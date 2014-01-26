@@ -1,0 +1,126 @@
+/*
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.parser.processor;
+
+import java.io.*;
+import java.util.*;
+
+import javax.annotation.processing.*;
+import javax.lang.model.*;
+import javax.lang.model.element.*;
+import javax.tools.*;
+
+@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedAnnotationTypes("com.oracle.truffle.r.parser.processor.GenerateRParser")
+public class GenerateRParserProcessor extends AbstractProcessor {
+    private static final String ANTLRC = "antlr-complete-3.5.1.jar";
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        if (roundEnv.processingOver()) {
+            return true;
+        }
+        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateRParser.class)) {
+            File antlrGenDir = null;
+            try {
+                String pkg = ((PackageElement) element.getEnclosingElement()).getQualifiedName().toString();
+
+                Filer filer = processingEnv.getFiler();
+                File srcGenDir = getSrcGenDir(filer);
+                File suiteRoot = srcGenDir.getParentFile().getParentFile();
+                // path to ANTLR jar
+                File antlr = join(suiteRoot, "lib", ANTLRC);
+                // Our src directory
+                File parserSrcDir = join(srcGenDir.getParentFile(), "src", pkg.replace('.', File.separatorChar));
+                antlrGenDir = mkTmpDir(null);
+                String[] command = new String[]{"java", "-jar", antlr.getAbsolutePath(), "-o", antlrGenDir.getAbsolutePath(), "R.g"};
+                // for (String e : command) {
+                // processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, e);
+                // }
+
+                Process process = Runtime.getRuntime().exec(command, null, parserSrcDir);
+                int rc = process.waitFor();
+                if (rc != 0) {
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Parser generator failed: " + rc);
+                    return false;
+                }
+                // Now create the actual source files, copying the ANTLR output
+                createSourceFile(filer, pkg, "RParser", antlrGenDir);
+                createSourceFile(filer, pkg, "RLexer", antlrGenDir);
+            } catch (Exception ex) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "exec of Parser generator failed: " + ex);
+                return false;
+            } finally {
+                if (antlrGenDir != null) {
+                    deleteTmpDir(antlrGenDir);
+                }
+            }
+        }
+        return true;
+    }
+
+    private static File join(File parent, String... args) {
+        File result = parent;
+        for (String arg : args) {
+            result = new File(result, arg);
+        }
+        return result;
+    }
+
+    private static void createSourceFile(Filer filer, String pkg, String className, File antlrGenDir) throws IOException {
+        JavaFileObject file = filer.createSourceFile(pkg + "." + className);
+        File antlrFile = join(antlrGenDir, className + ".java");
+        byte[] content = new byte[(int) antlrFile.length()];
+        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(antlrFile)); BufferedOutputStream os = new BufferedOutputStream(file.openOutputStream())) {
+            is.read(content);
+            os.write("// GENERATED CONTENT - DO NOT EDIT\n".getBytes());
+            os.write(content);
+        }
+    }
+
+    private static File mkTmpDir(File dir) throws IOException {
+        File tmp = File.createTempFile("antlr", null, dir);
+        String tmpName = tmp.getAbsolutePath();
+        tmp.delete();
+        File result = new File(tmpName);
+        result.mkdir();
+        return result;
+    }
+
+    private static void deleteTmpDir(File dir) {
+        for (File f : dir.listFiles()) {
+            f.delete();
+        }
+        dir.delete();
+    }
+
+    /**
+     * Find out the directory where generated sources will be put, which is a path to the suite root
+     * that works in mx and Eclipse.
+     */
+    private static File getSrcGenDir(Filer filer) throws IOException {
+        // The tmp file is not actually created because we don't create a stream to it.
+        return new File(filer.createSourceFile("tmp").toUri().getPath()).getParentFile();
+    }
+
+}

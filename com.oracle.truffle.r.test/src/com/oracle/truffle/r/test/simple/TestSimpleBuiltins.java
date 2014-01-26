@@ -1,0 +1,2269 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * Copyright (c) 2012-2013, Purdue University
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ *
+ * All rights reserved.
+ */
+package com.oracle.truffle.r.test.simple;
+
+import java.util.*;
+
+import org.junit.*;
+
+import com.oracle.truffle.r.test.*;
+
+public class TestSimpleBuiltins extends TestBase {
+
+    @Test
+    public void testSequence() {
+        assertEval("{ 5L:10L }");
+        assertEval("{ 5L:(0L-5L) }");
+        assertEval("{ 1:10 }");
+        assertEval("{ 1:(0-10) }");
+        assertEval("{ 1L:(0-10) }");
+        assertEval("{ 1:(0L-10L) }");
+        assertEval("{ (0-12):1.5 }");
+        assertEval("{ 1.5:(0-12) }");
+        assertEval("{ (0-1.5):(0-12) }");
+        assertEval("{ 10:1 }");
+        assertEval("{ (0-5):(0-9) }");
+    }
+
+    @Test
+    public void testSequenceStatement() {
+        assertEval("{ seq(1L,10L) }");
+        assertEval("{ seq(10L,1L) }");
+        assertEval("{ seq(1L,4L,2L) }");
+        assertEval("{ seq(1,-4,-2) }");
+    }
+
+    @Test
+    public void testSequenceStatementNamedParams() {
+        assertEval("{ seq(from=1,to=3) }");
+        assertEval("{ seq(length.out=1) }");
+        assertEval("{ seq(from=1.4) }");
+        assertEval("{ seq(from=1.7) }");
+        assertEval("{ seq(from=1,to=3,by=1) }");
+        assertEval("{ seq(from=-10,to=-5,by=2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSequenceStatementNamedParamsIgnore() {
+        assertEval("{ seq(to=-1,from=-10) }");
+        assertEval("{ seq(length.out=13.4) }");
+        assertEval("{ seq(length.out=0) }");
+        assertEval("{ seq(along.with=10) }");
+        assertEval("{ seq(along.with=NA) }");
+        assertEval("{ seq(along.with=1:10) }");
+        assertEval("{ seq(along.with=-3:-5) }");
+        assertEval("{ seq(from=10:12) }");
+        assertEval("{ seq(from=c(TRUE, FALSE)) }");
+        assertEval("{ seq(from=TRUE, to=TRUE, length.out=0) }");
+        assertEval("{ round(seq(from=10.5, to=15.4, length.out=4), digits=5) }");
+        assertEval("{ seq(from=11, to=12, length.out=2) }");
+        assertEval("{ seq(from=-10.4,to=-5.8,by=2.1) }");
+        assertEval("{ round(seq(from=3L,to=-2L,by=-4.2), digits=5) }");
+        assertEval("{ seq(along=c(10,11,12)) }"); // test partial name match
+    }
+
+    @Test
+    public void testArrayConstructors() {
+        assertEval("{ integer() }");
+        assertEval("{ double() }");
+        assertEval("{ logical() }");
+        assertEval("{ double(3) }");
+        assertEval("{ logical(3L) }");
+        assertEval("{ character(1L) }");
+        assertEval("{ raw() }");
+    }
+
+    @Test
+    public void testMaximum() {
+        assertEval("{ max((-1):100) }");
+        assertEval("{ max(2L, 4L) }");
+        assertEvalWarning("{ max() }");
+        assertEval("{ max(1:10, 100:200, c(4.0, 5.0)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testMaximumIgnore() {
+        assertEval("{ max(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
+        assertEval("{ max(c(\"hi\",\"abbey\",\"hello\")) }");
+        assertEval("{ max(\"hi\",\"abbey\",\"hello\") }");
+    }
+
+    @Test
+    public void testMinimum() {
+        assertEval("{ min((-1):100) }");
+        assertEval("{ min(2L, 4L) }");
+        assertEvalWarning("{ min() }");
+        assertEval("{ min(c(1,2,0/0)) }");
+        assertEval("{ max(c(1,2,0/0)) }");
+        assertEval("{ min(1:10, 100:200, c(4.0, -5.0)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testMinimumIgnore() {
+        assertEval("{ min(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
+        assertEval("{ min(c(\"hi\",\"abbey\",\"hello\")) }");
+        assertEval("{ min(\"hi\",\"abbey\",\"hello\") }");
+        assertEval("{ min(\"hi\",100) }");
+    }
+
+    @Test
+    public void testRep() {
+        assertEval("{ rep(1,3) }");
+        assertEval("{ rep(1:3,2) }");
+        assertEval("{ rep(c(1,2),0) }");
+        assertEval("{ rep(as.raw(14), 4) }");
+        assertEval("{ rep(1:3, length.out=4) }");
+        assertEval("{ rep(\"hello\", 3) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRepIgnore() {
+        assertEval("{ rep(1:3, length.out=NA) }");
+        assertEval("{ x <- as.raw(11) ; names(x) <- c(\"X\") ; rep(x, 3) }");
+        assertEval("{ x <- as.raw(c(11,12)) ; names(x) <- c(\"X\",\"Y\") ; rep(x, 2) }");
+        assertEval("{ x <- c(TRUE,NA) ; names(x) <- c(\"X\",NA) ; rep(x, length.out=3) }");
+        assertEval("{ x <- 1L ; names(x) <- c(\"X\") ; rep(x, times=2) } ");
+        assertEval("{ x <- 1 ; names(x) <- c(\"X\") ; rep(x, times=0) }");
+        assertEval("{ x <- 1+1i ; names(x) <- c(\"X\") ; rep(x, times=2) }");
+        assertEval("{ x <- c(1+1i,1+2i) ; names(x) <- c(\"X\") ; rep(x, times=2) }");
+        assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
+    }
+
+    @Test
+    public void testRepInt() {
+        assertEval("{ rep.int(1,3) }");
+        assertEval("{ rep.int(1:3,2) }");
+        assertEval("{ rep.int(c(1,2),0) }");
+        assertEval("{ rep.int(c(1,2),2) }");
+        assertEval("{ rep.int(as.raw(14), 4) }");
+        assertEval("{ rep.int(1L,3L) }");
+        assertEval("{ rep.int(\"a\",3) }");
+    }
+
+    @Test
+    public void testCombine() {
+        assertEval("{ c(\"1.2\",\"3.4\") }");
+        assertEval("{ c(\"a\",\"b\",\"c\") }");
+        assertEval("{ c(\"1\",\"b\") }");
+        assertEval("{ c(\"1.00\",\"2.00\") }");
+        assertEval("{ c(\"1.00\",\"b\") }");
+
+        assertEval("{ c(1.0,1L) }");
+        assertEval("{ c(1L,1.0) }");
+        assertEval("{ c( 1:3 ) }");
+        assertEval("{ c( 1L:3L ) }");
+        assertEval("{ c( 100, 1:3, 200 ) }");
+        assertEval("{ c( 1:3, 7:9 ) }");
+        assertEval("{ c( 1:3, 5, 7:9 ) }");
+
+        assertEval("{ c() }");
+        assertEval("{ c(NULL) }");
+        assertEval("{ c(NULL,NULL) }");
+        assertEval("{ c(NULL,1,2,3) }");
+
+        assertEval("{ c(1+1i,2-3i,4+5i) }");
+
+        assertEval("{ c(\"hello\", \"hi\") }");
+
+        assertEval("{ c(1+1i, as.raw(10)) }");
+        assertEval("{ c(as.raw(10), as.raw(20)) }");
+        assertEval("{ c(as.raw(10),  \"test\") }");
+
+        assertEval("{ f <- function(x,y) { c(x,y) } ; f(1,1) ; f(1, TRUE) }");
+        assertEval("{ f <- function(x,y) { c(x,y) } ; f(1,1) ; f(1, TRUE) ; f(NULL, NULL) }");
+
+        testCombine(new String[]{"1", "2", "3"});
+        testCombine(new String[]{"1L", "2L", "3L"});
+        testCombine(new String[]{"TRUE", "FALSE", "FALSE"});
+        testCombine(new String[]{"\"a\"", "\"b\"", "\"c\""});
+        testCombine(new String[]{"\"d\"", "2L", "\"f\""});
+        testCombine(new String[]{"\"g\"", "2", "2"});
+        testCombine(new String[]{"\"j\"", "TRUE", "TRUE"});
+
+        // test propagation of the "names" attribute
+        assertEval("{ x<-1:2; names(x)<-7:8; y<-3:4; names(y)<-9:10; z<-c(x, y); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; y<-3:4; z<-c(x, y); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8;  z<-c(x, integer()); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(x, 3L); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(3L, x); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; y<-double(0);  z<-c(x, y); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(x, 3); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(x, 3); attributes(z) }");
+
+        assertEval("{ c(a=42) }");
+        assertEval("{ c(a=FALSE) }");
+        assertEval("{ c(a=as.raw(7)) }");
+        assertEval("{ c(a=\"foo\") }");
+        assertEval("{ c(a=7i) }");
+
+        assertEval("{ c(a=1, b=2) }");
+        assertEval("{ c(a=FALSE, b=TRUE) }");
+        assertEval("{ c(a=as.raw(1), b=as.raw(2)) }");
+        assertEval("{ c(a=\"bar\", b=\"baz\") }");
+        assertEval("{ c(a=1, 2) }");
+        assertEval("{ c(1, b=2) }");
+
+        assertEval("{ c(a=1i, b=2i) }");
+        assertEval("{ c(a=7i, a=1:2) }");
+        assertEval("{ c(a=1:2, 42) }");
+        assertEval("{ c(a=1:2, b=c(42)) }");
+        assertEval("{ c(a=1:2, b=double()) }");
+        assertEval("{ c(a=c(z=1), 42) }");
+        assertEval("{ x<-c(z=1); names(x)=c(\"\"); c(a=x, 42) }");
+        assertEval("{ x<-c(y=1, z=2); names(x)=c(\"\", \"\"); c(a=x, 42) }");
+        assertEval("{ x<-c(y=1, z=2);  c(a=x, 42) }");
+        assertEval("{ x<-c(y=1);  c(x, 42) }");
+        assertEval("{ x<-c(1);  c(z=x, 42) }");
+        assertEval("{ x<-c(y=1, 2);  c(a=x, 42) }");
+
+    }
+
+    @Test
+    public void testList() {
+        assertEval("{ list(a=1, b=2) }");
+        assertEval("{ list(a=1, 2) }");
+        assertEval("{ list(1, b=2) }");
+        assertEval("{ x<-c(y=1, 2);  list(a=x, 42) }");
+        assertEval("{ x<-list(y=1, 2);  c(a=x, 42) }");
+        assertEval("{ x<-list(y=1, 2);  c(42, a=x) }");
+        assertEval("{ x<-list(y=1, 2);  c(a=x, c(z=7,42)) }");
+        assertEval("{ x<-list(y=1, 2);  c(a=x, c(y=7,z=42)) }");
+    }
+
+    public void testCombine(String[] testValues) {
+        genTest("{ c(%s) }", 1, testValues);
+        genTest("{ c(%s, %s) }", 2, testValues);
+        genTest("{ c(c(%s,%s), %s) }", 3, testValues);
+        genTest("{ c(%s, c(%s,%s)) }", 3, testValues);
+        genTest("{ c(NULL, c(%s,%s)) }", 2, testValues);
+        genTest("{ c(c(%s,%s), NULL) }", 2, testValues);
+        genTest("{ c(NULL, %s, NULL) }", 1, testValues);
+        genTest("{ c(NULL, %s) }", 1, testValues);
+        genTest("{ c(%s, NULL) }", 1, testValues);
+
+        genTest("{ c(c(%s,%s), c(%s,%s)) }", 4, testValues);
+        genTest("{ c(c(%s,%s), %s, c(%s,%s)) }", 5, testValues);
+        genTest("{ c(c(%s,%s), c(%s,%s), c(%s,%s)) }", 6, testValues);
+    }
+
+    private static void genTest(String test, int size, String[] testValues) {
+        String genTest = String.format(test, (Object[]) repeat(size, testValues));
+        assertEval(genTest);
+    }
+
+    private static String[] repeat(int size, String[] array) {
+        if (size == array.length) {
+            return array;
+        } else if (size <= array.length) {
+            return Arrays.copyOf(array, size);
+        } else {
+            String[] result = new String[size];
+            for (int i = 0; i < size; i++) {
+                result[i] = array[i % array.length];
+            }
+            return result;
+        }
+    }
+
+    @Test
+    @Ignore
+    public void testCombineBroken() {
+        assertEval("{ c(TRUE,1L,1.0,list(3,4)) }");
+        assertEval("{ c(TRUE,1L,1.0,list(3,list(4,5))) }");
+
+        assertEval("{ c(x=1,y=2) }");
+        assertEval("{ c(x=1,2) }");
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"A\",NA) ; c(x,test=x) }");
+        assertEval("{ c(a=1,b=2:3,list(x=FALSE))  }");
+        assertEval("{ c(1,z=list(1,b=22,3)) }");
+
+        assertEval("{ c(1i,0/0) }"); // yes, this is done by GNU-R, note
+        // inconsistency with as.complex(0/0)
+    }
+
+    @Test
+    public void testIsNA() {
+        assertEval("{ is.na(NA) }");
+        assertEval("{ is.na(c(NA)) }");
+        assertEval("{ is.na(c(1,2,3,4)) }");
+        assertEval("{ is.na(c(1,2,NA,4)) }");
+        assertEval("{ is.na(1[10]) }");
+        assertEval("{ is.na(c(1[10],2[10],3)) }");
+    }
+
+    @Test
+    public void testIsNABroken() {
+        assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
+    }
+
+    @Test
+    public void testAsInteger() {
+        assertEval("{ as.integer(\"1\") }");
+        assertEval("{ as.integer(c(\"1\",\"2\")) }");
+        assertEval("{ as.integer(c(1,2,3)) }");
+        assertEval("{ as.integer(c(1.0,2.5,3.9)) }");
+        assertEval("{ as.integer(0/0) }");
+        assertEval("{ as.integer(-0/0) }");
+        assertEval("{ as.integer(as.raw(c(1,2,3,4))) }");
+        assertEvalWarning("{ as.integer(10+2i) }");
+        assertEvalWarning("{ as.integer(c(3+3i, 4+4i)) }");
+        assertEvalWarning("{ as.integer(10000000000000) }");
+        assertEval("{ as.integer(list(c(1),2,3)) }");
+        assertEval("{ as.integer(list(integer(),2,3)) }");
+        assertEval("{ as.integer(list(list(1),2,3)) }");
+        assertEval("{ as.integer(list(1,2,3,list())) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsIntegerIgnore() {
+        assertEval("{ as.integer(10000000000) }"); // FIXME coercion warning missing
+        assertEval("{ as.integer(-10000000000) }"); // FIXME coercion warning missing
+    }
+
+    @Test
+    public void testAsCharacter() {
+        assertEval("{ as.character(1) }");
+        assertEval("{ as.character(1L) }");
+        assertEval("{ as.character(TRUE) }");
+        assertEval("{ as.character(1:3) }");
+        assertEval("{ as.character(NULL) }");
+        assertEval("{ as.character(list(1,2,3)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsCharacterIgnore() {
+        assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
+        assertEval("{ as.character(list(list(c(\"hello\", \"hi\")))) }");
+        assertEval("{ as.character(list(c(2L, 3L))) }");
+        assertEval("{ as.character(list(c(2L, 3L, 5L))) }");
+    }
+
+    @Test
+    public void testAsDouble() {
+        assertEval("{ as.double(\"1.27\") }");
+        assertEval("{ as.double(1L) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsDoubleIgnore() {
+        // FIXME coercion warnings missing
+        assertEval("{ as.double(c(\"1\",\"hello\")) }");
+        assertEval("{ as.double(\"TRUE\") }");
+
+    }
+
+    @Test
+    public void testAsLogical() {
+        assertEval("{ as.logical(1) }");
+        assertEval("{ as.logical(\"false\") }");
+        assertEval("{ as.logical(\"dummy\") }"); // no warning produced
+    }
+
+    @Test
+    public void testAsComplex() {
+        assertEval("{ as.complex(0) }");
+        assertEval("{ as.complex(TRUE) }");
+        assertEval("{ as.complex(\"1+5i\") }");
+        assertEval("{ as.complex(\"-1+5i\") }");
+        assertEval("{ as.complex(\"-1-5i\") }");
+        assertEval("{ as.complex(0/0) }");
+        assertEval("{ as.complex(c(0/0, 0/0)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsComplexIgnore() {
+        assertEval("{ as.complex(\"1e10+5i\") }");
+        assertEval("{ as.complex(\"-.1e10+5i\") }");
+        assertEval("{ as.complex(\"1e-2+3i\") }");
+        assertEval("{ as.complex(\"+.1e+2-3i\") }");
+    }
+
+    @Test
+    public void testAsRaw() {
+        assertEval("{ as.raw(NULL) }");
+        assertEval("{ as.raw(1) }");
+        assertEval("{ as.raw(1L) }");
+        assertEval("{ as.raw(c(1, 2, 3)) }");
+        assertEval("{ as.raw(c(1L, 2L, 3L)) }");
+        assertEval("{ as.raw(list(1,2,3)) }");
+        assertEval("{ as.raw(list(\"1\", 2L, 3.4)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsRawIgnore() {
+        // FIXME coercion warnings
+        assertEval("{ as.raw(1+1i) }");
+        assertEval("{ as.raw(-1) }");
+        assertEval("{ as.raw(-1L) }");
+        assertEval("{ as.raw(NA) }");
+        assertEval("{ as.raw(\"test\") }");
+        assertEval("{ as.raw(c(1+3i, -2-1i, NA)) }");
+        assertEval("{ as.raw(c(1, -2, 3)) }");
+        assertEval("{ as.raw(c(1,1000,NA)) }");
+        assertEval("{ as.raw(c(1L, -2L, 3L)) }");
+        assertEval("{ as.raw(c(1L, -2L, NA)) }");
+    }
+
+    @Test
+    public void testMatrix() {
+        assertEval("{ matrix(c(1,2,3,4),2,2) }");
+        assertEval("{ matrix(as.double(NA),2,2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testMatrixIgnore() {
+        // FIXME print output format
+        assertEval("{ matrix(1:4, nrow=2) }");
+        assertEval("{ matrix(c(1,2,3,4), nrow=2) }");
+        assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
+        assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
+        assertEval("{ matrix(nrow=2,ncol=2) }");
+        assertEval("{ matrix(1:4,2,2) }");
+        assertEval("{ matrix(1:4,3,2) }");
+        // FIXME missing warning
+        assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
+
+    }
+
+    @Test
+    public void testCasts() {
+        // shortcuts in views (only some combinations)
+        assertEval("{ as.complex(as.character(c(1+1i,1+1i))) }");
+        assertEval("{ as.complex(as.integer(c(1+1i,1+1i))) }");
+        assertEval("{ as.complex(as.logical(c(1+1i,1+1i))) }");
+
+        assertEval("{ as.double(as.logical(c(10,10))) }");
+        assertEval("{ as.integer(as.logical(-1:1)) }");
+        assertEval("{ as.raw(as.logical(as.raw(c(1,2)))) }");
+        assertEval("{ as.character(as.double(1:5)) }");
+        assertEval("{ as.character(as.complex(1:2)) }");
+
+        assertEval("{ m<-matrix(1:6, nrow=3) ; as.integer(m) }");
+        assertEval("{ m<-matrix(1:6, nrow=3) ; as.vector(m, \"any\") }");
+        assertEval("{ m<-matrix(1:6, nrow=3) ; as.vector(mode = \"integer\", x=m) }");
+        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"double\") }");
+        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"numeric\") }");
+        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m) }");
+        assertEval("{ m<-matrix(c(TRUE,FALSE,FALSE,TRUE), nrow=2) ; as.vector(m) }");
+        assertEval("{ m<-matrix(c(1+1i,2+2i,3-3i,4-4i), nrow=2) ; as.vector(m) }");
+        assertEval("{ m<-matrix(c(\"a\",\"b\",\"c\",\"d\"), nrow=2) ; as.vector(m) }");
+        assertEval("{ m<-matrix(as.raw(c(1,2,3,4)), nrow=2) ; as.vector(m) }");
+
+        // dropping dimensions
+        assertEval("{ m <- matrix(1:6, nrow=2) ; as.double(m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; as.integer(m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; as.logical(m) }");
+
+        // dropping names
+        assertEval("{ x <- c(0,2); names(x) <- c(\"hello\",\"hi\") ; as.logical(x) }");
+        assertEval("{ x <- 1:2; names(x) <- c(\"hello\",\"hi\") ; as.double(x) }");
+        assertEval("{ x <- c(1,2); names(x) <- c(\"hello\",\"hi\") ; as.integer(x) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCastsIgnore() {
+        assertEval("{ m<-matrix(c(1,0,1,0), nrow=2) ; as.vector(m, mode = \"logical\") }");
+        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"complex\") }");
+        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"character\") }");
+        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"raw\") }");
+
+        assertEval("{ as.vector(list(1,2,3), mode=\"integer\") }");
+
+        assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
+        assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
+        assertEval("{ l <- c(x=1) ; as.list(l) }");
+
+        assertEval("{ as.matrix(1) }");
+        assertEval("{ as.matrix(1:3) }");
+        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
+        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
+        assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
+        assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }"); // FIXME missing warning
+    }
+
+    @Test
+    public void testSum() {
+        assertEval("{ sum() }");
+        assertEval("{ sum(0, 1, 2, 3) }");
+        assertEval("{ sum(c(0, 1, 2, 3)) }");
+        assertEval("{ sum(c(0, 1, 2, 3), 4) }");
+        assertEval("{ sum(1:6, 3, 4) }");
+        assertEval("{ sum(1:6, 3L, TRUE) }");
+        assertEval("{ `sum`(1:10) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSumIgnore() {
+        assertEval("{ sum(0, 1[3]) }");
+        assertEval("{ sum(na.rm=FALSE, 0, 1[3]) }");
+        assertEval("{ sum(0, na.rm=FALSE, 1[3]) }");
+        assertEval("{ sum(0, 1[3], na.rm=FALSE) }");
+        assertEval("{ sum(0, 1[3], na.rm=TRUE) }");
+        assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
+    }
+
+    @Test
+    public void testMatchFun() {
+        assertEval("{ f <- match.fun(length) ; f(c(1,2,3)) }");
+        assertEval("{ f <- match.fun(\"length\") ; f(c(1,2,3)) }");
+        assertEval("{ f <- function(x) { y <- match.fun(x) ; y(c(1,2,3)) } ; c(f(\"sum\"),f(\"cumsum\")) }");
+        assertEval("{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f(\"+\"),f(\"*\")) }");
+    }
+
+    @Test
+    public void testSapply() {
+        assertEval("{ f <- function() { sapply(1:3,function(x){x*2L}) }; f() + f() }");
+        assertEval("{ f <- function() { sapply(c(1,2,3),function(x){x*2}) }; f() + f() }");
+
+        assertEval("{ h <- new.env() ; assign(\"a\",1,h) ; assign(\"b\",2,h) ; sa <- sapply(ls(h), function(k) get(k,h,inherits=FALSE)) ; names(sa) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testSapplyInore() {
+        // FIXME these all regressed with the change to 'print'
+        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
+        assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
+        assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { as.raw(10) } }) }");
+        assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { \"hello\" }} ) } ");
+        assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list(2) } }) }");
+    }
+
+    @Test
+    @Ignore
+    public void testApplyIgnore() {
+        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
+        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
+
+        assertEval("{ sapply(1:3,function(x){x*2L}) }"); // FIXME print format
+        assertEval("{ sapply(c(1,2,3),function(x){x*2}) }"); // FIXME print format
+        assertEval("{ sapply(1:3, length) }"); // FIXME print format
+        assertEval("{ f<-length; sapply(1:3, f) }"); // FIXME print format
+
+        assertEval("{ sapply(list(1,2,3),function(x){x*2}) }");
+        assertEval("{ sapply(1:3, function(x) { if (x==1) { 1 } else if (x==2) { integer() } else { TRUE } }) }");
+
+        assertEval("{ sapply(1:3, `-`, 2) }");
+        assertEval("{ sapply(1:3, \"-\", 2) }");
+
+        // matrix support
+        assertEval("{ sapply(1:3, function(i) { list(1,2) }) }");
+        assertEval("{ sapply(1:3, function(i) { if (i < 3) { list(1,2) } else { c(11,12) } }) }");
+        assertEval("{ sapply(1:3, function(i) { if (i < 3) { c(1+1i,2) } else { c(11,12) } }) }");
+
+        // names
+        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
+        assertEval("{ ( sapply(1:3, function(i) { list(xxx=1:i) } )) }");
+        assertEval("{ sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(2)} }) }");
+        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
+        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ f <- function() { sapply(c(1,2), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ f <- function() { sapply(c(X=1,Y=2), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ f <- function() { sapply(c(\"a\",\"b\"), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
+        assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
+
+        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }"); // FIXME print
+// regression
+        assertEval("{ f<-function() { x<-2 ; sapply(1, function(i) { x }) } ; f() }");  // FIXME
+// print
+        // regression
+
+    }
+
+    @Test
+    public void testApply() {
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,1,sum) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,2,sum) }");
+        assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list() } }) }");
+    }
+
+    @Test
+    public void testCat() {
+        assertEvalNoOutput("{ cat() }");
+        assertEvalNoNL("{ cat(1) }");
+        assertEvalNoNL("{ cat(1,2,3) }");
+        assertEvalNoNL("{ cat(\"a\") }");
+        assertEvalNoNL("{ cat(\"a\", \"b\") }");
+        assertEvalNoNL("{ cat(1, \"a\") }");
+        assertEvalNoNL("{ cat(c(1,2,3)) }");
+        assertEvalNoNL("{ cat(c(\"a\",\"b\")) }");
+        assertEvalNoNL("{ cat(c(1,2,3),c(\"a\",\"b\")) }");
+        assertEvalNoNL("{ cat(TRUE) }");
+        assertEvalNoNL("{ cat(TRUE, c(1,2,3), FALSE, 7, c(\"a\",\"b\"), \"x\") }");
+        assertEvalNoNL("{ cat(1:3) }");
+        assertEvalNoNL("{ cat(\"hi\",1:3,\"hello\") }");
+        assertEvalNoNL("{ cat(2.3) }");
+        assertEvalNoNL("{ cat(1.2,3.4) }");
+        assertEvalNoNL("{ cat(c(1.2,3.4),5.6) }");
+        assertEvalNoNL("{ cat(c(TRUE,FALSE), TRUE) }");
+        assertEvalNoNL("{ cat(NULL) }");
+        assertEvalNoNL("{ cat(1L) }");
+        assertEvalNoNL("{ cat(1L, 2L, 3L) }");
+        assertEvalNoNL("{ cat(c(1L, 2L, 3L)) }");
+        assertEvalNoNL("{ cat(1,2,sep=\".\") }");
+        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
+        assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testCatIgnore() {
+        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
+        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+    }
+
+    @Test
+    public void testOuter() {
+        assertEval("{ outer(c(1,2,3),c(1,2),\"-\") }");
+        assertEval("{ outer(c(1,2,3),c(1,2),\"*\") }");
+        assertEval("{ outer(1, 3, \"-\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testOuterIgnore() {
+        assertEval("{ outer(c(1,2,3),c(1,2),\"+\") }");
+        assertEval("{ outer(1:3,1:2) }");
+        assertEval("{ outer(1:3,1:2,\"*\") }");
+        assertEval("{ outer(1:3,1:2, function(x,y,z) { x*y*z }, 10) }");
+        assertEval("{ outer(1:2, 1:3, \"<\") }");
+        assertEval("{ outer(1:2, 1:3, '<') }");
+    }
+
+    @Test
+    public void testOperators() {
+        assertEval("{ `+`(1,2) }");
+        assertEval("{ `-`(1,2) }");
+        assertEval("{ `*`(1,2) }");
+        assertEval("{ `/`(1,2) }");
+        assertEval("{ `%/%`(1,2) }");
+        assertEval("{ `%%`(1,2) }");
+        assertEval("{ `^`(1,2) }");
+        assertEval("{ `!`(TRUE) }");
+        assertEval("{ `%o%`(3,5) }");
+        assertEval("{ x <- `+` ; x(2,3) }");
+        assertEval("{ x <- `+` ; f <- function() { x <- 1 ; x(2,3) } ; f() }");
+        assertEval("{ `||`(TRUE, FALSE) }");
+        assertEval("{ `&&`(TRUE, FALSE) }");
+        assertEval("{ `|`(TRUE, FALSE) }");
+        assertEval("{ `&`(TRUE, FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testOperatorsIgnore() {
+        assertEval("{ `%*%`(3,5) }");
+    }
+
+    @Test
+    public void testUpperTriangular() {
+    }
+
+    @Test
+    @Ignore
+    public void testUpperTriangularIgnore() {
+        // FIXME print regression
+        assertEval("{ m <- matrix(1:6, nrow=2) ;  upper.tri(m, diag=TRUE) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ;  upper.tri(m, diag=FALSE) }");
+
+        assertEval("{ upper.tri(1:3, diag=TRUE) }");
+        assertEval("{ upper.tri(1:3, diag=FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testLowerTriangular() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=TRUE) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=FALSE) }");
+
+        assertEval("{ lower.tri(1:3, diag=TRUE) }");
+        assertEval("{ lower.tri(1:3, diag=FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTriangular() {
+        assertEval("{ m <- { matrix( as.character(1:6), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
+        assertEval("{ m <- { matrix( (1:6) * (1+3i), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
+        assertEval("{ m <- { matrix( as.raw(11:16), nrow=2 ) } ; diag(m) <- c(as.raw(1),as.raw(2)) ; m }");
+    }
+
+    @Test
+    public void testDiagonal() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; diag(m) }");
+        assertEval("{ m <- matrix(1:9, nrow=3) ; diag(m) }");
+    }
+
+    @Test
+    public void testUpdateDiagonal() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1,2) ; m }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1,2); attributes(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1.1,2.2); attributes(m) }");
+    }
+
+    @Test
+    @Ignore
+    public void testUpdateDiagonalIgnore() {
+        // FIXME print regression
+        assertEval("{ x <- (m <- matrix(1:6, nrow=3)) ; diag(m) <- c(1,2) ; x }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; f <- function() { diag(m) <- c(100,200) } ; f() ; m }");
+    }
+
+    @Test
+    public void testDimensions() {
+        assertEval("{ dim(1) }");
+        assertEval("{ dim(1:3) }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; dim(m) }");
+
+        assertEval("{ nrow(1) }");
+        assertEval("{ nrow(1:3) }");
+        assertEval("{ NROW(1) }");
+        assertEval("{ NROW(1:3) }");
+        assertEval("{ ncol(1) }");
+        assertEval("{ ncol(1:3) }");
+        assertEval("{ NCOL(1) }");
+        assertEval("{ NCOL(1:3) }");
+
+        assertEval("{ m <- matrix(1:6, nrow=3) ; nrow(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; ncol(m) }");
+
+        assertEval("{ z <- 1 ; dim(z) <- c(1,1) ; dim(z) <- NULL ; z }");
+
+        assertEval("{ x <- 1:4 ; f <- function() { x <- 1:4 ; dim(x) <<- c(2,2) } ; f() ; dim(x) }");
+
+        assertEval("{ x<-1:12; dim(x)<-c(12); x }");
+        assertEvalWarning("{ x<-1:12; dim(x)<-c(12+10i); x }");
+        assertEval("{ x<-1:12; dim(x)<-c(as.raw(12)); x }");
+        assertEval("{ x<-1:12; dim(x)<-c(\"12\"); x }");
+        assertEval("{ x<-1:1; dim(x)<-c(TRUE); x }");
+
+        assertEval("{ x<-1:12; dim(x)<-c(3, 4); attr(x, \"dim\") }");
+        assertEval("{ x<-1:12; attr(x, \"dim\")<-c(3, 4); dim(x) }");
+        assertEval("{ x<-1:4; names(x)<-c(21:24); attr(x, \"foo\")<-\"foo\"; x }");
+        assertEval("{ x<-list(1,2,3); names(x)<-c(21:23); attr(x, \"foo\")<-\"foo\"; x }");
+
+        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1,3) ; x }");
+        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1,NA) ; x }");
+        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1,-1) ; x }");
+        assertEvalError("{ x <- 1:2 ; dim(x) <- integer() ; x }");
+        assertEval("{ b <- c(a=1+2i,b=3+4i) ; attr(b,\"my\") <- 211 ; dim(b) <- c(2,1) ; names(b) }");
+
+        assertEval("{ x<-1:4; dim(x)<-c(4); y<-101:104; dim(y)<-c(4); x > y }");
+        assertEval("{ x<-1:4; y<-101:104; dim(y)<-c(4); x > y }");
+        assertEval("{ x<-1:4; dim(x)<-c(4); y<-101:104; x > y }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(4); y<-101:104; dim(y)<-c(2,2); x > y }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(4); y<-101:108; dim(y)<-c(8); x > y }");
+
+        assertEval("{ x<-c(1); dim(x)<-1; names(x)<-c(\"b\"); attributes(x) }");
+        assertEval("{ x<-c(1); dim(x)<-1; attr(x, \"dimnames\")<-list(\"b\"); attributes(x) }");
+        assertEval("{ x<-c(1); dim(x)<-1; attr(x, \"dimnames\")<-list(a=\"b\"); attributes(x) }");
+        // reset all attributes
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; dim(x)<-NULL; attributes(x) }");
+        // reset dimensions and dimnames
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; attr(x, \"foo\")<-\"foo\"; attr(x, \"dim\")<-NULL; attributes(x) }");
+        // second names() invocation sets "dimnames"
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; attributes(x) }");
+        // third names() invocation resets "names" (and not "dimnames")
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attributes(x) }");
+        // both names and dimnames are set and then re-set
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attr(x, \"dimnames\")<-NULL; attributes(x) }");
+        assertEvalError("{ x<-1:4; attr(x, \"dimnames\")<-list(101, 102, 103, 104) }");
+        // assigning an "invisible" list returned by "attr(y, dimnames)<-" as dimnames attribute for
+// x
+        assertEval("{ x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, \"dimnames\")<-(attr(y, \"dimnames\")<-list(\"b\")); attributes(x) }");
+
+        // there should be no output
+        assertEval("{ x<-42; y<-(dim(x)<-1); }");
+        assertEval("{ x<-42; y<-(dim(x)<-1); y }");
+        // dim vector should not be shared
+        assertEval("{ x<-1:4; y<-c(2, 2); dim(x)<-y; y[1]=4; dim(x) }");
+        assertEval("{ x<-1; dim(x)=1; attr(x, \"foo\")<-\"foo\"; dim(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-1; dim(x)=1; attr(x, \"names\")<-\"a\"; dim(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-1; dim(x)=1; names(x)<-\"a\"; dim(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-1:2; dim(x)=c(1,2); names(x)<-c(\"a\", \"b\"); attr(x, \"foo\")<-\"foo\"; dim(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-1:4; names(x)<-c(21:24); attr(x, \"dim\")<-c(4); attr(x, \"foo\")<-\"foo\"; x }");
+        assertEval("{ x<-list(1,2,3); names(x)<-c(21:23); attr(x, \"dim\")<-c(3); attr(x, \"foo\")<-\"foo\"; x }");
+    }
+
+    @Test
+    @Ignore
+    public void testDimensionsIgnore() {
+        // FIXME print regressions
+        assertEval("{ x <- 1:2 ; dim(x) <- c(1,2) ; x }");
+        assertEval("{ x <- 1:2 ; attr(x, \"dim\") <- c(2,1) ; x }");
+    }
+
+    @Test
+    public void testCumulativeSum() {
+        assertEval("{ cumsum(1:10) }");
+        assertEval("{ cumsum(c(1,2,3)) }");
+        assertEval("{ cumsum(NA) }");
+        assertEval("{ cumsum(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cumsum(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cumsum(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cumsum(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cumsum(c(1+1i, NA, 2+3i)) }");
+        assertEval("{ cumsum(as.logical(-2:2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCumulativeSumBroken() {
+        assertEval("{ cumsum(c(1,2,3,0/0,5)) }");
+        assertEval("{ cumsum(c(1,0/0,5+1i)) }");
+        assertEval("{ cumsum(as.raw(1:6)) }");
+        assertEval("{ cumsum(rep(1e308, 3) ) }"); // FIXME 1e+308
+        assertEval("{ cumsum(c(1e308, 1e308, NA, 1, 2)) }"); // FIXME 1e+308
+
+        assertEval("{ cumsum(c(2000000000L, 2000000000L)) }"); // FIXME missing warning
+        assertEval("{ cumsum(c(-2147483647L, -1L)) }"); // FIXME missing warning
+        assertEval("{ cumsum((1:6)*(1+1i)) }"); // FIXME print formatting
+
+    }
+
+    @Test
+    public void testWhich() {
+        assertEval("{ which(c(TRUE, FALSE, NA, TRUE)) }");
+        assertEval("{ which(logical()) }");
+    }
+
+    @Test
+    @Ignore
+    public void testWhichIgnore() {
+        assertEval("{ which(c(a=TRUE,b=FALSE,c=TRUE)) }");
+    }
+
+    @Test
+    public void testColumnsRowsStat() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; colSums(na.rm = FALSE, x = m) }");
+    }
+
+    @Test
+    @Ignore
+    public void testColumnsRowsStatIgnore() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; colMeans(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rowMeans(x = m, na.rm = TRUE) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rowSums(x = m) }");
+
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; colMeans(m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; rowMeans(m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; colSums(m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; rowSums(m) }");
+
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; rowSums(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; rowSums(m, na.rm = TRUE) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; rowMeans(m, na.rm = TRUE) }");
+
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; colSums(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; colSums(na.rm = TRUE, m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; colMeans(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; colMeans(m, na.rm = TRUE) }");
+
+        assertEval("{ colMeans(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ colMeans(matrix((1:6)*(1+1i), nrow=2)) }");
+        assertEval("{ rowSums(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ rowSums(matrix((1:6)*(1+1i), nrow=2)) }");
+        assertEval("{ rowMeans(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ rowMeans(matrix((1:6)*(1+1i), nrow=2)) }");
+        assertEval("{ colSums(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ colSums(matrix((1:6)*(1+1i), nrow=2)) }");
+
+        assertEval("{ o <- outer(1:3, 1:4, \"<\") ; colSums(o) }");
+    }
+
+    @Test
+    public void testNChar() {
+        assertEval("{ nchar(c(\"hello\", \"hi\")) }");
+        assertEval("{ nchar(c(\"hello\", \"hi\", 10, 130)) }");
+        assertEval("{ nchar(c(10,130)) }");
+    }
+
+    @Test
+    public void testStrSplit() {
+        assertEval("{ strsplit(\"helloh\", \"h\", fixed=TRUE) }");
+        assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\"), fixed=TRUE) }");
+        assertEval("{ strsplit(\"helloh\", \"\", fixed=TRUE) }");
+        assertEval("{ strsplit(\"helloh\", \"h\") }");
+        assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\")) }");
+    }
+
+    @Test
+    @Ignore
+    public void testStrSplitIgnore() {
+        assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
+    }
+
+    @Test
+    public void testPaste() {
+        assertEval("{ paste() }");
+        assertEval("{ a <- as.raw(200) ; b <- as.raw(255) ; paste(a, b) }");
+        assertEval("{ paste(character(0),31415) }");
+        assertEval("{ paste(1:2, 1:3, FALSE, collapse=NULL) }");
+        assertEval("{ paste(sep=\"\") }");
+        assertEval("{ paste(1:2, 1:3, FALSE, collapse=\"-\", sep=\"+\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testPasteIgnore() {
+        assertEval("{ file.path(\"a\", \"b\", c(\"d\",\"e\",\"f\")) }");
+        assertEval("{ file.path() }");
+    }
+
+    @Test
+    public void testSubstring() {
+        assertEval("{ substr(\"123456\", 2L, 4L) }");
+        assertEval("{ substr(\"123456\", 2, 4) }");
+        assertEval("{ substr(\"123456\", 4, 2) }");
+        assertEval("{ substr(\"123456\", 7, 8) }");
+        assertEval("{ substr(\"123456\", 4, 8) }");
+        assertEval("{ substr(\"123456\", -1, 3) }");
+        assertEval("{ substr(\"123456\", -5, -1) }");
+        assertEval("{ substr(\"123456\", -20, -100) }");
+        assertEval("{ substr(\"123456\", 2.8, 4) }");
+        assertEval("{ substr(c(\"hello\", \"bye\"), 1, 2) }");
+        assertEval("{ substr(c(\"hello\", \"bye\"), c(1,2,3), 4) }");
+        assertEval("{ substr(c(\"hello\", \"bye\"), 1, c(1,2,3)) }");
+        assertEval("{ substr(c(\"hello\", \"bye\"), c(1,2), c(2,3)) }");
+        assertEval("{ substr(1234L,2,3) }");
+        assertEval("{ substr(1234,2,3) }");
+        assertEval("{ substr(\"abcdef\",c(1,2),c(3L,5L)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSubstringIgnore() {
+        assertEval("{ substring(\"123456\", first=2, last=4) }");
+        assertEval("{ substring(\"123456\", first=2.8, last=4) }");
+        assertEval("{ substring(c(\"hello\", \"bye\"), first=c(1,2,3), last=4) }");
+        assertEval("{ substring(\"fastr\", first=NA, last=2) }");
+        assertEval("{ substr(NA,1,2) }"); // FIXME print formatting
+        assertEval("{ substr(\"fastr\", NA, 2) }"); // FIXME print formatting
+        assertEval("{ substr(\"fastr\", 1, NA) }"); // FIXME print formatting
+    }
+
+    @Test
+    public void testOrder() {
+        assertEval("{ order(c(\"a\",\"c\",\"b\",\"d\",\"e\",\"f\")) }");
+        assertEval("{ order(c(5,2,2,1,7,4)) }");
+        assertEval("{ order(c(5,2,2,1,7,4),c(\"a\",\"c\",\"b\",\"d\",\"e\",\"f\")) }");
+        assertEval("{ order(c(1,1,1,1),c(4,3,2,1)) }");
+        assertEval("{ order(c(1,1,1,1),c(\"d\",\"c\",\"b\",\"a\")) }");
+    }
+
+    @Test
+    @Ignore
+    public void testOrderIgnore() {
+        assertEval("{ order(1:3) }");
+        assertEval("{ order(3:1) }");
+        assertEval("{ order(c(1,1,1), 3:1) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=FALSE) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=TRUE, na.last=TRUE) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=TRUE, na.last=NA) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=TRUE, na.last=FALSE) }");
+        assertEval("{ order() }");
+        assertEval("{ order(c(NA,NA,1), c(2,1,3)) }"); // infinite loop
+        assertEval("{ order(c(NA,NA,1), c(1,2,3)) }"); // infinite loop
+        assertEval("{ order(c(1,2,3,NA)) }"); // infinite loop
+        assertEval("{ order(c(1,2,3,NA), na.last=FALSE) }");
+        assertEval("{ order(c(1,2,3,NA), na.last=FALSE, decreasing=TRUE) }");
+        assertEval("{ order(c(0/0, -1/0, 2)) }");
+        assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
+    }
+
+    @Test
+    public void testLog() {
+        assertEval("{ log(1) } ");
+        assertEval("{ log(0) }");
+        assertEval("{ log(c(0,1)) }");
+    }
+
+    @Test
+    public void testLog2() {
+        assertEval("{ log2(1) } ");
+        assertEval("{ log2(0) }");
+        assertEval("{ log2(c(0,1)) }");
+
+        assertEval("{ log2(2) } ");
+        assertEval("{ log2(4) } ");
+        assertEval("{ as.integer(log2(6)*1000000) } ");
+    }
+
+    @Test
+    public void testLog10() {
+        assertEval("{ log10(1) } ");
+        assertEval("{ log10(0) }");
+        assertEval("{ log10(c(0,1)) }");
+
+        assertEval("{ log10(10) } ");
+        assertEval("{ log10(100) } ");
+        assertEval("{ as.integer(log10(200)*100000) } ");
+    }
+
+    @Test
+    @Ignore
+    public void testLogIgnore() {
+        assertEval("{ round( log(10,), digits = 5 ) }");
+        assertEval("{ round( log(10,2), digits = 5 ) }");
+        assertEval("{ round( log(10,10), digits = 5 ) }");
+        assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
+
+        assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
+    }
+
+    @Test
+    public void testSqrt() {
+        assertEval("{ sqrt(9) }");
+        assertEval("{ sqrt(9L) }");
+        assertEval("{ sqrt(NA) }");
+        assertEval("{ sqrt(c(1,4,9,16)) }");
+        assertEval("{ sqrt(c(1,4,NA,16)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSqrtBroken() {
+        assertEval("{ sqrt(c(a=9,b=81)) }");
+        // FIXME this works, but too many decimal places are displayed
+        assertEval("{ sqrt(1:5) }");
+        assertEval("{ sqrt(-1L) }"); // FIXME warning
+        assertEval("{ sqrt(-1) }"); // FIXME warning
+    }
+
+    @Test
+    @Ignore
+    public void testExp() {
+        assertEval("{ round( exp(c(1+1i,-2-3i)), digits=5 ) }");
+        assertEval("{ round( exp(1+2i), digits=5 ) }");
+    }
+
+    @Test
+    public void testAbs() {
+        assertEval("{ abs(0) }");
+        assertEval("{ abs(100) }");
+        assertEval("{ abs(-100) }");
+        assertEval("{ abs(0/0) }");
+        assertEval("{ abs((1:2)[3]) }");
+        assertEval("{ abs((1/0)*(1-0i)) }");
+        assertEval("{ abs(1) }");
+        assertEval("{ abs(1L) }");
+        assertEval("{ abs(-1) }");
+        assertEval("{ abs(-1L) }");
+        assertEval("{ abs(NA) }");
+        assertEval("{ abs(c(1, 2, 3)) }");
+        assertEval("{ abs(c(1L, 2L, 3L)) }");
+        assertEval("{ abs(c(1, -2, 3)) }");
+        assertEval("{ abs(c(1L, -2L, 3L)) }");
+        assertEval("{ abs(c(1L, -2L, NA)) }");
+        assertEval("{ abs((-1-0i)/(0+0i)) }");
+        assertEval("{ abs((-0-1i)/(0+0i)) }");
+        assertEval("{ abs(NA+0.1) }");
+        assertEval("{ abs((0+0i)/0) }");
+        assertEval("{ abs(c(1, -2, NA)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAbsIgnore() {
+        assertEval("{ abs(c(0/0,1i)) }");
+        assertEval("{ exp(-abs((0+1i)/(0+0i))) }");
+        assertEval("{ abs(1:3) }");
+        assertEval("{ abs(-1:-3) }");
+        assertEvalError("{ abs(NULL) }");
+    }
+
+    @Test
+    public void testFloor() {
+        assertEval("{ floor(c(0.2,-3.4,NA,0/0,1/0)) }");
+    }
+
+    @Test
+    public void testCeiling() {
+        assertEval("{ ceiling(c(0.2,-3.4,NA,0/0,1/0)) }");
+    }
+
+    @Test
+    public void testCharUtils() {
+        assertEval("{ toupper(c(\"hello\",\"bye\")) }");
+        assertEval("{ tolower(c(\"Hello\",\"ByE\")) }");
+        assertEval("{ toupper(c()) }");
+        assertEval("{ tolower(c()) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCharUtilsIgnore() {
+        assertEval("{ tolower(1E100) }");
+        assertEval("{ toupper(1E100) }");
+        assertEval("{ m <- matrix(\"hi\") ; toupper(m) }");
+        assertEval("{ toupper(c(a=\"hi\", \"hello\")) }");
+        assertEval("{ tolower(c(a=\"HI\", \"HELlo\")) }");
+        assertEval("{ tolower(NA) }");
+        assertEval("{ toupper(NA) }");
+    }
+
+    @Test
+    public void testTypeOf() {
+        assertEval("{ typeof(1) }");
+        assertEval("{ typeof(1L) }");
+        assertEval("{ typeof(function(){}) }");
+        assertEval("{ typeof(\"hi\") }");
+        assertEval("{ typeof(sum) }");
+        assertEval("{ typeof(NULL) }");
+        assertEval("{ typeof(TRUE) }");
+        assertEval("{ typeof(\"test\") }");
+        assertEval("{ typeof(c(1, 2, 3)) }");
+        assertEval("{ typeof(c(1L, 2L, 3L)) }");
+        assertEval("{ typeof(1:3) }");
+        assertEval("{ typeof(c(TRUE, TRUE, FALSE)) }");
+        assertEval("{ typeof(typeof(NULL)) }");
+        assertEval("{ length(typeof(NULL)) }");
+        assertEval("{ typeof(length(typeof(NULL))) }");
+    }
+
+    @Test
+    public void testSub() {
+        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\") }");
+        assertEval("{ sub(\"a\",\"aa\", \"prague alley\") }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testSubIgnore() {
+        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval("{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
+        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRegExprIgnore() {
+        assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME: missing
+// attributes
+        assertEval("gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME:
+// missing attributes
+    }
+
+    @Test
+    @Ignore
+    public void testRegExprComplex() {
+        assertEval("gregexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))"); // NOTE:
+        // this is without attributes
+        assertEval("regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))"); // NOTE:
+        // this is without attributes
+    }
+
+    @Test
+    public void testLength() {
+        assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
+        assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
+        assertEval("{ length(c(z=1:4)) }");
+        assertEval("{ x <- 1 ; f <- function() { length(x) <<- 2 } ; f() ; x }");
+        assertEval("{ length(1) }");
+        assertEval("{ length(NULL) }");
+        assertEval("{ length(NA) }");
+        assertEval("{ length(TRUE) }");
+        assertEval("{ length(1L) }");
+        assertEval("{ length(1+1i) }");
+        assertEval("{ length(d<-dim(1:3)) }");
+        assertEval("{ length(1:3) }");
+        assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
+        assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
+        assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
+    }
+
+    @Test
+    public void testUpdateNames() {
+        assertEval("{ x <- c(1,2) ; names(x) <- c(\"hello\", \"hi\"); names(x) } ");
+
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"hello\", \"hi\"); names(x) } ");
+        assertEval("{ x<-c(1, 2); attr(x, \"names\")<-c(\"a\", \"b\"); x }");
+        assertEval("{ x<-c(1, 2); attr(x, \"names\")<-c(\"a\", \"b\"); names(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-c(1, 2); names(x)<-c(\"a\", \"b\"); attr(x, \"names\")<-NULL; x }");
+        assertEval("{ x<-c(1, 2); names(x)<-42; x }");
+        assertEval("{ x<-c(1, 2); names(x)<-c(TRUE, FALSE); x }");
+        assertEvalError("{ x<-c(1,2); names(x)<-42:44; x }");
+        assertEvalError("{ x<-c(1,2); attr(x, \"names\")<-42:45; x }");
+        assertEval("{ x<-list(1,2); names(x)<-c(\"a\",NA); x }");
+        assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"$\"); x }");
+        assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"b\"); x }");
+        assertEval("{ x<-list(1,2); names(x)<-42:43; x }");
+        assertEval("{ x<-7; attr(x, \"foo\")<-\"a\"; attr(x, \"bar\")<-42; attributes(x) }");
+        assertEval("{ x<-c(\"a\", \"\", \"bbb\", \"\", \"c\"); names(x)<-1:4; x }");
+
+        assertEval("{ x <- c(1,2); names(x) <- c(\"hello\", \"hi\") ; x }");
+        assertEval("{ x <- 1:2; names(x) <- c(\"hello\", \"hi\") ; x }");
+
+        assertEval("{ x <- c(1,9); names(x) <- c(\"hello\",\"hi\") ; sqrt(x) }");
+        assertEval("{ x <- c(1,9); names(x) <- c(\"hello\",\"hi\") ; is.na(x) }");
+        assertEval("{ x <- c(1,NA); names(x) <- c(\"hello\",\"hi\") ; cumsum(x) }");
+        assertEval("{ x <- c(1,NA); names(x) <- c(NA,\"hi\") ; cumsum(x) }");
+
+        assertEval("{ x <- 1:2; names(x) <- c(\"A\", \"B\") ; abs(x) }");
+        assertEval("{ z <- c(a=1, b=2) ; names(z) <- NULL ; z }");
+        assertEval("{ x <- c(1,2) ; names(x) <- c(\"hello\"); names(x) }");
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"hello\"); names(x) }");
+    }
+
+    @Test
+    @Ignore
+    public void testUpdateNamesIgnore() {
+
+        assertEval("{ x <- c(1,2); names(x) <- c(\"A\", \"B\") ; x + 1 }");
+        assertEval("{ x <- 1:2; names(x) <- c(\"A\", \"B\") ; y <- c(1,2,3,4) ; names(y) <- c(\"X\", \"Y\", \"Z\") ; x + y }");
+    }
+
+    @Test
+    public void testRev() {
+        assertEval("{ rev(1:3) }");
+        assertEval("{ rev(c(1+1i, 2+2i)) }");
+    }
+
+    @Test
+    public void testEnvironment() {
+        // note: this function also includes lookup tests that do not explicitly invoke
+        // environment-related builtins
+
+        assertEval("{ f <- function() { assign(\"x\", 1) ; x } ; f() }");
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { x <- 3 ; assign(\"x\", 1, inherits=FALSE) ; x } ; g() } ; f() }");
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=FALSE) } ; g() ; x } ; f() }");
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=TRUE) } ; g() ; x } ; f() }");
+        assertEval("{ f <- function() {  g <- function() { assign(\"x\", 1, inherits=TRUE) } ; g() } ; f() ; x }");
+        assertEval("{ x <- 3 ; g <- function() { x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 2) ; g <- function() { x } ; g() } ; f() }");
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
+        assertEval("{ h <- function() { x <- 3  ; f <- function() { assign(\"x\", 2) ; g <- function() { x } ; g() } ; f() }  ; h() }");
+        assertEval("{ x <- 3 ; h <- function() { g <- function() { x } ; f <- function() { assign(\"x\", 2, inherits=TRUE) } ; f() ; g() }  ; h() }");
+        assertEval("{ x <- 3 ; h <- function(s) { if (s == 2) { assign(\"x\", 2) } ; x }  ; h(1) ; h(2) }");
+        assertEval("{ x <- 3 ; h <- function(s) { y <- x ; if (s == 2) { assign(\"x\", 2) } ; c(y,x) }  ; c(h(1),h(2)) }");
+        assertEval("{ g <- function() { x <- 2 ; f <- function() { x ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { f <- function() { if (FALSE) { x } ; assign(\"x\", 1) ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; assign(\"x\", 2) ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ h <- function() { g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+        assertEval("{ f <- function(z) { exists(\"z\") } ; f() }");
+        assertEval("{ f <- function() { x <- 3 ; exists(\"x\", inherits=FALSE) } ; f() }");
+        assertEval("{ f <- function() { z <- 3 ; exists(\"x\", inherits=FALSE) } ; f() }");
+        assertEval("{ f <- function() { if (FALSE) { x <- 3 } ; exists(\"x\", inherits=FALSE) } ; f() }");
+        assertEval("{ f <- function() { assign(\"x\", 2) ; exists(\"x\", inherits=FALSE) } ; f() }");
+        assertEval("{ g <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 3 } ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { x <- 2 ; f <- function() { x <- 5 ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { f <- function() { assign(\"x\", 3) ; if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { f <- function() { assign(\"z\", 3) ; if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ h <- function() { assign(\"x\", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+        assertEval("{ h <- function() { assign(\"z\", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+
+        assertEval("{ x <- 3 ; f <- function() { exists(\"x\") } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { exists(\"x\", inherits=FALSE) } ; f() }");
+
+        assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"abc\", \"def\"), h) }");
+        assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"def\", \"abc\"), h) }");
+        assertEval("{ h <- new.env() ; assign(c(\"a\"), 1, h) ; ls(h) }");
+        assertEval("{ h <- new.env() ; assign(c(\"a\"), 1L, h) ; ls(h) }");
+
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; assign(\"y\", 2, h) ; ls(h) }");
+        assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }", "[1] \"y\" \"x\"\n", "[1] \"x\" \"y\"\n");
+
+        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
+        assertEvalAlt("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
+        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
+        assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }");
+        // the actual elements are formatted differently from GNU-R, also in different order
+        assertEval("{ f <- function() { for (i in rev(1:10)) { assign(as.character(i), i) } ; ls() } ; length(f()) }");
+
+        // lookup
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; g <- function() { assign(\"y\", 3) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; g()  } ; f() }");
+        assertEval("{ f <- function() { assign(\"x\", 2, inherits=TRUE) ; assign(\"x\", 1) ; h <- function() { x } ; h() } ; f() }");
+        assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() }");
+        assertEval("{ x <- 3 ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() } ; gg() }");
+        assertEval("{ h <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; h() }");
+        assertEval("{ f <- function() { assign(\"x\", 3) ; g <- function() { x } ; g() } ; x <- 10 ; f() }");
+        assertEval("{ f <- function() { assign(\"x\", 3) ; h <- function() { assign(\"z\", 4) ; g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }");
+        assertEval("{ f <- function() { assign(\"x\", 3) ; h <- function() { g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }");
+        assertEval("{ f <- function() { assign(\"x\", 1) ; g <- function() { assign(\"z\", 2) ; x } ; g() } ; f() }");
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { assign(\"z\", 2) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { assign(\"x\", 5) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
+        assertEval("{ x <- 10 ; g <- function() { x <- 100 ; z <- 2 ; f <- function() { assign(\"z\", 1); x <- x ; x } ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; y <- 3} ; f <- function() { if (FALSE) { x } ; assign(\"y\", 2) ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; exists(\"x\") }  ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; h <- function() { exists(\"x\") } ; h() }  ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"y\", 2) ; h <- function() { exists(\"x\") } ; h() }  ; f() } ; g() }");
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { exists(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }");
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }");
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { if (FALSE) { x <- 2 } ; assign(\"x\", 1, inherits=TRUE) } ; g() ; x } ; f() }");
+        assertEval("{ h <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; g <- function() { assign(\"z\", 3) ; if (FALSE) { x <- 4 } ;  f <- function() { exists(\"x\") } ; f() } ; g() } ; h() }");
+        assertEval("{ f <- function(x) { assign(x, 23) ; exists(x) } ; c(f(\"a\"),f(\"b\")) }");
+        assertEval("{ f <- function() { x <- 2 ; get(\"x\") } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { get(\"x\") } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { x <- 2 ; get(\"x\") } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { x <- 2; h <- function() {  get(\"x\") }  ; h() } ; f() }");
+        assertEval("{ f <- function() { g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
+        assertEval("{ f <- function() { assign(\"z\", 2) ; g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
+        assertEval("{ f <- function() { x <- 22 ; get(\"x\", inherits=FALSE) } ; f() }");
+        assertEval("{ x <- 33 ; f <- function() { assign(\"x\", 44) ; get(\"x\", inherits=FALSE) } ; f() }");
+        assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { get(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
+
+        // lookup with function matching
+        assertEval("{ x <- function(){3} ; f <- function() { assign(\"x\", function(){4}) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x() } ; h() } ; f() }");
+        assertEval("{ f <- function() { assign(\"x\", function(){2}, inherits=TRUE) ; assign(\"x\", function(){1}) ; h <- function() { x() } ; h() } ; f() }");
+        assertEval("{ x <- function(){3} ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() }");
+        assertEval("{ x <- function(){3} ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
+        assertEval("{ h <- function() { x <- function(){2} ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; z <- h() ; z() }");
+        assertEval("{ h <- function() { g <- function() {4} ; f <- function() { if (FALSE) { g <- 4 } ; g() } ; f() } ; h() }");
+        assertEval("{ h <- function() { assign(\"f\", function() {4}) ; f() } ; h() }");
+        assertEval("{ f <- function() { 4 } ; h <- function() { assign(\"f\", 5) ; f() } ; h() }");
+        assertEval("{ f <- function() { 4 } ; h <- function() { assign(\"z\", 5) ; f() } ; h() }");
+        assertEval("{ gg <- function() {  assign(\"x\", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
+        assertEval("{ x <- function(){3} ; gg <- function() { assign(\"x\", 4) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
+        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"z\", 2) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; z <- h() ; z() }");
+        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"x\", function() {5} ) ; x() } ; g() } ; h() }");
+        assertEval("{ h <- function() { z <- 3 ; x <- function() {3} ; g <- function() { x <- 1 ; assign(\"z\", 5) ; x() } ; g() } ; h() }");
+        assertEval("{ h <- function() { x <- function() {3} ; gg <- function() { assign(\"x\", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }");
+        assertEval("{ h <- function() { z <- 2 ; x <- function() {3} ; gg <- function() { assign(\"z\", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }");
+        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"x\", function() {4}) ; x() } ; g() } ; h() }");
+        assertEval("{ h <- function() { z <- 2 ; x <- function() {3} ; g <- function() { assign(\"z\", 1) ; x() } ; g() } ; h() }");
+        assertEval("{ x <- function() { 3 } ; h <- function() { if (FALSE) { x <- 2 } ;  z <- 2  ; g <- function() { assign(\"z\", 1) ; x() } ; g() } ; h() }");
+        assertEval("{ x <- function() { 3 } ; h <- function() { g <- function() { f <- function() { x <- 1 ; x() } ; f() } ; g() } ; h() }");
+        assertEval("{ h <- function() { myfunc <- function(i) { sum(i) } ; g <- function() { myfunc <- 2 ; f <- function() { myfunc(2) } ; f() } ; g() } ; h() }");
+        assertEval("{ x <- function() {11} ; g <- function() { f <- function() { assign(\"x\", 2) ; x() } ; f() } ; g() }");
+        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }");
+        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }");
+        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }");
+
+        // lookup with super assignment
+        assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }");
+        assertEval("{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }");
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; g() ; x }");
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign(\"z\", 10) ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; h() } ; g() ; x }");
+        assertEval("{ gg <- function() { assign(\"x\", 100) ; g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; "
+                        + "h <- function() { if (FALSE) { x <- 1 } ; assign(\"z\", 10) ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }");
+        assertEval("{ gg <- function() { if (FALSE) { x <- 100 } ; g <- function() { if (FALSE) { x <- 100 } ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }");
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { assign(\"z\", 10) ; f <- function() { x <<- 3 } ; f() } ; h() } ; g() ; x }");
+        assertEval("{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign(\"z\", 2) ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; hh() } ; x <- 10 ; g() ; x }");
+        assertEval("{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign(\"z\", 2) ; h <- function() { assign(\"x\", 1); f <- function() { x <<- 3 } ; f() } ; h() } ; hh() ; x } ; x <- 10 ; g() }");
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f1(10) ; f2(11) ; x }");
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f2(10) ; f1(11) ; x }");
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x <<- 6 } ; h() ; get(\"x\") } ; f() }");
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; hh <- function() { if (FALSE) { x <- 100 } ; h <- function() { x <<- 6 } ; h() } ; hh() ; get(\"x\") } ; f() }");
+
+        // hashmaps
+        assertEval("{ assign(\"z\", 10, inherits=TRUE) ; z }");
+        assertEval("{ e<-new.env() ; ls(e) }");
+        assertEval("{ e<-new.env() ; assign(\"x\",1,e) ; ls(e) }");
+        assertEval("{ e<-new.env() ; assign(\"x\",1,e) ; get(\"x\",e) }");
+        assertEval("{ h <- new.env() ; assign(\"x\", 1, h) ; assign(\"x\", 1, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env() ; assign(\"x\", 1, h) ; assign(\"x\", 2, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env() ; u <- 1 ; assign(\"x\", u, h) ; assign(\"x\", u, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; exists(\"x\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; exists(\"xx\", h) }");
+        assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; exists(\"z\", h) }");
+        assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+
+        // top-level lookups
+        assertEval("{ exists(\"sum\") }");
+        assertEval("{ exists(\"sum\", inherits = FALSE) }");
+        assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
+
+        // globalenv
+        assertEval("{ ls() }");
+    }
+
+    @Test
+    @Ignore
+    public void testEnvironmentIgnore() {
+        // note: this function also includes lookup tests that do not explicitly invoke
+        // environment-related builtins
+        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }"); // requires promises
+
+        // require first-class environments
+        assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
+
+        // lookup
+        // require get
+        assertEvalError("{ get(\"dummy\") }");
+        assertEvalError("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits=FALSE) } ; f() }");
+        assertEvalError("{ x <- 33 ; f <- function() { get(\"x\", inherits=FALSE) } ; f() }");
+        assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+
+        // lookup with function matching
+        // require lapply
+        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+
+        // hashmaps
+        // require first-class environments
+        assertEvalError("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+        assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+        assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
+        assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
+
+        // globalenv
+        // require first-class environments, ls
+        assertEval("{ x <- 1 ; ls(globalenv()) }");
+        assertEval("{ ls(.GlobalEnv) }");
+        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
+
+        assertEval("{ emptyenv() }"); // FIXME Unsupported values in print
+
+    }
+
+    @Test
+    public void testTranspose() {
+
+        assertEval("{ m <- matrix(1:49, nrow=7) ; sum(m * t(m)) }");
+        assertEval("{ m <- matrix(1:81, nrow=9) ; sum(m * t(m)) }");
+        assertEval("{ m <- matrix(-5000:4999, nrow=100) ; sum(m * t(m)) }");
+        assertEval("{ m <- matrix(c(rep(1:10,100200),100L), nrow=1001) ; sum(m * t(m)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTransposeIgnore() {
+        // FIXME print regressions
+        assertEval("{ t(1:3) }");
+        assertEval("{ t(t(t(1:3))) }");
+        assertEval("{ t(matrix(1:6, nrow=2)) }");
+        assertEval("{ t(t(matrix(1:6, nrow=2))) }");
+        assertEval("{ t(matrix(1:4, nrow=2)) }");
+        assertEval("{ t(t(matrix(1:4, nrow=2))) }");
+    }
+
+    @Test
+    public void testTypeCheck() {
+        assertEval("{ is.double(10L) }");
+        assertEval("{ is.double(10) }");
+        assertEval("{ is.double(\"10\") }");
+        assertEval("{ is.numeric(10L) }");
+        assertEval("{ is.numeric(10) }");
+        assertEval("{ is.numeric(TRUE) }");
+        assertEval("{ is.character(\"hi\") }");
+        assertEval("{ is.logical(1L) }");
+        assertEval("{ is.integer(1) }");
+        assertEval("{ is.integer(1L) }");
+        assertEval("{ is.complex(1i) }");
+        assertEval("{ is.complex(1) }");
+        assertEval("{ is.raw(raw()) }");
+        assertEval("{ is.logical(NA) }");
+        assertEval("{ is.matrix(1) }");
+        assertEval("{ is.matrix(NULL) }");
+        assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testTypeCheckIgnore() {
+        assertEval("{ is.list(NULL) }");
+    }
+
+    @Test
+    public void testOverride() {
+        assertEval("{ sub <- function(x,y) { x - y }; sub(10,5) }");
+    }
+
+    @Test
+    @Ignore
+    public void testEigen() {
+        // symmetric real input
+        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
+        assertEval("{ eigen(10, only.values=FALSE) }");
+
+        // non-symmetric real input, real output
+        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+
+        // non-symmetric real input, complex output
+        // FIXME: GNUR is won't print the minus sign for negative zero
+        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+    }
+
+    @Test
+    public void testAttributes() {
+        assertEval("{ x <- 1; attributes(x) }");
+        assertEval("{ x <- 1; names(x) <- \"hello\" ; attributes(x) }");
+        assertEval("{ x <- 1:3 ; attr(x, \"myatt\") <- 2:4 ; attributes(x) }");
+        assertEval("{ x <- 1:3 ; attr(x, \"myatt\") <- 2:4 ; attr(x, \"myatt1\") <- \"hello\" ; attributes(x) }");
+        assertEval("{ x <- 1:3 ; attr(x, \"myatt\") <- 2:4 ; y <- x; attr(x, \"myatt1\") <- \"hello\" ; attributes(y) }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 2:4 ; y <- x; attr(x, \"myatt1\") <- \"hello\" ; attributes(y) }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"names\") }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"na\") }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"mya\") <- 1; attr(x, \"b\") <- 2; attr(x, \"m\") }");
+        assertEval("{ x <- 1:2; attr(x, \"aa\") <- 1 ; attr(x, \"ab\") <- 2; attr(x, \"bb\") <- 3; attr(x, \"b\") }");
+        assertEval("{ z <- 1; attr(z,\"a\") <- 1; attr(z,\"b\") <- 2; attr(z,\"c\") <- 3 ; attr(z,\"b\") <- NULL ; z }");
+
+        assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }");
+        assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, names=\"name\") ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(names=NULL) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, 2) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi=2) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(ho=1, 2, 3) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi=2, 3) ; x }");
+        assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, names=NULL, hello=3, hi=2, hello=NULL) ; x }");
+        // dimensions are set first even though they are set to NULL (names are preserved even
+        // though they are second on the list)
+        assertEval("{ x<-1; attributes(x)<-list(names=\"c\", dim=NULL); attributes(x) }");
+    }
+
+    @Test
+    public void testUnlist() {
+        assertEval("{ unlist(list(\"hello\", \"hi\")) }");
+    }
+
+    @Test
+    @Ignore
+    public void testUnlistIgnore() {
+        assertEval("{ unlist(list(a=\"hello\", b=\"hi\")) }");
+        assertEval("{ x <- list(a=1,b=2:3,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE, use.names=FALSE) }");
+        assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
+        assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
+
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+    }
+
+    @Test
+    public void testOther() {
+        assertEval("{ rev.mine <- function(x) { if (length(x)) x[length(x):1L] else x } ; rev.mine(1:3) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAperm() {
+        // default argument for permutation is transpose
+        assertEval("{ a = array(1:4,c(2,2)); b = aperm(a); c(a[1,1] == b[1,1], a[1,2] == b[2,1], a[2,1] == b[1,2], a[2,2] == b[2,2]) }");
+
+        // default for resize is true
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        // no resize does not change the dimensions
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        // correct structure with resize
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1)); a[1,2,3] == b[2,3,1] }");
+
+        // correct structure on cubic array
+        assertEval("{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1)); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }");
+
+        // correct structure on cubic array with no resize
+        assertEval("{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1), resize = FALSE); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }");
+
+        // correct structure without resize
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1), resize = FALSE); a[1,2,3] == b[2,1,2] }");
+
+        // first argument not an array
+        assertEvalError("{ aperm(c(1,2,3)); }");
+
+        // invalid perm length
+        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
+
+        // perm is not a permutation vector
+        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,1)); }");
+
+        // perm value out of bounds
+        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
+
+        // perm specified in complex numbers produces warning
+        assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
+    }
+
+    @Test
+    public void testColStatsMatrix() {
+        // colSums on matrix drop dimension
+        assertEval("{ a = colSums(matrix(1:12,3,4)); dim(a) }");
+
+        // colSums on matrix have correct length
+        assertEval("{ a = colSums(matrix(1:12,3,4)); length(a) }");
+
+        // colSums on matrix have correct values
+        assertEval("{ colSums(matrix(1:12,3,4)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testColStatsArray() {
+        // colSums on array have correct dimension
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); d = dim(a); c(d[1],d[2]) }");
+
+        // colSums on array have correct length
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // colSums on array have correct values
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRowStats() {
+        // rowSums on matrix drop dimension
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
+
+        // rowSums on matrix have correct length
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); length(a) }");
+
+        // rowSums on matrix have correct values
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRowStatsArray() {
+        // rowSums on array have no dimension
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }");
+
+        // row on array have correct length
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // rowSums on array have correct values
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRecall() {
+        assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; f(10) }");
+        assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; g <- f ; f <- sum ; g(10) }");
+        assertEval("{ f<-function(i) { if (i==1) { 1 } else if (i==2) { 1 } else { Recall(i-1) + Recall(i-2) } } ; f(10) }");
+        assertEvalError("{ Recall(10) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCrossprod() {
+        assertEval("{ x <- 1:6 ; crossprod(x) }");
+        assertEval("{ x <- 1:2 ; crossprod(t(x)) }");
+        assertEval("{ crossprod(1:3, matrix(1:6, ncol=2)) }");
+        assertEval("{ crossprod(t(1:2), 5) }");
+        assertEval("{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSort() {
+        assertEval("{ sort(c(1L,10L,2L)) }");
+        assertEval("{ sort(c(3,10,2)) }");
+        assertEval("{ sort(c(1,2,0/0,NA)) }");
+        assertEval("{ sort(c(2,1,0/0,NA), na.last=NA) }");
+        assertEval("{ sort(c(3,0/0,2,NA), na.last=TRUE) }");
+        assertEval("{ sort(c(3,NA,0/0,2), na.last=FALSE) }");
+        assertEval("{ sort(c(3L,NA,2L)) }");
+        assertEval("{ sort(c(3L,NA,-2L), na.last=TRUE) }");
+        assertEval("{ sort(c(3L,NA,-2L), na.last=FALSE) }");
+        assertEval("{ sort(c(a=NA,b=NA,c=3,d=1),na.last=TRUE, decreasing=TRUE) }");
+        assertEval("{ sort(c(a=NA,b=NA,c=3,d=1),na.last=FALSE, decreasing=FALSE) }");
+        assertEval("{ sort(c(a=0/0,b=1/0,c=3,d=NA),na.last=TRUE, decreasing=FALSE) }");
+        assertEval("{ sort(double()) }");
+        assertEval("{ sort(c(a=NA,b=NA,c=3L,d=-1L),na.last=TRUE, decreasing=FALSE) }");
+        assertEval("{ sort(c(3,NA,1,d=10), decreasing=FALSE, index.return=TRUE) }");
+        assertEval("{ sort(3:1, index.return=TRUE) }");
+    }
+
+    @Test
+    public void testCbind() {
+        assertEval("{ cbind() }");
+        assertEval("{ cbind(1:3,2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCbindIgnore() {
+        assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
+        assertEval("{ cbind(1:3,1:2) }");
+
+        // FIXME print regressions
+        assertEval("{ cbind(1:3,1:3) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; cbind(11:12, m) }");
+    }
+
+    @Test
+    public void testRbind() {
+        assertEval("{ rbind(1.1:3.3,1.1:3.3) }");
+        assertEval("{ rbind() }");
+        assertEval("{ rbind(1:3,2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRbindIgnore() {
+        // FIXME print regressions
+        assertEval("{ rbind(1:3,1:3) }");
+        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
+        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testRank() {
+        assertEval("{ rank(c(10,100,100,1000)) }");
+        assertEval("{ rank(c(1000,100,100,100, 10)) }");
+        assertEval("{ rank(c(a=2,b=1,c=3,40)) }");
+        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=NA) }");
+        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=\"keep\") }");
+        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=TRUE) }");
+        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=FALSE) }");
+        assertEval("{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=FALSE, ties.method=\"max\") }");
+        assertEval("{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=NA, ties.method=\"min\") }");
+        assertEval("{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
+    }
+
+    @Test
+    public void testCor() {
+        assertEval("{ cor(c(1,2,3),c(1,2,3)) }");
+        assertEval("{ as.integer(cor(c(1,2,3),c(1,2,5))*10000000) }");
+        assertEval("{ cor(cbind(c(3,2,1), c(1,2,3))) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCorIgnore() {
+        assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
+        assertEval("{ round( cor(cbind(c(10,5,4,1), c(2,5,10,5))), digits=5 ) }");
+        assertEval("{ cor(cbind(c(1,1,1), c(1,1,1))) }");
+    }
+
+    @Test
+    public void testCov() {
+        assertEval("{ cov(c(1,2,3),c(1,2,3)) }");
+        assertEval("{ cov(c(1,2,3),c(1,2,4)) }");
+        assertEval("{ cov(c(1,2,3),c(1,2,5)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testDet() {
+        assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
+        assertEval("{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
+        assertEval("{ det(matrix(c(1,0,4,NA),nrow=2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testFFT() {
+        assertEval("{ fft(1:4) }");
+        assertEval("{ fft(1:4, inverse=TRUE) }");
+        assertEval("{ fft(10) }");
+        assertEval("{ fft(cbind(1:2,3:4)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testChol() {
+        assertEval("{ chol(1) }");
+        assertEval("{ round( chol(10), digits=5) }");
+        assertEval("{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
+        assertEvalError("{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
+    }
+
+    @Test
+    @Ignore
+    public void testQr() {
+        assertEval("{ qr(10, LAPACK=TRUE) }");
+        assertEval("{ round( qr(matrix(1:6,nrow=2), LAPACK=TRUE)$qr, digits=5) }");
+        assertEval("{ qr(matrix(1:6,nrow=2), LAPACK=FALSE)$pivot }");
+        assertEval("{ qr(matrix(1:6,nrow=2), LAPACK=FALSE)$rank }");
+        assertEval("{ round( qr(matrix(1:6,nrow=2), LAPACK=FALSE)$qraux, digits=5 ) }");
+        assertEval("{ round( qr(matrix(c(3,2,-3,-4),nrow=2), LAPACK=FALSE)$qr, digits=5 ) }");
+
+        // qr.coef
+        assertEvalError("{ x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
+        assertEval("{ x <- qr(t(cbind(1:10,2:11)), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
+        assertEval(" { x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; round( qr.coef(x, 1:10), digits=5 ) }");
+        assertEval("{ x <- qr(c(3,1,2), LAPACK=TRUE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
+        // FIXME: GNU-R will print negative zero as zero
+        assertEval("{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
+        assertEval("{ x <- qr(c(3,1,2), LAPACK=FALSE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
+        assertEval("{ m <- matrix(c(1,0,0,0,1,0,0,0,1),nrow=3) ; x <- qr(m, LAPACK=FALSE) ; qr.coef(x, 1:3) }");
+        assertEval("{ x <- qr(cbind(1:3,2:4), LAPACK=FALSE) ; round( qr.coef(x, 1:3), digits=5 ) }");
+
+        // qr.solve
+        assertEval("{ round( qr.solve(qr(c(1,3,4,2)), c(1,2,3,4)), digits=5 ) }");
+        assertEval("{ round( qr.solve(c(1,3,4,2), c(1,2,3,4)), digits=5) }");
+    }
+
+    @Test
+    public void testComplex() {
+        assertEval("{ complex(real=1,imaginary=2) }");
+        assertEval("{ complex(real=1,imag=2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testComplexIgnore() {
+        assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
+        assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
+    }
+
+    @Test
+    public void testMod() {
+        assertEval("{ round(Mod(1+1i)*10000) }");
+    }
+
+    @Test
+    public void testRound() {
+        assertEval("{ round(0.4) }");
+        assertEval("{ round(0.5) }");
+        assertEval("{ round(0.6) }");
+        assertEval("{ round(1.5) }");
+        assertEval("{ round(-1.5) }");
+        assertEval("{ round(1L) }");
+        assertEval("{ round(1/0) }");
+        assertEval("{ round(c(0,0.2,0.4,0.6,0.8,1)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRoundIgnore() {
+        assertEval("{ round(1.123456,digit=2.8) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRandom() {
+        assertEval("{ round( rnorm(3), digits = 5 ) }");
+        assertEval("{ round( rnorm(3,1000,10), digits = 5 ) }");
+        assertEval("{ round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
+
+        assertEval("{ round( runif(3), digits = 5 ) }");
+        assertEval("{ round( runif(3,1,10), digits = 5 ) }");
+        assertEval("{ round( runif(3,1:3,3:2), digits = 5 ) }");
+
+        assertEval("{ round( rgamma(3,1), digits = 5 ) }");
+        assertEval("{ round( rgamma(3,0.5,scale=1:3), digits = 5 ) }");
+        assertEval("{ round( rgamma(3,0.5,rate=1:3), digits = 5 ) }");
+
+        assertEval("{ round( rbinom(3,3,0.9), digits = 5 ) }");
+        assertEval("{ round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
+
+        assertEval("{ round( rlnorm(3), digits = 5 ) }");
+        assertEval("{ round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
+
+        assertEval("{ round( rcauchy(3), digits = 5 ) }");
+        assertEval("{ round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
+    }
+
+    @Test
+    @Ignore
+    public void testDelayedAssign() {
+        assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
+        assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
+        assertEval("{ f <- function() { delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
+        assertEval("{ f <- function(...) { delayedAssign(\"x\", ..1) ; y <<- x } ; f(10) ; y }");
+        assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
+        assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
+    }
+
+    @Test
+    public void testMissing() {
+        assertEval("{ f <- function(a) { g(a) } ;  g <- function(b) { missing(b) } ; f() }");
+        assertEval("{ f <- function(a = 2) { g(a) } ; g <- function(b) { missing(b) } ; f() }");
+        assertEval("{ f <- function(a,b,c) { missing(b) } ; f(1,,2) }");
+        assertEval("{ g <- function(a, b, c) { b } ; f <- function(a,b,c) { g(a,b=2,c) } ; f(1,,2) }"); // not
+        // really the builtin, but somewhat related
+    }
+
+    @Test
+    @Ignore
+    public void testMissingIgnore() {
+        assertEval("{ f <- function(a = 2 + 3) { missing(a) } ; f() }");
+        assertEval("{ f <- function(a = z) { missing(a) } ; f() }");
+        assertEval("{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }");
+        assertEval("{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
+        assertEval("{ f <- function(a = z, z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
+        assertEval("{ f <- function(a) { g(a) } ; g <- function(b=2) { missing(b) } ; f() }");
+        assertEval("{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }");
+        assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
+        assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
+        assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
+        assertEval("{ f <- function(...) { missing(..2) } ; f(x + z, a * b) }");
+    }
+
+    @Test
+    @Ignore
+    public void testQuote() {
+        assertEval("{ quote(1:3) }"); // specific to fastr output format
+        assertEval("{ quote(list(1,2)) }"); // specific to fastr output format
+        assertEval("{ typeof(quote(1)) }");
+        assertEval("{ typeof(quote(x + y)) }");
+        assertEval("{ quote(x <- x + 1) }"); // specific to fastr output format
+        assertEval("{ typeof(quote(x)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSubstitute() {
+        assertEval("{ substitute(x + y, list(x=1)) }");
+        assertEval("{ f <- function(expr) { substitute(expr) } ; f(a * b) }");
+        assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(expr) } ; f() }");
+        assertEval("{ f <- function() { delayedAssign(\"expr\", a * b) ; substitute(dummy) } ; f() }");
+        assertEval("{ delayedAssign(\"expr\", a * b) ; substitute(expr) }");
+        assertEval("{ f <- function(expr) { expr ; substitute(expr) } ; a <- 10; b <- 2; f(a * b) }");
+        assertEval("{ f <- function(expra, exprb) { substitute(expra + exprb) } ; f(a * b, a + b) }");
+        assertEval("{ f <- function(y) { substitute(y) } ; f() }");
+        assertEval("{ f <- function(y) { substitute(y) } ; typeof(f()) }");
+        assertEval("{ f <- function(z) { g <- function(y) { substitute(y)  } ; g(z) } ; f(a + d) }");
+        assertEval("{ f <- function(x) { g <- function() { substitute(x) } ; g() } ;  f(a * b) }");
+        assertEval("{ substitute(a, list(a = quote(x + y), x = 1)) }");
+        assertEval("{ f <- function(x = y, y = x) { substitute(x) } ; f() }");
+        assertEval("{ f <- function(a, b=a, c=b, d=c) { substitute(d) } ; f(x + y) }");
+        assertEval("{ substitute(if(a) { x } else { x * a }, list(a = quote(x + y), x = 1)) }"); // specific
+        // to fastr output format
+        assertEval("{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }"); // specific
+        // to fastr output format
+        assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");  // specific
+        // to fastr output format
+        assertEval("{ f <- function(x) { substitute(x, list(a=1,b=2)) } ; f(a + b) }");
+        assertEval("{ f <- function() { substitute(x(1:10), list(x=quote(sum))) } ; f() }"); // specific
+        // to fastr output format
+        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; substitute(var, env=env) }");
+        assertEval("{ env <- new.env() ; z <- 0 ; delayedAssign(\"var\", z+2, assign.env=env) ; z <- 10 ; substitute(var, env=env) }");
+        assertEval("{ f <- function() { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
+        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f() }");
+        assertEval("{ f <- function(...) { substitute(list(a=1,b=2,...,3,...)) } ; f(x + z, a * b) }");
+        assertEval("{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }");
+    }
+
+    @Test
+    public void testInvocation() {
+        assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
+        assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
+    }
+
+    @Test
+    @Ignore
+    public void testInvocationIgnore() {
+        assertEvalError("{ rnorm(n=1,n=2) }");
+        assertEvalError("{ rnorm(s=1,s=1) }");
+        assertEvalError("{ matrix(1:4,n=2) }");
+        assertEvalError("{ matrix(x=1) }");
+
+        assertEval("{ round( rnorm(1,), digits = 5 ) }");
+
+        assertEvalError("{ max(1,2,) }");
+
+        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
+        assertEval("{ f <- function(...) { l <- list(...) ; l[[1]] <- 10; ..1 } ; f(11,12,13) }");
+        assertEval("{ g <- function(...) { length(list(...)) } ; f <- function(...) { g(..., ...) } ; f(z = 1, g = 31) }");
+        assertEval("{ g <- function(...) { `-`(...) } ; g(1,2) }");
+        assertEval("{ f <- function(...) { list(a=1,...) } ; f(b=2,3) }");
+        assertEval("{ f <- function(...) { substitute(...) } ; f(x + z) } ");
+        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
+        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
+
+        // FIXME print regressions
+        assertEval("{ matrix(da=1:3,1) }");
+    }
+
+    @Test
+    @Ignore
+    public void testEval() {
+        assertEval("{ eval(quote(x+x), list(x=1)) }");
+        assertEval("{ y <- 2; eval(quote(x+y), list(x=1)) }");
+        assertEval("{ y <- 2; x <- 4; eval(x + y, list(x=1)) }");
+        assertEval("{ y <- 2; x <- 2 ; eval(quote(x+y), -1) }");
+    }
+
+    @Test
+    @Ignore
+    public void testDeparse() {
+        assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testDiagnostics() {
+        assertEvalError("{ f <- function() { stop(\"hello\",\"world\") } ; f() }");
+    }
+
+    @Test
+    public void testSprintf() {
+        assertEval("{ sprintf(\"0x%x\",1L) }");
+        assertEval("{ sprintf(\"0x%x\",10L) }");
+        assertEval("{ sprintf(\"%d%d\",1L,2L) }");
+        assertEval("{ sprintf(\"0x%x\",1) }");
+        assertEval("{ sprintf(\"0x%x\",10) }");
+        assertEval("{ sprintf(\"%d\", 10) }");
+        assertEval("{ sprintf(\"%7.3f\", 10.1) }");
+        assertEval("{ sprintf(\"%03d\", 1:3) }");
+        assertEval("{ sprintf(\"%3d\", 1:3) }");
+        assertEval("{ sprintf(\"%4X\", 26) }");
+        assertEval("{ sprintf(\"%04X\", 26) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSprintfIgnore() {
+        assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
+        assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
+        assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");
+    }
+
+    @Test
+    @Ignore
+    public void testIdentical() {
+        assertEval("{ identical(1,1) }");
+        assertEval("{ identical(1L,1) }");
+        assertEval("{ identical(1:3, c(1L,2L,3L)) }");
+        assertEval("{ identical(0/0,1[2]) }");
+        assertEval("{ identical(list(1, list(2)), list(list(1), 1)) }");
+        assertEval("{ identical(list(1, list(2)), list(1, list(2))) }");
+        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
+        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 10 ; identical(x,y) }");
+        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
+        assertEval("{ x <- 1 ; attr(x, \"hello\") <- 2 ; attr(x, \"my\") <- 10;  attr(x, \"hello\") <- NULL ; y <- 1 ; attr(y, \"my\") <- 10 ; identical(x,y) }");
+    }
+
+    @Test
+    @Ignore
+    public void testWorkingDirectory() {
+        assertEval("{ cur <- getwd(); cur1 <- setwd(getwd()) ; cur2 <- getwd() ; cur == cur1 && cur == cur2 }");
+        assertEvalError("{ setwd(1) }");
+        assertEvalError("{ setwd(character()) }");
+        assertEval("{ cur <- getwd(); cur1 <- setwd(c(cur, \"dummy\")) ; cur2 <- getwd() ; cur == cur1  }");
+    }
+
+    @Test
+    @Ignore
+    public void testFileListing() {
+        assertEval("{ list.files(\"test/r/simple/data/tree1\") }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE) }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\".*dummy.*\") }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\"dummy\") }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
+    }
+
+    @Test
+    public void testAll() {
+        assertEval("{ all(TRUE) }");
+        assertEval("{ all(TRUE, TRUE, TRUE) }");
+        assertEval("{ all() }");
+        assertEval("{ all(logical(0)) }");
+
+        assertEval("{ all(TRUE, FALSE) }");
+        assertEval("{ all(FALSE) }");
+
+        assertEval("{ all(TRUE, TRUE, NA) }");
+
+        assertEval("{ v <- c(\"abc\", \"def\") ; w <- c(\"abc\", \"def\") ; all(v == w) }");
+
+        assertEval("{ all(TRUE, FALSE, NA,  na.rm=FALSE) }");
+        assertEval("{ all(TRUE, FALSE, NA,  na.rm=TRUE) }");
+        assertEval("{ all(TRUE, TRUE, NA,  na.rm=FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAllIgnore() {
+        assertEval("{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
+        assertEval("{ all(1) }"); // FIXME coercion warning missing
+        assertEval("{ all(0) }"); // FIXME coercion warning missing
+        assertEval("{ all(TRUE,c(TRUE,TRUE),1) }"); // FIXME coercion warning missing
+        assertEval("{ all(TRUE,c(TRUE,TRUE),1,0) }"); // FIXME coercion warning missing
+    }
+
+    @Test
+    public void testAny() {
+        assertEval("{ any(TRUE) }");
+        assertEval("{ any(TRUE, TRUE, TRUE) }");
+        assertEval("{ any(TRUE, FALSE) }");
+        assertEval("{ any(TRUE, TRUE, NA) }");
+
+        assertEval("{ any() }");
+        assertEval("{ any(logical(0)) }");
+        assertEval("{ any(FALSE) }");
+
+        assertEval("{ any(NA, NA, NA) }");
+        assertEval("{ any(NA) }");
+
+        assertEval("{ any(TRUE, TRUE, NA,  na.rm=TRUE) }");
+        assertEval("{ any(TRUE, FALSE, NA,  na.rm=TRUE) }");
+        assertEval("{ any(FALSE, NA,  na.rm=FALSE) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAnyIgnore() {
+        assertEval("{ any(FALSE, NA,  na.rm=TRUE) }");
+        assertEvalWarning("{ any(1) }"); // FIXME coercion warning missing
+        assertEvalWarning("{ any(0) }"); // FIXME coercion warning missing
+    }
+
+    @Test
+    @Ignore
+    public void testSource() {
+        assertEval("{ source(\"test/r/simple/data/tree2/setx.r\") ; x }");
+        assertEval("{ source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x } ; c(f(), x) }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=FALSE) ; x } ; c(f(), x) }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=FALSE) ; x } ; c(f(), x) }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCall() {
+        assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
+        assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
+    }
+
+    @Test
+    public void testIfelse() {
+        assertEval("{ ifelse(TRUE,1,0) }");
+        assertEval("{ ifelse(FALSE,1,0) }");
+        assertEval("{ ifelse(NA,1,0) }");
+    }
+
+    @Test
+    public void testIsObject() {
+        assertEval("{ is.object(1) }");
+        assertEval("{ is.object(1L) }");
+        assertEval("{ is.object(1:3) }");
+        assertEval("{ is.object(c(1,2,3)) }");
+        assertEval("{ is.object(NA) }");
+        assertEval("{ is.object(NULL) }");
+    }
+
+    @Test
+    public void testIsAtomic() {
+        assertEval("{ is.atomic(1) }");
+        assertEval("{ is.atomic(1L) }");
+        assertEval("{ is.atomic(1:3) }");
+        assertEval("{ is.atomic(c(1,2,3)) }");
+        assertEval("{ is.atomic(NA) }");
+        assertEval("{ is.atomic(NULL) }");
+    }
+
+    @Test
+    public void testMatMult() {
+        assertEval("{ matrix(c(1,2,3,4), 2) %*% matrix(c(5,6,7,8), 2) }");
+        assertEval("{ matrix(c(3,1,2,0,1,2), 2) %*% matrix(c(1,0,4,2,1,0), 3) }");
+        assertEval("{ c(1,2,3) %*% c(4,5,6) }");
+        assertEval("{ matrix(c(3,1,2,0,1,2),2) %*% c(1,0,4) }");
+        assertEval("{ c(1,0,4) %*% matrix(c(3,1,2,0,1,2),3) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testMatMultIgnore() {
+        // FIXME print regressions
+        assertEval("{ matrix(c(1+1i,2-2i,3+3i,4-4i), 2) %*% matrix(c(5+5i,6-6i,7+7i,8-8i), 2) }");
+        assertEval("{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i), 2) %*% matrix(c(1+1i,0-0i,4+4i,2-2i,1+1i,0-0i), 3) }");
+        assertEval("{ c(1+1i,2-2i,3+3i) %*% c(4-4i,5+5i,6-6i) }");
+        assertEval("{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),2) %*% c(1+1i,0-0i,4+4i) }");
+        assertEval("{ c(1+1i,0-0i,4+4i) %*% matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),3) }");
+
+    }
+
+    @Test
+    public void testMatch() {
+    }
+
+    @Test
+    @Ignore
+    public void testMatchIgnore() {
+        // FIXME print regressions
+        assertEval("{ match(2,c(1,2,3)) }");
+        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
+        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
+        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
+    }
+
+    @Test
+    public void testIn() {
+        assertEval("{ 2 %in% c(1,2,3) }");
+        assertEval("{ c(1,2,3,4,5) %in% c(1,2,1,2) }");
+        assertEval("{ \"hello\" %in% c(\"I\", \"say\", \"hello\", \"world\") }");
+        assertEval("{ c(\"hello\", \"say\") %in% c(\"I\", \"say\", \"hello\", \"world\") }");
+        assertEval("{ `%in%`(2,c(1,2,3)) }");
+    }
+
+    @Test
+    public void testIsUnsorted() {
+        assertEval("{ is.unsorted(c(1,2,3,4)) }");
+        assertEval("{ is.unsorted(c(1,2,6,4)) }");
+    }
+
+    @Test
+    public void testMean() {
+        assertEval("{ mean(c(5,5,5,5,5)) }");
+        assertEval("{ mean(c(1,2,3,4,5)) }");
+    }
+
+    @Test
+    public void testSd() {
+        assertEval("{ round(100*sd(c(1,2))^2) }");
+    }
+
+    @Test
+    public void testPrint() {
+        assertEval("{ print(23) }");
+        assertEval("{ print(1:3) }");
+        assertEval("{ print(list(1,2,3)) }");
+        assertEval("{ x<-c(1,2); names(x)=c(\"a\", \"b\"); print(x) }");
+        assertEval("{ x<-c(1, 2:20, 21); n<-\"a\"; n[21]=\"b\"; names(x)<-n; print(x) }");
+        assertEval("{ x<-c(10000000, 10000:10007, 21000000); n<-\"a\"; n[10]=\"b\"; names(x)<-n; print(x) }");
+        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); print(x) }");
+        assertEval("{  x<-c(11, 7, 2222, 7, 33); print(x) }");
+        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x) }");
+        assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }");
+    }
+
+    @Test
+    public void testInvisible() {
+        assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
+        assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
+    }
+
+}

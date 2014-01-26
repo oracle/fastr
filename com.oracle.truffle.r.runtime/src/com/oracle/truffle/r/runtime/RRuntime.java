@@ -1,0 +1,422 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ *
+ * All rights reserved.
+ */
+package com.oracle.truffle.r.runtime;
+
+import java.util.*;
+
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+
+public class RRuntime {
+
+    public static final String R_HOME;
+
+    static {
+        String rh = System.getenv("R_HOME");
+        R_HOME = rh == null ? "." : rh;
+    }
+
+    public static final String FASTR_VERSION = "0.6";
+
+    //@formatter:off
+    // Parts of the welcome message originate from GNU R.
+    public static final String WELCOME_MESSAGE =
+        "FastR version " + FASTR_VERSION + "\n" +
+        "Copyright (c) 2013-4, Oracle and/or its affiliates\n" +
+        "Copyright (c) 1995-2012, The R Core Team\n" +
+        "Copyright (c) 2003 The R Foundation\n" +
+        "Copyright (c) 2012-3 Purdue University\n" +
+        "Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura\n" +
+        "All rights reserved.\n" +
+        "\n" +
+        "FastR is free software and comes with ABSOLUTELY NO WARRANTY.\n" +
+        "You are welcome to redistribute it under certain conditions.\n" +
+        "Type 'license()' or 'licence()' for distribution details.\n" +
+        "\n" +
+        "R is a collaborative project with many contributors.\n" +
+        "Type 'contributors()' for more information.\n" +
+        "\n" +
+        "Type 'q()' to quit R.";
+
+    public static final String LICENSE =
+        "This software is distributed under the terms of the GNU General Public License\n" +
+        "Version 2, June 1991. The terms of the license are in a file called COPYING\n" +
+        "which you should have received with this software. A copy of the license can be\n" +
+        "found at http://www.gnu.org/licenses/gpl-2.0.html.\n" +
+        "\n" +
+        "'Share and Enjoy.'";
+    //@formatter:on
+
+    public static final int TRUE = 1;
+    public static final int FALSE = 0;
+    public static final String STRING_NA = new String("NA");
+    public static final int INT_NA = Integer.MIN_VALUE;
+    public static final int INT_MIN_VALUE = Integer.MIN_VALUE + 1;
+    public static final int INT_MAX_VALUE = Integer.MAX_VALUE;
+
+    // R's NA is a special instance of IEEE's NaN
+    public static final long NA_LONGBITS = 0x7ff00000000007a2L;
+    public static final double DOUBLE_NA = Double.longBitsToDouble(NA_LONGBITS);
+    public static final double EPSILON = Math.pow(2.0, -52.0);
+
+    public static final byte LOGICAL_TRUE = 1;
+    public static final byte LOGICAL_FALSE = 0;
+    public static final byte LOGICAL_NA = -1;
+
+    public static final String TYPE_ANY = new String("any");
+    public static final String TYPE_NUMERIC = new String("numeric");
+    public static final String TYPE_DOUBLE = new String("double");
+    public static final String TYPE_INTEGER = new String("integer");
+    public static final String TYPE_COMPLEX = new String("complex");
+    public static final String TYPE_CHARACTER = new String("character");
+    public static final String TYPE_LOGICAL = new String("logical");
+    public static final String TYPE_RAW = new String("raw");
+
+    public static final REnvironment EMPTY_ENV = REmptyEnvironment.instance;
+    public static final REnvironment GLOBAL_ENV = RGlobalEnvironment.instance;
+
+    public static final String[] STRING_ARRAY_SENTINEL = new String[0];
+
+    public static final String NAMES_ATTR_KEY = "names";
+    public static final String NAMES_ATTR_EMPTY_VALUE = "";
+    public static final String NAMES_ATTR_NA_HEADER = "<NA>";
+
+    public static final String DIM_ATTR_KEY = "dim";
+    public static final String DIMNAMES_ATTR_KEY = "dimnames";
+    public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
+
+    public static RComplex createComplexNA() {
+        return RDataFactory.createComplex(DOUBLE_NA, 0.0);
+    }
+
+    public static boolean isNAorNaN(double d) {
+        return Double.isNaN(d);
+    }
+
+    public static byte asLogical(boolean b) {
+        return b ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+    }
+
+    public static int logical2int(byte value) {
+        return isNA(value) ? RRuntime.INT_NA : (int) value;
+    }
+
+    public static double logical2double(byte value) {
+        return isNA(value) ? RRuntime.DOUBLE_NA : (double) value;
+    }
+
+    public static RComplex logical2complex(byte value) {
+        return isNA(value) ? createComplexNA() : RDataFactory.createComplex(value, 0);
+    }
+
+    public static String classToString(Class<?> c) {
+        if (c == RLogical.class) {
+            return TYPE_LOGICAL;
+        } else if (c == RInt.class) {
+            return TYPE_INTEGER;
+        } else if (c == RDouble.class) {
+            return TYPE_NUMERIC;
+        } else if (c == RComplex.class) {
+            return TYPE_COMPLEX;
+        } else if (c == RRaw.class) {
+            return TYPE_RAW;
+        } else if (c == RString.class) {
+            return TYPE_CHARACTER;
+        } else {
+            throw new RuntimeException("internal error, unknown class: " + c);
+        }
+    }
+
+    public static byte raw2logical(RRaw value) {
+        return value.getValue() == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
+    }
+
+    public static int raw2int(RRaw value) {
+        return value.getValue() & 0xFF;
+    }
+
+    public static double raw2double(RRaw value) {
+        return int2double(value.getValue() & 0xFF);
+    }
+
+    public static boolean isFinite(double d) {
+        return !isNAorNaN(d) && !Double.isInfinite(d);
+    }
+
+    public static int string2int(RContext context, String s) {
+        if (s != STRING_NA) {
+            // FIXME use R rules
+            try {
+                return Integer.decode(s);  // decode supports hex constants
+            } catch (NumberFormatException e) {
+                context.getAssumptions().naIntroduced.invalidate();
+            }
+        }
+        return INT_NA;
+    }
+
+    public static boolean doubleIsInt(double d) {
+        long longValue = (long) d;
+        return longValue == d && ((int) longValue & 0xffffffff) == longValue;
+    }
+
+    public static double string2double(RContext context, String v) {
+        if (v != STRING_NA) {
+            // FIXME use R rules
+            if ("Inf".equals(v)) {
+                return Double.POSITIVE_INFINITY;
+            } else if ("NaN".equals(v)) {
+                return Double.NaN;
+            }
+            try {
+                return Double.parseDouble(v);
+            } catch (NumberFormatException e) {
+                if (v.startsWith("0x")) {
+                    try {
+                        return int2double(Integer.decode(v));
+                    } catch (NumberFormatException ein) {
+                    }
+                }
+                context.getAssumptions().naIntroduced.invalidate();
+            }
+        }
+        return DOUBLE_NA;
+    }
+
+    public static double int2double(int i) {
+        return isNA(i) ? DOUBLE_NA : i;
+    }
+
+    public static int double2int(double d) {
+        return isNA(d) ? INT_NA : (int) d;
+    }
+
+    public static byte double2logical(double d) {
+        return isNA(d) ? LOGICAL_NA : d == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+    }
+
+    public static byte int2logical(int i) {
+        return isNA(i) ? LOGICAL_NA : i == 0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+    }
+
+    public static byte complex2logical(RComplex c) {
+        return isNA(c) ? LOGICAL_NA : c.getRealPart() == 0.0 && c.getImaginaryPart() == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+    }
+
+    public static byte string2logical(RContext context, String s) {
+        if (s != STRING_NA) {
+            if (s.equals("TRUE") || s.equals("T")) {
+                return TRUE;
+            }
+            if (s.equals("FALSE") || s.equals("F")) {
+                return FALSE;
+            }
+            if (s.equals("True") || s.equals("true")) {
+                return TRUE;
+            }
+            if (s.equals("False") || s.equals("false")) {
+                return FALSE;
+            }
+            context.getAssumptions().naIntroduced.invalidate();
+        }
+        return LOGICAL_NA;
+    }
+
+    public static RComplex int2complex(int i) {
+        return isNA(i) ? createComplexNA() : RDataFactory.createComplex(i, 0);
+    }
+
+    public static RComplex double2complex(double d) {
+        return isNA(d) ? createComplexNA() : RDataFactory.createComplex(d, 0);
+    }
+
+    public static RComplex raw2complex(RRaw r) {
+        return int2complex(raw2int(r));
+    }
+
+    @SlowPath
+    public static String toString(Object object) {
+        if (object instanceof Integer) {
+            int intValue = (int) object;
+            if (intValue == INT_NA) {
+                return STRING_NA;
+            }
+            return intValue + "L";
+        } else if (object instanceof Double) {
+            double doubleValue = (double) object;
+            if (isNA(doubleValue)) {
+                return STRING_NA;
+            }
+            return String.valueOf(doubleValue);
+        } else if (object instanceof Boolean) {
+            return object == Boolean.TRUE ? "TRUE" : "FALSE";
+        }
+
+        return object.toString();
+    }
+
+    public static boolean isNA(String value) {
+        return value == STRING_NA;
+    }
+
+    public static boolean isNA(byte value) {
+        return value == LOGICAL_NA;
+    }
+
+    public static boolean isNA(int left) {
+        return left == INT_NA;
+    }
+
+    public static boolean isNA(double left) {
+        return Double.doubleToRawLongBits(left) == NA_LONGBITS;
+    }
+
+    public static boolean isNA(RComplex left) {
+        return isNA(left.getRealPart());
+    }
+
+    public static boolean isComplete(String left) {
+        return !isNA(left);
+    }
+
+    public static boolean isComplete(byte left) {
+        return !isNA(left);
+    }
+
+    public static boolean isComplete(int left) {
+        return !isNA(left);
+    }
+
+    public static boolean isComplete(double left) {
+        return !isNA(left);
+    }
+
+    public static boolean isComplete(RComplex left) {
+        return !isNA(left);
+    }
+
+    @SlowPath
+    public static String doubleToString(double operand, int digitsBehindDot) {
+        if (RRuntime.isNA(operand)) {
+            return STRING_NA;
+        }
+        return String.format("%." + digitsBehindDot + "f", operand);
+    }
+
+    @SlowPath
+    public static String doubleToString(double operand) {
+        if (RRuntime.isNA(operand)) {
+            return STRING_NA;
+        }
+        if (RRuntime.doubleIsInt(operand)) {
+            return String.valueOf((int) operand);
+        }
+        if (operand == Double.POSITIVE_INFINITY) {
+            return "Inf";
+        }
+        if (operand == Double.NEGATIVE_INFINITY) {
+            return "-Inf";
+        }
+        if (Double.isNaN(operand)) {
+            return "NaN";
+        }
+
+        /*
+         * DecimalFormat format = new DecimalFormat(); format.setMaximumIntegerDigits(12);
+         * format.setMaximumFractionDigits(12); format.setGroupingUsed(false); return
+         * format.format(operand);
+         */
+        if (operand < 1000000000000L && ((long) operand) == operand) {
+            return Long.toString((long) operand);
+        }
+        if (operand > 1000000000000L) {
+            return String.format((Locale) null, "%.6e", operand);
+        }
+        return Double.toString(operand);
+    }
+
+    @SlowPath
+    public static String intToString(int operand, boolean appendL) {
+        if (RRuntime.isNA(operand)) {
+            return STRING_NA;
+        }
+        return String.valueOf(operand) + (appendL ? "L" : "");
+    }
+
+    @SlowPath
+    public static String complexToString(RComplex operand) {
+        if (RRuntime.isNA(operand)) {
+            return STRING_NA;
+        }
+        return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
+    }
+
+    @SlowPath
+    public static String rawToString(RRaw operand) {
+        return intToString(raw2int(operand), false);
+    }
+
+    public static String logicalToString(byte operand) {
+        if (RRuntime.isNA(operand)) {
+            return STRING_NA;
+        }
+        return operand == RRuntime.LOGICAL_TRUE ? "TRUE" : operand == RRuntime.LOGICAL_FALSE ? "FALSE" : STRING_NA;
+    }
+
+    @SlowPath
+    public static String quoteString(String data) {
+        return data == RRuntime.STRING_NA ? RRuntime.STRING_NA : "\"" + data + "\"";
+    }
+
+    private static final class REmptyEnvironment extends REnvironment {
+
+        static REnvironment instance = new REmptyEnvironment();
+
+        private REmptyEnvironment() {
+            super(null, 0);
+        }
+
+        @Override
+        public Object get(String key) {
+            return null;
+        }
+
+        @Override
+        public void put(String key, Object value) {
+            // empty
+        }
+
+        @Override
+        public String toString() {
+            return "<environment: R_EmptyEnv>";
+        }
+    }
+
+    private static final class RGlobalEnvironment extends REnvironment {
+
+        static REnvironment instance = new RGlobalEnvironment();
+
+        private RGlobalEnvironment() {
+            super();
+        }
+
+        @Override
+        public String toString() {
+            return "<environment: R_GlobalEnv>";
+        }
+    }
+
+    public static boolean isMatrix(RAbstractVector vector) {
+        return vector.getDimensions() != null && vector.getDimensions().length == 2;
+    }
+}

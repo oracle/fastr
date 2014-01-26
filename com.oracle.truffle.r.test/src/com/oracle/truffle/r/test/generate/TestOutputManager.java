@@ -1,0 +1,439 @@
+/*
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.test.generate;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * Supports the management of expected test output.
+ * 
+ * In the normal mode of operation (i.e. during unit testing) an existing file of expected outputs
+ * is read and an optimized lookup map is created for use by {@link #getOutput(String)}.
+ * 
+ */
+public class TestOutputManager {
+    /**
+     * Tests are recorded in a map keyed by the test input. An instance of this class is the value
+     * associated with the key.
+     */
+    public static class TestInfo {
+        /**
+         * Name of the element containing the test, i,e., the method annotated with {@code @Test}.
+         */
+        private String elementName;
+        /**
+         * The output, i.e., as produced by the associated R session.
+         */
+        public final String output;
+        /**
+         * This is initially set to {@code false} when reading an existing expected output file.
+         * When analyzing the test classes, if a test matches, this value is set to {@true}.
+         * Therefore, after test class analysis, any tests with {@code inCode == false}, must have
+         * been deleted, and will be removed from the updated file.
+         */
+        private boolean inCode;
+
+        public boolean inCode() {
+            return inCode;
+        }
+
+        public void setInCode() {
+            inCode = true;
+        }
+
+        public String elementName() {
+            return elementName;
+        }
+
+        public void setElementName(String elementName) {
+            this.elementName = elementName;
+        }
+
+        public TestInfo(String elementName, String expected, final boolean inCode) {
+            this.elementName = elementName;
+            this.output = expected;
+            this.inCode = inCode;
+        }
+    }
+
+    public static final String TEST_EXPECTED_OUTPUT_FILE = "ExpectedTestOutput.test";
+    public static final String TEST_FASTR_OUTPUT_FILE = "FastRTestOutput.test";
+    public static final String TEST_DIFF_OUTPUT_FILE = "DiffTestOutput.test";
+
+    /**
+     * Maps inputs to expected outputs, used during generation.
+     */
+    private SortedMap<String, SortedMap<String, TestInfo>> testMaps = new TreeMap<>();
+    /**
+     * A fast lookup map used at runtime to located the expected output.
+     */
+    private Map<String, String> runtimeTestMap;
+    /**
+     * Represents a remote GNU R session.
+     */
+    private RSession rSession;
+
+    /**
+     * Used to get the (expected) output for a test in generation mode,may be {@code null}.
+     */
+    private String rSessionName;
+
+    /**
+     * The file containing the associates test output (being read or being generated).
+     */
+    public final File outputFile;
+
+    public TestOutputManager(File outputFile) {
+        this.outputFile = outputFile;
+    }
+
+    protected void setRSession(RSession session) {
+        this.rSession = session;
+        this.rSessionName = session.name();
+    }
+
+    /**
+     * Associates a name with the manager, for the case where {@link #rSession} is unset.
+     */
+    protected void setRSessionName(String name) {
+        this.rSessionName = name;
+    }
+
+    /**
+     * Lookup the expected output in the fast map. If either the fast map does not exist or the
+     * lookup fails, return {@code null}.
+     */
+    public String getOutput(String input) {
+        if (runtimeTestMap != null) {
+            return runtimeTestMap.get(input);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Create a fast lookup map from an existing set of maps read from a file.
+     */
+    private Map<String, String> createFastLookupMap() {
+        runtimeTestMap = new HashMap<>();
+        for (Map<String, TestInfo> testMap : testMaps.values()) {
+            for (Map.Entry<String, TestInfo> entrySet : testMap.entrySet()) {
+                TestInfo testInfo = entrySet.getValue();
+                runtimeTestMap.put(entrySet.getKey(), testInfo.output);
+            }
+        }
+        return runtimeTestMap;
+    }
+
+    private static class SaveBufferedReader extends BufferedReader {
+        StringBuffer save;
+
+        public SaveBufferedReader(Reader in, StringBuffer save) {
+            super(in);
+            this.save = save;
+        }
+
+        @Override
+        public String readLine() throws IOException {
+            String line = super.readLine();
+            if (line != null) {
+                save.append(line).append('\n');
+            }
+            return line;
+        }
+
+    }
+
+    public String readTestOutputFile() throws IOException {
+        if (!outputFile.exists()) {
+            return null;
+        }
+        StringBuffer content = new StringBuffer();
+        try (SaveBufferedReader in = new SaveBufferedReader(new FileReader(outputFile), content)) {
+            // line format for element name: ##elementName
+            // line format for input lines: #input
+            // output lines do not start with #
+            String line = in.readLine();
+            while (true) {
+                if (line == null) {
+                    break;
+                }
+                if (!line.startsWith("##")) {
+                    throw new IOException("expected line to start with ##");
+                }
+                String elementName = line.substring(2);
+                line = in.readLine();
+                if (!line.startsWith("#")) {
+                    throw new IOException("expected line to start with #");
+                }
+                String input = line.substring(1);
+                StringBuilder output = new StringBuilder();
+                while (true) {
+                    line = in.readLine();
+                    if (line == null || line.startsWith("#")) {
+                        break;
+                    }
+                    output.append(line).append('\n');
+                }
+                output.deleteCharAt(output.length() - 1);
+                Map<String, TestInfo> testMap = getTestMap(elementName);
+                testMap.put(input, new TestInfo(elementName, output.toString(), false));
+            }
+        }
+        createFastLookupMap();
+        return content.toString();
+    }
+
+    /**
+     * Writes the contents of {@link #testMaps} to {link #testOutputFile}.
+     * 
+     * @param oldContent can be passed in to avoid the file update if the content would not change
+     * @param checkOnly does not update the file but returns {@code true} if it would be updated. In
+     *            this case, {@code oldContent} must be provided.
+     * 
+     * @return {@code true} if the file was updated
+     */
+    public boolean writeTestOutputFile(String oldContent, boolean checkOnly) throws IOException {
+        StringWriter swr = new StringWriter();
+        PrintWriter prSwr = new PrintWriter(swr);
+        for (Map<String, TestInfo> testMap : testMaps.values()) {
+            for (Map.Entry<String, TestInfo> entrySet : testMap.entrySet()) {
+                TestInfo testInfo = entrySet.getValue();
+                if (testInfo.inCode) {
+                    prSwr.printf("##%s%n", testInfo.elementName);
+                    prSwr.printf("#%s%n", entrySet.getKey());
+                    prSwr.println(testInfo.output);
+                }
+            }
+        }
+        String newContent = swr.getBuffer().toString();
+        if (oldContent == null || !newContent.equals(oldContent)) {
+            if (!checkOnly) {
+                try (BufferedWriter wr = new BufferedWriter(new FileWriter(outputFile))) {
+                    wr.write(newContent);
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Similar to {@link #writeTestOutputFile} but writes the differences between data in two
+     * managers, the first of which is the "expected" map. The expectation is that the second map
+     * contains the same keys but with possibly different values, and may have some entries missing,
+     * but never any keys not in the "expected" map. Returns true if there are no differences.
+     */
+    public static boolean writeDiffsTestOutputFile(File testOutputFile, TestOutputManager a, TestOutputManager b) throws IOException {
+        StringWriter swr = new StringWriter();
+        PrintWriter prSwr = new PrintWriter(swr);
+        boolean matches = true;
+        for (Map<String, TestInfo> aTestMap : a.testMaps.values()) {
+            for (Map.Entry<String, TestInfo> entrySet : aTestMap.entrySet()) {
+                TestInfo aTestInfo = entrySet.getValue();
+                TestInfo bTestInfo = b.find(aTestInfo.elementName, entrySet.getKey());
+                if (bTestInfo != null && aTestInfo.output.equals(bTestInfo.output)) {
+                    continue;
+                }
+                matches = false;
+                prSwr.printf("##%s%n", aTestInfo.elementName);
+                prSwr.printf("#%s%n", entrySet.getKey());
+                prSwr.printf("#%s%n", a.rSessionName);
+                prSwr.println(aTestInfo.output);
+                prSwr.printf("#%s%n", b.rSessionName);
+                if (bTestInfo != null) {
+                    prSwr.println(bTestInfo.output);
+                } else {
+                    prSwr.println("MISSING");
+                }
+            }
+        }
+        if (!matches) {
+            try (BufferedWriter wr = new BufferedWriter(new FileWriter(testOutputFile))) {
+                wr.write(swr.getBuffer().toString());
+            }
+        }
+        return matches;
+    }
+
+    /**
+     * Helper method to locate a test with key {@code testId} in a given element map.
+     */
+    private TestInfo find(String elementName, String testId) {
+        Map<String, TestInfo> testMap = testMaps.get(elementName);
+        if (testMap != null) {
+            TestInfo bTestInfo = testMap.get(testId);
+            if (bTestInfo != null) {
+                // found element
+                return bTestInfo;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * May be called at runtime to add a test result.
+     */
+    public void addTestResult(String testElementName, String input, String result) {
+        SortedMap<String, TestInfo> testMap = getTestMap(testElementName);
+        testMap.put(input, new TestInfo(testElementName, result, true));
+    }
+
+    public interface DiagnosticHandler {
+        void warning(String msg);
+
+        void note(String msg);
+
+        void error(String msg);
+    }
+
+    /**
+     * Generate a test result using GnuR.
+     * 
+     * @param testElementName identification of the annotated test element, i.e.,
+     *            {@code class.testmethod}.
+     * @param testMethodName name of method invoking specific test
+     * @param test R test string
+     * @param testId key to record test. {@code null} for single line tests, unique name for
+     *            multi-line tests.
+     * @param d handler for diagnostics
+     * @param checkOnly if {@code true} do not invoke GnuR, just update map
+     * @param stripTrailingWhiteSpace TODO
+     * @return the GnuR output
+     */
+    public String genTestResult(String testElementName, String testMethodName, String test, String testId, DiagnosticHandler d, boolean checkOnly, boolean stripTrailingWhiteSpace) {
+        Map<String, TestInfo> testMap = getTestMap(testElementName);
+        String testKey = testId == null ? test : testId;
+        TestInfo testInfo = testMap.get(testKey);
+        if (testInfo != null) {
+            if (testInfo.inCode()) {
+                // we have already seen this test - duplicates are harmless but we warn about it
+                d.warning("test '" + test + "' is duplicated in " + testInfo.elementName() + " and " + testElementName);
+            }
+            testInfo.setInCode();
+            testInfo.setElementName(testElementName);
+            return testInfo.output;
+        } else {
+            d.note("test file does not contain: " + testKey);
+            String expected = null;
+            if (!checkOnly) {
+                expected = rSession.eval(test);
+                if (stripTrailingWhiteSpace) {
+                    expected = stripTrailingWhitespace(expected);
+                }
+            }
+            testMap.put(testKey, new TestInfo(testElementName, expected, true));
+            return expected;
+        }
+    }
+
+    public SortedMap<String, TestInfo> getTestMap(String elementName) {
+        SortedMap<String, TestInfo> testMap = testMaps.get(elementName);
+        if (testMap == null) {
+            testMap = new TreeMap<>();
+            testMaps.put(elementName, testMap);
+        }
+        return testMap;
+    }
+
+    /**
+     * Join {@code arrays} removing duplicates.
+     */
+    public static String[] join(String[]... arrays) {
+        Set<String> set = new HashSet<>();
+        for (String[] s : arrays) {
+            for (int i = 0; i < s.length; ++i) {
+                set.add(s[i]);
+            }
+        }
+        String[] newValues = new String[set.size()];
+        set.toArray(newValues);
+        return newValues;
+    }
+
+    public static String[] template(String template, String[]... parameters) {
+        int resultLength = 1;
+        for (String[] param : parameters) {
+            resultLength *= param.length;
+        }
+        String[] result = new String[resultLength];
+        int index = 0;
+        int[] positions = new int[parameters.length];
+        while (index < result.length) {
+            String currentString = template;
+            for (int i = 0; i < parameters.length; ++i) {
+                int currentPos = positions[i];
+                currentString = currentString.replace("%" + i, parameters[i][currentPos]);
+            }
+            result[index] = currentString;
+            ++index;
+
+            for (int i = 0; i < parameters.length; ++i) {
+                positions[i]++;
+                if (positions[i] == parameters[i].length) {
+                    positions[i] = 0;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static String stripTrailingWhitespace(String s) {
+        int len = s.length();
+        if (len == 0) {
+            return s;
+        }
+        StringBuilder sb = new StringBuilder();
+        int ix = 0;
+        while (ix < len) {
+            int ixnl = s.indexOf('\n', ix);
+
+            int ixns = ixnl < 0 ? len - 1 : ixnl - 1;
+            if (ixns >= ix) {
+                while (ixns >= ix) {
+                    if (s.charAt(ixns) != ' ') {
+                        break;
+                    }
+                    ixns--;
+                }
+                sb.append(s.substring(ix, ixns + 1));
+            }
+            if (ixnl >= 0) {
+                sb.append('\n');
+                ixnl++;
+                ix = ixnl;
+            } else {
+                ix = len;
+                break;
+            }
+        }
+        sb.append(s.substring(ix));
+        return sb.toString();
+    }
+
+}
