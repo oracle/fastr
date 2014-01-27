@@ -89,7 +89,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
     }
 

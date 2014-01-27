@@ -135,7 +135,6 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     public RStringVector copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createStringVector(data, isComplete(), newDimensions);
     }
 

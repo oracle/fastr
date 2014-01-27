@@ -75,7 +75,6 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }
 

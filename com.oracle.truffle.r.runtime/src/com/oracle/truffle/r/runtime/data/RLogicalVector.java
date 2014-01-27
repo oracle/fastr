@@ -131,7 +131,6 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     @Override
     public RLogicalVector copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createLogicalVector(data, isComplete(), newDimensions);
     }
 

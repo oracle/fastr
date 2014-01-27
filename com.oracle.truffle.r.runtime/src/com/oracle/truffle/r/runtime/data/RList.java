@@ -104,7 +104,6 @@ public final class RList extends RVector implements RAbstractVector {
 
     @Override
     public RList copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createList(data, newDimensions);
     }
 

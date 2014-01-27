@@ -65,7 +65,6 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     }
 
     public RRawVector copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createRawVector(data, newDimensions);
     }
 

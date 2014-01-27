@@ -87,7 +87,6 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     }
 
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
-        this.makeShared();
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }
 
