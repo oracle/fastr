@@ -85,6 +85,7 @@ public class BasePackage extends RPackage {
         load(CumSum.class);
         load(Diag.class);
         load(Dim.class);
+        load(DimNames.class);
         load(DoubleBuiltin.class);
         load(EmptyEnv.class);
         load(Exists.class);
@@ -167,6 +168,7 @@ public class BasePackage extends RPackage {
         load(UpdateAttributes.class);
         load(UpdateDiag.class);
         load(UpdateDim.class);
+        load(UpdateDimNames.class);
         load(UpdateLength.class);
         load(UpdateNames.class);
         load(UpperTri.class);

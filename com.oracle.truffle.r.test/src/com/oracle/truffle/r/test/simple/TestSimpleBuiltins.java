@@ -793,7 +793,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attr(x, \"dimnames\")<-NULL; attributes(x) }");
         assertEvalError("{ x<-1:4; attr(x, \"dimnames\")<-list(101, 102, 103, 104) }");
         // assigning an "invisible" list returned by "attr(y, dimnames)<-" as dimnames attribute for
-// x
+        // x
         assertEval("{ x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, \"dimnames\")<-(attr(y, \"dimnames\")<-list(\"b\")); attributes(x) }");
 
         // there should be no output
@@ -807,6 +807,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-1:2; dim(x)=c(1,2); names(x)<-c(\"a\", \"b\"); attr(x, \"foo\")<-\"foo\"; dim(x)<-NULL; attributes(x) }");
         assertEval("{ x<-1:4; names(x)<-c(21:24); attr(x, \"dim\")<-c(4); attr(x, \"foo\")<-\"foo\"; x }");
         assertEval("{ x<-list(1,2,3); names(x)<-c(21:23); attr(x, \"dim\")<-c(3); attr(x, \"foo\")<-\"foo\"; x }");
+
+        assertEval("{ x<-1; dimnames(x) }");
+        assertEval("{ dimnames(1) }");
+        assertEval("{ dimnames(NULL) }");
+        assertEvalError("{ x<-1; dim(x)<-1; dimnames(x)<-1; dimnames(x) }");
+        assertEvalError("{ x<-1; dim(x)<-1; attr(x, \"dimnames\")<-1 }");
+        assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list() }");
+        assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list(0) }");
+        assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list(\"a\"); dimnames(x); dimnames(x)<-list(); dimnames(x) }");
     }
 
     @Test

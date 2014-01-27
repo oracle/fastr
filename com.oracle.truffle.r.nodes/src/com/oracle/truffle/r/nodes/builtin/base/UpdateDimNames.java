@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("dimnnames<-")
+@RBuiltin("dimnames<-")
 @SuppressWarnings("unused")
 public abstract class UpdateDimNames extends RBuiltinNode {
 
