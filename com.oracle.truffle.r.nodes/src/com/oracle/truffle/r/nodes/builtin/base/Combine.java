@@ -282,7 +282,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreter();
-            castString = adoptChild(CastStringNodeFactory.create(null, false));
+            castString = adoptChild(CastStringNodeFactory.create(null, false, true, false));
         }
         return castString.executeCast(frame, operand);
     }

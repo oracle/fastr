@@ -42,7 +42,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castStringNode = adoptChild(CastStringNodeFactory.create(null, true));
+            castStringNode = adoptChild(CastStringNodeFactory.create(null, true, true, false));
         }
         return castStringNode.executeStringVector(frame, o);
     }

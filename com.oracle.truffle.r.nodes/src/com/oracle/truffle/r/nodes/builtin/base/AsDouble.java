@@ -91,7 +91,7 @@ public abstract class AsDouble extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector asDouble(RDoubleVector vector) {
-        return vector;
+        return RDataFactory.createDoubleVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
@@ -115,8 +115,8 @@ public abstract class AsDouble extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleSequence asDouble(RDoubleSequence sequence) {
-        return sequence;
+    public RDoubleVector asDouble(RDoubleSequence sequence) {
+        return (RDoubleVector) sequence.createVector();
     }
 
     @Specialization

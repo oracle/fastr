@@ -51,7 +51,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     public String doInt(VirtualFrame frame, int value) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castCharacterNode = adoptChild(CastStringNodeFactory.create(null, false));
+            castCharacterNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
         }
         return (String) castCharacterNode.executeString(frame, value);
     }
@@ -87,7 +87,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     public RStringVector doVector(VirtualFrame frame, RAbstractVector vector) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castCharacterNode = adoptChild(CastStringNodeFactory.create(null, false));
+            castCharacterNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
         }
         Object ret = castCharacterNode.executeStringVector(frame, vector);
         return (RStringVector) ret;

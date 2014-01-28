@@ -264,11 +264,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testNonvectorizedLogicalLengthChecksIgnore_a1594db2ddfa1d07731f6c5f92cd9833() {
-        assertEvalWarning("{ c(a=TRUE, TRUE) | c(TRUE, b=FALSE, FALSE) }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testScalarsComplexIgnore_ec41b305258209dcd1f01b4c73dfa38c() {
         assertEval("{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }");
     }
@@ -1054,11 +1049,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_bd8aedf4ca4bd613b8c5ce35463c17a5() {
-        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
-    }
-
-    @Ignore
     public void TestSimpleAttributes_testArrayPropagation_ff71faa7f9c4a02839d5cb9c6735788f() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; x[c(1,1)] }");
     }
@@ -1196,81 +1186,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_74dc4cc35dbb11bd44bd7b1feaf36e6c() {
         assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(201:202, 203:204, 205:206); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testCastsIgnore_7421f56a7aeb2d6ab6fb29c2bdb776f6() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.character(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testCastsIgnore_c7ac6373611836a463ed1329c7aa7eee() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.double(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testCastsIgnore_a553b41add3e553324f2a994498662c4() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.integer(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_9bfc4209f222e2d701466ef7d338132a() {
-        assertEval("{ x <- as.raw(10) ; attr(x, \"hi\") <- 2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_80a0a73a4efa096e215a3bf7e5e5ee3e() {
-        assertEval("{ x <- TRUE ; attr(x, \"hi\") <- 2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_59f68b4d9d36df8c78eb72446822f6dd() {
-        assertEval("{ x <- 1L ; attr(x, \"hi\") <- 2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_ea8b6eacdfe0a30063d3a701d8b81f6e() {
-        assertEval("{ x <- 1 ; attr(x, \"hi\") <- 2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_a0ab09aad0b3f396ec58751a4051d177() {
-        assertEval("{ x <- 1+1i ; attr(x, \"hi\") <- 2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_32d40d8d60a044f9fafe367b8ae885fb() {
-        assertEval("{ x <- \"s\" ; attr(x, \"hi\") <- 2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_ce72d4164b0322ade6f4182d9311ebb0() {
-        assertEval("{ x <- c(1L, 2L) ; attr(x, \"hi\") <- 2; x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_6c9cda38c30d74cc14b3e95de0034c60() {
-        assertEval("{ x <- c(1, 2) ; attr(x, \"hi\") <- 2; x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_424967deb3f2e2c414ea5fb27c821f3b() {
-        assertEval("{ x <- c(1L, 2L) ; attr(x, \"hi\") <- 2; attr(x, \"hello\") <- 1:2 ;  x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_af51cfc72a0c2a460dea902e49bac27c() {
-        assertEval("{ x <- c(hello=9) ; attr(x, \"hi\") <- 2 ;  y <- x ; y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_efd8aa922890186c8ec61d84b7fefd05() {
-        assertEval("{ x <- c(hello=1) ; attr(x, \"hi\") <- 2 ;  attr(x,\"names\") <- \"HELLO\" ; x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testDefinition_09cc8ecbb951d42df7ce9a2b83157a71() {
-        assertEval("{ x<-1; dim(x)<-1; y<-(attr(x, \"dimnames\")<-list(1)); y }");
     }
 
     @Ignore

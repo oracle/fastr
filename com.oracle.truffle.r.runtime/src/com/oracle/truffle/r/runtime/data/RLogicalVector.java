@@ -129,6 +129,10 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return RLogical.class;
     }
 
+    public byte[] getDataCopy() {
+        return Arrays.copyOf(data, data.length);
+    }
+
     @Override
     public RLogicalVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createLogicalVector(data, isComplete(), newDimensions);

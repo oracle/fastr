@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleAttributes extends TestBase {
 
     @Test
-    @Ignore
     public void testDefinition() {
         assertEval("{ x <- as.raw(10) ; attr(x, \"hi\") <- 2 ;  x }");
         assertEval("{ x <- TRUE ; attr(x, \"hi\") <- 2 ;  x }");
@@ -35,6 +34,9 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- c(hello=1) ; attr(x, \"hi\") <- 2 ;  attr(x,\"names\") <- \"HELLO\" ; x }");
 
         assertEval("{ x<-1; dim(x)<-1; y<-(attr(x, \"dimnames\")<-list(1)); y }");
+
+        assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); z<-(attr(x, \"dimnames\")<-y); z }");
+        assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); attr(y, \"foo\")<-\"foo\"; z<-(attr(x, \"dimnames\")<-y); z }");
     }
 
     @Test
@@ -44,6 +46,8 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- 1:2 ;  attr(x, \"hi\") <- 2 ;  !x  }");
         assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ;  x & x }");
         assertEval("{ x <- as.raw(1:2);  attr(x, \"hi\") <- 2 ;  x & x }");
+
+        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
     }
 
     @Test
@@ -63,8 +67,6 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- 1:2 ;  attr(x, \"hi\") <- 3 ; attr(x, \"hihi\") <- 10 ; y <- 2:3 ; attr(y,\"zz\") <- 2; attr(y,\"hi\") <-3; attr(y,\"bye\") <- 4 ; x+y }");
 
         assertEval("{ x <- c(a=1,b=2) ;  attr(x, \"hi\") <- 2 ;  -x  }");
-
-        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
     }
 
     @Test
@@ -72,9 +74,7 @@ public class TestSimpleAttributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCastsIgnore() {
-        // FIXME print regressions
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.character(x) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.double(x) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.integer(x) }");

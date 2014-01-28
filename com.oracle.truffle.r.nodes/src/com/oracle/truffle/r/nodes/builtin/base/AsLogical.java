@@ -94,7 +94,7 @@ public abstract class AsLogical extends RBuiltinNode {
 
     @Specialization
     public RLogicalVector asLogical(RLogicalVector vector) {
-        return vector;
+        return RDataFactory.createLogicalVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization

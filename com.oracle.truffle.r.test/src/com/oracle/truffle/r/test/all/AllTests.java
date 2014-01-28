@@ -674,7 +674,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalLengthChecksIgnore_a1594db2ddfa1d07731f6c5f92cd9833() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalLengthChecks_a1594db2ddfa1d07731f6c5f92cd9833() {
         assertEvalWarning("{ c(a=TRUE, TRUE) | c(TRUE, b=FALSE, FALSE) }");
     }
 
@@ -3204,6 +3204,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testArithmeticPropagation_bd8aedf4ca4bd613b8c5ce35463c17a5() {
+        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testArithmeticPropagationIgnore_1bda07d542646902be34ad03340e3589() {
         assertEval("{ x <- c(1+1i,2+2i);  attr(x, \"hi\") <- 3 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
     }
@@ -3256,11 +3261,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleAttributes_testArithmeticPropagationIgnore_26dafe051e5a4eaed76812ecb0c1d215() {
         assertEval("{ x <- c(a=1,b=2) ;  attr(x, \"hi\") <- 2 ;  -x  }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_bd8aedf4ca4bd613b8c5ce35463c17a5() {
-        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
     }
 
     @Test
@@ -3526,6 +3526,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleAttributes_testDefinition_09cc8ecbb951d42df7ce9a2b83157a71() {
         assertEval("{ x<-1; dim(x)<-1; y<-(attr(x, \"dimnames\")<-list(1)); y }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testDefinition_4889b45f46fc504e4461e022620fc5d7() {
+        assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); z<-(attr(x, \"dimnames\")<-y); z }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testDefinition_3856e444c64ddd1b3dbeb3529dd0c22f() {
+        assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); attr(y, \"foo\")<-\"foo\"; z<-(attr(x, \"dimnames\")<-y); z }");
     }
 
     @Test

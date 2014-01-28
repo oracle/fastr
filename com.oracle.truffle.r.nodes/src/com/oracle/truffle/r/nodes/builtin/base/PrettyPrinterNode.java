@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChild(value = "operand", type = RNode.class)
+@NodeField(name = "printingAttributes", type = boolean.class)
 public abstract class PrettyPrinterNode extends RNode {
 
     @Child protected ToString toString;
@@ -51,10 +52,12 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Child PrettyPrinterNode recursivePrettyPrinter;
 
-    private Object prettyPrintRecursive(VirtualFrame frame, Object o) {
+    protected abstract boolean isPrintingAttributes();
+
+    private Object prettyPrintAttributes(VirtualFrame frame, Object o) {
         if (recursivePrettyPrinter == null) {
             CompilerDirectives.transferToInterpreter();
-            recursivePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null));
+            recursivePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, true));
         }
         return recursivePrettyPrinter.executeString(frame, o);
     }
@@ -125,7 +128,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             builder.append("\n");
             builder.append("attr(,\"" + attr.getKey() + "\")\n");
-            builder.append(prettyPrintRecursive(frame, attr.getValue()));
+            builder.append(prettyPrintAttributes(frame, attr.getValue()));
         }
         return builder.toString();
     }
@@ -354,7 +357,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < length; i++) {
-                if (operand.elementNamePrefix != null) {
+                if (isPrintingAttributes() && operand.elementNamePrefix != null) {
                     sb.append(operand.elementNamePrefix);
                 }
                 Object name = operand.getNameAt(i);
@@ -381,7 +384,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < length; i++) {
-                if (operand.elementNamePrefix != null) {
+                if (isPrintingAttributes() && operand.elementNamePrefix != null) {
                     sb.append(operand.elementNamePrefix);
                 } else {
                     sb.append(listName);

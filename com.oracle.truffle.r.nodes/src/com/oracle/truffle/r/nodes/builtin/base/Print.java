@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class Print extends RBuiltinNode {
 
-    @Child protected PrettyPrinterNode prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null));
+    @Child protected PrettyPrinterNode prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, false));
 
     private void printHelper(String string) {
         getContext().getConsoleHandler().println(string);

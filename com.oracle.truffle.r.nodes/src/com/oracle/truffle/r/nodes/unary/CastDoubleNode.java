@@ -90,7 +90,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(order = 101, guards = "preserveDimensions")
-    public RDoubleVector doLogicalVectorDimsAndNames(RLogicalVector operand) {
+    public RDoubleVector doLogicalVectorDims(RLogicalVector operand) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
@@ -123,7 +123,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(order = 104, guards = "preserveDimensions")
-    public RDoubleVector doStringVectorDimsAndNames(RStringVector operand) {
+    public RDoubleVector doStringVectorDims(RStringVector operand) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
@@ -152,11 +152,11 @@ public abstract class CastDoubleNode extends CastNode {
             String value = operand.getDataAt(i);
             ddata[i] = naCheck.convertStringToDouble(value);
         }
-        return RDataFactory.createDoubleVector(ddata, operand.isComplete(), operand.getNames());
+        return RDataFactory.createDoubleVector(ddata, operand.isComplete());
     }
 
     @Specialization(order = 107, guards = "preserveDimensions")
-    public RDoubleVector doComplexVectorDimsAndNames(RComplexVector operand) {
+    public RDoubleVector doComplexVectorDims(RComplexVector operand) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {

@@ -30,8 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class),
-                @NodeField(name = "context", type = RContext.class)})
+@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class), @NodeField(name = "context", type = RContext.class)})
 public abstract class CastIntegerNode extends CastNode {
 
     private final NACheck check = NACheck.create();
@@ -114,7 +113,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization(order = 101, guards = "preserveDimensions")
-    public RIntVector doComplexVectorDimsAndNames(RComplexVector vector) {
+    public RIntVector doComplexVectorDims(RComplexVector vector) {
         check.enable(vector);
         int length = vector.getLength();
         int[] result = new int[length];
@@ -150,7 +149,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization(order = 104, guards = "preserveDimensions")
-    public RIntVector doStringVectorDimsAndNames(RStringVector vector) {
+    public RIntVector doStringVectorDims(RStringVector vector) {
         check.enable(vector);
         int length = vector.getLength();
         int[] result = new int[length];
@@ -183,7 +182,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization(order = 107, guards = "preserveDimensions")
-    public RIntVector doLogicalVectorDimsAndNames(RLogicalVector vector) {
+    public RIntVector doLogicalVectorDims(RLogicalVector vector) {
         check.enable(vector);
         int length = vector.getLength();
         int[] result = new int[length];
@@ -216,7 +215,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization(order = 110, guards = "preserveDimensions")
-    public RIntVector doDoubleVectorDimsAndNames(RDoubleVector vector) {
+    public RIntVector doDoubleVectorDims(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(getContext(), vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
@@ -237,13 +236,13 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization(order = 113, guards = "preserveDimensions")
-    public RIntVector doRawVectorDimsAndNames(RRawVector vector) {
+    public RIntVector doRawVectorDims(RRawVector vector) {
         int length = vector.getLength();
         int[] result = new int[length];
         for (int i = 0; i < length; i++) {
             result[i] = vector.getDataAt(i).getValue();
         }
-        return RDataFactory.createIntVector(result, check.neverSeenNA());
+        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
     @Specialization(order = 114, guards = "preserveNames")
@@ -263,7 +262,7 @@ public abstract class CastIntegerNode extends CastNode {
         for (int i = 0; i < length; i++) {
             result[i] = vector.getDataAt(i).getValue();
         }
-        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
+        return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
     @Specialization

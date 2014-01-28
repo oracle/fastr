@@ -40,7 +40,7 @@ public abstract class NChar extends RBuiltinNode {
     private String coerceContent(VirtualFrame frame, Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreter();
-            convertString = adoptChild(CastStringNodeFactory.create(null, false));
+            convertString = adoptChild(CastStringNodeFactory.create(null, false, true, false));
         }
         try {
             return (String) convertString.executeCast(frame, content);

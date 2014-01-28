@@ -648,11 +648,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEvalWarning("{ as.raw(c(1,5,4)) | as.raw(c(1,4)) }");
         assertEvalWarning("{ c(TRUE, FALSE, FALSE) & c(TRUE,TRUE) }");
         assertEvalWarning("{ c(TRUE, TRUE) & c(TRUE, FALSE, FALSE) }");
-    }
-
-    @Test
-    @Ignore
-    public void testNonvectorizedLogicalLengthChecksIgnore() {
         assertEvalWarning("{ c(a=TRUE, TRUE) | c(TRUE, b=FALSE, FALSE) }");
     }
 

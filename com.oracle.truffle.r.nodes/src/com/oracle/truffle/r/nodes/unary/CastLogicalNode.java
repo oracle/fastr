@@ -113,7 +113,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(order = 101, guards = "preserveDimensions")
-    public RLogicalVector doStringVectorDimsAndNames(RStringVector operand) {
+    public RLogicalVector doStringVectorDims(RStringVector operand) {
         naCheck.enable(operand);
         byte[] ddata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
@@ -146,7 +146,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(order = 104, guards = "preserveDimensions")
-    public RLogicalVector doComplexVectorDimsAndNames(RComplexVector operand) {
+    public RLogicalVector doComplexVectorDims(RComplexVector operand) {
         naCheck.enable(operand);
         byte[] ddata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
@@ -179,7 +179,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(order = 107, guards = "preserveDimensions")
-    public RLogicalVector doRawVectorDimsAndNames(RRawVector operand) {
+    public RLogicalVector doRawVectorDims(RRawVector operand) {
         byte[] ddata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
             RRaw value = operand.getDataAt(i);

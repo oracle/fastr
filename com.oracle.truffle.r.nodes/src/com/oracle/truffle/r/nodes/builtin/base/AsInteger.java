@@ -99,14 +99,9 @@ public abstract class AsInteger extends RBuiltinNode {
         return RRuntime.INT_NA;
     }
 
-    @Specialization(order = 70, guards = "oneDimensional")
+    @Specialization(order = 71)
     public RIntVector asInteger(RIntVector vector) {
-        return vector;
-    }
-
-    @Specialization(order = 71, guards = "!oneDimensional")
-    public RIntVector asIntegerND(RIntVector vector) {
-        return vector.copyWithNewDimensions(null);
+        return RDataFactory.createIntVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
@@ -135,8 +130,8 @@ public abstract class AsInteger extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntSequence asInteger(RIntSequence sequence) {
-        return sequence;
+    public RIntVector asInteger(RIntSequence sequence) {
+        return (RIntVector) sequence.createVector();
     }
 
     @Specialization
@@ -147,9 +142,5 @@ public abstract class AsInteger extends RBuiltinNode {
     @Specialization
     public RIntVector asInteger(VirtualFrame frame, RList list) {
         return castIntVector(frame, list);
-    }
-
-    protected static boolean oneDimensional(RAbstractVector v) {
-        return !v.hasDimensions() || v.getDimensions().length == 1;
     }
 }
