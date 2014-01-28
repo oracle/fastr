@@ -43,4 +43,10 @@ public final class RBuiltinRootNode extends RRootNode {
     public CallNode inline(CallArgumentsNode args) {
         return builtin.inline(args);
     }
+
+    @Override
+    public String getSourceCode() {
+        return builtin.getSourceCode();
+    }
+
 }

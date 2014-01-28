@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -36,6 +37,10 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeField(name = "builtin", type = RBuiltinFactory.class)
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends CallNode {
+
+    public String getSourceCode() {
+        return "<builtin>";
+    }
 
     public abstract RNode[] getArguments();
 
@@ -234,6 +239,11 @@ public abstract class RBuiltinNode extends CallNode {
             return builtin;
         }
 
+        @Override
+        public String getSourceCode() {
+            return "<custom builtin>";
+        }
+
     }
 
     public static class RSnippetNode extends RCustomBuiltinNode {
@@ -243,11 +253,17 @@ public abstract class RBuiltinNode extends CallNode {
         public RSnippetNode(RNode[] arguments, RBuiltinFactory builtin, FunctionExpressionNode function) {
             super(arguments, builtin);
             snippetCall = adoptChild(CallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{})));
+            assignSourceSection(((DefaultCallTarget) ((FunctionExpressionNode.StaticFunctionExpressionNode) function).getFunction().getTarget()).getRootNode().getSourceSection());
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             return snippetCall.execute(frame);
+        }
+
+        @Override
+        public String getSourceCode() {
+            return getSourceSection().getCode();
         }
     }
 }

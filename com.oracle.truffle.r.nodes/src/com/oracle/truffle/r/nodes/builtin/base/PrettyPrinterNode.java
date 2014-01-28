@@ -100,7 +100,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Specialization
     public String prettyPrint(RFunction operand) {
-        return ((DefaultCallTarget) operand.getTarget()).getRootNode().getSourceSection().getCode();
+        return ((RRootNode) ((DefaultCallTarget) operand.getTarget()).getRootNode()).getSourceCode();
     }
 
     @Specialization

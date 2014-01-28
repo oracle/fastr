@@ -42,4 +42,9 @@ public abstract class RRootNode extends RootNode {
     public int getParameterCount() {
         return parameterNames.length;
     }
+
+    public String getSourceCode() {
+        return getSourceSection().getCode();
+    }
+
 }

@@ -56,7 +56,7 @@ public class RLibraryLoader {
                 WriteVariableNode.UnresolvedWriteLocalVariableNode fnDef = (WriteVariableNode.UnresolvedWriteLocalVariableNode) libNode;
                 String builtinName = fnDef.getSymbol().toString();
                 FunctionExpressionNode.DynamicFunctionExpressionNode builtinExpr = (FunctionExpressionNode.DynamicFunctionExpressionNode) fnDef.getRhs();
-                builtinDefs.put(builtinName, new FunctionExpressionNode.StaticFunctionExpressionNode(new RFunction("", builtinExpr.getCallTarget(), false)));
+                builtinDefs.put(builtinName, new FunctionExpressionNode.StaticFunctionExpressionNode(new RFunction(builtinName, builtinExpr.getCallTarget(), false)));
             }
         }
         return builtinDefs;
