@@ -89,7 +89,7 @@ public abstract class Exists extends RBuiltinNode {
         if (!name.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastName = name;
-            lastLookup = getContext().getLookup().lookup(getContext(), name) != null;
+            lastLookup = RContext.getInstance().getLookup().lookup(name) != null;
         }
         // FIXME deal with changes in packages due to deleting symbols
         return lastLookup;

@@ -59,7 +59,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory arithmetic) {
-        return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null, null);
+        return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null);
     }
 
     @CreateCast({"arguments"})

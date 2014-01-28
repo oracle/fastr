@@ -48,7 +48,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     private void updateNamesStringVector(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreter();
-            updateNames = adoptChild(UpdateNamesFactory.create(new RNode[1], getContext(), getBuiltin()));
+            updateNames = adoptChild(UpdateNamesFactory.create(new RNode[1], getBuiltin()));
         }
         updateNames.executeStringVector(frame, vector, o);
     }
@@ -56,7 +56,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreter();
-            castInteger = adoptChild(CastIntegerNodeFactory.create(null, true, false, getContext()));
+            castInteger = adoptChild(CastIntegerNodeFactory.create(null, true, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
     }

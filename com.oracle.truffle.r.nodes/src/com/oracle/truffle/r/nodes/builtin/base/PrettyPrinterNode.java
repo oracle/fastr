@@ -238,7 +238,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private String printMatrix(VirtualFrame frame, RVector vector) {
         if (toString == null) {
             CompilerDirectives.transferToInterpreter();
-            toString = adoptChild(ToStringFactory.create(new RNode[1], null, null));
+            toString = adoptChild(ToStringFactory.create(new RNode[1], null));
         }
         return toString.executeString(frame, vector);
     }

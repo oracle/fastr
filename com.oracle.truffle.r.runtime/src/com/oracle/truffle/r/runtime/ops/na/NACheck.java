@@ -291,14 +291,14 @@ public final class NACheck implements RDataCheckClosure {
         return ((int) value.getRealPart()) == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
     }
 
-    public int convertComplexToInt(RContext context, RComplex right) {
-        return convertComplexToInt(context, right, true);
+    public int convertComplexToInt(RComplex right) {
+        return convertComplexToInt(right, true);
     }
 
     @SuppressWarnings("static-method")
-    public int convertComplexToInt(RContext context, RComplex right, boolean warning) {
+    public int convertComplexToInt(RComplex right, boolean warning) {
         if (warning) {
-            context.setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return (int) right.getRealPart();
     }
@@ -314,7 +314,7 @@ public final class NACheck implements RDataCheckClosure {
         return false;
     }
 
-    public int convertDoubleToInt(RContext context, double value) {
+    public int convertDoubleToInt(double value) {
         if (checkNAorNaN(value)) {
             return RRuntime.INT_NA;
         }
@@ -324,13 +324,13 @@ public final class NACheck implements RDataCheckClosure {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 this.conversionOverflowReached = true;
             }
-            context.setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
             return RRuntime.INT_NA;
         }
         return result;
     }
 
-    public int[] convertDoubleVectorToIntData(RContext context, RDoubleVector vector) {
+    public int[] convertDoubleVectorToIntData(RDoubleVector vector) {
         int length = vector.getLength();
         int[] result = new int[length];
         boolean warning = false;
@@ -351,7 +351,7 @@ public final class NACheck implements RDataCheckClosure {
                 result[i] = intValue;
             }
             if (warning) {
-                context.setEvalWarning(RError.NA_INTRODUCED_COERCION);
+                RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
             }
         }
         return result;
@@ -368,8 +368,8 @@ public final class NACheck implements RDataCheckClosure {
     }
 
     @SuppressWarnings("static-method")
-    public byte convertStringToLogical(RContext context, String value) {
-        return RRuntime.string2logical(context, value);
+    public byte convertStringToLogical(String value) {
+        return RRuntime.string2logical(value);
     }
 
 }

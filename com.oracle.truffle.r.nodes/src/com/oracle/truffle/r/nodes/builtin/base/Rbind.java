@@ -44,7 +44,7 @@ public final class Rbind extends RWrapperBuiltinNode {
 
     @Override
     protected RNode createDelegate() {
-        Combine combine = CombineFactory.create(getArguments(), getContext(), getBuiltin(), null);
+        Combine combine = CombineFactory.create(getArguments(), getBuiltin(), null);
         combine.setFoldOperation(new RbindFoldOperationNode());
         return combine;
     }

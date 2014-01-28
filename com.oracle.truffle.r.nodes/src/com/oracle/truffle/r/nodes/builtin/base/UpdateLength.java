@@ -36,7 +36,7 @@ public abstract class UpdateLength extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // length argument is at index 1, and cast to int
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, getContext());
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
         return arguments;
     }
 

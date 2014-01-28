@@ -26,6 +26,6 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RBuiltinLookup {
 
-    RFunction lookup(RContext context, String methodName);
+    RFunction lookup(String methodName);
 
 }

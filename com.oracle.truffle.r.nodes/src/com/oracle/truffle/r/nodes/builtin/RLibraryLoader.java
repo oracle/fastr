@@ -41,11 +41,9 @@ import com.oracle.truffle.r.runtime.data.*;
 public class RLibraryLoader {
 
     private final File libFile;
-    private final RContext context;
 
-    public RLibraryLoader(File libFile, RContext context) {
+    public RLibraryLoader(File libFile) {
         this.libFile = libFile;
-        this.context = context;
     }
 
     public Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> loadLibrary() {
@@ -72,8 +70,8 @@ public class RLibraryLoader {
         ANTLRFileStream stream;
         try {
             stream = new ANTLRFileStream(libFile.getAbsolutePath());
-            RTruffleVisitor transform = new RTruffleVisitor(context);
-            RNode node = transform.transform(parseAST(stream, context.getSourceManager().get(libFile.getAbsolutePath())));
+            RTruffleVisitor transform = new RTruffleVisitor();
+            RNode node = transform.transform(parseAST(stream, RContext.getInstance().getSourceManager().get(libFile.getAbsolutePath())));
             return node;
         } catch (RecognitionException | IOException e) {
             throw new RuntimeException(e.getMessage(), e);

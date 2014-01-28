@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.builtin.debug.*;
-import com.oracle.truffle.r.runtime.*;
 
 public final class RDefaultPackages extends RPackages {
 
@@ -32,9 +31,9 @@ public final class RDefaultPackages extends RPackages {
         // empty
     }
 
-    public void load(RContext context) {
-        load(new BasePackage(context));
-        load(new DebugPackage(context));
+    public void load() {
+        load(new BasePackage());
+        load(new DebugPackage());
     }
 
     private static RDefaultPackages instance;

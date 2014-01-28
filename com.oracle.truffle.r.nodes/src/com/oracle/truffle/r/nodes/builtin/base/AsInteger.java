@@ -44,7 +44,7 @@ public abstract class AsInteger extends RBuiltinNode {
     private int castInt(VirtualFrame frame, Object o) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castIntNode = adoptChild(CastIntegerNodeFactory.create(null, false, false, getContext()));
+            castIntNode = adoptChild(CastIntegerNodeFactory.create(null, false, false));
         }
         return (int) castIntNode.executeInt(frame, o);
     }
@@ -52,7 +52,7 @@ public abstract class AsInteger extends RBuiltinNode {
     private RIntVector castIntVector(VirtualFrame frame, Object o) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castIntNode = adoptChild(CastIntegerNodeFactory.create(null, false, false, getContext()));
+            castIntNode = adoptChild(CastIntegerNodeFactory.create(null, false, false));
         }
         return (RIntVector) castIntNode.executeIntVector(frame, o);
     }
@@ -65,7 +65,7 @@ public abstract class AsInteger extends RBuiltinNode {
     @Specialization
     public int asInteger(double value) {
         check.enable(value);
-        return check.convertDoubleToInt(getContext(), value);
+        return check.convertDoubleToInt(value);
     }
 
     @Specialization
@@ -76,7 +76,7 @@ public abstract class AsInteger extends RBuiltinNode {
     @Specialization
     public int asInteger(RComplex value) {
         check.enable(value);
-        return check.convertComplexToInt(getContext(), value);
+        return check.convertComplexToInt(value);
     }
 
     @Specialization

@@ -81,7 +81,7 @@ public abstract class AsRaw extends RBuiltinNode {
         // TODO: Output NA and out-of-range warning.
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreter();
-            castInteger = adoptChild(CastIntegerNodeFactory.create(null, false, false, getContext()));
+            castInteger = adoptChild(CastIntegerNodeFactory.create(null, false, false));
         }
         return asRaw((int) castInteger.executeInt(frame, value));
     }
@@ -150,7 +150,7 @@ public abstract class AsRaw extends RBuiltinNode {
     public RRawVector asRaw(VirtualFrame frame, RList value) {
         if (asRawRecursive == null) {
             CompilerDirectives.transferToInterpreter();
-            asRawRecursive = adoptChild(AsRawFactory.create(new RNode[1], getContext(), getBuiltin()));
+            asRawRecursive = adoptChild(AsRawFactory.create(new RNode[1], getBuiltin()));
         }
         int length = value.getLength();
         RRawVector result = RDataFactory.createRawVector(length);

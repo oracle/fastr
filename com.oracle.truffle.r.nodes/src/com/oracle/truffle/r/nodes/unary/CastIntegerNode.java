@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class), @NodeField(name = "context", type = RContext.class)})
+@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class)})
 public abstract class CastIntegerNode extends CastNode {
 
     private final NACheck check = NACheck.create();
@@ -38,8 +38,6 @@ public abstract class CastIntegerNode extends CastNode {
     public abstract Object executeInt(VirtualFrame frame, Object o);
 
     public abstract Object executeIntVector(VirtualFrame frame, Object o);
-
-    public abstract RContext getContext();
 
     protected abstract boolean isNamesPreservation();
 
@@ -58,7 +56,7 @@ public abstract class CastIntegerNode extends CastNode {
     private Object castIntegerRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreter();
-            recursiveCastInteger = adoptChild(CastIntegerNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation(), getContext()));
+            recursiveCastInteger = adoptChild(CastIntegerNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation()));
         }
         return recursiveCastInteger.executeInt(frame, o);
     }
@@ -81,7 +79,7 @@ public abstract class CastIntegerNode extends CastNode {
     @Specialization
     public int doDouble(double operand) {
         check.enable(operand);
-        return check.convertDoubleToInt(getContext(), operand);
+        return check.convertDoubleToInt(operand);
     }
 
     @Specialization
@@ -97,7 +95,7 @@ public abstract class CastIntegerNode extends CastNode {
     @Specialization
     public int doComplex(RComplex operand) {
         check.enable(operand);
-        return check.convertComplexToInt(getContext(), operand);
+        return check.convertComplexToInt(operand);
     }
 
     @Specialization
@@ -118,9 +116,9 @@ public abstract class CastIntegerNode extends CastNode {
         int length = vector.getLength();
         int[] result = new int[length];
         for (int i = 0; i < length; i++) {
-            result[i] = check.convertComplexToInt(getContext(), vector.getDataAt(i), false);
+            result[i] = check.convertComplexToInt(vector.getDataAt(i), false);
         }
-        getContext().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
@@ -130,9 +128,9 @@ public abstract class CastIntegerNode extends CastNode {
         int length = vector.getLength();
         int[] result = new int[length];
         for (int i = 0; i < length; i++) {
-            result[i] = check.convertComplexToInt(getContext(), vector.getDataAt(i), false);
+            result[i] = check.convertComplexToInt(vector.getDataAt(i), false);
         }
-        getContext().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
@@ -142,9 +140,9 @@ public abstract class CastIntegerNode extends CastNode {
         int length = vector.getLength();
         int[] result = new int[length];
         for (int i = 0; i < length; i++) {
-            result[i] = check.convertComplexToInt(getContext(), vector.getDataAt(i), false);
+            result[i] = check.convertComplexToInt(vector.getDataAt(i), false);
         }
-        getContext().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
@@ -217,21 +215,21 @@ public abstract class CastIntegerNode extends CastNode {
     @Specialization(order = 110, guards = "preserveDimensions")
     public RIntVector doDoubleVectorDims(RDoubleVector vector) {
         check.enable(vector);
-        int[] result = check.convertDoubleVectorToIntData(getContext(), vector);
+        int[] result = check.convertDoubleVectorToIntData(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
     @Specialization(order = 111, guards = "preserveNames")
     public RIntVector doDoubleVectorNames(RDoubleVector vector) {
         check.enable(vector);
-        int[] result = check.convertDoubleVectorToIntData(getContext(), vector);
+        int[] result = check.convertDoubleVectorToIntData(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
     @Specialization(order = 112)
     public RIntVector doDoubleVector(RDoubleVector vector) {
         check.enable(vector);
-        int[] result = check.convertDoubleVectorToIntData(getContext(), vector);
+        int[] result = check.convertDoubleVectorToIntData(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 

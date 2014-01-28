@@ -48,14 +48,14 @@ public abstract class Quit extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // status argument is at index 1
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, getContext());
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
         return arguments;
     }
 
     @Specialization
     public Object doQuit(final String saveArg, int status, byte runLast) {
         String save = saveArg;
-        RContext.ConsoleHandler consoleHandler = getContext().getConsoleHandler();
+        RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
             if (consoleHandler.isInteractive()) {
                 save = "ask";

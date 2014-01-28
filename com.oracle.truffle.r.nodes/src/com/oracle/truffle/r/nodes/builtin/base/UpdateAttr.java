@@ -48,7 +48,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreter();
-            updateNames = adoptChild(UpdateNamesFactory.create(new RNode[1], getContext(), getBuiltin()));
+            updateNames = adoptChild(UpdateNamesFactory.create(new RNode[1], getBuiltin()));
         }
         return (RAbstractVector) updateNames.executeStringVector(frame, vector, o);
     }
@@ -56,7 +56,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreter();
-            updateDimNames = adoptChild(UpdateDimNamesFactory.create(new RNode[1], getContext(), getBuiltin()));
+            updateDimNames = adoptChild(UpdateDimNamesFactory.create(new RNode[1], getBuiltin()));
         }
         return (RAbstractVector) updateDimNames.executeList(frame, vector, o);
     }
@@ -64,7 +64,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreter();
-            castInteger = adoptChild(CastIntegerNodeFactory.create(null, true, false, getContext()));
+            castInteger = adoptChild(CastIntegerNodeFactory.create(null, true, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
     }

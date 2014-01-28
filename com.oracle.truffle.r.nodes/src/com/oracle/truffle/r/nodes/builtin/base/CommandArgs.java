@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,9 +38,9 @@ public abstract class CommandArgs extends RBuiltinNode {
         return getCommandArgs(trailingOnly == RRuntime.LOGICAL_TRUE);
     }
 
-    @com.oracle.truffle.api.CompilerDirectives.SlowPath
-    private RStringVector getCommandArgs(boolean trailingOnly) {
-        String[] s = getContext().getCommandArgs();
+    @SlowPath
+    private static RStringVector getCommandArgs(boolean trailingOnly) {
+        String[] s = RContext.getInstance().getCommandArgs();
         if (trailingOnly) {
             int index = s.length;
             for (int i = 0; i < s.length; ++i) {

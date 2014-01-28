@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class), @NodeField(name = "context", type = RContext.class)})
+@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class)})
 public abstract class CastLogicalNode extends CastNode {
 
     private final NACheck naCheck = NACheck.create();
@@ -39,8 +39,6 @@ public abstract class CastLogicalNode extends CastNode {
     public abstract Object executeByte(VirtualFrame frame, Object o);
 
     public abstract Object executeLogicalVector(VirtualFrame frame, Object o);
-
-    public abstract RContext getContext();
 
     protected abstract boolean isNamesPreservation();
 
@@ -79,7 +77,7 @@ public abstract class CastLogicalNode extends CastNode {
     @Specialization
     public byte doString(String operand) {
         naCheck.enable(operand);
-        return naCheck.convertStringToLogical(getContext(), operand);
+        return naCheck.convertStringToLogical(operand);
     }
 
     @Specialization
@@ -118,7 +116,7 @@ public abstract class CastLogicalNode extends CastNode {
         byte[] ddata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToLogical(getContext(), value);
+            ddata[i] = naCheck.convertStringToLogical(value);
         }
         return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
     }
@@ -129,7 +127,7 @@ public abstract class CastLogicalNode extends CastNode {
         byte[] ddata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToLogical(getContext(), value);
+            ddata[i] = naCheck.convertStringToLogical(value);
         }
         return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getNames());
     }
@@ -140,7 +138,7 @@ public abstract class CastLogicalNode extends CastNode {
         byte[] ddata = new byte[operand.getLength()];
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToLogical(getContext(), value);
+            ddata[i] = naCheck.convertStringToLogical(value);
         }
         return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA());
     }

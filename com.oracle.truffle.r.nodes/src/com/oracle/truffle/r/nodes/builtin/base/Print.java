@@ -43,8 +43,8 @@ public abstract class Print extends RBuiltinNode {
 
     @Child protected PrettyPrinterNode prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, false));
 
-    private void printHelper(String string) {
-        getContext().getConsoleHandler().println(string);
+    private static void printHelper(String string) {
+        RContext.getInstance().getConsoleHandler().println(string);
     }
 
     @Specialization

@@ -23,12 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.debug;
 
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 
 public class DebugPackage extends RPackage {
 
-    public DebugPackage(RContext context) {
-        super(context);
+    public DebugPackage() {
         load(DebugInfoBuiltin.class);
         load(DebugSource.class);
         load(DebugTreeBuiltin.class);
@@ -43,9 +41,9 @@ public class DebugPackage extends RPackage {
 
     private static DebugPackage instance;
 
-    public static DebugPackage getInstance(RContext context) {
+    public static DebugPackage getInstance() {
         if (instance == null) {
-            instance = new DebugPackage(context);
+            instance = new DebugPackage();
         }
         return instance;
     }

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("set.seed")
@@ -31,7 +32,7 @@ public abstract class SetSeed extends RBuiltinNode {
 
     @Specialization
     public RNull setseed(int n) {
-        getContext().getRandomNumberGenerator().setSeed(n);
+        RContext.getInstance().getRandomNumberGenerator().setSeed(n);
         return RNull.instance;
     }
 

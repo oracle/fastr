@@ -38,7 +38,7 @@ public abstract class Rnorm extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector rnorm(int n, double mean, double standardd) {
-        RRandomNumberGenerator rng = getContext().getRandomNumberGenerator();
+        RRandomNumberGenerator rng = RContext.getInstance().getRandomNumberGenerator();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
             result[i] = generateNorm(mean, standardd, rng);

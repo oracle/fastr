@@ -62,7 +62,7 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
     }
 
     private LeftOpToLogicalScalarCast createCast(RNode child) {
-        return LeftOpToLogicalScalarCastFactory.create(child, getContext(), logic.opName());
+        return LeftOpToLogicalScalarCastFactory.create(child, logic.opName());
     }
 
     @ShortCircuit("arguments[1]")
@@ -242,13 +242,11 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
         return needsRightOperand;
     }
 
-    @NodeFields({@NodeField(name = "context", type = RContext.class), @NodeField(name = "opName", type = String.class)})
+    @NodeField(name = "opName", type = String.class)
     @NodeChild("operand")
     public abstract static class LeftOpToLogicalScalarCast extends RNode {
 
         public abstract byte executeCast(VirtualFrame frame, Object o);
-
-        public abstract RContext getContext();
 
         public abstract String getOpName();
 

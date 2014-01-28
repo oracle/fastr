@@ -61,12 +61,12 @@ public abstract class CallNode extends RNode {
         return RTypesGen.RTYPES.expectDouble(execute(frame, function));
     }
 
-    public static CallNode createStaticCall(RContext context, String function, CallArgumentsNode arguments) {
-        return CallNode.createCall(ReadVariableNode.create(function, context, true, false), arguments);
+    public static CallNode createStaticCall(String function, CallArgumentsNode arguments) {
+        return CallNode.createCall(ReadVariableNode.create(function, true, false), arguments);
     }
 
-    public static CallNode createStaticCall(SourceSection src, RContext context, String function, CallArgumentsNode arguments) {
-        CallNode cn = createStaticCall(context, function, arguments);
+    public static CallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
+        CallNode cn = createStaticCall(function, arguments);
         cn.assignSourceSection(src);
         return cn;
     }

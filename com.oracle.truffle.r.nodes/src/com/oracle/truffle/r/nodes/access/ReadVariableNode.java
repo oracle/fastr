@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySupe
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
-
 import com.oracle.truffle.r.nodes.access.FrameSlotNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -45,12 +44,12 @@ public abstract class ReadVariableNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
-    public static ReadVariableNode create(Object symbol, RContext context, boolean functionLookup, boolean shouldCopyValue) {
-        return new UnresolvedReadVariableNode(symbol, context, functionLookup, shouldCopyValue);
+    public static ReadVariableNode create(Object symbol, boolean functionLookup, boolean shouldCopyValue) {
+        return new UnresolvedReadVariableNode(symbol, functionLookup, shouldCopyValue);
     }
 
-    public static ReadVariableNode create(SourceSection src, Object symbol, RContext context, boolean functionLookup, boolean shouldCopyValue) {
-        ReadVariableNode rvn = create(symbol, context, functionLookup, shouldCopyValue);
+    public static ReadVariableNode create(SourceSection src, Object symbol, boolean functionLookup, boolean shouldCopyValue) {
+        ReadVariableNode rvn = create(symbol, functionLookup, shouldCopyValue);
         rvn.assignSourceSection(src);
         return rvn;
     }
@@ -58,7 +57,6 @@ public abstract class ReadVariableNode extends RNode {
     public static final class UnresolvedReadVariableNode extends ReadVariableNode {
 
         private final Object symbol;
-        private final RContext context;
         private final boolean functionLookup;
 
         /**
@@ -72,9 +70,8 @@ public abstract class ReadVariableNode extends RNode {
             copyValue = c;
         }
 
-        public UnresolvedReadVariableNode(Object symbol, RContext context, boolean functionLookup, boolean copyValue) {
+        public UnresolvedReadVariableNode(Object symbol, boolean functionLookup, boolean copyValue) {
             this.symbol = symbol;
-            this.context = context;
             this.functionLookup = functionLookup;
             this.copyValue = copyValue;
         }
@@ -85,7 +82,7 @@ public abstract class ReadVariableNode extends RNode {
             if (enclosingFrame != null) {
                 ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol))
                                 : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol));
-                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, context, functionLookup, copyValue), functionLookup);
+                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, functionLookup, copyValue), functionLookup);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
                 return replace(resolveNonFrame()).execute(frame);
@@ -93,7 +90,7 @@ public abstract class ReadVariableNode extends RNode {
         }
 
         private ReadVariableNode resolveNonFrame() {
-            RFunction lookupResult = context.getLookup().lookup(context, symbol.toString());
+            RFunction lookupResult = RContext.getInstance().getLookup().lookup(symbol.toString());
             if (lookupResult != null) {
                 return BuiltinFunctionVariableNodeFactory.create(lookupResult);
             } else {
@@ -109,10 +106,10 @@ public abstract class ReadVariableNode extends RNode {
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
                 ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol));
-                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, context, functionLookup, copyValue), functionLookup);
+                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, functionLookup, copyValue), functionLookup);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
-                readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(symbol, context, functionLookup, copyValue), symbol);
+                readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(symbol, functionLookup, copyValue), symbol);
             }
             return replace(readNode).execute(frame);
         }

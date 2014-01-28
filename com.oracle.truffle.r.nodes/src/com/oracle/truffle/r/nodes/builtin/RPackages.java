@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
- /*
+/*
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
@@ -45,8 +45,8 @@ public abstract class RPackages implements RBuiltinLookup {
     }
 
     @Override
-    public RFunction lookup(RContext context, String methodName) {
-        RFunction function = context.getCachedFunction(methodName);
+    public RFunction lookup(String methodName) {
+        RFunction function = RContext.getInstance().getCachedFunction(methodName);
         if (function != null) {
             return function;
         }
@@ -55,12 +55,12 @@ public abstract class RPackages implements RBuiltinLookup {
         if (builtin == null) {
             return null;
         }
-        return createFunction(context, builtin, methodName);
+        return createFunction(builtin, methodName);
     }
 
-    private static RFunction createFunction(RContext context, RBuiltinFactory builtin, String methodName) {
-        CallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(context, builtin);
-        return context.putCachedFunction(methodName, new RFunction(builtin.getBuiltinNames()[0], callTarget, true));
+    private static RFunction createFunction(RBuiltinFactory builtin, String methodName) {
+        CallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtin);
+        return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtin.getBuiltinNames()[0], callTarget, true));
     }
 
     private RBuiltinFactory lookupBuiltin(String name) {

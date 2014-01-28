@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
 
 /**
  * Intended to be subclassed by definitions of builtin functions.
@@ -46,8 +45,8 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class RPackage {
     private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
-    protected RPackage(RContext context) {
-        loadSnippets(context);
+    protected RPackage() {
+        loadSnippets();
     }
 
     public final RBuiltinFactory lookupByName(String methodName) {
@@ -62,11 +61,11 @@ public abstract class RPackage {
         return builtins;
     }
 
-    public final void loadSnippets(RContext context) {
+    public final void loadSnippets() {
         String rSourceName = getName() + ".r";
         URL rSource = getClass().getResource(rSourceName);
         if (rSource != null) {
-            RLibraryLoader loader = new RLibraryLoader(new File(rSource.getPath()), context);
+            RLibraryLoader loader = new RLibraryLoader(new File(rSource.getPath()));
             Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
             for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
                 NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
@@ -154,7 +153,7 @@ public abstract class RPackage {
 
         public RBuiltinNode createNode(Object... arguments) {
             try {
-                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RContext) arguments[1], (RBuiltinFactory) arguments[2]);
+                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1]);
                 return constructor.newInstance(builtin);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -194,7 +193,7 @@ public abstract class RPackage {
 
         @Override
         public RBuiltinNode createNode(Object... arguments) {
-            RBuiltinNode builtin = new RBuiltinNode.RSnippetNode((RNode[]) arguments[0], (RContext) arguments[1], (RBuiltinFactory) arguments[2], function);
+            RBuiltinNode builtin = new RBuiltinNode.RSnippetNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1], function);
             return builtin;
         }
 

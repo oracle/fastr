@@ -57,7 +57,7 @@ public abstract class Cat extends RBuiltinNode {
     private void ensureToString(String sep) {
         if (toString == null || !sep.equals(currentSep)) {
             CompilerDirectives.transferToInterpreter();
-            toString = adoptChild(ToStringFactory.create(new RNode[1], getContext(), getBuiltin()));
+            toString = adoptChild(ToStringFactory.create(new RNode[1], getBuiltin()));
             toString.setSeparator(sep);
             toString.setQuotes(false);
             toString.setIntL(false);
@@ -93,12 +93,9 @@ public abstract class Cat extends RBuiltinNode {
         return RInvisible.INVISIBLE_NULL;
     }
 
-    // This builtin must be allowed to produce output.
-    // CheckStyle: stop system..print check
-
     @SlowPath
-    private void catIntl(String s) {
-        getContext().getConsoleHandler().print(s);
+    private static void catIntl(String s) {
+        RContext.getInstance().getConsoleHandler().print(s);
     }
 
 }

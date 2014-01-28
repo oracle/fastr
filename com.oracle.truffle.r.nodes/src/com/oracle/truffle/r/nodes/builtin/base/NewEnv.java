@@ -48,7 +48,7 @@ public abstract class NewEnv extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // size argument is at index 2, and an int
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, getContext());
+        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false);
         return arguments;
     }
 

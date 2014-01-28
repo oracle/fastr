@@ -37,7 +37,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     private static final String[] PARAMETER_NAMES = new String[]{"data", "nrow", "ncol", "byrow", "dimnames"};
 
-    @Child private Transpose transpose = this.adoptChild(TransposeFactory.create(new RNode[1], getContext(), getBuiltin()));
+    @Child private Transpose transpose = this.adoptChild(TransposeFactory.create(new RNode[1], getBuiltin()));
 
     @Override
     public Object[] getParameterNames() {
@@ -53,8 +53,8 @@ public abstract class Matrix extends RBuiltinNode {
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         // nrow and ncol (positions 1, 2) are actually int
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, getContext());
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, getContext());
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
+        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false);
         return arguments;
     }
 

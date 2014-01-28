@@ -52,7 +52,7 @@ public final class REngine {
     private REngine(String[] commandArgs, ConsoleHandler consoleHandler) {
         RDefaultPackages defaultPackages = RDefaultPackages.getInstance();
         this.context = RContext.instantiate(defaultPackages, commandArgs, consoleHandler);
-        defaultPackages.load(context);
+        defaultPackages.load();
     }
 
     /**
@@ -97,7 +97,7 @@ public final class REngine {
 
     private Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
         try {
-            RTruffleVisitor transform = new RTruffleVisitor(context);
+            RTruffleVisitor transform = new RTruffleVisitor();
             RNode node = transform.transform(parseAST(stream, source));
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, transform.getEnvironment(), node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
             CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
@@ -156,7 +156,7 @@ public final class REngine {
 
     private void printResult(Object result) {
         if (!(result instanceof RInvisible)) {
-            RFunction function = context.getLookup().lookup(context, "print");
+            RFunction function = context.getLookup().lookup("print");
             function.call(null, RArguments.create(function, new Object[]{result})).toString();
         }
     }

@@ -64,7 +64,7 @@ public abstract class MatchFun extends RBuiltinNode {
         if (lookup == null || !fun.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = fun;
-            ReadVariableNode rvn = ReadVariableNode.create(fun, getContext(), true, false);
+            ReadVariableNode rvn = ReadVariableNode.create(fun, true, false);
             lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
         }
         Object r = lookup.execute(frame);

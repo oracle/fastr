@@ -33,13 +33,11 @@ import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@NodeFields({@NodeField(name = "context", type = RContext.class), @NodeField(name = "builtin", type = RBuiltinFactory.class)})
+@NodeField(name = "builtin", type = RBuiltinFactory.class)
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends CallNode {
 
     public abstract RNode[] getArguments();
-
-    public abstract RContext getContext();
 
     public abstract RBuiltinFactory getBuiltin();
 
@@ -77,9 +75,9 @@ public abstract class RBuiltinNode extends CallNode {
         return args;
     }
 
-    static CallTarget createArgumentsCallTarget(RContext ctx, RBuiltinFactory builtin) {
+    static CallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
         RNode[] args = createCallArguments(builtin);
-        RBuiltinNode node = createNode(ctx, builtin, args, null);
+        RBuiltinNode node = createNode(builtin, args, null);
         injectParameterDefaultValues(node);
         RBuiltinRootNode root = new RBuiltinRootNode(node, node.getParameterNames(), new FrameDescriptor());
         node.onCreate();
@@ -100,21 +98,20 @@ public abstract class RBuiltinNode extends CallNode {
         RNode[] builtinArguments;
         // static number of arguments
         builtinArguments = inlineStaticArguments(args);
-        RBuiltinNode builtin = createNode(getContext(), getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
+        RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
         builtin.onCreate();
         return builtin;
     }
 
-    private static RBuiltinNode createNode(RContext context, RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {
+    private static RBuiltinNode createNode(RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {
         boolean isCombine = (factory.getFactory().getClass() == CombineFactory.class || factory.getFactory().getClass() == ListBuiltinFactory.class);
-        Object[] args = new Object[(isCombine ? 4 : 3) + factory.getConstantArguments().length];
+        Object[] args = new Object[(isCombine ? 3 : 2) + factory.getConstantArguments().length];
         int index = 0;
         for (; index < factory.getConstantArguments().length; index++) {
             args[index] = factory.getConstantArguments()[index];
         }
 
         args[index++] = builtinArguments;
-        args[index++] = context;
         args[index++] = factory;
         if (isCombine) {
             args[index++] = argNames;
@@ -216,27 +213,20 @@ public abstract class RBuiltinNode extends CallNode {
 
         @Children protected final RNode[] arguments;
 
-        private final RContext context;
         private final RBuiltinFactory builtin;
 
         public RCustomBuiltinNode(RBuiltinNode prev) {
-            this(prev.getArguments(), prev.getContext(), prev.getBuiltin());
+            this(prev.getArguments(), prev.getBuiltin());
         }
 
-        public RCustomBuiltinNode(RNode[] arguments, RContext context, RBuiltinFactory builtin) {
+        public RCustomBuiltinNode(RNode[] arguments, RBuiltinFactory builtin) {
             this.arguments = adoptChildren(arguments);
-            this.context = context;
             this.builtin = builtin;
         }
 
         @Override
         public RNode[] getArguments() {
             return arguments;
-        }
-
-        @Override
-        public RContext getContext() {
-            return context;
         }
 
         @Override
@@ -250,8 +240,8 @@ public abstract class RBuiltinNode extends CallNode {
 
         @Child protected CallNode snippetCall;
 
-        public RSnippetNode(RNode[] arguments, RContext context, RBuiltinFactory builtin, FunctionExpressionNode function) {
-            super(arguments, context, builtin);
+        public RSnippetNode(RNode[] arguments, RBuiltinFactory builtin, FunctionExpressionNode function) {
+            super(arguments, builtin);
             snippetCall = adoptChild(CallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{})));
         }
 

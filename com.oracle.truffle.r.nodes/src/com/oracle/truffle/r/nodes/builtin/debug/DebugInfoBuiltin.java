@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 
 @RBuiltin({"debug.info"})
 @RBuiltinComment("Prints this message.")
@@ -35,7 +36,7 @@ public abstract class DebugInfoBuiltin extends RBuiltinNode {
     @SlowPath
     @Specialization
     public Object printTree() {
-        RPackages packages = (RPackages) getContext().getLookup();
+        RPackages packages = (RPackages) RContext.getInstance().getLookup();
         StringBuilder b = new StringBuilder();
         for (RPackage pack : packages.getPackages()) {
             b.append(createPackageString(pack));

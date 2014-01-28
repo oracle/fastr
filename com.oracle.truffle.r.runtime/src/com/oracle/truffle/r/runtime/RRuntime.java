@@ -153,13 +153,13 @@ public class RRuntime {
         return !isNAorNaN(d) && !Double.isInfinite(d);
     }
 
-    public static int string2int(RContext context, String s) {
+    public static int string2int(String s) {
         if (s != STRING_NA) {
             // FIXME use R rules
             try {
                 return Integer.decode(s);  // decode supports hex constants
             } catch (NumberFormatException e) {
-                context.getAssumptions().naIntroduced.invalidate();
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
             }
         }
         return INT_NA;
@@ -170,7 +170,7 @@ public class RRuntime {
         return longValue == d && ((int) longValue & 0xffffffff) == longValue;
     }
 
-    public static double string2double(RContext context, String v) {
+    public static double string2double(String v) {
         if (v != STRING_NA) {
             // FIXME use R rules
             if ("Inf".equals(v)) {
@@ -187,7 +187,7 @@ public class RRuntime {
                     } catch (NumberFormatException ein) {
                     }
                 }
-                context.getAssumptions().naIntroduced.invalidate();
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
             }
         }
         return DOUBLE_NA;
@@ -213,7 +213,7 @@ public class RRuntime {
         return isNA(c) ? LOGICAL_NA : c.getRealPart() == 0.0 && c.getImaginaryPart() == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
     }
 
-    public static byte string2logical(RContext context, String s) {
+    public static byte string2logical(String s) {
         if (s != STRING_NA) {
             if (s.equals("TRUE") || s.equals("T")) {
                 return TRUE;
@@ -227,7 +227,7 @@ public class RRuntime {
             if (s.equals("False") || s.equals("false")) {
                 return FALSE;
             }
-            context.getAssumptions().naIntroduced.invalidate();
+            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
         }
         return LOGICAL_NA;
     }

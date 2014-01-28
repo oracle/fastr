@@ -26,22 +26,21 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadSuperVariableNode;
 import com.oracle.truffle.r.nodes.binary.*;
+import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.builtin.base.Invisible;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
+import com.oracle.truffle.r.parser.ast.Repeat;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
-    private final RContext context;
     private REnvironment environment;
 
-    public RTruffleVisitor(RContext context) {
-        this.context = context;
+    public RTruffleVisitor() {
         this.environment = new REnvironment();
     }
 
@@ -64,9 +63,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
         switch (c.getType()) {
             case INT:
-                return ConstantNode.create(src, RRuntime.string2int(context, c.getValues()[0]));
+                return ConstantNode.create(src, RRuntime.string2int(c.getValues()[0]));
             case DOUBLE:
-                return ConstantNode.create(src, RRuntime.string2double(context, c.getValues()[0]));
+                return ConstantNode.create(src, RRuntime.string2double(c.getValues()[0]));
             case BOOL:
                 String value = c.getValues()[0];
                 if (value.equals("NA")) {
@@ -81,7 +80,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             case STRING:
                 return ConstantNode.create(src, c.getValues()[0]);
             case COMPLEX:
-                return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(context, c.getValues()[0])));
+                return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(c.getValues()[0])));
             default:
                 throw new UnsupportedOperationException();
         }
@@ -98,7 +97,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : ConstantNode.create(RMissing.instance);
             index++;
         }
-        return CallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), context, true, false), CallArgumentsNode.create(nodes, argumentNames));
+        return CallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), true, false), CallArgumentsNode.create(nodes, argumentNames));
     }
 
     @Override
@@ -149,14 +148,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(UnaryOperation op) {
         RNode operand = op.getLHS().accept(this);
-        return CallNode.createStaticCall(op.getSource(), context, op.getPrettyOperator(), CallArgumentsNode.createUnnamed(operand));
+        return CallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(operand));
     }
 
     @Override
     public RNode visit(BinaryOperation op) {
         RNode left = op.getLHS().accept(this);
         RNode right = op.getRHS().accept(this);
-        return CallNode.createStaticCall(op.getSource(), context, op.getPrettyOperator(), CallArgumentsNode.createUnnamed(left, right));
+        return CallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(left, right));
     }
 
     @Override
@@ -272,7 +271,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         WriteVariableNode aAssign = WriteVariableNode.create(a, rhs, false, false, true);
 
         // read v, assign tmp
-        ReadVariableNode v = n.isSuper() ? ReadSuperVariableNode.create(vAST.getSource(), vSymbol, context, false, false) : ReadVariableNode.create(vAST.getSource(), vSymbol, context, false, false);
+        ReadVariableNode v = n.isSuper() ? ReadSuperVariableNode.create(vAST.getSource(), vSymbol, false, false) : ReadVariableNode.create(vAST.getSource(), vSymbol, false, false);
         final String tmp = "*tmp*";
         WriteVariableNode tmpAssign = WriteVariableNode.create(tmp, v, false, false);
 
@@ -292,7 +291,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         // assign v, read a
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, replacementFunctionCall, false, n.isSuper());
-        ReadVariableNode aRead = ReadVariableNode.create(a, context, false, false);
+        ReadVariableNode aRead = ReadVariableNode.create(a, false, false);
 
         // assemble
         SequenceNode replacement = new SequenceNode(new RNode[]{aAssign, tmpAssign, vAssign, Invisible.create(aRead)});
@@ -302,12 +301,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(SimpleAccessVariable n) {
-        return ReadVariableNode.create(n.getSource(), n.getSymbol(), context, false, n.shouldCopyValue());
+        return ReadVariableNode.create(n.getSource(), n.getSymbol(), false, n.shouldCopyValue());
     }
 
     @Override
     public RNode visit(SimpleAccessTempVariable n) {
-        return ReadVariableNode.create(n.getSource(), n.getSymbol(), context, false, false);
+        return ReadVariableNode.create(n.getSource(), n.getSymbol(), false, false);
     }
 
     @Override

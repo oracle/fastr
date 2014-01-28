@@ -47,7 +47,7 @@ public final class Max extends RWrapperBuiltinNode {
     @Override
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.NO_NONMISSING_MAX);
-        Combine combine = CombineFactory.create(getArguments(), getContext(), getBuiltin(), null);
+        Combine combine = CombineFactory.create(getArguments(), getBuiltin(), null);
         return UnaryArithmeticReduceNodeFactory.create(semantics, BinaryArithmetic.MAX, combine);
     }
 }

@@ -47,7 +47,7 @@ public final class Min extends RWrapperBuiltinNode {
     @Override
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.NO_NONMISSING_MIN);
-        Combine combine = CombineFactory.create(getArguments(), getContext(), getBuiltin(), null);
+        Combine combine = CombineFactory.create(getArguments(), getBuiltin(), null);
         return UnaryArithmeticReduceNodeFactory.create(semantics, BinaryArithmetic.MIN, combine);
     }
 }

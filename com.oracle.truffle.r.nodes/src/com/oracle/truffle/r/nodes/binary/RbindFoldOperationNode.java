@@ -30,7 +30,7 @@ public final class RbindFoldOperationNode extends FoldOperationNode {
     @Child private RbindBinaryNode rbind;
 
     public RbindFoldOperationNode() {
-        this.rbind = adoptChild(RbindBinaryNodeFactory.create(new RNode[2], null, null));
+        this.rbind = adoptChild(RbindBinaryNodeFactory.create(new RNode[2], null));
     }
 
     private Object executeRbind(VirtualFrame frame, Object left, Object right) {

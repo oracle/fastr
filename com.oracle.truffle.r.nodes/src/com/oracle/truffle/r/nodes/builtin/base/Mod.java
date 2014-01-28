@@ -34,7 +34,7 @@ public abstract class Mod extends RBuiltinNode {
 
     @Child protected BinaryArithmeticNode pow = adoptChild(BinaryArithmeticNode.create(BinaryArithmetic.POW));
     @Child protected BinaryArithmeticNode add = adoptChild(BinaryArithmeticNode.create(BinaryArithmetic.ADD));
-    @Child protected Sqrt sqrt = adoptChild(SqrtFactory.create(new RNode[1], getContext(), getBuiltin()));
+    @Child protected Sqrt sqrt = adoptChild(SqrtFactory.create(new RNode[1], getBuiltin()));
 
     @Specialization
     public double mod(RComplex x) {
