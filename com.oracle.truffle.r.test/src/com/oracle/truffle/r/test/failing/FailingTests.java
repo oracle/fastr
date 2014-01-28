@@ -354,11 +354,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testUnaryNotPropagateIgnore_44e928a036845cbe587412096f70a046() {
-        assertEvalError("{ x<-1:4; dim(x)<-c(2, 2); names(x)<-101:104; attr(x, \"dimnames\")<-list(201:202, 203:204); attr(x, \"foo\")<-\"foo\"; y<-!x; attributes(y) }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testUnaryNotRawIgnore_38e2346209ed5b661d4d085d731ec2eb() {
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(matrix(as.raw(1:4),nrow=2 )) }");
     }
