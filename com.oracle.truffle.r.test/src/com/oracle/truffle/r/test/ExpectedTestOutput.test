@@ -1047,6 +1047,23 @@ $dimnames[[2]]
 
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotPropagate
+#{ x<-1:4; dim(x)<-c(2, 2); names(x)<-101:104; attr(x, "dimnames")<-list(201:202, 203:204); attr(x, "foo")<-"foo"; y<-!x; attributes(y) }
+$names
+[1] "101" "102" "103" "104"
+
+$dim
+[1] 2 2
+
+$dimnames
+$dimnames[[1]]
+[1] "201" "202"
+
+$dimnames[[2]]
+[1] "203" "204"
+
+
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotRaw
 #{ a <- as.raw(12) ; !a }
 [1] f3

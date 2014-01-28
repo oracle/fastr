@@ -47,7 +47,11 @@ public abstract class WriteVariableNode extends RNode {
     @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenTemporary;
     @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenSequence;
 
-    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value) {
+    // the toBeCopied parameter is meant to prevent creation of the shared/non-temp vector; this
+    // needed for the implementation of the replacement forms of builtin functions as their last
+    // argument can be mutaded; for example, in "dimnames(x)<-list(1)", the assigned value list(1)
+    // must become list("1"), with the latter value returned as a result of the call
+    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, boolean toBeCopied) {
         Object newValue = value;
         if (!isArgWrite()) {
             Object frameValue;
@@ -72,21 +76,33 @@ public abstract class WriteVariableNode extends RNode {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenTemporary = true;
                         }
-                        rVector.markNonTemporary();
+                        if (toBeCopied) {
+                            RVector vectorCopy = rVector.copy();
+                            newValue = vectorCopy;
+                        } else {
+                            rVector.markNonTemporary();
+                        }
                     } else if (rVector.isShared()) {
                         if (!everSeenShared) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenShared = true;
                         }
                         RVector vectorCopy = rVector.copy();
-                        vectorCopy.markNonTemporary();
+                        if (!toBeCopied) {
+                            vectorCopy.markNonTemporary();
+                        }
                         newValue = vectorCopy;
                     } else {
                         if (!everSeenNonShared) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenNonShared = true;
                         }
-                        rVector.makeShared();
+                        if (toBeCopied) {
+                            RVector vectorCopy = rVector.copy();
+                            newValue = vectorCopy;
+                        } else {
+                            rVector.makeShared();
+                        }
                     }
                 }
             }
@@ -95,27 +111,33 @@ public abstract class WriteVariableNode extends RNode {
         frame.setObject(frameSlot, newValue);
     }
 
-    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
+    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, boolean toBeCopied) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, symbol.toString());
+            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, symbol.toString(), toBeCopied);
         } else {
             assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, symbol.toString());
+            return new UnresolvedWriteSuperVariableNode(rhs, symbol.toString(), toBeCopied);
         }
     }
 
+    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
+        return create(symbol, rhs, isArgWrite, isSuper, false);
+    }
+
     public static WriteVariableNode create(SourceSection src, Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        WriteVariableNode wvn = create(symbol, rhs, isArgWrite, isSuper);
+        WriteVariableNode wvn = create(symbol, rhs, isArgWrite, isSuper, false);
         wvn.assignSourceSection(src);
         return wvn;
     }
 
     public abstract void execute(VirtualFrame frame, Object value);
 
-    @NodeField(name = "symbol", type = Object.class)
+    @NodeFields({@NodeField(name = "symbol", type = Object.class), @NodeField(name = "toBeCopied", type = boolean.class)})
     public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
         public abstract Object getSymbol();
+
+        public abstract boolean isToBeCopied();
 
         @Specialization
         public byte doLogical(VirtualFrame frame, byte value) {
@@ -150,15 +172,17 @@ public abstract class WriteVariableNode extends RNode {
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerAsserts.neverPartOfCompilation();
             FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getSymbol(), initialKind);
-            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot)).execute(frame, value);
+            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, isToBeCopied())).execute(frame, value);
         }
     }
 
-    @NodeField(name = "frameSlot", type = FrameSlot.class)
+    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "toBeCopied", type = boolean.class)})
     public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
 
-        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, FrameSlot frameSlot) {
-            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, frameSlot);
+        public abstract boolean isToBeCopied();
+
+        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, FrameSlot frameSlot, boolean toBeCopied) {
+            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, frameSlot, toBeCopied);
         }
 
         @Specialization(guards = "isBooleanKind")
@@ -181,13 +205,13 @@ public abstract class WriteVariableNode extends RNode {
 
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot, RInvisible value) {
-            super.writeObjectValue(frame, frame, frameSlot, value.get());
+            super.writeObjectValue(frame, frame, frameSlot, value.get(), isToBeCopied());
             return value;
         }
 
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
-            super.writeObjectValue(frame, frame, frameSlot, value);
+            super.writeObjectValue(frame, frame, frameSlot, value, isToBeCopied());
             return value;
         }
     }
@@ -246,10 +270,12 @@ public abstract class WriteVariableNode extends RNode {
 
         @Child private RNode rhs;
         private final Object symbol;
+        private final boolean toBeCopied;
 
-        public UnresolvedWriteSuperVariableNode(RNode rhs, Object symbol) {
+        public UnresolvedWriteSuperVariableNode(RNode rhs, Object symbol, boolean toBeCopied) {
             this.rhs = adoptChild(rhs);
             this.symbol = symbol;
+            this.toBeCopied = toBeCopied;
         }
 
         @Override
@@ -266,10 +292,10 @@ public abstract class WriteVariableNode extends RNode {
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.get(frame).getEnclosingFrame() == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
                 writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, new FrameSlotNode.PresentFrameSlotNode(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)),
-                                this.isArgWrite());
+                                this.isArgWrite(), toBeCopied);
             } else {
-                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), this.isArgWrite());
-                writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol), getRhs());
+                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), this.isArgWrite(), toBeCopied);
+                writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, toBeCopied), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
         }
@@ -282,7 +308,7 @@ public abstract class WriteVariableNode extends RNode {
                 execute(frame, value, enclosingFrame);
             } else {
                 // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), symbol.toString())).execute(frame, value);
+                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), symbol.toString(), toBeCopied)).execute(frame, value);
             }
         }
 
@@ -294,9 +320,12 @@ public abstract class WriteVariableNode extends RNode {
 
     @SuppressWarnings("unused")
     @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
+    @NodeField(name = "toBeCopied", type = boolean.class)
     public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
         protected abstract FrameSlotNode getFrameSlotNode();
+
+        public abstract boolean isToBeCopied();
 
         @Specialization(guards = "isBooleanKind")
         public byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
@@ -318,13 +347,13 @@ public abstract class WriteVariableNode extends RNode {
 
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, RInvisible value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            super.writeObjectValue(frame, enclosingFrame, frameSlot, value.get());
+            super.writeObjectValue(frame, enclosingFrame, frameSlot, value.get(), isToBeCopied());
             return value;
         }
 
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            super.writeObjectValue(frame, enclosingFrame, frameSlot, value);
+            super.writeObjectValue(frame, enclosingFrame, frameSlot, value, isToBeCopied());
             return value;
         }
 

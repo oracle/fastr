@@ -78,7 +78,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Specialization(order = 3, guards = "!isZeroLength")
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
-        v.setDimNames(list, this.getSourceSection());
+        v.setDimNames(convertToListOfStrings(frame, list), this.getSourceSection());
         return v;
     }
 

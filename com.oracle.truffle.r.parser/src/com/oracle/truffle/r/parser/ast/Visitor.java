@@ -76,6 +76,8 @@ public interface Visitor<R> {
 
     R visit(SimpleAccessVariable readVariable);
 
+    R visit(SimpleAccessTempVariable readVariable);
+
     R visit(FieldAccess fieldAccess);
 
     R visit(SimpleAssignVariable assign);

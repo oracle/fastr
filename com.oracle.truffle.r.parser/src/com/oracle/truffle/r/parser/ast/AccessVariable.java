@@ -17,4 +17,8 @@ public abstract class AccessVariable extends ASTNode {
     public static ASTNode create(SourceSection src, String name, boolean shouldCopyValue) {
         return new SimpleAccessVariable(src, Symbol.getSymbol(name), shouldCopyValue);
     }
+
+    public static ASTNode create(SourceSection src, Object tempSymbol) {
+        return new SimpleAccessTempVariable(src, tempSymbol);
+    }
 }

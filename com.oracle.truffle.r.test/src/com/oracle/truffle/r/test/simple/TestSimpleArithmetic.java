@@ -388,10 +388,9 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testUnaryNotPropagateIgnore() {
+    public void testUnaryNotPropagate() {
         // list of sequences should be converted to list of string vectors
-        assertEvalError("{ x<-1:4; dim(x)<-c(2, 2); names(x)<-101:104; attr(x, \"dimnames\")<-list(201:202, 203:204); attr(x, \"foo\")<-\"foo\"; y<-!x; attributes(y) }");
+        assertEval("{ x<-1:4; dim(x)<-c(2, 2); names(x)<-101:104; attr(x, \"dimnames\")<-list(201:202, 203:204); attr(x, \"foo\")<-\"foo\"; y<-!x; attributes(y) }");
     }
 
     @Test

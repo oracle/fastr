@@ -262,9 +262,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         SimpleAccessVariable vAST = (SimpleAccessVariable) args.first().getValue();
         String vSymbol = vAST.getSymbol().toString();
 
-        // store a
-        final String a = "*tmp_a*";
-        WriteVariableNode aAssign = WriteVariableNode.create(a, rhs, false, false);
+        //@formatter:off
+        // store a - need to use temporary, otherwise there is a failure in case multiple calls to
+        // the replacement form are chained: 
+        // x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, "dimnames")<-(attr(y, "dimnames")<-list("b"))
+        //@formatter:on
+
+        final Object a = new Object();
+        WriteVariableNode aAssign = WriteVariableNode.create(a, rhs, false, false, true);
 
         // read v, assign tmp
         ReadVariableNode v = n.isSuper() ? ReadSuperVariableNode.create(vAST.getSource(), vSymbol, context, false, false) : ReadVariableNode.create(vAST.getSource(), vSymbol, context, false, false);
@@ -279,7 +284,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 rfArgs.add(args.getNode(i));
             }
         }
-        rfArgs.add(AccessVariable.create(null, a, false));
+        rfArgs.add(AccessVariable.create(null, a));
 
         // replacement function call (use visitor for FunctionCall)
         FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs);
@@ -298,6 +303,11 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(SimpleAccessVariable n) {
         return ReadVariableNode.create(n.getSource(), n.getSymbol(), context, false, n.shouldCopyValue());
+    }
+
+    @Override
+    public RNode visit(SimpleAccessTempVariable n) {
+        return ReadVariableNode.create(n.getSource(), n.getSymbol(), context, false, false);
     }
 
     @Override
