@@ -51,9 +51,8 @@ public final class REngine {
 
     private REngine(String[] commandArgs, ConsoleHandler consoleHandler) {
         RDefaultPackages defaultPackages = RDefaultPackages.getInstance();
-        this.context = new RContext(defaultPackages, commandArgs, consoleHandler);
+        this.context = RContext.instantiate(defaultPackages, commandArgs, consoleHandler);
         defaultPackages.load(context);
-
     }
 
     /**

@@ -99,13 +99,20 @@ public final class RContext {
         return singleton;
     }
 
-    public RContext(RBuiltinLookup lookup, String[] commandArgs, ConsoleHandler consoleHandler) {
+    public static RContext instantiate(RBuiltinLookup lookup, String[] commandArgs, ConsoleHandler consoleHandler) {
+        if (singleton != null) {
+            throw new IllegalStateException("RContext already instantiated.");
+        }
+        singleton = new RContext(lookup, commandArgs, consoleHandler);
+        return singleton;
+    }
+
+    private RContext(RBuiltinLookup lookup, String[] commandArgs, ConsoleHandler consoleHandler) {
         this.sourceManager = new SourceManager();
         this.lookup = lookup;
         this.commandArgs = commandArgs;
         this.consoleHandler = consoleHandler;
         this.evalWarnings = null;
-        singleton = this;
     }
 
     public RBuiltinLookup getLookup() {
