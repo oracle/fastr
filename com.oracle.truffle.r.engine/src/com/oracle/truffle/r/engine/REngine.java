@@ -76,7 +76,7 @@ public final class REngine {
      * value cannot be stored in an object field, so must be passed as an argument.
      */
     public static VirtualFrame createVirtualFrame() {
-        return new DefaultVirtualFrame(new FrameDescriptor(), null, RArguments.create());
+        return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
     }
 
     public Object parseAndEval(File file, boolean printResult) throws IOException {
