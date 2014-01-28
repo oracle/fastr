@@ -351,33 +351,11 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(order = 1000, guards = "!isMatrix")
     public String prettyPrint(VirtualFrame frame, RList operand) {
-        int length = operand.getLength();
-        if (length == 0) {
-            return "list()";
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < length; i++) {
-                if (isPrintingAttributes() && operand.elementNamePrefix != null) {
-                    sb.append(operand.elementNamePrefix);
-                }
-                Object name = operand.getNameAt(i);
-                sb.append(name).append('\n');
-                Object value = operand.getDataAt(i);
-                sb.append(printSingleListValue(frame, value, name)).append("\n\n");
-            }
-            String result = sb.deleteCharAt(sb.length() - 1).toString();
-            Map<String, Object> attributes = operand.getAttributes();
-            if (attributes != null) {
-                result = result + printAttributes(frame, operand, attributes);
-            }
-            return result;
-
-        }
+        return prettyPrintList0(frame, operand, null);
     }
 
-    // TODO refactor: too much code reuse
     // FIXME support nesting levels >1
-    public String prettyPrintNestedList(VirtualFrame frame, RList operand, Object listName) {
+    private String prettyPrintList0(VirtualFrame frame, RList operand, Object listName) {
         int length = operand.getLength();
         if (length == 0) {
             return "list()";
@@ -386,10 +364,11 @@ public abstract class PrettyPrinterNode extends RNode {
             for (int i = 0; i < length; i++) {
                 if (isPrintingAttributes() && operand.elementNamePrefix != null) {
                     sb.append(operand.elementNamePrefix);
-                } else {
-                    sb.append(listName);
                 }
                 Object name = operand.getNameAt(i);
+                if (listName != null) {
+                    name = new StringBuilder(listName.toString()).append(name).toString();
+                }
                 sb.append(name).append('\n');
                 Object value = operand.getDataAt(i);
                 sb.append(printSingleListValue(frame, value, name)).append("\n\n");
@@ -400,7 +379,6 @@ public abstract class PrettyPrinterNode extends RNode {
                 result = result + printAttributes(frame, operand, attributes);
             }
             return result;
-
         }
     }
 
@@ -486,7 +464,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
         if (RTYPES.isRList(argumentsValue0)) {
             RList argumentsValue0Cast = RTYPES.asRList(argumentsValue0);
-            return prettyPrintNestedList(frame, argumentsValue0Cast, listElementName);
+            return prettyPrintList0(frame, argumentsValue0Cast, listElementName);
         }
         if (RTYPES.isRInvisible(argumentsValue0)) {
             RInvisible argumentsValue0Cast = RTYPES.asRInvisible(argumentsValue0);

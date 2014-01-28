@@ -2267,6 +2267,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{  x<-c(11, 7, 2222, 7, 33); print(x) }");
         assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x) }");
         assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }");
+        assertEval("{ print(list(list(list(1,2),list(3)),list(list(4),list(5,6)))) }");
     }
 
     @Test
