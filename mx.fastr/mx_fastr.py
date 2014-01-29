@@ -182,7 +182,10 @@ def rbench(args):
     args = parser.parse_args(args)
 
     # dynamically load the benchmarks suite
-    _fastr_suite.import_suite('r_benchmarks', version=None, alternate='http://localhost/hg/r_benchmarks')
+    hg_base = mx.get_env('HG_BASE')
+    alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
+    bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
+    mx.build_suite(bm_suite)
 
     # Get the R script location via helper app
     # N.B. we do not use mx.java() as that might check options we don't want for the helper, e.g. debugging agent
