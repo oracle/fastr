@@ -75,6 +75,12 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
+    public byte doComplex(RComplex operand) {
+        naCheck.enable(operand);
+        return naCheck.convertComplexToLogical(operand);
+    }
+
+    @Specialization
     public byte doString(String operand) {
         naCheck.enable(operand);
         return naCheck.convertStringToLogical(operand);
@@ -83,6 +89,35 @@ public abstract class CastLogicalNode extends CastNode {
     @Specialization
     public byte doRaw(RRaw operand) {
         return RRuntime.raw2logical(operand);
+    }
+
+    private byte[] dataFromString(RStringVector operand) {
+        naCheck.enable(operand);
+        byte[] ldata = new byte[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            String value = operand.getDataAt(i);
+            ldata[i] = naCheck.convertStringToLogical(value);
+        }
+        return ldata;
+    }
+
+    private byte[] dataFromComplex(RComplexVector operand) {
+        naCheck.enable(operand);
+        byte[] ldata = new byte[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            RComplex value = operand.getDataAt(i);
+            ldata[i] = naCheck.convertComplexToLogical(value);
+        }
+        return ldata;
+    }
+
+    private static byte[] dataFromRaw(RRawVector operand) {
+        byte[] ldata = new byte[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            RRaw value = operand.getDataAt(i);
+            ldata[i] = RRuntime.raw2logical(value);
+        }
+        return ldata;
     }
 
     @Specialization
@@ -112,98 +147,56 @@ public abstract class CastLogicalNode extends CastNode {
 
     @Specialization(order = 101, guards = "preserveDimensions")
     public RLogicalVector doStringVectorDims(RStringVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToLogical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        byte[] ldata = dataFromString(operand);
+        return RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
     }
 
     @Specialization(order = 102, guards = "preserveNames")
     public RLogicalVector doStringVectorNames(RStringVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToLogical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        byte[] ldata = dataFromString(operand);
+        return RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
     }
 
     @Specialization(order = 103)
     public RLogicalVector doStringVector(RStringVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToLogical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA());
+        byte[] ldata = dataFromString(operand);
+        return RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
     }
 
     @Specialization(order = 104, guards = "preserveDimensions")
     public RLogicalVector doComplexVectorDims(RComplexVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertComplexToLogical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        byte[] ldata = dataFromComplex(operand);
+        return RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
     }
 
     @Specialization(order = 105, guards = "preserveNames")
     public RLogicalVector doComplexVectorNames(RComplexVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertComplexToLogical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        byte[] ldata = dataFromComplex(operand);
+        return RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
     }
 
     @Specialization(order = 106)
     public RLogicalVector doComplexVector(RComplexVector operand) {
-        naCheck.enable(operand);
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertComplexToLogical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, naCheck.neverSeenNA());
+        byte[] ldata = dataFromComplex(operand);
+        return RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
     }
 
     @Specialization(order = 107, guards = "preserveDimensions")
     public RLogicalVector doRawVectorDims(RRawVector operand) {
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RRaw value = operand.getDataAt(i);
-            ddata[i] = RRuntime.raw2logical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
+        byte[] ldata = dataFromRaw(operand);
+        return RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
     }
 
     @Specialization(order = 108, guards = "preserveNames")
     public RLogicalVector doRawVectorNames(RRawVector operand) {
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RRaw value = operand.getDataAt(i);
-            ddata[i] = RRuntime.raw2logical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
+        byte[] ldata = dataFromRaw(operand);
+        return RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
     }
 
     @Specialization(order = 109)
     public RLogicalVector doRawVector(RRawVector operand) {
-        byte[] ddata = new byte[operand.getLength()];
-        for (int i = 0; i < operand.getLength(); i++) {
-            RRaw value = operand.getDataAt(i);
-            ddata[i] = RRuntime.raw2logical(value);
-        }
-        return RDataFactory.createLogicalVector(ddata, RDataFactory.COMPLETE_VECTOR);
+        byte[] ldata = dataFromRaw(operand);
+        return RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Generic

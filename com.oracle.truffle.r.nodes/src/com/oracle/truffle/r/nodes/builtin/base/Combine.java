@@ -66,7 +66,13 @@ public abstract class Combine extends RBuiltinNode {
             CompilerDirectives.transferToInterpreter();
             castVector = adoptChild(CastToVectorNodeFactory.create(null));
         }
-        return castVector.executeRAbstractVector(frame, value);
+        RVector resultVector = castVector.executeRAbstractVector(frame, value).materialize();
+        // need to copy if vector is shared in case the same variable is used in combine, e.g. :
+        // x <- 1:2 ; names(x) <- c("A",NA) ; c(x,test=x)
+        if (resultVector.isShared()) {
+            resultVector = resultVector.copy();
+        }
+        return resultVector;
     }
 
     @Override

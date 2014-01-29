@@ -37,8 +37,6 @@ import com.sun.org.apache.xml.internal.utils.*;
 @SuppressWarnings("unused")
 public abstract class AsInteger extends RBuiltinNode {
 
-    private final NACheck check = NACheck.create();
-
     @Child CastIntegerNode castIntNode;
 
     private int castInt(VirtualFrame frame, Object o) {
@@ -63,35 +61,28 @@ public abstract class AsInteger extends RBuiltinNode {
     }
 
     @Specialization
-    public int asInteger(double value) {
-        check.enable(value);
-        return check.convertDoubleToInt(value);
+    public int asInteger(VirtualFrame frame, double value) {
+        return castInt(frame, value);
     }
 
     @Specialization
-    public int asInteger(byte value) {
-        return RRuntime.logical2int(value);
+    public int asInteger(VirtualFrame frame, byte value) {
+        return castInt(frame, value);
     }
 
     @Specialization
-    public int asInteger(RComplex value) {
-        check.enable(value);
-        return check.convertComplexToInt(value);
+    public int asInteger(VirtualFrame frame, RComplex value) {
+        return castInt(frame, value);
     }
 
     @Specialization
-    public int asInteger(RRaw value) {
-        // Raw values cannot be NA.
-        return (value.getValue()) & 0xFF;
+    public int asInteger(VirtualFrame frame, RRaw value) {
+        return castInt(frame, value);
     }
 
     @Specialization
-    public int asInteger(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ex) {
-            return RRuntime.INT_NA;
-        }
+    public int asInteger(VirtualFrame frame, String value) {
+        return castInt(frame, value);
     }
 
     @Specialization
@@ -105,42 +96,12 @@ public abstract class AsInteger extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RDoubleVector vector) {
-        return castIntVector(frame, vector);
-    }
-
-    @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RStringVector vector) {
-        return castIntVector(frame, vector);
-    }
-
-    @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RLogicalVector vector) {
-        return castIntVector(frame, vector);
-    }
-
-    @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RComplexVector vector) {
-        return castIntVector(frame, vector);
-    }
-
-    @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RRawVector vector) {
-        return castIntVector(frame, vector);
-    }
-
-    @Specialization
     public RIntVector asInteger(RIntSequence sequence) {
         return (RIntVector) sequence.createVector();
     }
 
     @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RDoubleSequence sequence) {
-        return castIntVector(frame, sequence);
-    }
-
-    @Specialization
-    public RIntVector asInteger(VirtualFrame frame, RList list) {
-        return castIntVector(frame, list);
+    public RIntVector asInteger(VirtualFrame frame, RAbstractVector vector) {
+        return castIntVector(frame, vector);
     }
 }

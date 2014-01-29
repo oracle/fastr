@@ -37,7 +37,8 @@ public class GnuROneShotRSession implements RSession {
                     "options(echo=FALSE)\n" + 
                     "options(warn=FALSE)\n" + 
                     "options(error=dump.frames)\n" +
-                    "options(showErrorCalls=FALSE)\n";
+                    "options(showErrorCalls=FALSE)\n" +
+                    "options(keep.source=TRUE)\n";
     //@formatter:on
 
     protected static final byte[] NL = "\n".getBytes();

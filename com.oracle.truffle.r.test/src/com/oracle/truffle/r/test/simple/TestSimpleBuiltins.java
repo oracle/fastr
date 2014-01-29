@@ -228,6 +228,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(1);  c(z=x, 42) }");
         assertEval("{ x<-c(y=1, 2);  c(a=x, 42) }");
 
+        assertEval("{ c(TRUE,1L,1.0,list(3,4)) }");
+        assertEval("{ c(TRUE,1L,1.0,list(3,list(4,5))) }");
+
+        assertEval("{ c(x=1,y=2) }");
+        assertEval("{ c(x=1,2) }");
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"A\",NA) ; c(x,test=x) }");
+        assertEval("{ c(a=1,b=2:3,list(x=FALSE))  }");
+        assertEval("{ c(1,z=list(1,b=22,3)) }");
     }
 
     @Test
@@ -280,15 +288,6 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testCombineBroken() {
-        assertEval("{ c(TRUE,1L,1.0,list(3,4)) }");
-        assertEval("{ c(TRUE,1L,1.0,list(3,list(4,5))) }");
-
-        assertEval("{ c(x=1,y=2) }");
-        assertEval("{ c(x=1,2) }");
-        assertEval("{ x <- 1:2 ; names(x) <- c(\"A\",NA) ; c(x,test=x) }");
-        assertEval("{ c(a=1,b=2:3,list(x=FALSE))  }");
-        assertEval("{ c(1,z=list(1,b=22,3)) }");
-
         assertEval("{ c(1i,0/0) }"); // yes, this is done by GNU-R, note
         // inconsistency with as.complex(0/0)
     }
@@ -324,13 +323,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.integer(list(integer(),2,3)) }");
         assertEval("{ as.integer(list(list(1),2,3)) }");
         assertEval("{ as.integer(list(1,2,3,list())) }");
-    }
-
-    @Test
-    @Ignore
-    public void testAsIntegerIgnore() {
-        assertEval("{ as.integer(10000000000) }"); // FIXME coercion warning missing
-        assertEval("{ as.integer(-10000000000) }"); // FIXME coercion warning missing
+        assertEvalWarning("{ as.integer(10000000000) }");
+        assertEvalWarning("{ as.integer(-10000000000) }");
+        assertEvalWarning("{ as.integer(c(\"1\",\"hello\")) }");
+        assertEvalWarning("{ as.integer(\"TRUE\") }");
+        assertEval("{ as.integer(as.raw(1)) }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
     }
 
     @Test
@@ -340,12 +339,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.character(TRUE) }");
         assertEval("{ as.character(1:3) }");
         assertEval("{ as.character(NULL) }");
-        assertEval("{ as.character(list(1,2,3)) }");
     }
 
     @Test
     @Ignore
     public void testAsCharacterIgnore() {
+        assertEval("{ as.character(list(1,2,3)) }");
         assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
         assertEval("{ as.character(list(list(c(\"hello\", \"hi\")))) }");
         assertEval("{ as.character(list(c(2L, 3L))) }");
@@ -356,22 +355,26 @@ public class TestSimpleBuiltins extends TestBase {
     public void testAsDouble() {
         assertEval("{ as.double(\"1.27\") }");
         assertEval("{ as.double(1L) }");
-    }
-
-    @Test
-    @Ignore
-    public void testAsDoubleIgnore() {
-        // FIXME coercion warnings missing
-        assertEval("{ as.double(c(\"1\",\"hello\")) }");
-        assertEval("{ as.double(\"TRUE\") }");
-
+        assertEval("{ as.double(as.raw(1)) }");
+        assertEvalWarning("{ as.double(c(\"1\",\"hello\")) }");
+        assertEvalWarning("{ as.double(\"TRUE\") }");
+        assertEvalWarning("{ as.double(10+2i) }");
+        assertEvalWarning("{ as.double(c(3+3i, 4+4i)) }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
     }
 
     @Test
     public void testAsLogical() {
         assertEval("{ as.logical(1) }");
         assertEval("{ as.logical(\"false\") }");
-        assertEval("{ as.logical(\"dummy\") }"); // no warning produced
+        assertEval("{ as.logical(\"dummy\") }"); // no warning produced (as it should be)
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.logical(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.logical(x); attributes(y) }");
+        assertEval("{ as.logical(c(\"1\",\"hello\")) }");
+        assertEval("{ as.logical(\"TRUE\") }");
+        assertEval("{ as.logical(10+2i) }");
+        assertEval("{ as.logical(c(3+3i, 4+4i)) }");
     }
 
     @Test
