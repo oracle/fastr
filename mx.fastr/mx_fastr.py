@@ -20,6 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+import subprocess
 from os.path import join, sep
 from argparse import ArgumentParser
 import shlex
@@ -168,7 +169,59 @@ def ignoredtests(args):
     mx.clean(testOnly)
     mx.build(testOnly)
 
+_fastr_suite = None
+
+def rbench(args):
+    '''run an R benchmark'''
+    parser = ArgumentParser(prog='mx rbench')
+    parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='qualified name of benchmark')
+    parser.add_argument('--path', action='store_true', help='print path to benchmark')
+    parser.add_argument('--J', dest='vm_args', help='Graal VM arguments (e.g. --J @-dsa)', metavar='@<args>')
+    parser.add_argument('--gnur', action='store_true', help='run under GnuR')
+    parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
+    args = parser.parse_args(args)
+
+    # dynamically load the benchmarks suite
+    _fastr_suite.import_suite('r_benchmarks', version=None, alternate='http://localhost/hg/r_benchmarks')
+
+    # Get the R script location via helper app
+    # N.B. we do not use mx.java() as that might check options we don't want for the helper, e.g. debugging agent
+    javacmd = ['java', '-cp', mx.classpath('r.benchmarks'), 'r.benchmarks.RBenchmarks', args.bm]
+    try:
+        bmpath = subprocess.check_output(javacmd).rstrip()
+        if args.path:
+            print bmpath
+        else:
+            command = []
+            if args.vm_args is not None:
+                command = ['--J', args.vm_args]
+            command = command + ['-f', bmpath]
+            if args.gnur:
+                env = os.environ
+                if args.gnur_jit:
+                    env['R_ENABLE_JIT'] = '3'
+                rc = subprocess.call(['R', '--slave'] + command, env=env)
+                if rc != 0:
+                    mx.abort('GnuR failed with rc: ' + rc)
+            else:
+                runRCommand(command)
+    except subprocess.CalledProcessError:
+        mx.abort(1)
+
+def _bench_harness_body(args, vmArgs):
+    mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
+    marks = ['shootout.binarytrees', 'shootout.fannkuchredux', 'shootout.fasta', 'shootout.fastaredux',
+             'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
+             'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm']
+    for mark in marks:
+        rbench([mark])
+
+def bench(args):
+    mx.bench(args, harness=_bench_harness_body)
+
 def mx_init(suite):
+    global _fastr_suite
+    _fastr_suite = suite
     commands = {
         'gate' : [gate, ''],
         'r' : [runRCommand, '[options]'],
@@ -176,6 +229,8 @@ def mx_init(suite):
         'rtestgen' : [testgen, ''],
         'rignoredtests' : [ignoredtests, ''],
         'junit' : [junit, ['options']],
+        'rbench' : [rbench, 'options'],
+        'bench' : [bench, 'options'],
     }
     mx.update_commands(suite, commands)
 
