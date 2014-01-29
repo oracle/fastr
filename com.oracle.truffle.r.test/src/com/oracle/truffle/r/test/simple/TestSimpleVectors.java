@@ -404,6 +404,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b,i) { b[i] } ; f(1:3,c(2,1)) ; f(1:3,NULL) }");
 
         assertEval("{ x <- \"hi\";  y<-c(1,1) ; x[y] }");
+        assertEval("{ l <- list(1,function(){3}) ; f <- function(i) { l[[i]] } ; f(c(2)) }");
     }
 
     @Test
@@ -475,7 +476,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- list(1,list(3)) ; x[[c(-1,1)]] }");
         assertEvalError("{ l <- list(1,list(2)) ; l[[integer()]] }");
         assertEval("{ l <- list(1,list(2)) ; f <- function(i) { l[[i]] } ; f(c(2,1)) ; f(1) }");
-        assertEval("{ l <- list(1,function(){3}) ; f <- function(i) { l[[i]] } ; f(c(2)) }");
         assertEvalError("{ l <- list(1,NULL) ; f <- function(i) { l[[i]] } ; f(c(2,1)) }");
         assertEvalError("{ f <- function(i) { l[[i]] } ; l <- list(1, f) ; f(c(2,1)) }");
         assertEvalError("{ f <- function(i) { l[[i]] } ; l <- list(1, 1:3) ; f(c(2,NA)) }");

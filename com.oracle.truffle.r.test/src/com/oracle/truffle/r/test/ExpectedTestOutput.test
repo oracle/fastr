@@ -39714,6 +39714,10 @@ integer(0)
 [1] 1 3 4 5
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ l <- list(1,function(){3}) ; f <- function(i) { l[[i]] } ; f(c(2)) }
+function(){3}
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ x <- "hi";  y<-c(1,1) ; x[y] }
 [1] "hi" "hi"
 
