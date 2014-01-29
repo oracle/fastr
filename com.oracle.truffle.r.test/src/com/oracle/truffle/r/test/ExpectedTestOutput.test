@@ -855,6 +855,18 @@ raw(0)
 [1] 0-0.25i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ round( ((1+1i)/(0+1i)) ^ (-3.54), digits=5) }
+[1] -0.27428+0.10364i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ round( (1+2i)^(3+4i), digits=5 ) }
+[1] 0.12901+0.03392i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }
+[1] -1.92308+2.88462i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
 #{ x <- 1+2i; y <- 3+4i; x*y }
 [1] -5+10i
 

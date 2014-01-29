@@ -139,19 +139,18 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ (1+2i) / ((0-1i)/(0+0i)) }");
         assertEval("{ ((1+1i)/(0+0i)) ^ (-3) }");
         assertEval("{ (3+2i)^2 }");
+        assertEval("{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }");
+        assertEval("{ round( (1+2i)^(3+4i), digits=5 ) }");
+        assertEval("{ round( ((1+1i)/(0+1i)) ^ (-3.54), digits=5) }");
     }
 
     @Test
     @Ignore
     public void testScalarsComplexIgnore() {
-        assertEval("{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }");
-        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
-        assertEval("{ round( (1+2i)^(3+4i), digits=5 ) }");
-        assertEval("{ round( ((1+1i)/(0+1i)) ^ (-3.54), digits=5) }");
-
         // FIXME print format
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y+x }");
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }");
+        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
 
     }
 
@@ -303,11 +302,12 @@ public class TestSimpleArithmetic extends TestBase {
     @Test
     @Ignore
     public void testVectorsOperationsComplexIgnore() {
-        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
         assertEval("{ z <- c(-1.5-1i,10) ; (z * z)[1] }");
-        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
         assertEval("{ c(1+1i,3+2i) / 2 }");
         assertEval("{ c(1,2,3+1i)^3 }");
+        // FIXME print format
+        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
+        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Test
