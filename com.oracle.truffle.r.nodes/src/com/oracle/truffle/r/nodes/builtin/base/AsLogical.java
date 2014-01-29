@@ -30,13 +30,12 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin("as.logical")
 @SuppressWarnings("unused")
 public abstract class AsLogical extends RBuiltinNode {
-
-    private final NACheck check = NACheck.create();
 
     @Child CastLogicalNode castLogicalNode;
 
@@ -64,27 +63,23 @@ public abstract class AsLogical extends RBuiltinNode {
     }
 
     @Specialization(order = 10)
-    public byte asLogical(int value) {
-        check.enable(value);
-        return check.convertIntToLogical(value);
+    public byte asLogical(VirtualFrame frame, int value) {
+        return castLogical(frame, value);
     }
 
     @Specialization(order = 12)
-    public byte asLogical(double value) {
-        check.enable(value);
-        return check.convertDoubleToLogical(value);
+    public byte asLogical(VirtualFrame frame, double value) {
+        return castLogical(frame, value);
     }
 
     @Specialization(order = 14)
-    public byte asLogical(RComplex value) {
-        check.enable(value);
-        return check.convertComplexToLogical(value);
+    public byte asLogical(VirtualFrame frame, RComplex value) {
+        return castLogical(frame, value);
     }
 
     @Specialization
     public byte asLogical(VirtualFrame frame, String value) {
-        check.enable(value);
-        return check.convertStringToLogical(value);
+        return castLogical(frame, value);
     }
 
     @Specialization
@@ -98,37 +93,7 @@ public abstract class AsLogical extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RIntVector vector) {
-        return castLogicalVector(frame, vector);
-    }
-
-    @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RStringVector vector) {
-        return castLogicalVector(frame, vector);
-    }
-
-    @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RDoubleVector vector) {
-        return castLogicalVector(frame, vector);
-    }
-
-    @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RComplexVector vector) {
-        return castLogicalVector(frame, vector);
-    }
-
-    @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RDoubleSequence sequence) {
-        return castLogicalVector(frame, sequence);
-    }
-
-    @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RIntSequence sequence) {
-        return castLogicalVector(frame, sequence);
-    }
-
-    @Specialization
-    public RLogicalVector asLogical(VirtualFrame frame, RRawVector vector) {
+    public RLogicalVector asLogical(VirtualFrame frame, RAbstractVector vector) {
         return castLogicalVector(frame, vector);
     }
 }

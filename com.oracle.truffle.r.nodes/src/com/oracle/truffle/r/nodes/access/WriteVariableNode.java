@@ -49,7 +49,7 @@ public abstract class WriteVariableNode extends RNode {
 
     // the toBeCopied parameter is meant to prevent creation of the shared/non-temp vector; this
     // needed for the implementation of the replacement forms of builtin functions as their last
-    // argument can be mutaded; for example, in "dimnames(x)<-list(1)", the assigned value list(1)
+    // argument can be mutated; for example, in "dimnames(x)<-list(1)", the assigned value list(1)
     // must become list("1"), with the latter value returned as a result of the call
     protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, boolean toBeCopied) {
         Object newValue = value;

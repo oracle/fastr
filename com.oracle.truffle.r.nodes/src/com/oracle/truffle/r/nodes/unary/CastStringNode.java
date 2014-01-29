@@ -35,6 +35,12 @@ public abstract class CastStringNode extends CastNode {
 
     @Child private ToString toString = adoptChild(ToStringFactory.create(new RNode[1], null));
 
+    public abstract Object executeString(VirtualFrame frame, int o);
+
+    public abstract Object executeString(VirtualFrame frame, double o);
+
+    public abstract Object executeString(VirtualFrame frame, byte o);
+
     public abstract Object executeString(VirtualFrame frame, Object o);
 
     public abstract Object executeStringVector(VirtualFrame frame, Object o);
@@ -87,6 +93,42 @@ public abstract class CastStringNode extends CastNode {
         return toString.executeString(frame, value);
     }
 
+    private String[] dataFromLogical(VirtualFrame frame, RLogicalVector operand) {
+        String[] sdata = new String[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            byte value = operand.getDataAt(i);
+            sdata[i] = toString.executeString(frame, value);
+        }
+        return sdata;
+    }
+
+    private String[] dataFromComplex(VirtualFrame frame, RComplexVector operand) {
+        String[] sdata = new String[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            RComplex value = operand.getDataAt(i);
+            sdata[i] = toString.executeString(frame, value);
+        }
+        return sdata;
+    }
+
+    private String[] dataFromRaw(VirtualFrame frame, RRawVector operand) {
+        String[] sdata = new String[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            RRaw value = operand.getDataAt(i);
+            sdata[i] = toString.executeString(frame, value);
+        }
+        return sdata;
+    }
+
+    private String[] dataFromList(VirtualFrame frame, RList operand) {
+        String[] sdata = new String[operand.getLength()];
+        for (int i = 0; i < operand.getLength(); i++) {
+            Object value = operand.getDataAt(i);
+            sdata[i] = toString.executeString(frame, value);
+        }
+        return sdata;
+    }
+
     @Specialization(order = 100, guards = "isZeroLength")
     public Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
         return isEmptyVectorConvertedToNull() ? RNull.instance : RDataFactory.createStringVector(0);
@@ -119,121 +161,73 @@ public abstract class CastStringNode extends CastNode {
 
     @Specialization(order = 107, guards = {"!isZeroLength", "preserveDimensions"})
     public RStringVector doLogicalVectorDims(VirtualFrame frame, RLogicalVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromLogical(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
     }
 
     @Specialization(order = 108, guards = {"!isZeroLength", "preserveNames"})
     public RStringVector doLogicalVectorNames(VirtualFrame frame, RLogicalVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromLogical(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
     }
 
     @Specialization(order = 109, guards = "!isZeroLength")
     public RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromLogical(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(order = 110, guards = {"!isZeroLength", "preserveDimensions"})
     public RStringVector doComplexVectorDims(VirtualFrame frame, RComplexVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromComplex(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
     }
 
     @Specialization(order = 111, guards = {"!isZeroLength", "preserveNames"})
     public RStringVector doComplexVectorNames(VirtualFrame frame, RComplexVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromComplex(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
     }
 
     @Specialization(order = 112, guards = "!isZeroLength")
     public RStringVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromComplex(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(order = 113, guards = {"!isZeroLength", "preserveDimensions"})
     public RStringVector doRawVectorDims(VirtualFrame frame, RRawVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromRaw(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
     }
 
     @Specialization(order = 114, guards = {"!isZeroLength", "preserveNames"})
     public RStringVector doRawVectorNames(VirtualFrame frame, RRawVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromRaw(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
     }
 
     @Specialization(order = 115, guards = "!isZeroLength")
     public RStringVector doRawVector(VirtualFrame frame, RRawVector vector) {
-        int length = vector.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, vector.getDataAt(i));
-        }
+        String[] result = dataFromRaw(frame, vector);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(order = 116, guards = {"!isZeroLength", "preserveDimensions"})
     public RStringVector doListDims(VirtualFrame frame, RList list) {
-        int length = list.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, list.getDataAt(i));
-        }
+        String[] result = dataFromList(frame, list);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getDimensions());
     }
 
     @Specialization(order = 117, guards = {"!isZeroLength", "preserveNames"})
     public RStringVector doListNames(VirtualFrame frame, RList list) {
-        int length = list.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, list.getDataAt(i));
-        }
+        String[] result = dataFromList(frame, list);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getNames());
     }
 
     @Specialization(order = 118, guards = "!isZeroLength")
     public RStringVector doList(VirtualFrame frame, RList list) {
-        int length = list.getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = toString.executeString(frame, list.getDataAt(i));
-        }
+        String[] result = dataFromList(frame, list);
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 

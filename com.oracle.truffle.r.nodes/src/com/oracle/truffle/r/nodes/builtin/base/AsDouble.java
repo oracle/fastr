@@ -30,15 +30,38 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin({"as.double", "as.numeric"})
 @SuppressWarnings("unused")
 public abstract class AsDouble extends RBuiltinNode {
 
-    private final NACheck check = NACheck.create();
-
     @Child CastDoubleNode castDoubleNode;
+
+    private double castDouble(VirtualFrame frame, int o) {
+        if (castDoubleNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
+        }
+        return (double) castDoubleNode.executeDouble(frame, o);
+    }
+
+    private double castDouble(VirtualFrame frame, double o) {
+        if (castDoubleNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
+        }
+        return (double) castDoubleNode.executeDouble(frame, o);
+    }
+
+    private double castDouble(VirtualFrame frame, byte o) {
+        if (castDoubleNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
+        }
+        return (double) castDoubleNode.executeDouble(frame, o);
+    }
 
     private double castDouble(VirtualFrame frame, Object o) {
         if (castDoubleNode == null) {
@@ -62,21 +85,18 @@ public abstract class AsDouble extends RBuiltinNode {
     }
 
     @Specialization(order = 10)
-    public double asDoubleInt(int value) {
-        check.enable(value);
-        return check.convertIntToDouble(value);
+    public double asDoubleInt(VirtualFrame frame, int value) {
+        return castDouble(frame, value);
     }
 
     @Specialization
-    public double asDouble(byte value) {
-        check.enable(value);
-        return check.convertLogicalToDouble(value);
+    public double asDouble(VirtualFrame frame, byte value) {
+        return castDouble(frame, value);
     }
 
     @Specialization
-    public double asDouble(RComplex value) {
-        check.enable(value);
-        return check.convertComplexToDouble(value);
+    public double asDouble(VirtualFrame frame, RComplex value) {
+        return castDouble(frame, value);
     }
 
     @Specialization
@@ -95,26 +115,6 @@ public abstract class AsDouble extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector asDouble(VirtualFrame frame, RIntVector vector) {
-        return castDoubleVector(frame, vector);
-    }
-
-    @Specialization
-    public RDoubleVector asDouble(VirtualFrame frame, RStringVector vector) {
-        return castDoubleVector(frame, vector);
-    }
-
-    @Specialization
-    public RDoubleVector asDouble(VirtualFrame frame, RLogicalVector vector) {
-        return castDoubleVector(frame, vector);
-    }
-
-    @Specialization
-    public RDoubleVector asDouble(VirtualFrame frame, RComplexVector vector) {
-        return castDoubleVector(frame, vector);
-    }
-
-    @Specialization
     public RDoubleVector asDouble(RDoubleSequence sequence) {
         return (RDoubleVector) sequence.createVector();
     }
@@ -128,5 +128,10 @@ public abstract class AsDouble extends RBuiltinNode {
             current += sequence.getStride();
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.INCOMPLETE_VECTOR);
+    }
+
+    @Specialization
+    public RDoubleVector asDouble(VirtualFrame frame, RAbstractVector vector) {
+        return castDoubleVector(frame, vector);
     }
 }

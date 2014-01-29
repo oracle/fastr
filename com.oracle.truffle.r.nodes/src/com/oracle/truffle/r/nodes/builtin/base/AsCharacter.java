@@ -35,37 +35,37 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @SuppressWarnings("unused")
 public abstract class AsCharacter extends RBuiltinNode {
 
-    private final NACheck check;
+    @Child CastStringNode castStringNode;
 
-    @Child CastStringNode castCharacterNode;
-
-    protected AsCharacter() {
-        this.check = NACheck.create();
+    private String castString(VirtualFrame frame, Object o) {
+        if (castStringNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castStringNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
+        }
+        return (String) castStringNode.executeString(frame, o);
     }
 
-    protected AsCharacter(AsCharacter other) {
-        this.check = other.check;
+    private RStringVector castStringVector(VirtualFrame frame, Object o) {
+        if (castStringNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castStringNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
+        }
+        return (RStringVector) castStringNode.executeStringVector(frame, o);
     }
 
     @Specialization
     public String doInt(VirtualFrame frame, int value) {
-        if (castCharacterNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castCharacterNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
-        }
-        return (String) castCharacterNode.executeString(frame, value);
+        return castString(frame, value);
     }
 
     @Specialization
-    public String doDouble(double value) {
-        check.enable(value);
-        return check.convertDoubleToString(value);
+    public String doDouble(VirtualFrame frame, double value) {
+        return castString(frame, value);
     }
 
     @Specialization
-    public String doLogical(byte value) {
-        check.enable(value);
-        return check.convertLogicalToString(value);
+    public String doLogical(VirtualFrame frame, byte value) {
+        return castString(frame, value);
     }
 
     @Specialization
@@ -80,16 +80,16 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Specialization
     public RStringVector doStringVector(VirtualFrame frame, RStringVector vector) {
-        return vector;
+        return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
+    }
+
+    @Specialization
+    public RStringVector doList(VirtualFrame frame, RList list) {
+        throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
     }
 
     @Specialization
     public RStringVector doVector(VirtualFrame frame, RAbstractVector vector) {
-        if (castCharacterNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castCharacterNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
-        }
-        Object ret = castCharacterNode.executeStringVector(frame, vector);
-        return (RStringVector) ret;
+        return castStringVector(frame, vector);
     }
 }

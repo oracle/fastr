@@ -1439,6 +1439,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testAsCharacterIgnore_c803fc23a52fdc9950e5603f439b132f() {
+        assertEval("{ as.character(list(1,2,3)) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testAsCharacterIgnore_03efd474c6b2ac63cfa1f6d497c9cf80() {
         assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
     }
@@ -1476,26 +1481,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testAsComplexIgnore_ca81945b0033de54e397d1df1719f69a() {
         assertEval("{ as.complex(\"+.1e+2-3i\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsDoubleIgnore_82ae143056b783ea1c485d5aaaf8b2ef() {
-        assertEval("{ as.double(c(\"1\",\"hello\")) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsDoubleIgnore_6db9f2b7f030c3b545b6fb2f540cc502() {
-        assertEval("{ as.double(\"TRUE\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsIntegerIgnore_cd4b790d81dbb46f2e4bc1e8874e7f84() {
-        assertEval("{ as.integer(10000000000) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsIntegerIgnore_10ae2ab3382a5b5a08b3c994ff8af6a4() {
-        assertEval("{ as.integer(-10000000000) }");
     }
 
     @Ignore
@@ -1841,41 +1826,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testColumnsRowsStatIgnore_ef0e18bdd086f0183fcc8fae77cc4d1a() {
         assertEval("{ o <- outer(1:3, 1:4, \"<\") ; colSums(o) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_9e952ef7a4db9df7944aa490c4223d4a() {
-        assertEval("{ c(TRUE,1L,1.0,list(3,4)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_35615a7ebae2fab48bfd016636b142d0() {
-        assertEval("{ c(TRUE,1L,1.0,list(3,list(4,5))) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_991b4e290db12070daca4ed96a3ffc63() {
-        assertEval("{ c(x=1,y=2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_500795124539a97439309c50c3a36290() {
-        assertEval("{ c(x=1,2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_d78532c80490f1bd045d0fbedd9b9c87() {
-        assertEval("{ x <- 1:2 ; names(x) <- c(\"A\",NA) ; c(x,test=x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_dea889dee9bbedd803fa8a3c9437c69c() {
-        assertEval("{ c(a=1,b=2:3,list(x=FALSE))  }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCombineBroken_3a952f6809176f161ea61dd876989666() {
-        assertEval("{ c(1,z=list(1,b=22,3)) }");
     }
 
     @Ignore

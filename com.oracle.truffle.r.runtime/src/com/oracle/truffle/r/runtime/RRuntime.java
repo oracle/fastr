@@ -103,22 +103,6 @@ public class RRuntime {
         return Double.isNaN(d);
     }
 
-    public static byte asLogical(boolean b) {
-        return b ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-    }
-
-    public static int logical2int(byte value) {
-        return isNA(value) ? RRuntime.INT_NA : (int) value;
-    }
-
-    public static double logical2double(byte value) {
-        return isNA(value) ? RRuntime.DOUBLE_NA : (double) value;
-    }
-
-    public static RComplex logical2complex(byte value) {
-        return isNA(value) ? createComplexNA() : RDataFactory.createComplex(value, 0);
-    }
-
     public static String classToString(Class<?> c) {
         if (c == RLogical.class) {
             return TYPE_LOGICAL;
@@ -137,6 +121,55 @@ public class RRuntime {
         }
     }
 
+    public static boolean isFinite(double d) {
+        return !isNAorNaN(d) && !Double.isInfinite(d);
+    }
+
+    public static boolean doubleIsInt(double d) {
+        long longValue = (long) d;
+        return longValue == d && ((int) longValue & 0xffffffff) == longValue;
+    }
+
+    public static byte asLogical(boolean b) {
+        return b ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+    }
+
+    // conversions from logical
+
+    public static int logical2intNoCheck(byte value) {
+        return value;
+    }
+
+    public static int logical2int(byte value) {
+        return isNA(value) ? RRuntime.INT_NA : logical2intNoCheck(value);
+    }
+
+    public static double logical2doubleNoCheck(byte value) {
+        return value;
+    }
+
+    public static double logical2double(byte value) {
+        return isNA(value) ? RRuntime.DOUBLE_NA : logical2doubleNoCheck(value);
+    }
+
+    public static RComplex logical2complexNoCheck(byte value) {
+        return RDataFactory.createComplex(value, 0);
+    }
+
+    public static RComplex logical2complex(byte value) {
+        return isNA(value) ? createComplexNA() : logical2complexNoCheck(value);
+    }
+
+    public static String logicalToStringNoCheck(byte operand) {
+        return operand == RRuntime.LOGICAL_TRUE ? "TRUE" : operand == RRuntime.LOGICAL_FALSE ? "FALSE" : STRING_NA;
+    }
+
+    public static String logicalToString(byte operand) {
+        return isNA(operand) ? STRING_NA : logicalToStringNoCheck(operand);
+    }
+
+    // conversions from raw
+
     public static byte raw2logical(RRaw value) {
         return value.getValue() == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
     }
@@ -149,99 +182,269 @@ public class RRuntime {
         return int2double(value.getValue() & 0xFF);
     }
 
-    public static boolean isFinite(double d) {
-        return !isNAorNaN(d) && !Double.isInfinite(d);
+    public static RComplex raw2complex(RRaw r) {
+        return int2complex(raw2int(r));
     }
 
-    public static int string2int(String s) {
-        if (s != STRING_NA) {
-            // FIXME use R rules
-            try {
-                return Integer.decode(s);  // decode supports hex constants
-            } catch (NumberFormatException e) {
-                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
-            }
+    @SlowPath
+    public static String rawToString(RRaw operand) {
+        return intToString(raw2int(operand), false);
+    }
+
+    // conversions from string
+
+    public static int string2intNoCheck(String s) {
+        // FIXME use R rules
+        try {
+            return Integer.decode(s);  // decode supports hex constants
+        } catch (NumberFormatException e) {
+            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
         }
         return INT_NA;
     }
 
-    public static boolean doubleIsInt(double d) {
-        long longValue = (long) d;
-        return longValue == d && ((int) longValue & 0xffffffff) == longValue;
+    public static int string2int(String s) {
+        if (isNA(s)) {
+            return INT_NA;
+        } else {
+            return string2intNoCheck(s);
+        }
     }
 
-    public static double string2double(String v) {
-        if (v != STRING_NA) {
-            // FIXME use R rules
-            if ("Inf".equals(v)) {
-                return Double.POSITIVE_INFINITY;
-            } else if ("NaN".equals(v)) {
-                return Double.NaN;
-            }
-            try {
-                return Double.parseDouble(v);
-            } catch (NumberFormatException e) {
-                if (v.startsWith("0x")) {
-                    try {
-                        return int2double(Integer.decode(v));
-                    } catch (NumberFormatException ein) {
-                    }
+    public static double string2doubleNoCheck(String v) {
+        // FIXME use R rules
+        if ("Inf".equals(v)) {
+            return Double.POSITIVE_INFINITY;
+        } else if ("NaN".equals(v)) {
+            return Double.NaN;
+        }
+        try {
+            return Double.parseDouble(v);
+        } catch (NumberFormatException e) {
+            if (v.startsWith("0x")) {
+                try {
+                    return int2double(Integer.decode(v));
+                } catch (NumberFormatException ein) {
                 }
-                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
             }
+            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
         }
         return DOUBLE_NA;
     }
 
-    public static double int2double(int i) {
-        return isNA(i) ? DOUBLE_NA : i;
-    }
-
-    public static int double2int(double d) {
-        return isNA(d) ? INT_NA : (int) d;
-    }
-
-    public static byte double2logical(double d) {
-        return isNA(d) ? LOGICAL_NA : d == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
-    }
-
-    public static byte int2logical(int i) {
-        return isNA(i) ? LOGICAL_NA : i == 0 ? LOGICAL_FALSE : LOGICAL_TRUE;
-    }
-
-    public static byte complex2logical(RComplex c) {
-        return isNA(c) ? LOGICAL_NA : c.getRealPart() == 0.0 && c.getImaginaryPart() == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
-    }
-
-    public static byte string2logical(String s) {
-        if (s != STRING_NA) {
-            if (s.equals("TRUE") || s.equals("T")) {
-                return TRUE;
-            }
-            if (s.equals("FALSE") || s.equals("F")) {
-                return FALSE;
-            }
-            if (s.equals("True") || s.equals("true")) {
-                return TRUE;
-            }
-            if (s.equals("False") || s.equals("false")) {
-                return FALSE;
-            }
-            RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+    public static double string2double(String v) {
+        if (isNA(v)) {
+            return DOUBLE_NA;
+        } else {
+            return string2doubleNoCheck(v);
         }
+    }
+
+    public static byte string2logicalNoCheck(String s) {
+        if (s.equals("TRUE") || s.equals("T")) {
+            return TRUE;
+        }
+        if (s.equals("FALSE") || s.equals("F")) {
+            return FALSE;
+        }
+        if (s.equals("True") || s.equals("true")) {
+            return TRUE;
+        }
+        if (s.equals("False") || s.equals("false")) {
+            return FALSE;
+        }
+        RContext.getInstance().getAssumptions().naIntroduced.invalidate();
         return LOGICAL_NA;
     }
 
+    public static byte string2logical(String s) {
+        return isNA(s) ? LOGICAL_NA : string2logicalNoCheck(s);
+    }
+
+    @SlowPath
+    public static RComplex string2complexNoCheck(String v) {
+        try {
+            int startIdx = 0;
+            char firstChar = v.charAt(0);
+            boolean negativeReal = firstChar == '-';
+            if (firstChar == '+' || negativeReal) {
+                startIdx++;
+            }
+
+            int plusIdx = v.indexOf("+", startIdx);
+            int minusIdx = v.indexOf("-", startIdx);
+            int iIdx = v.indexOf("i", startIdx);
+            int signIdx = getSignIdx(plusIdx, minusIdx);
+            boolean negativeImaginary = minusIdx > 0;
+
+            double realPart = Double.parseDouble(v.substring(startIdx, signIdx));
+            double imaginaryPart = Double.parseDouble(v.substring(signIdx + 1, iIdx));
+
+            return RDataFactory.createComplex(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
+        } catch (NumberFormatException ex) {
+            return RRuntime.createComplexNA();
+        }
+    }
+
+    @SlowPath
+    public static RComplex string2complex(String v) {
+        return isNA(v) ? RRuntime.createComplexNA() : string2complexNoCheck(v);
+    }
+
+    // conversions from int
+
+    public static double int2doubleNoCheck(int i) {
+        return i;
+    }
+
+    public static double int2double(int i) {
+        return isNA(i) ? DOUBLE_NA : int2doubleNoCheck(i);
+    }
+
+    public static byte int2logicalNoCheck(int i) {
+        return i == 0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+    }
+
+    public static byte int2logical(int i) {
+        return isNA(i) ? LOGICAL_NA : int2logicalNoCheck(i);
+    }
+
+    public static RComplex int2complexNoCheck(int i) {
+        return RDataFactory.createComplex(i, 0);
+    }
+
     public static RComplex int2complex(int i) {
-        return isNA(i) ? createComplexNA() : RDataFactory.createComplex(i, 0);
+        return isNA(i) ? createComplexNA() : int2complexNoCheck(i);
+    }
+
+    @SlowPath
+    public static String intToStringNoCheck(int operand, boolean appendL) {
+        return String.valueOf(operand) + (appendL ? "L" : "");
+    }
+
+    @SlowPath
+    public static String intToString(int operand, boolean appendL) {
+        return isNA(operand) ? STRING_NA : intToStringNoCheck(operand, appendL);
+    }
+
+    // conversions from double
+
+    public static int double2intNoCheck(double d) {
+        return (int) d;
+    }
+
+    public static int double2int(double d) {
+        return isNA(d) ? INT_NA : double2intNoCheck(d);
+    }
+
+    public static byte double2logicalNoCheck(double d) {
+        return d == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+    }
+
+    public static byte double2logical(double d) {
+        return isNA(d) ? LOGICAL_NA : double2logicalNoCheck(d);
+    }
+
+    public static RComplex double2complexNoCheck(double d) {
+        return RDataFactory.createComplex(d, 0);
     }
 
     public static RComplex double2complex(double d) {
-        return isNA(d) ? createComplexNA() : RDataFactory.createComplex(d, 0);
+        return isNA(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
-    public static RComplex raw2complex(RRaw r) {
-        return int2complex(raw2int(r));
+    @SlowPath
+    public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
+        return String.format("%." + digitsBehindDot + "f", operand);
+    }
+
+    @SlowPath
+    public static String doubleToString(double operand, int digitsBehindDot) {
+        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand, digitsBehindDot);
+    }
+
+    @SlowPath
+    public static String doubleToStringNoCheck(double operand) {
+        if (RRuntime.doubleIsInt(operand)) {
+            return String.valueOf((int) operand);
+        }
+        if (operand == Double.POSITIVE_INFINITY) {
+            return "Inf";
+        }
+        if (operand == Double.NEGATIVE_INFINITY) {
+            return "-Inf";
+        }
+        if (Double.isNaN(operand)) {
+            return "NaN";
+        }
+
+        /*
+         * DecimalFormat format = new DecimalFormat(); format.setMaximumIntegerDigits(12);
+         * format.setMaximumFractionDigits(12); format.setGroupingUsed(false); return
+         * format.format(operand);
+         */
+        if (operand < 1000000000000L && ((long) operand) == operand) {
+            return Long.toString((long) operand);
+        }
+        if (operand > 1000000000000L) {
+            return String.format((Locale) null, "%.6e", operand);
+        }
+        return Double.toString(operand);
+    }
+
+    @SlowPath
+    public static String doubleToString(double operand) {
+        return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand);
+    }
+
+    // conversions from complex
+
+    public static byte complex2logicalNoCheck(RComplex c) {
+        return c.getRealPart() == 0.0 && c.getImaginaryPart() == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+    }
+
+    public static byte complex2logical(RComplex c) {
+        return isNA(c) ? LOGICAL_NA : complex2logicalNoCheck(c);
+    }
+
+    public static int complex2intNoCheck(RComplex c) {
+        return double2intNoCheck(c.getRealPart());
+    }
+
+    public static int complex2int(RComplex c) {
+        return isNA(c) ? LOGICAL_NA : complex2intNoCheck(c);
+    }
+
+    public static double complex2doubleNoCheck(RComplex c) {
+        return double2intNoCheck(c.getRealPart());
+    }
+
+    public static double complex2double(RComplex c) {
+        return isNA(c) ? LOGICAL_NA : complex2doubleNoCheck(c);
+    }
+
+    @SlowPath
+    public static String complexToStringNoCheck(RComplex operand) {
+        return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
+    }
+
+    @SlowPath
+    public static String complexToString(RComplex operand) {
+        return isNA(operand) ? STRING_NA : complexToStringNoCheck(operand);
+    }
+
+    private static int getSignIdx(int plusIdx, int minusIdx) throws NumberFormatException {
+        if (plusIdx < 0) {
+            if (minusIdx < 0) {
+                throw new NumberFormatException();
+            }
+            return minusIdx;
+        } else {
+            if (minusIdx < 0) {
+                return plusIdx;
+            }
+            throw new NumberFormatException();
+        }
     }
 
     @SlowPath
@@ -303,74 +506,6 @@ public class RRuntime {
 
     public static boolean isComplete(RComplex left) {
         return !isNA(left);
-    }
-
-    @SlowPath
-    public static String doubleToString(double operand, int digitsBehindDot) {
-        if (RRuntime.isNA(operand)) {
-            return STRING_NA;
-        }
-        return String.format("%." + digitsBehindDot + "f", operand);
-    }
-
-    @SlowPath
-    public static String doubleToString(double operand) {
-        if (RRuntime.isNA(operand)) {
-            return STRING_NA;
-        }
-        if (RRuntime.doubleIsInt(operand)) {
-            return String.valueOf((int) operand);
-        }
-        if (operand == Double.POSITIVE_INFINITY) {
-            return "Inf";
-        }
-        if (operand == Double.NEGATIVE_INFINITY) {
-            return "-Inf";
-        }
-        if (Double.isNaN(operand)) {
-            return "NaN";
-        }
-
-        /*
-         * DecimalFormat format = new DecimalFormat(); format.setMaximumIntegerDigits(12);
-         * format.setMaximumFractionDigits(12); format.setGroupingUsed(false); return
-         * format.format(operand);
-         */
-        if (operand < 1000000000000L && ((long) operand) == operand) {
-            return Long.toString((long) operand);
-        }
-        if (operand > 1000000000000L) {
-            return String.format((Locale) null, "%.6e", operand);
-        }
-        return Double.toString(operand);
-    }
-
-    @SlowPath
-    public static String intToString(int operand, boolean appendL) {
-        if (RRuntime.isNA(operand)) {
-            return STRING_NA;
-        }
-        return String.valueOf(operand) + (appendL ? "L" : "");
-    }
-
-    @SlowPath
-    public static String complexToString(RComplex operand) {
-        if (RRuntime.isNA(operand)) {
-            return STRING_NA;
-        }
-        return doubleToString(operand.getRealPart()) + "+" + doubleToString(operand.getImaginaryPart()) + "i";
-    }
-
-    @SlowPath
-    public static String rawToString(RRaw operand) {
-        return intToString(raw2int(operand), false);
-    }
-
-    public static String logicalToString(byte operand) {
-        if (RRuntime.isNA(operand)) {
-            return STRING_NA;
-        }
-        return operand == RRuntime.LOGICAL_TRUE ? "TRUE" : operand == RRuntime.LOGICAL_FALSE ? "FALSE" : STRING_NA;
     }
 
     @SlowPath

@@ -180,127 +180,96 @@ public final class NACheck implements RDataCheckClosure {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;
         }
-        return value;
+        return RRuntime.logical2doubleNoCheck(value);
     }
 
-    @SuppressWarnings("static-method")
     public String convertLogicalToString(byte right) {
-        return RRuntime.logicalToString(right);
+        if (check(right)) {
+            return RRuntime.STRING_NA;
+        }
+        return RRuntime.logicalToStringNoCheck(right);
     }
 
-    @SuppressWarnings("static-method")
     public String convertIntToString(int right) {
-        return RRuntime.intToString(right, false);
+        if (check(right)) {
+            return RRuntime.STRING_NA;
+        }
+        return RRuntime.intToStringNoCheck(right, false);
     }
 
     @SlowPath
-    @SuppressWarnings("static-method")
     public double convertStringToDouble(String value) {
-        if (value.startsWith("0x") || value.startsWith("0X")) {
-            try {
-                return Long.valueOf(value.substring(2), 16);
-            } catch (NumberFormatException ex) {
-                return RRuntime.DOUBLE_NA;
-            }
-        } else {
-            try {
-                return Double.parseDouble(value);
-            } catch (NumberFormatException ex) {
-                return RRuntime.DOUBLE_NA;
-            }
+        if (check(value)) {
+            return RRuntime.DOUBLE_NA;
         }
+        double result = RRuntime.string2doubleNoCheck(value);
+        check(result); // can be NA
+        return result;
     }
 
-    @SuppressWarnings("static-method")
     public RComplex convertStringToComplex(String value) {
-        try {
-            int startIdx = 0;
-            char firstChar = value.charAt(0);
-            boolean negativeReal = firstChar == '-';
-            if (firstChar == '+' || negativeReal) {
-                startIdx++;
-            }
-
-            int plusIdx = value.indexOf("+", startIdx);
-            int minusIdx = value.indexOf("-", startIdx);
-            int iIdx = value.indexOf("i", startIdx);
-            int signIdx = getSignIdx(plusIdx, minusIdx);
-            boolean negativeImaginary = minusIdx > 0;
-
-            double realPart = Double.parseDouble(value.substring(startIdx, signIdx));
-            double imaginaryPart = Double.parseDouble(value.substring(signIdx + 1, iIdx));
-
-            return RDataFactory.createComplex(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
-        } catch (NumberFormatException ex) {
+        if (check(value)) {
             return RRuntime.createComplexNA();
         }
-    }
-
-    private static int getSignIdx(int plusIdx, int minusIdx) throws NumberFormatException {
-        if (plusIdx < 0) {
-            if (minusIdx < 0) {
-                throw new NumberFormatException();
-            }
-            return minusIdx;
-        } else {
-            if (minusIdx < 0) {
-                return plusIdx;
-            }
-            throw new NumberFormatException();
-        }
+        RComplex result = RRuntime.string2complexNoCheck(value);
+        check(result); // can be NA
+        return result;
     }
 
     public int convertStringToInt(String value) {
         if (check(value)) {
             return RRuntime.INT_NA;
         }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ex) {
-            return RRuntime.INT_NA;
-        }
+        return RRuntime.string2intNoCheck(value);
     }
 
     public String convertDoubleToString(double value) {
         if (check(value)) {
-            return "NA";
+            return RRuntime.STRING_NA;
         }
-        return RRuntime.doubleToString(value);
+        return RRuntime.doubleToStringNoCheck(value);
     }
 
     public String convertComplexToString(RComplex value) {
         if (check(value)) {
-            return "NA";
+            return RRuntime.STRING_NA;
         }
-        return value.toString();
+        return RRuntime.complexToStringNoCheck(value);
     }
 
     public double convertComplexToDouble(RComplex value) {
+        return convertComplexToDouble(value, false);
+    }
+
+    public double convertComplexToDouble(RComplex value, boolean warning) {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;
         }
-        // TODO Output conversion warning
-        return value.getRealPart();
+        if (warning) {
+            RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        }
+        return RRuntime.complex2doubleNoCheck(value);
     }
 
     public byte convertComplexToLogical(RComplex value) {
         if (check(value)) {
             return RRuntime.LOGICAL_NA;
         }
-        // TODO Output conversion warning
-        return ((int) value.getRealPart()) == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
+        return RRuntime.complex2logicalNoCheck(value);
     }
 
     public int convertComplexToInt(RComplex right) {
         return convertComplexToInt(right, true);
     }
 
-    @SuppressWarnings("static-method")
     public int convertComplexToInt(RComplex right, boolean warning) {
+        if (check(right)) {
+            return RRuntime.INT_NA;
+        }
         if (warning) {
             RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
-        return (int) right.getRealPart();
+        return RRuntime.complex2intNoCheck(right);
     }
 
     public boolean checkNAorNaN(double value) {
@@ -325,6 +294,7 @@ public final class NACheck implements RDataCheckClosure {
                 this.conversionOverflowReached = true;
             }
             RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            check(RRuntime.INT_NA); // na encountered
             return RRuntime.INT_NA;
         }
         return result;
@@ -346,6 +316,7 @@ public final class NACheck implements RDataCheckClosure {
                         this.conversionOverflowReached = true;
                     }
                     warning = true;
+                    check(RRuntime.INT_NA); // NA encountered
                     intValue = RRuntime.INT_NA;
                 }
                 result[i] = intValue;
@@ -357,19 +328,25 @@ public final class NACheck implements RDataCheckClosure {
         return result;
     }
 
-    @SuppressWarnings("static-method")
     public byte convertIntToLogical(int value) {
-        return RRuntime.int2logical(value);
+        if (check(value)) {
+            return RRuntime.LOGICAL_NA;
+        }
+        return RRuntime.int2logicalNoCheck(value);
     }
 
-    @SuppressWarnings("static-method")
     public byte convertDoubleToLogical(double value) {
-        return RRuntime.double2logical(value);
+        if (check(value)) {
+            return RRuntime.LOGICAL_NA;
+        }
+        return RRuntime.double2logicalNoCheck(value);
     }
 
-    @SuppressWarnings("static-method")
     public byte convertStringToLogical(String value) {
-        return RRuntime.string2logical(value);
+        if (check(value)) {
+            return RRuntime.LOGICAL_NA;
+        }
+        return RRuntime.string2logicalNoCheck(value);
     }
 
 }
