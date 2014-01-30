@@ -163,8 +163,6 @@ def _junit_r_harness(args, vmArgs, junitArgs):
         runlistener += ':' + runlistener_arg
 
     junitArgs += ['--runlistener', runlistener]
-    if mx_graal._get_vm() == 'graal':
-        vmArgs += '-XX:-BootstrapGraal'
     return mx_graal.vm(vmArgs + junitArgs, nonZeroIsFatal=False)
 
 def junit(args):
@@ -183,20 +181,18 @@ def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
 def testgen(args):
-    '''generate the expected output for unit tests'''
-    # we just invoke junit with the appropriate options
-    junit(args + ['--tests', _default_unit_tests(), '--gen-expected-output'])
-
-def ignoredtests(args):
-    """generate the ignored unit tests file using annotation processor"""
+    '''generate the expected output for unit tests, and All/Failing test classes'''
+    # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
     mx.clean(testOnly)
     mx.build(testOnly)
+    # now just invoke junit with the appropriate options
+    junit(args + ['--tests', _default_unit_tests(), '--gen-expected-output'])
 
 _fastr_suite = None
 
 def rbench(args):
-    '''run an R benchmark'''
+    '''run a single R benchmark'''
     parser = ArgumentParser(prog='mx rbench')
     parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='qualified name of benchmark')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
@@ -236,29 +232,35 @@ def rbench(args):
         mx.abort(1)
 
 def _bench_harness_body(args, vmArgs):
-    mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
     marks = ['shootout.binarytrees', 'shootout.fannkuchredux', 'shootout.fasta', 'shootout.fastaredux',
              'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
              'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm']
-    with mx_graal.VM('server', 'product'):
-        for mark in marks:
-            rbench([mark])
+    for mark in marks:
+        rbench([mark])
 
 def bench(args):
-    mx.bench(args, harness=_bench_harness_body)
+    '''Run a standard set of R benchmarks'''
+    # In the automatic benchmark context, the vm will neither be built nor set.
+    # In interactive (development) use, if it is set (interactive use) we use it, otherwise we choose the server variant.
+    # The build component of mx.bench causes the vm to be built.
+
+    vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
+    with vm:
+        mx.bench(args, harness=_bench_harness_body)
 
 def mx_init(suite):
     global _fastr_suite
     _fastr_suite = suite
     commands = {
-        'gate' : [gate, ''],
+        # new commands
         'r' : [runRCommand, '[options]'],
         'R' : [runRCommand, '[options]'],
         'rtestgen' : [testgen, ''],
-        'rignoredtests' : [ignoredtests, ''],
-        'junit' : [junit, ['options']],
         'rbench' : [rbench, 'options'],
+        # core overrides
+        'gate' : [gate, ''],
         'bench' : [bench, 'options'],
+        'junit' : [junit, ['options']],
     }
     mx.update_commands(suite, commands)
 
