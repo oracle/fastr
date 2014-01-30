@@ -72,7 +72,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = adoptChild(CastToVectorNodeFactory.create(null));
+            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false));
         }
         return castVector.executeRAbstractVector(frame, value);
     }
@@ -80,7 +80,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
     private RList castList(VirtualFrame frame, Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreter();
-            castList = adoptChild(CastListNodeFactory.create(null));
+            castList = adoptChild(CastListNodeFactory.create(null, true, false));
         }
         return castList.executeList(frame, value);
     }
