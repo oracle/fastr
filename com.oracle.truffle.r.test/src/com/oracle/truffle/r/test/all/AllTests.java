@@ -11059,6 +11059,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDefinitions_db43873d538745b7f440bea9a72e5ba8() {
+        assertEval("x<-function(){1};x");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDefinitions_0b5fd9af93b3e73346e7f4de73d898be() {
+        assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDefinitionsIgnore_b8d75a017c31d73d6dbf7c6a93953d67() {
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- \"sum\" ; sapply(1, x, 2) } ; f() }");
     }
@@ -11081,16 +11091,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDefinitionsIgnore_ba4a8d210d2bcdac8ede803b28c13172() {
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleFunctions_testDefinitionsIgnore_0b5fd9af93b3e73346e7f4de73d898be() {
-        assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
-    }
-
-    @Test
-    public void TestSimpleFunctions_testDefinitionsIgnore_5f003c191978963a5682d9a5302ed07e() {
-        assertEvalNoOutput("x<-function(){1}");
     }
 
     @Test
