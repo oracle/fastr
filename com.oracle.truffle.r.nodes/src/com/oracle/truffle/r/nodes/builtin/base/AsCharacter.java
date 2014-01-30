@@ -37,19 +37,35 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Child CastStringNode castStringNode;
 
-    private String castString(VirtualFrame frame, Object o) {
+    private void initCast() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreter();
             castStringNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
         }
+    }
+
+    private String castString(VirtualFrame frame, int o) {
+        initCast();
+        return (String) castStringNode.executeString(frame, o);
+    }
+
+    private String castString(VirtualFrame frame, double o) {
+        initCast();
+        return (String) castStringNode.executeString(frame, o);
+    }
+
+    private String castString(VirtualFrame frame, byte o) {
+        initCast();
+        return (String) castStringNode.executeString(frame, o);
+    }
+
+    private String castString(VirtualFrame frame, Object o) {
+        initCast();
         return (String) castStringNode.executeString(frame, o);
     }
 
     private RStringVector castStringVector(VirtualFrame frame, Object o) {
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castStringNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
-        }
+        initCast();
         return (RStringVector) castStringNode.executeStringVector(frame, o);
     }
 

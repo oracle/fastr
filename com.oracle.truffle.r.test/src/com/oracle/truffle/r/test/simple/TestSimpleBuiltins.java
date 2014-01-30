@@ -386,6 +386,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.complex(\"-1-5i\") }");
         assertEval("{ as.complex(0/0) }");
         assertEval("{ as.complex(c(0/0, 0/0)) }");
+        assertEvalWarning("{ as.complex(c(\"1\",\"hello\")) }");
+        assertEvalWarning("{ as.complex(\"TRUE\") }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
+        assertEval("{ as.complex(\"Inf\") }");
+        assertEval("{ as.complex(\"NaN\") }");
+        assertEval("{ as.complex(\"0x42\") }");
     }
 
     @Test
@@ -402,6 +409,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.raw(NULL) }");
         assertEval("{ as.raw(1) }");
         assertEval("{ as.raw(1L) }");
+        assertEval("{ as.raw(1.1) }");
         assertEval("{ as.raw(c(1, 2, 3)) }");
         assertEval("{ as.raw(c(1L, 2L, 3L)) }");
         assertEval("{ as.raw(list(1,2,3)) }");
@@ -409,19 +417,18 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAsRawIgnore() {
         // FIXME coercion warnings
-        assertEval("{ as.raw(1+1i) }");
-        assertEval("{ as.raw(-1) }");
-        assertEval("{ as.raw(-1L) }");
-        assertEval("{ as.raw(NA) }");
-        assertEval("{ as.raw(\"test\") }");
-        assertEval("{ as.raw(c(1+3i, -2-1i, NA)) }");
-        assertEval("{ as.raw(c(1, -2, 3)) }");
-        assertEval("{ as.raw(c(1,1000,NA)) }");
-        assertEval("{ as.raw(c(1L, -2L, 3L)) }");
-        assertEval("{ as.raw(c(1L, -2L, NA)) }");
+        assertEvalWarning("{ as.raw(1+1i) }");
+        assertEvalWarning("{ as.raw(-1) }");
+        assertEvalWarning("{ as.raw(-1L) }");
+        assertEvalWarning("{ as.raw(NA) }");
+        assertEvalWarning("{ as.raw(\"test\") }");
+        assertEvalWarning("{ as.raw(c(1+3i, -2-1i, NA)) }");
+        assertEvalWarning("{ as.raw(c(1, -2, 3)) }");
+        assertEvalWarning("{ as.raw(c(1,1000,NA)) }");
+        assertEvalWarning("{ as.raw(c(1L, -2L, 3L)) }");
+        assertEvalWarning("{ as.raw(c(1L, -2L, NA)) }");
     }
 
     @Test

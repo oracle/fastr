@@ -74,6 +74,12 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return new RComplex(data[index], data[index + 1]);
     }
 
+    public double[] getDataCopy() {
+        double[] copy = new double[data.length];
+        System.arraycopy(data, 0, copy, 0, data.length);
+        return copy;
+    }
+
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }

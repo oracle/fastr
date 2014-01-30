@@ -271,5 +271,4 @@ public abstract class CastDoubleNode extends CastNode {
             return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         }
     }
-
 }

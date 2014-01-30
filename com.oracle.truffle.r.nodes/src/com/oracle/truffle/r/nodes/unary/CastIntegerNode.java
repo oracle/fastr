@@ -35,6 +35,12 @@ public abstract class CastIntegerNode extends CastNode {
 
     private final NACheck check = NACheck.create();
 
+    public abstract Object executeInt(VirtualFrame frame, int o);
+
+    public abstract Object executeInt(VirtualFrame frame, double o);
+
+    public abstract Object executeInt(VirtualFrame frame, byte o);
+
     public abstract Object executeInt(VirtualFrame frame, Object o);
 
     public abstract Object executeIntVector(VirtualFrame frame, Object o);

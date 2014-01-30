@@ -2300,8 +2300,26 @@ character(0)
 [1] -1-5i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ as.complex("0x42") }
+[1] 66+0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
 #{ as.complex("1+5i") }
 [1] 1+5i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ as.complex("Inf") }
+[1] Inf+0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ as.complex("NaN") }
+[1] NaN+0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ as.complex("TRUE") }
+[1] NA
+Warning message:
+NAs introduced by coercion
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
 #{ as.complex(0) }
@@ -2316,8 +2334,22 @@ character(0)
 [1] 1+0i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ as.complex(c("1","hello")) }
+[1] 1+0i   NA
+Warning message:
+NAs introduced by coercion
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
 #{ as.complex(c(0/0, 0/0)) }
 [1] NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, "foo")<-"foo"; y<-as.complex(x); attributes(y) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsComplex
+#{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, "foo")<-"foo"; y<-as.complex(x); attributes(y) }
+NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsDouble
 #{ as.double("1.27") }
@@ -2502,6 +2534,10 @@ NULL
 [1] 01
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRaw
+#{ as.raw(1.1) }
+[1] 01
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRaw
 #{ as.raw(1L) }
 [1] 01
 
@@ -2524,6 +2560,68 @@ raw(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRaw
 #{ as.raw(list(1,2,3)) }
 [1] 01 02 03
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw("test") }
+[1] 00
+Warning messages:
+1: NAs introduced by coercion
+2: out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(-1) }
+[1] 00
+Warning message:
+out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(-1L) }
+[1] 00
+Warning message:
+out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(1+1i) }
+[1] 01
+Warning message:
+imaginary parts discarded in coercion
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(NA) }
+[1] 00
+Warning message:
+out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(c(1+3i, -2-1i, NA)) }
+[1] 01 00 00
+Warning messages:
+1: imaginary parts discarded in coercion
+2: out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(c(1, -2, 3)) }
+[1] 01 00 03
+Warning message:
+out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(c(1,1000,NA)) }
+[1] 01 00 00
+Warning message:
+out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(c(1L, -2L, 3L)) }
+[1] 01 00 03
+Warning message:
+out-of-range values treated as 0 in coercion to raw
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsRawIgnore
+#{ as.raw(c(1L, -2L, NA)) }
+[1] 01 00 00
+Warning message:
+out-of-range values treated as 0 in coercion to raw
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttributes
 #{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }
