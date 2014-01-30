@@ -3655,6 +3655,14 @@ a1 a2
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCor
+#{ cor(cbind(c(1,1,1), c(1,1,1))) }
+     [,1] [,2]
+[1,]    1   NA
+[2,]   NA    1
+Warning message:
+In cor(cbind(c(1, 1, 1), c(1, 1, 1))) : the standard deviation is zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCor
 #{ cor(cbind(c(3,2,1), c(1,2,3))) }
      [,1] [,2]
 [1,]    1   -1

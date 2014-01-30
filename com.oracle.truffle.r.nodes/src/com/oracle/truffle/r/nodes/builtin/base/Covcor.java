@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -32,7 +33,7 @@ public class Covcor {
         return corcov(x, y, iskendall, false, source);
     }
 
-    @com.oracle.truffle.api.CompilerDirectives.SlowPath
+    @SlowPath
     private static RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor, SourceSection source) {
         boolean ansmat;
         boolean naFail;
@@ -51,7 +52,9 @@ public class Covcor {
             ncx = 1;
         }
 
-        if (isMatrix(y)) {
+        if (y == null) {
+            ncy = ncx;
+        } else if (isMatrix(y)) {
             if (nrows(y) != n) {
                 error("incompatible dimensions");
             }
@@ -82,8 +85,13 @@ public class Covcor {
         double[] ym = new double[ncy];
         RIntVector ind = RDataFactory.createIntVector(n);
 
-        complete2(n, ncx, ncy, x, y, ind, naFail);
-        sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, cor, iskendall);
+        if (y == null) {
+            complete1(n, ncx, x, ind, naFail);
+            sd0 = covComplete1(n, ncx, x, xm, ind, answerData, cor, iskendall);
+        } else {
+            complete2(n, ncx, ncy, x, y, ind, naFail);
+            sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, cor, iskendall);
+        }
 
         if (sd0) { /* only in cor() */
             RError.warning(source, RError.SD_ZERO);
@@ -106,6 +114,26 @@ public class Covcor {
     private static int nrows(RDoubleVector x) {
         assert isMatrix(x);
         return x.getDimensions()[0];
+    }
+
+    private static void complete1(int n, int ncx, RDoubleVector x, RIntVector ind, boolean naFail) {
+        int i;
+        int j;
+        for (i = 0; i < n; i++) {
+            ind.updateDataAt(i, 1, check);
+        }
+        for (j = 0; j < ncx; j++) {
+            // z = &x[j * n];
+            for (i = 0; i < n; i++) {
+                if (Double.isNaN(x.getDataAt(j * n + i))) {
+                    if (naFail) {
+                        error("missing observations in cov/cor");
+                    } else {
+                        ind.updateDataAt(i, 0, check);
+                    }
+                }
+            }
+        }
     }
 
     private static void complete2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, RIntVector ind, boolean naFail) {
@@ -139,6 +167,81 @@ public class Covcor {
                 }
             }
         }
+    }
+
+    private static boolean covComplete1(int n, int ncx, RDoubleVector x, double[] xm, RIntVector indInput, double[] ans, boolean cor, boolean kendall) {
+        int n1 = -1;
+        int nobs;
+        boolean isSd0 = false;
+
+        /* total number of complete observations */
+        nobs = 0;
+        for (int k = 0; k < n; k++) {
+            if (indInput.getDataAt(k) != 0) {
+                nobs++;
+            }
+        }
+        if (nobs <= 1) { /* too many missing */
+            for (int i = 0; i < ans.length; i++) {
+                ans[i] = RRuntime.DOUBLE_NA;
+            }
+            return isSd0;
+        }
+
+        RIntVector ind = indInput;
+        if (nobs == ind.getLength()) {
+            // No values of ind are zeroed.
+            ind = null;
+        }
+
+        if (!kendall) {
+            mean(x, xm, ind, n, ncx, nobs);
+            n1 = nobs - 1;
+        }
+        for (int i = 0; i < ncx; i++) {
+            if (!kendall) {
+                double xxm = xm[i];
+                for (int j = 0; j <= i; j++) {
+                    double yym = xm[j];
+                    double sum = 0.0;
+                    for (int k = 0; k < n; k++) {
+                        if (ind == null || ind.getDataAt(k) != 0) {
+                            sum += (x.getDataAt(i * n + k) - xxm) * (x.getDataAt(j * n + k) - yym);
+                        }
+                    }
+                    double r = sum / n1;
+                    ans[i + j * ncx] = r;
+                    ans[j + i * ncx] = r;
+                }
+            } else { /* Kendall's tau */
+                throw new UnsupportedOperationException("kendall's unsupported");
+            }
+        }
+
+        if (cor) {
+            for (int i = 0; i < ncx; i++) {
+                xm[i] = Math.sqrt(ans[i + i * ncx]);
+            }
+            for (int i = 0; i < ncx; i++) {
+                for (int j = 0; j < i; j++) {
+                    if (xm[i] == 0 || xm[j] == 0) {
+                        isSd0 = true;
+                        ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                        ans[j + i * ncx] = RRuntime.DOUBLE_NA;
+                    } else {
+                        double sum = ans[i + j * ncx] / (xm[i] * xm[j]);
+                        if (sum > 1.0) {
+                            sum = 1.0;
+                        }
+                        ans[i + j * ncx] = sum;
+                        ans[j + i * ncx] = sum;
+                    }
+                }
+                ans[i + i * ncx] = 1.0;
+            }
+        }
+
+        return isSd0;
     }
 
     private static boolean covComplete2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, double[] xm, double[] ym, RIntVector indInput, double[] ans, boolean cor, boolean kendall) {

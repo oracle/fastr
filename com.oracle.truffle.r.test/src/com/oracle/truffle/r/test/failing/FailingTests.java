@@ -1799,11 +1799,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCorIgnore_a9306c39144eb95725c311083b3248ba() {
-        assertEval("{ cor(cbind(c(1,1,1), c(1,1,1))) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCrossprod_7f9549017d66ad3dd1583536fa7183d7() {
         assertEval("{ x <- 1:6 ; crossprod(x) }");
     }
