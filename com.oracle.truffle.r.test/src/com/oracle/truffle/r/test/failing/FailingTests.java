@@ -264,26 +264,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_ec41b305258209dcd1f01b4c73dfa38c() {
-        assertEval("{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_3687279e543d6b321de708f1696d22d9() {
-        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_e04a6b232a786acb98dfb4218c363291() {
-        assertEval("{ round( (1+2i)^(3+4i), digits=5 ) }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_b962b71eb5d225af35b575db321f93dc() {
-        assertEval("{ round( ((1+1i)/(0+1i)) ^ (-3.54), digits=5) }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testScalarsComplexIgnore_0dc33376658fd492af2c5beb032efdbf() {
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y+x }");
     }
@@ -291,6 +271,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleArithmetic_testScalarsComplexIgnore_46cb3430474fb02811820b09b2bcd950() {
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }");
+    }
+
+    @Ignore
+    public void TestSimpleArithmetic_testScalarsComplexIgnore_3687279e543d6b321de708f1696d22d9() {
+        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
     }
 
     @Ignore
@@ -389,18 +374,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_26cbb52252ff028ab7bba252147de26c() {
-        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_9b81d167391e44e04a528a367013f806() {
         assertEval("{ z <- c(-1.5-1i,10) ; (z * z)[1] }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_a88a08c3bbe4807e9507763726c626e5() {
-        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Ignore
@@ -411,6 +386,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_15a6502f9ece8e54a080a3e20541165c() {
         assertEval("{ c(1,2,3+1i)^3 }");
+    }
+
+    @Ignore
+    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_26cbb52252ff028ab7bba252147de26c() {
+        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
+    }
+
+    @Ignore
+    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_a88a08c3bbe4807e9507763726c626e5() {
+        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Ignore
@@ -6576,11 +6561,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testVectorIndexIgnore_e5cba9fa5b94fb314f5ea0d3270cd1fb() {
         assertEval("{ l <- list(1,list(2)) ; f <- function(i) { l[[i]] } ; f(c(2,1)) ; f(1) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_735c444595fe843fd5efb95ee1f0a3bd() {
-        assertEval("{ l <- list(1,function(){3}) ; f <- function(i) { l[[i]] } ; f(c(2)) }");
     }
 
     @Ignore
