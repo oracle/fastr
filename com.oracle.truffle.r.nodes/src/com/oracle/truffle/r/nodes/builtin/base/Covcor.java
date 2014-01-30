@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -23,16 +24,16 @@ public class Covcor {
 
     public static NACheck check = new NACheck();
 
-    public static RDoubleVector cor(RDoubleVector x, RDoubleVector y, boolean iskendall) {
-        return corcov(x, y, iskendall, true);
+    public static RDoubleVector cor(RDoubleVector x, RDoubleVector y, boolean iskendall, SourceSection source) {
+        return corcov(x, y, iskendall, true, source);
     }
 
-    public static RDoubleVector cov(RDoubleVector x, RDoubleVector y, boolean iskendall) {
-        return corcov(x, y, iskendall, false);
+    public static RDoubleVector cov(RDoubleVector x, RDoubleVector y, boolean iskendall, SourceSection source) {
+        return corcov(x, y, iskendall, false, source);
     }
 
     @com.oracle.truffle.api.CompilerDirectives.SlowPath
-    private static RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor) {
+    private static RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor, SourceSection source) {
         boolean ansmat;
         boolean naFail;
         boolean sd0;
@@ -85,7 +86,7 @@ public class Covcor {
         sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, cor, iskendall);
 
         if (sd0) { /* only in cor() */
-            warning("the standard deviation is zero");
+            RError.warning(source, RError.SD_ZERO);
         }
 
         RDoubleVector ans = null;
@@ -269,7 +270,4 @@ public class Covcor {
         throw new UnsupportedOperationException("error: " + string);
     }
 
-    private static void warning(String string) {
-        throw new UnsupportedOperationException("warning: " + string);
-    }
 }
