@@ -6878,12 +6878,22 @@ logical(0)
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDefinitions
+#x<-function(){1};x
+function(){1}
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDefinitions
 #{ "%plus%" <- function(a,b) a+b ; 3 %plus% 4 }
 [1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDefinitions
 #{ "-"(1) }
 [1] -1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDefinitions
+#{ 'my<-' <- function(x, value) { attr(x, "myattr") <- value ; x } ; z <- 1; my(z) <- "hello" ; z }
+[1] 1
+attr(,"myattr")
+[1] "hello"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDefinitionsNamedAndDefault
 #{ f <- sum ; f(1:10) }

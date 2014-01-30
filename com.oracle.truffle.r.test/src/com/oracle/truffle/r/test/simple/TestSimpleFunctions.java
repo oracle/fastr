@@ -63,22 +63,21 @@ public class TestSimpleFunctions extends TestBase {
     public void testDefinitions() {
         assertEval("{ \"%plus%\" <- function(a,b) a+b ; 3 %plus% 4 }");
         assertEval("{ \"-\"(1) }");
+        assertEval("x<-function(){1};x");
+
+        // replacement function
+        assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
     }
 
     @Test
     @Ignore
     public void testDefinitionsIgnore() {
-        assertEvalNoOutput("x<-function(){1}");
-
         // function matching, builtins
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- \"sum\" ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; g <- function() { x <- \"sum\" ; f <- function() { sapply(1, x, 2) } ; f() }  ; g() }");
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
-
-        // replacement function
-        assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
     }
 
     @Test
