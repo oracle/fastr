@@ -113,7 +113,7 @@ def _check_autogen_tests(copy):
         files_equal = filecmp.cmp(all_tests, join(_tempdir, 'AllTests.java')) and filecmp.cmp(failing_tests, join(_tempdir, 'FailingTests.java'))
         shutil.rmtree(_tempdir)
         if not files_equal:
-            mx.abort('AllTests.java and/or FailingTests.java are out of sync, regenerate with mx rignoretests')
+            mx.abort('AllTests.java and/or FailingTests.java are out of sync, regenerate with mx rtestgen')
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
