@@ -3773,7 +3773,7 @@ a1 a2
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCor
-#{ cor(cbind(c(1,1,1), c(1,1,1))) }
+#{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }
      [,1] [,2]
 [1,]    1   NA
 [2,]   NA    1

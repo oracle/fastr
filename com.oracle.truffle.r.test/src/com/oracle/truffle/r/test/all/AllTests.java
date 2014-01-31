@@ -5629,8 +5629,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCor_a9306c39144eb95725c311083b3248ba() {
-        assertEval("{ cor(cbind(c(1,1,1), c(1,1,1))) }");
+    public void TestSimpleBuiltins_testCor_eb299d07a9ea2621996c82b52b16f5e4() {
+        assertEval("{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
     }
 
     @Test
