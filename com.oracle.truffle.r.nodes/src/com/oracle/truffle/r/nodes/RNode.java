@@ -150,7 +150,7 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRInvisible(execute(frame));
     }
 
-    public boolean areSameLength(RAbstractVector a, RAbstractVector b) {
+    public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
         return a.getLength() == b.getLength();
     }
 

@@ -31,8 +31,6 @@ import com.oracle.truffle.r.runtime.*;
 
 public final class FunctionDefinitionNode extends RRootNode {
 
-    private static final boolean INLINING_ENABLED = false;
-
     private final REnvironment descriptor;
     private final RNode uninitializedBody;
     @Child private RNode body;
@@ -61,13 +59,6 @@ public final class FunctionDefinitionNode extends RRootNode {
         } catch (ReturnException ex) {
             return ex.getResult();
         }
-    }
-
-    public CallNode inline(FrameFactory factory, CallArgumentsNode cloneNode) {
-        if (INLINING_ENABLED) {
-            return new InlinedFunctionNode(factory, descriptor, NodeUtil.cloneNode(uninitializedBody), description, cloneNode);
-        }
-        return null;
     }
 
     @Override

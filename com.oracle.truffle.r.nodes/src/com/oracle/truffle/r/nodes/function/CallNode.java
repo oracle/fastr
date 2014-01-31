@@ -233,20 +233,11 @@ public abstract class CallNode extends RNode {
                 CallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
-                    CallNode call = root.inline(clonedArgs);
-                    if (call != null) {
-                        return call;
-                    }
-                    // fall through to dispatch
+                    return root.inline(clonedArgs);
                 }
             }
 
-            CallTarget target = function.getTarget();
-            if (target instanceof DefaultCallTarget) {
-                return new InlinableCallNode(function, clonedArgs);
-            } else {
-                return new DispatchedCallNode(function, clonedArgs);
-            }
+            return new DispatchedCallNode(function, clonedArgs);
         }
 
         private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments, Object[] actualNames) {
@@ -263,78 +254,6 @@ public abstract class CallNode extends RNode {
                 return CallArgumentsNode.create(permuted, arguments.getNames());
             }
             return arguments;
-        }
-    }
-
-    private static final class InlinableCallNode extends DispatchedCallNode implements InlinableCallSite {
-
-        @CompilerDirectives.CompilationFinal private int callCount;
-
-        private final DefaultCallTarget inlinableTarget;
-
-        InlinableCallNode(RFunction function, CallArgumentsNode arguments) {
-            super(function, arguments);
-            this.inlinableTarget = (DefaultCallTarget) function.getTarget();
-        }
-
-        @Override
-        public int getCallCount() {
-            return callCount;
-        }
-
-        @Override
-        public void resetCallCount() {
-            callCount = 0;
-        }
-
-        @Override
-        public Node getInlineTree() {
-            RootNode root = inlinableTarget.getRootNode();
-            if (root instanceof FunctionDefinitionNode) {
-                return ((FunctionDefinitionNode) root).getUninitializedBody();
-            }
-            return null;
-        }
-
-        @Override
-        public boolean inline(FrameFactory factory) {
-            CompilerAsserts.neverPartOfCompilation();
-            CallNode functionCall = null;
-
-            RootNode root = inlinableTarget.getRootNode();
-            if (root instanceof FunctionDefinitionNode) {
-                functionCall = ((FunctionDefinitionNode) root).inline(factory, arguments);
-            }
-            if (functionCall != null) {
-                this.replace(functionCall);
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public String toString() {
-            FunctionDefinitionNode def = NodeUtil.findParent(this, FunctionDefinitionNode.class);
-            if (def != null) {
-                return def.toString();
-            }
-
-            return super.toString();
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            if (CompilerDirectives.inInterpreter()) {
-                callCount++;
-            }
-            callCount++;
-            return super.execute(frame, evaluatedFunction);
-        }
-
-        @Override
-        public CallTarget getCallTarget() {
-            return inlinableTarget;
         }
     }
 
