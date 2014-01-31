@@ -41,7 +41,7 @@ public class Recall extends RCustomBuiltinNode {
         return PARAMETER_NAMES;
     }
 
-    @Child private CallNode callNode;
+    @Child private RCallNode callNode;
 
     public Recall(RBuiltinNode prev) {
         super(prev);
@@ -52,7 +52,7 @@ public class Recall extends RCustomBuiltinNode {
         RFunction function = RArguments.get(frame).getFunction();
         if (callNode == null) {
             CompilerDirectives.transferToInterpreter();
-            callNode = adoptChild(CallNode.createCall(null, CallArgumentsNode.createUnnamed(((CallNode.VarArgsNode) unwrap(arguments[0])).getArgumentNodes())));
+            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(((RCallNode.VarArgsNode) unwrap(arguments[0])).getArgumentNodes())));
             arguments[0] = null;
         }
         return callNode.execute(frame, function);

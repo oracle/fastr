@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @NodeField(name = "builtin", type = RBuiltinFactory.class)
 @NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends CallNode {
+public abstract class RBuiltinNode extends RCallNode {
 
     public String getSourceCode() {
         return "<builtin>";
@@ -99,7 +99,7 @@ public abstract class RBuiltinNode extends CallNode {
         }
     }
 
-    public CallNode inline(CallArgumentsNode args) {
+    public RCallNode inline(CallArgumentsNode args) {
         RNode[] builtinArguments;
         // static number of arguments
         builtinArguments = inlineStaticArguments(args);
@@ -248,11 +248,11 @@ public abstract class RBuiltinNode extends CallNode {
 
     public static class RSnippetNode extends RCustomBuiltinNode {
 
-        @Child protected CallNode snippetCall;
+        @Child protected RCallNode snippetCall;
 
         public RSnippetNode(RNode[] arguments, RBuiltinFactory builtin, FunctionExpressionNode function) {
             super(arguments, builtin);
-            snippetCall = adoptChild(CallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{})));
+            snippetCall = adoptChild(RCallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{})));
             assignSourceSection(((DefaultCallTarget) ((FunctionExpressionNode.StaticFunctionExpressionNode) function).getFunction().getTarget()).getRootNode().getSourceSection());
         }
 

@@ -97,7 +97,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : ConstantNode.create(RMissing.instance);
             index++;
         }
-        return CallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), true, false), CallArgumentsNode.create(nodes, argumentNames));
+        return RCallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), true, false), CallArgumentsNode.create(nodes, argumentNames));
     }
 
     @Override
@@ -148,14 +148,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(UnaryOperation op) {
         RNode operand = op.getLHS().accept(this);
-        return CallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(operand));
+        return RCallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(operand));
     }
 
     @Override
     public RNode visit(BinaryOperation op) {
         RNode left = op.getLHS().accept(this);
         RNode right = op.getRHS().accept(this);
-        return CallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(left, right));
+        return RCallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(left, right));
     }
 
     @Override
@@ -287,7 +287,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         // replacement function call (use visitor for FunctionCall)
         FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs);
-        CallNode replacementFunctionCall = (CallNode) visit(rfCall);
+        RCallNode replacementFunctionCall = (RCallNode) visit(rfCall);
 
         // assign v, read a
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, replacementFunctionCall, false, n.isSuper());

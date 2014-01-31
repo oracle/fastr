@@ -35,11 +35,11 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class CallNode extends RNode {
+public abstract class RCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
 
-    protected CallNode() {
+    protected RCallNode() {
     }
 
     @Override
@@ -61,22 +61,22 @@ public abstract class CallNode extends RNode {
         return RTypesGen.RTYPES.expectDouble(execute(frame, function));
     }
 
-    public static CallNode createStaticCall(String function, CallArgumentsNode arguments) {
-        return CallNode.createCall(ReadVariableNode.create(function, true, false), arguments);
+    public static RCallNode createStaticCall(String function, CallArgumentsNode arguments) {
+        return RCallNode.createCall(ReadVariableNode.create(function, true, false), arguments);
     }
 
-    public static CallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
-        CallNode cn = createStaticCall(function, arguments);
+    public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments) {
+        RCallNode cn = createStaticCall(function, arguments);
         cn.assignSourceSection(src);
         return cn;
     }
 
-    public static CallNode createCall(RNode function, CallArgumentsNode arguments) {
+    public static RCallNode createCall(RNode function, CallArgumentsNode arguments) {
         return new UninitializedCallNode(function, arguments);
     }
 
-    public static CallNode createCall(SourceSection src, RNode function, CallArgumentsNode arguments) {
-        CallNode cn = new UninitializedCallNode(function, arguments);
+    public static RCallNode createCall(SourceSection src, RNode function, CallArgumentsNode arguments) {
+        RCallNode cn = new UninitializedCallNode(function, arguments);
         cn.assignSourceSection(src);
         return cn;
     }
@@ -91,7 +91,7 @@ public abstract class CallNode extends RNode {
         return null;
     }
 
-    private abstract static class RootCallNode extends CallNode {
+    private abstract static class RootCallNode extends RCallNode {
 
         @Child protected RNode functionNode;
 
@@ -128,11 +128,11 @@ public abstract class CallNode extends RNode {
     public static final class CachedCallNode extends RootCallNode {
 
         @Child protected RootCallNode nextNode;
-        @Child protected CallNode currentNode;
+        @Child protected RCallNode currentNode;
         private final RFunction function;
         private final CallTarget target;
 
-        public CachedCallNode(RNode function, CallNode current, RootCallNode next, RFunction cachedFunction) {
+        public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
             super(function);
             this.currentNode = adoptChild(current);
             this.nextNode = adoptChild(next);
@@ -200,11 +200,11 @@ public abstract class CallNode extends RNode {
             return specialize(function).execute(frame, function);
         }
 
-        private CallNode specialize(RFunction function) {
+        private RCallNode specialize(RFunction function) {
             CompilerAsserts.neverPartOfCompilation();
 
             if (depth < INLINE_CACHE_SIZE) {
-                final CallNode current = createCacheNode(function);
+                final RCallNode current = createCacheNode(function);
                 final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
                 current.onCreate();
                 this.replace(cachedNode);
@@ -225,7 +225,7 @@ public abstract class CallNode extends RNode {
             return parentNode;
         }
 
-        protected CallNode createCacheNode(RFunction function) {
+        protected RCallNode createCacheNode(RFunction function) {
             CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
             clonedArgs = permuteArguments(function, clonedArgs, clonedArgs.getNames());
 
@@ -257,7 +257,7 @@ public abstract class CallNode extends RNode {
         }
     }
 
-    private static class DispatchedCallNode extends CallNode {
+    private static class DispatchedCallNode extends RCallNode {
 
         @Child protected CallArgumentsNode arguments;
         protected final RFunction function;
