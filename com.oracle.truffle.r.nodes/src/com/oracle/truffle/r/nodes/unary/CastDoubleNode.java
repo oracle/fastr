@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class)})
 public abstract class CastDoubleNode extends CastNode {
 
     private final NACheck naCheck = NACheck.create();
@@ -45,18 +44,6 @@ public abstract class CastDoubleNode extends CastNode {
     public abstract Object executeDouble(VirtualFrame frame, Object o);
 
     public abstract Object executeDoubleVector(VirtualFrame frame, Object o);
-
-    protected abstract boolean isNamesPreservation();
-
-    protected abstract boolean isDimensionsPreservation();
-
-    protected boolean preserveNames() {
-        return isNamesPreservation();
-    }
-
-    protected boolean preserveDimensions() {
-        return isDimensionsPreservation();
-    }
 
     @Specialization
     public RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -251,7 +238,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Generic
-    public int doOther(Object operand) {
+    public double doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());
     }
@@ -271,5 +258,4 @@ public abstract class CastDoubleNode extends CastNode {
             return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         }
     }
-
 }

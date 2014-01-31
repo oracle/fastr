@@ -30,26 +30,19 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class)})
 public abstract class CastIntegerNode extends CastNode {
 
     private final NACheck check = NACheck.create();
 
+    public abstract Object executeInt(VirtualFrame frame, int o);
+
+    public abstract Object executeInt(VirtualFrame frame, double o);
+
+    public abstract Object executeInt(VirtualFrame frame, byte o);
+
     public abstract Object executeInt(VirtualFrame frame, Object o);
 
     public abstract Object executeIntVector(VirtualFrame frame, Object o);
-
-    protected abstract boolean isNamesPreservation();
-
-    protected abstract boolean isDimensionsPreservation();
-
-    protected boolean preserveNames() {
-        return isNamesPreservation();
-    }
-
-    protected boolean preserveDimensions() {
-        return isDimensionsPreservation();
-    }
 
     @Child CastIntegerNode recursiveCastInteger;
 

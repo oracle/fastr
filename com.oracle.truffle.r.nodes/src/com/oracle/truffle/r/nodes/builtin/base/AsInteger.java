@@ -39,19 +39,35 @@ public abstract class AsInteger extends RBuiltinNode {
 
     @Child CastIntegerNode castIntNode;
 
-    private int castInt(VirtualFrame frame, Object o) {
+    private void initCast() {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreter();
             castIntNode = adoptChild(CastIntegerNodeFactory.create(null, false, false));
         }
+    }
+
+    private int castInt(VirtualFrame frame, int o) {
+        initCast();
+        return (int) castIntNode.executeInt(frame, o);
+    }
+
+    private int castInt(VirtualFrame frame, double o) {
+        initCast();
+        return (int) castIntNode.executeInt(frame, o);
+    }
+
+    private int castInt(VirtualFrame frame, byte o) {
+        initCast();
+        return (int) castIntNode.executeInt(frame, o);
+    }
+
+    private int castInt(VirtualFrame frame, Object o) {
+        initCast();
         return (int) castIntNode.executeInt(frame, o);
     }
 
     private RIntVector castIntVector(VirtualFrame frame, Object o) {
-        if (castIntNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castIntNode = adoptChild(CastIntegerNodeFactory.create(null, false, false));
-        }
+        initCast();
         return (RIntVector) castIntNode.executeIntVector(frame, o);
     }
 

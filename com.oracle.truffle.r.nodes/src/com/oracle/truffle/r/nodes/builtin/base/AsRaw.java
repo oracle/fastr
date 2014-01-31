@@ -36,10 +36,43 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class AsRaw extends RBuiltinNode {
 
-    @Child private AsRaw asRawRecursive;
     @Child private CastIntegerNode castInteger;
 
-    public abstract Object executeRaw(VirtualFrame frame, Object o);
+    @Child private CastRawNode castRawNode;
+
+    private void initCast() {
+        if (castRawNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castRawNode = adoptChild(CastRawNodeFactory.create(null, false, false));
+        }
+    }
+
+    private RRaw castRaw(VirtualFrame frame, int o) {
+        initCast();
+        return (RRaw) castRawNode.executeRaw(frame, o);
+    }
+
+    private RRaw castRaw(VirtualFrame frame, double o) {
+        initCast();
+        return (RRaw) castRawNode.executeRaw(frame, o);
+    }
+
+    private RRaw castRaw(VirtualFrame frame, byte o) {
+        initCast();
+        return (RRaw) castRawNode.executeRaw(frame, o);
+    }
+
+    private RRaw castRaw(VirtualFrame frame, Object o) {
+        initCast();
+        return (RRaw) castRawNode.executeRaw(frame, o);
+    }
+
+    private RRawVector castRawVector(VirtualFrame frame, Object o) {
+        initCast();
+        return (RRawVector) castRawNode.executeRawVector(frame, o);
+    }
+
+    public abstract RRaw executeRaw(VirtualFrame frame, Object o);
 
     @Specialization
     public RRawVector asRaw(RNull vector) {
@@ -47,43 +80,28 @@ public abstract class AsRaw extends RBuiltinNode {
     }
 
     @Specialization
-    public RRaw asRaw(byte logical) {
-        if (RRuntime.isNA(logical)) {
-            // TODO: Output out-of-range warning.
-            return RDataFactory.createRaw((byte) 0);
-        }
-        return RDataFactory.createRaw(logical);
+    public RRaw asRaw(VirtualFrame frame, byte logical) {
+        return castRaw(frame, logical);
     }
 
     @Specialization
-    public RRaw asRaw(int value) {
-        int result = (value & 0xFF);
-        if (result == value) {
-            return RDataFactory.createRaw((byte) result);
-        }
-        // TODO: Output out-of-range warning.
-        return RDataFactory.createRaw((byte) 0);
+    public RRaw asRaw(VirtualFrame frame, int value) {
+        return castRaw(frame, value);
     }
 
     @Specialization
-    public RRaw asRaw(double value) {
-        return asRaw((int) value);
+    public RRaw asRaw(VirtualFrame frame, double value) {
+        return castRaw(frame, value);
     }
 
     @Specialization
-    public RRaw asRaw(RComplex value) {
-        // TODO: Output dropping of imaginary part warning if imaginary part not 0.0.
-        return asRaw(value.getRealPart());
+    public RRaw asRaw(VirtualFrame frame, RComplex value) {
+        return castRaw(frame, value);
     }
 
     @Specialization
     public RRaw asRaw(VirtualFrame frame, String value) {
-        // TODO: Output NA and out-of-range warning.
-        if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
-            castInteger = adoptChild(CastIntegerNodeFactory.create(null, false, false));
-        }
-        return asRaw((int) castInteger.executeInt(frame, value));
+        return castRaw(frame, value);
     }
 
     @Specialization
@@ -92,88 +110,21 @@ public abstract class AsRaw extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector asRaw(RIntVector vector) {
-        return performAbstractIntVector(vector);
-    }
-
-    @Specialization
-    public RRawVector asRaw(RIntSequence vector) {
-        return performAbstractIntVector(vector);
-    }
-
-    @Specialization
-    public RRawVector asRaw(RDoubleSequence vector) {
-        return performAbstractDoubleVector(vector);
-    }
-
-    @Specialization
-    public RRawVector asRaw(RDoubleVector vector) {
-        return performAbstractDoubleVector(vector);
-    }
-
-    @Specialization
-    public RRawVector asRaw(RStringVector vector) {
-        int length = vector.getLength();
-        RRawVector result = RDataFactory.createRawVector(length);
-        for (int i = 0; i < length; i++) {
-            result.updateDataAt(i, RDataFactory.createRaw((byte) 0));
-        }
-        return result;
-    }
-
-    @Specialization
-    public RRawVector asRaw(RLogicalVector vector) {
-        int length = vector.getLength();
-        RRawVector result = RDataFactory.createRawVector(length);
-        for (int i = 0; i < length; i++) {
-            result.updateDataAt(i, asRaw(vector.getDataAt(i)));
-        }
-        return result;
-    }
-
-    @Specialization
-    public RRawVector asRaw(RComplexVector vector) {
-        int length = vector.getLength();
-        RRawVector result = RDataFactory.createRawVector(length);
-        for (int i = 0; i < length; i++) {
-            result.updateDataAt(i, asRaw(vector.getDataAt(i)));
-        }
-        return result;
+    public RRawVector asRaw(VirtualFrame frame, RAbstractVector vector) {
+        return castRawVector(frame, vector);
     }
 
     @Specialization
     public RRawVector asRaw(RRawVector value) {
-        return value;
+        return RDataFactory.createRawVector(value.getDataCopy());
     }
 
     @Specialization
     public RRawVector asRaw(VirtualFrame frame, RList value) {
-        if (asRawRecursive == null) {
-            CompilerDirectives.transferToInterpreter();
-            asRawRecursive = adoptChild(AsRawFactory.create(new RNode[1], getBuiltin()));
-        }
         int length = value.getLength();
         RRawVector result = RDataFactory.createRawVector(length);
         for (int i = 0; i < length; ++i) {
-            result.updateDataAt(i, (RRaw) asRawRecursive.executeRaw(frame, value.getDataAt(i)));
-        }
-        return result;
-    }
-
-    private RRawVector performAbstractIntVector(RAbstractIntVector vector) {
-        int length = vector.getLength();
-        RRawVector result = RDataFactory.createRawVector(length);
-        for (int i = 0; i < length; i++) {
-            result.updateDataAt(i, asRaw(vector.getDataAt(i)));
-        }
-        return result;
-    }
-
-    private RRawVector performAbstractDoubleVector(RAbstractDoubleVector vector) {
-        int length = vector.getLength();
-        RRawVector result = RDataFactory.createRawVector(length);
-        for (int i = 0; i < length; i++) {
-            result.updateDataAt(i, asRaw(vector.getDataAt(i)));
+            result.updateDataAt(i, castRaw(frame, value.getDataAt(i)));
         }
         return result;
     }

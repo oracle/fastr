@@ -64,7 +64,7 @@ public abstract class Combine extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = adoptChild(CastToVectorNodeFactory.create(null));
+            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false));
         }
         RVector resultVector = castVector.executeRAbstractVector(frame, value).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :
@@ -256,7 +256,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreter();
-            castComplex = adoptChild(CastComplexNodeFactory.create(null));
+            castComplex = adoptChild(CastComplexNodeFactory.create(null, true, false));
         }
         return castComplex.executeCast(frame, operand);
     }
@@ -296,7 +296,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreter();
-            castRaw = adoptChild(CastRawNodeFactory.create(null));
+            castRaw = adoptChild(CastRawNodeFactory.create(null, true, false));
         }
         return castRaw.executeCast(frame, operand);
     }
@@ -304,7 +304,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castList(VirtualFrame frame, Object operand) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreter();
-            castList = adoptChild(CastListNodeFactory.create(null));
+            castList = adoptChild(CastListNodeFactory.create(null, true, false));
         }
         return castList.executeCast(frame, operand);
     }

@@ -22,10 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -35,8 +38,69 @@ public abstract class AsVector extends RBuiltinNode {
 
     private static final String[] PARAMETER_NAMES = new String[]{"x", "mode"};
 
-    // @Child protected AsComplex asComplex;
-    // @Child protected AsLogical asLogical;
+    @Child private CastIntegerNode castInteger;
+    @Child private CastDoubleNode castDouble;
+    @Child private CastComplexNode castComplex;
+    @Child private CastLogicalNode castLogical;
+    @Child private CastStringNode castString;
+    @Child private CastRawNode castRaw;
+    @Child private CastListNode castList;
+
+    private RIntVector castInteger(VirtualFrame frame, Object operand) {
+        if (castInteger == null) {
+            CompilerDirectives.transferToInterpreter();
+            castInteger = adoptChild(CastIntegerNodeFactory.create(null, false, false));
+        }
+        return (RIntVector) castInteger.executeIntVector(frame, operand);
+    }
+
+    private RDoubleVector castDouble(VirtualFrame frame, Object operand) {
+        if (castDouble == null) {
+            CompilerDirectives.transferToInterpreter();
+            castDouble = adoptChild(CastDoubleNodeFactory.create(null, false, false));
+        }
+        return (RDoubleVector) castDouble.executeDoubleVector(frame, operand);
+    }
+
+    private RComplexVector castComplex(VirtualFrame frame, Object operand) {
+        if (castComplex == null) {
+            CompilerDirectives.transferToInterpreter();
+            castComplex = adoptChild(CastComplexNodeFactory.create(null, false, false));
+        }
+        return (RComplexVector) castComplex.executeComplexVector(frame, operand);
+    }
+
+    private RLogicalVector castLogical(VirtualFrame frame, Object operand) {
+        if (castLogical == null) {
+            CompilerDirectives.transferToInterpreter();
+            castLogical = adoptChild(CastLogicalNodeFactory.create(null, false, false));
+        }
+        return (RLogicalVector) castLogical.executeLogicalVector(frame, operand);
+    }
+
+    private RStringVector castString(VirtualFrame frame, Object operand) {
+        if (castString == null) {
+            CompilerDirectives.transferToInterpreter();
+            castString = adoptChild(CastStringNodeFactory.create(null, false, false, false));
+        }
+        return (RStringVector) castString.executeStringVector(frame, operand);
+    }
+
+    private RRawVector castRaw(VirtualFrame frame, Object operand) {
+        if (castRaw == null) {
+            CompilerDirectives.transferToInterpreter();
+            castRaw = adoptChild(CastRawNodeFactory.create(null, false, false));
+        }
+        return (RRawVector) castRaw.executeRawVector(frame, operand);
+    }
+
+    private RList castList(VirtualFrame frame, Object operand) {
+        if (castList == null) {
+            CompilerDirectives.transferToInterpreter();
+            castList = adoptChild(CastListNodeFactory.create(null, true, false));
+        }
+        return castList.executeList(frame, operand);
+    }
 
     @Override
     public Object[] getParameterNames() {
@@ -53,48 +117,86 @@ public abstract class AsVector extends RBuiltinNode {
         return x;
     }
 
-    @Specialization(order = 20, guards = "modeIsAnyOrMatches")
+    @Specialization(order = 100, guards = "castToInt")
+    public RAbstractVector asVectorInt(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castInteger(frame, x);
+    }
+
+    @Specialization(order = 200, guards = "castToDouble")
+    public RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castDouble(frame, x);
+    }
+
+    @Specialization(order = 300, guards = "castToComplex")
+    public RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castComplex(frame, x);
+    }
+
+    @Specialization(order = 400, guards = "castToLogical")
+    public RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castLogical(frame, x);
+    }
+
+    @Specialization(order = 500, guards = "castToString")
+    public RAbstractVector asVectorString(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castString(frame, x);
+    }
+
+    @Specialization(order = 600, guards = "castToRaw")
+    public RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castRaw(frame, x);
+    }
+
+    @Specialization(order = 700, guards = "castToList")
+    public RAbstractVector asVectorList(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        return castList(frame, x);
+    }
+
+    @Specialization(order = 1000)
+    public RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
+        RList result = x.copyWithNewDimensions(null);
+        result.copyNamesFrom(x);
+        return result;
+    }
+
+    @Specialization(order = 1001, guards = "modeIsAnyOrMatches")
     public RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         return x.copyWithNewDimensions(null);
     }
 
-    // FIXME comment these in (and extend) once polymorphic nodes are supported
+    @SuppressWarnings("unused")
+    @Specialization(order = 1002, guards = "!modeIsAnyOrMatches")
+    public RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
+        throw RError.getInvalidMode(getSourceSection());
+    }
 
-    // @Specialization(order = 40, guards = "castToLogical")
-    // public RLogicalVector asVectorLogical(VirtualFrame frame, RAbstractVector x,
-    // @SuppressWarnings("unused") String mode) {
-    // if (asLogical == null) {
-    // CompilerDirectives.transferToInterpreter();
-    // asLogical = adoptChild(AsLogicalFactory.create(new RNode[1], getContext(), getBuiltin()));
-    // }
-    // try {
-    // return asLogical.executeRLogicalVector(frame, x).copyWithNewDimensions(null);
-    // } catch (UnexpectedResultException ure) {
-    // throw new IllegalStateException(ure);
-    // }
-    // }
+    protected boolean castToInt(RAbstractVector x, String mode) {
+        return x.getElementClass() != RInt.class && RRuntime.TYPE_INTEGER.equals(mode);
+    }
 
-    // @Specialization(order = 60, guards = "castToComplex")
-    // public RComplexVector asVectorComplex(VirtualFrame frame, RAbstractVector x,
-    // @SuppressWarnings("unused") String mode) {
-    // if (asComplex == null) {
-    // CompilerDirectives.transferToInterpreter();
-    // asComplex = adoptChild(AsComplexFactory.create(new RNode[1], getContext(), getBuiltin()));
-    // }
-    // try {
-    // return asComplex.executeRComplexVector(frame, x).copyWithNewDimensions(null);
-    // } catch (UnexpectedResultException ure) {
-    // throw new IllegalStateException(ure);
-    // }
-    // }
+    protected boolean castToDouble(RAbstractVector x, String mode) {
+        return x.getElementClass() != RDouble.class && (RRuntime.TYPE_NUMERIC.equals(mode) || RRuntime.TYPE_DOUBLE.equals(mode));
+    }
 
-    // protected boolean castToLogical(RAbstractVector x, String mode) {
-    // return x.getElementClass() != RLogical.class && RRuntime.TYPE_LOGICAL.equals(mode);
-    // }
+    protected boolean castToComplex(RAbstractVector x, String mode) {
+        return x.getElementClass() != RComplex.class && RRuntime.TYPE_COMPLEX.equals(mode);
+    }
 
-    // protected boolean castToComplex(RAbstractVector x, String mode) {
-    // return x.getElementClass() != RComplex.class && RRuntime.TYPE_COMPLEX.equals(mode);
-    // }
+    protected boolean castToLogical(RAbstractVector x, String mode) {
+        return x.getElementClass() != RLogical.class && RRuntime.TYPE_LOGICAL.equals(mode);
+    }
+
+    protected boolean castToString(RAbstractVector x, String mode) {
+        return x.getElementClass() != RString.class && RRuntime.TYPE_CHARACTER.equals(mode);
+    }
+
+    protected boolean castToRaw(RAbstractVector x, String mode) {
+        return x.getElementClass() != RRaw.class && RRuntime.TYPE_RAW.equals(mode);
+    }
+
+    protected boolean castToList(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+        return mode.equals("list");
+    }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
         return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode);

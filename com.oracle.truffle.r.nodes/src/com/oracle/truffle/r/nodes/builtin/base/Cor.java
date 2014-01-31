@@ -31,12 +31,12 @@ public abstract class Cor extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2) {
-        return Covcor.cor(vector1, vector2, false);
+        return Covcor.cor(vector1, vector2, false, this.getEncapsulatingSourceSection());
     }
 
     @Specialization
     @SuppressWarnings("unused")
     public RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2) {
-        return Covcor.cor(vector1, vector1, false);
+        return Covcor.cor(vector1, vector1, false, this.getEncapsulatingSourceSection());
     }
 }

@@ -29,40 +29,47 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin("as.complex")
 @SuppressWarnings("unused")
 public abstract class AsComplex extends RBuiltinNode {
 
-    private final NACheck check;
-
     @Child CastComplexNode castComplexNode;
 
     public abstract RComplexVector executeRComplexVector(VirtualFrame frame, Object o) throws UnexpectedResultException;
 
-    private RComplex castComplex(VirtualFrame frame, Object o) {
+    private void initCast() {
         if (castComplexNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castComplexNode = adoptChild(CastComplexNodeFactory.create(null));
+            castComplexNode = adoptChild(CastComplexNodeFactory.create(null, false, false));
         }
+    }
+
+    private RComplex castComplex(VirtualFrame frame, int o) {
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(frame, o);
+    }
+
+    private RComplex castComplex(VirtualFrame frame, double o) {
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(frame, o);
+    }
+
+    private RComplex castComplex(VirtualFrame frame, byte o) {
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(frame, o);
+    }
+
+    private RComplex castComplex(VirtualFrame frame, Object o) {
+        initCast();
         return (RComplex) castComplexNode.executeComplex(frame, o);
     }
 
     private RComplexVector castComplexVector(VirtualFrame frame, Object o) {
-        if (castComplexNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castComplexNode = adoptChild(CastComplexNodeFactory.create(null));
-        }
+        initCast();
         return (RComplexVector) castComplexNode.executeComplexVector(frame, o);
-    }
-
-    protected AsComplex() {
-        this.check = NACheck.create();
-    }
-
-    protected AsComplex(AsComplex other) {
-        this.check = other.check;
     }
 
     @Specialization
@@ -71,21 +78,18 @@ public abstract class AsComplex extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplex doInt(int value) {
-        check.enable(value);
-        return check.convertIntToComplex(value);
+    public RComplex doInt(VirtualFrame frame, int value) {
+        return castComplex(frame, value);
     }
 
     @Specialization
-    public RComplex doDouble(double value) {
-        check.enable(value);
-        return check.convertDoubleToComplex(value);
+    public RComplex doDouble(VirtualFrame frame, double value) {
+        return castComplex(frame, value);
     }
 
     @Specialization
-    public RComplex doLogical(byte value) {
-        check.enable(value);
-        return check.convertLogicalToComplex(value);
+    public RComplex doLogical(VirtualFrame frame, byte value) {
+        return castComplex(frame, value);
     }
 
     @Specialization
@@ -100,41 +104,11 @@ public abstract class AsComplex extends RBuiltinNode {
 
     @Specialization
     public RComplexVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
-        return vector;
+        return RDataFactory.createComplexVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
-    public RComplexVector doIntVector(VirtualFrame frame, RIntVector vector) {
+    public RComplexVector doIntVector(VirtualFrame frame, RAbstractVector vector) {
         return castComplexVector(frame, vector);
-    }
-
-    @Specialization
-    public RComplexVector doDoubleVector(VirtualFrame frame, RDoubleVector vector) {
-        return castComplexVector(frame, vector);
-    }
-
-    @Specialization
-    public RComplexVector doLogicalVector(VirtualFrame frame, RLogicalVector vector) {
-        return castComplexVector(frame, vector);
-    }
-
-    @Specialization
-    public RComplexVector doRawVector(VirtualFrame frame, RRawVector vector) {
-        return castComplexVector(frame, vector);
-    }
-
-    @Specialization
-    public RComplexVector doStringVector(VirtualFrame frame, RStringVector vector) {
-        return castComplexVector(frame, vector);
-    }
-
-    @Specialization
-    public RComplexVector doIntSequence(VirtualFrame frame, RIntSequence sequence) {
-        return castComplexVector(frame, sequence);
-    }
-
-    @Specialization
-    public RComplexVector doDoubleSequence(VirtualFrame frame, RDoubleSequence sequence) {
-        return castComplexVector(frame, sequence);
     }
 }

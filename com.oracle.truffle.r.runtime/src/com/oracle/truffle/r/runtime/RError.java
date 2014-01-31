@@ -11,8 +11,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 
 /*
  * The error messages are copy-pasted and/or hand re-written from GNU R.
@@ -226,6 +226,10 @@ public abstract class RError extends RuntimeException {
     public static final String INVALID_TYPE_LENGTH = "invalid type/length (%s/%d) in vector allocation";
     public static final String SUBASSIGN_TYPE_FIX = "incompatible types (from %s to %s) in subassignment type fix";
     public static final String RECURSIVE_INDEXING_FAILED = "recursive indexing failed at level %d";
+
+    public static void warning(SourceSection source, String message) {
+        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
+    }
 
     public abstract static class RNYIError extends RError {
 

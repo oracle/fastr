@@ -131,7 +131,7 @@ public class RRuntime {
     }
 
     public static byte asLogical(boolean b) {
-        return b ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return b ? LOGICAL_TRUE : LOGICAL_FALSE;
     }
 
     // conversions from logical
@@ -141,7 +141,7 @@ public class RRuntime {
     }
 
     public static int logical2int(byte value) {
-        return isNA(value) ? RRuntime.INT_NA : logical2intNoCheck(value);
+        return isNA(value) ? INT_NA : logical2intNoCheck(value);
     }
 
     public static double logical2doubleNoCheck(byte value) {
@@ -149,7 +149,7 @@ public class RRuntime {
     }
 
     public static double logical2double(byte value) {
-        return isNA(value) ? RRuntime.DOUBLE_NA : logical2doubleNoCheck(value);
+        return isNA(value) ? DOUBLE_NA : logical2doubleNoCheck(value);
     }
 
     public static RComplex logical2complexNoCheck(byte value) {
@@ -161,7 +161,7 @@ public class RRuntime {
     }
 
     public static String logicalToStringNoCheck(byte operand) {
-        return operand == RRuntime.LOGICAL_TRUE ? "TRUE" : operand == RRuntime.LOGICAL_FALSE ? "FALSE" : STRING_NA;
+        return operand == LOGICAL_TRUE ? "TRUE" : operand == LOGICAL_FALSE ? "FALSE" : STRING_NA;
     }
 
     public static String logicalToString(byte operand) {
@@ -171,7 +171,7 @@ public class RRuntime {
     // conversions from raw
 
     public static byte raw2logical(RRaw value) {
-        return value.getValue() == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
+        return value.getValue() == 0 ? LOGICAL_FALSE : LOGICAL_TRUE;
     }
 
     public static int raw2int(RRaw value) {
@@ -204,11 +204,7 @@ public class RRuntime {
     }
 
     public static int string2int(String s) {
-        if (isNA(s)) {
-            return INT_NA;
-        } else {
-            return string2intNoCheck(s);
-        }
+        return isNA(s) ? INT_NA : string2intNoCheck(s);
     }
 
     public static double string2doubleNoCheck(String v) {
@@ -263,32 +259,37 @@ public class RRuntime {
 
     @SlowPath
     public static RComplex string2complexNoCheck(String v) {
-        try {
-            int startIdx = 0;
-            char firstChar = v.charAt(0);
-            boolean negativeReal = firstChar == '-';
-            if (firstChar == '+' || negativeReal) {
-                startIdx++;
+        double doubleValue = string2doubleNoCheck(v);
+        if (!RRuntime.isNA(doubleValue)) {
+            return RDataFactory.createComplex(doubleValue, 0.0);
+        } else {
+            try {
+                int startIdx = 0;
+                char firstChar = v.charAt(0);
+                boolean negativeReal = firstChar == '-';
+                if (firstChar == '+' || negativeReal) {
+                    startIdx++;
+                }
+
+                int plusIdx = v.indexOf("+", startIdx);
+                int minusIdx = v.indexOf("-", startIdx);
+                int iIdx = v.indexOf("i", startIdx);
+                int signIdx = getSignIdx(plusIdx, minusIdx);
+                boolean negativeImaginary = minusIdx > 0;
+
+                double realPart = Double.parseDouble(v.substring(startIdx, signIdx));
+                double imaginaryPart = Double.parseDouble(v.substring(signIdx + 1, iIdx));
+
+                return RDataFactory.createComplex(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
+            } catch (NumberFormatException ex) {
+                return createComplexNA();
             }
-
-            int plusIdx = v.indexOf("+", startIdx);
-            int minusIdx = v.indexOf("-", startIdx);
-            int iIdx = v.indexOf("i", startIdx);
-            int signIdx = getSignIdx(plusIdx, minusIdx);
-            boolean negativeImaginary = minusIdx > 0;
-
-            double realPart = Double.parseDouble(v.substring(startIdx, signIdx));
-            double imaginaryPart = Double.parseDouble(v.substring(signIdx + 1, iIdx));
-
-            return RDataFactory.createComplex(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
-        } catch (NumberFormatException ex) {
-            return RRuntime.createComplexNA();
         }
     }
 
     @SlowPath
     public static RComplex string2complex(String v) {
-        return isNA(v) ? RRuntime.createComplexNA() : string2complexNoCheck(v);
+        return isNA(v) ? createComplexNA() : string2complexNoCheck(v);
     }
 
     // conversions from int
@@ -325,6 +326,14 @@ public class RRuntime {
     @SlowPath
     public static String intToString(int operand, boolean appendL) {
         return isNA(operand) ? STRING_NA : intToStringNoCheck(operand, appendL);
+    }
+
+    public static int int2rawIntValue(int i) {
+        return isNA(i) ? 0 : i & 0xFF;
+    }
+
+    public static RRaw int2raw(int i) {
+        return RDataFactory.createRaw((byte) int2rawIntValue(i));
     }
 
     // conversions from double
@@ -365,7 +374,7 @@ public class RRuntime {
 
     @SlowPath
     public static String doubleToStringNoCheck(double operand) {
-        if (RRuntime.doubleIsInt(operand)) {
+        if (doubleIsInt(operand)) {
             return String.valueOf((int) operand);
         }
         if (operand == Double.POSITIVE_INFINITY) {
@@ -395,6 +404,14 @@ public class RRuntime {
     @SlowPath
     public static String doubleToString(double operand) {
         return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand);
+    }
+
+    public static int double2rawIntValue(double operand) {
+        return isNA(operand) ? 0 : ((int) operand) & 0xFF;
+    }
+
+    public static RRaw double2raw(double operand) {
+        return RDataFactory.createRaw((byte) double2rawIntValue(operand));
     }
 
     // conversions from complex
@@ -431,6 +448,14 @@ public class RRuntime {
     @SlowPath
     public static String complexToString(RComplex operand) {
         return isNA(operand) ? STRING_NA : complexToStringNoCheck(operand);
+    }
+
+    public static int complex2rawIntValue(RComplex c) {
+        return isNA(c) ? 0 : ((int) c.getRealPart() & 0xFF);
+    }
+
+    public static RRaw complex2raw(RComplex c) {
+        return RDataFactory.createRaw((byte) complex2rawIntValue(c));
     }
 
     private static int getSignIdx(int plusIdx, int minusIdx) throws NumberFormatException {
@@ -510,7 +535,7 @@ public class RRuntime {
 
     @SlowPath
     public static String quoteString(String data) {
-        return data == RRuntime.STRING_NA ? RRuntime.STRING_NA : "\"" + data + "\"";
+        return data == STRING_NA ? STRING_NA : "\"" + data + "\"";
     }
 
     private static final class REmptyEnvironment extends REnvironment {

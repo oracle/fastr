@@ -386,6 +386,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.complex(\"-1-5i\") }");
         assertEval("{ as.complex(0/0) }");
         assertEval("{ as.complex(c(0/0, 0/0)) }");
+        assertEvalWarning("{ as.complex(c(\"1\",\"hello\")) }");
+        assertEvalWarning("{ as.complex(\"TRUE\") }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
+        assertEval("{ as.complex(\"Inf\") }");
+        assertEval("{ as.complex(\"NaN\") }");
+        assertEval("{ as.complex(\"0x42\") }");
     }
 
     @Test
@@ -402,6 +409,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.raw(NULL) }");
         assertEval("{ as.raw(1) }");
         assertEval("{ as.raw(1L) }");
+        assertEval("{ as.raw(1.1) }");
         assertEval("{ as.raw(c(1, 2, 3)) }");
         assertEval("{ as.raw(c(1L, 2L, 3L)) }");
         assertEval("{ as.raw(list(1,2,3)) }");
@@ -409,19 +417,38 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAsRawIgnore() {
         // FIXME coercion warnings
-        assertEval("{ as.raw(1+1i) }");
-        assertEval("{ as.raw(-1) }");
-        assertEval("{ as.raw(-1L) }");
-        assertEval("{ as.raw(NA) }");
-        assertEval("{ as.raw(\"test\") }");
-        assertEval("{ as.raw(c(1+3i, -2-1i, NA)) }");
-        assertEval("{ as.raw(c(1, -2, 3)) }");
-        assertEval("{ as.raw(c(1,1000,NA)) }");
-        assertEval("{ as.raw(c(1L, -2L, 3L)) }");
-        assertEval("{ as.raw(c(1L, -2L, NA)) }");
+        assertEvalWarning("{ as.raw(1+1i) }");
+        assertEvalWarning("{ as.raw(-1) }");
+        assertEvalWarning("{ as.raw(-1L) }");
+        assertEvalWarning("{ as.raw(NA) }");
+        assertEvalWarning("{ as.raw(\"test\") }");
+        assertEvalWarning("{ as.raw(c(1+3i, -2-1i, NA)) }");
+        assertEvalWarning("{ as.raw(c(1, -2, 3)) }");
+        assertEvalWarning("{ as.raw(c(1,1000,NA)) }");
+        assertEvalWarning("{ as.raw(c(1L, -2L, 3L)) }");
+        assertEvalWarning("{ as.raw(c(1L, -2L, NA)) }");
+    }
+
+    @Test
+    public void testAsVector() {
+        assertEvalWarning("{ as.vector(\"foo\", \"integer\") }");
+        assertEvalWarning("{ as.vector(\"foo\", \"double\") }");
+        assertEvalWarning("{ as.vector(\"foo\", \"numeric\") }");
+        assertEval("{ as.vector(\"foo\", \"logical\") }");
+        assertEvalWarning("{ as.vector(\"foo\", \"raw\") }");
+        assertEval("{ as.vector(\"foo\", \"character\") }");
+        assertEval("{ as.vector(\"foo\", \"list\") }");
+        assertEval("{ as.vector(\"foo\") }");
+        assertEvalError("{ as.vector(\"foo\", \"bar\") }");
+        assertEvalWarning("{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
+        assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
+        assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
+        assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x); attributes(y) }");
+        assertEval("{ x<-c(a=1, b=2); as.vector(x, \"list\") }");
+        assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x, \"list\"); attributes(y) }");
+        assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
     }
 
     @Test
@@ -479,18 +506,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- c(0,2); names(x) <- c(\"hello\",\"hi\") ; as.logical(x) }");
         assertEval("{ x <- 1:2; names(x) <- c(\"hello\",\"hi\") ; as.double(x) }");
         assertEval("{ x <- c(1,2); names(x) <- c(\"hello\",\"hi\") ; as.integer(x) }");
-    }
 
-    @Test
-    @Ignore
-    public void testCastsIgnore() {
         assertEval("{ m<-matrix(c(1,0,1,0), nrow=2) ; as.vector(m, mode = \"logical\") }");
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"complex\") }");
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"character\") }");
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"raw\") }");
 
         assertEval("{ as.vector(list(1,2,3), mode=\"integer\") }");
+    }
 
+    @Test
+    @Ignore
+    public void testCastsIgnore() {
         assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- c(x=1) ; as.list(l) }");

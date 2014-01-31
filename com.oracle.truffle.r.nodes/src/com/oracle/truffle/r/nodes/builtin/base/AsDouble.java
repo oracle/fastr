@@ -39,43 +39,35 @@ public abstract class AsDouble extends RBuiltinNode {
 
     @Child CastDoubleNode castDoubleNode;
 
-    private double castDouble(VirtualFrame frame, int o) {
+    private void initCast() {
         if (castDoubleNode == null) {
             CompilerDirectives.transferToInterpreter();
             castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
         }
+    }
+
+    private double castDouble(VirtualFrame frame, int o) {
+        initCast();
         return (double) castDoubleNode.executeDouble(frame, o);
     }
 
     private double castDouble(VirtualFrame frame, double o) {
-        if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
-        }
+        initCast();
         return (double) castDoubleNode.executeDouble(frame, o);
     }
 
     private double castDouble(VirtualFrame frame, byte o) {
-        if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
-        }
+        initCast();
         return (double) castDoubleNode.executeDouble(frame, o);
     }
 
     private double castDouble(VirtualFrame frame, Object o) {
-        if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
-        }
+        initCast();
         return (double) castDoubleNode.executeDouble(frame, o);
     }
 
     private RDoubleVector castDoubleVector(VirtualFrame frame, Object o) {
-        if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
-            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
-        }
+        initCast();
         return (RDoubleVector) castDoubleNode.executeDoubleVector(frame, o);
     }
 

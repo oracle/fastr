@@ -64,6 +64,12 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return RDataFactory.createRaw(data[i]);
     }
 
+    public byte[] getDataCopy() {
+        byte[] copy = new byte[data.length];
+        System.arraycopy(data, 0, copy, 0, data.length);
+        return copy;
+    }
+
     public RRawVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createRawVector(data, newDimensions);
     }

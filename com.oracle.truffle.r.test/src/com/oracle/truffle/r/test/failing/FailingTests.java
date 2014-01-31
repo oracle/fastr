@@ -1469,56 +1469,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_234cefc5ff95e036f3fa00ff5e0f2088() {
-        assertEval("{ as.raw(1+1i) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_6cd26c8e6df8ead2edcbb6df45860698() {
-        assertEval("{ as.raw(-1) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_b2f6c512a8b92fcc2861d16b643c77e8() {
-        assertEval("{ as.raw(-1L) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_6e315b6de04235063bc8e0be93dc9780() {
-        assertEval("{ as.raw(NA) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_3dced2b189d4bc08910497a4c84f8eaf() {
-        assertEval("{ as.raw(\"test\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_75c975b8a03a598a4af0a0a332d02b71() {
-        assertEval("{ as.raw(c(1+3i, -2-1i, NA)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_747e8b9acbda8dd5dc02ce1274604e0c() {
-        assertEval("{ as.raw(c(1, -2, 3)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_ad6deee1d16519ee2ce790bb577709d2() {
-        assertEval("{ as.raw(c(1,1000,NA)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_d799cae365e5f001ed4de47c2cbbff01() {
-        assertEval("{ as.raw(c(1L, -2L, 3L)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testAsRawIgnore_05185c7c12248d279730674e3b527d86() {
-        assertEval("{ as.raw(c(1L, -2L, NA)) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCall_7d3147e26292301cfabf8939c17af430() {
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
     }
@@ -1526,31 +1476,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testCall_ac5601b7f27d60cead4d93b849fd38ca() {
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_97d4b6e51e8e88e14a04e0f452ea5159() {
-        assertEval("{ m<-matrix(c(1,0,1,0), nrow=2) ; as.vector(m, mode = \"logical\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_5dd4341a59ca7d0e2ed6b0d084e792db() {
-        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"complex\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_2313113d77f87db77406408465c55c7e() {
-        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"character\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_b6184a32a36c6baf7d41451b40d049ba() {
-        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"raw\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_5ecedc65b348c959e86222b948f34ce8() {
-        assertEval("{ as.vector(list(1,2,3), mode=\"integer\") }");
     }
 
     @Ignore
@@ -3761,16 +3686,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testDefinitionsIgnore_ba4a8d210d2bcdac8ede803b28c13172() {
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testDefinitionsIgnore_0b5fd9af93b3e73346e7f4de73d898be() {
-        assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testDefinitionsIgnore_5f003c191978963a5682d9a5302ed07e() {
-        assertEvalNoOutput("x<-function(){1}");
     }
 
     @Ignore

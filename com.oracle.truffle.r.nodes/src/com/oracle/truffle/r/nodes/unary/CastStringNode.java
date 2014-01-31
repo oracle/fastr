@@ -29,8 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@NodeFields({@NodeField(name = "emptyVectorConvertedToNull", type = boolean.class), @NodeField(name = "namesPreservation", type = boolean.class),
-                @NodeField(name = "dimensionsPreservation", type = boolean.class)})
+@NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastNode {
 
     @Child private ToString toString = adoptChild(ToStringFactory.create(new RNode[1], null));
@@ -46,18 +45,6 @@ public abstract class CastStringNode extends CastNode {
     public abstract Object executeStringVector(VirtualFrame frame, Object o);
 
     public abstract boolean isEmptyVectorConvertedToNull();
-
-    protected abstract boolean isNamesPreservation();
-
-    protected abstract boolean isDimensionsPreservation();
-
-    protected boolean preserveNames() {
-        return isNamesPreservation();
-    }
-
-    protected boolean preserveDimensions() {
-        return isDimensionsPreservation();
-    }
 
     public CastStringNode() {
         toString.setQuotes(false);
