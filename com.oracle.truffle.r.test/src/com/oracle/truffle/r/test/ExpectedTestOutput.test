@@ -1921,6 +1921,23 @@ Error: object 'nonexistent' not found
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
+#{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, "dimnames")<-list(201:202, 203:204, 205:206); attr(x, "foo")<-"foo"; y<-x; attributes(x>y) }
+$dim
+[1] 2 2 2
+
+$dimnames
+$dimnames[[1]]
+[1] "201" "202"
+
+$dimnames[[2]]
+[1] "203" "204"
+
+$dimnames[[3]]
+[1] "205" "206"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
 #{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, "dimnames")<-list(c("201", "202"), c("203", "204"), c("205", "206")); attr(x, "foo")<-"foo"; y<-x; attributes(x>y) }
 $dim
 [1] 2 2 2

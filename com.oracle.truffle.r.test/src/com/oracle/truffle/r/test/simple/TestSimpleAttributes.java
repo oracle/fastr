@@ -105,6 +105,8 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; sum(x) }");
         // propagate names (or dimnames) and dimensions
         assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(c(\"201\", \"202\"), c(\"203\", \"204\"), c(\"205\", \"206\")); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
+        // convert elements of dimnames list to string vectors
+        assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(201:202, 203:204, 205:206); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
     }
 
     @Test
@@ -131,9 +133,6 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(x) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(list(x,x)) }");
-
-        // elements of dimnames list are not converted to string vectors
-        assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(201:202, 203:204, 205:206); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
     }
 
     @Test
