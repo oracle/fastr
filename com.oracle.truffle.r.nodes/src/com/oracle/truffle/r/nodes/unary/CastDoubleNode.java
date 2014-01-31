@@ -238,7 +238,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Generic
-    public int doOther(Object operand) {
+    public double doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());
     }

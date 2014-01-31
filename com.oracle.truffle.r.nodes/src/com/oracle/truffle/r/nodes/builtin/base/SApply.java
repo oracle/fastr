@@ -235,7 +235,7 @@ public abstract class SApply extends RBuiltinNode {
             CompilerDirectives.transferToInterpreter();
             castString = adoptChild(CastStringNodeFactory.create(null, false, true, false));
         }
-        return (RStringVector) castString.executeString(frame, value);
+        return (RStringVector) castString.executeStringVector(frame, value);
     }
 
 }
