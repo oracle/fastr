@@ -22,10 +22,24 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 
+@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class)})
 public abstract class CastNode extends UnaryNode {
 
     public abstract Object executeCast(VirtualFrame frame, Object value);
+
+    protected abstract boolean isNamesPreservation();
+
+    protected abstract boolean isDimensionsPreservation();
+
+    protected boolean preserveNames() {
+        return isNamesPreservation();
+    }
+
+    protected boolean preserveDimensions() {
+        return isDimensionsPreservation();
+    }
 
 }

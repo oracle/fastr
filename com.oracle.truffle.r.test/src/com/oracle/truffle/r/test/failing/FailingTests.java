@@ -1479,31 +1479,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_97d4b6e51e8e88e14a04e0f452ea5159() {
-        assertEval("{ m<-matrix(c(1,0,1,0), nrow=2) ; as.vector(m, mode = \"logical\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_5dd4341a59ca7d0e2ed6b0d084e792db() {
-        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"complex\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_2313113d77f87db77406408465c55c7e() {
-        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"character\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_b6184a32a36c6baf7d41451b40d049ba() {
-        assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"raw\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_5ecedc65b348c959e86222b948f34ce8() {
-        assertEval("{ as.vector(list(1,2,3), mode=\"integer\") }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCastsIgnore_bf55a9d7ec96d782af8d9529a2f38293() {
         assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
     }

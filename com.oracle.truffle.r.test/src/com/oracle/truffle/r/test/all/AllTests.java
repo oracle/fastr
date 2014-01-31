@@ -4489,6 +4489,86 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsVector_e84fd1b27fd6570ddd6a53234fde0ba0() {
+        assertEval("{ as.vector(\"foo\", \"logical\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_cb0809ef1d3ab2fc8312585316b3ff3f() {
+        assertEval("{ as.vector(\"foo\", \"character\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_ad178529ec6948277d4535f8ce4d1307() {
+        assertEval("{ as.vector(\"foo\", \"list\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_715c056f5c63c0038099fb48bed34bad() {
+        assertEval("{ as.vector(\"foo\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_7df3d852bd307ec74005874e9e6b860a() {
+        assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_68bdfdc99e081735270c25dad5c6438c() {
+        assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_35065e6784253d5d096669f4fee13932() {
+        assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x); attributes(y) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_5b09e05fda45f41d37a149696f95babb() {
+        assertEval("{ x<-c(a=1, b=2); as.vector(x, \"list\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_824741c5ce8c39da5eb71c8a537981b6() {
+        assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x, \"list\"); attributes(y) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_bfb16efc959f2032f3fd07f7282ad495() {
+        assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_8d0d1cdaff856d660d11866fa044397e() {
+        assertEvalError("{ as.vector(\"foo\", \"bar\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_e20c6558cca6aea70251347229e52bf5() {
+        assertEvalWarning("{ as.vector(\"foo\", \"integer\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_f66e36fa2296e57c288db82f5f8e9798() {
+        assertEvalWarning("{ as.vector(\"foo\", \"double\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_0a44fb77142709976b0a7a4642abaf1f() {
+        assertEvalWarning("{ as.vector(\"foo\", \"numeric\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_84c625ebcd4124d15ba6dbf9b32d8293() {
+        assertEvalWarning("{ as.vector(\"foo\", \"raw\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsVector_73bc292dddea0adb6832fc9f79b8d507() {
+        assertEvalWarning("{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAttributes_7a7da0b52cfc6f6dbfdd195db4c141e9() {
         assertEval("{ x <- 1; attributes(x) }");
     }
@@ -4729,27 +4809,27 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_97d4b6e51e8e88e14a04e0f452ea5159() {
+    public void TestSimpleBuiltins_testCasts_97d4b6e51e8e88e14a04e0f452ea5159() {
         assertEval("{ m<-matrix(c(1,0,1,0), nrow=2) ; as.vector(m, mode = \"logical\") }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_5dd4341a59ca7d0e2ed6b0d084e792db() {
+    public void TestSimpleBuiltins_testCasts_5dd4341a59ca7d0e2ed6b0d084e792db() {
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"complex\") }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_2313113d77f87db77406408465c55c7e() {
+    public void TestSimpleBuiltins_testCasts_2313113d77f87db77406408465c55c7e() {
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"character\") }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_b6184a32a36c6baf7d41451b40d049ba() {
+    public void TestSimpleBuiltins_testCasts_b6184a32a36c6baf7d41451b40d049ba() {
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"raw\") }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_5ecedc65b348c959e86222b948f34ce8() {
+    public void TestSimpleBuiltins_testCasts_5ecedc65b348c959e86222b948f34ce8() {
         assertEval("{ as.vector(list(1,2,3), mode=\"integer\") }");
     }
 

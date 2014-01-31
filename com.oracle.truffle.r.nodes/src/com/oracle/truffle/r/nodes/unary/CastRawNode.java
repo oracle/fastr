@@ -30,12 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@NodeFields({@NodeField(name = "namesPreservation", type = boolean.class), @NodeField(name = "dimensionsPreservation", type = boolean.class)})
 public abstract class CastRawNode extends CastNode {
-
-    protected abstract boolean isNamesPreservation();
-
-    protected abstract boolean isDimensionsPreservation();
 
     public abstract Object executeRaw(VirtualFrame frame, int o);
 
@@ -46,14 +41,6 @@ public abstract class CastRawNode extends CastNode {
     public abstract Object executeRaw(VirtualFrame frame, Object o);
 
     public abstract Object executeRawVector(VirtualFrame frame, Object o);
-
-    protected boolean preserveNames() {
-        return isNamesPreservation();
-    }
-
-    protected boolean preserveDimensions() {
-        return isDimensionsPreservation();
-    }
 
     @Specialization
     public RNull doNull(@SuppressWarnings("unused") RNull operand) {
