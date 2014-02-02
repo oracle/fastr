@@ -208,8 +208,8 @@ def rbench(args):
     mx.build_suite(bm_suite)
 
     # Get the R script location via helper app
-    # N.B. we do not use mx.java() as that might check options we don't want for the helper, e.g. debugging agent
-    javacmd = ['java', '-cp', mx.classpath('r.benchmarks'), 'r.benchmarks.RBenchmarks', args.bm]
+    # N.B. we do not use mx.run_java() as that might check options we don't want for the helper, e.g. debugging agent
+    javacmd = [mx.java().java, '-cp', mx.classpath('r.benchmarks'), 'r.benchmarks.RBenchmarks', args.bm]
     try:
         bmpath = subprocess.check_output(javacmd).rstrip()
         if args.path:
