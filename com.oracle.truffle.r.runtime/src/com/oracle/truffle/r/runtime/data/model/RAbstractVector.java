@@ -54,4 +54,6 @@ public interface RAbstractVector {
     Object getNames();
 
     RList getDimNames();
+
+    boolean isMatrix();
 }
