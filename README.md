@@ -39,7 +39,8 @@ The first build will also download various required libraries, so there should b
 If you are behind a firewall, make sure that you have the 'http_proxy' environment variable set appropriately.
 
 After building, running the FastR console is done with `mx r` or 'mx R'.
-FastR is supposed to support the same command line arguments as R, so running an R script is done with `mx R -f <file>`.
+FastR supports the same command line arguments as R, so running an R script is done with `mx R -f <file>`.
+However, many of the command line options are not yet implemented.
 
 ## IDE Usage
 
