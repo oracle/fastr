@@ -3798,6 +3798,12 @@ Warning message:
 In cor(cbind(c(1, 1, 1), c(1, 1, 1))) : the standard deviation is zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCor
+#{ cor(cbind(c(1:9,0/0), 101:110)) }
+     [,1] [,2]
+[1,]    1   NA
+[2,]   NA    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCor
 #{ cor(cbind(c(3,2,1), c(1,2,3))) }
      [,1] [,2]
 [1,]    1   -1

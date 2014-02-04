@@ -5634,7 +5634,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCorIgnore_564c5ee2d2eea4a4b168dca5e6fa9e4f() {
+    public void TestSimpleBuiltins_testCor_564c5ee2d2eea4a4b168dca5e6fa9e4f() {
         assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
     }
 

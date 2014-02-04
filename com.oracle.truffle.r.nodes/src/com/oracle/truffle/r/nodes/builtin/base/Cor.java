@@ -27,16 +27,16 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("cor")
-public abstract class Cor extends RBuiltinNode {
+public abstract class Cor extends Covcor {
 
     @Specialization
     public RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2) {
-        return Covcor.cor(vector1, vector2, false, this.getEncapsulatingSourceSection());
+        return corcov(vector1, vector2, false, true);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     public RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2) {
-        return Covcor.cor(vector1, null, false, this.getEncapsulatingSourceSection());
+        return corcov(vector1, null, false, true);
     }
 }

@@ -20,23 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.builtin.debug;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("cov")
-public abstract class Cov extends Covcor {
+/**
+ * Dump Truffle trees to a listening IGV instance, if any.
+ */
+@RBuiltin("debug.dump")
+@RBuiltinComment("Dumps Truffle trees to IGV if an IGV instance running.")
+public abstract class DebugDumpBuiltin extends RBuiltinNode {
 
-    @Specialization
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2) {
-        return corcov(vector1, vector2, false, false);
+    private static final Object[] PARAMETER_NAMES = new Object[]{"function"};
+
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
     }
 
-    @Specialization
-    @SuppressWarnings("unused")
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2) {
-        return corcov(vector1, null, false, false);
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
+
+    private static final int FUNCTION_LENGTH_LIMIT = 40;
+
+    @Specialization
+    public Object dump(RFunction function) {
+        String source = ((RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode()).getSourceCode();
+        Utils.dumpFunction("dump: " + (source.length() <= FUNCTION_LENGTH_LIMIT ? source : source.substring(0, FUNCTION_LENGTH_LIMIT) + "..."), function);
+        return RInvisible.INVISIBLE_NULL;
+    }
+
 }

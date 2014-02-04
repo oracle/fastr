@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 public final class Utils {
 
@@ -105,6 +106,16 @@ public final class Utils {
         }
 
         return gotSection ? new DefaultSourceSection(s, "<bounding box>", minLine, minLineColumn, minCharIndex, maxCharIndex - minCharIndex) : null;
+    }
+
+    public static void dumpFunction(String groupName, RFunction function) {
+        GraphPrintVisitor graphPrinter = new GraphPrintVisitor();
+        DefaultCallTarget callTarget = (DefaultCallTarget) function.getTarget();
+        if (callTarget != null) {
+            graphPrinter.beginGroup(groupName);
+            graphPrinter.beginGraph(function.toString()).visit(callTarget.getRootNode());
+        }
+        graphPrinter.printToNetwork(true);
     }
 
 }
