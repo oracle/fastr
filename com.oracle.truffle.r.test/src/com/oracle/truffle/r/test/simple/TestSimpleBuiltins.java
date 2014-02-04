@@ -2306,4 +2306,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
     }
 
+    @Test
+    public void testRm() {
+        assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
+        assertEvalWarning("{ rm(\"ieps\") }");
+        assertEval("{ x <- 200 ; rm(\"x\") }");
+    }
+
 }

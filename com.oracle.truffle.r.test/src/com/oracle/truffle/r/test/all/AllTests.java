@@ -8649,6 +8649,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRm_ca7a9f28edcdd3c7bf66a0b3735a11dc() {
+        assertEval("{ x <- 200 ; rm(\"x\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRm_7c0682fb8c9a86ff5b94ead1d97dbab6() {
+        assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRm_638fe08c6d320c8475e37234929ca562() {
+        assertEvalWarning("{ rm(\"ieps\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRound_33dc93cb0d4989bdf0b386cebae13f9d() {
         assertEval("{ round(0.4) }");
     }

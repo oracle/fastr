@@ -141,6 +141,7 @@ public class BasePackage extends RPackage {
         load(RepeatInternal.class);
         load(Return.class);
         load(Rev.class);
+        load(Rm.class);
         load(Rnorm.class);
         load(Round.class);
         load(Runif.class);

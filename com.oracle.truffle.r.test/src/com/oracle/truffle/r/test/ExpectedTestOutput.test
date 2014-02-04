@@ -5505,6 +5505,18 @@ numeric(0)
 #{ rev(c(1+1i, 2+2i)) }
 [1] 2+2i 1+1i
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRm
+#{ rm("ieps") }
+Warning message:
+In rm("ieps") : object 'ieps' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRm
+#{ x <- 200 ; rm("x") ; x }
+Error: object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRm
+#{ x <- 200 ; rm("x") }
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRound
 #{ round(-1.5) }
 [1] -2
