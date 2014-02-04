@@ -231,6 +231,10 @@ public abstract class RError extends RuntimeException {
         RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
     }
 
+    public static void warning(SourceSection source, String message, Object... args) {
+        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + stringFormat(message, args));
+    }
+
     public abstract static class RNYIError extends RError {
 
         private static final long serialVersionUID = -7296314309177604737L;
