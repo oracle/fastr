@@ -80,4 +80,8 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     public Map<String, Object> getAttributes() {
         return null;
     }
+
+    public boolean isMatrix() {
+        return false;
+    }
 }

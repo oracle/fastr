@@ -76,4 +76,8 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return copyWithNewDimensions(getDimensions());
     }
 
+    public boolean isMatrix() {
+        return vector.isMatrix();
+    }
+
 }

@@ -3349,6 +3349,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_74dc4cc35dbb11bd44bd7b1feaf36e6c() {
+        assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(201:202, 203:204, 205:206); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_d0b74ca1e3a968310d26a6eb998b7eed() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; abs(x) }");
     }
@@ -3446,11 +3451,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_5f3c184dd2fb70f674345e3d0a5ee9ca() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(list(x,x)) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_74dc4cc35dbb11bd44bd7b1feaf36e6c() {
-        assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(201:202, 203:204, 205:206); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
     }
 
     @Test
@@ -13696,6 +13696,46 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testMoreVectorsOther_8e3f96d4a82935b012bfdb246addabf9() {
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[3L] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_ac880bff260f234821af9ee036453e82() {
+        assertEval("{ x<-1:8; dim(x)<-c(2, 4); x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_2353b26f5025b3b887c97eb5ea65e808() {
+        assertEval("{ x<-c(1,2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_34a2f0bd885192caa54b4be1b01723ec() {
+        assertEval("{ x<-integer(0); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_bfbd6edbd45d39e41eaf37228d3b3689() {
+        assertEval("{ x<-character(0); y<-list(x, 1+1i, 2+2i, 3+3i); dim(y)<-c(2, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_f2b9166399f84a17b55468507202f20b() {
+        assertEval("{ x<-list(1,2,3,4); dim(x)<-c(2, 2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_3c7a1a57f283a35aabc3e72823f6d702() {
+        assertEval("{ z<-list(1,2,3,4); dim(z)<-c(2,2); x<-list(z,2,3,42); dim(x)<-c(2, 2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_9a48692a3c1cb930aaa111a6670344d0() {
+        assertEval("{ x<-1:8; dim(x)<-c(2, 4); toString(x) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_9fa337312d75fdd276af0a5c0c591b91() {
+        assertEval("{ x<-list(1, 2, 3, 4); dim(x)<-c(2, 2); toString(x) }");
     }
 
     @Test

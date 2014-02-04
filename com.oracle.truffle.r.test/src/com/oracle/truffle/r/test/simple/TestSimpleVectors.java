@@ -1382,4 +1382,15 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ k <- c(1,2,3,4,5,6,7,8,9) ; length(k) <- 4 ; k }");
     }
 
+    @Test
+    public void testPrint() {
+        assertEval("{ x<-1:8; dim(x)<-c(2, 4); x }");
+        assertEval("{ x<-c(1,2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+        assertEval("{ x<-integer(0); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+        assertEval("{ x<-character(0); y<-list(x, 1+1i, 2+2i, 3+3i); dim(y)<-c(2, 2); y }");
+        assertEval("{ x<-list(1,2,3,4); dim(x)<-c(2, 2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+        assertEval("{ z<-list(1,2,3,4); dim(z)<-c(2,2); x<-list(z,2,3,42); dim(x)<-c(2, 2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
+        assertEval("{ x<-1:8; dim(x)<-c(2, 4); toString(x) }");
+        assertEval("{ x<-list(1, 2, 3, 4); dim(x)<-c(2, 2); toString(x) }");
+    }
 }

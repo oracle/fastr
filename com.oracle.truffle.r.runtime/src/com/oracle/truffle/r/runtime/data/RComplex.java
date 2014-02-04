@@ -50,6 +50,7 @@ public final class RComplex extends RScalar {
         return toString(RRuntime.doubleToString(realPart), RRuntime.doubleToString(imaginaryPart));
     }
 
+    @SlowPath
     public String toString(String realPartString, String imaginaryPartString) {
         return isNA() ? "NA" : realPartString + (imaginaryPart < 0.0 ? "" : "+") + imaginaryPartString + "i";
     }

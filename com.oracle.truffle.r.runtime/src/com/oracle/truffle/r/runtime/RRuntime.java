@@ -82,6 +82,13 @@ public class RRuntime {
     public static final String TYPE_LOGICAL = new String("logical");
     public static final String TYPE_RAW = new String("raw");
 
+    public static final String TYPE_NUMERIC_CAP = new String("Numeric");
+    public static final String TYPE_INTEGER_CAP = new String("Integer");
+    public static final String TYPE_COMPLEX_CAP = new String("Complex");
+    public static final String TYPE_CHARACTER_CAP = new String("Character");
+    public static final String TYPE_LOGICAL_CAP = new String("Logical");
+    public static final String TYPE_RAW_CAP = new String("Raw");
+
     public static final REnvironment EMPTY_ENV = REmptyEnvironment.instance;
     public static final REnvironment GLOBAL_ENV = RGlobalEnvironment.instance;
 
@@ -116,6 +123,24 @@ public class RRuntime {
             return TYPE_RAW;
         } else if (c == RString.class) {
             return TYPE_CHARACTER;
+        } else {
+            throw new RuntimeException("internal error, unknown class: " + c);
+        }
+    }
+
+    public static String classToStringCap(Class<?> c) {
+        if (c == RLogical.class) {
+            return TYPE_LOGICAL_CAP;
+        } else if (c == RInt.class) {
+            return TYPE_INTEGER_CAP;
+        } else if (c == RDouble.class) {
+            return TYPE_NUMERIC_CAP;
+        } else if (c == RComplex.class) {
+            return TYPE_COMPLEX_CAP;
+        } else if (c == RRaw.class) {
+            return TYPE_RAW_CAP;
+        } else if (c == RString.class) {
+            return TYPE_CHARACTER_CAP;
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
@@ -193,6 +218,7 @@ public class RRuntime {
 
     // conversions from string
 
+    @SlowPath
     public static int string2intNoCheck(String s) {
         // FIXME use R rules
         try {
@@ -203,10 +229,12 @@ public class RRuntime {
         return INT_NA;
     }
 
+    @SlowPath
     public static int string2int(String s) {
         return isNA(s) ? INT_NA : string2intNoCheck(s);
     }
 
+    @SlowPath
     public static double string2doubleNoCheck(String v) {
         // FIXME use R rules
         if ("Inf".equals(v)) {
@@ -228,6 +256,7 @@ public class RRuntime {
         return DOUBLE_NA;
     }
 
+    @SlowPath
     public static double string2double(String v) {
         if (isNA(v)) {
             return DOUBLE_NA;

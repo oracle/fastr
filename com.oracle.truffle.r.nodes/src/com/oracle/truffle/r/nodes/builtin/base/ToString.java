@@ -134,7 +134,7 @@ public abstract class ToString extends RBuiltinNode {
     }
 
     @SlowPath
-    @Specialization(order = 100, guards = "!hasDimensions")
+    @Specialization(order = 100)
     public String toString(RIntVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -150,21 +150,8 @@ public abstract class ToString extends RBuiltinNode {
         return b.toString();
     }
 
-    @Specialization(order = 101, guards = "hasDimensions")
-    public String toStringDim(final RIntVector vector) {
-        assert vector.getDimensions().length == 2;
-        return toStringDim0(vector.getDimensions()[0], vector.getDimensions()[1], new DataToStringClosure() {
-
-            @Override
-            @SlowPath
-            String dataToString(int index) {
-                return ToString.this.toString(vector.getDataAt(index));
-            }
-        });
-    }
-
     @SlowPath
-    @Specialization(order = 200, guards = "!hasDimensions")
+    @Specialization(order = 200)
     public String toString(RDoubleVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -178,20 +165,6 @@ public abstract class ToString extends RBuiltinNode {
             }
         }
         return b.toString();
-    }
-
-    @SlowPath
-    @Specialization(order = 201, guards = "hasDimensions")
-    public String toStringDim(final RDoubleVector vector) {
-        assert vector.getDimensions().length == 2;
-        return toStringDim0(vector.getDimensions()[0], vector.getDimensions()[1], new DataToStringClosure() {
-
-            @Override
-            @SlowPath
-            String dataToString(int index) {
-                return ToString.this.toString(vector.getDataAt(index));
-            }
-        });
     }
 
     @SlowPath
@@ -212,7 +185,7 @@ public abstract class ToString extends RBuiltinNode {
     }
 
     @SlowPath
-    @Specialization(order = 300, guards = "!hasDimensions")
+    @Specialization(order = 300)
     public String toString(RLogicalVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -226,19 +199,6 @@ public abstract class ToString extends RBuiltinNode {
             }
         }
         return b.toString();
-    }
-
-    @Specialization(order = 301, guards = "hasDimensions")
-    public String toStringDim(final RLogicalVector vector) {
-        assert vector.getDimensions().length == 2;
-        return toStringDim0(vector.getDimensions()[0], vector.getDimensions()[1], new DataToStringClosure() {
-
-            @Override
-            @SlowPath
-            String dataToString(int index) {
-                return ToString.this.toString(vector.getDataAt(index));
-            }
-        });
     }
 
     @SlowPath
@@ -259,7 +219,7 @@ public abstract class ToString extends RBuiltinNode {
     }
 
     @SlowPath
-    @Specialization(order = 500, guards = "!hasDimensions")
+    @Specialization(order = 500)
     public String toString(RComplexVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -276,21 +236,7 @@ public abstract class ToString extends RBuiltinNode {
     }
 
     @SlowPath
-    @Specialization(order = 501, guards = "hasDimensions")
-    public String toStringDim(final RComplexVector vector) {
-        assert vector.getDimensions().length == 2;
-        return toStringDim0(vector.getDimensions()[0], vector.getDimensions()[1], new DataToStringClosure() {
-
-            @Override
-            @SlowPath
-            String dataToString(int index) {
-                return ToString.this.toString(vector.getDataAt(index));
-            }
-        });
-    }
-
-    @SlowPath
-    @Specialization(order = 600, guards = "!hasDimensions")
+    @Specialization(order = 600)
     public String toString(VirtualFrame frame, RList vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -314,28 +260,6 @@ public abstract class ToString extends RBuiltinNode {
             }
         }
         return b.toString();
-    }
-
-    @SlowPath
-    @Specialization(order = 601, guards = "hasDimensions")
-    public String toStringDim(final VirtualFrame frame, final RList vector) {
-        int length = vector.getLength();
-        if (length == 0) {
-            return "list()";
-        }
-        assert vector.getDimensions().length == 2;
-        return toStringDim0(vector.getDimensions()[0], vector.getDimensions()[1], new DataToStringClosure() {
-
-            @Override
-            String dataToString(int index) {
-                Object d = vector.getDataAt(index);
-                if (d instanceof RList) {
-                    return "List," + ((RList) d).getLength();
-                } else {
-                    return toStringRecursive(frame, d);
-                }
-            }
-        });
     }
 
     @Specialization
@@ -362,90 +286,4 @@ public abstract class ToString extends RBuiltinNode {
     public void setQuotes(boolean quotes) {
         this.quotes = quotes;
     }
-
-    protected static boolean hasDimensions(RAbstractVector v) {
-        // for printing purposes, no dimensions and dimensions == 1 is the same
-        return v.hasDimensions() && v.getDimensions().length > 1;
-    }
-
-    @SlowPath
-    protected static String padColHeader(int r, int dataColWidth) {
-        StringBuilder sb = new StringBuilder();
-        String rs = Integer.toString(r);
-        int wdiff = dataColWidth - (rs.length() + 3); // 3: [,]
-        if (wdiff > 0) {
-            spaces(sb, wdiff);
-        }
-        return sb.append("[,").append(rs).append(']').toString();
-    }
-
-    @SlowPath
-    protected static String rowHeader(int c) {
-        return new StringBuilder("[").append(c).append(",]").toString();
-    }
-
-    @SlowPath
-    protected static void spaces(StringBuilder sb, int s) {
-        for (int i = 0; i < s; ++i) {
-            sb.append(' ');
-        }
-    }
-
-    @SlowPath
-    protected String toStringDim0(int nrow, int ncol, DataToStringClosure dtsc) {
-        // FIXME support more than two dimensions
-        // FIXME support empty matrices
-
-        // prepare data (relevant for column widths)
-        String[] dataStrings = new String[nrow * ncol];
-        int[] dataColWidths = new int[ncol];
-        for (int r = 0; r < nrow; ++r) {
-            for (int c = 0; c < ncol; ++c) {
-                int index = c * nrow + r;
-                String data = dtsc.dataToString(index);
-                dataStrings[index] = data;
-                if (data.length() > dataColWidths[c]) {
-                    dataColWidths[c] = data.length();
-                }
-            }
-        }
-
-        int rowHeaderWidth = rowHeader(nrow).length();
-        String rowFormat = "%" + rowHeaderWidth + "s";
-
-        StringBuilder b = new StringBuilder();
-
-        // column header
-        spaces(b, rowHeaderWidth + 1);
-        for (int c = 1; c <= ncol; ++c) {
-            b.append(padColHeader(c, dataColWidths[c - 1]));
-            if (c < ncol) {
-                b.append(' ');
-            }
-        }
-        b.append('\n');
-
-        // rows
-        for (int r = 1; r <= nrow; ++r) {
-            b.append(String.format(rowFormat, rowHeader(r))).append(' ');
-            for (int c = 1; c <= ncol; ++c) {
-                String cellFormat = "%" + padColHeader(c, dataColWidths[c - 1]).length() + "s";
-                b.append(String.format(cellFormat, dataStrings[(c - 1) * nrow + (r - 1)]));
-                if (c < ncol) {
-                    b.append(' ');
-                }
-            }
-            if (r < nrow) {
-                b.append('\n');
-            }
-        }
-
-        return b.toString();
-    }
-
-    private abstract class DataToStringClosure {
-
-        abstract String dataToString(int index);
-    }
-
 }
