@@ -77,7 +77,9 @@ def _truffle_r_gate_body(args, tasks):
         junit(['--tests', _default_unit_tests(), '--check-expected-output'])
         tasks.append(t.stop())
         t = mx_graal.Task('UnitTests: simple')
-        junit(['--tests', _default_unit_tests()])
+        rc = junit(['--tests', _default_unit_tests()])
+        if rc != 0:
+            mx.abort('unit tests failed')
         tasks.append(t.stop())
 
     if args.jacocout is not None:
