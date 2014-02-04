@@ -218,6 +218,7 @@ public class RRuntime {
 
     // conversions from string
 
+    @SlowPath
     public static int string2intNoCheck(String s) {
         // FIXME use R rules
         try {
@@ -228,10 +229,12 @@ public class RRuntime {
         return INT_NA;
     }
 
+    @SlowPath
     public static int string2int(String s) {
         return isNA(s) ? INT_NA : string2intNoCheck(s);
     }
 
+    @SlowPath
     public static double string2doubleNoCheck(String v) {
         // FIXME use R rules
         if ("Inf".equals(v)) {
@@ -253,6 +256,7 @@ public class RRuntime {
         return DOUBLE_NA;
     }
 
+    @SlowPath
     public static double string2double(String v) {
         if (isNA(v)) {
             return DOUBLE_NA;

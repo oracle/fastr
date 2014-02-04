@@ -97,6 +97,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return "NULL";
     }
 
+    @SlowPath
     @Specialization(order = 1, guards = "!printingVectorElements")
     public String prettyPrintVector(byte operand) {
         return "[1] " + RRuntime.logicalToString(operand);
@@ -107,6 +108,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.logicalToString(operand);
     }
 
+    @SlowPath
     @Specialization(order = 10, guards = "!printingVectorElements")
     public String prettyPrintVector(int operand) {
         return "[1] " + RRuntime.intToString(operand, false);
@@ -117,6 +119,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.intToString(operand, false);
     }
 
+    @SlowPath
     @Specialization(order = 20, guards = "!printingVectorElements")
     public String prettyPrintVector(double operand) {
         return "[1] " + doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000));
@@ -127,6 +130,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000));
     }
 
+    @SlowPath
     @Specialization(order = 30, guards = "!printingVectorElements")
     public String prettyPrintVector(RComplex operand) {
         double factor = calcRoundFactor(operand.getRealPart(), 10000000);
@@ -141,6 +145,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor), doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000)));
     }
 
+    @SlowPath
     @Specialization(order = 40, guards = "!printingVectorElements")
     public String prettyPrintVector(String operand) {
         return "[1] " + RRuntime.quoteString(operand);
@@ -151,6 +156,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.quoteString(operand);
     }
 
+    @SlowPath
     @Specialization(order = 50, guards = "!printingVectorElements")
     public String prettyPrintVector(RRaw operand) {
         return "[1] " + operand.toString();
@@ -402,6 +408,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return factor;
     }
 
+    @SlowPath
     private static String doubleToStringPrintFormat(double input, double roundFactor) {
         double data = input;
         if (!Double.isNaN(data) && !Double.isInfinite(data)) {
@@ -416,6 +423,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     // FIXME support nesting levels >1
+    @SlowPath
     private String prettyPrintList0(VirtualFrame frame, RList operand, Object listName) {
         int length = operand.getLength();
         if (length == 0) {
@@ -444,7 +452,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     // special case to handle "[1]" appropriately (depending on the "printing mode")
-    @Specialization(order = 70, guards = "isLengthOne")
+    @Specialization(order = 70, guards = {"isLengthOne", "printingVectorElements"})
     public String prettyPrintLengthOne(RAbstractIntVector operand) {
         return prettyPrint(operand.getDataAt(0));
     }
@@ -469,6 +477,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return prettyPrintRecursive(frame, operand.getDataAtAsObject(0));
     }
 
+    @SlowPath
     @Specialization(order = 80, guards = "printingVectorElements")
     public String prettyPrintElements(RList operand) {
         return "List," + operand.getLength();
