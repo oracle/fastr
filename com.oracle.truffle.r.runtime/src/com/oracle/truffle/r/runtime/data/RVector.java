@@ -144,6 +144,27 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             if (dimensions == null) {
                 throw RError.getDimnamesNonarray(sourceSection);
             }
+            int newDimNamesLength = newDimNames.getLength();
+            if (newDimNamesLength > dimensions.length) {
+                throw RError.getDimNamesDontMatchDims(sourceSection, newDimNamesLength, dimensions.length);
+            }
+            for (int i = 0; i < newDimNamesLength; i++) {
+                Object dimObject = newDimNames.getDataAt(i);
+                if (dimObject != RNull.instance) {
+                    RStringVector dimVector = (RStringVector) dimObject;
+                    if (dimVector.getLength() != dimensions[i]) {
+                        throw RError.getDimNamesDontMatchExtent(sourceSection, i + 1);
+                    }
+                }
+            }
+
+            if (newDimNamesLength < dimensions.length) {
+                // resize the array and fill the missing entries with NULL-s
+                newDimNames.resizeInternal(dimensions.length);
+                for (int i = newDimNamesLength; i < dimensions.length; i++) {
+                    newDimNames.updateDataAt(i, RNull.instance, null);
+                }
+            }
             attributes.put(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
             newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
         }

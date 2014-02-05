@@ -825,6 +825,13 @@ public class TestSimpleBuiltins extends TestBase {
         // assigning an "invisible" list returned by "attr(y, dimnames)<-" as dimnames attribute for
         // x
         assertEval("{ x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, \"dimnames\")<-(attr(y, \"dimnames\")<-list(\"b\")); attributes(x) }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(NULL); attributes(x) }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\")); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), NULL, c(\"d\")); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), 42, c(\"d\", \"e\", \"f\")); attributes(x) }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), \"c\", c(\"d\", \"e\"), 7); attributes(x) }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), \"c\", c(\"d\", \"e\")); attributes(x) }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), 42, c(\"d\", \"e\")); attributes(x) }");
 
         // there should be no output
         assertEval("{ x<-42; y<-(dim(x)<-1); }");

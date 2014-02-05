@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class UpdateDimNames extends RBuiltinNode {
 
     @Child CastStringNode castStringNode;
+    @Child CastToVectorNode castVectorNode;
 
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
@@ -47,6 +48,14 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         return castStringNode.executeCast(frame, o);
     }
 
+    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+        if (castVectorNode == null) {
+            CompilerDirectives.transferToInterpreter();
+            castVectorNode = adoptChild(CastToVectorNodeFactory.create(null, false, false));
+        }
+        return castVectorNode.executeRAbstractVector(frame, value).materialize();
+    }
+
     public abstract Object executeList(VirtualFrame frame, RAbstractVector vector, Object o);
 
     public RList convertToListOfStrings(VirtualFrame frame, RList list) {
@@ -54,7 +63,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
         for (int i = 0; i < list.getLength(); i++) {
             Object element = list.getDataAt(i);
             if (element != RNull.instance) {
-                Object s = castString(frame, element);
+                Object s = castString(frame, castVector(frame, element));
                 list.updateDataAt(i, s, null);
             }
         }
