@@ -289,12 +289,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs);
         RCallNode replacementFunctionCall = (RCallNode) visit(rfCall);
 
-        // assign v, read a
+        // assign v, delete *tmp*, read a
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, replacementFunctionCall, false, n.isSuper());
+        Rm rmTmp = Rm.create(tmp);
         ReadVariableNode aRead = ReadVariableNode.create(a, false, false);
 
         // assemble
-        SequenceNode replacement = new SequenceNode(new RNode[]{aAssign, tmpAssign, vAssign, Invisible.create(aRead)});
+        SequenceNode replacement = new SequenceNode(new RNode[]{aAssign, tmpAssign, vAssign, rmTmp, Invisible.create(aRead)});
         replacement.assignSourceSection(n.getSource());
         return replacement;
     }

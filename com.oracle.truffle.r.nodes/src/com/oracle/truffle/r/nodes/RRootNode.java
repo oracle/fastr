@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 
@@ -43,6 +44,7 @@ public abstract class RRootNode extends RootNode {
         return parameterNames.length;
     }
 
+    @SlowPath
     public String getSourceCode() {
         return getSourceSection().getCode();
     }

@@ -184,6 +184,8 @@ public abstract class RError extends RuntimeException {
     public static final String IS_OF_WRONG_ARITY = "'%d' argument passed to '%s' which requires '%d'";
     public static final String OBJECT_NOT_SUBSETTABLE = "object of type '%s' is not subsettable";
     public static final String DIMS_DONT_MATCH_LENGTH = "dims [product %d] do not match the length of object [%d]";
+    public static final String DIMNAMES_DONT_MATCH_DIMS = "length of 'dimnames' [%d] must match that of 'dims' [%d]";
+    public static final String DIMNAMES_DONT_MATCH_EXTENT = "length of 'dimnames' [%d] not equal to array extent";
     public static final String MUST_BE_ATOMIC = "'%s' must be atomic";
     public static final String MUST_BE_NULL_OR_STRING = "'%s' must be NULL or a character vector";
     public static final String MUST_BE_SCALAR = "'%s' must be of length 1";
@@ -229,6 +231,10 @@ public abstract class RError extends RuntimeException {
 
     public static void warning(SourceSection source, String message) {
         RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
+    }
+
+    public static void warning(SourceSection source, String message, Object... args) {
+        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + stringFormat(message, args));
     }
 
     public abstract static class RNYIError extends RError {
@@ -1752,6 +1758,14 @@ public abstract class RError extends RuntimeException {
 
     public static RError getDimsDontMatchLength(SourceSection ast, int dimsProduct, int objectLength) {
         return getGenericError(ast, stringFormat(RError.DIMS_DONT_MATCH_LENGTH, dimsProduct, objectLength));
+    }
+
+    public static RError getDimNamesDontMatchDims(SourceSection ast, int dimNamesLength, int dimsLength) {
+        return getGenericError(ast, stringFormat(RError.DIMNAMES_DONT_MATCH_DIMS, dimNamesLength, dimsLength));
+    }
+
+    public static RError getDimNamesDontMatchExtent(SourceSection ast, int dimNamesVectorLength) {
+        return getGenericError(ast, stringFormat(RError.DIMNAMES_DONT_MATCH_EXTENT, dimNamesVectorLength));
     }
 
     @SlowPath

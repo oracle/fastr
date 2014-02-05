@@ -28,6 +28,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ConstantNode extends RNode {
 
@@ -54,6 +55,8 @@ public abstract class ConstantNode extends RNode {
             return new ConstantEmptyObjectArrayNode();
         } else if (value instanceof RComplex) {
             return new ConstantComplexNode((RComplex) value);
+        } else if (value instanceof RAbstractVector) {
+            return new ConstantVectorNode((RAbstractVector) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -231,6 +234,25 @@ public abstract class ConstantNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             return EMPTY_OBJECT_ARRAY;
+        }
+    }
+
+    private static final class ConstantVectorNode extends ConstantNode {
+
+        private final RAbstractVector vector;
+
+        public ConstantVectorNode(RAbstractVector vector) {
+            this.vector = vector;
+        }
+
+        @Override
+        public RAbstractVector executeRAbstractVector(VirtualFrame frame) {
+            return vector;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return vector;
         }
     }
 }
