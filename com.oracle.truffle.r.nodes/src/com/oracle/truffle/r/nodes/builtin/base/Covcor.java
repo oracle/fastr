@@ -11,8 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -21,22 +20,14 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 /*
  * Logic derived from GNU-R, library/stats/src/cov.c
  */
-public class Covcor {
+public abstract class Covcor extends RBuiltinNode {
 
-    public static NACheck check = new NACheck();
+    public NACheck check = new NACheck();
 
-    public static RDoubleVector cor(RDoubleVector x, RDoubleVector y, boolean iskendall, SourceSection source) {
-        return corcov(x, y, iskendall, true, source);
-    }
-
-    public static RDoubleVector cov(RDoubleVector x, RDoubleVector y, boolean iskendall, SourceSection source) {
-        return corcov(x, y, iskendall, false, source);
-    }
-
-    @SlowPath
-    private static RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor, SourceSection source) {
+    protected RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor) {
         boolean ansmat;
         boolean naFail;
+        boolean everything;
         boolean sd0;
         boolean emptyErr;
         int n;
@@ -48,7 +39,7 @@ public class Covcor {
             n = nrows(x);
             ncx = ncols(x);
         } else {
-            n = length(x);
+            n = x.getLength();
             ncx = 1;
         }
 
@@ -61,40 +52,58 @@ public class Covcor {
             ncy = ncols(y);
             ansmat = true;
         } else {
-            if (length(y) != n) {
+            if (y.getLength() != n) {
                 error("incompatible dimensions");
             }
             ncy = 1;
         }
 
+        // TODO adopt full use semantics
+
         /* "default: complete" (easier for -Wall) */
         naFail = false;
+        everything = false;
         emptyErr = true;
 
-        // case 1: /* use all : no NAs */
-        naFail = true;
+        // case 4: /* "everything": NAs are propagated */
+        everything = true;
+        emptyErr = false;
 
-        if (emptyErr && lENGTH(x) == 0) {
+        if (emptyErr && x.getLength() == 0) {
             error("'x' is empty");
         }
 
         double[] answerData = new double[ncx * ncy];
 
-        // else if (!pair) { /* all | complete */
         double[] xm = new double[ncx];
         double[] ym = new double[ncy];
-        RIntVector ind = RDataFactory.createIntVector(n);
 
         if (y == null) {
-            complete1(n, ncx, x, ind, naFail);
-            sd0 = covComplete1(n, ncx, x, xm, ind, answerData, cor, iskendall);
+            if (everything) {
+                boolean[] ind = new boolean[ncx];
+                findNA1(n, ncx, x, ind);
+                sd0 = covNA1(n, ncx, x, xm, ind, answerData, cor, iskendall);
+            } else {
+                RIntVector ind = RDataFactory.createIntVector(n);
+                complete1(n, ncx, x, ind, naFail);
+                sd0 = covComplete1(n, ncx, x, xm, ind, answerData, cor, iskendall);
+            }
         } else {
-            complete2(n, ncx, ncy, x, y, ind, naFail);
-            sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, cor, iskendall);
+            if (everything) {
+                boolean[] hasNAx = new boolean[ncx];
+                boolean[] hasNAy = new boolean[ncy];
+                sd0 = false;
+                findNA2(n, ncx, ncy, x, y, hasNAx, hasNAy);
+                sd0 = covNA2(n, ncx, ncy, x, y, xm, ym, hasNAx, hasNAy, answerData, cor, iskendall);
+            } else {
+                RIntVector ind = RDataFactory.createIntVector(n);
+                complete2(n, ncx, ncy, x, y, ind, naFail);
+                sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, cor, iskendall);
+            }
         }
 
         if (sd0) { /* only in cor() */
-            RError.warning(source, RError.SD_ZERO);
+            RError.warning(this.getEncapsulatingSourceSection(), RError.SD_ZERO);
         }
 
         RDoubleVector ans = null;
@@ -116,7 +125,7 @@ public class Covcor {
         return x.getDimensions()[0];
     }
 
-    private static void complete1(int n, int ncx, RDoubleVector x, RIntVector ind, boolean naFail) {
+    private void complete1(int n, int ncx, RDoubleVector x, RIntVector ind, boolean naFail) {
         int i;
         int j;
         for (i = 0; i < n; i++) {
@@ -136,7 +145,7 @@ public class Covcor {
         }
     }
 
-    private static void complete2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, RIntVector ind, boolean naFail) {
+    private void complete2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, RIntVector ind, boolean naFail) {
         int i;
         int j;
         for (i = 0; i < n; i++) {
@@ -328,7 +337,7 @@ public class Covcor {
                 }
                 sum /= n1;
             } else { /* Kendall's tau */
-                throw new UnsupportedOperationException("kenall's unsupported");
+                throw new UnsupportedOperationException("kendall's unsupported");
             }
             vectorM[i] = Math.sqrt(sum);
         }
@@ -357,20 +366,285 @@ public class Covcor {
         }
     }
 
+    private static void findNA1(int n, int nc, RDoubleVector v, boolean[] hasNA) {
+        for (int j = 0; j < nc; j++) {
+            hasNA[j] = false;
+            for (int i = 0; i < n; i++) {
+                if (Double.isNaN(v.getDataAt(j * n + i))) {
+                    hasNA[j] = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void findNA2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, boolean[] hasNAx, boolean[] hasNAy) {
+        findNA1(n, ncx, x, hasNAx);
+        findNA1(n, ncy, y, hasNAy);
+    }
+
+    private boolean covNA1(int n, int ncx, RDoubleVector x, double[] xm, boolean[] hasNA, double[] ans, boolean cor, boolean iskendall) {
+        double sum;
+        double xxm;
+        double yym;
+        int n1 = -1;
+        boolean sd0 = false;
+
+        if (n <= 1) { /* too many missing */
+            for (int i = 0; i < ncx; i++) {
+                for (int j = 0; j < ncx; j++) {
+                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                }
+            }
+            return sd0;
+        }
+
+        if (!iskendall) {
+            mean(n, ncx, x, xm, hasNA);
+            n1 = n - 1;
+        }
+
+        for (int i = 0; i < ncx; i++) {
+            if (hasNA[i]) {
+                for (int j = 0; j <= i; j++) {
+                    ans[j + i * ncx] = RRuntime.DOUBLE_NA;
+                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                if (!iskendall) {
+                    xxm = xm[i];
+                    for (int j = 0; j <= i; j++) {
+                        if (hasNA[j]) {
+                            ans[j + i * ncx] = RRuntime.DOUBLE_NA;
+                            ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                        } else {
+                            yym = xm[j];
+                            sum = 0.0;
+                            for (int k = 0; k < n; k++) {
+                                double u = x.getDataAt(i * n + k);
+                                double v = x.getDataAt(j * n + k);
+                                if (checkNAs(u, v, xxm, yym)) {
+                                    sum = RRuntime.DOUBLE_NA;
+                                    break;
+                                }
+                                sum += (u - xxm) * (v - yym);
+                            }
+                            double r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
+                            ans[j + i * ncx] = r;
+                            ans[i + j * ncx] = r;
+                        }
+                    }
+                } else { /* Kendall's tau */
+                    throw new UnsupportedOperationException("kendall's unsupported");
+                }
+            }
+        }
+
+        if (cor) {
+            for (int i = 0; i < ncx; i++) {
+                if (!hasNA[i]) {
+                    double u = ans[i + i * ncx];
+                    xm[i] = checkNAs(u) ? RRuntime.DOUBLE_NA : Math.sqrt(u);
+                }
+            }
+            for (int i = 0; i < ncx; i++) {
+                if (!hasNA[i]) {
+                    for (int j = 0; j < i; j++) {
+                        if (xm[i] == 0 || xm[j] == 0) {
+                            sd0 = true;
+                            ans[j + i * ncx] = RRuntime.DOUBLE_NA;
+                            ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                        } else {
+                            double u = ans[i + j * ncx];
+                            double v = xm[i];
+                            double w = xm[j];
+                            sum = checkNAs(u, v, w) ? RRuntime.DOUBLE_NA : u / (v * w);
+                            if (sum > 1.0) {
+                                sum = 1.0;
+                            }
+                            ans[j + i * ncx] = sum;
+                            ans[i + j * ncx] = sum;
+                        }
+                    }
+                }
+                ans[i + i * ncx] = 1.0;
+            }
+        }
+
+        return sd0;
+    }
+
+    private void mean(int n, int ncx, RDoubleVector x, double[] xm, boolean[] hasNA) {
+        double sum;
+        double tmp;
+        /* variable means (has_na) */
+        for (int i = 0; i < ncx; i++) {
+            if (hasNA[i]) {
+                tmp = RRuntime.DOUBLE_NA;
+            } else {
+                sum = 0.0;
+                for (int k = 0; k < n; k++) {
+                    double u = x.getDataAt(i * n + k);
+                    if (checkNAs(u)) {
+                        sum = RRuntime.DOUBLE_NA;
+                        break;
+                    }
+                    sum += u;
+                }
+                tmp = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n;
+                if (RRuntime.isFinite(tmp)) {
+                    sum = 0.0;
+                    for (int k = 0; k < n; k++) {
+                        double u = x.getDataAt(i * n + k);
+                        if (checkNAs(u)) {
+                            sum = RRuntime.DOUBLE_NA;
+                            break;
+                        }
+                        sum += u - tmp;
+                    }
+                    if (checkNAs(sum)) {
+                        tmp = RRuntime.DOUBLE_NA;
+                    } else {
+                        tmp += sum / n;
+                    }
+                }
+            }
+            xm[i] = tmp;
+        }
+    }
+
+    private boolean covNA2(int n, int ncx, int ncy, RDoubleVector x, RDoubleVector y, double[] xm, double[] ym, boolean[] hasNAx, boolean[] hasNAy, double[] ans, boolean cor, boolean iskendall) {
+        double sum;
+        double xxm;
+        double yym;
+        int n1 = -1;
+        boolean sd0 = false;
+
+        if (n <= 1) { /* too many missing */
+            for (int i = 0; i < ncx; i++) {
+                for (int j = 0; j < ncy; j++) {
+                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                }
+            }
+            return sd0;
+        }
+
+        if (!iskendall) {
+            mean(n, ncx, x, xm, hasNAx);
+            mean(n, ncy, y, ym, hasNAy);
+            n1 = n - 1;
+        }
+
+        for (int i = 0; i < ncx; i++) {
+            if (hasNAx[i]) {
+                for (int j = 0; j < ncy; j++) {
+                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                if (!iskendall) {
+                    xxm = xm[i];
+                    for (int j = 0; j < ncy; j++) {
+                        if (hasNAy[j]) {
+                            ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                        } else {
+                            yym = ym[j];
+                            sum = 0.0;
+                            for (int k = 0; k < n; k++) {
+                                double u = x.getDataAt(i * n + k);
+                                double v = y.getDataAt(j * n + k);
+                                if (checkNAs(u, v, xxm, yym)) {
+                                    sum = RRuntime.DOUBLE_NA;
+                                    break;
+                                }
+                                sum += (u - xxm) * (v - yym);
+                            }
+                            ans[i + j * ncx] = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
+                        }
+                    }
+                } else { /* Kendall's tau */
+                    throw new UnsupportedOperationException("kendall's unsupported");
+                }
+            }
+        }
+
+        if (cor) {
+            covsdev(n, n1, ncx, x, hasNAx, xm, iskendall);
+            covsdev(n, n1, ncy, y, hasNAy, ym, iskendall);
+
+            for (int i = 0; i < ncx; i++) {
+                if (!hasNAx[i]) {
+                    for (int j = 0; j < ncy; j++) {
+                        if (!hasNAy[j]) {
+                            if (xm[i] == 0.0 || ym[j] == 0.0) {
+                                sd0 = true;
+                                ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                            } else {
+                                double u = xm[i];
+                                double v = ym[j];
+                                if (checkNAs(u, v)) {
+                                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
+                                } else {
+                                    ans[i + j * ncx] /= u * v;
+                                }
+                                if (ans[i + j * ncx] > 1.0) {
+                                    ans[i + j * ncx] = 1.0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return sd0;
+    }
+
+    private void covsdev(int n, int n1, int ncx, RDoubleVector x, boolean[] hasNA, double[] xm, boolean iskendall) {
+        for (int i = 0; i < ncx; i++) {
+            if (!hasNA[i]) { /* Var(X[j]) */
+                double sum = 0.0;
+                if (!iskendall) {
+                    double xxm = xm[i];
+                    if (checkNAs(xxm)) {
+                        sum = RRuntime.DOUBLE_NA;
+                    } else {
+                        for (int k = 0; k < n; k++) {
+                            double u = x.getDataAt(i * n + k);
+                            double v = x.getDataAt(i * n + k);
+                            if (checkNAs(u, v)) {
+                                sum = RRuntime.DOUBLE_NA;
+                                break;
+                            }
+                            sum += (u - xxm) * (v - xxm);
+                        }
+                    }
+                    if (!checkNAs(sum)) {
+                        sum /= n1;
+                    }
+                } else { /* Kendall's tau */
+                    throw new UnsupportedOperationException("kendall's unsupported");
+                }
+                xm[i] = checkNAs(sum) ? RRuntime.DOUBLE_NA : Math.sqrt(sum);
+            }
+        }
+    }
+
     private static boolean isMatrix(RAbstractVector vector) {
         return RRuntime.isMatrix(vector);
     }
 
-    private static int lENGTH(RAbstractVector v) {
-        return length(v);
-    }
-
-    private static int length(RAbstractVector v) {
-        return v.getLength();
-    }
-
     private static void error(String string) {
         throw new UnsupportedOperationException("error: " + string);
+    }
+
+    private boolean checkNAs(double... xs) {
+        for (double x : xs) {
+            check.enable(x);
+            if (check.check(x)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

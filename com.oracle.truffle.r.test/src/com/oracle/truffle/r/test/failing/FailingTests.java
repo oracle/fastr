@@ -1759,11 +1759,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCorIgnore_564c5ee2d2eea4a4b168dca5e6fa9e4f() {
-        assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCorIgnore_13b78c66b0e72ebed23e724262a27546() {
         assertEval("{ round( cor(cbind(c(10,5,4,1), c(2,5,10,5))), digits=5 ) }");
     }
