@@ -63,7 +63,7 @@ public abstract class RPackages implements RBuiltinLookup {
         return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtin.getBuiltinNames()[0], callTarget, true));
     }
 
-    private RBuiltinFactory lookupBuiltin(String name) {
+    public RBuiltinFactory lookupBuiltin(String name) {
         for (RPackage pack : packages) {
             RBuiltinFactory factory = pack.lookupByName(name);
             if (factory != null) {
