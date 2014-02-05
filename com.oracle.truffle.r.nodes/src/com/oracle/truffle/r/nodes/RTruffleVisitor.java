@@ -26,7 +26,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadSuperVariableNode;
 import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -292,8 +291,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         // assign v, delete *tmp*, read a
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, replacementFunctionCall, false, n.isSuper());
-        Rm rmTmp = RmFactory.create(new RNode[]{ConstantNode.create(tmp), ConstantNode.create(RDataFactory.createStringVector(0)), ConstantNode.create(-1), ConstantNode.create(RMissing.instance),
-                        ConstantNode.create(RRuntime.LOGICAL_FALSE)}, RDefaultPackages.getInstance().lookupBuiltin(tmp));
+        Rm rmTmp = Rm.create(tmp);
         ReadVariableNode aRead = ReadVariableNode.create(a, false, false);
 
         // assemble

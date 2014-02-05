@@ -34,6 +34,17 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(value = {"rm", "remove"}, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public abstract class Rm extends RBuiltinNode {
 
+    public static Rm create(String name) {
+        RNode[] args = getParameterValues0();
+        args[0] = ConstantNode.create(name);
+        return RmFactory.create(args, RDefaultPackages.getInstance().lookupBuiltin("rm"));
+    }
+
+    private static RNode[] getParameterValues0() {
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RDataFactory.createStringVector(0)), ConstantNode.create(-1), ConstantNode.create(RMissing.instance),
+                        ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+    }
+
     private static final Object[] PARAMETER_NAMES = new Object[]{"...", "list", "pos", "envir", "inherits"};
 
     @Override
@@ -43,8 +54,7 @@ public abstract class Rm extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RDataFactory.createStringVector(0)), ConstantNode.create(-1), ConstantNode.create(RMissing.instance),
-                        ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return getParameterValues0();
     }
 
     @Specialization
