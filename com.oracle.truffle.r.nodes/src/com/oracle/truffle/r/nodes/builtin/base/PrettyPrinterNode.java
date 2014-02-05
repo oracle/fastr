@@ -69,7 +69,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     private String prettyPrintAttributes(VirtualFrame frame, Object o) {
         if (attributePrettyPrinter == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             attributePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, true, false));
         }
         return attributePrettyPrinter.executeString(frame, o);
@@ -77,7 +77,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     private String prettyPrintVectorElement(VirtualFrame frame, Object o) {
         if (vectorElementPrettyPrinter == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             vectorElementPrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, false, true));
         }
         return vectorElementPrettyPrinter.executeString(frame, o);
@@ -85,7 +85,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     private String prettyPrintRecursive(VirtualFrame frame, Object o) {
         if (recursivePrettyPrinter == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             recursivePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, isPrintingAttributes(), isPrintingVectorElements()));
         }
         return recursivePrettyPrinter.executeString(frame, o);
@@ -97,10 +97,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return "NULL";
     }
 
-    @SlowPath
     @Specialization(order = 1, guards = "!printingVectorElements")
     public String prettyPrintVector(byte operand) {
-        return "[1] " + RRuntime.logicalToString(operand);
+        return concat("[1] ", RRuntime.logicalToString(operand));
     }
 
     @Specialization(order = 2, guards = "printingVectorElements")
@@ -108,10 +107,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.logicalToString(operand);
     }
 
-    @SlowPath
     @Specialization(order = 10, guards = "!printingVectorElements")
     public String prettyPrintVector(int operand) {
-        return "[1] " + RRuntime.intToString(operand, false);
+        return concat("[1] ", RRuntime.intToString(operand, false));
     }
 
     @Specialization(order = 11, guards = "printingVectorElements")
@@ -119,10 +117,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.intToString(operand, false);
     }
 
-    @SlowPath
     @Specialization(order = 20, guards = "!printingVectorElements")
     public String prettyPrintVector(double operand) {
-        return "[1] " + doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000));
+        return concat("[1] ", doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000)));
     }
 
     @Specialization(order = 21, guards = "printingVectorElements")
@@ -130,13 +127,12 @@ public abstract class PrettyPrinterNode extends RNode {
         return doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000));
     }
 
-    @SlowPath
     @Specialization(order = 30, guards = "!printingVectorElements")
     public String prettyPrintVector(RComplex operand) {
         double factor = calcRoundFactor(operand.getRealPart(), 10000000);
-        return "[1] " +
+        return concat("[1] ",
                         operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor),
-                                        doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000)));
+                                        doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000))));
     }
 
     @Specialization(order = 31, guards = "printingVectorElements")
@@ -145,10 +141,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor), doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000)));
     }
 
-    @SlowPath
     @Specialization(order = 40, guards = "!printingVectorElements")
     public String prettyPrintVector(String operand) {
-        return "[1] " + RRuntime.quoteString(operand);
+        return concat("[1] ", RRuntime.quoteString(operand));
     }
 
     @Specialization(order = 41, guards = "printingVectorElements")
@@ -156,10 +151,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.quoteString(operand);
     }
 
-    @SlowPath
     @Specialization(order = 50, guards = "!printingVectorElements")
     public String prettyPrintVector(RRaw operand) {
-        return "[1] " + operand.toString();
+        return concat("[1] ", operand.toString());
     }
 
     @Specialization(order = 51, guards = "printingVectorElements")
@@ -172,7 +166,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return ((RRootNode) ((DefaultCallTarget) operand.getTarget()).getRootNode()).getSourceCode();
     }
 
-    @SlowPath
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, Map<String, Object> attributes) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, Object> attr : attributes.entrySet()) {
@@ -188,14 +181,13 @@ public abstract class PrettyPrinterNode extends RNode {
             builder.append("attr(,\"" + attr.getKey() + "\")\n");
             builder.append(prettyPrintAttributes(frame, attr.getValue()));
         }
-        return builder.toString();
+        return builderToString(builder);
     }
 
-    @SlowPath
     private String printVector(VirtualFrame frame, RAbstractVector vector, String[] values, boolean isStringVector, boolean isRawVector) {
         assert vector.getLength() == values.length;
         if (values.length == 0) {
-            return RRuntime.classToString(vector.getElementClass()) + "(0)";
+            return concat(RRuntime.classToString(vector.getElementClass()), "(0)");
         } else {
             boolean printNamesHeader = (!vector.hasDimensions() && vector.getNames() != null && vector.getNames() != RNull.instance);
             RStringVector names = printNamesHeader ? (RStringVector) vector.getNames() : null;
@@ -231,7 +223,7 @@ public abstract class PrettyPrinterNode extends RNode {
             while (index < vector.getLength()) {
                 if (!printNamesHeader) {
                     int position = index + 1;
-                    String positionString = Integer.toString(position);
+                    String positionString = intString(position);
                     for (int i = 0; i < maxPositionLength - positionString.length(); ++i) {
                         builder.append(' ');
                     }
@@ -280,26 +272,26 @@ public abstract class PrettyPrinterNode extends RNode {
                 builder.append('\n');
                 if (printNamesHeader) {
                     headerBuilder.append('\n');
-                    headerBuilder.append(builder);
+                    headerBuilder.append(builderToString(builder));
                     builder = new StringBuilder();
                 }
             }
-            String result = (!printNamesHeader ? builder.deleteCharAt(builder.length() - 1).toString() : headerBuilder.deleteCharAt(headerBuilder.length() - 1).toString());
+            StringBuilder resultBuilder = printNamesHeader ? headerBuilder : builder;
+            resultBuilder.deleteCharAt(resultBuilder.length() - 1);
             Map<String, Object> attributes = vector.getAttributes();
             if (attributes != null) {
-                result = result + printAttributes(frame, vector, attributes);
+                resultBuilder.append(printAttributes(frame, vector, attributes));
             }
-            return result;
+            return builderToString(resultBuilder);
         }
     }
 
-    @SlowPath
     protected static String padColHeader(int r, int dataColWidth, RAbstractVector vector, boolean isList) {
         RList dimNames = vector.getDimNames();
         StringBuilder sb = new StringBuilder();
         int wdiff;
         if (dimNames == null || dimNames.getDataAt(1) == RNull.instance) {
-            String rs = Integer.toString(r);
+            String rs = intString(r);
             wdiff = dataColWidth - (rs.length() + 3); // 3: [,]
             if (!isList && wdiff > 0) {
                 spaces(sb, wdiff);
@@ -317,21 +309,19 @@ public abstract class PrettyPrinterNode extends RNode {
         if (isList && wdiff > 0) {
             spaces(sb, wdiff);
         }
-        return sb.toString();
+        return builderToString(sb);
     }
 
-    @SlowPath
     protected static String rowHeader(int c, RAbstractVector vector) {
         RList dimNames = vector.getDimNames();
         if (dimNames == null || dimNames.getDataAt(0) == RNull.instance) {
-            return new StringBuilder("[").append(c).append(",]").toString();
+            return concat("[", intString(c), ",]");
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(0);
             return dimNamesVector.getDataAt(c - 1);
         }
     }
 
-    @SlowPath
     protected static void spaces(StringBuilder sb, int s) {
         for (int i = 0; i < s; ++i) {
             sb.append(' ');
@@ -342,7 +332,7 @@ public abstract class PrettyPrinterNode extends RNode {
         String dimId;
         RList dimNames = vector.getDimNames();
         if (dimNames == null || dimNames.getDataAt(dimLevel - 1) == RNull.instance) {
-            dimId = Integer.toString(dimInd + 1);
+            dimId = intString(dimInd + 1);
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(dimLevel - 1);
             dimId = dimNamesVector.getDataAt(dimInd);
@@ -350,11 +340,10 @@ public abstract class PrettyPrinterNode extends RNode {
         return dimId;
     }
 
-    @SlowPath
     private String printDim(VirtualFrame frame, RAbstractVector vector, boolean isList, int currentDimLevel, int arrayBase, int accDimensions, String header) {
         int[] dimensions = vector.getDimensions();
         if (currentDimLevel == 3) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             int dimSize = dimensions[currentDimLevel - 1];
             int matrixSize = dimensions[0] * dimensions[1];
             for (int dimInd = 0; dimInd < dimSize; dimInd++) {
@@ -371,21 +360,20 @@ public abstract class PrettyPrinterNode extends RNode {
                     sb.append("\n");
                 }
             }
-            return sb.toString();
+            return builderToString(sb);
         } else {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             int dimSize = dimensions[currentDimLevel - 1];
             int newAccDimensions = accDimensions / dimSize;
             for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                 int newArrayBase = arrayBase + newAccDimensions * dimInd;
                 String dimId = getDimId(vector, currentDimLevel, dimInd);
-                sb.append(printDim(frame, vector, isList, currentDimLevel - 1, newArrayBase, newAccDimensions, dimId + ", " + header));
+                sb.append(printDim(frame, vector, isList, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header)));
             }
-            return sb.toString();
+            return builderToString(sb);
         }
     }
 
-    @SlowPath
     private String printVectorMultiDim(VirtualFrame frame, RAbstractVector vector, boolean isList) {
         int[] dimensions = vector.getDimensions();
         assert dimensions != null;
@@ -394,7 +382,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (numDimensions == 2) {
             return printVector2Dim(frame, vector, dimensions, 0, isList);
         } else if (numDimensions == 3) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             int dimSize = dimensions[numDimensions - 1];
             int matrixSize = dimensions[0] * dimensions[1];
             for (int dimInd = 0; dimInd < dimSize; dimInd++) {
@@ -409,9 +397,9 @@ public abstract class PrettyPrinterNode extends RNode {
                     sb.append("\n");
                 }
             }
-            return sb.toString();
+            return builderToString(sb);
         } else {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             int dimSize = dimensions[numDimensions - 1];
             int accDimensions = vector.getLength() / dimSize;
             for (int dimInd = 0; dimInd < dimSize; dimInd++) {
@@ -419,11 +407,10 @@ public abstract class PrettyPrinterNode extends RNode {
                 String dimId = getDimId(vector, numDimensions, dimInd);
                 sb.append(printDim(frame, vector, isList, numDimensions - 1, arrayBase, accDimensions, dimId));
             }
-            return sb.toString();
+            return builderToString(sb);
         }
     }
 
-    @SlowPath
     private String printVector2Dim(VirtualFrame frame, RAbstractVector vector, int[] dimensions, int offset, boolean isList) {
         int nrow = dimensions[0];
         int ncol = dimensions[1];
@@ -454,7 +441,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         int rowHeaderWidth = rowHeader(nrow, vector).length();
-        String rowFormat = "%" + rowHeaderWidth + "s";
+        String rowFormat = concat("%", intString(rowHeaderWidth), "s");
 
         StringBuilder b = new StringBuilder();
 
@@ -478,8 +465,8 @@ public abstract class PrettyPrinterNode extends RNode {
                     b.append(dataString);
                     spaces(b, padColHeader(c, dataColWidths[c - 1], vector, isList).length() - dataString.length());
                 } else {
-                    String cellFormat = "%" + padColHeader(c, dataColWidths[c - 1], vector, isList).length() + "s";
-                    b.append(String.format(cellFormat, dataString));
+                    String cellFormat = concat("%", intString(padColHeader(c, dataColWidths[c - 1], vector, isList).length()), "s");
+                    b.append(stringFormat(cellFormat, dataString));
                 }
                 if (c < ncol) {
                     b.append(' ');
@@ -490,7 +477,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
         }
 
-        return b.toString();
+        return builderToString(b);
     }
 
     private static double calcRoundFactor(double input, long maxFactor) {
@@ -520,7 +507,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return factor;
     }
 
-    @SlowPath
     private static String doubleToStringPrintFormat(double input, double roundFactor) {
         double data = input;
         if (!Double.isNaN(data) && !Double.isInfinite(data)) {
@@ -534,8 +520,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.doubleToString(data);
     }
 
-    // FIXME support nesting levels >1
-    @SlowPath
     private String prettyPrintList0(VirtualFrame frame, RList operand, Object listName) {
         int length = operand.getLength();
         if (length == 0) {
@@ -548,18 +532,18 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
                 Object name = operand.getNameAt(i);
                 if (listName != null) {
-                    name = new StringBuilder(listName.toString()).append(name).toString();
+                    name = concat(objectString(listName), objectString(name));
                 }
                 sb.append(name).append('\n');
                 Object value = operand.getDataAt(i);
                 sb.append(printSingleListValue(frame, value, name)).append("\n\n");
             }
-            String result = sb.deleteCharAt(sb.length() - 1).toString();
+            sb.deleteCharAt(sb.length() - 1);
             Map<String, Object> attributes = operand.getAttributes();
             if (attributes != null) {
-                result = result + printAttributes(frame, operand, attributes);
+                sb.append(printAttributes(frame, operand, attributes));
             }
-            return result;
+            return builderToString(sb);
         }
     }
 
@@ -589,15 +573,14 @@ public abstract class PrettyPrinterNode extends RNode {
         return prettyPrintRecursive(frame, operand.getDataAtAsObject(0));
     }
 
-    @SlowPath
     @Specialization(order = 80, guards = "printingVectorElements")
     public String prettyPrintElements(RList operand) {
-        return "List," + operand.getLength();
+        return concat("List,", intString(operand.getLength()));
     }
 
     @Specialization(order = 81, guards = "printingVectorElements")
     public String prettyPrintElements(RAbstractVector operand) {
-        return RRuntime.classToStringCap(operand.getElementClass()) + "," + operand.getLength();
+        return concat(RRuntime.classToStringCap(operand.getElementClass()), ",", intString(operand.getLength()));
     }
 
     @Specialization(order = 100, guards = {"twoDimsOrMore", "!printingVectorElements"})
@@ -734,7 +717,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return v.getLength() == 1;
     }
 
-    @SlowPath
     protected Object printSingleListValue(VirtualFrame frame, Object argumentsValue0, Object listElementName) {
         if (RTYPES.isByte(argumentsValue0)) {
             byte argumentsValue0Cast = RTYPES.asByte(argumentsValue0);
@@ -808,12 +790,40 @@ public abstract class PrettyPrinterNode extends RNode {
             RInvisible argumentsValue0Cast = RTYPES.asRInvisible(argumentsValue0);
             return prettyPrint(frame, argumentsValue0Cast);
         }
-        throw new UnsupportedOperationException("Unsupported values" + argumentsValue0);
+        throw new UnsupportedOperationException(concat("Unsupported values ", objectString(argumentsValue0)));
     }
 
     @Specialization
     public String prettyPrint(VirtualFrame frame, RInvisible operand) {
         return prettyPrintRecursive(frame, operand.get());
+    }
+
+    @SlowPath
+    private static String builderToString(StringBuilder sb) {
+        return sb.toString();
+    }
+
+    @SlowPath
+    private static String intString(int x) {
+        return Integer.toString(x);
+    }
+
+    @SlowPath
+    private static String stringFormat(String format, String arg) {
+        return String.format(format, arg);
+    }
+
+    @SlowPath
+    private static String objectString(Object o) {
+        return o.toString();
+    }
+
+    private static String concat(String... ss) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : ss) {
+            sb.append(s);
+        }
+        return builderToString(sb);
     }
 
 }

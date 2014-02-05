@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 
 public final class RList extends RVector implements RAbstractVector {
 
@@ -107,6 +108,7 @@ public final class RList extends RVector implements RAbstractVector {
         return RDataFactory.createList(data, newDimensions);
     }
 
+    @SlowPath
     public Object getNameAt(int index) {
         if (names != null && names != RNull.instance) {
             String name = ((RStringVector) names).getDataAt(index);

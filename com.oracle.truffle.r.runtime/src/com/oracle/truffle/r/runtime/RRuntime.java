@@ -110,6 +110,7 @@ public class RRuntime {
         return Double.isNaN(d);
     }
 
+    @SlowPath
     public static String classToString(Class<?> c) {
         if (c == RLogical.class) {
             return TYPE_LOGICAL;
@@ -128,6 +129,7 @@ public class RRuntime {
         }
     }
 
+    @SlowPath
     public static String classToStringCap(Class<?> c) {
         if (c == RLogical.class) {
             return TYPE_LOGICAL_CAP;
