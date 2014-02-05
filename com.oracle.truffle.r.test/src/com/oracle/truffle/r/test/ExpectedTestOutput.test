@@ -3990,6 +3990,77 @@ Error in attr(x, "dimnames") <- list(101, 102, 103, 104) :
   'dimnames' applied to non-array
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(NULL); attributes(x) }
+$dim
+[1] 2 1 2
+
+$dimnames
+$dimnames[[1]]
+NULL
+
+$dimnames[[2]]
+NULL
+
+$dimnames[[3]]
+NULL
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a")); x }
+Error in dimnames(x) <- list(c("a")) :
+  length of 'dimnames' [1] not equal to array extent
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a", "b"), "c", c("d", "e")); attributes(x) }
+$dim
+[1] 2 1 2
+
+$dimnames
+$dimnames[[1]]
+[1] "a" "b"
+
+$dimnames[[2]]
+[1] "c"
+
+$dimnames[[3]]
+[1] "d" "e"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a", "b"), "c", c("d", "e"), 7); attributes(x) }
+Error in dimnames(x) <- list(c("a", "b"), "c", c("d", "e"), 7) :
+  length of 'dimnames' [4] must match that of 'dims' [3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a", "b"), 42, c("d", "e")); attributes(x) }
+$dim
+[1] 2 1 2
+
+$dimnames
+$dimnames[[1]]
+[1] "a" "b"
+
+$dimnames[[2]]
+[1] "42"
+
+$dimnames[[3]]
+[1] "d" "e"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a", "b"), 42, c("d", "e", "f")); attributes(x) }
+Error in dimnames(x) <- list(c("a", "b"), 42, c("d", "e", "f")) :
+  length of 'dimnames' [3] not equal to array extent
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a", "b"), NULL, c("d")); x }
+Error in dimnames(x) <- list(c("a", "b"), NULL, c("d")) :
+  length of 'dimnames' [3] not equal to array extent
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDimensions
 #{ x<-1:4; dim(x)<-c(4); y<-101:104; dim(y)<-c(2,2); x > y }
 Error in x > y : non-conformable arrays
 
@@ -39253,6 +39324,718 @@ NULL
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-10001:10008; dim(x)<-c(2,2,2); x }
+, , 1
+
+      [,1]  [,2]
+[1,] 10001 10003
+[2,] 10002 10004
+
+, , 2
+
+      [,1]  [,2]
+[1,] 10005 10007
+[2,] 10006 10008
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-101:108; dim(x)<-c(2,2,2); dimnames(x)<-list(c(1, 2), c(3, 4), c(5, 6)); x }
+, , 5
+
+    3   4
+1 101 103
+2 102 104
+
+, , 6
+
+    3   4
+1 105 107
+2 106 108
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:16; dim(x)<-c(2,2,2,2); x }
+, , 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2, 1
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+, , 1, 2
+
+     [,1] [,2]
+[1,]    9   11
+[2,]   10   12
+
+, , 2, 2
+
+     [,1] [,2]
+[1,]   13   15
+[2,]   14   16
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:16; dim(x)<-c(2,4,2); x }
+, , 1
+
+     [,1] [,2] [,3] [,4]
+[1,]    1    3    5    7
+[2,]    2    4    6    8
+
+, , 2
+
+     [,1] [,2] [,3] [,4]
+[1,]    9   11   13   15
+[2,]   10   12   14   16
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:256; dim(x)<-c(4,4,4,4); x }
+, , 1, 1
+
+     [,1] [,2] [,3] [,4]
+[1,]    1    5    9   13
+[2,]    2    6   10   14
+[3,]    3    7   11   15
+[4,]    4    8   12   16
+
+, , 2, 1
+
+     [,1] [,2] [,3] [,4]
+[1,]   17   21   25   29
+[2,]   18   22   26   30
+[3,]   19   23   27   31
+[4,]   20   24   28   32
+
+, , 3, 1
+
+     [,1] [,2] [,3] [,4]
+[1,]   33   37   41   45
+[2,]   34   38   42   46
+[3,]   35   39   43   47
+[4,]   36   40   44   48
+
+, , 4, 1
+
+     [,1] [,2] [,3] [,4]
+[1,]   49   53   57   61
+[2,]   50   54   58   62
+[3,]   51   55   59   63
+[4,]   52   56   60   64
+
+, , 1, 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   65   69   73   77
+[2,]   66   70   74   78
+[3,]   67   71   75   79
+[4,]   68   72   76   80
+
+, , 2, 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   81   85   89   93
+[2,]   82   86   90   94
+[3,]   83   87   91   95
+[4,]   84   88   92   96
+
+, , 3, 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   97  101  105  109
+[2,]   98  102  106  110
+[3,]   99  103  107  111
+[4,]  100  104  108  112
+
+, , 4, 2
+
+     [,1] [,2] [,3] [,4]
+[1,]  113  117  121  125
+[2,]  114  118  122  126
+[3,]  115  119  123  127
+[4,]  116  120  124  128
+
+, , 1, 3
+
+     [,1] [,2] [,3] [,4]
+[1,]  129  133  137  141
+[2,]  130  134  138  142
+[3,]  131  135  139  143
+[4,]  132  136  140  144
+
+, , 2, 3
+
+     [,1] [,2] [,3] [,4]
+[1,]  145  149  153  157
+[2,]  146  150  154  158
+[3,]  147  151  155  159
+[4,]  148  152  156  160
+
+, , 3, 3
+
+     [,1] [,2] [,3] [,4]
+[1,]  161  165  169  173
+[2,]  162  166  170  174
+[3,]  163  167  171  175
+[4,]  164  168  172  176
+
+, , 4, 3
+
+     [,1] [,2] [,3] [,4]
+[1,]  177  181  185  189
+[2,]  178  182  186  190
+[3,]  179  183  187  191
+[4,]  180  184  188  192
+
+, , 1, 4
+
+     [,1] [,2] [,3] [,4]
+[1,]  193  197  201  205
+[2,]  194  198  202  206
+[3,]  195  199  203  207
+[4,]  196  200  204  208
+
+, , 2, 4
+
+     [,1] [,2] [,3] [,4]
+[1,]  209  213  217  221
+[2,]  210  214  218  222
+[3,]  211  215  219  223
+[4,]  212  216  220  224
+
+, , 3, 4
+
+     [,1] [,2] [,3] [,4]
+[1,]  225  229  233  237
+[2,]  226  230  234  238
+[3,]  227  231  235  239
+[4,]  228  232  236  240
+
+, , 4, 4
+
+     [,1] [,2] [,3] [,4]
+[1,]  241  245  249  253
+[2,]  242  246  250  254
+[3,]  243  247  251  255
+[4,]  244  248  252  256
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:32; dim(x)<-c(2,2,2,2,2); x }
+, , 1, 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2, 1, 1
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+, , 1, 2, 1
+
+     [,1] [,2]
+[1,]    9   11
+[2,]   10   12
+
+, , 2, 2, 1
+
+     [,1] [,2]
+[1,]   13   15
+[2,]   14   16
+
+, , 1, 1, 2
+
+     [,1] [,2]
+[1,]   17   19
+[2,]   18   20
+
+, , 2, 1, 2
+
+     [,1] [,2]
+[1,]   21   23
+[2,]   22   24
+
+, , 1, 2, 2
+
+     [,1] [,2]
+[1,]   25   27
+[2,]   26   28
+
+, , 2, 2, 2
+
+     [,1] [,2]
+[1,]   29   31
+[2,]   30   32
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:32; dim(x)<-c(2,2,2,4); x }
+, , 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2, 1
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+, , 1, 2
+
+     [,1] [,2]
+[1,]    9   11
+[2,]   10   12
+
+, , 2, 2
+
+     [,1] [,2]
+[1,]   13   15
+[2,]   14   16
+
+, , 1, 3
+
+     [,1] [,2]
+[1,]   17   19
+[2,]   18   20
+
+, , 2, 3
+
+     [,1] [,2]
+[1,]   21   23
+[2,]   22   24
+
+, , 1, 4
+
+     [,1] [,2]
+[1,]   25   27
+[2,]   26   28
+
+, , 2, 4
+
+     [,1] [,2]
+[1,]   29   31
+[2,]   30   32
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:32; dim(x)<-c(2,2,4,2); x }
+, , 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2, 1
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+, , 3, 1
+
+     [,1] [,2]
+[1,]    9   11
+[2,]   10   12
+
+, , 4, 1
+
+     [,1] [,2]
+[1,]   13   15
+[2,]   14   16
+
+, , 1, 2
+
+     [,1] [,2]
+[1,]   17   19
+[2,]   18   20
+
+, , 2, 2
+
+     [,1] [,2]
+[1,]   21   23
+[2,]   22   24
+
+, , 3, 2
+
+     [,1] [,2]
+[1,]   25   27
+[2,]   26   28
+
+, , 4, 2
+
+     [,1] [,2]
+[1,]   29   31
+[2,]   30   32
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:32; dim(x)<-c(2,4,2,2); x }
+, , 1, 1
+
+     [,1] [,2] [,3] [,4]
+[1,]    1    3    5    7
+[2,]    2    4    6    8
+
+, , 2, 1
+
+     [,1] [,2] [,3] [,4]
+[1,]    9   11   13   15
+[2,]   10   12   14   16
+
+, , 1, 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   17   19   21   23
+[2,]   18   20   22   24
+
+, , 2, 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   25   27   29   31
+[2,]   26   28   30   32
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:32; dim(x)<-c(4,2,2,2); x }
+, , 1, 1
+
+     [,1] [,2]
+[1,]    1    5
+[2,]    2    6
+[3,]    3    7
+[4,]    4    8
+
+, , 2, 1
+
+     [,1] [,2]
+[1,]    9   13
+[2,]   10   14
+[3,]   11   15
+[4,]   12   16
+
+, , 1, 2
+
+     [,1] [,2]
+[1,]   17   21
+[2,]   18   22
+[3,]   19   23
+[4,]   20   24
+
+, , 2, 2
+
+     [,1] [,2]
+[1,]   25   29
+[2,]   26   30
+[3,]   27   31
+[4,]   28   32
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:4; dim(x)<-c(1,2,2); x }
+, , 1
+
+     [,1] [,2]
+[1,]    1    2
+
+, , 2
+
+     [,1] [,2]
+[1,]    3    4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c("a", "b"), "c", c("d", "e")); x }
+, , d
+
+  c
+a 1
+b 2
+
+, , e
+
+  c
+a 3
+b 4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:4; dim(x)<-c(2,1,2); x }
+, , 1
+
+     [,1]
+[1,]    1
+[2,]    2
+
+, , 2
+
+     [,1]
+[1,]    3
+[2,]    4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:4; dim(x)<-c(2,2,1); x }
+, , 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:4; dim(x)<-c(2,2,1,1); x }
+, , 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:64; dim(x)<-c(2,2,2,2,2,2); x }
+, , 1, 1, 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2, 1, 1, 1
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+, , 1, 2, 1, 1
+
+     [,1] [,2]
+[1,]    9   11
+[2,]   10   12
+
+, , 2, 2, 1, 1
+
+     [,1] [,2]
+[1,]   13   15
+[2,]   14   16
+
+, , 1, 1, 2, 1
+
+     [,1] [,2]
+[1,]   17   19
+[2,]   18   20
+
+, , 2, 1, 2, 1
+
+     [,1] [,2]
+[1,]   21   23
+[2,]   22   24
+
+, , 1, 2, 2, 1
+
+     [,1] [,2]
+[1,]   25   27
+[2,]   26   28
+
+, , 2, 2, 2, 1
+
+     [,1] [,2]
+[1,]   29   31
+[2,]   30   32
+
+, , 1, 1, 1, 2
+
+     [,1] [,2]
+[1,]   33   35
+[2,]   34   36
+
+, , 2, 1, 1, 2
+
+     [,1] [,2]
+[1,]   37   39
+[2,]   38   40
+
+, , 1, 2, 1, 2
+
+     [,1] [,2]
+[1,]   41   43
+[2,]   42   44
+
+, , 2, 2, 1, 2
+
+     [,1] [,2]
+[1,]   45   47
+[2,]   46   48
+
+, , 1, 1, 2, 2
+
+     [,1] [,2]
+[1,]   49   51
+[2,]   50   52
+
+, , 2, 1, 2, 2
+
+     [,1] [,2]
+[1,]   53   55
+[2,]   54   56
+
+, , 1, 2, 2, 2
+
+     [,1] [,2]
+[1,]   57   59
+[2,]   58   60
+
+, , 2, 2, 2, 2
+
+     [,1] [,2]
+[1,]   61   63
+[2,]   62   64
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:64; dim(x)<-c(2,2,2,4,2); x }
+, , 1, 1, 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2, 1, 1
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+, , 1, 2, 1
+
+     [,1] [,2]
+[1,]    9   11
+[2,]   10   12
+
+, , 2, 2, 1
+
+     [,1] [,2]
+[1,]   13   15
+[2,]   14   16
+
+, , 1, 3, 1
+
+     [,1] [,2]
+[1,]   17   19
+[2,]   18   20
+
+, , 2, 3, 1
+
+     [,1] [,2]
+[1,]   21   23
+[2,]   22   24
+
+, , 1, 4, 1
+
+     [,1] [,2]
+[1,]   25   27
+[2,]   26   28
+
+, , 2, 4, 1
+
+     [,1] [,2]
+[1,]   29   31
+[2,]   30   32
+
+, , 1, 1, 2
+
+     [,1] [,2]
+[1,]   33   35
+[2,]   34   36
+
+, , 2, 1, 2
+
+     [,1] [,2]
+[1,]   37   39
+[2,]   38   40
+
+, , 1, 2, 2
+
+     [,1] [,2]
+[1,]   41   43
+[2,]   42   44
+
+, , 2, 2, 2
+
+     [,1] [,2]
+[1,]   45   47
+[2,]   46   48
+
+, , 1, 3, 2
+
+     [,1] [,2]
+[1,]   49   51
+[2,]   50   52
+
+, , 2, 3, 2
+
+     [,1] [,2]
+[1,]   53   55
+[2,]   54   56
+
+, , 1, 4, 2
+
+     [,1] [,2]
+[1,]   57   59
+[2,]   58   60
+
+, , 2, 4, 2
+
+     [,1] [,2]
+[1,]   61   63
+[2,]   62   64
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:64; dim(x)<-c(4,4,4); x }
+, , 1
+
+     [,1] [,2] [,3] [,4]
+[1,]    1    5    9   13
+[2,]    2    6   10   14
+[3,]    3    7   11   15
+[4,]    4    8   12   16
+
+, , 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   17   21   25   29
+[2,]   18   22   26   30
+[3,]   19   23   27   31
+[4,]   20   24   28   32
+
+, , 3
+
+     [,1] [,2] [,3] [,4]
+[1,]   33   37   41   45
+[2,]   34   38   42   46
+[3,]   35   39   43   47
+[4,]   36   40   44   48
+
+, , 4
+
+     [,1] [,2] [,3] [,4]
+[1,]   49   53   57   61
+[2,]   50   54   58   62
+[3,]   51   55   59   63
+[4,]   52   56   60   64
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ x<-1:8; dim(x)<-c(2, 4); toString(x) }
 [1] "1, 2, 3, 4, 5, 6, 7, 8"
 
@@ -39263,10 +40046,130 @@ NULL
 [2,]    2    4    6    8
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), NULL, NULL); x }
+, , 1
+
+    [,1] [,2]
+101    1    3
+102    2    4
+
+, , 2
+
+    [,1] [,2]
+101    5    7
+102    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), NULL, c(105, 106)); x }
+, , 105
+
+    [,1] [,2]
+101    1    3
+102    2    4
+
+, , 106
+
+    [,1] [,2]
+101    5    7
+102    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), c(103, 104), NULL); x }
+, , 1
+
+    103 104
+101   1   3
+102   2   4
+
+, , 2
+
+    103 104
+101   5   7
+102   6   8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), c(103, 104), c(105, 106)); x }
+, , 105
+
+    103 104
+101   1   3
+102   2   4
+
+, , 106
+
+    103 104
+101   5   7
+102   6   8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), c(105, 106)); x }
+, , 1
+
+    105 106
+101   1   3
+102   2   4
+
+, , 2
+
+    105 106
+101   5   7
+102   6   8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-1:8; dim(x)<-c(2,2,2); x }
+, , 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ x<-c(1,2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }
      [,1]      [,2]
 [1,] Numeric,2 2
 [2,] 1         3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-c(1:2, 100003:100004,10005:10008); dim(x)<-c(2,2,2); x }
+, , 1
+
+     [,1]   [,2]
+[1,]    1 100003
+[2,]    2 100004
+
+, , 2
+
+      [,1]  [,2]
+[1,] 10005 10007
+[2,] 10006 10008
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-c(1:4,10005:10008); dim(x)<-c(2,2,2); x }
+, , 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2
+
+      [,1]  [,2]
+[1,] 10005 10007
+[2,] 10006 10008
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ x<-character(0); y<-list(x, 1+1i, 2+2i, 3+3i); dim(y)<-c(2, 2); y }
@@ -39289,6 +40192,21 @@ NULL
      [,1]   [,2]
 [1,] List,4 2
 [2,] 1      3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-list(1,2,3,4,5,6,7,8); dim(x)<-c(2,2,2); x }
+, , 1
+
+     [,1] [,2]
+[1,] 1    3
+[2,] 2    4
+
+, , 2
+
+     [,1] [,2]
+[1,] 5    7
+[2,] 6    8
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ z<-list(1,2,3,4); dim(z)<-c(2,2); x<-list(z,2,3,42); dim(x)<-c(2, 2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }

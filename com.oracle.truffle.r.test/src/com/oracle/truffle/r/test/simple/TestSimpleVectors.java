@@ -1392,5 +1392,34 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ z<-list(1,2,3,4); dim(z)<-c(2,2); x<-list(z,2,3,42); dim(x)<-c(2, 2); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }");
         assertEval("{ x<-1:8; dim(x)<-c(2, 4); toString(x) }");
         assertEval("{ x<-list(1, 2, 3, 4); dim(x)<-c(2, 2); toString(x) }");
+
+        // multiple dimensions
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x }");
+        assertEval("{ x<-list(1,2,3,4,5,6,7,8); dim(x)<-c(2,2,2); x }");
+        assertEval("{ x<-1:16; dim(x)<-c(2,2,2,2); x }");
+        assertEval("{ x<-1:32; dim(x)<-c(2,2,2,2,2); x }");
+        assertEval("{ x<-1:64; dim(x)<-c(2,2,2,2,2,2); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), NULL, NULL); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), c(103, 104), NULL); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), c(103, 104), c(105, 106)); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), c(105, 106)); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dimnames(x)<-list(c(101, 102), NULL, c(105, 106)); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), \"c\", c(\"d\", \"e\")); x }");
+        assertEval("{ x<-101:108; dim(x)<-c(2,2,2); dimnames(x)<-list(c(1, 2), c(3, 4), c(5, 6)); x }");
+        assertEval("{ x<-10001:10008; dim(x)<-c(2,2,2); x }");
+        assertEval("{ x<-c(1:2, 100003:100004,10005:10008); dim(x)<-c(2,2,2); x }");
+        assertEval("{ x<-c(1:4,10005:10008); dim(x)<-c(2,2,2); x }");
+        assertEval("{ x<-1:16; dim(x)<-c(2,4,2); x }");
+        assertEval("{ x<-1:32; dim(x)<-c(4,2,2,2); x }");
+        assertEval("{ x<-1:32; dim(x)<-c(2,4,2,2); x }");
+        assertEval("{ x<-1:32; dim(x)<-c(2,2,4,2); x }");
+        assertEval("{ x<-1:32; dim(x)<-c(2,2,2,4); x }");
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,4); x }");
+        assertEval("{ x<-1:256; dim(x)<-c(4,4,4,4); x }");
+        assertEval("{ x<-1:64; dim(x)<-c(2,2,2,4,2); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2,1); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2,1,1); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(1,2,2); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,1,2); x }");
     }
 }
