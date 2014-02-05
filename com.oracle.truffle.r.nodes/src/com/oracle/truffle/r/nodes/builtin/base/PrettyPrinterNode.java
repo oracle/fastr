@@ -358,7 +358,9 @@ public abstract class PrettyPrinterNode extends RNode {
             int dimSize = dimensions[currentDimLevel - 1];
             int matrixSize = dimensions[0] * dimensions[1];
             for (int dimInd = 0; dimInd < dimSize; dimInd++) {
+                // CheckStyle: stop system..print check
                 sb.append(", , ");
+                // CheckStyle: resume system..print check
                 sb.append(getDimId(vector, currentDimLevel, dimInd));
                 sb.append(", ");
                 sb.append(header);
@@ -396,7 +398,9 @@ public abstract class PrettyPrinterNode extends RNode {
             int dimSize = dimensions[numDimensions - 1];
             int matrixSize = dimensions[0] * dimensions[1];
             for (int dimInd = 0; dimInd < dimSize; dimInd++) {
+                // CheckStyle: stop system..print check
                 sb.append(", , ");
+                // CheckStyle: resume system..print check
                 sb.append(getDimId(vector, numDimensions, dimInd));
                 sb.append("\n\n");
                 sb.append(printVector2Dim(frame, vector, dimensions, dimInd * matrixSize, isList));
