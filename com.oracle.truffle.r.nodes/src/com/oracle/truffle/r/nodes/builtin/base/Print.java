@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class Print extends RBuiltinNode {
 
-    @Child protected PrettyPrinterNode prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, false, false));
+    @Child protected PrettyPrinterNode prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, null, false));
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);
@@ -49,7 +49,7 @@ public abstract class Print extends RBuiltinNode {
 
     @Specialization
     public Object print(VirtualFrame frame, Object o) {
-        String s = prettyPrinter.executeString(frame, o);
+        String s = (String) prettyPrinter.executeString(frame, o, null);
         printHelper(s);
         return new RInvisible(o); // TODO should we actually call "invisible(o)"?
     }
