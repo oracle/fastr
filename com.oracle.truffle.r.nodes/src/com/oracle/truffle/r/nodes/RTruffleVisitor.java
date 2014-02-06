@@ -247,9 +247,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
      * rm('*tmp*')
      * </pre>
      * 
-     * We take an anonymous object as the name of the temporary variable and omit the removal, as the
-     * anonymous object is unique to this replacement. We also anonymously store a to be able to use it
-     * as the value of this expression.
+     * We take an anonymous object to store a, as the anonymous object is unique to this
+     * replacement. We omit the removal of *tmp*.
      */
     //@formatter:on
     @Override
@@ -289,13 +288,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs);
         RCallNode replacementFunctionCall = (RCallNode) visit(rfCall);
 
-        // assign v, delete *tmp*, read a
+        // assign v, read a
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, replacementFunctionCall, false, n.isSuper());
-        Rm rmTmp = Rm.create(tmp);
         ReadVariableNode aRead = ReadVariableNode.create(a, false, false);
 
         // assemble
-        SequenceNode replacement = new SequenceNode(new RNode[]{aAssign, tmpAssign, vAssign, rmTmp, Invisible.create(aRead)});
+        SequenceNode replacement = new SequenceNode(new RNode[]{aAssign, tmpAssign, vAssign, Invisible.create(aRead)});
         replacement.assignSourceSection(n.getSource());
         return replacement;
     }
