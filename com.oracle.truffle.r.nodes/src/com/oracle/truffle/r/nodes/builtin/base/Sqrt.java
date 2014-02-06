@@ -53,11 +53,12 @@ public abstract class Sqrt extends RBuiltinNode {
 
     @Specialization
     public double sqrt(byte x) {
+        // sqrt for logical values: TRUE -> 1, FALSE -> 0, NA -> NA
         na.enable(x);
         if (na.check(x)) {
             return RRuntime.DOUBLE_NA;
         }
-        return Math.sqrt(x);
+        return x;
     }
 
     @Specialization
@@ -72,7 +73,7 @@ public abstract class Sqrt extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector sqrtIncomplete(RDoubleVector xs) {
+    public RDoubleVector sqrt(RDoubleVector xs) {
         double[] res = new double[xs.getLength()];
         na.enable(xs);
         for (int i = 0; i < xs.getLength(); ++i) {
