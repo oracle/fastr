@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.RTypesGen.*;
-
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -32,24 +30,26 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@NodeChild(value = "operand", type = RNode.class)
+@SuppressWarnings("unused")
+@NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class)})
 @NodeFields({@NodeField(name = "printingAttributes", type = boolean.class), @NodeField(name = "printingVectorElements", type = boolean.class)})
 public abstract class PrettyPrinterNode extends RNode {
 
     @Override
-    public abstract String execute(VirtualFrame frame);
+    public abstract Object execute(VirtualFrame frame);
 
-    public abstract String executeString(VirtualFrame frame, int o);
+    public abstract Object executeString(VirtualFrame frame, int o, Object listElementName);
 
-    public abstract String executeString(VirtualFrame frame, double o);
+    public abstract Object executeString(VirtualFrame frame, double o, Object listElementName);
 
-    public abstract String executeString(VirtualFrame frame, byte o);
+    public abstract Object executeString(VirtualFrame frame, byte o, Object listElementName);
 
-    public abstract String executeString(VirtualFrame frame, Object o);
+    public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName);
 
     public static final int CONSOLE_WIDTH = 80;
 
@@ -58,6 +58,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child PrettyPrinterNode attributePrettyPrinter;
     @Child PrettyPrinterNode vectorElementPrettyPrinter;
     @Child PrettyPrinterNode recursivePrettyPrinter;
+    @Child PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
 
     protected abstract boolean isPrintingAttributes();
 
@@ -70,65 +71,72 @@ public abstract class PrettyPrinterNode extends RNode {
     private String prettyPrintAttributes(VirtualFrame frame, Object o) {
         if (attributePrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            attributePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, true, false));
+            attributePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, null, true, false));
         }
-        return attributePrettyPrinter.executeString(frame, o);
+        return (String) attributePrettyPrinter.executeString(frame, o, null);
     }
 
     private String prettyPrintVectorElement(VirtualFrame frame, Object o) {
         if (vectorElementPrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            vectorElementPrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, false, true));
+            vectorElementPrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, null, false, true));
         }
-        return vectorElementPrettyPrinter.executeString(frame, o);
+        return (String) vectorElementPrettyPrinter.executeString(frame, o, null);
     }
 
-    private String prettyPrintRecursive(VirtualFrame frame, Object o) {
+    private String prettyPrintRecursive(VirtualFrame frame, Object o, Object listElementName) {
         if (recursivePrettyPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursivePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, isPrintingAttributes(), isPrintingVectorElements()));
+            recursivePrettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, null, isPrintingAttributes(), isPrintingVectorElements()));
         }
-        return recursivePrettyPrinter.executeString(frame, o);
+        return (String) recursivePrettyPrinter.executeString(frame, o, listElementName);
+    }
+
+    private String prettyPrintSingleListElement(VirtualFrame frame, Object o, Object listElementName) {
+        if (singleListElementPrettyPrinter == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            singleListElementPrettyPrinter = adoptChild(PrettyPrinterSingleListElementNodeFactory.create(null, null));
+        }
+        return (String) singleListElementPrettyPrinter.executeString(frame, o, listElementName);
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    public String prettyPrint(RNull operand) {
+    public String prettyPrint(RNull operand, Object listElementName) {
         return "NULL";
     }
 
     @Specialization(order = 1, guards = "!printingVectorElements")
-    public String prettyPrintVector(byte operand) {
+    public String prettyPrintVector(byte operand, Object listElementName) {
         return concat("[1] ", RRuntime.logicalToString(operand));
     }
 
     @Specialization(order = 2, guards = "printingVectorElements")
-    public String prettyPrint(byte operand) {
+    public String prettyPrint(byte operand, Object listElementName) {
         return RRuntime.logicalToString(operand);
     }
 
     @Specialization(order = 10, guards = "!printingVectorElements")
-    public String prettyPrintVector(int operand) {
+    public String prettyPrintVector(int operand, Object listElementName) {
         return concat("[1] ", RRuntime.intToString(operand, false));
     }
 
     @Specialization(order = 11, guards = "printingVectorElements")
-    public String prettyPrint(int operand) {
+    public String prettyPrint(int operand, Object listElementName) {
         return RRuntime.intToString(operand, false);
     }
 
     @Specialization(order = 20, guards = "!printingVectorElements")
-    public String prettyPrintVector(double operand) {
+    public String prettyPrintVector(double operand, Object listElementName) {
         return concat("[1] ", doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000)));
     }
 
     @Specialization(order = 21, guards = "printingVectorElements")
-    public String prettyPrint(double operand) {
+    public String prettyPrint(double operand, Object listElementName) {
         return doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000));
     }
 
     @Specialization(order = 30, guards = "!printingVectorElements")
-    public String prettyPrintVector(RComplex operand) {
+    public String prettyPrintVector(RComplex operand, Object listElementName) {
         double factor = calcRoundFactor(operand.getRealPart(), 10000000);
         return concat("[1] ",
                         operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor),
@@ -136,33 +144,33 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @Specialization(order = 31, guards = "printingVectorElements")
-    public String prettyPrint(RComplex operand) {
+    public String prettyPrint(RComplex operand, Object listElementName) {
         double factor = calcRoundFactor(operand.getRealPart(), 10000000);
         return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor), doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000)));
     }
 
     @Specialization(order = 40, guards = "!printingVectorElements")
-    public String prettyPrintVector(String operand) {
+    public String prettyPrintVector(String operand, Object listElementName) {
         return concat("[1] ", RRuntime.quoteString(operand));
     }
 
     @Specialization(order = 41, guards = "printingVectorElements")
-    public String prettyPrint(String operand) {
+    public String prettyPrint(String operand, Object listElementName) {
         return RRuntime.quoteString(operand);
     }
 
     @Specialization(order = 50, guards = "!printingVectorElements")
-    public String prettyPrintVector(RRaw operand) {
+    public String prettyPrintVector(RRaw operand, Object listElementName) {
         return concat("[1] ", operand.toString());
     }
 
     @Specialization(order = 51, guards = "printingVectorElements")
-    public String prettyPrint(RRaw operand) {
+    public String prettyPrint(RRaw operand, Object listElementName) {
         return operand.toString();
     }
 
     @Specialization
-    public String prettyPrint(RFunction operand) {
+    public String prettyPrint(RFunction operand, Object listElementName) {
         return ((RRootNode) ((DefaultCallTarget) operand.getTarget()).getRootNode()).getSourceCode();
     }
 
@@ -520,7 +528,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.doubleToString(data);
     }
 
-    private String prettyPrintList0(VirtualFrame frame, RList operand, Object listName) {
+    private String prettyPrintList0(VirtualFrame frame, RList operand, Object listElementName) {
         int length = operand.getLength();
         if (length == 0) {
             return "list()";
@@ -531,12 +539,12 @@ public abstract class PrettyPrinterNode extends RNode {
                     sb.append(operand.elementNamePrefix);
                 }
                 Object name = operand.getNameAt(i);
-                if (listName != null) {
-                    name = concat(objectString(listName), objectString(name));
+                if (listElementName != null) {
+                    name = concat(objectString(listElementName), objectString(name));
                 }
                 sb.append(name).append('\n');
                 Object value = operand.getDataAt(i);
-                sb.append(printSingleListValue(frame, value, name)).append("\n\n");
+                sb.append(prettyPrintSingleListElement(frame, value, name)).append("\n\n");
             }
             sb.deleteCharAt(sb.length() - 1);
             Map<String, Object> attributes = operand.getAttributes();
@@ -549,120 +557,104 @@ public abstract class PrettyPrinterNode extends RNode {
 
     // special case to handle "[1]" appropriately (depending on the "printing mode")
     @Specialization(order = 70, guards = {"isLengthOne", "printingVectorElements"})
-    public String prettyPrintLengthOne(RAbstractIntVector operand) {
-        return prettyPrint(operand.getDataAt(0));
-    }
-
-    @Specialization(order = 71, guards = {"isLengthOne", "printingVectorElements"})
-    public String prettyPrintLengthOne(RAbstractDoubleVector operand) {
-        return prettyPrint(operand.getDataAt(0));
-    }
-
-    @Specialization(order = 72, guards = {"isLengthOne", "printingVectorElements"})
-    public String prettyPrintLengthOne(RAbstractLogicalVector operand) {
-        return prettyPrint(operand.getDataAt(0));
-    }
-
-    @Specialization(order = 73, guards = {"isLengthOne", "printingVectorElements"})
-    public String prettyPrintLengthOne(VirtualFrame frame, RList operand) {
-        return prettyPrintList0(frame, operand, null);
-    }
-
-    @Specialization(order = 74, guards = {"isLengthOne", "printingVectorElements"})
-    public String prettyPrintLengthOne(VirtualFrame frame, RAbstractVector operand) {
-        return prettyPrintRecursive(frame, operand.getDataAtAsObject(0));
+    public String prettyPrintLengthOne(VirtualFrame frame, RAbstractVector operand, Object listElementName) {
+        return prettyPrintRecursive(frame, operand.getDataAtAsObject(0), listElementName);
     }
 
     @Specialization(order = 80, guards = "printingVectorElements")
-    public String prettyPrintElements(RList operand) {
+    public String prettyPrintElements(RList operand, Object listElementName) {
         return concat("List,", intString(operand.getLength()));
     }
 
     @Specialization(order = 81, guards = "printingVectorElements")
-    public String prettyPrintElements(RAbstractVector operand) {
+    public String prettyPrintElements(RAbstractVector operand, Object listElementName) {
         return concat(RRuntime.classToStringCap(operand.getElementClass()), ",", intString(operand.getLength()));
     }
 
     @Specialization(order = 100, guards = {"twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrintM(VirtualFrame frame, RList operand) {
+    public String prettyPrintM(VirtualFrame frame, RList operand, Object listElementName) {
         return printVectorMultiDim(frame, operand, true);
     }
 
     @Specialization(order = 101, guards = {"twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrintM(VirtualFrame frame, RAbstractVector operand) {
+    public String prettyPrintM(VirtualFrame frame, RAbstractVector operand, Object listElementName) {
         return printVectorMultiDim(frame, operand, false);
     }
 
-    @SlowPath
     @Specialization(order = 200, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RList operand) {
-        return prettyPrintList0(frame, operand, null);
+    public String prettyPrint(VirtualFrame frame, RList operand, Object listElementName) {
+        return prettyPrintList0(frame, operand, listElementName);
     }
 
     @Specialization(order = 300, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RAbstractDoubleVector operand) {
+    public String prettyPrint(VirtualFrame frame, RAbstractDoubleVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
             double data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, listElementName);
         }
         return printVector(frame, operand, values, false, false);
     }
 
     @Specialization(order = 400, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RAbstractIntVector operand) {
+    public String prettyPrint(VirtualFrame frame, RAbstractIntVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
             int data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, listElementName);
         }
         return printVector(frame, operand, values, false, false);
     }
 
     @Specialization(order = 500, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RAbstractStringVector operand) {
+    public String prettyPrint(VirtualFrame frame, RAbstractStringVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
             String data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, listElementName);
         }
         return printVector(frame, operand, values, true, false);
     }
 
     @Specialization(order = 600, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RAbstractLogicalVector operand) {
+    public String prettyPrint(VirtualFrame frame, RAbstractLogicalVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
             byte data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, listElementName);
         }
         return printVector(frame, operand, values, false, false);
     }
 
     @Specialization(order = 700, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RAbstractRawVector operand) {
+    public String prettyPrint(VirtualFrame frame, RAbstractRawVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
             RRaw data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, listElementName);
         }
         return printVector(frame, operand, values, false, true);
     }
 
     @Specialization(order = 800, guards = {"!twoDimsOrMore", "!printingVectorElements"})
-    public String prettyPrint(VirtualFrame frame, RAbstractComplexVector operand) {
+    public String prettyPrint(VirtualFrame frame, RAbstractComplexVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
             RComplex data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, listElementName);
         }
         return printVector(frame, operand, values, false, false);
+    }
+
+    @Specialization
+    public String prettyPrint(VirtualFrame frame, RInvisible operand, Object listElementName) {
+        return prettyPrintRecursive(frame, operand.get(), listElementName);
     }
 
     protected static boolean twoDimsOrMore(RAbstractVector v) {
@@ -717,87 +709,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return v.getLength() == 1;
     }
 
-    protected Object printSingleListValue(VirtualFrame frame, Object argumentsValue0, Object listElementName) {
-        if (RTYPES.isByte(argumentsValue0)) {
-            byte argumentsValue0Cast = RTYPES.asByte(argumentsValue0);
-            return prettyPrintVector(argumentsValue0Cast);
-        }
-        if (RTYPES.isInteger(argumentsValue0)) {
-            int argumentsValue0Cast = RTYPES.asInteger(argumentsValue0);
-            return prettyPrintVector(argumentsValue0Cast);
-        }
-        if (RTYPES.isDouble(argumentsValue0)) {
-            double argumentsValue0Cast = RTYPES.asDouble(argumentsValue0);
-            return prettyPrintVector(argumentsValue0Cast);
-        }
-        if (RTYPES.isRRaw(argumentsValue0)) {
-            RRaw argumentsValue0Cast = RTYPES.asRRaw(argumentsValue0);
-            return prettyPrintVector(argumentsValue0Cast);
-        }
-        if (RTYPES.isRComplex(argumentsValue0)) {
-            RComplex argumentsValue0Cast = RTYPES.asRComplex(argumentsValue0);
-            return prettyPrintVector(argumentsValue0Cast);
-        }
-        if (RTYPES.isString(argumentsValue0)) {
-            String argumentsValue0Cast = RTYPES.asString(argumentsValue0);
-            return prettyPrintVector(argumentsValue0Cast);
-        }
-        if (RTYPES.isRIntSequence(argumentsValue0)) {
-            RIntSequence argumentsValue0Cast = RTYPES.asRIntSequence(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRDoubleSequence(argumentsValue0)) {
-            RDoubleSequence argumentsValue0Cast = RTYPES.asRDoubleSequence(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRIntVector(argumentsValue0)) {
-            RIntVector argumentsValue0Cast = RTYPES.asRIntVector(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRDoubleVector(argumentsValue0)) {
-            RDoubleVector argumentsValue0Cast = RTYPES.asRDoubleVector(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRRawVector(argumentsValue0)) {
-            RRawVector argumentsValue0Cast = RTYPES.asRRawVector(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRComplexVector(argumentsValue0)) {
-            RComplexVector argumentsValue0Cast = RTYPES.asRComplexVector(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRStringVector(argumentsValue0)) {
-            RStringVector argumentsValue0Cast = RTYPES.asRStringVector(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRLogicalVector(argumentsValue0)) {
-            RLogicalVector argumentsValue0Cast = RTYPES.asRLogicalVector(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        if (RTYPES.isRFunction(argumentsValue0)) {
-            RFunction argumentsValue0Cast = RTYPES.asRFunction(argumentsValue0);
-            return prettyPrint(argumentsValue0Cast);
-        }
-        if (RTYPES.isRNull(argumentsValue0)) {
-            RNull argumentsValue0Cast = RTYPES.asRNull(argumentsValue0);
-            return prettyPrint(argumentsValue0Cast);
-        }
-        if (RTYPES.isRList(argumentsValue0)) {
-            RList argumentsValue0Cast = RTYPES.asRList(argumentsValue0);
-            return prettyPrintList0(frame, argumentsValue0Cast, listElementName);
-        }
-        if (RTYPES.isRInvisible(argumentsValue0)) {
-            RInvisible argumentsValue0Cast = RTYPES.asRInvisible(argumentsValue0);
-            return prettyPrint(frame, argumentsValue0Cast);
-        }
-        throw new UnsupportedOperationException(concat("Unsupported values ", objectString(argumentsValue0)));
-    }
-
-    @Specialization
-    public String prettyPrint(VirtualFrame frame, RInvisible operand) {
-        return prettyPrintRecursive(frame, operand.get());
-    }
-
     @SlowPath
     private static String builderToString(StringBuilder sb) {
         return sb.toString();
@@ -824,6 +735,92 @@ public abstract class PrettyPrinterNode extends RNode {
             sb.append(s);
         }
         return builderToString(sb);
+    }
+
+    @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class)})
+    abstract static class PrettyPrinterSingleListElementNode extends RNode {
+
+        @Child PrettyPrinterNode prettyPrinter;
+
+        private void initCast(Object listElementName) {
+            if (prettyPrinter == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, null, false, false));
+            }
+        }
+
+        private String prettyPrintSingleElement(VirtualFrame frame, byte o, Object listElementName) {
+            initCast(listElementName);
+            return (String) prettyPrinter.executeString(frame, o, listElementName);
+        }
+
+        private String prettyPrintSingleElement(VirtualFrame frame, int o, Object listElementName) {
+            initCast(listElementName);
+            return (String) prettyPrinter.executeString(frame, o, listElementName);
+        }
+
+        private String prettyPrintSingleElement(VirtualFrame frame, double o, Object listElementName) {
+            initCast(listElementName);
+            return (String) prettyPrinter.executeString(frame, o, listElementName);
+        }
+
+        private String prettyPrintSingleElement(VirtualFrame frame, Object o, Object listElementName) {
+            initCast(listElementName);
+            return (String) prettyPrinter.executeString(frame, o, listElementName);
+        }
+
+        public abstract Object executeString(VirtualFrame frame, int o, Object listElementName);
+
+        public abstract Object executeString(VirtualFrame frame, double o, Object listElementName);
+
+        public abstract Object executeString(VirtualFrame frame, byte o, Object listElementName);
+
+        public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName);
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, RNull operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, byte operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, int operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, double operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, RComplex operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, String operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, RRaw operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, RInvisible operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintVector(VirtualFrame frame, RAbstractVector operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
     }
 
 }
