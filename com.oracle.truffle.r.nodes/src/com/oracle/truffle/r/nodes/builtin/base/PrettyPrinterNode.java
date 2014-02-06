@@ -163,7 +163,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 continue;
             }
             builder.append("\n");
-            builder.append("attr(,\"" + attr.getKey() + "\")\n");
+            builder.append(concat("attr(,\"", attr.getKey(), "\")\n"));
             builder.append(prettyPrintAttributes(frame, attr.getValue()));
         }
         return builderToString(builder);
@@ -271,6 +271,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
     protected static String padColHeader(int r, int dataColWidth, RAbstractVector vector, boolean isList) {
         RList dimNames = vector.getDimNames();
         StringBuilder sb = new StringBuilder();
@@ -325,6 +326,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return dimId;
     }
 
+    @SlowPath
     private String printDim(RAbstractVector vector, boolean isList, int currentDimLevel, int arrayBase, int accDimensions, String header) {
         int[] dimensions = vector.getDimensions();
         if (currentDimLevel == 3) {
@@ -359,6 +361,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
     private String printVectorMultiDim(RAbstractVector vector, boolean isList) {
         int[] dimensions = vector.getDimensions();
         assert dimensions != null;
@@ -396,6 +399,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
     private String printVector2Dim(RAbstractVector vector, int[] dimensions, int offset, boolean isList) {
         int nrow = dimensions[0];
         int ncol = dimensions[1];
@@ -442,7 +446,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         // rows
         for (int r = 1; r <= nrow; ++r) {
-            b.append(String.format(rowFormat, rowHeader(r, vector))).append(' ');
+            b.append(stringFormat(rowFormat, rowHeader(r, vector))).append(' ');
             for (int c = 1; c <= ncol; ++c) {
                 String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
                 if (isList) {
@@ -706,6 +710,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return builderToString(sb);
     }
 
+    @SlowPath
     private String printVectorElement(Object vectorElement) {
         if (vectorElement == RNull.instance) {
             return "NULL";
