@@ -570,8 +570,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testSapplyInore() {
+    public void testSapplyIgnore() {
         // FIXME these all regressed with the change to 'print'
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
