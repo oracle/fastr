@@ -2959,27 +2959,27 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSapplyInore_e30b8dbeaaac291438d9893765622dcc() {
+    public void TestSimpleBuiltins_testSapplyIgnore_e30b8dbeaaac291438d9893765622dcc() {
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSapplyInore_d1e677fbd4330542e55296a85de7a560() {
+    public void TestSimpleBuiltins_testSapplyIgnore_d1e677fbd4330542e55296a85de7a560() {
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSapplyInore_3348bfd05e16974ee51fd002aa21a7c4() {
+    public void TestSimpleBuiltins_testSapplyIgnore_3348bfd05e16974ee51fd002aa21a7c4() {
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { as.raw(10) } }) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSapplyInore_a1f12546a0709e269e55fdf2ce6796a1() {
+    public void TestSimpleBuiltins_testSapplyIgnore_a1f12546a0709e269e55fdf2ce6796a1() {
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { \"hello\" }} ) } ");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSapplyInore_64d9e8edd48f17d106de20e6c9502df6() {
+    public void TestSimpleBuiltins_testSapplyIgnore_64d9e8edd48f17d106de20e6c9502df6() {
         assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list(2) } }) }");
     }
 
