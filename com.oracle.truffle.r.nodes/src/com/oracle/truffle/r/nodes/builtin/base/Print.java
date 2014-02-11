@@ -50,7 +50,9 @@ public abstract class Print extends RBuiltinNode {
     @Specialization
     public Object print(VirtualFrame frame, Object o) {
         String s = (String) prettyPrinter.executeString(frame, o, null);
-        printHelper(s);
+        if (s != null) {
+            printHelper(s);
+        }
         return new RInvisible(o); // TODO should we actually call "invisible(o)"?
     }
 

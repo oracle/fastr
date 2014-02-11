@@ -1421,5 +1421,18 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:4; dim(x)<-c(2,2,1,1); x }");
         assertEval("{ x<-1:4; dim(x)<-c(1,2,2); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,1,2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(0, 1); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(0, 3); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(0, 0); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(0, 0, 2, 2, 2); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0); dimnames(x)<-list(\"a\"); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(0, 1); dimnames(x)<-list(NULL, \"a\"); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 2, 2); dimnames(x)<-list(\"a\", NULL, c(\"b\", \"c\"), c(\"d\", \"e\"), c(\"f\", \"g\")); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(0, 4); dimnames(x)<-list(NULL, c(\"a\", \"bbbbbbbbbbbb\", \"c\", \"d\")); x }");
     }
 }
