@@ -4495,6 +4495,10 @@ character(0)
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ get("x") }
+Error in get("x") : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ gg <- function() {  assign("x", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
 [1] 11
 
@@ -4661,6 +4665,14 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ x <- 1; exists("x", inherits = FALSE) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ x <- 2 ; rm("x") ; get("x") }
+Error in get("x") : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ x <- 2 ; y <- 3 ; rm("y") ; ls() }
+[1] "x"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ x <- 3 ; f <- function() { assign("x", 2) ; g <- function() { x } ; g() } ; f() }

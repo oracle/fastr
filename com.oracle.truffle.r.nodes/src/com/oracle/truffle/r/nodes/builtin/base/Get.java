@@ -72,7 +72,13 @@ public abstract class Get extends RBuiltinNode {
                 fs = frm.getFrameDescriptor().findFrameSlot(x);
             }
         }
-        return fs == null ? null : frm.getValue(fs);
+        if (fs != null) {
+            Object v = frm.getValue(fs);
+            if (v != null) {
+                return v;
+            }
+        }
+        throw RError.getUnknownVariable(this.getEncapsulatingSourceSection(), x);
     }
 
     @Specialization

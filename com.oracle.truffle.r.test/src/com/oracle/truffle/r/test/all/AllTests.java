@@ -6439,6 +6439,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_1b704057d0a3b32717c4812143a5f57f() {
+        assertEval("{ x <- 2 ; y <- 3 ; rm(\"y\") ; ls() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_5f9149f4bb0770f64df8392c8f0f1560() {
         assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }");
     }
@@ -6896,6 +6901,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironment_f5b6d5670ee3679c2214a7720ed4f5e9() {
         assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_d2b207ebaf757535786aa553fb1fe90a() {
+        assertEvalError("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_72bcfb2ecee83734cf418b9ff1c34f8c() {
+        assertEvalError("{ get(\"x\") }");
     }
 
     @Test

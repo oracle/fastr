@@ -1343,6 +1343,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; assign(\"y\", 2, h) ; ls(h) }");
         assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }", "[1] \"y\" \"x\"\n", "[1] \"x\" \"y\"\n");
 
+        assertEval("{ x <- 2 ; y <- 3 ; rm(\"y\") ; ls() }");
+        assertEvalError("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
+        assertEvalError("{ get(\"x\") }");
+
         assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
         assertEvalAlt("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
         assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
@@ -2319,5 +2323,4 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
     }
-
 }
