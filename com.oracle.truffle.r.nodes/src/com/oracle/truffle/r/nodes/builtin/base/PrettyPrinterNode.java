@@ -879,6 +879,9 @@ public abstract class PrettyPrinterNode extends RNode {
                 sb.append('\n');
                 for (int r = 1; r <= nrow; ++r) {
                     sb.append(getDimId(dimNames, 0, r));
+                    if (r < nrow) {
+                        sb.append('\n');
+                    }
                 }
             }
             return builderToString(sb);

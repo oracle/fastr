@@ -1424,6 +1424,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 1); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 3); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(3, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
