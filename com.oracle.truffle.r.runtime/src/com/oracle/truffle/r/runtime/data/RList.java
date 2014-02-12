@@ -57,6 +57,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return Arrays.toString(data);
     }
@@ -79,7 +80,7 @@ public final class RList extends RVector implements RAbstractVector {
 
     @Override
     protected String getDataAtAsString(int index) {
-        return getDataAt(index).toString();
+        return RRuntime.toString(getDataAt(index));
     }
 
     public RList updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {

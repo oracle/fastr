@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RIntSequence extends RSequence implements RAbstractIntVector {
@@ -56,6 +57,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return internalCreateVector().toString();
     }

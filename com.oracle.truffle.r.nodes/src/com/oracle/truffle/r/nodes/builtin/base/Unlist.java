@@ -166,7 +166,7 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     private static String unlistValueString(Object cur) {
-        return cur.toString();
+        return RRuntime.toString(cur);
     }
 
     private static double unlistValueDouble(Object dataAtAsObject) {

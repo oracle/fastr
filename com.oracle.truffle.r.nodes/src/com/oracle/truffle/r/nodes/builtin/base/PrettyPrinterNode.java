@@ -208,7 +208,7 @@ public abstract class PrettyPrinterNode extends RNode {
             int leftWidth = 0;
             int maxPositionLength = 0;
             if (!printNamesHeader) {
-                maxPositionLength = Integer.toString(vector.getLength()).length();
+                maxPositionLength = intString(vector.getLength()).length();
                 leftWidth = maxPositionLength + 2; // There is [] around the number.
             }
             int forColumns = CONSOLE_WIDTH - leftWidth;
@@ -393,7 +393,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
                 Object name = operand.getNameAt(i);
                 if (listElementName != null) {
-                    name = concat(objectString(listElementName), objectString(name));
+                    name = concat(RRuntime.toString(listElementName), RRuntime.toString(name));
                 }
                 sb.append(name).append('\n');
                 Object value = operand.getDataAt(i);
@@ -556,11 +556,6 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     private static String stringFormat(String format, String arg) {
         return String.format(format, arg);
-    }
-
-    @SlowPath
-    private static String objectString(Object o) {
-        return o.toString();
     }
 
     private static String concat(String... ss) {

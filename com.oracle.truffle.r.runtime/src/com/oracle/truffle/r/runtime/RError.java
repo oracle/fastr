@@ -1782,7 +1782,7 @@ public abstract class RError extends RuntimeException {
             str.append(s);
             str.append("\"");
         }
-        return getGenericError(ast, stringFormat(RError.ARG_ONE_OF, argName, str.toString()));
+        return getGenericError(ast, stringFormat(RError.ARG_ONE_OF, argName, RRuntime.toString(str)));
     }
 
     public static RError getMustBeSquare(SourceSection ast, String argName) {

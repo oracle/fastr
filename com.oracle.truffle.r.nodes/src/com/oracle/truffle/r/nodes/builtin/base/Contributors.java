@@ -38,12 +38,12 @@ public abstract class Contributors extends RBuiltinNode {
     public Object contributors() {
         Path cf = Paths.get(this.getClass().getResource("CONTRIBUTORS").getFile());
         if (!cf.toFile().exists()) {
-            throw RError.getCannotOpenFile(getSourceSection(), cf.toString(), "file not found");
+            throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "file not found");
         }
         try {
             System.out.println(new String(Files.readAllBytes(cf)));
         } catch (IOException ioe) {
-            throw RError.getCannotOpenFile(getSourceSection(), cf.toString(), "reading error");
+            throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "reading error");
         }
         return RInvisible.INVISIBLE_NULL;
     }

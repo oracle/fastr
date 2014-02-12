@@ -450,10 +450,10 @@ public abstract class RCallNode extends RNode {
     }
 
     private int findParameterPosition(Object[] parameterNames, Object actualName, int argPos, boolean varArgs) {
-        String name = actualName.toString();
+        String name = RRuntime.toString(actualName);
         int found = -1;
         for (int i = 0; i < parameterNames.length; i++) {
-            if (parameterNames[i] != null && parameterNames[i].toString().startsWith(name)) {
+            if (parameterNames[i] != null && RRuntime.toString(parameterNames[i]).startsWith(name)) {
                 if (found >= 0) {
                     throw RError.getArgumentMatchesMultiple(getEncapsulatingSourceSection(), 1 + argPos);
                 }

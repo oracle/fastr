@@ -113,7 +113,7 @@ public final class Utils {
         DefaultCallTarget callTarget = (DefaultCallTarget) function.getTarget();
         if (callTarget != null) {
             graphPrinter.beginGroup(groupName);
-            graphPrinter.beginGraph(function.toString()).visit(callTarget.getRootNode());
+            graphPrinter.beginGraph(RRuntime.toString(function)).visit(callTarget.getRootNode());
         }
         graphPrinter.printToNetwork(true);
     }

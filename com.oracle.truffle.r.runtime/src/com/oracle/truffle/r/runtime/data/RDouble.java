@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+
 @com.oracle.truffle.api.CompilerDirectives.ValueType
 public final class RDouble extends RScalar {
 
@@ -36,6 +38,7 @@ public final class RDouble extends RScalar {
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return Double.toString(value);
     }

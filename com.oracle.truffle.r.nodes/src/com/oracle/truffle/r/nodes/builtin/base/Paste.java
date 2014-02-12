@@ -113,7 +113,7 @@ public abstract class Paste extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public String paste(RComplex value, Object sep, Object collapse) {
-        return value.toString();
+        return RRuntime.toString(value);
     }
 
     @SuppressWarnings("unused")

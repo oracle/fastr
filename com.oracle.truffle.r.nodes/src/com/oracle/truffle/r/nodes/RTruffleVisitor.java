@@ -93,7 +93,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode[] nodes = new RNode[call.getArgs().size()];
         for (ArgumentList.Entry e : call.getArgs()) {
             Symbol argName = e.getName();
-            argumentNames[index] = (argName == null ? null : argName.toString());
+            argumentNames[index] = (argName == null ? null : RRuntime.toString(argName));
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : ConstantNode.create(RMissing.instance);
             index++;
         }
@@ -124,7 +124,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 for (ArgumentList.Entry arg : argumentsList) {
                     RNode defaultValue = arg.getValue() != null ? arg.getValue().accept(this) : ConstantNode.create(RMissing.instance);
                     init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index, defaultValue), true, false);
-                    parameterNames[index] = arg.getName().toString();
+                    parameterNames[index] = RRuntime.toString(arg.getName());
                     index++;
                 }
                 init[index] = body;
@@ -258,7 +258,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         FunctionCall f = n.getBuiltin();
         ArgumentList args = f.getArgs();
         SimpleAccessVariable vAST = (SimpleAccessVariable) args.first().getValue();
-        String vSymbol = vAST.getSymbol().toString();
+        String vSymbol = RRuntime.toString(vAST.getSymbol());
 
         //@formatter:off
         // store a - need to use temporary, otherwise there is a failure in case multiple calls to
