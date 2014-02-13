@@ -8554,6 +8554,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testReIm_95c6a5bfa6a3c21a1c0b96172569dae5() {
+        assertEval("{ Re(1+1i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_9ae67abaa867a65f6296a0c6492969f1() {
+        assertEval("{ Im(1+1i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_37988dec2f27d6109524ff49342aafb4() {
+        assertEval("{ Re(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_74bde8d3265cea27201f771a32aa6820() {
+        assertEval("{ Im(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_b51e9bf13edb27292ec723545da8014c() {
+        assertEval("{ Re(c(1+1i,2-2i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_695e20e4675aae861985bf62be5c3dc2() {
+        assertEval("{ Im(c(1+1i,2-2i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_710eccf642f88fe5b36e243eb0f50bf7() {
+        assertEval("{ Re(c(1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_b4fc1b0b3a0a6825795dc057bdeb88d2() {
+        assertEval("{ Im(c(1,2)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRecall_ab1f19a0b3e459827e17703fdb01ae66() {
         assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; f(10) }");
     }

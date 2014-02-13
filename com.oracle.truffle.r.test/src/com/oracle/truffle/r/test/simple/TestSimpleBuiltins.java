@@ -1890,6 +1890,18 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testReIm() {
+        assertEval("{ Re(1+1i) }");
+        assertEval("{ Im(1+1i) }");
+        assertEval("{ Re(1) }");
+        assertEval("{ Im(1) }");
+        assertEval("{ Re(c(1+1i,2-2i)) }");
+        assertEval("{ Im(c(1+1i,2-2i)) }");
+        assertEval("{ Re(c(1,2)) }");
+        assertEval("{ Im(c(1,2)) }");
+    }
+
+    @Test
     public void testMod() {
         assertEval("{ round(Mod(1+1i)*10000) }");
     }

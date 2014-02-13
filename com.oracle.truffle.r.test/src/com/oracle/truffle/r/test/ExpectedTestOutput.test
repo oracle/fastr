@@ -5540,6 +5540,38 @@ NULL
 [1,]    1    2    3
 [2,]    2    2    2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(1) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(1+1i) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(c(1+1i,2-2i)) }
+[1]  1 -2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(c(1,2)) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(1+1i) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(c(1+1i,2-2i)) }
+[1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(c(1,2)) }
+[1] 1 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep("hello", 3) }
 [1] "hello" "hello" "hello"
