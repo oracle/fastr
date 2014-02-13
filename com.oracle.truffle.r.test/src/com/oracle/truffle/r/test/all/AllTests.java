@@ -1354,6 +1354,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testScalarsComplex_c4757c37a7ae086ad8969c73a91e9cf2() {
+        assertEval("{ c(1+2i,1.1+2.1i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_78cc1126bf3f8f6e3c709b5beacf95d8() {
+        assertEval("{ c(1+2i,11.1+2.1i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_a2328b24a0a62e3659427bb986873204() {
+        assertEval("{ c(1+2i,1.1+12.1i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_db6b99346a02533a68ac1bdc5d6a1182() {
+        assertEval("{ c(11+2i,1.1+2.1i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_5434efc74a8434ff9b00c74c21af36be() {
+        assertEval("{ c(1+12i,1.1+2.1i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_f8e47fb5c1d2a99c0ceadffef991295e() {
+        assertEval("{ c(-1+2i,1.1+2.1i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_60b9c85b174529d3ae154bf8ae10cd98() {
+        assertEval("{ c(1-2i,1+22i) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testScalarsComplex_3687279e543d6b321de708f1696d22d9() {
+        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testScalarsComplexIgnore_0dc33376658fd492af2c5beb032efdbf() {
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y+x }");
     }
@@ -1361,11 +1401,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testScalarsComplexIgnore_46cb3430474fb02811820b09b2bcd950() {
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }");
-    }
-
-    @Test
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_3687279e543d6b321de708f1696d22d9() {
-        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
     }
 
     @Test
@@ -2239,6 +2274,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testVectorsOperationsComplex_26cbb52252ff028ab7bba252147de26c() {
+        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testVectorsOperationsComplex_a88a08c3bbe4807e9507763726c626e5() {
+        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_9b81d167391e44e04a528a367013f806() {
         assertEval("{ z <- c(-1.5-1i,10) ; (z * z)[1] }");
     }
@@ -2251,16 +2296,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_15a6502f9ece8e54a080a3e20541165c() {
         assertEval("{ c(1,2,3+1i)^3 }");
-    }
-
-    @Test
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_26cbb52252ff028ab7bba252147de26c() {
-        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
-    }
-
-    @Test
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_a88a08c3bbe4807e9507763726c626e5() {
-        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Test

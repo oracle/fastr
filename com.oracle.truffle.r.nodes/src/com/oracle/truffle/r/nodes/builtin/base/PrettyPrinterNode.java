@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleVectorElementNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintDimNodeFactory;
@@ -41,6 +42,7 @@ import static com.oracle.truffle.r.nodes.RTypesGen.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.sun.jmx.snmp.defaults.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class)})
@@ -66,6 +68,9 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child PrettyPrinterNode recursivePrettyPrinter;
     @Child PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
     @Child PrintVectorMultiDimNode multiDimPrinter;
+
+    @Child Re re;
+    @Child Im im;
 
     protected abstract boolean isPrintingAttributes();
 
@@ -139,8 +144,9 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     public static String prettyPrint(RComplex operand) {
-        double factor = calcRoundFactor(operand.getRealPart(), 10000000);
-        return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor), doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000)));
+        double rfactor = calcRoundFactor(operand.getRealPart(), 10000000);
+        double ifactor = calcRoundFactor(operand.getImaginaryPart(), 10000000);
+        return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), rfactor), doubleToStringPrintFormat(operand.getImaginaryPart(), ifactor));
     }
 
     @Specialization(order = 40)
@@ -489,11 +495,32 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Specialization(order = 800, guards = "!twoDimsOrMore")
     public String prettyPrint(VirtualFrame frame, RAbstractComplexVector operand, Object listElementName) {
+        if (re == null) {
+            // the two are allocated side by side; checking for re is sufficient
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            RPackages packages = (RPackages) RContext.getInstance().getLookup();
+            re = adoptChild(ReFactory.create(new RNode[1], packages.lookupBuiltin("Re")));
+            im = adoptChild(ImFactory.create(new RNode[1], packages.lookupBuiltin("Im")));
+        }
+
+        RDoubleVector realParts = (RDoubleVector) re.executeRDoubleVector(frame, operand);
+        RDoubleVector imaginaryParts = (RDoubleVector) im.executeRDoubleVector(frame, operand);
+
         int length = operand.getLength();
+        String[] realValues = new String[length];
+        String[] imaginaryValues = new String[length];
+        for (int i = 0; i < length; ++i) {
+            realValues[i] = prettyPrint(realParts.getDataAt(i));
+            imaginaryValues[i] = prettyPrint(imaginaryParts.getDataAt(i));
+        }
+        padTrailingDecimalPointAndZeroesIfRequired(realValues);
+        padTrailingDecimalPointAndZeroesIfRequired(imaginaryValues);
+        removeLeadingMinus(imaginaryValues);
+        rightJustify(imaginaryValues);
+
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
-            RComplex data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = operand.getDataAt(i).isNA() ? "NA" : concat(realValues[i], imaginaryParts.getDataAt(i) < 0.0 ? "-" : "+", imaginaryValues[i], "i");
         }
         return printVector(frame, operand, values, false, false);
     }
@@ -613,6 +640,42 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             if (lenAfterPoint[i] < maxLenAfterPoint) {
                 values[i] = concat(v, stringFormat(concat("%0", intString(maxLenAfterPoint - lenAfterPoint[i]), "d"), 0));
+            }
+        }
+    }
+
+    private static void rightJustify(String[] values) {
+        int maxLen = 0;
+        boolean inequalLengths = false;
+        int lastLen = 0;
+        for (int i = 0; i < values.length; ++i) {
+            int l = values[i].length();
+            maxLen = Math.max(maxLen, l);
+            inequalLengths = lastLen != 0 && lastLen != l;
+            lastLen = l;
+        }
+        if (!inequalLengths) {
+            return;
+        }
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            int l = v.length();
+            if (l < maxLen) {
+                int d = maxLen - l;
+                if (d == 1) {
+                    values[i] = concat(" ", v);
+                } else {
+                    values[i] = concat(stringFormat(concat("%", intString(d), "s"), " "), v);
+                }
+            }
+        }
+    }
+
+    private static void removeLeadingMinus(String[] values) {
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            if (v.charAt(0) == '-') {
+                values[i] = substring(v, 1);
             }
         }
     }

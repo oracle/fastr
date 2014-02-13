@@ -142,6 +142,14 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }");
         assertEval("{ round( (1+2i)^(3+4i), digits=5 ) }");
         assertEval("{ round( ((1+1i)/(0+1i)) ^ (-3.54), digits=5) }");
+        assertEval("{ c(1+2i,1.1+2.1i) }");
+        assertEval("{ c(1+2i,11.1+2.1i) }");
+        assertEval("{ c(1+2i,1.1+12.1i) }");
+        assertEval("{ c(11+2i,1.1+2.1i) }");
+        assertEval("{ c(1+12i,1.1+2.1i) }");
+        assertEval("{ c(-1+2i,1.1+2.1i) }");
+        assertEval("{ c(1-2i,1+22i) }");
+        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
     }
 
     @Test
@@ -150,8 +158,6 @@ public class TestSimpleArithmetic extends TestBase {
         // FIXME print format
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y+x }");
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }");
-        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
-
     }
 
     @Test
@@ -297,6 +303,8 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ a <- c(1+1i,3+2i) ; a - (4+3i) }");
         assertEval("{ c(1+1i,3+2i) * c(1,2) }");
         assertEval("{ z <- c(1+1i,3+2i) ; z * c(1,2) }");
+        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
+        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Test
@@ -305,9 +313,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ z <- c(-1.5-1i,10) ; (z * z)[1] }");
         assertEval("{ c(1+1i,3+2i) / 2 }");
         assertEval("{ c(1,2,3+1i)^3 }");
-        // FIXME print format
-        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
-        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Test

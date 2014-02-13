@@ -274,11 +274,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_3687279e543d6b321de708f1696d22d9() {
-        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testScalarsRealIgnore_706f889093f4841d307059b60cb81c13() {
         assertEval("{ 1000000000*100000000000 }");
     }
@@ -386,16 +381,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_15a6502f9ece8e54a080a3e20541165c() {
         assertEval("{ c(1,2,3+1i)^3 }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_26cbb52252ff028ab7bba252147de26c() {
-        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_a88a08c3bbe4807e9507763726c626e5() {
-        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Ignore
