@@ -1899,6 +1899,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ Im(c(1+1i,2-2i)) }");
         assertEval("{ Re(c(1,2)) }");
         assertEval("{ Im(c(1,2)) }");
+        assertEval("{ Re(as.double(NA)) }");
+        assertEval("{ Im(as.double(NA)) }");
+        assertEval("{ Re(c(1,NA,2)) }");
+        assertEval("{ Im(c(1,NA,2)) }");
+        assertEval("{ Re(NA+2i) }");
+        assertEval("{ Im(NA+2i) }");
     }
 
     @Test

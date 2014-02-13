@@ -8594,6 +8594,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testReIm_0b578f8709fd8650c76e4e966bfcf875() {
+        assertEval("{ Re(as.double(NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_c471bf142d67a893551ed73c5005c67e() {
+        assertEval("{ Im(as.double(NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_52ea9dd247c8e1ffe482ae528e37dc4f() {
+        assertEval("{ Re(c(1,NA,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_4f1f76d4ead8a97e2f5b391916ae7863() {
+        assertEval("{ Im(c(1,NA,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_5d8952605ab5cec9b014901812842ee7() {
+        assertEval("{ Re(NA+2i) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testReIm_ae55c54aa1488eae5687b14ae08b2008() {
+        assertEval("{ Im(NA+2i) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRecall_ab1f19a0b3e459827e17703fdb01ae66() {
         assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; f(10) }");
     }

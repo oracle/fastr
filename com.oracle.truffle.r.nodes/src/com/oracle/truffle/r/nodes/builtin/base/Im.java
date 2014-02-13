@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -38,8 +39,8 @@ public abstract class Im extends RBuiltinNode {
         double[] result = new double[vector.getLength()];
         check.enable(vector);
         for (int i = 0; i < vector.getLength(); ++i) {
-            result[i] = vector.getDataAt(i).getImaginaryPart();
-            check.check(result[i]);
+            RComplex c = vector.getDataAt(i);
+            result[i] = check.check(c) ? RRuntime.DOUBLE_NA : c.getImaginaryPart();
         }
         return RDataFactory.createDoubleVector(result, check.neverSeenNA());
     }
