@@ -603,10 +603,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { c(1+1i,2) } else { c(11,12) } }) }");
 
         // names
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
-        assertEval("{ ( sapply(1:3, function(i) { list(xxx=1:i) } )) }");
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
+        assertEval("{ (sapply(1:3, function(i) { list(xxx=1:i) } )) }");
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(2)} }) }");
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
         assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(1,2), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=1,Y=2), function(x) { c(a=x) })  } ; f() }");
@@ -614,12 +614,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
 
-        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }"); // FIXME print
-// regression
+        // FIXME print regression
+        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }");
         assertEval("{ f<-function() { x<-2 ; sapply(1, function(i) { x }) } ; f() }");  // FIXME
-// print
-        // regression
-
     }
 
     @Test
@@ -2309,6 +2306,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x) }");
         assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }");
         assertEval("{ print(list(list(list(1,2),list(3)),list(list(4),list(5,6)))) }");
+        assertEval("{ print(c(1.1,2.34567)) }");
+        assertEval("{ print(c(1,2.34567)) }");
+        assertEval("{ print(c(11.1,2.34567)) }");
     }
 
     @Test

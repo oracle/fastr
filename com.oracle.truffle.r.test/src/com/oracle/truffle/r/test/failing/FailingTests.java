@@ -1359,13 +1359,13 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_35f39b7e9528c71de88463d46c32532c() {
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
+    public void TestSimpleBuiltins_testApplyIgnore_2cf7378fd6b712f0b62c0f76b237c08c() {
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_14dba1bec51e16063fb831245dcb618b() {
-        assertEval("{ ( sapply(1:3, function(i) { list(xxx=1:i) } )) }");
+    public void TestSimpleBuiltins_testApplyIgnore_91913713ed1196f2c80dc3bdd44320fe() {
+        assertEval("{ (sapply(1:3, function(i) { list(xxx=1:i) } )) }");
     }
 
     @Ignore
@@ -1374,8 +1374,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_4f78337e05fdb3aa63c17f01a57f9ad5() {
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
+    public void TestSimpleBuiltins_testApplyIgnore_2304de70341b6e2e641140ace2ce7f15() {
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
     }
 
     @Ignore

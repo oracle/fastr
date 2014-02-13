@@ -439,6 +439,7 @@ public abstract class PrettyPrinterNode extends RNode {
             double data = operand.getDataAt(i);
             values[i] = prettyPrint(data);
         }
+        padTrailingDecimalPointAndZeroesIfRequired(values);
         return printVector(frame, operand, values, false, false);
     }
 
@@ -554,7 +555,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    private static String stringFormat(String format, String arg) {
+    private static String stringFormat(String format, Object arg) {
         return String.format(format, arg);
     }
 
@@ -564,6 +565,56 @@ public abstract class PrettyPrinterNode extends RNode {
             sb.append(s);
         }
         return builderToString(sb);
+    }
+
+    @SlowPath
+    private static String substring(String s, int start) {
+        return s.substring(start);
+    }
+
+    private static int requiresDecimalPointsAndTrailingZeroes(String[] values, int[] decimalPointOffsets, int[] lenAfterPoint) {
+        boolean foundWithDecimalPoint = false;
+        boolean foundWithoutDecimalPoint = false;
+        boolean inequalLenAfterPoint = false;
+        int maxLenAfterPoint = -1;
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            decimalPointOffsets[i] = v.indexOf('.');
+            if (decimalPointOffsets[i] == -1) {
+                foundWithoutDecimalPoint = true;
+                lenAfterPoint[i] = 0;
+            } else {
+                foundWithDecimalPoint = true;
+                int lap = substring(v, decimalPointOffsets[i] + 1).length();
+                lenAfterPoint[i] = lap;
+                if (lap > maxLenAfterPoint) {
+                    if (maxLenAfterPoint == -1) {
+                        inequalLenAfterPoint = true;
+                    }
+                    maxLenAfterPoint = lap;
+                }
+            }
+        }
+        return (foundWithDecimalPoint && foundWithoutDecimalPoint) || inequalLenAfterPoint ? maxLenAfterPoint : -1;
+    }
+
+    private static void padTrailingDecimalPointAndZeroesIfRequired(String[] values) {
+        int[] decimalPointOffsets = new int[values.length];
+        int[] lenAfterPoint = new int[values.length];
+        int maxLenAfterPoint = requiresDecimalPointsAndTrailingZeroes(values, decimalPointOffsets, lenAfterPoint);
+        if (maxLenAfterPoint == -1) {
+            return;
+        }
+
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            if (decimalPointOffsets[i] == -1) {
+                v = concat(v, ".");
+            }
+            if (lenAfterPoint[i] < maxLenAfterPoint) {
+                values[i] = concat(v, stringFormat(concat("%0", intString(maxLenAfterPoint - lenAfterPoint[i]), "d"), 0));
+            }
+        }
     }
 
     @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class)})

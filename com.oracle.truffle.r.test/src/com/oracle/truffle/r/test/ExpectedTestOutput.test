@@ -5435,6 +5435,18 @@ character(0)
 [1] 23
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ print(c(1,2.34567)) }
+[1] 1.00000 2.34567
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ print(c(1.1,2.34567)) }
+[1] 1.10000 2.34567
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ print(c(11.1,2.34567)) }
+[1] 11.10000  2.34567
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{ print(list(1,2,3)) }
 [[1]]
 [1] 1
