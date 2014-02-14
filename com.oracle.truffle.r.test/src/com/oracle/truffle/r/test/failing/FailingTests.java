@@ -2204,21 +2204,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_73766bf1494217b546d5a8a1b7fd6ffb() {
-        assertEvalError("{ rnorm(n=1,n=2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_e8154f4579737f4c2897a1a5efec88b0() {
-        assertEvalError("{ rnorm(s=1,s=1) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_80ab23cb6bb221f5903c9f0591b173d3() {
-        assertEvalError("{ matrix(1:4,n=2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_e7dd2cd652f2b8c1a31a90832603d4c5() {
         assertEvalError("{ matrix(x=1) }");
     }

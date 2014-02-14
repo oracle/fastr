@@ -7229,6 +7229,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInvocation_73766bf1494217b546d5a8a1b7fd6ffb() {
+        assertEvalError("{ rnorm(n=1,n=2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInvocation_e8154f4579737f4c2897a1a5efec88b0() {
+        assertEvalError("{ rnorm(s=1,s=1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInvocation_80ab23cb6bb221f5903c9f0591b173d3() {
+        assertEvalError("{ matrix(1:4,n=2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInvocationIgnore_6024770f1412c264dd004f2fa8bc6fbf() {
         assertEval("{ round( rnorm(1,), digits = 5 ) }");
     }
@@ -7276,21 +7291,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInvocationIgnore_fbbf7efb3099f10d62c7d48ff602ec5d() {
         assertEval("{ matrix(da=1:3,1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_73766bf1494217b546d5a8a1b7fd6ffb() {
-        assertEvalError("{ rnorm(n=1,n=2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_e8154f4579737f4c2897a1a5efec88b0() {
-        assertEvalError("{ rnorm(s=1,s=1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_80ab23cb6bb221f5903c9f0591b173d3() {
-        assertEvalError("{ matrix(1:4,n=2) }");
     }
 
     @Test

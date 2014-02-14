@@ -2043,14 +2043,15 @@ public class TestSimpleBuiltins extends TestBase {
     public void testInvocation() {
         assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
         assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
+
+        assertEvalError("{ rnorm(n=1,n=2) }");
+        assertEvalError("{ rnorm(s=1,s=1) }");
+        assertEvalError("{ matrix(1:4,n=2) }");
     }
 
     @Test
     @Ignore
     public void testInvocationIgnore() {
-        assertEvalError("{ rnorm(n=1,n=2) }");
-        assertEvalError("{ rnorm(s=1,s=1) }");
-        assertEvalError("{ matrix(1:4,n=2) }");
         assertEvalError("{ matrix(x=1) }");
 
         assertEval("{ round( rnorm(1,), digits = 5 ) }");

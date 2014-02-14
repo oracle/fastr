@@ -4893,6 +4893,21 @@ list()
 #{ g <- function(...) { max(...) } ; g(1,2) }
 [1] 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvocation
+#{ matrix(1:4,n=2) }
+Error in matrix(1:4, n = 2) :
+  argument 2 matches multiple formal arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvocation
+#{ rnorm(n=1,n=2) }
+Error in rnorm(n = 1, n = 2) :
+  formal argument "n" matched by multiple actual arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvocation
+#{ rnorm(s=1,s=1) }
+Error in rnorm(s = 1, s = 1) :
+  formal argument "sd" matched by multiple actual arguments
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
 #{ is.atomic(1) }
 [1] TRUE
