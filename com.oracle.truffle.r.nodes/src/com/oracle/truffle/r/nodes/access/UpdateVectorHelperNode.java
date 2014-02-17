@@ -174,6 +174,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
 
     // TODO(tw): Remove duplicate logic with AccessVectorNode once basic benchmarks work.
 
+    @CompilationFinal private boolean hasSeenNA;
     @CompilationFinal private boolean hasSeenPositive;
     @CompilationFinal private boolean hasSeenZero;
     @CompilationFinal private boolean hasSeenNegative;
@@ -183,23 +184,21 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
     @Specialization(order = 1001)
     public RIntVector doIntVectorIntVector(RIntVector vector, RIntVector right, RIntVector positions) {
 
-        int positiveCount = 0;
-        int negativeCount = 0;
-        int zeroCount = 0;
         int positionLength = positions.getLength();
         int maxPositiveOutOfBounds = 0;
+        positionNACheck.enable(positions);
         for (int i = 0; i < positionLength; ++i) {
             int pos = positions.getDataAt(i);
             if (positionNACheck.check(pos)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getNASubscripted(this.getEncapsulatingSourceSection());
-            }
-            if (pos > 0) {
+                if (!hasSeenNA) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    hasSeenNA = true;
+                }
+            } else if (pos > 0) {
                 if (!hasSeenPositive) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     hasSeenPositive = true;
                 }
-                positiveCount++;
                 if (pos > vector.getLength()) {
                     if (!hasSeenOutOfBounds) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -212,18 +211,16 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     hasSeenZero = true;
                 }
-                zeroCount++;
             } else {
                 if (!hasSeenNegative) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     hasSeenNegative = true;
                 }
-                negativeCount++;
             }
         }
 
-        if (hasSeenNegative && negativeCount > 0) {
-            if (hasSeenPositive && positiveCount > 0) {
+        if (hasSeenNegative) {
+            if (hasSeenPositive || hasSeenNA) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.getOnlyZeroMixed(getEncapsulatingSourceSection());
             }
@@ -254,6 +251,11 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
             }
             return vector;
         } else {
+            if (hasSeenNA) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.getNASubscripted(getEncapsulatingSourceSection());
+            }
+
             if (!hasSeenZeroNegatives) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 hasSeenZeroNegatives = true;
@@ -277,6 +279,26 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
             }
             return resultVector;
         }
+    }
+
+    @Specialization(order = 1002)
+    public RIntVector doDouble(RIntVector left, RIntVector right, RLogicalVector positions) {
+        rightNACheck.enable(right);
+        positionNACheck.enable(positions);
+        int rightIndex = 0;
+        int posIndex = 0;
+        for (int leftIndex = 0; leftIndex < left.getLength(); leftIndex++) {
+            byte value = positions.getDataAt(posIndex);
+            if (positionNACheck.check(value)) {
+                throw RError.getNASubscripted(getEncapsulatingSourceSection());
+            }
+            if (value == RRuntime.LOGICAL_TRUE) {
+                rightIndex = Utils.incMod(rightIndex, right.getLength());
+                left.updateDataAt(leftIndex, right.getDataAt(rightIndex), rightNACheck);
+            }
+            posIndex = Utils.incMod(posIndex, positions.getLength());
+        }
+        return left;
     }
 
     // list updates
@@ -357,10 +379,15 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
     @Specialization(order = 1337)
     public RDoubleVector doDouble(RDoubleVector left, RDoubleVector right, RLogicalVector positions) {
         rightNACheck.enable(right);
+        positionNACheck.enable(positions);
         int rightIndex = 0;
         int posIndex = 0;
         for (int leftIndex = 0; leftIndex < left.getLength(); leftIndex++) {
-            if (positions.getDataAt(posIndex) == RRuntime.LOGICAL_TRUE) {
+            byte value = positions.getDataAt(posIndex);
+            if (positionNACheck.check(value)) {
+                throw RError.getNASubscripted(getEncapsulatingSourceSection());
+            }
+            if (value == RRuntime.LOGICAL_TRUE) {
                 rightIndex = Utils.incMod(rightIndex, right.getLength());
                 left.updateDataAt(leftIndex, right.getDataAt(rightIndex), rightNACheck);
             }

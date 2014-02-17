@@ -7823,12 +7823,782 @@ NULL
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2, -3, -4)]
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2, -3, -4)]
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2, -3, -4)]
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+a b c d
+1 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+a c
+1 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+a d
+1 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2, 2); x[, -1] }
+[1] 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2, 2); x[, -3] }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2, 2); x[-1, ] }
+[1] 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2, 2); x[-3, ] }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2,2); x[-1, -1] }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2,2); x[1,1] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:4); dim(x)<-c(2,2); x[1,2] }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1)] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2)] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2, -3)] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(0)] }
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(1)] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 4); x[c(-1, -2),c(1, 2)] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[-1,0] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[-2,0] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[0,-1] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[0,-2] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[0,0] }
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[0,1] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[0,] }
+     [,1] [,2] [,3] [,4]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2,4); x[1,0] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(4,2); x[-1, 1] }
+[1] 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(4,2); x[0,1] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(4,2); x[0,2] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(4,2); x[1, -1] }
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(4,2); x[1,0] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(4,2); x[2,0] }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:16; dim(x)<-c(4,4); x[-1,-2] }
+     [,1] [,2] [,3]
+[1,]    2   10   14
+[2,]    3   11   15
+[3,]    4   12   16
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:16; dim(x)<-c(4,4); x[-1,c(1,1,2,3)] }
+     [,1] [,2] [,3] [,4]
+[1,]    2    2    6   10
+[2,]    3    3    7   11
+[3,]    4    4    8   12
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c("a", "b"), c("d", "e")); x[1, 1] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c("a", "b"), c("d", "e")); x[c(1,1), 1] }
+a a
+1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c("a", "b"), c("d", "e")); x[c(1,2), 1] }
+a b
+1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c("a", "b"), c("d", "e")); x[c(1,2,1), 1] }
+a b a
+1 2 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(2,2); x[1,3] }
+Error: subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(4,1); dimnames(x)<-list(c("a", "b", "c", "d"), "z"); x[, 1] }
+a b c d
+1 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:4; dim(x)<-c(4,1); dimnames(x)<-list(c("a", "b", "c", "d"), "z"); x[c(2,4), 1] }
+b d
+2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-1:8; dim(x)<-c(2, 4); x[c(-1, -2),c(5)] }
+Error: subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+  a   b   c   d
+"a" "b" "c" "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+  a   c
+"a" "c"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+  a   d
+"a" "c"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2, 2); x[, -1] }
+[1] "c" "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2, 2); x[, -3] }
+     [,1] [,2]
+[1,] "a"  "c"
+[2,] "b"  "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2, 2); x[-1, ] }
+[1] "b" "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2, 2); x[-3, ] }
+     [,1] [,2]
+[1,] "a"  "c"
+[2,] "b"  "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2, 2); x[1, 1] }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2,2); x[-1, -1] }
+[1] "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2,2); x[1,1] }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c("a", "b", "c", "d"); dim(x)<-c(2,2); x[1,2] }
+[1] "c"
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+   a    b    c    d
+1+1i 2+2i 3+3i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+   a    c
+1+1i 3+3i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+   a    d
+1+1i 3+3i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2, 2); x[, -1] }
+[1] 3+3i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2, 2); x[, -3] }
+     [,1] [,2]
+[1,] 1+1i 3+3i
+[2,] 2+2i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2, 2); x[-1, ] }
+[1] 2+2i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2, 2); x[-3, ] }
+     [,1] [,2]
+[1,] 1+1i 3+3i
+[2,] 2+2i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2, 2); x[1, 1] }
+[1] 1+1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2,2); x[-1, -1] }
+[1] 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2,2); x[1,1] }
+[1] 1+1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i); dim(x)<-c(2,2); x[1,2] }
+[1] 3+3i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(-1)] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2)] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2, -3)] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(0)] }
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(1)] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2, 4); x[c(-1, -2),c(1, 2)] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[-1,0] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[-2,0] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[0,-1] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[0,-2] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[0,0] }
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[0,1] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[0,] }
+     [,1] [,2] [,3] [,4]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(2,4); x[1,0] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(4,2); x[-1, 1] }
+[1] 2+2i 3+3i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(4,2); x[0,1] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(4,2); x[0,2] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(4,2); x[1, -1] }
+[1] 5+5i
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(4,2); x[1,0] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1+1i, 2+2i, 3+3i, 4+4i, 5+5i, 6+6i, 7+7i, 8+8i); dim(x)<-c(4,2); x[2,0] }
+complex(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1, 2, 3, 4); dim(x)<-c(2, 2); x[1] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+  a   b   c   d
+1.1 2.2 3.3 4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+  a   c
+1.1 3.3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+  a   d
+1.1 3.3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2, 2); x[, -1] }
+[1] 3.3 4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2, 2); x[, -3] }
+     [,1] [,2]
+[1,]  1.1  3.3
+[2,]  2.2  4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2, 2); x[-1, ] }
+[1] 2.2 4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2, 2); x[-3, ] }
+     [,1] [,2]
+[1,]  1.1  3.3
+[2,]  2.2  4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[-1, -1] }
+[1] 4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[1,1] }
+[1] 1.1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[1,2] }
+[1] 3.3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1)] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2)] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(-1, -2, -3)] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(0)] }
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(1)] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2, 4); x[c(-1, -2),c(1, 2)] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[-1,0] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[-2,0] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[0,-1] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[0,-2] }
+     [,1] [,2] [,3]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[0,0] }
+<0 x 0 matrix>
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[0,1] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[0,] }
+     [,1] [,2] [,3] [,4]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(2,4); x[1,0] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(4,2); x[-1, 1] }
+[1] 2.2 3.3 4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(4,2); x[0,1] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(4,2); x[0,2] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(4,2); x[1, -1] }
+[1] 5.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(4,2); x[1,0] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8); dim(x)<-c(4,2); x[2,0] }
+numeric(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
 #{ x<-c(1L,2L,3L,4L,5L,6L); dim(x) <- c(2,3); x[1,2] }
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
 #{ x<-c(1L,2L,3L,4L,5L,6L,7L,8L,9L,10L); dim(x) <- c(2,5); x[2,4] }
 [1] 8
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(FALSE, TRUE, TRUE, FALSE); dim(x)<-c(2, 2); x[1, 1] }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+    a     b     c     d
+ TRUE FALSE  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+   a    c
+TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+   a    d
+TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2, 2); x[, -1] }
+[1]  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2, 2); x[, -3] }
+      [,1]  [,2]
+[1,]  TRUE  TRUE
+[2,] FALSE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2, 2); x[-1, ] }
+[1] FALSE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2, 2); x[-3, ] }
+      [,1]  [,2]
+[1,]  TRUE  TRUE
+[2,] FALSE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2,2); x[-1, -1] }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2,2); x[1,1] }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(TRUE, FALSE, TRUE, FALSE); dim(x)<-c(2,2); x[1,2] }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+ a  b  c  d
+01 02 03 04
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+ a  c
+01 03
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+ a  d
+01 03
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2, 2); x[, -1] }
+[1] 03 04
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2, 2); x[, -3] }
+     [,1] [,2]
+[1,]   01   03
+[2,]   02   04
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2, 2); x[-1, ] }
+[1] 02 04
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2, 2); x[-3, ] }
+     [,1] [,2]
+[1,]   01   03
+[2,]   02   04
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); x[-1, -1] }
+[1] 04
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); x[1,1] }
+[1] 01
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); x[1,2] }
+[1] 03
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, ] }
+$a
+[1] TRUE
+
+$b
+[1] "a"
+
+$c
+[1] 42
+
+$d
+[1] 1.1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "c", "d")); x[1, c(1,3)] }
+$a
+[1] TRUE
+
+$c
+[1] 42
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(1,4); dimnames(x)<-list("z", c("a", "b", "d", "e")); x[1, c(1,3)] }
+$a
+[1] TRUE
+
+$d
+[1] 42
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2, 2); x[, -1] }
+[[1]]
+[1] 42
+
+[[2]]
+[1] 1.1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2, 2); x[, -3] }
+     [,1] [,2]
+[1,] TRUE 42
+[2,] "a"  1.1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2, 2); x[-1, ] }
+[[1]]
+[1] "a"
+
+[[2]]
+[1] 1.1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2, 2); x[-3, ] }
+     [,1] [,2]
+[1,] TRUE 42
+[2,] "a"  1.1
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2,2); x[,0] }
+
+[1,]
+[2,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2,2); x[-1, -1] }
+[[1]]
+[1] 1.1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2,2); x[0,] }
+     [,1] [,2]
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2,2); x[1,1] }
+[[1]]
+[1] TRUE
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessScalarIndex
+#{ x<-list(TRUE, "a", 42, 1.1); dim(x)<-c(2,2); x[1,2] }
+[[1]]
+[1] 42
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testMatrixAccessWithScalarAndVector
 #{ i <- c(1L,3L,5L) ; m <- 1:10 ; dim(m) <- c(2,5) ; m[2,i] }
@@ -7857,6 +8627,26 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateDim
 #{ x<-c(1L,2L,3L,4L,5L,6L); dim(x) <- c(2L,3L); dim(x) }
 [1] 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[, c(1)] }
+[1] 1.1 2.2
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[, c(1,2)] }
+     [,1] [,2]
+[1,]  1.1  3.3
+[2,]  2.2  4.4
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[c(1), ] }
+[1] 1.1 3.3
+
+##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateScalarIndex
+#{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[c(1,2), ] }
+     [,1] [,2]
+[1,]  1.1  3.3
+[2,]  2.2  4.4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateScalarIndex
 #{ x<-c(1L,2L,3L,4L,5L,6L); dim(x) <- c(2,3); x[1,2] <- 100L; x[1,2] }
@@ -40473,6 +41263,13 @@ a
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-integer(0); dim(x)<-c(3, 0); x }
+
+[1,]
+[2,]
+[3,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
 #{ x<-integer(0); y<-list(x, 1, 2, 3); dim(y)<-c(2, 2); y }
      [,1]      [,2]
 [1,] Integer,0 2
@@ -40847,7 +41644,7 @@ integer(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarOutOfBoundsOnVector
 #{ x<-1:3; x[-0.1] }
-[1] 2 3
+integer(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarOutOfBoundsOnVector
 #{ x<-1:3; x[-4.1] }
@@ -40887,7 +41684,7 @@ integer(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarOutOfBoundsOnVector
 #{ x<-c(1,2,3); x[-0.1] }
-[1] 2 3
+numeric(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarOutOfBoundsOnVector
 #{ x<-c(1,2,3); x[-4.1] }
@@ -40927,7 +41724,7 @@ numeric(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarOutOfBoundsOnVector
 #{ x<-c(1L,2L,3L); x[-0.1] }
-[1] 2 3
+integer(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarOutOfBoundsOnVector
 #{ x<-c(1L,2L,3L); x[-4.1] }
@@ -41362,8 +42159,23 @@ function(){3}
 [1] 1 3 4 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
+#{ x <- (0:4); x[c(NA,NA,NA)] <- c(200L,300L); x }
+Error in x[c(NA, NA, NA)] <- c(200L, 300L) :
+  NAs are not allowed in subscripted assignments
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
 #{ x <- c(1) ; f <- function() { x[[1]] <<- x[[1]] + 1 ; x } ; a <- f() ; b <- f() ; c(a,b) }
 [1] 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
+#{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,0,NA)] <- c(400L,500L,600L); x }
+Error in x[c(NA, 0, NA)] <- c(400L, 500L, 600L) :
+  NAs are not allowed in subscripted assignments
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
+#{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,2,10)] <- c(400L,500L,600L); x }
+Error in x[c(NA, 2, 10)] <- c(400L, 500L, 600L) :
+  NAs are not allowed in subscripted assignments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
 #{ x<-1:5; x[4:3]<-c(300L,400L); x }

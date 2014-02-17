@@ -366,6 +366,22 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ b <- c(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[1] <- 3+1i ; b }");
         assertEval("{ b <- list(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[\"hello\"] <- NULL ; b }");
+
+        assertEval("{ x<-1:4; x[c(-1.5)] }");
+        assertEval("{ x<-1:4; x[c(-0.5)] }");
+        assertEval("{ x<-1:4; x[c(1.4,1.8)] }");
+    }
+
+    @Test
+    @Ignore
+    public void testMultiDimScalarIndexIgnore() {
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,]) }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[,0,]) }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[-1,0,] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[-1,-1, 0] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[0,2,0]) }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[0,-1,0]) }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[0,3,0]) }");
     }
 
     @Test
@@ -683,6 +699,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f<-function(i,v) { x<-1:5 ; x[i]<-v ; x } ; f(c(3,2),1) ; f(1L,TRUE) ; f(2:4,c(4,3,2)) }");
 
         assertEval("{ b <- 1:3 ; b[integer()] <- 3:5 ; b }");
+
+        assertEvalError("{ x <- (0:4); x[c(NA,NA,NA)] <- c(200L,300L); x }");
+        assertEvalError("{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,2,10)] <- c(400L,500L,600L); x }");
+        assertEvalError("{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,0,NA)] <- c(400L,500L,600L); x }");
 
     }
 
@@ -1424,6 +1444,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 1); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 3); x }");
+        assertEval("{ x<-integer(0); dim(x)<-c(3, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 0); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
