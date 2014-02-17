@@ -2214,21 +2214,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testLogIgnore_19a1529b84641df8cd280fc3f04fdc83() {
-        assertEval("{ round( log(10,), digits = 5 ) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLogIgnore_11d410bde7960c23039008b176a8c6de() {
-        assertEval("{ round( log(10,2), digits = 5 ) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLogIgnore_55d1aea1ad49cb7388b91157708cc4fd() {
-        assertEval("{ round( log(10,10), digits = 5 ) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testLogIgnore_052ed04e88403025c80c488866a0f346() {
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
     }

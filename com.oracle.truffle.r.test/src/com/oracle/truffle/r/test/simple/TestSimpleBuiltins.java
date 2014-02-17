@@ -1043,6 +1043,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ log(1) } ");
         assertEval("{ log(0) }");
         assertEval("{ log(c(0,1)) }");
+        assertEval("{ round( log(10,), digits = 5 ) }");
+        assertEval("{ round( log(10,2), digits = 5 ) }");
+        assertEval("{ round( log(10,10), digits = 5 ) }");
     }
 
     @Test
@@ -1070,11 +1073,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testLogIgnore() {
-        assertEval("{ round( log(10,), digits = 5 ) }");
-        assertEval("{ round( log(10,2), digits = 5 ) }");
-        assertEval("{ round( log(10,10), digits = 5 ) }");
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
-
         assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
     }
 

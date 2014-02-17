@@ -7539,6 +7539,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testLog_19a1529b84641df8cd280fc3f04fdc83() {
+        assertEval("{ round( log(10,), digits = 5 ) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLog_11d410bde7960c23039008b176a8c6de() {
+        assertEval("{ round( log(10,2), digits = 5 ) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLog_55d1aea1ad49cb7388b91157708cc4fd() {
+        assertEval("{ round( log(10,10), digits = 5 ) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testLog10_ecfc4b2a884388b0322382974493d08e() {
         assertEval("{ log10(1) } ");
     }
@@ -7596,21 +7611,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLog2_1867c20d58519782db9911c7db59004e() {
         assertEval("{ as.integer(log2(6)*1000000) } ");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLogIgnore_19a1529b84641df8cd280fc3f04fdc83() {
-        assertEval("{ round( log(10,), digits = 5 ) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLogIgnore_11d410bde7960c23039008b176a8c6de() {
-        assertEval("{ round( log(10,2), digits = 5 ) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLogIgnore_55d1aea1ad49cb7388b91157708cc4fd() {
-        assertEval("{ round( log(10,10), digits = 5 ) }");
     }
 
     @Test
