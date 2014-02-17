@@ -81,6 +81,11 @@ public abstract class AccessVectorNode extends RNode {
         return accessInBoundsIntVector(vector, position);
     }
 
+    @Specialization(order = 101, guards = "isNA")
+    public int accessNA(@SuppressWarnings("unused") RIntSequence vector, @SuppressWarnings("unused") int position) {
+        return RRuntime.INT_NA;
+    }
+
     @Specialization(order = 108, guards = "isAboveLength")
     public int accessAboveLength(@SuppressWarnings("unused") RIntSequence vector, @SuppressWarnings("unused") int position) {
         return RRuntime.INT_NA;
@@ -145,6 +150,11 @@ public abstract class AccessVectorNode extends RNode {
     @Specialization(order = 200, guards = "isInBounds")
     public int accessIntVectorIntScalar(RIntVector vector, int position) {
         return accessInBoundsIntVector(vector, position);
+    }
+
+    @Specialization(order = 201, guards = "isNA")
+    public int accessNA(@SuppressWarnings("unused") RIntVector vector, @SuppressWarnings("unused") int position) {
+        return RRuntime.INT_NA;
     }
 
     @Specialization(order = 208, guards = "isAboveLength")
@@ -450,6 +460,11 @@ public abstract class AccessVectorNode extends RNode {
         return accessInBoundsDoubleVector(vector, position);
     }
 
+    @Specialization(order = 301, guards = "isNA")
+    public double accessNA(@SuppressWarnings("unused") RDoubleVector vector, @SuppressWarnings("unused") int position) {
+        return RRuntime.DOUBLE_NA;
+    }
+
     @Specialization(order = 302, guards = "isMinusLength")
     public RDoubleVector accessMinusLength(RDoubleVector vector, @SuppressWarnings("unused") int position) {
         return vector.removeLast();
@@ -684,6 +699,11 @@ public abstract class AccessVectorNode extends RNode {
     @Specialization(order = 600, guards = "isInBounds")
     public String accessIntVectorIntScalar(RStringVector vector, int position) {
         return accessInBoundsStringVector(vector, position);
+    }
+
+    @Specialization(order = 101, guards = "isNA")
+    public String accessNA(@SuppressWarnings("unused") RStringVector vector, @SuppressWarnings("unused") int position) {
+        return RRuntime.STRING_NA;
     }
 
     @Specialization(order = 608, guards = "isAboveLength")
@@ -979,7 +999,11 @@ public abstract class AccessVectorNode extends RNode {
     }
 
     public static boolean isNA(@SuppressWarnings("unused") Object vector, byte position) {
-        return position == RRuntime.LOGICAL_NA;
+        return RRuntime.isNA(position);
+    }
+
+    public static boolean isNA(@SuppressWarnings("unused") Object vector, int position) {
+        return RRuntime.isNA(position);
     }
 
     public static boolean isInBounds(RAbstractVector vector, int position) {

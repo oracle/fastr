@@ -22,23 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import java.util.*;
-
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.AccessVectorNodeFactory.AccessVectorVectorCastFactory;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild("vector"), @NodeChild("firstPosition"), @NodeChild("secondPosition")})
 public abstract class AccessMatrixNode extends RNode {
 
-    private final NACheck firstPositionNACheck = NACheck.create();
-    private final NACheck secondPositionNACheck = NACheck.create();
     private final NACheck elementNACheck = NACheck.create();
+    private final NACheck namesNACheck = NACheck.create();
 
     @CompilationFinal private boolean isSubset;
 
@@ -48,510 +44,1780 @@ public abstract class AccessMatrixNode extends RNode {
 
     @CompilationFinal private boolean everSeenZeroPosition;
 
+    abstract RNode getVector();
+
     @CreateCast({"vector"})
     public RNode createCastVector(RNode child) {
-        return AccessVectorVectorCastFactory.create(child);
+        return CastToVectorNodeFactory.create(child, false, false);
     }
 
     @CreateCast({"firstPosition"})
     public RNode createCastFirstPosition(RNode child) {
-        return VectorPositionCastFactory.create(firstPositionNACheck, child);
+        return ArrayPositionCastFactory.create(0, getVector(), child);
     }
 
     @CreateCast({"secondPosition"})
     public RNode createCastSecondPosition(RNode child) {
-        return VectorPositionCastFactory.create(secondPositionNACheck, child);
+        return ArrayPositionCastFactory.create(1, getVector(), child);
     }
 
-    // Vector is NULL
+    // matrix is NULL
 
     @Specialization(order = 0)
     public RNull access(RNull vector, @SuppressWarnings("unused") Object firstPosition, @SuppressWarnings("unused") Object secondPosition) {
         return vector;
     }
 
-    // Int matrix access
+    // no indexes
 
-    @Specialization(order = 200, guards = "bothInBounds")
-    public int access(RIntVector vector, int firstPosition, int secondPosition) {
-        return accessInBoundsIntMatrix(vector, firstPosition, secondPosition);
-    }
-
-    @Specialization(order = 201)
+    @Specialization(order = 10)
     @SuppressWarnings("unused")
-    public RIntVector access(RIntVector vector, RMissing firstPosition, RMissing secondPosition) {
+    public RAbstractVector access(RAbstractVector vector, RMissing firstPosition, RMissing secondPosition) {
         return vector;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean arg2isZero(Object arg0, Object arg1, int value) {
-        return value == 0;
-    }
+    // one of the indexes is 0 (empty vector but with different dimensions)
 
-    @Specialization(order = 220, guards = "arg2isZero")
-    public RIntVector accessMissing0(RIntVector vector, @SuppressWarnings("unused") RMissing firstPosition, @SuppressWarnings("unused") int secondPosition) {
-        return createVectorWithZeroDim(vector, 1);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends RVector> T createVectorWithZeroDim(T vector, int dim) {
-        int[] dimensions = vector.getDimensions();
+    private static void resetDim(RVector vector, int[] dimensions, int dim) {
         assert dimensions != null && dimensions.length >= 2;
         dimensions[dim] = 0;
-        return (T) vector.createEmptySameType(0, true).copyWithNewDimensions(dimensions);
+        vector.setDimensions(dimensions);
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean arg2Negative(Object arg0, Object arg1, int value) {
-        return value < 0;
+    private static void modifyDim(RVector vector, int[] dimensions, int dimToModify, int dimValue, int dimToReset) {
+        dimensions[dimToModify] = dimValue;
+        resetDim(vector, dimensions, dimToReset);
     }
 
-    @Specialization(order = 221, guards = "arg2Negative")
-    public RIntVector accessRemove(RIntVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
-        assert vector.isMatrix() && vector.getDimensions().length == 2;
-        final int nrows = vector.getDimensions()[0];
-        final int ncols = vector.getDimensions()[1];
-        final int resultNcols = ncols - 1;
-        final int removeCol = -secondPosition;
-
-        // result has one column less (as secondPosition is negative: remove that column)
-        int[] result = new int[nrows * resultNcols];
-        // dimensions degenerate to vector if there is only one column remaining
-        int[] resultDim = resultNcols == 1 ? null : new int[]{nrows, resultNcols};
-
-        int w = 0; // write index
-        elementNACheck.enable(true);
-
-        // copy up to removed column
-        for (int r = 0; r < nrows * (removeCol - 1); ++r, ++w) {
-            result[w] = vector.getDataAt(r);
-            elementNACheck.check(result[w]);
-        }
-
-        // copy after removed column
-        for (int r = nrows * removeCol; r < vector.getLength(); ++r, ++w) {
-            result[w] = vector.getDataAt(r);
-            elementNACheck.check(result[w]);
-        }
-
-        return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), resultDim);
+    @Specialization(order = 20, guards = "bothPositionsZero")
+    public RAbstractVector accessZeroZero(RAbstractVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") int secondPosition) {
+        RVector v = vector.materialize();
+        RVector resultVector = v.createEmptySameType(0, true);
+        resultVector.setDimensions(new int[2]);
+        return resultVector;
     }
 
-    @Specialization(order = 222, guards = "!arg2isZero")
+    @Specialization(order = 30, guards = "secondPositionZero")
+    public RAbstractVector accessMissingZero(RAbstractVector vector, @SuppressWarnings("unused") RMissing firstPosition, @SuppressWarnings("unused") int secondPosition) {
+        RVector v = vector.materialize();
+        RVector resultVector = v.createEmptySameType(0, true);
+        resetDim(resultVector, vector.getDimensions(), 1);
+        return resultVector;
+    }
+
+    @Specialization(order = 31, guards = "secondPositionZero")
+    public RAbstractVector accessPositiveZero(RAbstractVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") int secondPosition) {
+        RVector v = vector.materialize();
+        return v.createEmptySameType(0, true);
+    }
+
+    @Specialization(order = 32, guards = "secondPositionZero")
+    public RAbstractVector accessNegativeZero(RAbstractVector vector, RIntVector firstPosition, @SuppressWarnings("unused") int secondPosition) {
+        RVector v = vector.materialize();
+        RVector resultVector = v.createEmptySameType(0, true);
+        modifyDim(resultVector, vector.getDimensions(), 0, firstPosition.getLength(), 1);
+        return resultVector;
+    }
+
+    @Specialization(order = 40, guards = "firstPositionZero")
+    public RAbstractVector accessZeroMissing(RAbstractVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        RVector v = vector.materialize();
+        RVector resultVector = v.createEmptySameType(0, true);
+        resetDim(resultVector, vector.getDimensions(), 0);
+        return resultVector;
+    }
+
+    @Specialization(order = 41, guards = "firstPositionZero")
+    public RAbstractVector accessZeroPositive(RAbstractVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") int secondPosition) {
+        RVector v = vector.materialize();
+        return v.createEmptySameType(0, true);
+    }
+
+    @Specialization(order = 42, guards = "firstPositionZero")
+    public RAbstractVector accessZeroNegative(RAbstractVector vector, @SuppressWarnings("unused") int firstPosition, RIntVector secondPosition) {
+        RVector v = vector.materialize();
+        RVector resultVector = v.createEmptySameType(0, true);
+        modifyDim(resultVector, vector.getDimensions(), 1, secondPosition.getLength(), 0);
+        return resultVector;
+    }
+
+    // Int matrix access
+
+    @Specialization(order = 100, guards = "bothInBounds")
+    public int access(RIntVector vector, int firstPosition, int secondPosition) {
+        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
+    }
+
+    @Specialization(order = 110)
     public RIntVector access(RIntVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         int[] result = new int[nrows];
+        int columnBase = (secondPosition - 1) * nrows;
         elementNACheck.enable(true);
-        for (int i = 0; i < nrows; ++i) {
-            result[i] = vector.getDataAt((secondPosition - 1) * nrows + i);
+        // pick all elements from a chosen column
+        for (int i = 0; i < nrows; i++) {
+            int rowOffset = i;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
         }
-        return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean arg2hasNegative(Object arg0, int arg1, RIntVector arg2) {
-        for (int i = 0; i < arg2.getLength(); ++i) {
-            if (arg2.getDataAt(i) < 0) {
-                return true;
-            }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(0)).copy());
         }
-        return false;
     }
 
-    @Specialization(order = 223, guards = "arg2hasNegative")
-    public RIntVector accessRemove(RIntVector vector, int firstPosition, RIntVector secondPosition) {
+    private void updateDimName(String[] data, int dataInd, RStringVector names, int namesInd) {
+        if (names != null) {
+            data[dataInd] = names.getDataAt(namesInd);
+            namesNACheck.check(data[dataInd]);
+        }
+    }
+
+    @Specialization(order = 120)
+    public RIntVector access(RIntVector vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
-        final int ncols = vector.getDimensions()[1];
-
-        // assemble the columns to be removed (increasing order)
-        // (ignore duplicates and nonexistent colums; the first 0 in the array terminates)
-        int[] removeCols = new int[secondPosition.getLength()];
-        int colsToRemove = 0;
-        for (int i = 0; i < secondPosition.getLength(); ++i) {
-            int removeCol = -secondPosition.getDataAt(i);
-            if (removeCol > 0 && removeCol <= ncols) {
-                // duplicate?
-                boolean duplicate = false;
-                for (int j = 0; j < removeCols.length; ++j) {
-                    if (removeCols[j] == 0) {
-                        break;
-                    }
-                    if (removeCols[j] == removeCol) {
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if (duplicate) {
-                    continue;
-                }
-                // insert
-                ++colsToRemove;
-                for (int j = 0; j < removeCols.length; ++j) {
-                    if (removeCols[j] == 0) {
-                        removeCols[j] = removeCol;
-                        break;
-                    }
-                    if (removeCols[j] < removeCol) {
-                        for (int k = j + 1; k < removeCols.length; ++k) {
-                            boolean was0 = removeCols[k] == 0;
-                            removeCols[k] = removeCols[k - 1];
-                            if (was0) {
-                                break;
-                            }
-                        }
-                        removeCols[j] = removeCol;
-                        break;
-                    }
-                }
-            }
+        int[] result = new int[firstPosition.getLength()];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
         }
-
-        final int resultNcols = ncols - colsToRemove;
-
-        // result has less columns
-        int[] result = new int[resultNcols];
-
-        int r = firstPosition - 1; // read index (starts at given row, column 0)
-        int w = 0; // write index
-        elementNACheck.enable(true);
-
-        int removeCol = 0;
-        for (int rc : removeCols) {
-            if (rc == 0) {
-                break;
-            }
-
-            removeCol = rc;
-
-            // copy up to next removed column
-            while (r < nrows * (removeCol - 1)) {
-                result[w] = vector.getDataAt(r);
-                elementNACheck.check(result[w]);
-                r += nrows;
-                ++w;
-            }
-
-            r += nrows;
-        }
-
-        // copy after last removed column
-        while (r < vector.getLength()) {
-            result[w] = vector.getDataAt(r);
-            elementNACheck.check(result[w]);
-            r += nrows;
-            ++w;
-        }
-
-        return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
-    }
-
-    @Specialization(order = 224)
-    public RIntVector access(RIntVector vector, int firstPosition, RIntVector secondPosition) {
-        assert vector.isMatrix() && vector.getDimensions().length == 2;
-        final int nrows = vector.getDimensions()[0];
-        int[] result = new int[secondPosition.getLength()];
-        elementNACheck.enable(true);
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = vector.getDataAt(nrows * (secondPosition.getDataAt(i) - 1) + firstPosition - 1);
+        elementNACheck.enable(!vector.isComplete());
+        // pick selected elements from a chosen column
+        for (int i = 0; i < result.length; i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
         }
-        return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean arg1isZero(Object arg0, int value) {
-        return value == 0;
-    }
-
-    @Specialization(order = 230, guards = "arg1isZero")
-    public RIntVector access0Missing(RIntVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
-        return createVectorWithZeroDim(vector, 0);
-    }
-
-    @Specialization(order = 231, guards = "!arg1isZero")
+    @Specialization(order = 130)
     public RIntVector access(RIntVector vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         final int ncols = vector.getDimensions()[1];
         int[] result = new int[ncols];
-        elementNACheck.enable(true);
-        for (int i = 0; i < ncols; ++i) {
-            result[i] = vector.getDataAt(i * nrows + (firstPosition - 1));
+        int rowOffset = firstPosition - 1;
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
         }
-        return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
+    }
+
+    @Specialization(order = 140)
+    public RIntVector access(RIntVector vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int[] result = new int[secondPosition.getLength()];
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < result.length; ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 150)
+    public RIntVector access(RIntVector vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        assert resRowNum > 1; // due to how ArrayPositionCast works
+        int[] result = new int[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RIntVector resultVector = RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 151)
+    public RIntVector access(RIntVector vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        assert resColNum > 1; // due to how ArrayPositionCast works
+        int resRowNum = firstPosition.getLength();
+        int[] result = new int[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RIntVector resultVector = RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 152)
+    public RIntVector access(RIntVector vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        int[] result = new int[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+        if (dimnames == null) {
+            return RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RIntVector resultVector = RDataFactory.createIntVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
     }
 
     // Double matrix access
 
-    @Specialization(order = 300, guards = "bothInBounds")
+    @Specialization(order = 200, guards = "bothInBounds")
     public double access(RDoubleVector vector, int firstPosition, int secondPosition) {
-        return accessInBoundsDoubleMatrix(vector, firstPosition, secondPosition);
+        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
     }
 
-    @Specialization(order = 301)
-    @SuppressWarnings("unused")
-    public RDoubleVector access(RDoubleVector vector, RMissing firstPosition, RMissing secondPosition) {
-        return vector;
-    }
-
-    @Specialization(order = 320, guards = "arg2isZero")
-    public RDoubleVector accessMissing0(RDoubleVector vector, @SuppressWarnings("unused") RMissing firstPosition, @SuppressWarnings("unused") int secondPosition) {
-        return createVectorWithZeroDim(vector, 1);
-    }
-
-    @Specialization(order = 321, guards = "!arg2isZero")
+    @Specialization(order = 210)
     public RDoubleVector access(RDoubleVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         double[] result = new double[nrows];
+        int columnBase = (secondPosition - 1) * nrows;
         elementNACheck.enable(true);
-        for (int i = 0; i < nrows; ++i) {
-            result[i] = vector.getDataAt((secondPosition - 1) * nrows + i);
+        // pick all elements from a chosen column
+        for (int i = 0; i < nrows; i++) {
+            int rowOffset = i;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
         }
-        return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA());
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(0)).copy());
+        }
     }
 
-    @Specialization(order = 330, guards = "arg1isZero")
-    public RDoubleVector access0Missing(RDoubleVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
-        return createVectorWithZeroDim(vector, 0);
+    @Specialization(order = 220)
+    public RDoubleVector access(RDoubleVector vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        double[] result = new double[firstPosition.getLength()];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        // pick selected elements from a chosen column
+        for (int i = 0; i < result.length; i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
     }
 
-    @Specialization(order = 331, guards = "!arg1isZero")
+    @Specialization(order = 230)
     public RDoubleVector access(RDoubleVector vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         final int ncols = vector.getDimensions()[1];
         double[] result = new double[ncols];
-        elementNACheck.enable(vector);
-        for (int i = 0; i < ncols; ++i) {
-            result[i] = vector.getDataAt(i * nrows + (firstPosition - 1));
+        int rowOffset = firstPosition - 1;
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
         }
-        return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA());
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
+    }
+
+    @Specialization(order = 240)
+    public RDoubleVector access(RDoubleVector vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        double[] result = new double[secondPosition.getLength()];
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < result.length; ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 250)
+    public RDoubleVector access(RDoubleVector vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        double[] result = new double[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RDoubleVector resultVector = RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 251)
+    public RDoubleVector access(RDoubleVector vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        int resRowNum = firstPosition.getLength();
+        double[] result = new double[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RDoubleVector resultVector = RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 252)
+    public RDoubleVector access(RDoubleVector vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        double[] result = new double[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RDoubleVector resultVector = RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    // logical matrix access
+
+    @Specialization(order = 300, guards = "bothInBounds")
+    public byte access(RLogicalVector vector, int firstPosition, int secondPosition) {
+        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
+    }
+
+    @Specialization(order = 310)
+    public RLogicalVector access(RLogicalVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        byte[] result = new byte[nrows];
+        int columnBase = (secondPosition - 1) * nrows;
+        elementNACheck.enable(true);
+        // pick all elements from a chosen column
+        for (int i = 0; i < nrows; i++) {
+            int rowOffset = i;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(0)).copy());
+        }
+    }
+
+    @Specialization(order = 320)
+    public RLogicalVector access(RLogicalVector vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        byte[] result = new byte[firstPosition.getLength()];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        // pick selected elements from a chosen column
+        for (int i = 0; i < result.length; i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 330)
+    public RLogicalVector access(RLogicalVector vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        final int ncols = vector.getDimensions()[1];
+        byte[] result = new byte[ncols];
+        int rowOffset = firstPosition - 1;
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
+    }
+
+    @Specialization(order = 340)
+    public RLogicalVector access(RLogicalVector vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        byte[] result = new byte[secondPosition.getLength()];
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < result.length; ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
     }
 
     @Specialization(order = 350)
-    public RDoubleVector access(RDoubleVector vector, RIntSequence firstPosition, RIntSequence secondPosition) {
+    public RLogicalVector access(RLogicalVector vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
-        double[] result = new double[firstPosition.getLength() * secondPosition.getLength()];
-        elementNACheck.enable(vector);
-        for (int j = 0, q = secondPosition.getStart(); j < secondPosition.getLength(); j++, q += secondPosition.getStride()) {
-            for (int i = 0, p = firstPosition.getStart(); i < firstPosition.getLength(); i++, p += firstPosition.getStride()) {
-                double value = vector.getDataAt((q - 1) * nrows + (p - 1));
-                result[j * firstPosition.getLength() + i] = value;
-                elementNACheck.check(value);
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        byte[] result = new byte[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
             }
         }
-        return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA(), new int[]{firstPosition.getLength(), secondPosition.getLength()});
-    }
-
-    @Specialization(order = 380)
-    public RDoubleVector access(RDoubleVector vector, RMissing firstPosition, RIntVector secondPosition) {
-        int secondLength = secondPosition.getLength();
-        secondPositionNACheck.enable(secondPosition);
-        if (secondLength == 1) {
-            if (secondPositionNACheck.check(secondPosition.getDataAt(0))) {
-                // returns a vector of the same dimensions, but filled with NA
-                double[] data = new double[vector.getLength()];
-                Arrays.fill(data, RRuntime.DOUBLE_NA);
-                return RDataFactory.createDoubleVector(data, false, vector.getDimensions());
-            } else {
-                return access(vector, firstPosition, secondPosition.getDataAt(0));
-            }
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
         } else {
-            assert vector.isMatrix() && vector.getDimensions().length == 2;
-            final int nrows = vector.getDimensions()[0];
-            int selectedCols = secondLength;
-            for (int i = 0; i < secondLength; i++) {
-                if (secondPosition.getDataAt(i) == 0) {
-                    --selectedCols;
-                    if (!everSeenZeroPosition) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        everSeenZeroPosition = true;
-                    }
-                }
-            }
-            final int resultLength = nrows * selectedCols;
-            double[] result = new double[resultLength];
-            elementNACheck.enable(vector);
-            int resultcol = 0;
-            for (int j = 0; j < secondLength; ++j) {
-                int position = secondPosition.getDataAt(j);
-                if (everSeenZeroPosition && position == 0) {
-                    continue;
-                }
-                for (int i = 0; i < nrows; ++i) {
-                    double value;
-                    if (secondPositionNACheck.check(position)) {
-                        value = RRuntime.DOUBLE_NA;
-                    } else {
-                        value = vector.getDataAt((position - 1) * nrows + i);
-                        elementNACheck.check(value);
-                    }
-                    result[resultcol * nrows + i] = value;
-                }
-                ++resultcol;
-            }
-            return RDataFactory.createDoubleVector(result, elementNACheck.neverSeenNA() && secondPositionNACheck.neverSeenNA(), new int[]{nrows, selectedCols});
+            RLogicalVector resultVector = RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
         }
     }
 
-    @Specialization(order = 381)
-    public RDoubleVector access(RDoubleVector vector, RIntVector firstPosition, RMissing secondPosition) {
-        if (firstPosition.getLength() == 1 && firstPosition.getDataAt(0) != RRuntime.INT_NA) {
-            return access(vector, firstPosition.getDataAt(0), secondPosition);
+    @Specialization(order = 351)
+    public RLogicalVector access(RLogicalVector vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        int resRowNum = firstPosition.getLength();
+        byte[] result = new byte[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
         } else {
-            throw Utils.nyi();
+            RLogicalVector resultVector = RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
         }
     }
 
-    // access String Matrix
+    @Specialization(order = 352)
+    public RLogicalVector access(RLogicalVector vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        byte[] result = new byte[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RLogicalVector resultVector = RDataFactory.createLogicalVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    // String matrix acccess
 
     @Specialization(order = 400, guards = "bothInBounds")
     public String access(RStringVector vector, int firstPosition, int secondPosition) {
-        return accessInBoundsStringMatrix(vector, firstPosition, secondPosition);
+        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
     }
 
-    @Specialization(order = 401)
-    @SuppressWarnings("unused")
-    public RStringVector access(RStringVector vector, RMissing firstPosition, RMissing secondPosition) {
-        return vector;
-    }
-
-    @Specialization(order = 420, guards = "arg2isZero")
-    public RStringVector accessMissing0(RStringVector vector, @SuppressWarnings("unused") RMissing firstPosition, @SuppressWarnings("unused") int secondPosition) {
-        return createVectorWithZeroDim(vector, 1);
-    }
-
-    @Specialization(order = 421, guards = "!arg2isZero")
+    @Specialization(order = 410)
     public RStringVector access(RStringVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         String[] result = new String[nrows];
-        elementNACheck.enable(vector);
-        for (int i = 0; i < nrows; ++i) {
-            result[i] = vector.getDataAt((secondPosition - 1) * nrows + i);
+        int columnBase = (secondPosition - 1) * nrows;
+        elementNACheck.enable(true);
+        // pick all elements from a chosen column
+        for (int i = 0; i < nrows; i++) {
+            int rowOffset = i;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
         }
-        return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(0)).copy());
+        }
     }
 
-    @Specialization(order = 440, guards = "arg1isZero")
-    public RStringVector access0Missing(RStringVector vector, @SuppressWarnings("unused") int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
-        return createVectorWithZeroDim(vector, 0);
+    @Specialization(order = 420)
+    public RStringVector access(RStringVector vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        String[] result = new String[firstPosition.getLength()];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        // pick selected elements from a chosen column
+        for (int i = 0; i < result.length; i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
     }
 
-    @Specialization(order = 431, guards = "!arg1isZero")
+    @Specialization(order = 430)
     public RStringVector access(RStringVector vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         final int ncols = vector.getDimensions()[1];
         String[] result = new String[ncols];
-        elementNACheck.enable(vector);
-        for (int i = 0; i < ncols; ++i) {
-            result[i] = vector.getDataAt(i * nrows + (firstPosition - 1));
+        int rowOffset = firstPosition - 1;
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(result[i]);
         }
-        return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
     }
 
-    @Specialization(order = 432)
+    @Specialization(order = 440)
     public RStringVector access(RStringVector vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
         assert vector.isMatrix() && vector.getDimensions().length == 2;
         final int nrows = vector.getDimensions()[0];
         String[] result = new String[secondPosition.getLength()];
-        elementNACheck.enable(vector);
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = vector.getDataAt(nrows * (secondPosition.getDataAt(i) - 1) + firstPosition - 1);
-            elementNACheck.check(result[i]);
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
         }
-        return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0; i < result.length; ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(result[i]);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 450)
+    public RStringVector access(RStringVector vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        String[] result = new String[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RStringVector resultVector = RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 451)
+    public RStringVector access(RStringVector vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        int resRowNum = firstPosition.getLength();
+        String[] result = new String[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RStringVector resultVector = RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 452)
+    public RStringVector access(RStringVector vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        String[] result = new String[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(result[ind]);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RStringVector resultVector = RDataFactory.createStringVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    // RComplex matrix access
+
+    @Specialization(order = 500, guards = "bothInBounds")
+    public RComplex access(RComplexVector vector, int firstPosition, int secondPosition) {
+        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
+    }
+
+    @Specialization(order = 510)
+    public RComplexVector access(RComplexVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        double[] result = new double[nrows << 1];
+        int columnBase = (secondPosition - 1) * nrows;
+        elementNACheck.enable(true);
+        // pick all elements from a chosen column
+        for (int i = 0, ind = 0; i < nrows; i++) {
+            int rowOffset = i;
+            RComplex c = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(c);
+            result[ind++] = c.getRealPart();
+            result[ind++] = c.getImaginaryPart();
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(0)).copy());
+        }
+    }
+
+    @Specialization(order = 520)
+    public RComplexVector access(RComplexVector vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        double[] result = new double[firstPosition.getLength() << 1];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        // pick selected elements from a chosen column
+        for (int i = 0, ind = 0; i < firstPosition.getLength(); i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            RComplex c = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(c);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+            result[ind++] = c.getRealPart();
+            result[ind++] = c.getImaginaryPart();
+        }
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 530)
+    public RComplexVector access(RComplexVector vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        final int ncols = vector.getDimensions()[1];
+        double[] result = new double[ncols << 1];
+        int rowOffset = firstPosition - 1;
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0, ind = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            RComplex c = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(c);
+            result[ind++] = c.getRealPart();
+            result[ind++] = c.getImaginaryPart();
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
+    }
+
+    @Specialization(order = 540)
+    public RComplexVector access(RComplexVector vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        double[] result = new double[secondPosition.getLength() << 1];
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        for (int i = 0, ind = 0; i < secondPosition.getLength(); ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            RComplex c = vector.getDataAt(columnBase + rowOffset);
+            elementNACheck.check(c);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+            result[ind++] = c.getRealPart();
+            result[ind++] = c.getImaginaryPart();
+        }
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA());
+        } else {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 550)
+    public RComplexVector access(RComplexVector vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        double[] result = new double[(resColNum * resRowNum) << 1];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                RComplex c = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(c);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                result[ind++] = c.getRealPart();
+                result[ind++] = c.getImaginaryPart();
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RComplexVector resultVector = RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 551)
+    public RComplexVector access(RComplexVector vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        int resRowNum = firstPosition.getLength();
+        double[] result = new double[(resColNum * resRowNum) << 1];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                RComplex c = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(c);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                result[ind++] = c.getRealPart();
+                result[ind++] = c.getImaginaryPart();
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RComplexVector resultVector = RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 552)
+    public RComplexVector access(RComplexVector vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        double[] result = new double[(resColNum * resRowNum) << 1];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        elementNACheck.enable(!vector.isComplete());
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                RComplex c = vector.getDataAt(columnBase + rowOffset);
+                elementNACheck.check(c);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                result[ind++] = c.getRealPart();
+                result[ind++] = c.getImaginaryPart();
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+        } else {
+            RComplexVector resultVector = RDataFactory.createComplexVector(result, elementNACheck.neverSeenNA(), new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    // RRaw matrix access
+
+    @Specialization(order = 600, guards = "bothInBounds")
+    public RRaw access(RRawVector vector, int firstPosition, int secondPosition) {
+        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
+    }
+
+    @Specialization(order = 610)
+    public RRawVector access(RRawVector vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        byte[] result = new byte[nrows];
+        int columnBase = (secondPosition - 1) * nrows;
+        // pick all elements from a chosen column
+        for (int i = 0; i < nrows; i++) {
+            int rowOffset = i;
+            result[i] = vector.getDataAt(columnBase + rowOffset).getValue();
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result);
+        } else {
+            return RDataFactory.createRawVector(result, ((RStringVector) dimnames.getDataAt(0)).copy());
+        }
+    }
+
+    @Specialization(order = 620)
+    public RRawVector access(RRawVector vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        byte[] result = new byte[firstPosition.getLength()];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        // pick selected elements from a chosen column
+        for (int i = 0; i < result.length; i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            result[i] = vector.getDataAt(columnBase + rowOffset).getValue();
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result);
+        } else {
+            return RDataFactory.createRawVector(result, RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 630)
+    public RRawVector access(RRawVector vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        final int ncols = vector.getDimensions()[1];
+        byte[] result = new byte[ncols];
+        int rowOffset = firstPosition - 1;
+        for (int i = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            result[i] = vector.getDataAt(columnBase + rowOffset).getValue();
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result);
+        } else {
+            return RDataFactory.createRawVector(result, ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
+    }
+
+    @Specialization(order = 640)
+    public RRawVector access(RRawVector vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        byte[] result = new byte[secondPosition.getLength()];
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        for (int i = 0; i < result.length; ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            result[i] = vector.getDataAt(columnBase + rowOffset).getValue();
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result);
+        } else {
+            return RDataFactory.createRawVector(result, RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 650)
+    public RRawVector access(RRawVector vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        byte[] result = new byte[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                result[ind] = vector.getDataAt(columnBase + rowOffset).getValue();
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result, new int[]{resRowNum, resColNum});
+        } else {
+            RRawVector resultVector = RDataFactory.createRawVector(result, new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 651)
+    public RRawVector access(RRawVector vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        int resRowNum = firstPosition.getLength();
+        byte[] result = new byte[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset).getValue();
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result, new int[]{resRowNum, resColNum});
+        } else {
+            RRawVector resultVector = RDataFactory.createRawVector(result, new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 652)
+    public RRawVector access(RRawVector vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        byte[] result = new byte[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset).getValue();
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createRawVector(result, new int[]{resRowNum, resColNum});
+        } else {
+            RRawVector resultVector = RDataFactory.createRawVector(result, new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    // list matrix access
+
+    @Specialization(order = 700, guards = "bothInBounds")
+    public RList access(RList vector, int firstPosition, int secondPosition) {
+        return RDataFactory.createList(new Object[]{vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition))});
+    }
+
+    @Specialization(order = 710)
+    public RList access(RList vector, @SuppressWarnings("unused") RMissing firstPosition, int secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        Object[] result = new Object[nrows];
+        int columnBase = (secondPosition - 1) * nrows;
+        // pick all elements from a chosen column
+        for (int i = 0; i < nrows; i++) {
+            int rowOffset = i;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createList(result);
+        } else {
+            return RDataFactory.createList(result, ((RStringVector) dimnames.getDataAt(0)).copy());
+        }
+    }
+
+    @Specialization(order = 720)
+    public RList access(RList vector, RIntVector firstPosition, int secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        Object[] result = new Object[firstPosition.getLength()];
+        int columnBase = (secondPosition - 1) * nrows;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(0);
+            namesData = new String[firstPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        // pick selected elements from a chosen column
+        for (int i = 0; i < result.length; i++) {
+            int rowOffset = firstPosition.getDataAt(i) - 1;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createList(result);
+        } else {
+            return RDataFactory.createList(result, RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 730)
+    public RList access(RList vector, int firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        final int ncols = vector.getDimensions()[1];
+        Object[] result = new Object[ncols];
+        int rowOffset = firstPosition - 1;
+        for (int i = 0; i < ncols; i++) {
+            int columnBase = i * nrows;
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+        }
+        RList dimnames = vector.getDimNames();
+        if (dimnames == null) {
+            return RDataFactory.createList(result);
+        } else {
+            return RDataFactory.createList(result, ((RStringVector) dimnames.getDataAt(1)).copy());
+        }
+    }
+
+    @Specialization(order = 740)
+    public RList access(RList vector, int firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        Object[] result = new Object[secondPosition.getLength()];
+        int rowOffset = firstPosition - 1;
+        RList dimnames = vector.getDimNames();
+        String[] namesData = null;
+        RStringVector names = null;
+        if (dimnames != null) {
+            names = (RStringVector) dimnames.getDataAt(1);
+            namesData = new String[secondPosition.getLength()];
+            namesNACheck.enable(!names.isComplete());
+        }
+        for (int i = 0; i < result.length; ++i) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            result[i] = vector.getDataAt(columnBase + rowOffset);
+            updateDimName(namesData, i, names, columnBase + rowOffset);
+        }
+        if (dimnames == null) {
+            return RDataFactory.createList(result);
+        } else {
+            return RDataFactory.createList(result, RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA()));
+        }
+    }
+
+    @Specialization(order = 750)
+    public RList access(RList vector, @SuppressWarnings("unused") RMissing firstPosition, RIntVector secondPosition) {
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = nrows;
+        Object[] result = new Object[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = j;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+        if (dimnames == null) {
+            return RDataFactory.createList(result, new int[]{resRowNum, resColNum});
+        } else {
+            RList resultVector = RDataFactory.createList(result, new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 751)
+    public RList access(RList vector, RIntVector firstPosition, @SuppressWarnings("unused") RMissing secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = vector.getDimensions()[1];
+        int resRowNum = firstPosition.getLength();
+        Object[] result = new Object[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * i;
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createList(result, new int[]{resRowNum, resColNum});
+        } else {
+            RList resultVector = RDataFactory.createList(result, new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
+    }
+
+    @Specialization(order = 752)
+    public RList access(RList vector, RIntVector firstPosition, RIntVector secondPosition) {
+        assert firstPosition.getLength() > 1;
+        assert secondPosition.getLength() > 1;
+        assert vector.isMatrix() && vector.getDimensions().length == 2;
+        final int nrows = vector.getDimensions()[0];
+        int resColNum = secondPosition.getLength();
+        int resRowNum = firstPosition.getLength();
+        Object[] result = new Object[resColNum * resRowNum];
+        RList dimnames = vector.getDimNames();
+        String[] rowNamesData = null;
+        String[] colNamesData = null;
+        RStringVector rowNames = null;
+        RStringVector colNames = null;
+        if (dimnames != null) {
+            rowNames = (RStringVector) dimnames.getDataAt(0);
+            colNames = (RStringVector) dimnames.getDataAt(1);
+            rowNamesData = new String[resRowNum];
+            colNamesData = new String[resColNum];
+            namesNACheck.enable(!rowNames.isComplete() || !colNames.isComplete());
+        }
+        int ind = 0;
+        for (int i = 0; i < resColNum; i++) {
+            int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
+            updateDimName(colNamesData, i, colNames, columnBase);
+            for (int j = 0; j < resRowNum; j++) {
+                int rowOffset = firstPosition.getDataAt(j) - 1;
+                result[ind] = vector.getDataAt(columnBase + rowOffset);
+                updateDimName(rowNamesData, j, rowNames, rowOffset);
+                ind++;
+            }
+        }
+
+        if (dimnames == null) {
+            return RDataFactory.createList(result, new int[]{resRowNum, resColNum});
+        } else {
+            RList resultVector = RDataFactory.createList(result, new int[]{resRowNum, resColNum});
+            resultVector.setDimNames(RDataFactory.createList(new Object[]{rowNamesData, colNamesData}));
+            return resultVector;
+        }
     }
 
     // helper functions
-
-    private static int accessInBoundsIntMatrix(RIntVector vector, int firstPosition, int secondPosition) {
-        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
-    }
-
-    private static double accessInBoundsDoubleMatrix(RDoubleVector vector, int firstPosition, int secondPosition) {
-        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
-    }
-
-    private static String accessInBoundsStringMatrix(RStringVector vector, int firstPosition, int secondPosition) {
-        return vector.getDataAt(vector.convertToIndex(firstPosition, secondPosition));
-    }
 
     protected boolean bothInBounds(RVector vector, int firstPosition, int secondPosition) {
         return vector.isInBounds(firstPosition, secondPosition);
     }
 
-    public static AccessMatrixNode create(RNode vector, RNode firstPosition, RNode secondPosition) {
-        return AccessMatrixNodeFactory.create(vector, firstPosition, secondPosition);
+    @SuppressWarnings("unused")
+    protected static boolean bothPositionsZero(RAbstractVector vector, int firstPosition, int secondPosition) {
+        return firstPosition == 0 && secondPosition == 0;
     }
 
-    @NodeChild("operand")
-    public abstract static class AccessVectorVectorCast extends RNode {
+    @SuppressWarnings("unused")
+    protected static boolean secondPositionZero(RAbstractVector vector, Object firstPosition, int secondPosition) {
+        return secondPosition == 0;
+    }
 
-        @Specialization
-        public RLogicalVector test(byte operand) {
-            return RDataFactory.createLogicalVectorFromScalar(operand);
-        }
+    @SuppressWarnings("unused")
+    protected static boolean secondPositionZero(RAbstractVector vector, int firstPosition, int secondPosition) {
+        return secondPosition == 0;
+    }
 
-        @Specialization
-        public RIntVector doInt(int operand) {
-            return RDataFactory.createIntVectorFromScalar(operand);
-        }
+    @SuppressWarnings("unused")
+    protected static boolean firstPositionZero(RAbstractVector vector, int firstPosition) {
+        return firstPosition == 0;
+    }
 
-        @Specialization
-        public RDoubleVector doDouble(double operand) {
-            return RDataFactory.createDoubleVectorFromScalar(operand);
-        }
-
-        @Specialization
-        public RComplexVector doComplex(RComplex operand) {
-            return RDataFactory.createComplexVectorFromScalar(operand);
-        }
-
-        @Specialization
-        public RDoubleVector doDoubleSequence(RDoubleSequence operand) {
-            return (RDoubleVector) operand.createVector();
-        }
-
-        @Specialization
-        public RIntVector doIntVector(RIntSequence operand) {
-            return (RIntVector) operand.createVector();
-        }
-
-        @Specialization
-        public RIntVector doIntVector(RIntVector operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RDoubleVector doDoubleVector(RDoubleVector operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RComplexVector doComplexVector(RComplexVector operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RLogicalVector doLogicalVector(RLogicalVector operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RStringVector doStringVector(RStringVector operand) {
-            return operand;
-        }
+    public static AccessMatrixNode create(RNode vector, RNode firstPosition, RNode secondPosition) {
+        return AccessMatrixNodeFactory.create(vector, firstPosition, secondPosition);
     }
 }

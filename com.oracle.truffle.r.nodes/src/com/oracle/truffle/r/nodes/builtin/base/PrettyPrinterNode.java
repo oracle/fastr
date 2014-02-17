@@ -93,12 +93,12 @@ public abstract class PrettyPrinterNode extends RNode {
         return (String) singleListElementPrettyPrinter.executeString(frame, o, listElementName);
     }
 
-    private String printVectorMultiDim(VirtualFrame frame, RAbstractVector vector, boolean isList) {
+    private String printVectorMultiDim(VirtualFrame frame, RAbstractVector vector, boolean isListOrStringVector) {
         if (multiDimPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             multiDimPrinter = adoptChild(PrintVectorMultiDimNodeFactory.create(null, null));
         }
-        return (String) multiDimPrinter.executeString(frame, vector, RRuntime.asLogical(isList));
+        return (String) multiDimPrinter.executeString(frame, vector, RRuntime.asLogical(isListOrStringVector));
     }
 
     @Specialization
@@ -287,14 +287,14 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    protected static String padColHeader(int r, int dataColWidth, RAbstractVector vector, boolean isList) {
+    protected static String padColHeader(int r, int dataColWidth, RAbstractVector vector, boolean isListOrStringVector) {
         RList dimNames = vector.getDimNames();
         StringBuilder sb = new StringBuilder();
         int wdiff;
         if (dimNames == null || dimNames.getDataAt(1) == RNull.instance) {
             String rs = intString(r);
             wdiff = dataColWidth - (rs.length() + 3); // 3: [,]
-            if (!isList && wdiff > 0) {
+            if (!isListOrStringVector && wdiff > 0) {
                 spaces(sb, wdiff);
             }
             sb.append("[,").append(rs).append(']');
@@ -302,12 +302,12 @@ public abstract class PrettyPrinterNode extends RNode {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(1);
             String dimId = dimNamesVector.getDataAt(r - 1);
             wdiff = dataColWidth - dimId.length();
-            if (!isList && wdiff > 0) {
+            if (!isListOrStringVector && wdiff > 0) {
                 spaces(sb, wdiff);
             }
             sb.append(dimId);
         }
-        if (isList && wdiff > 0) {
+        if (isListOrStringVector && wdiff > 0) {
             spaces(sb, wdiff);
         }
         return builderToString(sb);
@@ -422,6 +422,11 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @Specialization(order = 101, guards = "twoDimsOrMore")
+    public String prettyPrintM(VirtualFrame frame, RAbstractStringVector operand, Object listElementName) {
+        return printVectorMultiDim(frame, operand, true);
+    }
+
+    @Specialization(order = 102, guards = "twoDimsOrMore")
     public String prettyPrintM(VirtualFrame frame, RAbstractVector operand, Object listElementName) {
         return printVectorMultiDim(frame, operand, false);
     }
@@ -737,39 +742,39 @@ public abstract class PrettyPrinterNode extends RNode {
 
     }
 
-    @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isList", type = RNode.class)})
+    @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class)})
     abstract static class PrintVectorMultiDimNode extends RNode {
 
         @Child PrintVector2DimNode vector2DimPrinter;
         @Child PrintDimNode dimPrinter;
 
-        private String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isList) {
+        private String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 vector2DimPrinter = adoptChild(PrintVector2DimNodeFactory.create(null, null, null, null));
             }
-            return (String) vector2DimPrinter.executeString(frame, vector, dimensions, offset, isList);
+            return (String) vector2DimPrinter.executeString(frame, vector, dimensions, offset, isListOrStringVector);
         }
 
-        private String printDim(VirtualFrame frame, RAbstractVector vector, byte isList, int currentDimLevel, int arrayBase, int accDimensions, String header) {
+        private String printDim(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, int currentDimLevel, int arrayBase, int accDimensions, String header) {
             if (dimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dimPrinter = adoptChild(PrintDimNodeFactory.create(null, null, null, null, null, null));
             }
-            return (String) dimPrinter.executeString(frame, vector, isList, currentDimLevel, arrayBase, accDimensions, header);
+            return (String) dimPrinter.executeString(frame, vector, isListOrStringVector, currentDimLevel, arrayBase, accDimensions, header);
         }
 
-        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isList);
+        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector);
 
         @Specialization
-        public String printVectorMultiDim(VirtualFrame frame, RAbstractVector vector, byte isList) {
+        public String printVectorMultiDim(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector) {
             int[] dimensions = vector.getDimensions();
             RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, RDataFactory.COMPLETE_VECTOR);
             assert dimensions != null;
             int numDimensions = dimensions.length;
             assert numDimensions > 1;
             if (numDimensions == 2) {
-                return printVector2Dim(frame, vector, dimensionsVector, 0, isList);
+                return printVector2Dim(frame, vector, dimensionsVector, 0, isListOrStringVector);
             } else {
                 int dimSize = dimensions[numDimensions - 1];
                 if (dimSize == 0) {
@@ -784,7 +789,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         // CheckStyle: resume system..print check
                         sb.append(getDimId(vector, numDimensions, dimInd));
                         sb.append("\n\n");
-                        sb.append(printVector2Dim(frame, vector, dimensionsVector, dimInd * matrixSize, isList));
+                        sb.append(printVector2Dim(frame, vector, dimensionsVector, dimInd * matrixSize, isListOrStringVector));
                         sb.append("\n");
                         if (dimInd < (dimSize - 1) && vector.getLength() > 0 || vector.getLength() == 0) {
                             sb.append("\n");
@@ -795,7 +800,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                         int arrayBase = accDimensions * dimInd;
                         String dimId = getDimId(vector, numDimensions, dimInd);
-                        String innerDims = printDim(frame, vector, isList, numDimensions - 1, arrayBase, accDimensions, dimId);
+                        String innerDims = printDim(frame, vector, isListOrStringVector, numDimensions - 1, arrayBase, accDimensions, dimId);
                         if (innerDims == null) {
                             return null;
                         } else {
@@ -814,7 +819,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "dimensions", type = RNode.class), @NodeChild(value = "offset", type = RNode.class),
-                    @NodeChild(value = "isList", type = RNode.class)})
+                    @NodeChild(value = "isListOrStringVector", type = RNode.class)})
     abstract static class PrintVector2DimNode extends RNode {
 
         @Child PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
@@ -827,7 +832,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return (String) singleVectorElementPrettyPrinter.executeString(frame, o);
         }
 
-        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isList);
+        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector);
 
         private static String getDimId(RList dimNames, int dimension, int ind) {
             StringBuilder sb = new StringBuilder();
@@ -852,7 +857,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @Specialization(order = 1, guards = "isEmpty")
-        public String printVector2DimEmpty(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isList) {
+        public String printVector2DimEmpty(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
 
@@ -888,7 +893,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @Specialization(order = 2, guards = "!isEmpty")
-        public String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isList) {
+        public String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
 
@@ -925,7 +930,7 @@ public abstract class PrettyPrinterNode extends RNode {
             // column header
             spaces(b, rowHeaderWidth + 1);
             for (int c = 1; c <= ncol; ++c) {
-                b.append(padColHeader(c, dataColWidths[c - 1], vector, isList == RRuntime.LOGICAL_TRUE));
+                b.append(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector == RRuntime.LOGICAL_TRUE));
                 if (c < ncol) {
                     b.append(' ');
                 }
@@ -937,12 +942,12 @@ public abstract class PrettyPrinterNode extends RNode {
                 b.append(stringFormat(rowFormat, rowHeader(r, vector))).append(' ');
                 for (int c = 1; c <= ncol; ++c) {
                     String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
-                    if (isList == RRuntime.LOGICAL_TRUE) {
+                    if (isListOrStringVector == RRuntime.LOGICAL_TRUE) {
                         // list elements are aligned to the left and vector's to the right
                         b.append(dataString);
-                        spaces(b, padColHeader(c, dataColWidths[c - 1], vector, isList == RRuntime.LOGICAL_TRUE).length() - dataString.length());
+                        spaces(b, padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector == RRuntime.LOGICAL_TRUE).length() - dataString.length());
                     } else {
-                        String cellFormat = concat("%", intString(padColHeader(c, dataColWidths[c - 1], vector, isList == RRuntime.LOGICAL_TRUE).length()), "s");
+                        String cellFormat = concat("%", intString(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector == RRuntime.LOGICAL_TRUE).length()), "s");
                         b.append(stringFormat(cellFormat, dataString));
                     }
                     if (c < ncol) {
@@ -957,39 +962,39 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(b);
         }
 
-        public boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isList) {
+        public boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector) {
             return vector.getLength() == 0;
         }
 
     }
 
-    @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isList", type = RNode.class), @NodeChild(value = "currentDimLevel", type = RNode.class),
+    @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "currentDimLevel", type = RNode.class),
                     @NodeChild(value = "arrayBase", type = RNode.class), @NodeChild(value = "accDimensions", type = RNode.class), @NodeChild(value = "header", type = RNode.class)})
     abstract static class PrintDimNode extends RNode {
 
-        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isList, int currentDimLevel, int arrayBase, int accDimensions, String header);
+        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, int currentDimLevel, int arrayBase, int accDimensions, String header);
 
         @Child PrintVector2DimNode vector2DimPrinter;
         @Child PrintDimNode dimPrinter;
 
-        private String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isList) {
+        private String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 vector2DimPrinter = adoptChild(PrintVector2DimNodeFactory.create(null, null, null, null));
             }
-            return (String) vector2DimPrinter.executeString(frame, vector, dimensions, offset, isList);
+            return (String) vector2DimPrinter.executeString(frame, vector, dimensions, offset, isListOrStringVector);
         }
 
-        private String printDimRecursive(VirtualFrame frame, RAbstractVector vector, byte isList, int currentDimLevel, int arrayBase, int accDimensions, String header) {
+        private String printDimRecursive(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, int currentDimLevel, int arrayBase, int accDimensions, String header) {
             if (dimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dimPrinter = adoptChild(PrintDimNodeFactory.create(null, null, null, null, null, null));
             }
-            return (String) dimPrinter.executeString(frame, vector, isList, currentDimLevel, arrayBase, accDimensions, header);
+            return (String) dimPrinter.executeString(frame, vector, isListOrStringVector, currentDimLevel, arrayBase, accDimensions, header);
         }
 
         @Specialization
-        public String printDim(VirtualFrame frame, RAbstractVector vector, byte isList, int currentDimLevel, int arrayBase, int accDimensions, String header) {
+        public String printDim(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, int currentDimLevel, int arrayBase, int accDimensions, String header) {
             int[] dimensions = vector.getDimensions();
             RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, RDataFactory.COMPLETE_VECTOR);
             StringBuilder sb = new StringBuilder();
@@ -1007,7 +1012,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     sb.append(", ");
                     sb.append(header);
                     sb.append("\n\n");
-                    sb.append(printVector2Dim(frame, vector, dimensionsVector, arrayBase + (dimInd * matrixSize), isList));
+                    sb.append(printVector2Dim(frame, vector, dimensionsVector, arrayBase + (dimInd * matrixSize), isListOrStringVector));
                     sb.append("\n");
                     if ((arrayBase + (dimInd * matrixSize) + matrixSize) < vector.getLength() || vector.getLength() == 0) {
                         sb.append("\n");
@@ -1018,7 +1023,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                     int newArrayBase = arrayBase + newAccDimensions * dimInd;
                     String dimId = getDimId(vector, currentDimLevel, dimInd);
-                    String innerDims = printDimRecursive(frame, vector, isList, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header));
+                    String innerDims = printDimRecursive(frame, vector, isListOrStringVector, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header));
                     if (innerDims == null) {
                         return null;
                     } else {
