@@ -12344,6 +12344,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleLoop_testLoopsErrors_bc6b5c193e92175abc33e62c6b4cb66c() {
+        assertEvalError("{ break; }");
+    }
+
+    @Test
+    public void TestSimpleLoop_testLoopsErrors_4e8d19b7c3269b63639652234d8164f8() {
+        assertEvalError("{ next; }");
+    }
+
+    @Test
     public void TestSimpleLoop_testLoopsErrorsIgnore_f394e8f19fc73574a5c55ba7f8e03973() {
         assertEvalError("{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
     }
@@ -12356,16 +12366,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleLoop_testLoopsErrorsIgnore_eb72a8fa37e3e5c2ac10481c6173a724() {
         assertEvalError("{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
-    }
-
-    @Test
-    public void TestSimpleLoop_testLoopsErrorsIgnore_bc6b5c193e92175abc33e62c6b4cb66c() {
-        assertEvalError("{ break; }");
-    }
-
-    @Test
-    public void TestSimpleLoop_testLoopsErrorsIgnore_4e8d19b7c3269b63639652234d8164f8() {
-        assertEvalError("{ next; }");
     }
 
     @Test

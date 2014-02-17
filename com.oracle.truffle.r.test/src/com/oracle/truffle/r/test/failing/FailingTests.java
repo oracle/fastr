@@ -4049,16 +4049,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleLoop_testLoopsErrorsIgnore_bc6b5c193e92175abc33e62c6b4cb66c() {
-        assertEvalError("{ break; }");
-    }
-
-    @Ignore
-    public void TestSimpleLoop_testLoopsErrorsIgnore_4e8d19b7c3269b63639652234d8164f8() {
-        assertEvalError("{ next; }");
-    }
-
-    @Ignore
     public void TestSimpleLoop_testOneIterationLoops_2b49e8a8d835c688af57e7939698d86a() {
         assertEvalNoNL("{ for (a in 1) cat(a) }");
     }

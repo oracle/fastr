@@ -7791,6 +7791,14 @@ list()
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleLoop.testLoopsErrors
+#{ break; }
+Error: no loop for break/next, jumping to top level
+
+##com.oracle.truffle.r.test.simple.TestSimpleLoop.testLoopsErrors
+#{ next; }
+Error: no loop for break/next, jumping to top level
+
+##com.oracle.truffle.r.test.simple.TestSimpleLoop.testLoopsErrors
 #{ while(1 < NA) { 1 } }
 Error in while (1 < NA) { : missing value where TRUE/FALSE needed
 

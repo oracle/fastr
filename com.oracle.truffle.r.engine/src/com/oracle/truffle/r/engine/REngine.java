@@ -30,6 +30,7 @@ import org.antlr.runtime.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -125,7 +126,11 @@ public final class REngine {
     private Object run(CallTarget callTarget, boolean printResult) {
         Object result = null;
         try {
-            result = callTarget.call(null, RArguments.create());
+            try {
+                result = callTarget.call(null, RArguments.create());
+            } catch (ControlFlowException cfe) {
+                throw RError.getNoLoopForBreakNext(null);
+            }
             if (printResult) {
                 printResult(result);
             }
@@ -141,7 +146,11 @@ public final class REngine {
     private Object runGlobal(CallTarget callTarget, VirtualFrame globalFrame, boolean printResult) {
         Object result = null;
         try {
-            result = ((DefaultCallTarget) callTarget).getRootNode().execute(globalFrame);
+            try {
+                result = ((DefaultCallTarget) callTarget).getRootNode().execute(globalFrame);
+            } catch (ControlFlowException cfe) {
+                throw RError.getNoLoopForBreakNext(null);
+            }
             if (printResult) {
                 printResult(result);
             }
