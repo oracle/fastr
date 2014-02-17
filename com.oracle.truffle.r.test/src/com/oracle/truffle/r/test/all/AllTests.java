@@ -9299,17 +9299,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSprintfIgnore_2f5377dc3237afcaf3f4b0fa24d32d56() {
+    public void TestSimpleBuiltins_testSprintf_2f5377dc3237afcaf3f4b0fa24d32d56() {
         assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSprintfIgnore_2b763de8de8629771e185b2aa8e8c72f() {
+    public void TestSimpleBuiltins_testSprintf_2b763de8de8629771e185b2aa8e8c72f() {
         assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSprintfIgnore_632e911896ba628e751fb0a5d3deb81f() {
+    public void TestSimpleBuiltins_testSprintf_632e911896ba628e751fb0a5d3deb81f() {
         assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");
     }
 

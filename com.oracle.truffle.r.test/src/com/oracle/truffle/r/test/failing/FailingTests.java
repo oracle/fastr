@@ -3139,21 +3139,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSprintfIgnore_2f5377dc3237afcaf3f4b0fa24d32d56() {
-        assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSprintfIgnore_2b763de8de8629771e185b2aa8e8c72f() {
-        assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSprintfIgnore_632e911896ba628e751fb0a5d3deb81f() {
-        assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSqrtBroken_dda9ccdc11f9f5afbe9854145501c5e5() {
         assertEval("{ sqrt(c(a=9,b=81)) }");
     }

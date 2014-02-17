@@ -2105,11 +2105,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sprintf(\"%3d\", 1:3) }");
         assertEval("{ sprintf(\"%4X\", 26) }");
         assertEval("{ sprintf(\"%04X\", 26) }");
-    }
-
-    @Test
-    @Ignore
-    public void testSprintfIgnore() {
         assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
         assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
         assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");

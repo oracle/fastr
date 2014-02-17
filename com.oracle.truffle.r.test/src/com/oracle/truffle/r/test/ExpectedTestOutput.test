@@ -5900,6 +5900,18 @@ Error: object 'x' not found
 #{ sprintf("0x%x",1L) }
 [1] "0x1"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSprintf
+#{ sprintf("Hello %*2$d", 3, 2) }
+[1] "Hello  3"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSprintf
+#{ sprintf("Hello %*d", 3, 2) }
+[1] "Hello   2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSprintf
+#{ sprintf("Hello %2$*2$d", 3, 2) }
+[1] "Hello  2"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSqrt
 #{ sqrt(9) }
 [1] 3

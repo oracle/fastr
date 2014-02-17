@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -68,7 +70,7 @@ public abstract class Sprintf extends RBuiltinNode {
             if (Math.floor(x) == x) {
                 return format(fmt, (long) x);
             }
-            throw RError.getInvalidFormatDouble(null, fmt);
+            throw RError.getInvalidFormatDouble(getEncapsulatingSourceSection(), fmt);
         }
         return format(fmt, x);
     }
@@ -87,9 +89,88 @@ public abstract class Sprintf extends RBuiltinNode {
         return format(fmt, args);
     }
 
+    private static String format(String fmt, Object... args) {
+        char[] conversions = new char[args.length];
+        String format = processFormat(fmt, args, conversions);
+        adjustValues(args, conversions);
+        return stringFormat(format, args);
+    }
+
+    private static String processFormat(String fmt, Object[] args, char[] conversions) {
+        int i = 0;
+        char[] cs = fmt.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        int argc = 1;
+
+        while (i < cs.length) {
+            // skip up to and including next %
+            while (i < cs.length && cs[i] != '%') {
+                sb.append(cs[i++]);
+            }
+            if (i == cs.length) {
+                break;
+            }
+            sb.append(cs[i++]);
+
+            FormatInfo fi = extractFormatInfo(cs, i, argc);
+            argc = fi.argc;
+            if (fi.conversion != '%') {
+                // take care of width/precision being defined by args
+                int w = 0;
+                int p = 0;
+                if (fi.width != 0 || fi.widthIsArg) {
+                    w = fi.widthIsArg ? intValue(args[fi.width - 1]) : fi.width;
+                }
+                if (fi.precision != 0 || fi.precisionIsArg) {
+                    p = fi.precisionIsArg ? intValue(args[fi.precision - 1]) : fi.precision;
+                }
+                // which argument to print
+                sb.append(intString(fi.numArg)).append('$');
+                // flags
+                if (fi.adjustLeft) {
+                    sb.append('-');
+                }
+                if (fi.alwaysSign) {
+                    sb.append('+');
+                }
+                if (fi.alternate) {
+                    sb.append('#');
+                }
+                if (fi.padZero) {
+                    sb.append('0');
+                }
+                if (fi.spacePrefix) {
+                    sb.append(' ');
+                }
+                // width and precision
+                if (fi.width != 0 || fi.widthIsArg) {
+                    sb.append(intString(w));
+                }
+                if (fi.precision != 0 || fi.precisionIsArg) {
+                    sb.append('.').append(intString(p));
+                }
+            }
+            sb.append(fi.conversion);
+            conversions[fi.numArg - 1] = fi.conversion;
+            i = fi.nextChar;
+        }
+
+        return RRuntime.toString(sb);
+    }
+
+    private static int intValue(Object o) {
+        if (o instanceof Double) {
+            return ((Double) o).intValue();
+        } else if (o instanceof Integer) {
+            return ((Integer) o).intValue();
+        } else {
+            throw new IllegalStateException("unexpected type");
+        }
+    }
+
     @SlowPath
-    protected String format(String fmt, Object... args) {
-        return String.format(null, fmt, args);
+    private static String intString(int x) {
+        return Integer.toString(x);
     }
 
     private static char firstFormatChar(String fmt) {
@@ -108,6 +189,192 @@ public abstract class Sprintf extends RBuiltinNode {
             }
         }
         return f;
+    }
+
+    @SlowPath
+    private static String stringFormat(String format, Object[] args) {
+        return String.format((Locale) null, format, args);
+    }
+
+    private static void adjustValues(Object[] args, char[] conversions) {
+        for (int i = 0; i < args.length; ++i) {
+            if (conversions[i] == 0) {
+                continue;
+            }
+            if (conversions[i] == 'd') {
+                if (args[i] instanceof Double) {
+                    args[i] = ((Double) args[i]).intValue();
+                }
+            }
+        }
+    }
+
+    //
+    // format info parsing
+    //
+
+    static class FormatInfo {
+        char conversion;
+        int width;
+        int precision;
+        boolean adjustLeft;
+        boolean alwaysSign;
+        boolean spacePrefix;
+        boolean padZero;
+        boolean alternate;
+        int numArg;
+        boolean widthIsArg;
+        boolean precisionIsArg;
+        int nextChar;
+        int argc;
+    }
+
+    //@formatter:off
+    /**
+     * The grammar understood by the format info extractor is as follows. Note that the
+     * leading {@code %} has already been consumed in the caller and is not given in the
+     * grammar.
+     * 
+     * formatInfo        = '%'
+     *                   | arg? (widthAndPrecision | '-' | '+' | ' ' | '0' | '#')* conversion
+     * arg               = number '$'
+     * widthAndPrecision = oneWidth
+     *                   | number '.' number
+     *                   | number '.' argWidth
+     *                   | argWidth '.' number
+     * oneWidth          = number
+     *                   | argWidth
+     * argWidth          = '*' arg?
+     * conversion        = < one of the conversion characters, save % >
+     */
+    //@formatter:on
+    private static FormatInfo extractFormatInfo(char[] cs, int i, int argc) {
+        int j = i;
+        FormatInfo fi = new FormatInfo();
+        fi.argc = argc;
+        char c = cs[j];
+        // finished if % is the conversion
+        if (c != '%') {
+            // look ahead for a $ (indicates arg)
+            if (isNumeric(c) && lookahead(cs, j, '$')) {
+                fi.numArg = number(cs, j, fi);
+                j = fi.nextChar + 1; // advance past $
+                c = cs[j];
+            }
+            // now loop until the conversion is found
+            while (!isConversion(c)) {
+                switch (c) {
+                    case '-':
+                        fi.adjustLeft = true;
+                        ++j;
+                        break;
+                    case '+':
+                        fi.alwaysSign = true;
+                        ++j;
+                        break;
+                    case ' ':
+                        fi.spacePrefix = true;
+                        ++j;
+                        break;
+                    case '0':
+                        fi.padZero = true;
+                        ++j;
+                        break;
+                    case '#':
+                        fi.alternate = true;
+                        ++j;
+                        break;
+                    case '*':
+                        widthAndPrecision(cs, j, fi);
+                        j = fi.nextChar;
+                        break;
+                    default:
+                        // it can still be a widthAndPrecision if a number is given
+                        if (isNumeric(c)) {
+                            widthAndPrecision(cs, j, fi);
+                            j = fi.nextChar;
+                        } else {
+                            throw new IllegalStateException("problem with format expression");
+                        }
+                }
+                c = cs[j];
+            }
+        }
+        fi.conversion = c;
+        fi.nextChar = j + 1;
+        if (fi.numArg == 0) {
+            // no arg explicitly given, use args array
+            fi.numArg = fi.argc++;
+        }
+        return fi;
+    }
+
+    private static void widthAndPrecision(char[] cs, int i, FormatInfo fi) {
+        int j = i;
+        oneWidth(cs, j, fi, true);
+        j = fi.nextChar;
+        if (cs[j] == '.') {
+            oneWidth(cs, j + 1, fi, false);
+        }
+    }
+
+    private static void oneWidth(char[] cs, int i, FormatInfo fi, boolean width) {
+        int j = i;
+        int n;
+        if (isNumeric(cs[j])) {
+            n = number(cs, j, fi);
+            j = fi.nextChar;
+        } else {
+            assert cs[j] == '*';
+            if (width) {
+                fi.widthIsArg = true;
+            } else {
+                fi.precisionIsArg = true;
+            }
+            ++j;
+            if (isNumeric(cs[j])) {
+                n = number(cs, j, fi);
+                j = fi.nextChar;
+                assert cs[j] == '$';
+                fi.nextChar = ++j;
+            } else {
+                n = fi.argc++;
+            }
+        }
+        if (width) {
+            fi.width = n;
+        } else {
+            fi.precision = n;
+        }
+        fi.nextChar = j;
+    }
+
+    private static boolean isConversion(char c) {
+        return "aAdifeEgGosxX".indexOf(c) != -1;
+    }
+
+    private static boolean isNumeric(char c) {
+        return c >= 48 && c <= 57;
+    }
+
+    private static int number(char[] cs, int i, FormatInfo fi) {
+        int j = i;
+        int num = cs[j++] - 48;
+        while (isNumeric(cs[j])) {
+            num = 10 * num + cs[j++];
+        }
+        fi.nextChar = j;
+        return num;
+    }
+
+    private static boolean lookahead(char[] cs, int i, char c) {
+        int j = i;
+        while (!isConversion(cs[j])) {
+            if (cs[j++] == c) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
