@@ -56,8 +56,23 @@ public abstract class Ls extends RBuiltinNode {
     @SuppressWarnings("unused")
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
         // this is the ls() specialisation
-        String[] names = frame.getFrameDescriptor().getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);
-        return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
+        FrameDescriptor fd = frame.getFrameDescriptor();
+        String[] names = fd.getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);
+        int undefinedIdentifiers = 0;
+        for (int i = 0; i < names.length; ++i) {
+            if (frame.getValue(fd.findFrameSlot(names[i])) == null) {
+                names[i] = null;
+                ++undefinedIdentifiers;
+            }
+        }
+        String[] definedNames = new String[names.length - undefinedIdentifiers];
+        int j = 0;
+        for (int i = 0; i < names.length; ++i) {
+            if (names[i] != null) {
+                definedNames[j++] = names[i];
+            }
+        }
+        return RDataFactory.createStringVector(definedNames, RDataFactory.COMPLETE_VECTOR);
     }
 
 }

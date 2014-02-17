@@ -157,7 +157,7 @@ public final class REngine {
     private void printResult(Object result) {
         if (!(result instanceof RInvisible)) {
             RFunction function = context.getLookup().lookup("print");
-            function.call(null, RArguments.create(function, new Object[]{result})).toString();
+            RRuntime.toString(function.call(null, RArguments.create(function, new Object[]{result})));
         }
     }
 
@@ -169,7 +169,7 @@ public final class REngine {
     private void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
-        context.getConsoleHandler().printErrorln(out.toString());
+        context.getConsoleHandler().printErrorln(RRuntime.toString(out));
 
     }
 

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 
 @TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends Node {
@@ -39,11 +40,11 @@ public abstract class FrameSlotNode extends Node {
     }
 
     static FrameSlot findFrameSlot(Frame frame, Object symbol) {
-        return frame.getFrameDescriptor().findFrameSlot(symbol.toString());
+        return frame.getFrameDescriptor().findFrameSlot(RRuntime.toString(symbol));
     }
 
     static Assumption getAssumption(Frame frame, Object symbol) {
-        return frame.getFrameDescriptor().getNotInFrameAssumption(symbol.toString());
+        return frame.getFrameDescriptor().getNotInFrameAssumption(RRuntime.toString(symbol));
     }
 
     public static final class UnresolvedFrameSlotNode extends FrameSlotNode {

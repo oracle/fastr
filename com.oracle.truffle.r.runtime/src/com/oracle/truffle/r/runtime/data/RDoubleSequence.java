@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RDoubleSequence extends RSequence implements RAbstractDoubleVector {
@@ -56,6 +57,7 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return internalCreateVector().toString();
     }

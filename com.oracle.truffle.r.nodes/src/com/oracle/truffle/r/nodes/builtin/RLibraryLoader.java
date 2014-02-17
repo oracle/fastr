@@ -54,7 +54,7 @@ public class RLibraryLoader {
         for (Node libNode : library.getChildren()) {
             if (isFunctionDefinition(libNode)) {
                 WriteVariableNode.UnresolvedWriteLocalVariableNode fnDef = (WriteVariableNode.UnresolvedWriteLocalVariableNode) libNode;
-                String builtinName = fnDef.getSymbol().toString();
+                String builtinName = RRuntime.toString(fnDef.getSymbol());
                 FunctionExpressionNode.DynamicFunctionExpressionNode builtinExpr = (FunctionExpressionNode.DynamicFunctionExpressionNode) fnDef.getRhs();
                 builtinDefs.put(builtinName, new FunctionExpressionNode.StaticFunctionExpressionNode(new RFunction(builtinName, builtinExpr.getCallTarget(), false)));
             }

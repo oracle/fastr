@@ -807,6 +807,34 @@ raw(0)
 [1] NaN+NaNi
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(-1+2i,1.1+2.1i) }
+[1] -1.0+2.0i  1.1+2.1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(1+12i,1.1+2.1i) }
+[1] 1.0+12.0i 1.1+ 2.1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(1+2i,1.1+12.1i) }
+[1] 1.0+ 2.0i 1.1+12.1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(1+2i,1.1+2.1i) }
+[1] 1.0+2.0i 1.1+2.1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(1+2i,11.1+2.1i) }
+[1]  1.0+2.0i 11.1+2.1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(1-2i,1+22i) }
+[1] 1- 2i 1+22i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ c(11+2i,1.1+2.1i) }
+[1] 11.0+2.0i  1.1+2.1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
 #{ f <- function(a, b) { a + b } ; f(1+2i, 3) ; f(1, 2) }
 [1] 3
 
@@ -877,6 +905,10 @@ raw(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
 #{ x <- 1+2i; y <- 3+4i; x/y }
 [1] 0.44+0.08i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }
+[1] -1.00000+1.00000i  0.34862+0.50459i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
 #{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y-x }
@@ -1550,6 +1582,14 @@ numeric(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
 #{ c(1+1i,3+2i) * c(1,2) }
 [1] 1+1i 6+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
+#{ round( 3^c(1,2,3+1i), digits=5 ) }
+[1]  3.00000+ 0.00000i  9.00000+ 0.00000i 12.28048+24.04558i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
+#{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }
+[1]  0.27396+0.58370i -0.20455+0.89662i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
 #{ z <- c(1+1i,3+2i) ; z * c(1,2) }
@@ -4495,6 +4535,10 @@ character(0)
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ get("x") }
+Error in get("x") : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ gg <- function() {  assign("x", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
 [1] 11
 
@@ -4661,6 +4705,14 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ x <- 1; exists("x", inherits = FALSE) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ x <- 2 ; rm("x") ; get("x") }
+Error in get("x") : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ x <- 2 ; y <- 3 ; rm("y") ; ls() }
+[1] "x"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ x <- 3 ; f <- function() { assign("x", 2) ; g <- function() { x } ; g() } ; f() }
@@ -5423,6 +5475,18 @@ character(0)
 [1] 23
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ print(c(1,2.34567)) }
+[1] 1.00000 2.34567
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ print(c(1.1,2.34567)) }
+[1] 1.10000 2.34567
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ print(c(11.1,2.34567)) }
+[1] 11.10000  2.34567
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{ print(list(1,2,3)) }
 [[1]]
 [1] 1
@@ -5515,6 +5579,62 @@ NULL
      [,1] [,2] [,3]
 [1,]    1    2    3
 [2,]    2    2    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(1) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(1+1i) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(NA+2i) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(as.double(NA)) }
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(c(1+1i,2-2i)) }
+[1]  1 -2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(c(1,2)) }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Im(c(1,NA,2)) }
+[1] 0 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(1+1i) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(NA+2i) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(as.double(NA)) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(c(1+1i,2-2i)) }
+[1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(c(1,2)) }
+[1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testReIm
+#{ Re(c(1,NA,2)) }
+[1]  1 NA  2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep("hello", 3) }

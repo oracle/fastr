@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleVectorElementNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintDimNodeFactory;
@@ -41,6 +42,7 @@ import static com.oracle.truffle.r.nodes.RTypesGen.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.sun.jmx.snmp.defaults.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class)})
@@ -66,6 +68,9 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child PrettyPrinterNode recursivePrettyPrinter;
     @Child PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
     @Child PrintVectorMultiDimNode multiDimPrinter;
+
+    @Child Re re;
+    @Child Im im;
 
     protected abstract boolean isPrintingAttributes();
 
@@ -139,8 +144,9 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     public static String prettyPrint(RComplex operand) {
-        double factor = calcRoundFactor(operand.getRealPart(), 10000000);
-        return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), factor), doubleToStringPrintFormat(operand.getImaginaryPart(), calcRoundFactor(operand.getImaginaryPart(), 10000000)));
+        double rfactor = calcRoundFactor(operand.getRealPart(), 10000000);
+        double ifactor = calcRoundFactor(operand.getImaginaryPart(), 10000000);
+        return operand.toString(doubleToStringPrintFormat(operand.getRealPart(), rfactor), doubleToStringPrintFormat(operand.getImaginaryPart(), ifactor));
     }
 
     @Specialization(order = 40)
@@ -208,7 +214,7 @@ public abstract class PrettyPrinterNode extends RNode {
             int leftWidth = 0;
             int maxPositionLength = 0;
             if (!printNamesHeader) {
-                maxPositionLength = Integer.toString(vector.getLength()).length();
+                maxPositionLength = intString(vector.getLength()).length();
                 leftWidth = maxPositionLength + 2; // There is [] around the number.
             }
             int forColumns = CONSOLE_WIDTH - leftWidth;
@@ -393,7 +399,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
                 Object name = operand.getNameAt(i);
                 if (listElementName != null) {
-                    name = concat(objectString(listElementName), objectString(name));
+                    name = concat(RRuntime.toString(listElementName), RRuntime.toString(name));
                 }
                 sb.append(name).append('\n');
                 Object value = operand.getDataAt(i);
@@ -444,6 +450,7 @@ public abstract class PrettyPrinterNode extends RNode {
             double data = operand.getDataAt(i);
             values[i] = prettyPrint(data);
         }
+        padTrailingDecimalPointAndZeroesIfRequired(values);
         return printVector(frame, operand, values, false, false);
     }
 
@@ -493,11 +500,32 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Specialization(order = 800, guards = "!twoDimsOrMore")
     public String prettyPrint(VirtualFrame frame, RAbstractComplexVector operand, Object listElementName) {
+        if (re == null) {
+            // the two are allocated side by side; checking for re is sufficient
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            RPackages packages = (RPackages) RContext.getInstance().getLookup();
+            re = adoptChild(ReFactory.create(new RNode[1], packages.lookupBuiltin("Re")));
+            im = adoptChild(ImFactory.create(new RNode[1], packages.lookupBuiltin("Im")));
+        }
+
+        RDoubleVector realParts = (RDoubleVector) re.executeRDoubleVector(frame, operand);
+        RDoubleVector imaginaryParts = (RDoubleVector) im.executeRDoubleVector(frame, operand);
+
         int length = operand.getLength();
+        String[] realValues = new String[length];
+        String[] imaginaryValues = new String[length];
+        for (int i = 0; i < length; ++i) {
+            realValues[i] = prettyPrint(realParts.getDataAt(i));
+            imaginaryValues[i] = prettyPrint(imaginaryParts.getDataAt(i));
+        }
+        padTrailingDecimalPointAndZeroesIfRequired(realValues);
+        padTrailingDecimalPointAndZeroesIfRequired(imaginaryValues);
+        removeLeadingMinus(imaginaryValues);
+        rightJustify(imaginaryValues);
+
         String[] values = new String[length];
         for (int i = 0; i < length; i++) {
-            RComplex data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = operand.getDataAt(i).isNA() ? "NA" : concat(realValues[i], imaginaryParts.getDataAt(i) < 0.0 ? "-" : "+", imaginaryValues[i], "i");
         }
         return printVector(frame, operand, values, false, false);
     }
@@ -559,13 +587,8 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    private static String stringFormat(String format, String arg) {
+    private static String stringFormat(String format, Object arg) {
         return String.format(format, arg);
-    }
-
-    @SlowPath
-    private static String objectString(Object o) {
-        return o.toString();
     }
 
     private static String concat(String... ss) {
@@ -574,6 +597,92 @@ public abstract class PrettyPrinterNode extends RNode {
             sb.append(s);
         }
         return builderToString(sb);
+    }
+
+    @SlowPath
+    private static String substring(String s, int start) {
+        return s.substring(start);
+    }
+
+    private static int requiresDecimalPointsAndTrailingZeroes(String[] values, int[] decimalPointOffsets, int[] lenAfterPoint) {
+        boolean foundWithDecimalPoint = false;
+        boolean foundWithoutDecimalPoint = false;
+        boolean inequalLenAfterPoint = false;
+        int maxLenAfterPoint = -1;
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            decimalPointOffsets[i] = v.indexOf('.');
+            if (decimalPointOffsets[i] == -1) {
+                foundWithoutDecimalPoint = true;
+                lenAfterPoint[i] = 0;
+            } else {
+                foundWithDecimalPoint = true;
+                int lap = substring(v, decimalPointOffsets[i] + 1).length();
+                lenAfterPoint[i] = lap;
+                if (lap > maxLenAfterPoint) {
+                    if (maxLenAfterPoint == -1) {
+                        inequalLenAfterPoint = true;
+                    }
+                    maxLenAfterPoint = lap;
+                }
+            }
+        }
+        return (foundWithDecimalPoint && foundWithoutDecimalPoint) || inequalLenAfterPoint ? maxLenAfterPoint : -1;
+    }
+
+    private static void padTrailingDecimalPointAndZeroesIfRequired(String[] values) {
+        int[] decimalPointOffsets = new int[values.length];
+        int[] lenAfterPoint = new int[values.length];
+        int maxLenAfterPoint = requiresDecimalPointsAndTrailingZeroes(values, decimalPointOffsets, lenAfterPoint);
+        if (maxLenAfterPoint == -1) {
+            return;
+        }
+
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            if (decimalPointOffsets[i] == -1) {
+                v = concat(v, ".");
+            }
+            if (lenAfterPoint[i] < maxLenAfterPoint) {
+                values[i] = concat(v, stringFormat(concat("%0", intString(maxLenAfterPoint - lenAfterPoint[i]), "d"), 0));
+            }
+        }
+    }
+
+    private static void rightJustify(String[] values) {
+        int maxLen = 0;
+        boolean inequalLengths = false;
+        int lastLen = 0;
+        for (int i = 0; i < values.length; ++i) {
+            int l = values[i].length();
+            maxLen = Math.max(maxLen, l);
+            inequalLengths = lastLen != 0 && lastLen != l;
+            lastLen = l;
+        }
+        if (!inequalLengths) {
+            return;
+        }
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            int l = v.length();
+            if (l < maxLen) {
+                int d = maxLen - l;
+                if (d == 1) {
+                    values[i] = concat(" ", v);
+                } else {
+                    values[i] = concat(stringFormat(concat("%", intString(d), "s"), " "), v);
+                }
+            }
+        }
+    }
+
+    private static void removeLeadingMinus(String[] values) {
+        for (int i = 0; i < values.length; ++i) {
+            String v = values[i];
+            if (v.charAt(0) == '-') {
+                values[i] = substring(v, 1);
+            }
+        }
     }
 
     @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class)})

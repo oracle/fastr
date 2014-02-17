@@ -274,11 +274,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testScalarsComplexIgnore_3687279e543d6b321de708f1696d22d9() {
-        assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testScalarsRealIgnore_706f889093f4841d307059b60cb81c13() {
         assertEval("{ 1000000000*100000000000 }");
     }
@@ -386,16 +381,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_15a6502f9ece8e54a080a3e20541165c() {
         assertEval("{ c(1,2,3+1i)^3 }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_26cbb52252ff028ab7bba252147de26c() {
-        assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testVectorsOperationsComplexIgnore_a88a08c3bbe4807e9507763726c626e5() {
-        assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
     }
 
     @Ignore
@@ -1359,13 +1344,13 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_35f39b7e9528c71de88463d46c32532c() {
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
+    public void TestSimpleBuiltins_testApplyIgnore_2cf7378fd6b712f0b62c0f76b237c08c() {
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_14dba1bec51e16063fb831245dcb618b() {
-        assertEval("{ ( sapply(1:3, function(i) { list(xxx=1:i) } )) }");
+    public void TestSimpleBuiltins_testApplyIgnore_91913713ed1196f2c80dc3bdd44320fe() {
+        assertEval("{ (sapply(1:3, function(i) { list(xxx=1:i) } )) }");
     }
 
     @Ignore
@@ -1374,8 +1359,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_4f78337e05fdb3aa63c17f01a57f9ad5() {
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
+    public void TestSimpleBuiltins_testApplyIgnore_2304de70341b6e2e641140ace2ce7f15() {
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
     }
 
     @Ignore

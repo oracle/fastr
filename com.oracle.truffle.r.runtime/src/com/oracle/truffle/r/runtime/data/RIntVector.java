@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -56,6 +57,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return Arrays.toString(data);
     }

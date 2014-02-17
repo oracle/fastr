@@ -60,6 +60,8 @@ public class RRuntime {
     public static final int TRUE = 1;
     public static final int FALSE = 0;
     public static final String STRING_NA = new String("NA");
+    public static final String STRING_TRUE = new String("TRUE");
+    public static final String STRING_FALSE = new String("FALSE");
     public static final int INT_NA = Integer.MIN_VALUE;
     public static final int INT_MIN_VALUE = Integer.MIN_VALUE + 1;
     public static final int INT_MAX_VALUE = Integer.MAX_VALUE;
@@ -94,11 +96,11 @@ public class RRuntime {
 
     public static final String[] STRING_ARRAY_SENTINEL = new String[0];
 
-    public static final String NAMES_ATTR_KEY = "names";
+    public static final String NAMES_ATTR_KEY = new String("names");
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
     public static final String NAMES_ATTR_NA_HEADER = "<NA>";
 
-    public static final String DIM_ATTR_KEY = "dim";
+    public static final String DIM_ATTR_KEY = new String("dim");
     public static final String DIMNAMES_ATTR_KEY = "dimnames";
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
@@ -188,7 +190,7 @@ public class RRuntime {
     }
 
     public static String logicalToStringNoCheck(byte operand) {
-        return operand == LOGICAL_TRUE ? "TRUE" : operand == LOGICAL_FALSE ? "FALSE" : STRING_NA;
+        return operand == LOGICAL_TRUE ? STRING_TRUE : operand == LOGICAL_FALSE ? STRING_FALSE : STRING_NA;
     }
 
     public static String logicalToString(byte operand) {
@@ -354,7 +356,6 @@ public class RRuntime {
         return String.valueOf(operand) + (appendL ? "L" : "");
     }
 
-    @SlowPath
     public static String intToString(int operand, boolean appendL) {
         return isNA(operand) ? STRING_NA : intToStringNoCheck(operand, appendL);
     }
@@ -432,7 +433,6 @@ public class RRuntime {
         return Double.toString(operand);
     }
 
-    @SlowPath
     public static String doubleToString(double operand) {
         return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand);
     }

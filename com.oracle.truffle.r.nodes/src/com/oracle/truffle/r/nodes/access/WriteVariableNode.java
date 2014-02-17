@@ -113,10 +113,10 @@ public abstract class WriteVariableNode extends RNode {
 
     public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, boolean toBeCopied) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, symbol.toString(), toBeCopied);
+            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(symbol), toBeCopied);
         } else {
             assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, symbol.toString(), toBeCopied);
+            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(symbol), toBeCopied);
         }
     }
 
@@ -308,7 +308,7 @@ public abstract class WriteVariableNode extends RNode {
                 execute(frame, value, enclosingFrame);
             } else {
                 // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), symbol.toString(), toBeCopied)).execute(frame, value);
+                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), RRuntime.toString(symbol), toBeCopied)).execute(frame, value);
             }
         }
 

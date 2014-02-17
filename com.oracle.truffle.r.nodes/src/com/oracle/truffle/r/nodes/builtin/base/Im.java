@@ -22,29 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
-import java.nio.file.*;
-
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("contributors")
-public abstract class Contributors extends RBuiltinNode {
+@RBuiltin("Im")
+public abstract class Im extends RBuiltinNode {
 
-    // CheckStyle: stop system..print check
+    public abstract Object executeRDoubleVector(VirtualFrame frame, RAbstractComplexVector vector);
+
+    private NACheck check = NACheck.create();
+
     @Specialization
-    public Object contributors() {
-        Path cf = Paths.get(this.getClass().getResource("CONTRIBUTORS").getFile());
-        if (!cf.toFile().exists()) {
-            throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "file not found");
+    public RDoubleVector im(RAbstractComplexVector vector) {
+        double[] result = new double[vector.getLength()];
+        check.enable(vector);
+        for (int i = 0; i < vector.getLength(); ++i) {
+            RComplex c = vector.getDataAt(i);
+            result[i] = check.check(c) ? RRuntime.DOUBLE_NA : c.getImaginaryPart();
         }
-        try {
-            System.out.println(new String(Files.readAllBytes(cf)));
-        } catch (IOException ioe) {
-            throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "reading error");
-        }
-        return RInvisible.INVISIBLE_NULL;
+        return RDataFactory.createDoubleVector(result, check.neverSeenNA());
     }
+
+    @Specialization
+    public RDoubleVector im(RAbstractDoubleVector vector) {
+        return RDataFactory.createDoubleVector(vector.getLength());
+    }
+
 }

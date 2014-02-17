@@ -87,7 +87,7 @@ public abstract class Rm extends RBuiltinNode {
         if (fs == null) {
             RError.warning(this.getEncapsulatingSourceSection(), RError.UNKNOWN_OBJECT, x);
         } else {
-            frm.getFrameDescriptor().removeFrameSlot(x);
+            frm.setObject(fs, null); // use null (not an R value) to represent "undefined"
         }
     }
 

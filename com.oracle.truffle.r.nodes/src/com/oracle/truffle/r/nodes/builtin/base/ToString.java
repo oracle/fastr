@@ -105,7 +105,7 @@ public abstract class ToString extends RBuiltinNode {
 
     @Specialization
     public String toString(RFunction function) {
-        return function.toString();
+        return RRuntime.toString(function);
     }
 
     @Specialization
@@ -114,8 +114,8 @@ public abstract class ToString extends RBuiltinNode {
     }
 
     @Specialization
-    public String toString(RRaw complex) {
-        return complex.toString();
+    public String toString(RRaw raw) {
+        return raw.toString();
     }
 
     @Specialization()
@@ -147,7 +147,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @SlowPath
@@ -164,7 +164,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @SlowPath
@@ -181,7 +181,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @SlowPath
@@ -198,7 +198,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @SlowPath
@@ -215,7 +215,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @SlowPath
@@ -232,7 +232,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @SlowPath
@@ -259,7 +259,7 @@ public abstract class ToString extends RBuiltinNode {
                 b.append(separator);
             }
         }
-        return b.toString();
+        return RRuntime.toString(b);
     }
 
     @Specialization

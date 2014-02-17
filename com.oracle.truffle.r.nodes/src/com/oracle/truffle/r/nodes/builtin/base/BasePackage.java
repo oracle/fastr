@@ -91,6 +91,7 @@ public class BasePackage extends RPackage {
         load(Gregexpr.class);
         load(GSub.class);
         load(Ifelse.class);
+        load(Im.class);
         load(IntegerBuiltin.class);
         load(Invisible.class);
         load(IsAtomic.class);
@@ -135,6 +136,7 @@ public class BasePackage extends RPackage {
         load(Quit.class);
         load(RawBuiltin.class);
         load(Rbind.class);
+        load(Re.class);
         load(Recall.class);
         load(Regexp.class);
         load(Repeat.class);

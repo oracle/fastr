@@ -90,11 +90,11 @@ public abstract class ReadVariableNode extends RNode {
         }
 
         private ReadVariableNode resolveNonFrame() {
-            RFunction lookupResult = RContext.getInstance().getLookup().lookup(symbol.toString());
+            RFunction lookupResult = RContext.getInstance().getLookup().lookup(RRuntime.toString(symbol));
             if (lookupResult != null) {
                 return BuiltinFunctionVariableNodeFactory.create(lookupResult);
             } else {
-                return UnknownVariableNodeFactory.create(symbol.toString());
+                return UnknownVariableNodeFactory.create(RRuntime.toString(symbol));
             }
         }
 
@@ -118,7 +118,7 @@ public abstract class ReadVariableNode extends RNode {
             ArrayList<Assumption> assumptions = new ArrayList<>();
             Frame currentFrame = frame;
             do {
-                FrameSlot frameSlot = FrameSlotNode.findFrameSlot(currentFrame, symbol.toString());
+                FrameSlot frameSlot = FrameSlotNode.findFrameSlot(currentFrame, RRuntime.toString(symbol));
                 if (frameSlot != null) {
                     assumptions = null;
                     break;

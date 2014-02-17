@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("get")
 public abstract class Get extends RBuiltinNode {
@@ -48,13 +49,14 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(String x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+    public Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+        String sx = x.getDataAt(0);
         REnvironment env = pos;
-        Object r = env.get(x);
+        Object r = env.get(sx);
         while (r == null && env != null) {
             env = env.getParent();
             if (env != null) {
-                r = env.get(x);
+                r = env.get(sx);
             }
         }
         return r;
@@ -72,12 +74,13 @@ public abstract class Get extends RBuiltinNode {
                 fs = frm.getFrameDescriptor().findFrameSlot(x);
             }
         }
-        return fs == null ? null : frm.getValue(fs);
-    }
-
-    @Specialization
-    public Object get(RStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
-        return get(x.getDataAt(0), pos, envir, mode, inherits);
+        if (fs != null) {
+            Object v = frm.getValue(fs);
+            if (v != null) {
+                return v;
+            }
+        }
+        throw RError.getUnknownVariable(this.getEncapsulatingSourceSection(), x);
     }
 
 }
