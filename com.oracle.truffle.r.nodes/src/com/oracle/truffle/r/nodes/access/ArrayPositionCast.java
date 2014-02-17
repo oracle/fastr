@@ -190,7 +190,8 @@ public abstract class ArrayPositionCast extends RNode {
             // it's negative, but not out of bounds - pick all indexes apart from the negative one
             int dimLength = vector.getDimensions()[dimension];
             int[] positions = new int[dimLength - 1];
-            for (int i = 1, ind = 0; i <= dimLength; i++) {
+            int ind = 0;
+            for (int i = 1; i <= dimLength; i++) {
                 if (i != -operand) {
                     positions[ind++] = i;
                 }
@@ -319,7 +320,8 @@ public abstract class ArrayPositionCast extends RNode {
                 } else if (hasSeenZero) {
                     // eliminate 0-s
                     int[] data = new int[positionsLength - zeroCount];
-                    for (int i = 0, ind = 0; i < positionsLength; i++) {
+                    int ind = 0;
+                    for (int i = 0; i < positionsLength; i++) {
                         int pos = positions.getDataAt(i);
                         if (pos != 0) {
                             data[ind++] = pos;
@@ -333,7 +335,7 @@ public abstract class ArrayPositionCast extends RNode {
             } else if (hasSeenNegative) {
                 boolean[] excludedPositions = new boolean[dimLength];
                 int allPositionsNum = dimLength;
-                for (int i = 0, ind = 0; i < positionsLength; i++) {
+                for (int i = 0; i < positionsLength; i++) {
                     int pos = -positions.getDataAt(i);
                     if (pos > 0 && pos <= dimLength && !excludedPositions[pos - 1]) {
                         allPositionsNum--;
@@ -344,7 +346,8 @@ public abstract class ArrayPositionCast extends RNode {
                     return RDataFactory.createIntVector(new int[]{0}, RDataFactory.COMPLETE_VECTOR);
                 } else {
                     int[] data = new int[allPositionsNum];
-                    for (int i = 0, ind = 0; i < dimLength; i++) {
+                    int ind = 0;
+                    for (int i = 0; i < dimLength; i++) {
                         if (!excludedPositions[i]) {
                             data[ind++] = i + 1;
                         }

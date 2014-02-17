@@ -701,7 +701,7 @@ public abstract class AccessVectorNode extends RNode {
         return accessInBoundsStringVector(vector, position);
     }
 
-    @Specialization(order = 101, guards = "isNA")
+    @Specialization(order = 601, guards = "isNA")
     public String accessNA(@SuppressWarnings("unused") RStringVector vector, @SuppressWarnings("unused") int position) {
         return RRuntime.STRING_NA;
     }

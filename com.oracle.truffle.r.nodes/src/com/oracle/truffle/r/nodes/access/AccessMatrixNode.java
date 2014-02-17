@@ -1111,7 +1111,8 @@ public abstract class AccessMatrixNode extends RNode {
         int columnBase = (secondPosition - 1) * nrows;
         elementNACheck.enable(true);
         // pick all elements from a chosen column
-        for (int i = 0, ind = 0; i < nrows; i++) {
+        int ind = 0;
+        for (int i = 0; i < nrows; i++) {
             int rowOffset = i;
             RComplex c = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(c);
@@ -1143,7 +1144,8 @@ public abstract class AccessMatrixNode extends RNode {
         }
         elementNACheck.enable(!vector.isComplete());
         // pick selected elements from a chosen column
-        for (int i = 0, ind = 0; i < firstPosition.getLength(); i++) {
+        int ind = 0;
+        for (int i = 0; i < firstPosition.getLength(); i++) {
             int rowOffset = firstPosition.getDataAt(i) - 1;
             RComplex c = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(c);
@@ -1166,7 +1168,8 @@ public abstract class AccessMatrixNode extends RNode {
         double[] result = new double[ncols << 1];
         int rowOffset = firstPosition - 1;
         elementNACheck.enable(!vector.isComplete());
-        for (int i = 0, ind = 0; i < ncols; i++) {
+        int ind = 0;
+        for (int i = 0; i < ncols; i++) {
             int columnBase = i * nrows;
             RComplex c = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(c);
@@ -1197,7 +1200,8 @@ public abstract class AccessMatrixNode extends RNode {
             namesNACheck.enable(!names.isComplete());
         }
         elementNACheck.enable(!vector.isComplete());
-        for (int i = 0, ind = 0; i < secondPosition.getLength(); ++i) {
+        int ind = 0;
+        for (int i = 0; i < secondPosition.getLength(); ++i) {
             int columnBase = nrows * (secondPosition.getDataAt(i) - 1);
             RComplex c = vector.getDataAt(columnBase + rowOffset);
             elementNACheck.check(c);
