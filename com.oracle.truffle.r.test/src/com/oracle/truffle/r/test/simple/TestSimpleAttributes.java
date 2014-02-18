@@ -107,6 +107,7 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(c(\"201\", \"202\"), c(\"203\", \"204\"), c(\"205\", \"206\")); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
         // convert elements of dimnames list to string vectors
         assertEval("{ x<-1:8; dim(x)<-c(2, 2, 2); names(x)<-101:108; attr(x, \"dimnames\")<-list(201:202, 203:204, 205:206); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(x>y) }");
+        assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
     }
 
     @Test
@@ -130,7 +131,6 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
         assertEval("{ x <- c(hello=1, hi=9) ; attr(x, \"hi\") <- 2 ;  sqrt(x) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  t(m) }");
-        assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(x) }");
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(list(x,x)) }");
     }

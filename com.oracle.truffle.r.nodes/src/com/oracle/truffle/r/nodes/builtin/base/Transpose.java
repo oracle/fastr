@@ -59,16 +59,8 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector transpose(RIntVector vector) {
-        if (!vector.isMatrix()) {
-            throw RError.getArgumentNotMatrix(this.getSourceSection());
-        }
-        return performAbstractIntVector(vector, vector.getDimensions());
-    }
-
-    @Specialization
-    public RIntVector transpose(RIntSequence vector) {
-        return performAbstractIntVector(vector, new int[]{vector.getLength(), 1});
+    public RIntVector transpose(RAbstractIntVector vector) {
+        return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
     private static RIntVector performAbstractIntVector(RAbstractIntVector vector, int[] dim) {
@@ -86,20 +78,15 @@ public abstract class Transpose extends RBuiltinNode {
             }
         }
         int[] newDim = new int[]{secondDim, firstDim};
-        return RDataFactory.createIntVector(result, vector.isComplete(), newDim);
+        RIntVector r = RDataFactory.createIntVector(result, vector.isComplete());
+        r.copyAttributesFrom(vector);
+        r.setDimensions(newDim);
+        return r;
     }
 
     @Specialization
-    public RDoubleVector transpose(RDoubleVector vector) {
-        if (!vector.isMatrix()) {
-            throw RError.getArgumentNotMatrix(this.getSourceSection());
-        }
-        return performAbstractDoubleVector(vector, vector.getDimensions());
-    }
-
-    @Specialization
-    public RDoubleVector transpose(RDoubleSequence vector) {
-        return performAbstractDoubleVector(vector, new int[]{vector.getLength(), 1});
+    public RDoubleVector transpose(RAbstractDoubleVector vector) {
+        return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
     private static RDoubleVector performAbstractDoubleVector(RAbstractDoubleVector vector, int[] dim) {
@@ -117,15 +104,15 @@ public abstract class Transpose extends RBuiltinNode {
             }
         }
         int[] newDim = new int[]{secondDim, firstDim};
-        return RDataFactory.createDoubleVector(result, vector.isComplete(), newDim);
+        RDoubleVector r = RDataFactory.createDoubleVector(result, vector.isComplete());
+        r.copyAttributesFrom(vector);
+        r.setDimensions(newDim);
+        return r;
     }
 
     @Specialization
-    public RStringVector transpose(RStringVector vector) {
-        if (!vector.isMatrix()) {
-            throw RError.getArgumentNotMatrix(this.getSourceSection());
-        }
-        return performAbstractStringVector(vector, vector.getDimensions());
+    public RStringVector transpose(RAbstractStringVector vector) {
+        return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
 
     private static RStringVector performAbstractStringVector(RAbstractStringVector vector, int[] dim) {
@@ -143,6 +130,9 @@ public abstract class Transpose extends RBuiltinNode {
             }
         }
         int[] newDim = new int[]{secondDim, firstDim};
-        return RDataFactory.createStringVector(result, vector.isComplete(), newDim);
+        RStringVector r = RDataFactory.createStringVector(result, vector.isComplete());
+        r.copyAttributesFrom(vector);
+        r.setDimensions(newDim);
+        return r;
     }
 }
