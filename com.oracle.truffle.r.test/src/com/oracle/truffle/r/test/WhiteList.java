@@ -25,6 +25,8 @@ package com.oracle.truffle.r.test;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.r.runtime.*;
+
 public abstract class WhiteList {
     // CheckStyle: stop system..print check
 
@@ -52,7 +54,7 @@ public abstract class WhiteList {
         this.whiteListResource = whiteListResource;
         String[] vars = new String[10];
         try {
-            InputStream is = getClass().getResourceAsStream(whiteListResource);
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), whiteListResource);
             if (is == null) {
                 throw new FileNotFoundException("Failed to locate: " + whiteListResource);
             } else {

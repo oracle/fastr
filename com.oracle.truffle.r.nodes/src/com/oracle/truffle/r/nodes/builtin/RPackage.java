@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * Intended to be subclassed by definitions of builtin functions.
@@ -63,7 +64,7 @@ public abstract class RPackage {
 
     public final void loadSnippets() {
         String rSourceName = getName() + ".r";
-        URL rSource = getClass().getResource(rSourceName);
+        URL rSource = ResourceHandlerFactory.getHandler().getResource(getClass(), rSourceName);
         if (rSource != null) {
             RLibraryLoader loader = new RLibraryLoader(new File(rSource.getPath()));
             Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();

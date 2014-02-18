@@ -36,7 +36,7 @@ public abstract class Contributors extends RBuiltinNode {
     // CheckStyle: stop system..print check
     @Specialization
     public Object contributors() {
-        Path cf = Paths.get(this.getClass().getResource("CONTRIBUTORS").getFile());
+        Path cf = Paths.get(ResourceHandlerFactory.getHandler().getResource(getClass(), "CONTRIBUTORS").getFile());
         if (!cf.toFile().exists()) {
             throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "file not found");
         }
