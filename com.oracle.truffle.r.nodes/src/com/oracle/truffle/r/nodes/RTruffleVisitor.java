@@ -94,7 +94,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         for (ArgumentList.Entry e : call.getArgs()) {
             Symbol argName = e.getName();
             argumentNames[index] = (argName == null ? null : RRuntime.toString(argName));
-            nodes[index] = e.getValue() != null ? e.getValue().accept(this) : ConstantNode.create(RMissing.instance);
+            nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
             index++;
         }
         return RCallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), true, false), CallArgumentsNode.create(nodes, argumentNames));

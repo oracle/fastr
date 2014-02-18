@@ -29,6 +29,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 public final class CallArgumentsNode extends RNode {
 
@@ -81,7 +82,7 @@ public final class CallArgumentsNode extends RNode {
         Object[] values = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             RNode arg = arguments[i];
-            values[i] = arg.execute(frame);
+            values[i] = arg == null ? RMissing.instance : arg.execute(frame);
         }
         return values;
     }

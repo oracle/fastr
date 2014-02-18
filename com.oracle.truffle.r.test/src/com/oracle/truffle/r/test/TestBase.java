@@ -398,7 +398,14 @@ public class TestBase {
                                 ok = assertFalse();
                             }
                         } else {
-                            ok = assertFalse();
+                            if (keepTrailingWhiteSpace) {
+                                ok = assertFalse();
+                            } else {
+                                result = TestOutputManager.stripTrailingWhitespace(result);
+                                if (!expected.equals(result)) {
+                                    ok = assertFalse();
+                                }
+                            }
                         }
                     }
                 }

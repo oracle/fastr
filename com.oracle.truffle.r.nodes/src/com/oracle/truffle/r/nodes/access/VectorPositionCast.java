@@ -42,30 +42,13 @@ public abstract class VectorPositionCast extends RNode {
 
     private final NACheck positionNACheck;
 
-    @Specialization(order = 1, guards = "positiveDouble")
+    @Specialization(order = 1)
     public int doDoublePosition(double operand) {
-        return (int) operand;
-    }
-
-    public static boolean positiveDouble(double operand) {
-        return operand >= 0.0;
-    }
-
-    @Specialization(order = 2)
-    public int doDouble(double operand) {
         positionNACheck.enable(operand);
-        return doDoubleHelper(operand);
-    }
-
-    public int doDoubleHelper(double operand) {
         if (positionNACheck.check(operand)) {
             return RRuntime.INT_NA;
         }
-        int result = (int) operand;
-        if (result == 0 && operand < 0.0) {
-            return -1;
-        }
-        return result;
+        return (int) operand;
     }
 
     @Specialization(order = 3)
@@ -153,7 +136,7 @@ public abstract class VectorPositionCast extends RNode {
         positionNACheck.enable(operand);
         int[] intData = new int[dataLength];
         for (int i = 0; i < dataLength; ++i) {
-            intData[i] = doDoubleHelper(operand.getDataAt(i));
+            intData[i] = doDoublePosition(operand.getDataAt(i));
         }
         return RDataFactory.createIntVector(intData, operand.isComplete());
     }

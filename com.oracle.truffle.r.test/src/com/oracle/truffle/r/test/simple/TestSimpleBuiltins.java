@@ -603,10 +603,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { c(1+1i,2) } else { c(11,12) } }) }");
 
         // names
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
-        assertEval("{ ( sapply(1:3, function(i) { list(xxx=1:i) } )) }");
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(zzz=2)} })) }");
+        assertEval("{ (sapply(1:3, function(i) { list(xxx=1:i) } )) }");
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(2)} }) }");
-        assertEval("{ ( sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
+        assertEval("{ (sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
         assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(1,2), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=1,Y=2), function(x) { c(a=x) })  } ; f() }");
@@ -614,12 +614,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
 
-        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }"); // FIXME print
-// regression
+        // FIXME print regression
+        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }");
         assertEval("{ f<-function() { x<-2 ; sapply(1, function(i) { x }) } ; f() }");  // FIXME
-// print
-        // regression
-
     }
 
     @Test
@@ -1046,6 +1043,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ log(1) } ");
         assertEval("{ log(0) }");
         assertEval("{ log(c(0,1)) }");
+        assertEval("{ round( log(10,), digits = 5 ) }");
+        assertEval("{ round( log(10,2), digits = 5 ) }");
+        assertEval("{ round( log(10,10), digits = 5 ) }");
     }
 
     @Test
@@ -1073,11 +1073,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testLogIgnore() {
-        assertEval("{ round( log(10,), digits = 5 ) }");
-        assertEval("{ round( log(10,2), digits = 5 ) }");
-        assertEval("{ round( log(10,10), digits = 5 ) }");
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
-
         assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
     }
 
@@ -1893,6 +1889,24 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testReIm() {
+        assertEval("{ Re(1+1i) }");
+        assertEval("{ Im(1+1i) }");
+        assertEval("{ Re(1) }");
+        assertEval("{ Im(1) }");
+        assertEval("{ Re(c(1+1i,2-2i)) }");
+        assertEval("{ Im(c(1+1i,2-2i)) }");
+        assertEval("{ Re(c(1,2)) }");
+        assertEval("{ Im(c(1,2)) }");
+        assertEval("{ Re(as.double(NA)) }");
+        assertEval("{ Im(as.double(NA)) }");
+        assertEval("{ Re(c(1,NA,2)) }");
+        assertEval("{ Im(c(1,NA,2)) }");
+        assertEval("{ Re(NA+2i) }");
+        assertEval("{ Im(NA+2i) }");
+    }
+
+    @Test
     public void testMod() {
         assertEval("{ round(Mod(1+1i)*10000) }");
     }
@@ -2028,14 +2042,15 @@ public class TestSimpleBuiltins extends TestBase {
     public void testInvocation() {
         assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
         assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
+
+        assertEvalError("{ rnorm(n=1,n=2) }");
+        assertEvalError("{ rnorm(s=1,s=1) }");
+        assertEvalError("{ matrix(1:4,n=2) }");
     }
 
     @Test
     @Ignore
     public void testInvocationIgnore() {
-        assertEvalError("{ rnorm(n=1,n=2) }");
-        assertEvalError("{ rnorm(s=1,s=1) }");
-        assertEvalError("{ matrix(1:4,n=2) }");
         assertEvalError("{ matrix(x=1) }");
 
         assertEval("{ round( rnorm(1,), digits = 5 ) }");
@@ -2089,11 +2104,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sprintf(\"%3d\", 1:3) }");
         assertEval("{ sprintf(\"%4X\", 26) }");
         assertEval("{ sprintf(\"%04X\", 26) }");
-    }
-
-    @Test
-    @Ignore
-    public void testSprintfIgnore() {
         assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
         assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
         assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");
@@ -2309,6 +2319,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x) }");
         assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }");
         assertEval("{ print(list(list(list(1,2),list(3)),list(list(4),list(5,6)))) }");
+        assertEval("{ print(c(1.1,2.34567)) }");
+        assertEval("{ print(c(1,2.34567)) }");
+        assertEval("{ print(c(11.1,2.34567)) }");
     }
 
     @Test
