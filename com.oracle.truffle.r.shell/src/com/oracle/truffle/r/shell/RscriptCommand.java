@@ -22,13 +22,77 @@
  */
 package com.oracle.truffle.r.shell;
 
+import java.io.*;
+
+import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.runtime.*;
+
 /**
  * Emulates the (Gnu)Rscript command as precisely as possible.
  */
 public class RscriptCommand {
     // CheckStyle: stop system..print check
     public static void main(String[] args) {
-        System.err.println("Rscript is not implemented");
+        evalFileInput(args[0], new String[0]);
+    }
+
+    private static void evalFileInput(String filePath, String[] commandArgs) {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            fail("Fatal error: cannot open file '" + filePath + "': No such file or directory");
+        }
+        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
+            byte[] bytes = new byte[(int) file.length()];
+            is.read(bytes);
+            String content = new String(bytes);
+            REngine engine = REngine.getInstance(commandArgs, new SysoutConsoleHandler());
+            engine.parseAndEval(content, REngine.createVirtualFrame(), true);
+        } catch (IOException ex) {
+            fail("unexpected error reading file input");
+        }
+
+    }
+
+    static void fail(String msg) {
+        System.err.println(msg);
         System.exit(1);
     }
+
+    private static class SysoutConsoleHandler implements RContext.ConsoleHandler {
+        private PrintStream err = System.err;
+
+        public void println(String s) {
+            System.out.println(s);
+        }
+
+        public void print(String s) {
+            System.out.print(s);
+        }
+
+        public void printErrorln(String s) {
+            err.println(s);
+        }
+
+        public void printError(String s) {
+            err.print(s);
+        }
+
+        public String readLine() {
+            fail("input not possible");
+            return null;
+        }
+
+        public boolean isInteractive() {
+            return false;
+        }
+
+        public void redirectError() {
+            err = System.out;
+        }
+
+        public void setPrompt(String prompt) {
+        }
+
+    }
+
 }
