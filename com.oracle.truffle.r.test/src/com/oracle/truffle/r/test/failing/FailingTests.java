@@ -1139,11 +1139,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_8e0e4c508ec0f20a865b0743b9c50074() {
-        assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
-    }
-
-    @Ignore
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_294da5e2033cde503cc35cc77c91a8be() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(x) }");
     }

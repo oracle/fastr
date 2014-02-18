@@ -3389,6 +3389,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_8e0e4c508ec0f20a865b0743b9c50074() {
+        assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_d0b74ca1e3a968310d26a6eb998b7eed() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; abs(x) }");
     }
@@ -3471,11 +3476,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_889b85feda5669920cfe714405ea72cd() {
         assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  t(m) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_8e0e4c508ec0f20a865b0743b9c50074() {
-        assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
     }
 
     @Test
