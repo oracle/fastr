@@ -1494,11 +1494,12 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testTranspose() {
-
         assertEval("{ m <- matrix(1:49, nrow=7) ; sum(m * t(m)) }");
         assertEval("{ m <- matrix(1:81, nrow=9) ; sum(m * t(m)) }");
         assertEval("{ m <- matrix(-5000:4999, nrow=100) ; sum(m * t(m)) }");
         assertEval("{ m <- matrix(c(rep(1:10,100200),100L), nrow=1001) ; sum(m * t(m)) }");
+
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) }");
     }
 
     @Test

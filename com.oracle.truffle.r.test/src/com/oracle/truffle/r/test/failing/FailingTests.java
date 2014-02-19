@@ -169,16 +169,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleArithmetic_testMatricesProductIgnore_af557b2850b93c6f969d8bbddeda060f() {
-        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; m %*% t(m) }");
-    }
-
-    @Ignore
-    public void TestSimpleArithmetic_testMatricesProductIgnore_f85f22d8857748f52317e561e2718ae3() {
-        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) %*% m }");
-    }
-
-    @Ignore
     public void TestSimpleArithmetic_testMatricesProductIgnore_caeff71e032666868b80c5661b0aedbf() {
         assertEval("{ m <- matrix(c(1,2,3,0/0), nrow=4) ; m %*% 1:4 }");
     }

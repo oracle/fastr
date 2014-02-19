@@ -482,6 +482,10 @@ public class TestSimpleArithmetic extends TestBase {
     @Test
     public void testMatricesProduct() {
         assertEval("{ double() %*% double() }");
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; m %*% t(m) }");
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) %*% m }");
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; n <- matrix(1:4,4) ; m %*% n }");
+        assertEval("{ m <- double() ; dim(m) <- c(4,0) ; n <- matrix(1:4,ncol=4) ; n %*% m }");
     }
 
     @Test
@@ -497,8 +501,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEvalError("{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }");
         assertEvalError("{ 1:3 %*% matrix(4,nrow=2,ncol=5) }");
         assertEvalError("{ matrix(4,nrow=2,ncol=5) %*% 1:4 }");
-        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; m %*% t(m) }");
-        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) %*% m }");
         assertEval("{ m <- matrix(c(1,2,3,0/0), nrow=4) ; m %*% 1:4 }");
         assertEval("{ m <- matrix(c(NA,1,0/0,2), nrow=2) ; 1:2 %*% m }");
         assertEval("{ m <- double() ; dim(m) <- c(0,0) ; m %*% m }");

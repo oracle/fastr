@@ -364,6 +364,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArithmetic_testMatricesProduct_af557b2850b93c6f969d8bbddeda060f() {
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; m %*% t(m) }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testMatricesProduct_f85f22d8857748f52317e561e2718ae3() {
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) %*% m }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testMatricesProduct_f1ed21950d9811ec9ce279909f8ac20a() {
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; n <- matrix(1:4,4) ; m %*% n }");
+    }
+
+    @Test
+    public void TestSimpleArithmetic_testMatricesProduct_a0b87c9b473a105c31dbe9f024f1229f() {
+        assertEval("{ m <- double() ; dim(m) <- c(4,0) ; n <- matrix(1:4,ncol=4) ; n %*% m }");
+    }
+
+    @Test
     public void TestSimpleArithmetic_testMatricesProductIgnore_2d6353b38e2b880f487de091cada51de() {
         assertEval("{ x <- 1:3 %*% 9:11 ; x[1] }");
     }
@@ -396,16 +416,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleArithmetic_testMatricesProductIgnore_fcf07ee50d1cec625af66d876a3ade31() {
         assertEval("{ a <- array(1:9, dim=c(3,1,3)) ;  a %*% 1:9 }");
-    }
-
-    @Test
-    public void TestSimpleArithmetic_testMatricesProductIgnore_af557b2850b93c6f969d8bbddeda060f() {
-        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; m %*% t(m) }");
-    }
-
-    @Test
-    public void TestSimpleArithmetic_testMatricesProductIgnore_f85f22d8857748f52317e561e2718ae3() {
-        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) %*% m }");
     }
 
     @Test
@@ -9771,6 +9781,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testTranspose_fa1a12b9e0728d5f5374903976e090f4() {
         assertEval("{ m <- matrix(c(rep(1:10,100200),100L), nrow=1001) ; sum(m * t(m)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTranspose_23b14b1abdbbcc6ee0ba28e66b2dc0b3() {
+        assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) }");
     }
 
     @Test
