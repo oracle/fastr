@@ -578,11 +578,6 @@ public class TestSimpleArithmetic extends TestBase {
     @Test
     public void testNonvectorizedLogicalAndAsFunction() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), TRUE) }");
-    }
-
-    @Test
-    @Ignore
-    public void testNonvectorizedLogicalAndAsFunctionIgnore() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) }");
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(1,2) }");
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(double(),2) }");

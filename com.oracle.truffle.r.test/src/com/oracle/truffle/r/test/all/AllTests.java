@@ -624,42 +624,42 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_af987d86996028033ce13fb70386754f() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_af987d86996028033ce13fb70386754f() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_88bd252f9707cc0728933d5a01d5ec36() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_88bd252f9707cc0728933d5a01d5ec36() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(1,2) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_0d6f9f6d6b5bf8c004bd208c8b88a72e() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_0d6f9f6d6b5bf8c004bd208c8b88a72e() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(double(),2) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_c924f78b26ae5bf033f4de08b188383f() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_c924f78b26ae5bf033f4de08b188383f() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(integer(),2) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_2a6f592a022116d86a5ec89d04304c16() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_2a6f592a022116d86a5ec89d04304c16() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(2+3i,1/0) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_72585e59f431501cf5001dd2c3e50d33() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_72585e59f431501cf5001dd2c3e50d33() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(2+3i,logical()) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_852d4ff2e6db41111d0f4c780193e927() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_852d4ff2e6db41111d0f4c780193e927() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(1:3,4:10) ; f(1,2) ; f(logical(),4) }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunctionIgnore_127115bfa7022c79f86704e41e945f5c() {
+    public void TestSimpleArithmetic_testNonvectorizedLogicalAndAsFunction_127115bfa7022c79f86704e41e945f5c() {
         assertEval("{ f <- function(a,b) { a && b } ;  f(c(TRUE, FALSE), logical()) ; f(TRUE, c(TRUE,TRUE,FALSE)) ; f(1,2) }");
     }
 
