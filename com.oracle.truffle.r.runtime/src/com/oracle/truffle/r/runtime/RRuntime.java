@@ -71,6 +71,9 @@ public class RRuntime {
     public static final double DOUBLE_NA = Double.longBitsToDouble(NA_LONGBITS);
     public static final double EPSILON = Math.pow(2.0, -52.0);
 
+    public static final double COMPLEX_NA_REAL_PART = DOUBLE_NA;
+    public static final double COMPLEX_NA_IMAGINARY_PART = 0.0;
+
     public static final byte LOGICAL_TRUE = 1;
     public static final byte LOGICAL_FALSE = 0;
     public static final byte LOGICAL_NA = -1;
@@ -105,7 +108,7 @@ public class RRuntime {
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
     public static RComplex createComplexNA() {
-        return RDataFactory.createComplex(DOUBLE_NA, 0.0);
+        return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
     }
 
     public static boolean isNAorNaN(double d) {

@@ -150,6 +150,7 @@ public abstract class RError extends RuntimeException {
     public static final String MATCH_VECTOR_ARGS = "'match' requires vector arguments";
     public static final String DIMNAMES_NONARRAY = "'dimnames' applied to non-array";
     public static final String DIMNAMES_LIST = "'dimnames' must be a list";
+    public static final String NO_ARRAY_DIMNAMES = "no 'dimnames' attribute for array";
 
     public static final String ONLY_FIRST_USED = "numerical expression has %d elements: only the first used";
     public static final String NO_SUCH_INDEX = "no such index at level %d";
@@ -1594,6 +1595,18 @@ public abstract class RError extends RuntimeException {
             @Override
             public String getMessage() {
                 return RError.DIMNAMES_LIST;
+            }
+        };
+    }
+
+    public static RError getNoArrayDimnames(SourceSection expr) {
+        return new RErrorInExpr(expr) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public String getMessage() {
+                return RError.NO_ARRAY_DIMNAMES;
             }
         };
     }

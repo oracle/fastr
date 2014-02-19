@@ -169,7 +169,8 @@ public final class NACheck implements RDataCheckClosure {
     }
 
     public boolean neverSeenNA() {
-        return state != CHECK;
+        // need to check for both NA and NaN (the latter used for double to int conversions)
+        return state != CHECK && !seenNaN;
     }
 
     public boolean hasNeverBeenTrue() {

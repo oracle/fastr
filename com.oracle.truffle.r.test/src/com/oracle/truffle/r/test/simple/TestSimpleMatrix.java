@@ -77,6 +77,13 @@ public class TestSimpleMatrix extends TestBase {
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[1, ] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[1, c(1,3)] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"d\", \"e\")); x[1, c(1,3)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(1, NA), ] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(TRUE, NA), ] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; x<-1:4; dim(x)<-c(2,2); x[NA, ] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1,NA), 1] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, c(1,NA)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, NA), c(1,NA)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, 1), c(1,NA)] }", TESTED_4L_VECTORS));
 
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,4); x[0,0] }", TESTED_8L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,4); x[,0] }", TESTED_8L_VECTORS));
@@ -101,6 +108,16 @@ public class TestSimpleMatrix extends TestBase {
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2, 4); x[c(-1, -2),c(1)] }", TESTED_8L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2, 4); x[c(-1, -2),c(1, 2)] }", TESTED_8L_VECTORS));
 
+        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, TRUE] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, FALSE] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, FALSE)] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE)] }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
+        assertEval("{ x<-(1:8); dim(x)<-c(2,4); x[1, c(NA, NA)] }");
+        assertEval("{ x<-(1:8); dim(x)<-c(2,4); x[1, c(1, NA)] }");
+        assertEval("{ x<-(1:4); dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, NA] }");
+        assertEval("{ x<-(1:4); dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[NA, 1] }");
+
         assertEval("{ x<-1:16; dim(x)<-c(4,4); x[-1,-2] }");
         assertEval("{ x<-1:16; dim(x)<-c(4,4); x[-1,c(1,1,2,3)] }");
 
@@ -110,18 +127,15 @@ public class TestSimpleMatrix extends TestBase {
         assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(1,1), 1] }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(1,2), 1] }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(1,2,1), 1] }");
-    }
 
-    @Test
-    @Ignore
-    public void testAccessScalarIndexIgnore() {
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[\"b\", 1] }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[\"d\", 1] }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[as.character(NA), 1] }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(\"b\"), 1] }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(\"d\"), 1] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, TRUE] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, FALSE] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, FALSE)] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE)] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(\"a\", \"b\"), 1] }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(\"a\", \"a\"), 1] }");
+        assertEval("{ x<-1:2; dim(x)<-c(1:2); dimnames(x)<-list(\"z\", c(\"a\", \"b\")); x[\"z\", 1] }");
+        assertEval("{ x<-1:2; dim(x)<-c(1:2); dimnames(x)<-list(\"z\", c(\"a\", \"b\")); x[c(\"z\", \"z\"), 1] }");
     }
 
     @Test
