@@ -1448,6 +1448,7 @@ public class TestSimpleBuiltins extends TestBase {
 
         // globalenv
         assertEval("{ ls() }");
+        assertEval("{ globalenv() }");
     }
 
     @Test

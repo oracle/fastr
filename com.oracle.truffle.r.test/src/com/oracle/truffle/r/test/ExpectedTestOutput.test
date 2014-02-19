@@ -4558,6 +4558,10 @@ Error in get("x") : object 'x' not found
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ globalenv() }
+<environment: R_GlobalEnv>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ h <- function() { assign("f", function() {4}) ; f() } ; h() }
 [1] 4
 

@@ -6919,6 +6919,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_9e2a6f71d6db27159d2decade3c9ba3d() {
+        assertEval("{ globalenv() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_9da65acccab58ab951f83fcc62eb2a9d() {
         assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }");
     }
