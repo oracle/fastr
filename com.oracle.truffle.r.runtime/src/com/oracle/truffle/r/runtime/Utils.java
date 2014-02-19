@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
@@ -116,6 +118,18 @@ public final class Utils {
             graphPrinter.beginGraph(RRuntime.toString(function)).visit(callTarget.getRootNode());
         }
         graphPrinter.printToNetwork(true);
+    }
+
+    public static String getResourceAsString(InputStream is) throws IOException {
+        try (BufferedReader bs = new BufferedReader(new InputStreamReader(is))) {
+            char[] buf = new char[1024];
+            StringBuilder sb = new StringBuilder();
+            int n;
+            while ((n = bs.read(buf, 0, buf.length)) > 0) {
+                sb.append(buf, 0, n);
+            }
+            return sb.toString();
+        }
     }
 
 }

@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
-import java.nio.file.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -33,17 +31,16 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin("contributors")
 public abstract class Contributors extends RBuiltinNode {
 
-    // CheckStyle: stop system..print check
     @Specialization
     public Object contributors() {
-        Path cf = Paths.get(ResourceHandlerFactory.getHandler().getResource(getClass(), "CONTRIBUTORS").getFile());
-        if (!cf.toFile().exists()) {
-            throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "file not found");
+        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "CONTRIBUTORS");
+        if (is == null) {
+            throw RError.getInternal(getSourceSection(), "CONTRIBUTORS resource not found");
         }
         try {
-            System.out.println(new String(Files.readAllBytes(cf)));
+            RContext.getInstance().getConsoleHandler().println(Utils.getResourceAsString(is));
         } catch (IOException ioe) {
-            throw RError.getCannotOpenFile(getSourceSection(), RRuntime.toString(cf), "reading error");
+            throw RError.getInternal(getSourceSection(), "error reading CONTRIBUTORS resource");
         }
         return RInvisible.INVISIBLE_NULL;
     }
