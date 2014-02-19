@@ -95,6 +95,7 @@ public class RRuntime {
     public static final REnvironment GLOBAL_ENV = RGlobalEnvironment.instance;
 
     public static final String[] STRING_ARRAY_SENTINEL = new String[0];
+    public static final String DEFAULT = "default";
 
     public static final String NAMES_ATTR_KEY = new String("names");
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
@@ -103,6 +104,8 @@ public class RRuntime {
     public static final String DIM_ATTR_KEY = new String("dim");
     public static final String DIMNAMES_ATTR_KEY = "dimnames";
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
+
+    public static final String CLASS_ATTR_KEY = "class";
 
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(DOUBLE_NA, 0.0);

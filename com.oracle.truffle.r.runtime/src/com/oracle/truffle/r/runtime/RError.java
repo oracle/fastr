@@ -159,6 +159,7 @@ public abstract class RError extends RuntimeException {
     public static final String ARGUMENT_NOT_MATCH = "supplied argument name '%s' does not match '%s'";
     public static final String ARGUMENT_MISSING = "argument '%s' is missing, with no default";
     public static final String UNKNOWN_FUNCTION = "could not find function '%s'";
+    public static final String UNKNOWN_FUNCTION_USE_METHOD = "Error in UseMethod('%s') : \n no applicable method for '%s' applied to an object of class '%s'";
     public static final String UNKNOWN_OBJECT = "object '%s' not found";
     public static final String INVALID_ARGUMENT = "invalid '%s' argument";
     public static final String INVALID_SUBSCRIPT_TYPE = "invalid subscript type '%s'";
@@ -1634,6 +1635,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getUnknownFunction(SourceSection ast, String variable) {
         return getGenericError(ast, stringFormat(RError.UNKNOWN_FUNCTION, variable));
+    }
+
+    public static RError getUnknownFunctionUseMethod(SourceSection ast, String function, String classVector) {
+        return getGenericError(ast, stringFormat(RError.UNKNOWN_FUNCTION_USE_METHOD, function, function, classVector));
     }
 
     public static RError getInvalidArgument(SourceSection ast, String str) {

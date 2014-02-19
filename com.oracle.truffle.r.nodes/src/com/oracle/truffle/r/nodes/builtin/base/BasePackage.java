@@ -172,6 +172,7 @@ public class BasePackage extends RPackage {
         load(UpdateLength.class);
         load(UpdateNames.class);
         load(UpperTri.class);
+        load(UseMethod.class);
         load(Which.class);
     }
 
