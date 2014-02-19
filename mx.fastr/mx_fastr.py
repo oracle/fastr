@@ -23,7 +23,6 @@
 import subprocess, tempfile, shutil, filecmp
 from os.path import join, sep
 from argparse import ArgumentParser
-import shlex
 import mx
 import mx_graal
 import os
