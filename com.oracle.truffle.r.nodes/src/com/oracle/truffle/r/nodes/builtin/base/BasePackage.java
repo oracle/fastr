@@ -88,6 +88,7 @@ public class BasePackage extends RPackage {
         load(Exists.class);
         load(Floor.class);
         load(Get.class);
+        load(GlobalEnv.class);
         load(Gregexpr.class);
         load(GSub.class);
         load(Ifelse.class);
@@ -154,10 +155,11 @@ public class BasePackage extends RPackage {
         load(Sprintf.class);
         load(Sqrt.class);
         load(Stop.class);
+        load(Strsplit.class);
         load(Sub.class);
         load(Substr.class);
         load(Sum.class);
-        load(Strsplit.class);
+        // load(SysGetpid.class);
         load(ToLower.class);
         load(ToString.class);
         load(ToUpper.class);

@@ -178,6 +178,11 @@ public abstract class PrettyPrinterNode extends RNode {
         return ((RRootNode) ((DefaultCallTarget) operand.getTarget()).getRootNode()).getSourceCode();
     }
 
+    @Specialization
+    public String prettyPrint(REnvironment operand, Object listElementName) {
+        return operand.toString();
+    }
+
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, Map<String, Object> attributes) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, Object> attr : attributes.entrySet()) {
