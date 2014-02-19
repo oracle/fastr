@@ -23,16 +23,14 @@
 import subprocess, tempfile, shutil, filecmp
 from os.path import join, sep
 from argparse import ArgumentParser
-import shlex
 import mx
 import mx_graal
 import os
 
 def runRCommand(args):
-    '''run R program or shell [--J @VMargs] [path]'''
-    vmArgs, rArgs = _extract_vmArgs(args)
+    '''run R program or shell [path]'''
     os.environ['R_HOME'] = mx.suite('fastr').dir
-    mx_graal.vm(vmArgs + ['-cp', rShellCp(), rCommandClass()] + rArgs)
+    mx_graal.vm(['-cp', rShellCp(), rCommandClass()] + args)
 
 def rShellCp():
     return mx.classpath("com.oracle.truffle.r.shell")
@@ -40,30 +38,6 @@ def rShellCp():
 
 def rCommandClass():
     return "com.oracle.truffle.r.shell.RCommand"
-
-def _extract_vmArgs(args):
-    '''custom version of mx._extract_VM_args that supports --J'''
-    rArgs = []
-    vmArgs = []
-    # mx._extract_VM_args style
-    doubleDash = args.index('--') if '--' in args else None
-    if doubleDash is not None:
-        return (args[:doubleDash], args[doubleDash + 1:])
-
-    args_len = len(args)
-    i = 0
-    while i < args_len:
-        arg = args[i]
-        if arg.startswith('--J'):
-            if i == args_len - 1 or not args[i + 1].startswith('@'):
-                mx.abort("@args expected after --J")
-            else:
-                i = i + 1
-                vmArgs = vmArgs + shlex.split(args[i].lstrip('@'))
-        else:
-            rArgs.append(arg)
-        i = i + 1
-    return (vmArgs, rArgs)
 
 def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)

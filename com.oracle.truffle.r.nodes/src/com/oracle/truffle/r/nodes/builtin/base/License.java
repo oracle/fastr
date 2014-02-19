@@ -30,10 +30,9 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin({"license", "licence"})
 public abstract class License extends RBuiltinNode {
 
-    // CheckStyle: stop system..print check
     @Specialization
     public Object license() {
-        System.out.println(RRuntime.LICENSE);
+        RContext.getInstance().getConsoleHandler().println(RRuntime.LICENSE);
         return RInvisible.INVISIBLE_NULL;
     }
 

@@ -255,6 +255,18 @@ public abstract class RError extends RuntimeException {
         };
     }
 
+    public static RError getInternal(SourceSection expr, final String msg) {
+        return new RErrorInExpr(expr) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public String getMessage() {
+                return msg == null ? "Internal implementation error ..." : msg;
+            }
+        };
+    }
+
     public static RError getLengthZero(SourceSection expr) {
         return new RErrorInExpr(expr) {
 

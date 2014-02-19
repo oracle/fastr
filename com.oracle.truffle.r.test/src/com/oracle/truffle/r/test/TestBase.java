@@ -18,6 +18,7 @@ import static org.junit.Assert.fail;
 import org.junit.*;
 import org.junit.runner.*;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.generate.*;
 
 /**
@@ -146,7 +147,7 @@ public class TestBase {
         if (expectedOutputManager == null) {
             // assume we are running a unit test in an IDE and the RunListener was not invoked.
             // In this case we can expect the test output file to exist and open it as a resource
-            URL expectedTestOutputURL = TestBase.class.getResource(TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
+            URL expectedTestOutputURL = ResourceHandlerFactory.getHandler().getResource(TestBase.class, TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
             if (expectedTestOutputURL == null) {
                 Assert.fail("cannot find " + TestOutputManager.TEST_EXPECTED_OUTPUT_FILE + " resource");
             } else {

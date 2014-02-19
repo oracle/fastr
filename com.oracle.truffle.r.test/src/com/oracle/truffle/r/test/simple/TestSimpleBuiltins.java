@@ -1043,6 +1043,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ log(1) } ");
         assertEval("{ log(0) }");
         assertEval("{ log(c(0,1)) }");
+        assertEval("{ round( log(10,), digits = 5 ) }");
+        assertEval("{ round( log(10,2), digits = 5 ) }");
+        assertEval("{ round( log(10,10), digits = 5 ) }");
     }
 
     @Test
@@ -1070,11 +1073,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testLogIgnore() {
-        assertEval("{ round( log(10,), digits = 5 ) }");
-        assertEval("{ round( log(10,2), digits = 5 ) }");
-        assertEval("{ round( log(10,10), digits = 5 ) }");
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
-
         assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
     }
 
@@ -1449,6 +1448,7 @@ public class TestSimpleBuiltins extends TestBase {
 
         // globalenv
         assertEval("{ ls() }");
+        assertEval("{ globalenv() }");
     }
 
     @Test
@@ -2043,14 +2043,15 @@ public class TestSimpleBuiltins extends TestBase {
     public void testInvocation() {
         assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
         assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
+
+        assertEvalError("{ rnorm(n=1,n=2) }");
+        assertEvalError("{ rnorm(s=1,s=1) }");
+        assertEvalError("{ matrix(1:4,n=2) }");
     }
 
     @Test
     @Ignore
     public void testInvocationIgnore() {
-        assertEvalError("{ rnorm(n=1,n=2) }");
-        assertEvalError("{ rnorm(s=1,s=1) }");
-        assertEvalError("{ matrix(1:4,n=2) }");
         assertEvalError("{ matrix(x=1) }");
 
         assertEval("{ round( rnorm(1,), digits = 5 ) }");
@@ -2104,11 +2105,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sprintf(\"%3d\", 1:3) }");
         assertEval("{ sprintf(\"%4X\", 26) }");
         assertEval("{ sprintf(\"%04X\", 26) }");
-    }
-
-    @Test
-    @Ignore
-    public void testSprintfIgnore() {
         assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
         assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
         assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");

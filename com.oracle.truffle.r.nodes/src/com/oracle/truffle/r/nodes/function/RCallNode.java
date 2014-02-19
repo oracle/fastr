@@ -405,9 +405,10 @@ public abstract class RCallNode extends RNode {
         T[] resultArgs = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgIndex != -1 ? parameterNames.length : Math.max(parameterNames.length, arguments.length));
         BitSet matchedNames = new BitSet(actualNames.length);
         int unmatchedNameCount = 0;
+        boolean[] matchedArgs = new boolean[parameterNames.length];
         for (int i = 0; i < actualNames.length; i++) {
             if (actualNames[i] != null) {
-                int parameterPosition = findParameterPosition(parameterNames, actualNames[i], i, true/* TODO */);
+                int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, true/* TODO */);
                 if (parameterPosition >= 0) {
                     resultArgs[parameterPosition] = arguments[i];
                     matchedNames.set(i);
@@ -449,7 +450,7 @@ public abstract class RCallNode extends RNode {
         return resultArgs;
     }
 
-    private int findParameterPosition(Object[] parameterNames, Object actualName, int argPos, boolean varArgs) {
+    private int findParameterPosition(Object[] parameterNames, Object actualName, boolean[] matchedArgs, int argPos, boolean varArgs) {
         String name = RRuntime.toString(actualName);
         int found = -1;
         for (int i = 0; i < parameterNames.length; i++) {
@@ -458,6 +459,10 @@ public abstract class RCallNode extends RNode {
                     throw RError.getArgumentMatchesMultiple(getEncapsulatingSourceSection(), 1 + argPos);
                 }
                 found = i;
+                if (matchedArgs[found]) {
+                    throw RError.getFormalMatchedMultiple(getEncapsulatingSourceSection(), RRuntime.toString(parameterNames[i]));
+                }
+                matchedArgs[found] = true;
             }
         }
         if (found >= 0 || varArgs) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
 import java.io.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("contributors")
-public abstract class Contributors extends RBuiltinNode {
+/**
+ * Abstracts the mechanism for accessing resources in the sense of
+ * {@link java.lang.Class#getResource(String)}, for environments that might not support that
+ * functionality.
+ */
+public interface ResourceHandler {
+    /**
+     * See {@link java.lang.Class#getResource(String)}.
+     * 
+     * @return The path component of the {@link java.net URL} returned by
+     *         {@link java.lang.Class#getResource(String)}
+     */
+    String getResourcePath(Class<?> accessor, String name);
 
-    @Specialization
-    public Object contributors() {
-        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "CONTRIBUTORS");
-        if (is == null) {
-            throw RError.getInternal(getSourceSection(), "CONTRIBUTORS resource not found");
-        }
-        try {
-            RContext.getInstance().getConsoleHandler().println(Utils.getResourceAsString(is));
-        } catch (IOException ioe) {
-            throw RError.getInternal(getSourceSection(), "error reading CONTRIBUTORS resource");
-        }
-        return RInvisible.INVISIBLE_NULL;
-    }
+    /**
+     * See {@link java.lang.Class#getResourceAsStream(String)}.
+     */
+    InputStream getResourceAsStream(Class<?> accessor, String name);
 }

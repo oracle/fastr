@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
 import java.io.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import java.net.*;
 
-@RBuiltin("contributors")
-public abstract class Contributors extends RBuiltinNode {
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory.*;
 
-    @Specialization
-    public Object contributors() {
-        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "CONTRIBUTORS");
-        if (is == null) {
-            throw RError.getInternal(getSourceSection(), "CONTRIBUTORS resource not found");
-        }
-        try {
-            RContext.getInstance().getConsoleHandler().println(Utils.getResourceAsString(is));
-        } catch (IOException ioe) {
-            throw RError.getInternal(getSourceSection(), "error reading CONTRIBUTORS resource");
-        }
-        return RInvisible.INVISIBLE_NULL;
+/**
+ * Default implementation uses the default mechanism in {@code java.lang.Class}.
+ */
+class DefaultResourceHandlerFactory extends ResourceHandlerFactory implements Handler {
+
+    public URL getResource(Class<?> accessor, String name) {
+        return accessor.getResource(name);
     }
+
+    public InputStream getResourceAsStream(Class<?> accessor, String name) {
+        return accessor.getResourceAsStream(name);
+    }
+
+    @Override
+    protected Handler newHandler() {
+        return this;
+    }
+
 }

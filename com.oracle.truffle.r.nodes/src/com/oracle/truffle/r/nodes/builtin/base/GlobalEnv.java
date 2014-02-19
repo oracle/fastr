@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.RTypesGen.*;
-
-import java.text.*;
-
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("print")
-@SuppressWarnings("unused")
-public abstract class Print extends RBuiltinNode {
-
-    @Child protected PrettyPrinterNode prettyPrinter = adoptChild(PrettyPrinterNodeFactory.create(null, null, false));
-
-    private static void printHelper(String string) {
-        RContext.getInstance().getConsoleHandler().println(string);
-    }
+@RBuiltin({"globalenv"})
+public abstract class GlobalEnv extends RBuiltinNode {
 
     @Specialization
-    public Object print(VirtualFrame frame, Object o) {
-        String s = (String) prettyPrinter.executeString(frame, o, null);
-        if (s != null && !s.isEmpty()) {
-            printHelper(s);
-        }
-        return new RInvisible(o); // TODO should we actually call "invisible(o)"?
+    public Object globalenv() {
+        return RRuntime.GLOBAL_ENV;
     }
 
 }

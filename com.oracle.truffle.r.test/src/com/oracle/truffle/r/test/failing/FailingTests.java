@@ -1139,11 +1139,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_8e0e4c508ec0f20a865b0743b9c50074() {
-        assertEval("{ m <- 1:3 ; attr(m,\"a\") <- 1 ;  t(m) }");
-    }
-
-    @Ignore
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_294da5e2033cde503cc35cc77c91a8be() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(x) }");
     }
@@ -2204,21 +2199,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_73766bf1494217b546d5a8a1b7fd6ffb() {
-        assertEvalError("{ rnorm(n=1,n=2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_e8154f4579737f4c2897a1a5efec88b0() {
-        assertEvalError("{ rnorm(s=1,s=1) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_80ab23cb6bb221f5903c9f0591b173d3() {
-        assertEvalError("{ matrix(1:4,n=2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_e7dd2cd652f2b8c1a31a90832603d4c5() {
         assertEvalError("{ matrix(x=1) }");
     }
@@ -2226,21 +2206,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_53d1bf6a3bf98883a70a360da169055c() {
         assertEvalError("{ max(1,2,) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLogIgnore_19a1529b84641df8cd280fc3f04fdc83() {
-        assertEval("{ round( log(10,), digits = 5 ) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLogIgnore_11d410bde7960c23039008b176a8c6de() {
-        assertEval("{ round( log(10,2), digits = 5 ) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testLogIgnore_55d1aea1ad49cb7388b91157708cc4fd() {
-        assertEval("{ round( log(10,10), digits = 5 ) }");
     }
 
     @Ignore
@@ -3154,21 +3119,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSprintfIgnore_2f5377dc3237afcaf3f4b0fa24d32d56() {
-        assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSprintfIgnore_2b763de8de8629771e185b2aa8e8c72f() {
-        assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSprintfIgnore_632e911896ba628e751fb0a5d3deb81f() {
-        assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSqrtBroken_dda9ccdc11f9f5afbe9854145501c5e5() {
         assertEval("{ sqrt(c(a=9,b=81)) }");
     }
@@ -4076,16 +4026,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleLoop_testLoopsErrorsIgnore_eb72a8fa37e3e5c2ac10481c6173a724() {
         assertEvalError("{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
-    }
-
-    @Ignore
-    public void TestSimpleLoop_testLoopsErrorsIgnore_bc6b5c193e92175abc33e62c6b4cb66c() {
-        assertEvalError("{ break; }");
-    }
-
-    @Ignore
-    public void TestSimpleLoop_testLoopsErrorsIgnore_4e8d19b7c3269b63639652234d8164f8() {
-        assertEvalError("{ next; }");
     }
 
     @Ignore

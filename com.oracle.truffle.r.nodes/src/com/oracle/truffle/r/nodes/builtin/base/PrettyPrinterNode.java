@@ -103,7 +103,13 @@ public abstract class PrettyPrinterNode extends RNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             multiDimPrinter = adoptChild(PrintVectorMultiDimNodeFactory.create(null, null));
         }
-        return (String) multiDimPrinter.executeString(frame, vector, RRuntime.asLogical(isListOrStringVector));
+        StringBuilder sb = new StringBuilder();
+        sb.append((String) multiDimPrinter.executeString(frame, vector, RRuntime.asLogical(isListOrStringVector)));
+        Map<String, Object> attributes = vector.getAttributes();
+        if (attributes != null) {
+            sb.append(printAttributes(frame, vector, attributes));
+        }
+        return builderToString(sb);
     }
 
     @Specialization
@@ -172,6 +178,11 @@ public abstract class PrettyPrinterNode extends RNode {
         return ((RRootNode) ((DefaultCallTarget) operand.getTarget()).getRootNode()).getSourceCode();
     }
 
+    @Specialization
+    public String prettyPrint(REnvironment operand, Object listElementName) {
+        return operand.toString();
+    }
+
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, Map<String, Object> attributes) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, Object> attr : attributes.entrySet()) {
@@ -179,8 +190,8 @@ public abstract class PrettyPrinterNode extends RNode {
                 // names attribute already printed
                 continue;
             }
-            if (attr.getKey().equals(RRuntime.DIM_ATTR_KEY)) {
-                // dim attribute never gets printed
+            if (attr.getKey().equals(RRuntime.DIM_ATTR_KEY) || attr.getKey().equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+                // dim and dimnames attributes never gets printed
                 continue;
             }
             builder.append("\n");
@@ -902,7 +913,7 @@ public abstract class PrettyPrinterNode extends RNode {
             } else {
                 int dimSize = dimensions[numDimensions - 1];
                 if (dimSize == 0) {
-                    return null;
+                    return "";
                 }
                 StringBuilder sb = new StringBuilder();
                 if (numDimensions == 3) {
@@ -926,7 +937,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         String dimId = getDimId(vector, numDimensions, dimInd);
                         String innerDims = printDim(frame, vector, isListOrStringVector, numDimensions - 1, arrayBase, accDimensions, dimId);
                         if (innerDims == null) {
-                            return null;
+                            return "";
                         } else {
                             sb.append(innerDims);
                         }

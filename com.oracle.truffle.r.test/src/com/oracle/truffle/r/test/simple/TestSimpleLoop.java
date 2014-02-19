@@ -51,6 +51,9 @@ public class TestSimpleLoop extends TestBase {
     @Test
     public void testLoopsErrors() {
         assertEvalError("{ while(1 < NA) { 1 } }");
+
+        assertEvalError("{ break; }");
+        assertEvalError("{ next; }");
     }
 
     @Test
@@ -59,9 +62,6 @@ public class TestSimpleLoop extends TestBase {
         assertEvalError("{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
         assertEvalError("{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
         assertEvalError("{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
-
-        assertEvalError("{ break; }");
-        assertEvalError("{ next; }");
     }
 
     @Test
