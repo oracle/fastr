@@ -296,7 +296,7 @@ public abstract class ArrayPositionCast extends RNode {
             int resultLength = vector.getDimensions()[dimension];
             int logicalVectorLength = operand.getLength();
             int logicalVectorInd = 0;
-            int data[] = new int[resultLength];
+            int[] data = new int[resultLength];
             naCheck.enable(!operand.isComplete());
             boolean hasSeenFalse = false;
             for (int i = 0; i < resultLength; i++, logicalVectorInd = Utils.incMod(logicalVectorInd, logicalVectorLength)) {
