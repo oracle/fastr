@@ -2739,26 +2739,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testRecall_ab1f19a0b3e459827e17703fdb01ae66() {
-        assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; f(10) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRecall_0ba837fe54245bf403e44681adc101c6() {
-        assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; g <- f ; f <- sum ; g(10) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRecall_c03f6fc45c4259fc4e69c35929eaece2() {
-        assertEval("{ f<-function(i) { if (i==1) { 1 } else if (i==2) { 1 } else { Recall(i-1) + Recall(i-2) } } ; f(10) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRecall_7c29fb4f1a8750978976ebb307ddc9c8() {
-        assertEvalError("{ Recall(10) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testRegExprComplex_86a31eb43c44df7c7453e0bfe0140ded() {
         assertEval("gregexpr(\"(a)[^a]\\1\", c(\"andrea apart\", \"amadeus\", NA))");
     }

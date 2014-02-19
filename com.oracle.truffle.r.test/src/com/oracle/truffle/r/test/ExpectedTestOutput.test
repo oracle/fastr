@@ -5727,6 +5727,22 @@ NULL
 #{ Re(c(1,NA,2)) }
 [1]  1 NA  2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRecall
+#{ Recall(10) }
+Error in Recall(10) : 'Recall' called from outside a closure
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRecall
+#{ f<-function(i) { if (i==1) { 1 } else if (i==2) { 1 } else { Recall(i-1) + Recall(i-2) } } ; f(10) }
+[1] 55
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRecall
+#{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; f(10) }
+[1] 3628800
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRecall
+#{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; g <- f ; f <- sum ; g(10) }
+[1] 3628800
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep("hello", 3) }
 [1] "hello" "hello" "hello"

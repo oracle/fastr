@@ -50,15 +50,23 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         RFunction function = RArguments.get(frame).getFunction();
+        if (function == null) {
+            throw RError.getRecallCalledOutsideClosure(getEncapsulatingSourceSection());
+        }
         if (callNode == null) {
             CompilerDirectives.transferToInterpreter();
-            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(((RCallNode.VarArgsNode) unwrap(arguments[0])).getArgumentNodes())));
+            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(createArgs(arguments[0]))));
             arguments[0] = null;
         }
         return callNode.execute(frame, function);
     }
 
-    private static Object unwrap(RNode argNode) {
-        return argNode instanceof WrapArgumentNode ? ((WrapArgumentNode) argNode).getOperand() : argNode;
+    private static RNode[] createArgs(RNode argNode) {
+        RNode actualArgNode = argNode instanceof WrapArgumentNode ? ((WrapArgumentNode) argNode).getOperand() : argNode;
+        if (actualArgNode instanceof VarArgsNode) {
+            return ((VarArgsNode) actualArgNode).getArgumentNodes();
+        } else {
+            return new RNode[]{actualArgNode};
+        }
     }
 }
