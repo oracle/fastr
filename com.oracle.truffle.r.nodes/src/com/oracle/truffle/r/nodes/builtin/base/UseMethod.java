@@ -1,3 +1,13 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * Copyright (c) 2014, Purdue University
+ * Copyright (c) 2014, Oracle and/or its affiliates
+ *
+ * All rights reserved.
+ */
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
@@ -27,6 +37,8 @@ public abstract class UseMethod extends RBuiltinNode {
     @Child protected ReadVariableNode lookup;
     @CompilationFinal protected String lastFun;
 
+    private FunctionDefinitionNode funcDefnNode;
+
     @Override
     public Object[] getParameterNames() {
         return PARAMETER_NAMES;
@@ -43,30 +55,24 @@ public abstract class UseMethod extends RBuiltinNode {
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, RAbstractVector arg) {
 
-        final Map<?, ?> attributes = arg.getAttributes();
+        final Map<String, Object> attributes = arg.getAttributes();
         final Object classAttrb = attributes.get(RRuntime.CLASS_ATTR_KEY);
-        RFunction targetFunction = null;
+        VirtualFrame newFrame = null;
         if (classAttrb instanceof RStringVector) {
             RStringVector classNames = (RStringVector) classAttrb;
-            for (int i = 0; i < classNames.getLength() && targetFunction == null; ++i) {
-                targetFunction = findFunction(classNames.getDataAt(i), generic, frame);
+            for (int i = 0; i < classNames.getLength() && newFrame == null; ++i) {
+                newFrame = findFunction(classNames.getDataAt(i), generic, frame);
             }
         }
         if (classAttrb instanceof String) {
-            targetFunction = findFunction((String) classAttrb, generic, frame);
+            newFrame = findFunction((String) classAttrb, generic, frame);
         }
-        if (targetFunction == null) {
-            targetFunction = findFunction(RRuntime.DEFAULT, generic, frame);
-            if (targetFunction == null) {
+        if (newFrame == null) {
+            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
+            if (newFrame == null) {
                 throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, classAttrb.toString());
             }
-
         }
-        FunctionDefinitionNode fDefn = (FunctionDefinitionNode) (((DefaultCallTarget) targetFunction.getTarget()).getRootNode());
-        RArguments currentArguments = frame.getArguments(RArguments.class);
-        RArguments newArguments = RArguments.create(targetFunction, targetFunction.getEnclosingFrame(), currentArguments.getArgumentsArray(), currentArguments.getNames());
-        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, frame.getFrameDescriptor().copy());
-
         // Copy the variables defined(prior to call to UseMethod) in the current frame to the new
         // frame
         for (FrameSlot fs : frame.getFrameDescriptor().getSlots()) {
@@ -94,7 +100,7 @@ public abstract class UseMethod extends RBuiltinNode {
                     break;
             }
         }
-        return fDefn.execute(newFrame);
+        return funcDefnNode.execute(newFrame);
     }
 
     /*
@@ -110,8 +116,11 @@ public abstract class UseMethod extends RBuiltinNode {
     /*
      * @Specialization public Object useMethod(VirtualFrame frame, String generic, RDouble arg) { }
      */
-    private RFunction findFunction(final String className, final String generic, VirtualFrame frame) {
-        final String funcName = generic + "." + className;
+    private VirtualFrame findFunction(final String className, final String generic, VirtualFrame frame) {
+        StringBuilder sbFuncName = new StringBuilder(generic);
+        sbFuncName.append(".");
+        sbFuncName.append(className);
+        final String funcName = RRuntime.toString(sbFuncName);
         if (lookup == null || !funcName.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = funcName;
@@ -125,7 +134,11 @@ public abstract class UseMethod extends RBuiltinNode {
             return null;
         }
         if (func != null && func instanceof RFunction) {
-            return (RFunction) func;
+            final RFunction targetFunction = (RFunction) func;
+            funcDefnNode = (FunctionDefinitionNode) (((DefaultCallTarget) targetFunction.getTarget()).getRootNode());
+            final RArguments currentArguments = frame.getArguments(RArguments.class);
+            final RArguments newArguments = RArguments.create(targetFunction, targetFunction.getEnclosingFrame(), currentArguments.getArgumentsArray(), currentArguments.getNames());
+            return Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, frame.getFrameDescriptor().copy());
         }
         return null;
     }
