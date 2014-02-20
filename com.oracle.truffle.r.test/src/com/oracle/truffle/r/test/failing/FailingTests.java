@@ -3974,41 +3974,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_908d675bd2ddd444451a0355ec9bf7d4() {
-        assertEval("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(\"b\"), 1] }");
-    }
-
-    @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_38338d5474331aa6eeff230e7b5ba879() {
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, TRUE] }");
-    }
-
-    @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_db156d54bea8cb65414cbc93089ecf17() {
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, FALSE] }");
-    }
-
-    @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_1c896ed27494abd74b02ac6f757b9ac0() {
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, FALSE)] }");
-    }
-
-    @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_dd0a5fa1d3a35144101e702bc966c97d() {
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE)] }");
-    }
-
-    @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_112ecfdbb435356eb1b836e9064960f2() {
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
-    }
-
-    @Ignore
-    public void TestSimpleMatrix_testAccessScalarIndexIgnore_0329e63f7c90c3a6cbc7453eb4331204() {
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"d\", \"e\")); x[c(\"d\"), 1] }");
-    }
-
-    @Ignore
     public void TestSimpleMatrix_testUpdateScalarIndexIgnore_31ebd8e266314975219ed84586986401() {
         assertEval("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[,][1]<-42; x }");
     }
