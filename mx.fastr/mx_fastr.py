@@ -30,7 +30,7 @@ import os
 def runRCommand(args):
     '''run R program or shell [path]'''
     os.environ['R_HOME'] = mx.suite('fastr').dir
-    mx_graal.vm(['-ea', '-cp', rShellCp(), rCommandClass()] + args)
+    mx_graal.vm(['-ea', '-esa', '-cp', rShellCp(), rCommandClass()] + args)
 
 def rShellCp():
     return mx.classpath("com.oracle.truffle.r.shell")
