@@ -9,9 +9,6 @@ library@ANTLR@urls=http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/a
 library@NETLIB@path=lib/netlib-java-0.9.3.jar
 library@NETLIB@urls=http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar
 
-library@JLINE-2.11@path=lib/jline-2.11.jar
-library@JLINE-2.11@urls=http://repo1.maven.org/maven2/jline/jline/2.11/jline-2.11.jar
-
 library@ANTLR-C@path=lib/antlr-complete-3.5.1.jar
 library@ANTLR-C@urls=http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar
 
@@ -63,14 +60,14 @@ project@com.oracle.truffle.r.engine@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.shell
 project@com.oracle.truffle.r.shell@sourceDirs=src
-project@com.oracle.truffle.r.shell@dependencies=com.oracle.truffle.r.engine,JLINE-2.11
+project@com.oracle.truffle.r.shell@dependencies=com.oracle.truffle.r.engine,JLINE
 project@com.oracle.truffle.r.shell@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.shell@javaCompliance=1.7
 project@com.oracle.truffle.r.shell@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime@sourceDirs=src
-project@com.oracle.truffle.r.runtime@dependencies=com.oracle.truffle.api,NETLIB
+project@com.oracle.truffle.r.runtime@dependencies=com.oracle.truffle.api,NETLIB,JNR_POSIX,JNR_CONSTANTS,JNR_FFI,JFFI,JFFI_NATIVE,JNR_X86ASM,ASM,ASM_ANALYSIS,ASM_COMMONS,ASM_TREE,ASM_UTIL
 project@com.oracle.truffle.r.runtime@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime@javaCompliance=1.7
 project@com.oracle.truffle.r.runtime@workingSets=Truffle,FastR
