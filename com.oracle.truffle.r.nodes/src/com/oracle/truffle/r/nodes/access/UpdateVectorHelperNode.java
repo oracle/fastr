@@ -67,6 +67,15 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         return VectorPositionCastFactory.create(positionNACheck, child);
     }
 
+    @Specialization(order = 23, guards = "isSingleElementEmptyPosition")
+    public Object access(RAbstractVector vector, Object right, RAbstractVector position) {
+        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+    }
+
+    protected boolean isSingleElementEmptyPosition(RAbstractVector vector, Object right, RAbstractVector position) {
+        return !isSubset && position.getLength() == 0;
+    }
+
     // Scalar assigned to logical vector with scalar position.
 
     @Specialization(order = 100, guards = "!positionEqualsZero")

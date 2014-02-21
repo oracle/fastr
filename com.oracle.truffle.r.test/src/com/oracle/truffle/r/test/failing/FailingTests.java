@@ -4864,11 +4864,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleVectors_testListUpdateIgnore_ad4f324c267f9fd378c1ebb5db6be131() {
-        assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,b=list(x=3)),character(),10) }");
-    }
-
-    @Ignore
     public void TestSimpleVectors_testListUpdateIgnore_5038483431f78dfe82dd044060a16939() {
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(c(1,2,b=c(x=3)),c(\"b\",\"x\"),10) }");
     }

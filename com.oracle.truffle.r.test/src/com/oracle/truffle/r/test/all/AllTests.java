@@ -13409,6 +13409,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testListUpdate_ad4f324c267f9fd378c1ebb5db6be131() {
+        assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,b=list(x=3)),character(),10) }");
+    }
+
+    @Test
     public void TestSimpleVectors_testListUpdateIgnore_e4cc13b3d845341d0bbe02830ff3054d() {
         assertEval(" { f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(list(a=1,b=c(a=2)),c(TRUE,TRUE),3) }");
     }
@@ -13921,11 +13926,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testListUpdateIgnore_46d267d73b5b19292f799c55c5c8b655() {
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), f, 2) }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testListUpdateIgnore_ad4f324c267f9fd378c1ebb5db6be131() {
-        assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,b=list(x=3)),character(),10) }");
     }
 
     @Test

@@ -40940,6 +40940,10 @@ In x[c(2, 2, 2)] <- c(200L, 300L) :
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testListUpdate
+#{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,b=list(x=3)),character(),10) }
+Error in b[[i]] <- v : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testListUpdate
 #{ l <- matrix(list(1,2)) ; l[3] <- NULL ; l }
 [[1]]
 [1] 1
