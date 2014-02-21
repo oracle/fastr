@@ -421,6 +421,9 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x <- \"hi\";  y<-c(1,1) ; x[y] }");
         assertEval("{ l <- list(1,function(){3}) ; f <- function(i) { l[[i]] } ; f(c(2)) }");
+
+        assertEval("{ a <- c(1,2,3) ; x <- integer() ; a[x] }");
+        assertEvalError("{ a <- c(1,2,3) ; x <- integer() ; a[[x]] }");
     }
 
     @Test

@@ -65,6 +65,9 @@ public class TestSimpleLists extends TestBase {
         assertEval("{ a <- list(1,NULL,list()) ; a[[3]] }");
         assertEval("{ a <- list(1,NULL,list()) ; typeof(a[3]) }");
         assertEval("{ a <- list(1,NULL,list()) ; typeof(a[[3]]) }");
+
+        assertEval("{ a <- list(1,2,3) ; x <- integer() ; a[x] }");
+        assertEvalError("{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }");
     }
 
     @Test

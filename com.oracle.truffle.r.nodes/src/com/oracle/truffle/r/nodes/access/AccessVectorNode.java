@@ -74,6 +74,16 @@ public abstract class AccessVectorNode extends RNode {
         return vector;
     }
 
+    @Specialization(order = 23, guards = "isSingleElementEmptyPosition")
+    @SuppressWarnings("unused")
+    public Object access(RAbstractVector vector, RAbstractVector position) {
+        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+    }
+
+    protected boolean isSingleElementEmptyPosition(@SuppressWarnings("unused") RAbstractVector vector, RAbstractVector position) {
+        return !isSubset && position.getLength() == 0;
+    }
+
     // Int sequence access
 
     @Specialization(order = 100, guards = "isInBounds")
@@ -979,6 +989,16 @@ public abstract class AccessVectorNode extends RNode {
         } else {
             throw RError.getSelectMoreThanOne(null);
         }
+    }
+
+    @Specialization(order = 707)
+    public Object accessIntVector(@SuppressWarnings("unused") RList list, RIntVector position) {
+        if (isSubset) {
+            if (position.getLength() == 0) {
+                return RDataFactory.createList();
+            }
+        }
+        throw Utils.nyi();
     }
 
     // raw vector

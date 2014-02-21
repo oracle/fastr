@@ -7657,6 +7657,14 @@ Error in if (NA) x <- 3 : missing value where TRUE/FALSE needed
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleLists.testListAccess
+#{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }
+Error in a[[x]] : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleLists.testListAccess
+#{ a <- list(1,2,3) ; x <- integer() ; a[x] }
+list()
+
+##com.oracle.truffle.r.test.simple.TestSimpleLists.testListAccess
 #{ a <- list(1,NULL,list()) ; a[3] }
 [[1]]
 list()
@@ -42835,6 +42843,14 @@ Error in x[3] <<- 10 : object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ (1:5)[3:4] }
 [1] 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ a <- c(1,2,3) ; x <- integer() ; a[[x]] }
+Error in a[[x]] : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ a <- c(1,2,3) ; x <- integer() ; a[x] }
+numeric(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE,TRUE)) ; f(1:3,3:1) }

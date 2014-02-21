@@ -12199,6 +12199,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleLists_testListAccess_d96acf7acd87b203fb663abeb53bf98c() {
+        assertEval("{ a <- list(1,2,3) ; x <- integer() ; a[x] }");
+    }
+
+    @Test
     public void TestSimpleLists_testListAccess_f50556c729cd8f8fb891ec8e2ff7be57() {
         assertEvalError("{ l <- list(1,2,3) ; l[[5]] }");
     }
@@ -12216,6 +12221,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleLists_testListAccess_34a7d57c315887ff314aaf437954874c() {
         assertEvalError("{ l <- list(1,2,3) ; l[[-5]] }");
+    }
+
+    @Test
+    public void TestSimpleLists_testListAccess_f2688f64a0fd99d51f3d5123888afffb() {
+        assertEvalError("{ a <- list(1,2,3) ; x <- integer() ; a[[x]] }");
     }
 
     @Test
@@ -16541,6 +16551,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testVectorIndex_735c444595fe843fd5efb95ee1f0a3bd() {
         assertEval("{ l <- list(1,function(){3}) ; f <- function(i) { l[[i]] } ; f(c(2)) }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testVectorIndex_7a6d17fe063a5585f7aa59e7f27b18bf() {
+        assertEval("{ a <- c(1,2,3) ; x <- integer() ; a[x] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testVectorIndex_c2871393cc9204f0b163a30c9426d95a() {
+        assertEvalError("{ a <- c(1,2,3) ; x <- integer() ; a[[x]] }");
     }
 
     @Test
