@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
@@ -42,6 +43,27 @@ public abstract class MatMult extends RBuiltinNode {
 
     public MatMult(MatMult prev) {
         this.na = prev.na;
+    }
+
+    @Specialization(order = 1, guards = "bothZeroDim")
+    public RDoubleVector both0Dim(RDoubleVector a, RDoubleVector b) {
+        int r = b.getDimensions()[1];
+        int c = a.getDimensions()[0];
+        RDoubleVector result = RDataFactory.createDoubleVector(r * c);
+        result.setDimensions(new int[]{r, c});
+        return result;
+    }
+
+    @Specialization(order = 2, guards = "leftHasZeroDim")
+    public RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b) {
+        int[] dim = a.getDimensions()[0] == 0 ? new int[]{0, b.getDimensions()[1]} : new int[]{b.getDimensions()[0], 0};
+        return a.copyWithNewDimensions(dim);
+    }
+
+    @Specialization(order = 3, guards = "rightHasZeroDim")
+    public RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b) {
+        int[] dim = b.getDimensions()[0] == 0 ? new int[]{0, a.getDimensions()[1]} : new int[]{a.getDimensions()[0], 0};
+        return b.copyWithNewDimensions(dim);
     }
 
     // double-double
@@ -208,6 +230,30 @@ public abstract class MatMult extends RBuiltinNode {
 
     protected static boolean vecmat(RVector a, RVector b) {
         return !a.isMatrix() && b.isMatrix();
+    }
+
+    protected static boolean leftHasZeroDim(RAbstractVector a, @SuppressWarnings("unused") RAbstractVector b) {
+        return hasZeroDim(a);
+    }
+
+    protected static boolean rightHasZeroDim(@SuppressWarnings("unused") RAbstractVector a, RAbstractVector b) {
+        return hasZeroDim(b);
+    }
+
+    protected static boolean bothZeroDim(RAbstractVector a, RAbstractVector b) {
+        return hasZeroDim(a) && hasZeroDim(b);
+    }
+
+    protected static boolean hasZeroDim(RAbstractVector v) {
+        if (!v.hasDimensions()) {
+            return false;
+        }
+        for (int d : v.getDimensions()) {
+            if (d == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

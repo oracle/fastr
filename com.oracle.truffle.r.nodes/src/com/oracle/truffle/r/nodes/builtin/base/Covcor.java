@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
  */
 public abstract class Covcor extends RBuiltinNode {
 
-    public NACheck check = new NACheck();
+    protected final NACheck check = new NACheck();
 
     protected RDoubleVector corcov(RDoubleVector x, RDoubleVector y, boolean iskendall, boolean cor) {
         boolean ansmat;
