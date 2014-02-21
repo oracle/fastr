@@ -39,12 +39,6 @@ public abstract class AccessMatrixNode extends RNode {
     private final NACheck elementNACheck = NACheck.create();
     private final NACheck namesNACheck = NACheck.create();
 
-    @CompilationFinal private boolean isSubset;
-
-    public void setSubset(boolean s) {
-        isSubset = s;
-    }
-
     @CompilationFinal private boolean everSeenZeroPosition;
 
     abstract RNode getVector();
@@ -56,17 +50,25 @@ public abstract class AccessMatrixNode extends RNode {
 
     @CreateCast({"firstPosition"})
     public RNode createCastFirstPosition(RNode child) {
-        return ArrayPositionCastFactory.create(0, getVector(), child);
+        return ArrayPositionCastFactory.create(0, getVector(), child, false);
     }
 
     @CreateCast({"secondPosition"})
     public RNode createCastSecondPosition(RNode child) {
-        return ArrayPositionCastFactory.create(1, getVector(), child);
+        return ArrayPositionCastFactory.create(1, getVector(), child, false);
+    }
+
+    // dimensions do not match
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 0, guards = "wrongDimensions")
+    public Object access(RAbstractVector vector, Object firstPosition, Object secondPosition) {
+        throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
     }
 
     // matrix is NULL
 
-    @Specialization(order = 0)
+    @Specialization(order = 1)
     public RNull access(RNull vector, @SuppressWarnings("unused") Object firstPosition, @SuppressWarnings("unused") Object secondPosition) {
         return vector;
     }
@@ -81,10 +83,39 @@ public abstract class AccessMatrixNode extends RNode {
 
     // one of the indexes is 0 (empty vector but with different dimensions)
 
+    private static void resetDimNames(RVector vector, RList dimNames, int dim) {
+        if (dimNames != null) {
+            RStringVector namesVector = (RStringVector) dimNames.getDataAt((dim + 1) % 2);
+            if (namesVector != null) {
+                RList newDimNames = RDataFactory.createList(new Object[2]);
+                newDimNames.updateDataAt(dim, RNull.instance, null);
+                newDimNames.updateDataAt((dim + 1) % 2, namesVector.copy(), null);
+                vector.setDimNames(newDimNames);
+            }
+        }
+    }
+
     private static void resetDim(RVector vector, int[] dimensions, int dim) {
         assert dimensions != null && dimensions.length >= 2;
         dimensions[dim] = 0;
         vector.setDimensions(dimensions);
+    }
+
+    private void modifyDimNames(RVector vector, RIntVector positions, RList dimNames, int dim) {
+        if (dimNames != null) {
+            RStringVector namesVector = (RStringVector) dimNames.getDataAt((dim + 1) % 2);
+            if (namesVector != null) {
+                String[] data = new String[positions.getLength()];
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = namesVector.getDataAt(positions.getDataAt(i) - 1);
+                    namesNACheck.check(data[i]);
+                }
+                RList newDimNames = RDataFactory.createList(new Object[2]);
+                newDimNames.updateDataAt(dim, RNull.instance, null);
+                newDimNames.updateDataAt((dim + 1) % 2, RDataFactory.createStringVector(data, namesNACheck.neverSeenNA()), null);
+                vector.setDimNames(newDimNames);
+            }
+        }
     }
 
     private static void modifyDim(RVector vector, int[] dimensions, int dimToModify, int dimValue, int dimToReset) {
@@ -105,6 +136,7 @@ public abstract class AccessMatrixNode extends RNode {
         RVector v = vector.materialize();
         RVector resultVector = v.createEmptySameType(0, true);
         resetDim(resultVector, vector.getDimensions(), 1);
+        resetDimNames(resultVector, vector.getDimNames(), 1);
         return resultVector;
     }
 
@@ -118,7 +150,8 @@ public abstract class AccessMatrixNode extends RNode {
     public RAbstractVector accessNegativeZero(RAbstractVector vector, RIntVector firstPosition, @SuppressWarnings("unused") int secondPosition) {
         RVector v = vector.materialize();
         RVector resultVector = v.createEmptySameType(0, true);
-        modifyDim(resultVector, vector.getDimensions(), 0, firstPosition.getLength(), 1);
+        modifyDim(resultVector, v.getDimensions(), 0, firstPosition.getLength(), 1);
+        modifyDimNames(resultVector, firstPosition, v.getDimNames(), 1);
         return resultVector;
     }
 
@@ -127,6 +160,7 @@ public abstract class AccessMatrixNode extends RNode {
         RVector v = vector.materialize();
         RVector resultVector = v.createEmptySameType(0, true);
         resetDim(resultVector, vector.getDimensions(), 0);
+        resetDimNames(resultVector, vector.getDimNames(), 0);
         return resultVector;
     }
 
@@ -140,7 +174,8 @@ public abstract class AccessMatrixNode extends RNode {
     public RAbstractVector accessZeroNegative(RAbstractVector vector, @SuppressWarnings("unused") int firstPosition, RIntVector secondPosition) {
         RVector v = vector.materialize();
         RVector resultVector = v.createEmptySameType(0, true);
-        modifyDim(resultVector, vector.getDimensions(), 1, secondPosition.getLength(), 0);
+        modifyDim(resultVector, v.getDimensions(), 1, secondPosition.getLength(), 0);
+        modifyDimNames(resultVector, secondPosition, v.getDimNames(), 0);
         return resultVector;
     }
 
@@ -2482,6 +2517,11 @@ public abstract class AccessMatrixNode extends RNode {
     @SuppressWarnings("unused")
     protected static boolean firstPositionNA(RAbstractVector vector, int firstPosition) {
         return RRuntime.isNA(firstPosition);
+    }
+
+    @SuppressWarnings("unused")
+    protected static boolean wrongDimensions(RAbstractVector vector, Object firstPosition, Object secondPosition) {
+        return vector.getDimensions() == null || vector.getDimensions().length != 2;
     }
 
     public static AccessMatrixNode create(RNode vector, RNode firstPosition, RNode secondPosition) {

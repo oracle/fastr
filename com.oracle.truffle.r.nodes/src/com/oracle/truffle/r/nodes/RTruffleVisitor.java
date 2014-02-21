@@ -192,11 +192,19 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             RNode firstIndex = firstNode == null ? ConstantNode.create(RMissing.instance) : firstNode.accept(this);
             RNode secondIndex = secondNode == null ? ConstantNode.create(RMissing.instance) : secondNode.accept(this);
             AccessMatrixNode access = AccessMatrixNode.create(vector, firstIndex, secondIndex);
-            access.setSubset(a.isSubset());
+            access.assignSourceSection(a.getSource());
+            return access;
+        } else {
+            int argLength = a.getArgs().size();
+            RNode[] positions = new RNode[argLength];
+            for (int i = 0; i < argLength; i++) {
+                ASTNode node = a.getArgs().getNode(i);
+                positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
+            }
+            AccessArrayNode access = AccessArrayNode.create(vector, positions);
             access.assignSourceSection(a.getSource());
             return access;
         }
-        throw new UnsupportedOperationException("Unsupported AST Node " + a.getClass().getName());
     }
 
     @Override

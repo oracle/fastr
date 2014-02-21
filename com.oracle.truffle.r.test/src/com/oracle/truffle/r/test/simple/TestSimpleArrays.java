@@ -18,6 +18,21 @@ public class TestSimpleArrays extends TestBase {
 
     @Test
     @Ignore
+    public void testAccessScalarIndex() {
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1,1] }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }");
+    }
+
+    @Test
+    @Ignore
+    public void testAccessScalarIndexIgnore() {
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,1]) }");
+        assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,1,-1]) }");
+        assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,,-1]) }");
+    }
+
+    @Test
+    @Ignore
     public void testArrayBuiltin() {
         // array with no arguments produces array of length 1
         assertEval("{ a = array(); length(a) }");

@@ -1402,6 +1402,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ k <- c(1,2,3,4,5,6,7,8,9) ; length(k) <- 4 ; k }");
     }
 
+    private static final String[] TESTED_4L_VECTORS = new String[]{"(1:4)", "c(1.1, 2.2, 3.3, 4.4)", "c(1+1i, 2+2i, 3+3i, 4+4i)", "c(\"a\", \"b\", \"c\", \"d\")", "c(TRUE, FALSE, TRUE, FALSE)",
+                    "c(as.raw(1),as.raw(2),as.raw(3),as.raw(4))", "list(TRUE, \"a\", 42, 1.1)"};
+
     @Test
     public void testPrint() {
         assertEval("{ x<-1:8; dim(x)<-c(2, 4); x }");
@@ -1455,5 +1458,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-integer(0); dim(x)<-c(0, 1); dimnames(x)<-list(NULL, \"a\"); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 2, 2); dimnames(x)<-list(\"a\", NULL, c(\"b\", \"c\"), c(\"d\", \"e\"), c(\"f\", \"g\")); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 4); dimnames(x)<-list(NULL, c(\"a\", \"bbbbbbbbbbbb\", \"c\", \"d\")); x }");
+
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[0, c(1,1,1,1)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"c\", \"d\")); x[0, c(1,1,1,1)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"c\", \"d\")); x[0, c(1,2,3,4)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"cc\", \"d\")); x[0, c(1,2,3,4)] }", TESTED_4L_VECTORS));
     }
 }

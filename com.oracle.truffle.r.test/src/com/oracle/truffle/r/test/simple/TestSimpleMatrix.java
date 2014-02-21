@@ -54,6 +54,9 @@ public class TestSimpleMatrix extends TestBase {
 
     @Test
     public void testAccessScalarIndex() {
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,2] }");
+        assertEvalError("{ x<-1:8; x[1,2] }");
+
         assertEval("{ x<-c(1L,2L,3L,4L,5L,6L); dim(x) <- c(2,3); x[1,2] }");
         assertEval("{ x<-c(1L,2L,3L,4L,5L,6L,7L,8L,9L,10L); dim(x) <- c(2,5); x[2,4] }");
         assertEval("{ x<-c(1, 2, 3, 4); dim(x)<-c(2, 2); x[1] }");
@@ -84,6 +87,14 @@ public class TestSimpleMatrix extends TestBase {
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, c(1,NA)] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, NA), c(1,NA)] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1, 1), c(1,NA)] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[1, 0] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[0, 1] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[-1, 0] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[0, -1] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[, 0] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[0, ] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[c(1,1,1), 0] }", TESTED_4L_VECTORS));
+        assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[0, c(1,1,1)] }", TESTED_4L_VECTORS));
 
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,4); x[0,0] }", TESTED_8L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(2,4); x[,0] }", TESTED_8L_VECTORS));

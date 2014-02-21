@@ -38,11 +38,18 @@ import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConver
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
+@NodeField(name = "allVector", type = boolean.class)
 public abstract class ArrayPositionCast extends RNode {
 
     abstract int executeArg(VirtualFrame frame, Object o, RAbstractVector vector);
 
     abstract RNode getVector();
+
+    abstract boolean isAllVector();
+
+    protected boolean allVector() {
+        return isAllVector();
+    }
 
     private final int dimension;
 
@@ -59,9 +66,22 @@ public abstract class ArrayPositionCast extends RNode {
         return OperatorConverterNodeFactory.create(dimension, getVector(), child);
     }
 
-    @Specialization
+    @Specialization(order = 1, guards = "!allVector")
     public RMissing doMissing(RAbstractVector vector, RMissing operand) {
         return operand;
+    }
+
+    @Specialization(order = 2, guards = "allVector")
+    public RIntVector doMissingVector(RAbstractVector vector, RMissing operand) {
+        if (vector.getDimensions() == null || dimension >= vector.getDimensions().length) {
+            throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
+        }
+        int[] data = new int[vector.getDimensions()[dimension]];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = i + 1;
+        }
+
+        return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
@@ -69,12 +89,17 @@ public abstract class ArrayPositionCast extends RNode {
         return 0;
     }
 
-    @Specialization
+    @Specialization(order = 10, guards = "!allVector")
     public int doInt(RAbstractVector vector, int operand) {
         return operand;
     }
 
-    @Specialization(guards = "sizeOneVector")
+    @Specialization(order = 11, guards = "allVector")
+    public RIntVector doIntVector(RAbstractVector vector, int operand) {
+        return RDataFactory.createIntVector(new int[]{operand}, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Specialization(order = 20, guards = {"sizeOneVector", "!allVector"})
     public int doIntVectorSizeOne(RAbstractVector vector, RIntVector operand) {
         return operand.getDataAt(0);
     }
@@ -82,11 +107,6 @@ public abstract class ArrayPositionCast extends RNode {
     @Specialization(guards = "!sizeOneVector")
     public RIntVector doIntVector(RAbstractVector vector, RIntVector operand) {
         return operand;
-    }
-
-    @Specialization
-    public int doStringVector(VirtualFrame frame, RAbstractVector vector, RStringVector operand) {
-        throw Utils.nyi(); // TODO
     }
 
     public static boolean sizeOneVector(RAbstractVector vector, RIntVector operand) {
@@ -287,7 +307,7 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 50, guards = "outOfBounds")
-        public RLogicalVector doLogicalVectorOutOfBounds(RAbstractVector vector, RLogicalVector operand) {
+        public RIntVector doLogicalVectorOutOfBounds(RAbstractVector vector, RLogicalVector operand) {
             throw RError.getLogicalSubscriptLong(getEncapsulatingSourceSection());
         }
 
@@ -443,16 +463,24 @@ public abstract class ArrayPositionCast extends RNode {
             }
         }
 
+        private int getDimensionSize(RAbstractVector vector) {
+            if (vector.getDimensions() == null || dimension >= vector.getDimensions().length) {
+                throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
+            } else {
+                return vector.getDimensions()[dimension];
+            }
+        }
+
         protected boolean dimLengthOne(RAbstractVector vector, byte operand) {
-            return vector.getDimensions()[dimension] == 1;
+            return getDimensionSize(vector) == 1;
         }
 
         protected boolean dimLengthOne(RAbstractVector vector, int operand) {
-            return vector.getDimensions()[dimension] == 1;
+            return getDimensionSize(vector) == 1;
         }
 
         protected boolean dimLengthOne(RAbstractVector vector, RMissing operand) {
-            return vector.getDimensions()[dimension] == 1;
+            return getDimensionSize(vector) == 1;
         }
 
         protected static boolean indNA(RAbstractVector vector, int operand) {
@@ -468,15 +496,15 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         protected boolean outOfBoundsNegative(RAbstractVector vector, int operand) {
-            return operand < 0 && -operand > vector.getDimensions()[dimension];
+            return operand < 0 && -operand > getDimensionSize(vector);
         }
 
         protected boolean outOfBounds(RAbstractVector vector, RLogicalVector operand) {
-            return operand.getLength() > vector.getDimensions()[dimension];
+            return operand.getLength() > getDimensionSize(vector);
         }
 
         protected boolean outOfBounds(RAbstractVector vector, int operand) {
-            return operand > vector.getDimensions()[dimension];
+            return operand > getDimensionSize(vector);
         }
 
         protected boolean isNegative(RAbstractVector vector, int operand) {

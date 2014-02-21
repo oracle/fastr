@@ -389,6 +389,31 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleArrays_testAccessScalarIndex_a56caa3c745a61518ed30596b3cdce8f() {
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1,1] }");
+    }
+
+    @Ignore
+    public void TestSimpleArrays_testAccessScalarIndex_edb35c675f513b9c006ede06699f3cad() {
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }");
+    }
+
+    @Ignore
+    public void TestSimpleArrays_testAccessScalarIndexIgnore_a51f3c1b971cf35008b9df963a6e492b() {
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,1]) }");
+    }
+
+    @Ignore
+    public void TestSimpleArrays_testAccessScalarIndexIgnore_d117396db8313c46cdbbf79266c28505() {
+        assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,1,-1]) }");
+    }
+
+    @Ignore
+    public void TestSimpleArrays_testAccessScalarIndexIgnore_9586dd6fd7d9547734b53c25053b8fb5() {
+        assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,,-1]) }");
+    }
+
+    @Ignore
     public void TestSimpleArrays_testArrayBuiltin_9a47dd99312e693ad52405e33fe75b04() {
         assertEval("{ a = array(); length(a) }");
     }
