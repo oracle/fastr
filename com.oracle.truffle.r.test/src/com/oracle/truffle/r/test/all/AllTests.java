@@ -7439,6 +7439,41 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsTRUE_acbc975cbce8f2d6a8b5422c52a423d3() {
+        assertEval("{ isTRUE(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsTRUE_914502371c8dda2fce5a0ab871b41cd7() {
+        assertEval("{ isTRUE(FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsTRUE_0c8034c5be2cf8442cbe373537d1f7d0() {
+        assertEval("{ isTRUE(NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsTRUE_78f604c978973485d42c11bc4d70aaeb() {
+        assertEval("{ isTRUE(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsTRUE_4510212fe57e0d1dc393efa4c05bfc0f() {
+        assertEval("{ isTRUE(as.vector(TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsTRUE_a3b6592c79b5852ef853c585e0eff03d() {
+        assertEval("{ isTRUE(as.vector(FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsTRUE_625a4bacb96d3aa1531e631190657a54() {
+        assertEval("{ isTRUE(as.vector(1)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsUnsorted_3b7257dae08d22cc08ee94a46df33918() {
         assertEval("{ is.unsorted(c(1,2,3,4)) }");
     }

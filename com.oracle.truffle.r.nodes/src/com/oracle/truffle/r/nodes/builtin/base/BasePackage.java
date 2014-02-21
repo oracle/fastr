@@ -88,6 +88,7 @@ public class BasePackage extends RPackage {
         load(Exists.class);
         load(Floor.class);
         load(Get.class);
+        load(Getwd.class);
         load(GlobalEnv.class);
         load(Gregexpr.class);
         load(GSub.class);
@@ -107,6 +108,7 @@ public class BasePackage extends RPackage {
         load(IsNumeric.class);
         load(IsObject.class);
         load(IsRaw.class);
+        load(IsTRUE.class);
         load(IsTypeNode.class);
         load(IsUnsorted.class);
         load(Length.class);
@@ -151,6 +153,7 @@ public class BasePackage extends RPackage {
         load(SApply.class);
         load(Sd.class);
         load(SetSeed.class);
+        load(Setwd.class);
         load(Seq.class);
         load(Sprintf.class);
         load(Sqrt.class);
@@ -159,7 +162,8 @@ public class BasePackage extends RPackage {
         load(Sub.class);
         load(Substr.class);
         load(Sum.class);
-        // load(SysGetpid.class);
+        load(InternalSysGetenv.class);
+        load(SysGetpid.class);
         load(ToLower.class);
         load(ToString.class);
         load(ToUpper.class);

@@ -971,6 +971,17 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testIsTRUE() {
+        assertEval("{ isTRUE(TRUE) }");
+        assertEval("{ isTRUE(FALSE) }");
+        assertEval("{ isTRUE(NA) }");
+        assertEval("{ isTRUE(1) }");
+        assertEval("{ isTRUE(as.vector(TRUE)) }");
+        assertEval("{ isTRUE(as.vector(FALSE)) }");
+        assertEval("{ isTRUE(as.vector(1)) }");
+    }
+
+    @Test
     @Ignore
     public void testPasteIgnore() {
         assertEval("{ file.path(\"a\", \"b\", c(\"d\",\"e\",\"f\")) }");

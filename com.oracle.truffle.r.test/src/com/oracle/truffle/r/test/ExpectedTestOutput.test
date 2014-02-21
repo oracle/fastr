@@ -5048,6 +5048,34 @@ Error in rnorm(s = 1, s = 1) :
 #{ is.object(c(1,2,3)) }
 [1] FALSE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(1) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(FALSE) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(NA) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(TRUE) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(as.vector(1)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(as.vector(FALSE)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsTRUE
+#{ isTRUE(as.vector(TRUE)) }
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsUnsorted
 #{ is.unsorted(c(1,2,3,4)) }
 [1] FALSE
