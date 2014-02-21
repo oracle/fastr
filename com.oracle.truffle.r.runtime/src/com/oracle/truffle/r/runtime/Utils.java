@@ -132,4 +132,10 @@ public final class Utils {
         }
     }
 
+    public static void fail(String msg) {
+        // CheckStyle: stop system..print check
+        System.err.println("FastR internal error: " + msg);
+        System.exit(1);
+    }
+
 }

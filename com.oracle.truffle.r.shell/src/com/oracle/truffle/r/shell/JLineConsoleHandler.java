@@ -53,7 +53,7 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
         try {
             return console.readLine();
         } catch (IOException ex) {
-            RCommand.fail("unexpected error reading console input");
+            Utils.fail("unexpected error reading console input");
             return null;
         }
     }

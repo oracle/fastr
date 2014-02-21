@@ -82,16 +82,11 @@ public class RCommand {
             try {
                 console = new RJLineConsoleReader(consoleInput, consoleOutput);
             } catch (IOException ex) {
-                fail("unexpected error opening console reader");
+                Utils.fail("unexpected error opening console reader");
             }
             readEvalPrint(consoleInput == System.in, console, commandArgs);
         }
         // TODO exit code
-    }
-
-    static void fail(String msg) {
-        System.err.println(msg);
-        System.exit(1);
     }
 
     private static void printVersionAndExit() {
@@ -109,7 +104,7 @@ public class RCommand {
     private static void evalFileInput(String filePath, String[] commandArgs) {
         File file = new File(filePath);
         if (!file.exists()) {
-            fail("Fatal error: cannot open file '" + filePath + "': No such file or directory");
+            Utils.fail("Fatal error: cannot open file '" + filePath + "': No such file or directory");
         }
         try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
             byte[] bytes = new byte[(int) file.length()];
@@ -119,7 +114,7 @@ public class RCommand {
             REngine engine = REngine.getInstance(commandArgs, consoleHandler);
             engine.parseAndEval(content, REngine.createVirtualFrame(), true);
         } catch (IOException ex) {
-            fail("unexpected error reading file input");
+            Utils.fail("unexpected error reading file input");
         }
 
     }
@@ -144,7 +139,7 @@ public class RCommand {
         } catch (UserInterruptException e) {
             // interrupted
         } catch (IOException ex) {
-            fail("unexpected error reading console input");
+            Utils.fail("unexpected error reading console input");
         }
 
     }
