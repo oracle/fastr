@@ -104,7 +104,7 @@ public abstract class ArrayPositionCast extends RNode {
         return operand.getDataAt(0);
     }
 
-    @Specialization(guards = "!sizeOneVector")
+    @Specialization
     public RIntVector doIntVector(RAbstractVector vector, RIntVector operand) {
         return operand;
     }
