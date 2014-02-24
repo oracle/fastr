@@ -312,7 +312,16 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
 
     // list updates
 
-    @Specialization(order = 1200, guards = "singlePositionInBounds")
+    @Specialization(order = 1200, guards = "positionEqualsZero")
+    public RList doList(RList list, Object right, int position) {
+        if (isSubset) {
+            return list;
+        } else {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
+    }
+
+    @Specialization(order = 1201, guards = "singlePositionInBounds")
     public RList doList(RList list, RAbstractVector right, int position) {
         if (isSubset) {
             list.updateDataAt(position - 1, right.getDataAtAsObject(0), rightNACheck);
@@ -331,7 +340,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         return RDataFactory.createList(result);
     }
 
-    @Specialization(order = 1211, guards = "!singlePositionInBounds")
+    @Specialization(order = 1211, guards = "singlePositionOutOfBounds")
     public RList doListOutOfBounds(RList list, RNull right, int position) {
         if (isSubset) {
             Object[] data = list.getDataCopy();
@@ -531,5 +540,15 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
     // FIXME DSL bug: Object arg1 should suffice
     protected static boolean singlePositionInBounds(RAbstractVector arg0, RNull arg1, int position) {
         return position >= 1 && position <= arg0.getLength();
+    }
+
+    // FIXME DSL bug: Object arg1 should suffice
+    protected static boolean singlePositionOutOfBounds(RAbstractVector arg0, RAbstractVector arg1, int position) {
+        return !positionEqualsZero(arg0, arg1, position) && (position < 0 || position > arg0.getLength());
+    }
+
+    // FIXME DSL bug: Object arg1 should suffice
+    protected static boolean singlePositionOutOfBounds(RAbstractVector arg0, RNull arg1, int position) {
+        return !positionEqualsZero(arg0, arg1, position) && (position < 0 || position > arg0.getLength());
     }
 }
