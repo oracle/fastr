@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,7 +39,6 @@ public abstract class IsObject extends RBuiltinNode {
 
     @Specialization
     public byte isObject(RAbstractVector arg) {
-        Map<String, Object> attributes = arg.getAttributes();
         return arg.isObject() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 }

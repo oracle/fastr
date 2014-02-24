@@ -82,7 +82,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractVector arg, RAbstractVector className) {
         if (className.getLength() == 0) {
-            return setClass(frame, arg, RNull.instance);
+            return setClass(arg, RNull.instance);
         }
         return setClass(frame, arg, castStringVector(frame, className));
     }
@@ -98,7 +98,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(VirtualFrame frame, RAbstractVector arg, RNull className) {
+    public Object setClass(RAbstractVector arg, @SuppressWarnings("unused") RNull className) {
         Map<String, Object> attrb = getAttributes(arg);
         if (attrb != null) {
             attrb.remove(RRuntime.CLASS_ATTR_KEY);
@@ -186,14 +186,14 @@ public abstract class UpdateClass extends RBuiltinNode {
         }
         if (className.equals(RRuntime.TYPE_MATRIX)) {
             if (RRuntime.isMatrix(arg)) {
-                return setClass(frame, arg, RNull.instance);
+                return setClass(arg, RNull.instance);
             }
             throw RError.getNotMatixUpdateClass(getEncapsulatingSourceSection(), arg.getDimensions().length);
 
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
             if (arg.getDimensions().length > 0) {
-                return setClass(frame, arg, RNull.instance);
+                return setClass(arg, RNull.instance);
             }
             throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
         }

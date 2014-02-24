@@ -90,22 +90,22 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, byte arg) {
+    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") byte arg) {
         return useMethodHelper(frame, generic, RRuntime.TYPE_LOGICAL);
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, String arg) {
+    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") String arg) {
         return useMethodHelper(frame, generic, RRuntime.TYPE_CHARACTER);
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, int arg) {
+    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") int arg) {
         return useMethodHelper(frame, generic, RRuntime.CLASS_INTEGER);
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, double arg) {
+    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") double arg) {
         return useMethodHelper(frame, generic, RRuntime.CLASS_DOUBLE);
     }
 

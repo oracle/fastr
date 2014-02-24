@@ -11,7 +11,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -19,7 +18,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(value = "class")
 public abstract class GetClass extends RBuiltinNode {
     @Specialization
-    public Object getClass(VirtualFrame frame, RAbstractVector arg) {
+    public Object getClass(RAbstractVector arg) {
         if (arg.isObject()) {
             return arg.getAttributes().get(RRuntime.CLASS_ATTR_KEY);
         }
