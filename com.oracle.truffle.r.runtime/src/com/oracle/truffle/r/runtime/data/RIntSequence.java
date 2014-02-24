@@ -30,6 +30,13 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     private final int start;
     private final int stride;
 
+    private static final List<String> klass;
+    static {
+        klass = new ArrayList<>();
+        klass.add(RRuntime.TYPE_INTEGER);
+        klass.add(RRuntime.TYPE_NUMERIC);
+    }
+
     RIntSequence(int start, int stride, int length) {
         super(length);
         assert length > 0;
@@ -92,5 +99,9 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
+    }
+
+    public List<String> getClassHierarchy() {
+        return klass;
     }
 }

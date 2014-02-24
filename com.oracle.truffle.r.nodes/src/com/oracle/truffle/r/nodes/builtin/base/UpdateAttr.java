@@ -120,6 +120,9 @@ public abstract class UpdateAttr extends RBuiltinNode {
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
         } else {
+            if (name.equals(RRuntime.CLASS_ATTR_KEY) && !(value instanceof RString && value instanceof RStringVector)) {
+                RError.getInvalidClassAttr(getEncapsulatingSourceSection());
+            }
             if (resultVector.getAttributes() == null) {
                 resultVector.setAttributes(new LinkedHashMap<String, Object>());
             }

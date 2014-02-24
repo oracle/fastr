@@ -208,7 +208,11 @@ public abstract class RError extends RuntimeException {
     public static final String FORMAL_MATCHED_MULTIPLE = "formal argument \"%s\" matched by multiple actual arguments";
     public static final String ARGUMENT_MATCHES_MULTIPLE = "argument %d matches multiple formal arguments";
     public static final String ARGUMENT_EMPTY = "argument %d is empty";
-    public static final String REPEATED_FORMAL = "repeated formal argument '%s'"; // not exactly
+    public static final String REPEATED_FORMAL = "repeated formal argument '%s'";
+    public static final String NOT_A_MATRIX_UPDATE_CLASS = "invalid to set the class to matrix unless the dimension attribute is of length 2 (was '%d')";
+    public static final String NOT_ARRAY_UPDATE_CLASS = "cannot set class to \"array\" unless the dimension attribute has length > 0";
+    public static final String SET_INVALID_CLASS_ATTR = "attempt to set invalid 'class' attribute";
+    // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
     public static final String REFERENCE_NONEXISTENT = "reference to non-existent argument %d";
@@ -1904,6 +1908,18 @@ public abstract class RError extends RuntimeException {
 
     public static RError getRecursiveIndexingFailed(SourceSection ast, int level) {
         return getGenericError(ast, stringFormat(RError.RECURSIVE_INDEXING_FAILED, level));
+    }
+
+    public static RError getNotMatixUpdateClass(SourceSection ast, int dim) {
+        return getGenericError(ast, stringFormat(RError.NOT_A_MATRIX_UPDATE_CLASS, dim));
+    }
+
+    public static RError getNotArrayUpdateClass(SourceSection ast) {
+        return getGenericError(ast, RError.NOT_ARRAY_UPDATE_CLASS);
+    }
+
+    public static RError getInvalidClassAttr(SourceSection ast) {
+        return getGenericError(ast, RError.SET_INVALID_CLASS_ATTR);
     }
 
     @SlowPath

@@ -40,9 +40,8 @@ public abstract class IsObject extends RBuiltinNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
     public byte isObject(RAbstractVector arg) {
         Map<String, Object> attributes = arg.getAttributes();
-        return (attributes != null && attributes.get(RRuntime.CLASS_ATTR_KEY) != null) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return arg.isObject() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 }

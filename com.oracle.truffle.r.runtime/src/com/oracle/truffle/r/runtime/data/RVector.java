@@ -212,6 +212,10 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         return matrixDimension != 0;
     }
 
+    public final boolean isArray() {
+        return dimensions != null && dimensions.length > 0;
+    }
+
     public final int[] getDimensions() {
         if (hasDimensions()) {
             return Arrays.copyOf(dimensions, dimensions.length);
@@ -381,5 +385,21 @@ public abstract class RVector extends RBounded implements RAbstractVector {
                 return null;
             }
         }
+    }
+
+    public boolean isObject() {
+        return (this.attributes != null && this.attributes.get(RRuntime.CLASS_ATTR_KEY) != null) ? true : false;
+    }
+
+    // As shape of the vector may change at run-time we need to compute
+    // class hierarchy on the fly.
+    public List<String> getClassHierarchy() {
+        List<String> klass = new ArrayList<>();
+        if (this.isMatrix()) {
+            klass.add(RRuntime.TYPE_MATRIX);
+        } else if (this.isArray()) {
+            klass.add(RRuntime.TYPE_ARRAY);
+        }
+        return klass;
     }
 }

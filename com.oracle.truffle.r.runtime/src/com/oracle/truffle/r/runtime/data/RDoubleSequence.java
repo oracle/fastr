@@ -30,6 +30,13 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     private final double start;
     private final double stride;
 
+    private static final List<String> klass;
+    static {
+        klass = new ArrayList<>();
+        klass.add(RRuntime.TYPE_DOUBLE);
+        klass.add(RRuntime.TYPE_NUMERIC);
+    }
+
     RDoubleSequence(double start, double stride, int length) {
         super(length);
         assert length > 0;
@@ -90,5 +97,10 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
+    }
+
+    @Override
+    public List<String> getClassHierarchy() {
+        return klass;
     }
 }

@@ -143,4 +143,11 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
+
+    @Override
+    public List<String> getClassHierarchy() {
+        final List<String> classHr = super.getClassHierarchy();
+        classHr.add(RRuntime.TYPE_RAW);
+        return classHr;
+    }
 }

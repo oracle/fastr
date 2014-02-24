@@ -49,30 +49,154 @@ public abstract class UseMethod extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    // TODO: Matrix, arrays, integers, strings etc have default class types so there should be a
-// specialization for each one of them.
-
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, RAbstractVector arg) {
+        if (arg.isObject()) {
+            final Object classAttrb = arg.getAttributes().get(RRuntime.CLASS_ATTR_KEY);
+            if (classAttrb instanceof RStringVector) {
+                RStringVector classNames = (RStringVector) classAttrb;
+                return useMethodHelper(frame, generic, classNames);
+            }
+            return useMethodHelper(frame, generic, (String) classAttrb);
+        } else {
+            return useMethodHelper(frame, generic, arg.getClassHierarchy());
+        }
+    }
 
-        final Map<String, Object> attributes = arg.getAttributes();
-        final Object classAttrb = attributes.get(RRuntime.CLASS_ATTR_KEY);
-        VirtualFrame newFrame = null;
-        if (classAttrb instanceof RStringVector) {
-            RStringVector classNames = (RStringVector) classAttrb;
-            for (int i = 0; i < classNames.getLength() && newFrame == null; ++i) {
-                newFrame = findFunction(classNames.getDataAt(i), generic, frame);
+    /*
+     * If only one argument is passed to UseMethod, the first argument of enclosing function is used
+     * to resolve the generic.
+     */
+    @Specialization
+    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RMissing arg) {
+        RArguments args = frame.getArguments(RArguments.class);
+        if (args == null || args.getLength() == 0 || args.getArgument(0) == null) {
+            throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
+        }
+        Object enclosingArg = args.getArgument(0);
+        if (enclosingArg instanceof Byte) {
+            return useMethod(frame, generic, (byte) enclosingArg);
+        }
+        if (enclosingArg instanceof String) {
+            return useMethod(frame, generic, (String) enclosingArg);
+        }
+        if (enclosingArg instanceof Integer) {
+            return useMethod(frame, generic, (int) enclosingArg);
+        }
+        if (enclosingArg instanceof Double) {
+            return useMethod(frame, generic, (double) enclosingArg);
+        }
+        return useMethod(frame, generic, (RAbstractVector) enclosingArg);
+    }
+
+    @Specialization
+    public Object useMethod(VirtualFrame frame, String generic, byte arg) {
+        return useMethodHelper(frame, generic, RRuntime.TYPE_LOGICAL);
+    }
+
+    @Specialization
+    public Object useMethod(VirtualFrame frame, String generic, String arg) {
+        return useMethodHelper(frame, generic, RRuntime.TYPE_CHARACTER);
+    }
+
+    @Specialization
+    public Object useMethod(VirtualFrame frame, String generic, int arg) {
+        return useMethodHelper(frame, generic, RRuntime.CLASS_INTEGER);
+    }
+
+    @Specialization
+    public Object useMethod(VirtualFrame frame, String generic, double arg) {
+        return useMethodHelper(frame, generic, RRuntime.CLASS_DOUBLE);
+    }
+
+    private Object useMethodHelper(VirtualFrame frame, String generic, String className) {
+        VirtualFrame newFrame = findFunction(className, generic, frame);
+        if (newFrame == null) {
+            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
+            if (newFrame == null) {
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, className);
             }
         }
-        if (classAttrb instanceof String) {
-            newFrame = findFunction((String) classAttrb, generic, frame);
+        return dispatchMethod(frame, newFrame);
+    }
+
+    private Object useMethodHelper(VirtualFrame frame, String generic, String[] classNames) {
+        VirtualFrame newFrame = null;
+        for (final String className : classNames) {
+            newFrame = findFunction(className, generic, frame);
+            if (newFrame != null) {
+                break;
+            }
         }
         if (newFrame == null) {
             newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
             if (newFrame == null) {
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, classAttrb.toString());
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, Arrays.toString(classNames));
             }
         }
+        return dispatchMethod(frame, newFrame);
+    }
+
+    private Object useMethodHelper(VirtualFrame frame, String generic, List<String> classNames) {
+        VirtualFrame newFrame = null;
+        for (final String className : classNames) {
+            newFrame = findFunction(className, generic, frame);
+            if (newFrame != null) {
+                break;
+            }
+        }
+        if (newFrame == null) {
+            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
+            if (newFrame == null) {
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, classNames.toString());
+            }
+        }
+        return dispatchMethod(frame, newFrame);
+    }
+
+    private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
+        VirtualFrame newFrame = null;
+        for (int i = 0; i < classNames.getLength() && newFrame == null; ++i) {
+            newFrame = findFunction(classNames.getDataAt(i), generic, frame);
+        }
+        if (newFrame == null) {
+            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
+            if (newFrame == null) {
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, classNames.toString());
+            }
+        }
+        return dispatchMethod(frame, newFrame);
+    }
+
+    private VirtualFrame findFunction(final String className, final String generic, VirtualFrame frame) {
+        StringBuilder sbFuncName = new StringBuilder(generic);
+        sbFuncName.append(".");
+        sbFuncName.append(className);
+        final String funcName = RRuntime.toString(sbFuncName);
+        if (lookup == null || !funcName.equals(lastFun)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lastFun = funcName;
+            ReadVariableNode rvn = ReadVariableNode.create(funcName, true, false);
+            lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
+        }
+        Object func = null;
+        try {
+            func = lookup.execute((VirtualFrame) frame.getCaller().unpack());
+        } catch (RError r) {
+            return null;
+        }
+        if (func != null && func instanceof RFunction) {
+            final RFunction targetFunction = (RFunction) func;
+            funcDefnNode = (FunctionDefinitionNode) (((DefaultCallTarget) targetFunction.getTarget()).getRootNode());
+            final RArguments currentArguments = frame.getArguments(RArguments.class);
+            final RArguments newArguments = RArguments.create(targetFunction, targetFunction.getEnclosingFrame(), currentArguments.getArgumentsArray(), currentArguments.getNames());
+            return Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, frame.getFrameDescriptor().copy());
+        }
+        return null;
+    }
+
+    private Object dispatchMethod(VirtualFrame frame, VirtualFrame newFrame) {
+
         // Copy the variables defined(prior to call to UseMethod) in the current frame to the new
         // frame
         for (FrameSlot fs : frame.getFrameDescriptor().getSlots()) {
@@ -103,43 +227,4 @@ public abstract class UseMethod extends RBuiltinNode {
         return funcDefnNode.execute(newFrame);
     }
 
-    /*
-     * If only one argument is passed to UseMethod, the first argument of enclosing function is used
-     * to resolve the generic.
-     */
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, RMissing arg) {
-        RAbstractVector enclosingArg = (RAbstractVector) frame.getArguments(RArguments.class).getArgument(0);
-        return useMethod(frame, generic, enclosingArg);
-    }
-
-    /*
-     * @Specialization public Object useMethod(VirtualFrame frame, String generic, RDouble arg) { }
-     */
-    private VirtualFrame findFunction(final String className, final String generic, VirtualFrame frame) {
-        StringBuilder sbFuncName = new StringBuilder(generic);
-        sbFuncName.append(".");
-        sbFuncName.append(className);
-        final String funcName = RRuntime.toString(sbFuncName);
-        if (lookup == null || !funcName.equals(lastFun)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lastFun = funcName;
-            ReadVariableNode rvn = ReadVariableNode.create(funcName, true, false);
-            lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
-        }
-        Object func = null;
-        try {
-            func = lookup.execute((VirtualFrame) frame.getCaller().unpack());
-        } catch (RError r) {
-            return null;
-        }
-        if (func != null && func instanceof RFunction) {
-            final RFunction targetFunction = (RFunction) func;
-            funcDefnNode = (FunctionDefinitionNode) (((DefaultCallTarget) targetFunction.getTarget()).getRootNode());
-            final RArguments currentArguments = frame.getArguments(RArguments.class);
-            final RArguments newArguments = RArguments.create(targetFunction, targetFunction.getEnclosingFrame(), currentArguments.getArgumentsArray(), currentArguments.getNames());
-            return Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, frame.getFrameDescriptor().copy());
-        }
-        return null;
-    }
 }
