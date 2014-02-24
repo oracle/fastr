@@ -327,7 +327,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         Object[] data = list.getDataCopy();
         Object[] result = new Object[data.length - 1];
         System.arraycopy(data, 0, result, 0, position - 1);
-        System.arraycopy(data, position + 1, result, position, data.length - (position + 1));
+        System.arraycopy(data, position, result, position - 1, data.length - position);
         return RDataFactory.createList(result);
     }
 
