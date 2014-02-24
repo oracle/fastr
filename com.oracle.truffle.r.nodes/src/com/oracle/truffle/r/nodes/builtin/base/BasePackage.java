@@ -39,8 +39,6 @@ public class BasePackage extends RPackage {
         load(BinaryArithmeticNode.class).names("%%").arguments(BinaryArithmetic.MOD, null);
         load(BinaryArithmeticNode.class).names("*").arguments(BinaryArithmetic.MULTIPLY, null);
         load(BinaryArithmeticNode.class).names("^").arguments(BinaryArithmetic.POW, null);
-        load(MatMult.class).names("%*%");
-        load(OuterMult.class).names("%o%");
         load(BinaryBooleanNode.class).names("==").arguments(BinaryCompare.EQUAL);
         load(BinaryBooleanNode.class).names("!=").arguments(BinaryCompare.NOT_EQUAL);
         load(BinaryBooleanNode.class).names(">=").arguments(BinaryCompare.GREATER_EQUAL);
@@ -134,6 +132,7 @@ public class BasePackage extends RPackage {
         load(NewEnv.class);
         load(Order.class);
         load(Outer.class);
+        load(OuterMult.class);
         load(Paste.class);
         load(Print.class);
         load(ProcTime.class);

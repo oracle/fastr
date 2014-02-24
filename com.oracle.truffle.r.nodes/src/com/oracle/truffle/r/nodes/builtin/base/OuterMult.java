@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("outer")
+@RBuiltin("%o%")
 public abstract class OuterMult extends RBuiltinNode {
 
     @Specialization
