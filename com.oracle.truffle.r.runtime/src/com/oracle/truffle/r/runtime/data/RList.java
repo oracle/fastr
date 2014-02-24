@@ -163,4 +163,11 @@ public final class RList extends RVector implements RAbstractVector {
     protected void resizeInternal(int size) {
         this.data = createResizedData(size, true);
     }
+
+    @Override
+    public List<String> getClassHierarchy() {
+        List<String> klass = super.getClassHierarchy();
+        klass.add(RRuntime.TYPE_LIST);
+        return klass;
+    }
 }
