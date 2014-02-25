@@ -155,7 +155,7 @@ public abstract class Outer extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 41, guards = "functionIsMult")
-    public RDoubleVector outerMult(RDoubleVector x, RDoubleVector y, String function) {
+    public RDoubleVector outerMult(RAbstractDoubleVector x, RAbstractDoubleVector y, String function) {
         return outerMultImpl(x, y);
     }
 

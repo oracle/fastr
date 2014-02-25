@@ -132,7 +132,6 @@ public class BasePackage extends RPackage {
         load(NewEnv.class);
         load(Order.class);
         load(Outer.class);
-        load(OuterMult.class);
         load(Paste.class);
         load(Print.class);
         load(ProcTime.class);
