@@ -1761,6 +1761,10 @@ numeric(0)
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }
+[1] 0 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dimnames(x)<-list(c("a", "b"), c("c", "d"), c("e", "f")) ;x[,0,] }
 , , e
 
@@ -1795,6 +1799,10 @@ e f
       e <NA>  e
 <NA> NA   NA NA
 <NA> NA   NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+#{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }
+<0 x 0 matrix>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); x[1,1,NA] }

@@ -2619,6 +2619,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testAccessScalarIndex_587ad0c9609dc4123c9590f037813a27() {
+        assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testAccessScalarIndex_23a36b90ec9ac75b7f4740c6bf7247ab() {
+        assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }");
+    }
+
+    @Test
     public void TestSimpleArrays_testAccessScalarIndex_a56caa3c745a61518ed30596b3cdce8f() {
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1,1] }");
     }
