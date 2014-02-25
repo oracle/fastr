@@ -46,6 +46,10 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class RPackage {
     private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
+    private void putBuiltin(String name, RBuiltinFactory factory) {
+        builtins.put(name, factory);
+    }
+
     protected RPackage() {
         loadSnippets();
     }
@@ -71,12 +75,33 @@ public abstract class RPackage {
             for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
                 NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
                 RBuiltinFactory builtinFactory = new RBuiltinFactory(new String[]{def.getKey()}, LastParameterKind.VALUE, nodeFactory, new Object[0]);
-                builtins.put(def.getKey(), builtinFactory);
+                putBuiltin(def.getKey(), builtinFactory);
             }
         }
     }
 
     public abstract String getName();
+
+    @SuppressWarnings("unchecked")
+    protected final void loadBuiltins() {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(".")))) {
+            while (true) {
+                String l = r.readLine();
+                if (l == null) {
+                    break;
+                }
+                if (l.endsWith(".class")) {
+                    Class<?> clazz = Class.forName(getClass().getPackage().getName() + "." + l.replace(".class", ""));
+                    if (clazz.getAnnotation(RBuiltin.class) != null) {
+                        load((Class<? extends RBuiltinNode>) clazz);
+                    }
+                }
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+            Utils.fail("error loading RBuiltIn classes from " + getClass().getSimpleName() + " : " + ex);
+        }
+
+    }
 
     protected final RBuiltinBuilder load(Class<? extends RBuiltinNode> clazz) {
         RBuiltin builtin = clazz.getAnnotation(RBuiltin.class);
@@ -99,7 +124,7 @@ public abstract class RPackage {
             if (registered != null && registered != builtin) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");
             }
-            builtins.put(name, builtin);
+            putBuiltin(name, builtin);
         }
     }
 
@@ -137,7 +162,7 @@ public abstract class RPackage {
             if (builtins.containsKey(name)) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");
             }
-            builtins.put(name, factory);
+            putBuiltin(name, factory);
         }
         return new RBuiltinBuilder(this, factory);
     }
