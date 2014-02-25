@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -29,6 +30,7 @@ import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
 import jnr.posix.util.*;
+import jnr.constants.platform.Errno;
 
 import com.oracle.truffle.r.runtime.ffi.*;
 
@@ -72,19 +74,29 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
         return posix.chdir(dir);
     }
 
+    /**
+     * Functions missing from JNR POSIX.
+     */
     public interface LibCX {
         int getcwd(@Out byte[] path);
+
+        int sleep(int seconds);
+
+        String mkdtemp(String template);
     }
 
     private static LibCX libcx;
 
-    public String getwd() {
-        // For some reason the JNR POSIX interface does not include getcwd
+    private static LibCX libcx() {
         if (libcx == null) {
             libcx = LibraryLoader.create(LibCX.class).load("c");
         }
+        return libcx;
+    }
+
+    public String getwd() {
         byte[] buf = new byte[4096];
-        int rc = libcx.getcwd(buf);
+        int rc = libcx().getcwd(buf);
         if (rc == 0) {
             return null;
         } else {
@@ -98,6 +110,33 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
 
     public Object getHandle(String name) {
         return name;
+    }
+
+    public String readlink(String path) throws IOException {
+        String s = posix.readlink(path);
+        if (s == null) {
+            int n = posix.errno();
+            if (n == Errno.EINVAL.intValue()) {
+                // not a link
+            } else {
+                // some other error
+                throw new IOException();
+            }
+        }
+        return s;
+    }
+
+    public void sleep(int seconds) {
+        libcx().sleep(seconds);
+    }
+
+    public boolean isWriteableDirectory(String path) {
+        FileStat fileStat = posix.stat(path);
+        return fileStat.isDirectory() && fileStat.isWritable();
+    }
+
+    public String mkdtemp(String template) {
+        return libcx().mkdtemp(template);
     }
 
 }

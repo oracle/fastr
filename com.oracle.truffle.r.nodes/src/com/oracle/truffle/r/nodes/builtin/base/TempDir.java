@@ -20,37 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * A statically typed interface to exactly those native functions required by the base package.
- * These methods do not necessarily map 1-1 to a native function, they may involve the invocation of
- * several native functions.
- */
-public interface BaseRFFI extends RFFI {
-    int getpid();
+@RBuiltin("tempdir")
+public abstract class TempDir extends RBuiltinNode {
 
-    String getwd();
+    private static final String tempDirPath = TempDirPath.tempDirPath();
 
-    int setwd(String dir);
+    @Specialization
+    public Object tempdir() {
+        return RDataFactory.createStringVector(tempDirPath);
+    }
 
-    /**
-     * Try to convert a symbolic link to it's target.
-     * 
-     * @param path the link path
-     * @return the target if {@code path} is a link else {@code null}
-     * @throws IOException for any other error except "not a link"
-     */
-    String readlink(String path) throws IOException;
-
-    void sleep(int seconds);
-
-    /**
-     * Returns {@code true}oif an only if {@code path} denotes a writeable directory.
-     */
-    boolean isWriteableDirectory(String path);
-
-    String mkdtemp(String template);
 }
