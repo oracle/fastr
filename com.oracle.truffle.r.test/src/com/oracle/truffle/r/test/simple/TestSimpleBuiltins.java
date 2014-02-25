@@ -513,15 +513,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ m<-matrix(c(1,2,3,4), nrow=2) ; as.vector(m, mode = \"raw\") }");
 
         assertEval("{ as.vector(list(1,2,3), mode=\"integer\") }");
+
+        // as.list
+        assertEval("{ k <- as.list(3:6) ; l <- as.list(1) ; list(k,l) }");
+        assertEval("{ as.list(list(1,2,\"eep\")) }");
+        assertEval("{ as.list(c(1,2,3,2,1)) }");
+        assertEval("{ as.list(3:6) }");
+        assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
+        assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
+        assertEval("{ l <- c(x=1) ; as.list(l) }");
     }
 
     @Test
     @Ignore
     public void testCastsIgnore() {
-        assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
-        assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
-        assertEval("{ l <- c(x=1) ; as.list(l) }");
-
         assertEval("{ as.matrix(1) }");
         assertEval("{ as.matrix(1:3) }");
         assertEval("{ x <- 1:3; z <- as.matrix(x); x }");

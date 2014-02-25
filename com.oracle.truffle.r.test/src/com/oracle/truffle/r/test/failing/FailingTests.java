@@ -1404,21 +1404,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_bf55a9d7ec96d782af8d9529a2f38293() {
-        assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_3491879b65e4aca7ee4eb07254dd1ba0() {
-        assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testCastsIgnore_f53133a962e1057652661353bb342c97() {
-        assertEval("{ l <- c(x=1) ; as.list(l) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCastsIgnore_fd41615e647202e9a7f994c633674ca4() {
         assertEval("{ as.matrix(1) }");
     }
@@ -5174,11 +5159,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleVectors_testScalarIndexIgnore_50f8d5d633f8f248cb1651a0304290ba() {
-        assertEval("{ x<-as.list(5:1) ; y <- 2L;  x[[y]] }");
-    }
-
-    @Ignore
     public void TestSimpleVectors_testScalarIndexIgnore_f46eea254cc6c35426449d4583dab803() {
         assertEval("{ x <- c(a=1,b=2) ; y <- 2L ; x[y] }");
     }
@@ -5416,11 +5396,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testScalarIndexIgnore_5f22c8ae5cc529428a95d0f3a7153e95() {
         assertEval("{ f <- function(x,i) { x[i] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:3,c(1,2)) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testScalarIndexIgnore_942a9f166109273f1444551c2ae8ade1() {
-        assertEval("{ x <- as.list(1:2) ; f <- function(i) { x[i] <- NULL ; x } ; f(1) ; f(NULL) }");
     }
 
     @Ignore
@@ -5836,11 +5811,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testScalarUpdateIgnore_360c2b664487b9e657393bf83af15aab() {
         assertEval("{ x <- list(a=3,b=4) ; x[\"z\"] <- NULL ; x }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testScalarUpdateIgnore_09adda5c97bee3d85cb1bc08ce20a710() {
-        assertEval("{ x <- as.list(1:2) ; x[[\"z\"]] <- NULL ; x }");
     }
 
     @Ignore
@@ -6371,11 +6341,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testVectorIndexIgnore_e5cba9fa5b94fb314f5ea0d3270cd1fb() {
         assertEval("{ l <- list(1,list(2)) ; f <- function(i) { l[[i]] } ; f(c(2,1)) ; f(1) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_1f99c587df8881ae8bb4134fbb911f66() {
-        assertEval("{ f <- function(i) { l[[i]] } ; l <- list(1, as.list(1:3)) ; f(c(2,NA)) }");
     }
 
     @Ignore
@@ -7401,41 +7366,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testVectorUpdateIgnore_8ae152de2f49dddfbdc77eb3575fc29d() {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,NA), 4) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_68872cf7ac79fb04821c3a961b6aef82() {
-        assertEval("{ b <- as.list(3:6) ; dim(b) <- c(4,1) ; b[c(TRUE,FALSE)] <- NULL ; b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_94da93241a73ec6cec883f3a8a1067f9() {
-        assertEval("{ b <- as.list(3:6) ; names(b) <- c(\"X\",\"Y\",\"Z\",\"Q\") ; b[c(TRUE,FALSE)] <- NULL ; b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_98098d0ab4b0f25322f799edc9ce5bbc() {
-        assertEval("{ b <- as.list(3:6) ; names(b) <- c(\"X\",\"Y\",\"Z\",\"Q\") ; b[c(FALSE,FALSE)] <- NULL ; b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_d4fc37b15d1d32e379d3bf1b64ef139a() {
-        assertEval("{ b <- as.list(3:6) ; dim(b) <- c(1,4) ; b[c(FALSE,FALSE)] <- NULL ; b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_79937a987764abbf160fdfd26173b4cd() {
-        assertEval("{ b <- as.list(3:6) ; dim(b) <- c(1,4) ; b[c(FALSE,FALSE,TRUE)] <- NULL ; b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_ea864b5e5eb945f5125e4d30e33da13b() {
-        assertEval("{ b <- as.list(3:5) ; dim(b) <- c(1,3) ; b[c(FALSE,FALSE,FALSE)] <- NULL ; b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorUpdateIgnore_482cc3f8f70802c19aa313810aa28702() {
-        assertEval("{ b <- as.list(3:5) ; dim(b) <- c(1,3) ; b[c(FALSE,TRUE,NA)] <- NULL ; b }");
     }
 
     @Ignore
