@@ -39,23 +39,17 @@ public abstract class IsTRUE extends RBuiltinNode {
         return RDataFactory.createLogicalVectorFromScalar(xx);
     }
 
-    @Specialization(order = 1)
+    @Specialization(order = 1, guards = "exactlyTrue")
     public RLogicalVector isTRUE(RLogicalVector x) {
         return RDataFactory.createLogicalVectorFromScalar(exactlyTrue(x) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
     }
 
     @Generic
-    public RLogicalVector isTRUEGeneric(Object x) {
-        byte b = RRuntime.LOGICAL_FALSE;
-        if (x instanceof RLogicalVector) {
-            if (exactlyTrue((RLogicalVector) x)) {
-                b = RRuntime.LOGICAL_TRUE;
-            }
-        }
-        return RDataFactory.createLogicalVectorFromScalar(b);
+    public RLogicalVector isTRUEGeneric(@SuppressWarnings("unused") Object x) {
+        return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE);
     }
 
-    private static boolean exactlyTrue(RLogicalVector v) {
+    public static boolean exactlyTrue(RLogicalVector v) {
         return v.getLength() == 1 && v.getDataAt(0) == RRuntime.LOGICAL_TRUE && (v.getAttributes() == null || v.getAttributes().isEmpty());
     }
 }
