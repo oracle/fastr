@@ -6729,6 +6729,21 @@ $<NA>
 #{ z <- c(a=1, b=2) ; names(z) <- NULL ; z }
 [1] 1 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodEnclFuncArgs
+#{f <- function(x,y,z){ UseMethod("f"); }; f.second <- function(x,y,z){cat("f second",x,y,z)}; obj <-1; attr(obj,"class") <- "second"; arg2=2; arg3=3; f(obj,arg2,arg3);}
+f second 1 2 3
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodLocalVars
+#{f <- function(x){ y<-2;locFun <- function(){cat("local")}; UseMethod("f"); }; f.second <- function(x){cat("f second",x);locFun();}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
+f second 1local
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodNested
+#{f <- function(x){g<- function(x){ h<- function(x){ UseMethod("f");}; h(x)}; g(x) }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
+f second 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodOneArg
+#{f <- function(x){ UseMethod("f"); };f.first <- function(x){cat("f first",x)}; f.second <- function(x){cat("f second",x)}; obj <-1; attr(obj,"class")  <- "first"; f(obj); attr(obj,"class")  <- "second"; f(obj);}
+f first 1f second 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
+#{f <- function(x){ UseMethod("f",x); };f.first <- function(x){cat("f first",x)};f.second <- function(x){cat("f second",x)};obj <-1;attr(obj,"class")  <- "first";f(obj);attr(obj,"class")  <- "second";f(obj)}
+f first 1f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhich
 #{ which(c(TRUE, FALSE, NA, TRUE)) }
 [1] 1 4

@@ -174,4 +174,10 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         this.data = newData;
     }
 
+    @Override
+    public List<String> getClassHierarchy() {
+        final List<String> classHr = super.getClassHierarchy();
+        classHr.addAll(Arrays.asList(RRuntime.CLASS_DOUBLE));
+        return classHr;
+    }
 }

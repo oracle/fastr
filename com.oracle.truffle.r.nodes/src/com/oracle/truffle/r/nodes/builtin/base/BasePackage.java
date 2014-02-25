@@ -88,6 +88,7 @@ public class BasePackage extends RPackage {
         load(Exists.class);
         load(Floor.class);
         load(Get.class);
+        load(GetClass.class);
         load(Getwd.class);
         load(GlobalEnv.class);
         load(Gregexpr.class);
@@ -172,12 +173,14 @@ public class BasePackage extends RPackage {
         load(Unlist.class);
         load(UpdateAttr.class);
         load(UpdateAttributes.class);
+        load(UpdateClass.class);
         load(UpdateDiag.class);
         load(UpdateDim.class);
         load(UpdateDimNames.class);
         load(UpdateLength.class);
         load(UpdateNames.class);
         load(UpperTri.class);
+        load(UseMethod.class);
         load(Which.class);
     }
 

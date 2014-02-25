@@ -86,6 +86,9 @@ public class RRuntime {
     public static final String TYPE_CHARACTER = new String("character");
     public static final String TYPE_LOGICAL = new String("logical");
     public static final String TYPE_RAW = new String("raw");
+    public static final String TYPE_MATRIX = new String("matrix");
+    public static final String TYPE_ARRAY = new String("array");
+    public static final String TYPE_LIST = new String("list");
 
     public static final String TYPE_NUMERIC_CAP = new String("Numeric");
     public static final String TYPE_INTEGER_CAP = new String("Integer");
@@ -98,6 +101,7 @@ public class RRuntime {
     public static final REnvironment GLOBAL_ENV = RGlobalEnvironment.instance;
 
     public static final String[] STRING_ARRAY_SENTINEL = new String[0];
+    public static final String DEFAULT = "default";
 
     public static final String NAMES_ATTR_KEY = new String("names");
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
@@ -106,6 +110,11 @@ public class RRuntime {
     public static final String DIM_ATTR_KEY = new String("dim");
     public static final String DIMNAMES_ATTR_KEY = "dimnames";
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
+
+    public static final String CLASS_ATTR_KEY = "class";
+
+    public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
+    public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};
 
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);

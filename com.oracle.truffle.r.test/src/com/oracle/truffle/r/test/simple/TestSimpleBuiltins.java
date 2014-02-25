@@ -3,7 +3,7 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2012-2013, Purdue University
+ * Copyright (c) 2012-2014, Purdue University
  * Copyright (c) 2013, 2014, Oracle and/or its affiliates
  *
  * All rights reserved.
@@ -2347,5 +2347,49 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
+    }
+
+    @Test
+    public void testUseMethodSimple() {
+        // Basic UseMethod
+        assertEval("{f <- function(x){ UseMethod(\"f\",x); };" + "f.first <- function(x){cat(\"f first\",x)};" + "f.second <- function(x){cat(\"f second\",x)};" + "obj <-1;"
+                        + "attr(obj,\"class\")  <- \"first\";" + "f(obj);" + "attr(obj,\"class\")  <- \"second\";" + "f(obj)}");
+    }
+
+    @Test
+    public void testUseMethodOneArg() {
+        // If only one argument is passed to UseMethod(), the call should
+        // be resolved based on first argument to enclosing function.
+        assertEval("{f <- function(x){ UseMethod(\"f\"); };f.first <- function(x){cat(\"f first\",x)}; f.second <- function(x){cat(\"f second\",x)}; obj <-1; attr(obj,\"class\")  <- \"first\"; f(obj); attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void testUseMethodLocalVars() {
+        // The variables defined before call to UseMethod should be
+        // accessible to target function.
+        assertEval("{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void testUseMethodNested() {
+        // The UseMethod call can be nested deep compared to where target is
+        // defined.
+        assertEval("{f <- function(x){g<- function(x){ h<- function(x){ UseMethod(\"f\");}; h(x)}; g(x) }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void testUseMethodEnclFuncArgs() {
+        // All the argument passed to the caller of UseMethod() should be
+        // accessible to the target method.
+        assertEval("{f <- function(x,y,z){ UseMethod(\"f\"); }; f.second <- function(x,y,z){cat(\"f second\",x,y,z)}; obj <-1; attr(obj,\"class\") <- \"second\"; arg2=2; arg3=3; f(obj,arg2,arg3);}");
+
+    }
+
+    @Test
+    @Ignore
+    public void testUseMethodIgnore() {
+        // TODO
+        // All the statements after UseMethod() call should get ignored.
+        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
 }

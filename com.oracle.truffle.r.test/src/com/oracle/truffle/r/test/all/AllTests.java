@@ -10449,6 +10449,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUseMethodEnclFuncArgs_c699286a5e7dd6ca4c46b1245a1f633e() {
+        assertEval("{f <- function(x,y,z){ UseMethod(\"f\"); }; f.second <- function(x,y,z){cat(\"f second\",x,y,z)}; obj <-1; attr(obj,\"class\") <- \"second\"; arg2=2; arg3=3; f(obj,arg2,arg3);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodIgnore_1af23cb23456744d7e6a4cb93888e9a3() {
+        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodLocalVars_cd724107886a7c9d25ae3b6aad713cb6() {
+        assertEval("{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodNested_d689820491ffcbc9ddb83012801bd243() {
+        assertEval("{f <- function(x){g<- function(x){ h<- function(x){ UseMethod(\"f\");}; h(x)}; g(x) }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodOneArg_fce364ef2dfa8e366da5615934951253() {
+        assertEval("{f <- function(x){ UseMethod(\"f\"); };f.first <- function(x){cat(\"f first\",x)}; f.second <- function(x){cat(\"f second\",x)}; obj <-1; attr(obj,\"class\")  <- \"first\"; f(obj); attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodSimple_f4ab882034aa9d9c9d106566155c9a1d() {
+        assertEval("{f <- function(x){ UseMethod(\"f\",x); };f.first <- function(x){cat(\"f first\",x)};f.second <- function(x){cat(\"f second\",x)};obj <-1;attr(obj,\"class\")  <- \"first\";f(obj);attr(obj,\"class\")  <- \"second\";f(obj)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testWhich_abb40fde89cc0dfbb69ec73c399e9ee0() {
         assertEval("{ which(c(TRUE, FALSE, NA, TRUE)) }");
     }

@@ -164,4 +164,10 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return getDataAt(index);
     }
 
+    @Override
+    public List<String> getClassHierarchy() {
+        List<String> klass = super.getClassHierarchy();
+        klass.add(RRuntime.TYPE_COMPLEX);
+        return klass;
+    }
 }
