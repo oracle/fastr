@@ -374,6 +374,48 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         return RDataFactory.createList(result);
     }
 
+    @Specialization(order = 1221)
+    public RList doListStringPosition(RList left, RNull right, String position) {
+        if (left.getNames() == null || left.getNames() == RNull.instance) {
+            return left;
+        }
+        int p = left.getElementIndexByName(position);
+        if (p == -1) {
+            return left;
+        }
+        return singlePositionInBounds(left, right, p) ? doList(left, right, p) : doListOutOfBounds(left, right, p);
+    }
+
+    @Specialization(order = 1222)
+    public RList doListStringPositions(RList left, RNull right, RStringVector positions) {
+        if (left.getNames() == null || left.getNames() == RNull.instance) {
+            return left;
+        }
+        int[] del = new int[positions.getLength()];
+        int deleted = 0;
+        for (int i = 0; i < positions.getLength(); ++i) {
+            int p = left.getElementIndexByName(positions.getDataAt(i));
+            if (p != -1) {
+                del[deleted++] = p;
+            }
+        }
+        if (deleted == 0) {
+            return left;
+        }
+        if (deleted == 1) {
+            if (singlePositionInBounds(left, right, del[0])) {
+                return doList(left, right, del[0]);
+            }
+            if (singlePositionOutOfBounds(left, right, del[0])) {
+                return doListOutOfBounds(left, right, del[0]);
+            }
+        }
+        int[] actDel = new int[deleted];
+        System.arraycopy(del, 0, actDel, 0, deleted);
+        RIntVector vdel = RDataFactory.createIntVector(actDel, RDataFactory.COMPLETE_VECTOR);
+        return doList(left, right, vdel);
+    }
+
     // Vector assigned to vector
 
     private RLogicalVector doLogical(RLogicalVector vector, RAbstractLogicalVector right, RIntVector positions) {
