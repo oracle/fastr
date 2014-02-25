@@ -337,7 +337,16 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         Object[] result = new Object[data.length - 1];
         System.arraycopy(data, 0, result, 0, position - 1);
         System.arraycopy(data, position, result, position - 1, data.length - position);
-        return RDataFactory.createList(result);
+        RList r = RDataFactory.createList(result);
+        if (list.getNames() != null && list.getNames() != RNull.instance) {
+            RStringVector vnames = (RStringVector) list.getNames();
+            String[] names = vnames.getDataCopy();
+            String[] newNames = new String[names.length - 1];
+            System.arraycopy(names, 0, newNames, 0, position - 1);
+            System.arraycopy(names, position, newNames, position - 1, names.length - position);
+            r.setNames(RDataFactory.createStringVector(newNames, vnames.isComplete()));
+        }
+        return r;
     }
 
     @Specialization(order = 1211, guards = "singlePositionOutOfBounds")
@@ -347,7 +356,16 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
             Object[] result = new Object[position - 1];
             Arrays.fill(result, RNull.instance);
             System.arraycopy(data, 0, result, 0, data.length);
-            return RDataFactory.createList(result);
+            RList r = RDataFactory.createList(result);
+            if (list.getNames() != null && list.getNames() != RNull.instance) {
+                RStringVector vnames = (RStringVector) list.getNames();
+                String[] names = vnames.getDataCopy();
+                String[] newNames = new String[position - 1];
+                Arrays.fill(newNames, "");
+                System.arraycopy(names, 0, newNames, 0, names.length);
+                r.setNames(RDataFactory.createStringVector(newNames, vnames.isComplete()));
+            }
+            return r;
         } else {
             return list;
         }
@@ -365,13 +383,32 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
             data[pos] = right;
         }
         Object[] result = new Object[data.length - deleted];
+        String[] names = null;
+        String[] newNames = null;
+        boolean namesComplete = false;
+        boolean hasNames = false;
+        if (list.getNames() != null && list.getNames() != RNull.instance) {
+            hasNames = true;
+            RStringVector vnames = (RStringVector) list.getNames();
+            names = vnames.getDataCopy();
+            namesComplete = vnames.isComplete();
+            newNames = new String[names.length - deleted];
+        }
         int w = 0; // write index
         for (int i = 0; i < data.length; ++i) {
             if (data[i] != right) {
-                result[w++] = data[i];
+                result[w] = data[i];
+                if (hasNames) {
+                    newNames[w] = names[i];
+                }
+                ++w;
             }
         }
-        return RDataFactory.createList(result);
+        RList r = RDataFactory.createList(result);
+        if (hasNames) {
+            r.setNames(RDataFactory.createStringVector(newNames, namesComplete));
+        }
+        return r;
     }
 
     @Specialization(order = 1221)

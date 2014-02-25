@@ -95,6 +95,20 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         return names == null ? RNull.instance : names;
     }
 
+    public final int getElementIndexByName(String name) {
+        if (getNames() == RNull.instance) {
+            return -1;
+        }
+        assert names instanceof RStringVector;
+        RStringVector ns = (RStringVector) names;
+        for (int i = 0; i < ns.getLength(); ++i) {
+            if (ns.getDataAt(i).equals(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public final void setNames(Object newNames) {
         setNames(newNames, null);
     }
