@@ -416,6 +416,24 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         return doList(left, right, vdel);
     }
 
+    @Specialization(order = 1223)
+    public RList doListLogicalPositions(RList left, RNull right, RLogicalVector positions) {
+        int[] del = new int[left.getLength()];
+        int deleted = 0;
+        for (int i = 0, l = 0; i < left.getLength(); ++i, l = Utils.incMod(l, positions.getLength())) {
+            if (positions.getDataAt(l) == RRuntime.LOGICAL_TRUE) {
+                del[deleted++] = i + 1; // translate to R index
+            }
+        }
+        if (deleted == 0) {
+            return left;
+        }
+        int[] actDel = new int[deleted];
+        System.arraycopy(del, 0, actDel, 0, deleted);
+        RIntVector vdel = RDataFactory.createIntVector(actDel, RDataFactory.COMPLETE_VECTOR);
+        return doList(left, right, vdel);
+    }
+
     // Vector assigned to vector
 
     private RLogicalVector doLogical(RLogicalVector vector, RAbstractLogicalVector right, RIntVector positions) {
