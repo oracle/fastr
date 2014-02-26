@@ -148,4 +148,11 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
+
+    @Override
+    public List<String> getClassHierarchy() {
+        final List<String> classHr = super.getClassHierarchy();
+        classHr.add(RRuntime.TYPE_CHARACTER);
+        return classHr;
+    }
 }

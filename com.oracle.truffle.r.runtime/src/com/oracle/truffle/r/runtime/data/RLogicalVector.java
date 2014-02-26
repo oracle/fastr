@@ -148,4 +148,11 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
+
+    @Override
+    public List<String> getClassHierarchy() {
+        final List<String> classHr = super.getClassHierarchy();
+        classHr.add(RRuntime.TYPE_LOGICAL);
+        return classHr;
+    }
 }

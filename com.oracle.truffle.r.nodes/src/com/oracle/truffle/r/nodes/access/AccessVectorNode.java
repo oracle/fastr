@@ -27,8 +27,10 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.AccessVectorNodeFactory.AccessVectorVectorCastFactory;
+import com.oracle.truffle.r.nodes.access.AccessVectorNodeFactory.IndirectAccessFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -41,6 +43,10 @@ public abstract class AccessVectorNode extends RNode {
     private final NACheck resultNACheck;
 
     @CompilationFinal private boolean isSubset;
+
+    @Child private IndirectAccess indirectAccess;
+
+    public abstract Object executeObject(VirtualFrame frame, RAbstractVector vector, Object position);
 
     public void setSubset(boolean s) {
         isSubset = s;
@@ -992,13 +998,23 @@ public abstract class AccessVectorNode extends RNode {
     }
 
     @Specialization(order = 707)
-    public Object accessIntVector(@SuppressWarnings("unused") RList list, RIntVector position) {
+    public Object accessIntVector(VirtualFrame frame, RList list, RIntVector position) {
         if (isSubset) {
             if (position.getLength() == 0) {
                 return RDataFactory.createList();
             }
+            throw Utils.nyi("subset access, length != 0");
+        } else {
+            int pos = position.getDataAt(0);
+            int[] rem = new int[position.getLength() - 1];
+            System.arraycopy(position.getDataCopy(), 1, rem, 0, rem.length);
+            RIntVector remainder = RDataFactory.createIntVector(rem, position.isComplete());
+            if (indirectAccess == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                indirectAccess = adoptChild(IndirectAccessFactory.create(ConstantNode.create(list), ConstantNode.create(pos), ConstantNode.create(remainder)));
+            }
+            return indirectAccess.execute(frame, list, pos, remainder);
         }
-        throw Utils.nyi();
     }
 
     // raw vector
@@ -1223,4 +1239,39 @@ public abstract class AccessVectorNode extends RNode {
             return operand;
         }
     }
+
+    @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "at", type = RNode.class), @NodeChild(value = "atat", type = RNode.class)})
+    public abstract static class IndirectAccess extends RNode {
+
+        @Child protected AccessVectorNode operandAt;
+        @Child protected AccessVectorNode operandAtAt;
+
+        public abstract Object execute(VirtualFrame frame, RAbstractVector operand, int at, RIntVector atat);
+
+        @Specialization(order = 1, guards = "isLengthZero")
+        public Object indirectAccess0(VirtualFrame frame, RAbstractVector operand, int at, @SuppressWarnings("unused") RIntVector atat) {
+            if (operandAt == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                operandAt = adoptChild(AccessVectorNodeFactory.create(ConstantNode.create(operand), ConstantNode.create(at)));
+            }
+            return operandAt.executeObject(frame, operand, at);
+        }
+
+        @Specialization(order = 2)
+        public Object indirectAccess(VirtualFrame frame, RAbstractVector operand, int at, RIntVector atat) {
+            RAbstractVector v = (RAbstractVector) indirectAccess0(frame, operand, at, atat);
+            if (operandAtAt == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                operandAtAt = adoptChild(AccessVectorNodeFactory.create(ConstantNode.create(v), ConstantNode.create(atat)));
+            }
+            return operandAtAt.executeObject(frame, v, atat);
+        }
+
+        @SuppressWarnings("unused")
+        protected static boolean isLengthZero(RAbstractVector operand, int at, RIntVector atat) {
+            return atat.getLength() == 0;
+        }
+
+    }
+
 }

@@ -157,4 +157,11 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
+
+    @Override
+    public List<String> getClassHierarchy() {
+        final List<String> classHr = super.getClassHierarchy();
+        classHr.addAll(Arrays.asList(RRuntime.CLASS_INTEGER));
+        return classHr;
+    }
 }

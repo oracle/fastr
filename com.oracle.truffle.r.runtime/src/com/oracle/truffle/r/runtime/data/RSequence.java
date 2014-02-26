@@ -84,4 +84,12 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     public boolean isMatrix() {
         return false;
     }
+
+    public boolean isArray() {
+        return false;
+    }
+
+    public boolean isObject() {
+        return false;
+    }
 }

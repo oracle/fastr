@@ -38,10 +38,7 @@ public abstract class IsObject extends RBuiltinNode {
     }
 
     @Specialization
-    @SuppressWarnings("unused")
     public byte isObject(RAbstractVector arg) {
-        // FIXME return the result of class attribute presence check (once supported)
-        return RRuntime.LOGICAL_FALSE;
+        return arg.isObject() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
-
 }

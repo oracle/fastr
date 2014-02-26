@@ -104,7 +104,7 @@ public abstract class ArrayPositionCast extends RNode {
         return operand.getDataAt(0);
     }
 
-    @Specialization(guards = "!sizeOneVector")
+    @Specialization
     public RIntVector doIntVector(RAbstractVector vector, RIntVector operand) {
         return operand;
     }
@@ -208,7 +208,14 @@ public abstract class ArrayPositionCast extends RNode {
             return operand;
         }
 
-        @Specialization(order = 7, guards = "isNegative")
+        @Specialization(order = 7, guards = {"isNegative", "dimLengthOne"})
+        public int doIntNegativeNoDimLeft(RAbstractVector vector, int operand) {
+            // it's negative, but not out of bounds and dimension has length one - result is no
+            // dimensions left
+            return 0;
+        }
+
+        @Specialization(order = 8, guards = "isNegative")
         public RIntVector doIntNegative(RAbstractVector vector, int operand) {
             // it's negative, but not out of bounds - pick all indexes apart from the negative one
             int dimLength = vector.getDimensions()[dimension];
@@ -220,13 +227,6 @@ public abstract class ArrayPositionCast extends RNode {
                 }
             }
             return RDataFactory.createIntVector(positions, RDataFactory.COMPLETE_VECTOR);
-        }
-
-        @Specialization(order = 8, guards = {"isNegative", "dimLengthOne"})
-        public int doIntNegativeNoDimLeft(RAbstractVector vector, int operand) {
-            // it's negative, but not out of bounds and dimension has length one - result is no
-            // dimensions left
-            return 0;
         }
 
         @Specialization(order = 10, guards = "!isNegative")

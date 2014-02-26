@@ -29,9 +29,13 @@ import com.oracle.truffle.r.nodes.function.RCallNode.VarArgsAsObjectArrayNodeFac
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "positions", type = RNode[].class)})
 public abstract class AccessArrayNode extends RNode {
+
+    private final NACheck elementNACheck = NACheck.create();
+    private final NACheck namesNACheck = NACheck.create();
 
     private static final VarArgsAsObjectArrayNodeFactory varArgAsObjectArrayNodeFactory = new VarArgsAsObjectArrayNodeFactory();
 
@@ -57,11 +61,785 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
     }
 
-    @SuppressWarnings("unused")
+    private RStringVector getNames(RAbstractVector vector, Object[] positions, int currentDimLevel) {
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int numPositions = p.getLength();
+        if (numPositions > 1) {
+            RList dimNames = vector.getDimNames();
+            RStringVector srcNames = dimNames == null ? null : (dimNames.getDataAt(currentDimLevel - 1) == RNull.instance ? null : (RStringVector) dimNames.getDataAt(currentDimLevel - 1));
+            if (srcNames == null) {
+                return null;
+            } else {
+                namesNACheck.enable(!srcNames.isComplete() || !p.isComplete());
+                String[] namesData = new String[numPositions];
+                for (int i = 0; i < p.getLength(); i++) {
+                    int pos = p.getDataAt(i);
+                    if (namesNACheck.check(pos)) {
+                        namesData[i] = RRuntime.STRING_NA;
+                    } else {
+                        namesData[i] = srcNames.getDataAt(pos - 1);
+                        namesNACheck.check(namesData[i]);
+                    }
+                }
+                RStringVector dstNames = RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
+                return dstNames;
+            }
+        }
+        if (currentDimLevel == 1) {
+            return null;
+        } else {
+            return getNames(vector, positions, currentDimLevel - 1);
+        }
+    }
+
+    private void getDimNames(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
+        if (currentSrcDimLevel == 0) {
+            return;
+        }
+        RIntVector p = (RIntVector) positions[currentSrcDimLevel - 1];
+        int numPositions = p.getLength();
+        if (numPositions > 1) {
+            RList srcDimNames = vector.getDimNames();
+            RStringVector srcNames = srcDimNames == null ? null : (srcDimNames.getDataAt(currentSrcDimLevel - 1) == RNull.instance ? null
+                            : (RStringVector) srcDimNames.getDataAt(currentSrcDimLevel - 1));
+            if (srcNames == null) {
+                dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
+            } else {
+                namesNACheck.enable(!srcNames.isComplete() || !p.isComplete());
+                String[] namesData = new String[numPositions];
+                for (int i = 0; i < p.getLength(); i++) {
+                    int pos = p.getDataAt(i);
+                    if (namesNACheck.check(pos)) {
+                        namesData[i] = RRuntime.STRING_NA;
+                    } else {
+                        namesData[i] = srcNames.getDataAt(pos - 1);
+                        namesNACheck.check(namesData[i]);
+                    }
+                }
+                RStringVector dstNames = RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
+                dstDimNames.updateDataAt(currentDstDimLevel - 1, dstNames, null);
+            }
+            getDimNames(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1);
+        } else {
+            if (p.getDataAt(0) == 0) {
+                dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
+                getDimNames(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1);
+            } else {
+                getDimNames(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel);
+            }
+        }
+
+    }
+
+    private static class DimsAndResultLength {
+        public final int[] dimensions;
+        public final int resLength;
+
+        public DimsAndResultLength(int[] dimensions, int resLength) {
+            this.dimensions = dimensions;
+            this.resLength = resLength;
+        }
+    }
+
+    private static DimsAndResultLength getDimsAndResultLength(Object[] positions) {
+        int dimLength = 0;
+        int resLength = 1;
+        int multi = 0; // how many times # positions > 1 ?
+        int zero = 0; // how many times a position is 0
+        for (int i = 0; i < positions.length; i++) {
+            RIntVector p = (RIntVector) positions[i];
+            int pLength = p.getLength();
+            if (pLength == 1 && p.getDataAt(0) != 0) {
+                continue;
+            }
+            if (pLength > 1) {
+                multi++;
+                resLength *= pLength;
+            } else {
+                resLength = 0;
+                zero++;
+            }
+            dimLength++;
+        }
+        // create dimensions array
+        int[] dimensions = null;
+
+        if (dimLength > 0 && ((zero > 1 || multi > 1) || (zero > 0 && multi > 0))) {
+            dimensions = new int[dimLength];
+            int ind = 0;
+            for (int i = 0; i < positions.length; i++) {
+                RIntVector p = (RIntVector) positions[i];
+                int pLength = p.getLength();
+                if (pLength == 1 && p.getDataAt(0) != 0) {
+                    continue;
+                }
+                if (pLength > 1) {
+                    dimensions[ind++] = pLength;
+                } else {
+                    dimensions[ind++] = 0;
+                }
+            }
+        }
+        return new DimsAndResultLength(dimensions, resLength);
+    }
+
+    private void getData(int[] data, RIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = RRuntime.INT_NA;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = RRuntime.INT_NA;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex);
+                        elementNACheck.check(data[dstIndex]);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
     @Specialization(order = 10)
     RIntVector access(RIntVector vector, Object[] positions) {
-        // dummy (for now)
-        return RDataFactory.createIntVector(new int[]{42}, true);
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        int[] data;
+        if (resLength == 0) {
+            data = new int[0];
+        } else {
+            data = new int[resLength];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!vector.isComplete() || !p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RIntVector resultVector = RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
+    }
+
+    private void getData(double[] data, RDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = RRuntime.DOUBLE_NA;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = RRuntime.DOUBLE_NA;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex);
+                        elementNACheck.check(data[dstIndex]);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
+    @Specialization(order = 20)
+    RDoubleVector access(RDoubleVector vector, Object[] positions) {
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        double[] data;
+        if (resLength == 0) {
+            data = new double[0];
+        } else {
+            data = new double[resLength];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!vector.isComplete() || !p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RDoubleVector resultVector = RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
+    }
+
+    private void getData(byte[] data, RLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = RRuntime.LOGICAL_NA;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = RRuntime.LOGICAL_NA;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex);
+                        elementNACheck.check(data[dstIndex]);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
+    @Specialization(order = 30)
+    RLogicalVector access(RLogicalVector vector, Object[] positions) {
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        byte[] data;
+        if (resLength == 0) {
+            data = new byte[0];
+        } else {
+            data = new byte[resLength];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!vector.isComplete() || !p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RLogicalVector resultVector = RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
+    }
+
+    private void getData(String[] data, RStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = RRuntime.STRING_NA;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = RRuntime.STRING_NA;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex);
+                        elementNACheck.check(data[dstIndex]);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
+    @Specialization(order = 40)
+    RStringVector access(RStringVector vector, Object[] positions) {
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        String[] data;
+        if (resLength == 0) {
+            data = new String[0];
+        } else {
+            data = new String[resLength];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!vector.isComplete() || !p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RStringVector resultVector = RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
+    }
+
+    private void getDataComplex(double[] data, RComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = (dstArrayBase + newAccDstDimensions * i) << 1;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = RRuntime.COMPLEX_NA_REAL_PART;
+                    data[dstIndex + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = RRuntime.COMPLEX_NA_REAL_PART;
+                        data[dstIndex + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex).getRealPart();
+                        data[dstIndex + 1] = vector.getDataAt(srcIndex).getImaginaryPart();
+                        elementNACheck.check(data[dstIndex]);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getDataComplex(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
+    @Specialization(order = 50)
+    RComplexVector access(RComplexVector vector, Object[] positions) {
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        double[] data;
+        if (resLength == 0) {
+            data = new double[0];
+        } else {
+            data = new double[resLength << 1];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!vector.isComplete() || !p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getDataComplex(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RComplexVector resultVector = RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
+    }
+
+    private void getDataRaw(byte[] data, RRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = 0;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = 0;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex).getValue();
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getDataRaw(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
+    @Specialization(order = 60)
+    RRawVector access(RRawVector vector, Object[] positions) {
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        byte[] data;
+        if (resLength == 0) {
+            data = new byte[0];
+        } else {
+            data = new byte[resLength];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getDataRaw(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createRawVector(data, dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createRawVector(data, dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RRawVector resultVector = RDataFactory.createRawVector(data, dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
+    }
+
+    private void getData(Object[] data, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        int[] srcDimensions = vector.getDimensions();
+        RIntVector p = (RIntVector) positions[currentDimLevel - 1];
+        int srcDimSize = srcDimensions[currentDimLevel - 1];
+        int newAccSrcDimensions = accSrcDimensions / srcDimSize;
+        int newAccDstDimensions = accDstDimensions / p.getLength();
+        elementNACheck.enable(p);
+        if (currentDimLevel == 1) {
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstIndex = dstArrayBase + newAccDstDimensions * i;
+                if (srcArrayBase == -1) {
+                    data[dstIndex] = RNull.instance;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        data[dstIndex] = RNull.instance;
+                    } else {
+                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                        data[dstIndex] = vector.getDataAt(srcIndex);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < p.getLength(); i++) {
+                int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
+                int newSrcArrayBase;
+                if (srcArrayBase == -1) {
+                    newSrcArrayBase = -1;
+                } else {
+                    int pos = p.getDataAt(i);
+                    if (elementNACheck.check(pos)) {
+                        newSrcArrayBase = -1;
+                    } else {
+                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+                    }
+                }
+                getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
+            }
+        }
+    }
+
+    @Specialization(order = 70)
+    RList access(RList vector, Object[] positions) {
+        // compute length of dimensions array and of the resulting vector
+        DimsAndResultLength res = getDimsAndResultLength(positions);
+        int[] dimensions = res.dimensions;
+        int resLength = res.resLength;
+        int[] srcDimensions = vector.getDimensions();
+        int numSrcDimensions = srcDimensions.length;
+        Object[] data;
+        if (resLength == 0) {
+            data = new Object[0];
+        } else {
+            data = new Object[resLength];
+            RIntVector p = (RIntVector) positions[positions.length - 1];
+            int srcDimSize = srcDimensions[numSrcDimensions - 1];
+            int accSrcDimensions = vector.getLength() / srcDimSize;
+            int accDstDimensions = resLength / p.getLength();
+
+            elementNACheck.enable(!p.isComplete());
+            for (int i = 0; i < p.getLength(); i++) {
+                int dstArrayBase = accDstDimensions * i;
+                int srcArrayBase;
+                int pos = p.getDataAt(i);
+                if (elementNACheck.check(pos)) {
+                    srcArrayBase = -1; // fill with NAs at the lower levels
+                } else {
+                    srcArrayBase = accSrcDimensions * (pos - 1);
+                }
+                getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+            }
+        }
+        RList dimNames = vector.getDimNames();
+        if (dimNames == null) {
+            return RDataFactory.createList(data, dimensions);
+        } else {
+            if (dimensions == null) {
+                // construct names
+                RStringVector names = getNames(vector, positions, numSrcDimensions);
+                return RDataFactory.createList(data, dimensions, names);
+            } else {
+                // construct dimnames
+                int dimLength = dimensions.length;
+                RList resultVector = RDataFactory.createList(data, dimensions);
+                int numDstDimensions = dimLength;
+                RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
+                getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions);
+                resultVector.setDimNames(dstDimNames);
+                return resultVector;
+            }
+        }
     }
 
     protected boolean wrongDimensions(RAbstractVector vector, Object[] positions) {

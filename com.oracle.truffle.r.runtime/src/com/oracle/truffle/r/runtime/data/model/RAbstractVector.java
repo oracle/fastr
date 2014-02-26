@@ -56,4 +56,10 @@ public interface RAbstractVector {
     RList getDimNames();
 
     boolean isMatrix();
+
+    boolean isArray();
+
+    boolean isObject();
+
+    List<String> getClassHierarchy();
 }

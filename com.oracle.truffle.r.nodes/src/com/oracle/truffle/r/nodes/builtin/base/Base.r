@@ -42,3 +42,6 @@ Sys.getenv <- function(x = NULL, unset = "", names = NA)
     }
 }
 
+as.list <- function(x, ...) if (typeof(x) == "list") x else as.vector(x, "list")
+
+`%o%` <- function(x, y) outer(x, y)

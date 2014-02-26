@@ -165,9 +165,9 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1002, guards = "!modeIsAnyOrMatches")
+    @Specialization(order = 1002, guards = "invalidMode")
     public RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
-        throw RError.getInvalidMode(getSourceSection());
+        throw RError.getInvalidMode(getEncapsulatingSourceSection());
     }
 
     protected boolean castToInt(RAbstractVector x, String mode) {
@@ -200,6 +200,12 @@ public abstract class AsVector extends RBuiltinNode {
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
         return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode);
+    }
+
+    protected boolean invalidMode(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+        return !RRuntime.TYPE_ANY.equals(mode) && !RRuntime.TYPE_ARRAY.equals(mode) && !RRuntime.TYPE_CHARACTER.equals(mode) && !RRuntime.TYPE_COMPLEX.equals(mode) &&
+                        !RRuntime.TYPE_DOUBLE.equals(mode) && !RRuntime.TYPE_INTEGER.equals(mode) && !RRuntime.TYPE_LIST.equals(mode) && !RRuntime.TYPE_LOGICAL.equals(mode) &&
+                        !RRuntime.TYPE_MATRIX.equals(mode) && !RRuntime.TYPE_NUMERIC.equals(mode) && !RRuntime.TYPE_RAW.equals(mode);
     }
 
 }

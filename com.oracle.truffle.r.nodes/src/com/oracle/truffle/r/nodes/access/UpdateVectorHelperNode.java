@@ -312,7 +312,16 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
 
     // list updates
 
-    @Specialization(order = 1200, guards = "singlePositionInBounds")
+    @Specialization(order = 1200, guards = "positionEqualsZero")
+    public RList doList(RList list, Object right, int position) {
+        if (isSubset) {
+            return list;
+        } else {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
+    }
+
+    @Specialization(order = 1201, guards = "singlePositionInBounds")
     public RList doList(RList list, RAbstractVector right, int position) {
         if (isSubset) {
             list.updateDataAt(position - 1, right.getDataAtAsObject(0), rightNACheck);
@@ -327,18 +336,36 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         Object[] data = list.getDataCopy();
         Object[] result = new Object[data.length - 1];
         System.arraycopy(data, 0, result, 0, position - 1);
-        System.arraycopy(data, position + 1, result, position, data.length - (position + 1));
-        return RDataFactory.createList(result);
+        System.arraycopy(data, position, result, position - 1, data.length - position);
+        RList r = RDataFactory.createList(result);
+        if (list.getNames() != null && list.getNames() != RNull.instance) {
+            RStringVector vnames = (RStringVector) list.getNames();
+            String[] names = vnames.getDataCopy();
+            String[] newNames = new String[names.length - 1];
+            System.arraycopy(names, 0, newNames, 0, position - 1);
+            System.arraycopy(names, position, newNames, position - 1, names.length - position);
+            r.setNames(RDataFactory.createStringVector(newNames, vnames.isComplete()));
+        }
+        return r;
     }
 
-    @Specialization(order = 1211, guards = "!singlePositionInBounds")
+    @Specialization(order = 1211, guards = "singlePositionOutOfBounds")
     public RList doListOutOfBounds(RList list, RNull right, int position) {
         if (isSubset) {
             Object[] data = list.getDataCopy();
             Object[] result = new Object[position - 1];
             Arrays.fill(result, RNull.instance);
             System.arraycopy(data, 0, result, 0, data.length);
-            return RDataFactory.createList(result);
+            RList r = RDataFactory.createList(result);
+            if (list.getNames() != null && list.getNames() != RNull.instance) {
+                RStringVector vnames = (RStringVector) list.getNames();
+                String[] names = vnames.getDataCopy();
+                String[] newNames = new String[position - 1];
+                Arrays.fill(newNames, "");
+                System.arraycopy(names, 0, newNames, 0, names.length);
+                r.setNames(RDataFactory.createStringVector(newNames, vnames.isComplete()));
+            }
+            return r;
         } else {
             return list;
         }
@@ -356,13 +383,92 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
             data[pos] = right;
         }
         Object[] result = new Object[data.length - deleted];
+        String[] names = null;
+        String[] newNames = null;
+        boolean namesComplete = false;
+        boolean hasNames = false;
+        if (list.getNames() != null && list.getNames() != RNull.instance) {
+            hasNames = true;
+            RStringVector vnames = (RStringVector) list.getNames();
+            names = vnames.getDataCopy();
+            namesComplete = vnames.isComplete();
+            newNames = new String[names.length - deleted];
+        }
         int w = 0; // write index
         for (int i = 0; i < data.length; ++i) {
             if (data[i] != right) {
-                result[w++] = data[i];
+                result[w] = data[i];
+                if (hasNames) {
+                    newNames[w] = names[i];
+                }
+                ++w;
             }
         }
-        return RDataFactory.createList(result);
+        RList r = RDataFactory.createList(result);
+        if (hasNames) {
+            r.setNames(RDataFactory.createStringVector(newNames, namesComplete));
+        }
+        return r;
+    }
+
+    @Specialization(order = 1221)
+    public RList doListStringPosition(RList left, RNull right, String position) {
+        if (left.getNames() == null || left.getNames() == RNull.instance) {
+            return left;
+        }
+        int p = left.getElementIndexByName(position);
+        if (p == -1) {
+            return left;
+        }
+        return singlePositionInBounds(left, right, p) ? doList(left, right, p) : doListOutOfBounds(left, right, p);
+    }
+
+    @Specialization(order = 1222)
+    public RList doListStringPositions(RList left, RNull right, RStringVector positions) {
+        if (left.getNames() == null || left.getNames() == RNull.instance) {
+            return left;
+        }
+        int[] del = new int[positions.getLength()];
+        int deleted = 0;
+        for (int i = 0; i < positions.getLength(); ++i) {
+            int p = left.getElementIndexByName(positions.getDataAt(i));
+            if (p != -1) {
+                del[deleted++] = p;
+            }
+        }
+        if (deleted == 0) {
+            return left;
+        }
+        if (deleted == 1) {
+            if (singlePositionInBounds(left, right, del[0])) {
+                return doList(left, right, del[0]);
+            }
+            if (singlePositionOutOfBounds(left, right, del[0])) {
+                return doListOutOfBounds(left, right, del[0]);
+            }
+        }
+        int[] actDel = new int[deleted];
+        System.arraycopy(del, 0, actDel, 0, deleted);
+        RIntVector vdel = RDataFactory.createIntVector(actDel, RDataFactory.COMPLETE_VECTOR);
+        return doList(left, right, vdel);
+    }
+
+    @Specialization(order = 1223)
+    public RList doListLogicalPositions(RList left, RNull right, RLogicalVector positions) {
+        int[] del = new int[left.getLength()];
+        int deleted = 0;
+        for (int i = 0, l = 0; i < left.getLength(); ++i, l = Utils.incMod(l, positions.getLength())) {
+            if (positions.getDataAt(l) == RRuntime.LOGICAL_TRUE) {
+                del[deleted++] = i + 1; // translate to R index
+            }
+        }
+        if (deleted == 0) {
+            return left;
+        }
+        int[] actDel = new int[deleted];
+        System.arraycopy(del, 0, actDel, 0, deleted);
+        RIntVector vdel = RDataFactory.createIntVector(actDel, RDataFactory.COMPLETE_VECTOR);
+        return doList(left, right, vdel);
     }
 
     // Vector assigned to vector
@@ -531,5 +637,15 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
     // FIXME DSL bug: Object arg1 should suffice
     protected static boolean singlePositionInBounds(RAbstractVector arg0, RNull arg1, int position) {
         return position >= 1 && position <= arg0.getLength();
+    }
+
+    // FIXME DSL bug: Object arg1 should suffice
+    protected static boolean singlePositionOutOfBounds(RAbstractVector arg0, RAbstractVector arg1, int position) {
+        return !positionEqualsZero(arg0, arg1, position) && (position < 0 || position > arg0.getLength());
+    }
+
+    // FIXME DSL bug: Object arg1 should suffice
+    protected static boolean singlePositionOutOfBounds(RAbstractVector arg0, RNull arg1, int position) {
+        return !positionEqualsZero(arg0, arg1, position) && (position < 0 || position > arg0.getLength());
     }
 }
