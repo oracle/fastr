@@ -183,6 +183,42 @@ public abstract class AccessArrayNode extends RNode {
         return new DimsAndResultLength(dimensions, resLength);
     }
 
+    private int getNewArrayBase(int srcArrayBase, RIntVector p, int i, int newAccSrcDimensions) {
+        int newSrcArrayBase;
+        if (srcArrayBase == -1) {
+            newSrcArrayBase = -1;
+        } else {
+            int pos = p.getDataAt(i);
+            if (elementNACheck.check(pos)) {
+                newSrcArrayBase = -1;
+            } else {
+                newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
+            }
+        }
+        return newSrcArrayBase;
+    }
+
+    private int getSrcIndex(int srcArrayBase, RIntVector p, int i, int newAccSrcDimensions) {
+        if (srcArrayBase == -1) {
+            return -1;
+        } else {
+            int pos = p.getDataAt(i);
+            if (elementNACheck.check(pos)) {
+                return -1;
+            } else {
+                return srcArrayBase + newAccSrcDimensions * (pos - 1);
+            }
+        }
+    }
+
+    private int getSrcArrayBase(int pos, int accSrcDimensions) {
+        if (elementNACheck.check(pos)) {
+            return -1; // fill with NAs at the lower levels
+        } else {
+            return accSrcDimensions * (pos - 1);
+        }
+    }
+
     private void getData(int[] data, RIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -193,33 +229,18 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = RRuntime.INT_NA;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = RRuntime.INT_NA;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex);
-                        elementNACheck.check(data[dstIndex]);
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex);
+                    elementNACheck.check(data[dstIndex]);
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -246,13 +267,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!vector.isComplete() || !p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
@@ -287,33 +303,18 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = RRuntime.DOUBLE_NA;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = RRuntime.DOUBLE_NA;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex);
-                        elementNACheck.check(data[dstIndex]);
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex);
+                    elementNACheck.check(data[dstIndex]);
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -340,13 +341,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!vector.isComplete() || !p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
@@ -381,33 +377,18 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = RRuntime.LOGICAL_NA;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = RRuntime.LOGICAL_NA;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex);
-                        elementNACheck.check(data[dstIndex]);
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex);
+                    elementNACheck.check(data[dstIndex]);
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -434,13 +415,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!vector.isComplete() || !p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
@@ -475,33 +451,18 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = RRuntime.STRING_NA;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = RRuntime.STRING_NA;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex);
-                        elementNACheck.check(data[dstIndex]);
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex);
+                    elementNACheck.check(data[dstIndex]);
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -528,13 +489,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!vector.isComplete() || !p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
@@ -569,36 +525,20 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = (dstArrayBase + newAccDstDimensions * i) << 1;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = RRuntime.COMPLEX_NA_REAL_PART;
                     data[dstIndex + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = RRuntime.COMPLEX_NA_REAL_PART;
-                        data[dstIndex + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex).getRealPart();
-                        data[dstIndex + 1] = vector.getDataAt(srcIndex).getImaginaryPart();
-                        elementNACheck.check(data[dstIndex]);
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex).getRealPart();
+                    data[dstIndex + 1] = vector.getDataAt(srcIndex).getImaginaryPart();
+                    elementNACheck.check(data[dstIndex]);
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getDataComplex(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -625,13 +565,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!vector.isComplete() || !p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getDataComplex(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
@@ -666,32 +601,17 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = 0;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = 0;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex).getValue();
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex).getValue();
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getDataRaw(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -718,13 +638,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getDataRaw(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
@@ -759,32 +674,17 @@ public abstract class AccessArrayNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                if (srcArrayBase == -1) {
+                int srcIndex = getSrcIndex(srcArrayBase, p, i, newAccSrcDimensions);
+                if (srcIndex == -1) {
                     data[dstIndex] = RNull.instance;
                 } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        data[dstIndex] = RNull.instance;
-                    } else {
-                        int srcIndex = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                        data[dstIndex] = vector.getDataAt(srcIndex);
-                    }
+                    data[dstIndex] = vector.getDataAt(srcIndex);
                 }
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase;
-                if (srcArrayBase == -1) {
-                    newSrcArrayBase = -1;
-                } else {
-                    int pos = p.getDataAt(i);
-                    if (elementNACheck.check(pos)) {
-                        newSrcArrayBase = -1;
-                    } else {
-                        newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-                    }
-                }
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
                 getData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions);
             }
         }
@@ -811,13 +711,8 @@ public abstract class AccessArrayNode extends RNode {
             elementNACheck.enable(!p.isComplete());
             for (int i = 0; i < p.getLength(); i++) {
                 int dstArrayBase = accDstDimensions * i;
-                int srcArrayBase;
                 int pos = p.getDataAt(i);
-                if (elementNACheck.check(pos)) {
-                    srcArrayBase = -1; // fill with NAs at the lower levels
-                } else {
-                    srcArrayBase = accSrcDimensions * (pos - 1);
-                }
+                int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
                 getData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
             }
         }
