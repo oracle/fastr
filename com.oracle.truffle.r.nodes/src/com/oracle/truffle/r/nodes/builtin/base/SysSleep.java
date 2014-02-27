@@ -72,6 +72,6 @@ public abstract class SysSleep extends RBuiltinNode {
     }
 
     private static void sleep(int seconds) {
-        BaseRFFIFactory.getFFI().sleep(seconds);
+        BaseRFFIFactory.getRFFI().sleep(seconds);
     }
 }

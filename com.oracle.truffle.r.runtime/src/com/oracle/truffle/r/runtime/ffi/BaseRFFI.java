@@ -48,9 +48,18 @@ public interface BaseRFFI extends RFFI {
     void sleep(int seconds);
 
     /**
-     * Returns {@code true}oif an only if {@code path} denotes a writeable directory.
+     * Returns {@code true} if an only if {@code path} denotes a writeable directory.
      */
     boolean isWriteableDirectory(String path);
 
+    /**
+     * Creates a temporary directory using {@code template} and return the resulting path or
+     * {@code null} if error.
+     */
     String mkdtemp(String template);
+
+    /**
+     * Returns {@code true} iff the file denoted by {@code path} exists.
+     */
+    boolean exists(String path);
 }

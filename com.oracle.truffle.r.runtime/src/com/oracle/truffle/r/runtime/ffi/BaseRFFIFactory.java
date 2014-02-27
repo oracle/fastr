@@ -27,10 +27,10 @@ package com.oracle.truffle.r.runtime.ffi;
  */
 public abstract class BaseRFFIFactory extends RFFIFactory implements BaseRFFI {
 
-    protected static final BaseRFFI baseFFI = (BaseRFFI) theFFI;
+    protected static final BaseRFFI baseRFFI = (BaseRFFI) theRFFI;
 
-    public static BaseRFFI getFFI() {
-        return baseFFI;
+    public static BaseRFFI getRFFI() {
+        return baseRFFI;
     }
 
 }

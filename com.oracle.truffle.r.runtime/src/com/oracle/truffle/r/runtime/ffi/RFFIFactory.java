@@ -51,14 +51,14 @@ public abstract class RFFIFactory {
     }
 
     protected static RFFIFactory theFactory;
-    protected static final RFFI theFFI = theFactory.createRFFI();
+    protected static final RFFI theRFFI = theFactory.createRFFI();
 
     protected static RFFIFactory getFactory() {
         return theFactory;
     }
 
     public static RFFI getRFFI() {
-        return theFFI;
+        return theRFFI;
     }
 
     /**

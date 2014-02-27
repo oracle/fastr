@@ -1,5 +1,7 @@
 package com.oracle.truffle.r.runtime;
 
+import java.io.*;
+
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -17,14 +19,17 @@ public class TempDirPath {
         String startingTempDirPath = null;
         for (String envVar : envVars) {
             String value = System.getenv(envVar);
-            if (value != null && BaseRFFIFactory.getFFI().isWriteableDirectory(value)) {
+            if (value != null && BaseRFFIFactory.getRFFI().isWriteableDirectory(value)) {
                 startingTempDirPath = value;
             }
         }
         if (startingTempDirPath == null) {
-            startingTempDirPath = "/tmp";
+            startingTempDirPath = "/tmp/"; // TODO Windows
         }
-        String t = BaseRFFIFactory.getFFI().mkdtemp(startingTempDirPath + "/Rtmp" + "XXXXXX");
+        if (!startingTempDirPath.endsWith(File.separator)) {
+            startingTempDirPath += startingTempDirPath;
+        }
+        String t = BaseRFFIFactory.getRFFI().mkdtemp(startingTempDirPath + "Rtmp" + "XXXXXX");
         if (t != null) {
             tempDirPath = t;
         } else {
