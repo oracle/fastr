@@ -84,7 +84,7 @@ public abstract class RPackage {
 
     @SuppressWarnings("unchecked")
     protected final void loadBuiltins() {
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(".")))) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), ".")))) {
             while (true) {
                 String l = r.readLine();
                 if (l == null) {
