@@ -214,6 +214,7 @@ public abstract class RError extends RuntimeException {
     public static final String NOT_A_MATRIX_UPDATE_CLASS = "invalid to set the class to matrix unless the dimension attribute is of length 2 (was %d)";
     public static final String NOT_ARRAY_UPDATE_CLASS = "cannot set class to \"array\" unless the dimension attribute has length > 0";
     public static final String SET_INVALID_CLASS_ATTR = "attempt to set invalid 'class' attribute";
+    public static final String NOT_LEN_ONE_LOGICAL_VECTOR = "'%s' must be a length 1 logical vector";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -235,6 +236,8 @@ public abstract class RError extends RuntimeException {
     public static final String INVALID_TYPE_LENGTH = "invalid type/length (%s/%d) in vector allocation";
     public static final String SUBASSIGN_TYPE_FIX = "incompatible types (from %s to %s) in subassignment type fix";
     public static final String RECURSIVE_INDEXING_FAILED = "recursive indexing failed at level %d";
+
+    private static final String NOT_CHARACTER_VECTOR = "'%s' must be a character vector";
 
     public static void warning(SourceSection source, String message) {
         RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
@@ -1963,6 +1966,14 @@ public abstract class RError extends RuntimeException {
     @SlowPath
     private static String stringFormat(String format, Object... args) {
         return String.format(format, args);
+    }
+
+    public static RError getNotLengthOneLogicalVector(SourceSection sourceSection, final String arg) {
+        return getGenericError(sourceSection, String.format(NOT_LEN_ONE_LOGICAL_VECTOR, arg));
+    }
+
+    public static RError getNotCharacterVector(SourceSection sourceSection, final String what) {
+        return getGenericError(sourceSection, String.format(NOT_CHARACTER_VECTOR, what));
     }
 
 }

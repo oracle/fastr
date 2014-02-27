@@ -7429,6 +7429,56 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInherits_d44abdb71603cf4c3dd66f3e9be929e1() {
+        assertEval("{x <- 10; inherits(x, \"a\") ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_dfd666ff99448757c43d859d60e8bfa4() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\"); inherits(x,\"a\") ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_c7ded27e57c1310a0844a7607f124b3f() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1a1360b46e15fc2f2e213641e50470f5() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"a\", \"b\", \"c\"), TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_6e8f9ef4539db9f9a35e6d2a43fc9fc3() {
+        assertEval("{x <- 10;class(x) <- c(\"a\");inherits(x, c(\"a\", \"b\", \"a\"), TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_0027ac15d1bcae36eaa7a69454d148c6() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"c\", \"q\", \"b\"), TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_b4eba1f1190198ceaa262614f59857b1() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"c\", \"q\", \"b\")) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_f90abf6cde0533d9ea8216062edbc944() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInheritsIgnore_d0dc6389c924878311546ba61d753a22() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInheritsIgnore_89e7444d88aeaed136ad761742bfd5e4() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInvisible_8469019c606ff78421cea952d395fa6b() {
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
     }

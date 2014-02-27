@@ -5247,6 +5247,38 @@ Error in get("x") : object 'x' not found
 #{ c(1,2,3,4,5) %in% c(1,2,1,2) }
 [1]  TRUE  TRUE FALSE FALSE FALSE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10; inherits(x, "a") ;}
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a");inherits(x, c("a", "b", "a"), TRUE) ;}
+[1] 1 0 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b"); inherits(x,"a") ;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, "a", TRUE) ;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, "a", c(TRUE)) ;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("a", "b", "c"), TRUE) ;}
+[1] 1 2 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b")) ;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b"), TRUE) ;}
+[1] 0 0 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
 #{ f <- function() { invisible(23) } ; f() }
 

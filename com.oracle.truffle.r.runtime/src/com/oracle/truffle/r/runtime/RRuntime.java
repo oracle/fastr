@@ -116,6 +116,10 @@ public class RRuntime {
     public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
     public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};
 
+    public static final String WHICH = "which";
+
+    public static final String WHAT = "what";
+
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
     }

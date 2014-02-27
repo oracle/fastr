@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -30,4 +31,6 @@ public abstract class GetClass extends RBuiltinNode {
     public Object getClass(RFunction arg) {
         return RRuntime.TYPE_FUNCTION;
     }
+
+    public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }
