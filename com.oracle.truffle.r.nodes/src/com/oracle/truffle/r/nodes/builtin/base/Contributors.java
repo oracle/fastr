@@ -31,17 +31,23 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin("contributors")
 public abstract class Contributors extends RBuiltinNode {
 
+    private static String getContributors() {
+        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(Contributors.class, "CONTRIBUTORS");
+        if (is != null) {
+            try {
+                return Utils.getResourceAsString(is);
+            } catch (IOException ex) {
+            }
+        }
+        Utils.fail("CONTRIBUTORS resource not found");
+        return null;
+    }
+
+    private static final String CONTRIBUTORS = getContributors();
+
     @Specialization
     public Object contributors() {
-        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "CONTRIBUTORS");
-        if (is == null) {
-            throw RError.getInternal(getSourceSection(), "CONTRIBUTORS resource not found");
-        }
-        try {
-            RContext.getInstance().getConsoleHandler().println(Utils.getResourceAsString(is));
-        } catch (IOException ioe) {
-            throw RError.getInternal(getSourceSection(), "error reading CONTRIBUTORS resource");
-        }
+        RContext.getInstance().getConsoleHandler().println(CONTRIBUTORS);
         return RInvisible.INVISIBLE_NULL;
     }
 }
