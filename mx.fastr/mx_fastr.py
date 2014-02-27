@@ -172,7 +172,6 @@ def rbench(args):
     parser = ArgumentParser(prog='mx rbench')
     parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='qualified name of benchmark')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
-    parser.add_argument('--J', dest='vm_args', help='Graal VM arguments (e.g. --J @-dsa)', metavar='@<args>')
     parser.add_argument('--gnur', action='store_true', help='run under GnuR')
     parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
     args = parser.parse_args(args)
@@ -191,10 +190,7 @@ def rbench(args):
         if args.path:
             print bmpath
         else:
-            command = []
-            if args.vm_args is not None:
-                command = ['--J', args.vm_args]
-            command = command + ['-f', bmpath]
+            command = ['-f', bmpath]
             if args.gnur:
                 env = os.environ
                 if args.gnur_jit:
