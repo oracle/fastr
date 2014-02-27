@@ -27,17 +27,17 @@ import mx
 import mx_graal
 import os
 
-def runRCommand(args):
-    '''run R program or shell [path]'''
+def _runR(args, className):
     os.environ['R_HOME'] = mx.suite('fastr').dir
-    mx_graal.vm(['-ea', '-esa', '-cp', rShellCp(), rCommandClass()] + args)
+    mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args)
 
-def rShellCp():
-    return mx.classpath("com.oracle.truffle.r.shell")
+def runRCommand(args):
+    '''run R shell'''
+    _runR(args, "com.oracle.truffle.r.shell.RCommand")
 
-
-def rCommandClass():
-    return "com.oracle.truffle.r.shell.RCommand"
+def runRscriptCommand(args):
+    '''run Rscript file'''
+    _runR(args, "com.oracle.truffle.r.shell.RscriptCommand")
 
 def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)
@@ -231,6 +231,8 @@ def mx_init(suite):
         # new commands
         'r' : [runRCommand, '[options]'],
         'R' : [runRCommand, '[options]'],
+        'rscript' : [runRscriptCommand, '[options]'],
+        'Rscript' : [runRscriptCommand, '[options]'],
         'rtestgen' : [testgen, ''],
         'rbench' : [rbench, 'options'],
         # core overrides
