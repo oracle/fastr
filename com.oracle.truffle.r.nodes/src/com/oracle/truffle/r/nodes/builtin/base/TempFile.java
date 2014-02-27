@@ -58,12 +58,42 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Generic
-    public RStringVector tempfileGeneric(@SuppressWarnings("unused") Object pattern, Object tempDir, Object fileExt) throws RError {
-        RStringVector patternVec = checkVector(pattern, INVALID_PATTERN);
-        RStringVector tempDirVec = checkVector(tempDir, INVALID_TEMPDIR);
-        RStringVector fileExtVec = checkVector(fileExt, INVALID_FILEEXT);
+    public RStringVector tempfileGeneric(Object pattern, Object tempDir, Object fileExt) throws RError {
+        RStringVector[] argVecs = new RStringVector[]{checkVector(pattern, INVALID_PATTERN), checkVector(tempDir, INVALID_TEMPDIR), checkVector(fileExt, INVALID_FILEEXT)};
         // Now we have RStringVectors of at least length 1
-        return null;
+        int maxL = 0;
+        for (int i = 0; i < argVecs.length; i++) {
+            int l = argVecs[i].getLength();
+            if (i > maxL) {
+                maxL = l;
+            }
+        }
+        for (int i = 0; i < argVecs.length; i++) {
+            int l = argVecs[i].getLength();
+            if (l < maxL) {
+                argVecs[i] = extendVector(argVecs[i], l, maxL);
+            }
+        }
+        // Now all vectors are same length
+        String[] data = new String[maxL];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = createFile(argVecs[0].getDataAt(i), argVecs[1].getDataAt(i), argVecs[2].getDataAt(i));
+        }
+        return RDataFactory.createStringVector(data, true);
+    }
+
+    private static RStringVector extendVector(RStringVector vec, int vecL, int maxL) {
+        String[] data = new String[maxL];
+        int i = 0;
+        while (i < vecL) {
+            data[i] = vec.getDataAt(i);
+            i++;
+        }
+        while (i < maxL) {
+            data[i] = vec.getDataAt(i % vecL);
+            i++;
+        }
+        return RDataFactory.createStringVector(data, true);
     }
 
     private RStringVector checkVector(Object obj, String msg) throws RError {
@@ -72,12 +102,10 @@ public abstract class TempFile extends RBuiltinNode {
             if (result.getLength() > 0) {
                 return result;
             }
+        } else if (obj instanceof String) {
+            return RDataFactory.createStringVector((String) obj);
         }
         throw RError.getGenericError(getSourceSection(), msg);
-    }
-
-    private static RStringVector create(RStringVector pattern, RStringVector tempDir, RStringVector fileExt) {
-        return null;
     }
 
     private static String createFile(String pattern, String tempDir, String fileExt) {
