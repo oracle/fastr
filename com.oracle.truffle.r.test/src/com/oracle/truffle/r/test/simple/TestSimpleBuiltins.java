@@ -1549,6 +1549,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ is.matrix(1) }");
         assertEval("{ is.matrix(NULL) }");
         assertEval("{ is.matrix(matrix(1:6, nrow=2)) }");
+        assertEval("{ is.array(1) }");
+        assertEval("{ is.array(NULL) }");
+        assertEval("{ is.array(matrix(1:6, nrow=2)) }");
+        assertEval("{ is.array(1:6) }");
     }
 
     @Test
@@ -2396,5 +2400,31 @@ public class TestSimpleBuiltins extends TestBase {
         // TODO
         // All the statements after UseMethod() call should get ignored.
         assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void testUpdateClass() {
+        assertEval("{x=1; class(x)<-\"first\"; x;}");
+
+        assertEval("{ x=1;class(x)<-\"character\"; x}");
+
+        assertEval("{x<-1; class(x)<-\"logical\"; x;  class(x)<-c(1,2,3); x; class(x)<-NULL; x;}");
+
+        assertEval("{x<-1;class(x)<-c(1,2,3);class(x)<-c(); x;}");
+
+        assertEval("{x<-1;class(x)<-c(1,2,3); x;}");
+
+        assertEval("{x<-1;class(x)<-NULL; x;}");
+
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-\"array\"; x; class(x)<-\"matrix\"; x;}");
+
+        assertEval("{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}");
+    }
+
+    @Test
+    @Ignore
+    public void testUpdateClassIgnore() {
+        // Fails because of exact string matching in error message.
+        assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
     }
 }

@@ -3384,6 +3384,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
+        assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testUpdateDiagonalIgnore_bc599977512a7c0c3a2e02240001e906() {
         assertEval("{ x <- (m <- matrix(1:6, nrow=3)) ; diag(m) <- c(1,2) ; x }");
     }

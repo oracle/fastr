@@ -8,6 +8,7 @@
  *
  * All rights reserved.
  */
+
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
@@ -16,18 +17,19 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(value = "class")
-public abstract class GetClass extends RBuiltinNode {
-    @Specialization
-    public Object getClass(RAbstractVector arg) {
-        if (arg.isObject()) {
-            return arg.getAttributes().get(RRuntime.CLASS_ATTR_KEY);
-        }
-        return arg.getClassHierarchy().get(0);
-    }
+@RBuiltin(value = "unclass")
+public abstract class UnClass extends RBuiltinNode {
 
     @Specialization
-    public Object getClass(RFunction arg) {
-        return RRuntime.TYPE_FUNCTION;
+    public Object unClass(RAbstractVector arg) {
+        if (arg.isObject()) {
+            RVector resultVector = arg.materialize();
+            if (resultVector.isShared()) {
+                resultVector = resultVector.copy();
+            }
+            resultVector.getAttributes().remove(RRuntime.CLASS_ATTR_KEY);
+            return resultVector;
+        }
+        return arg;
     }
 }

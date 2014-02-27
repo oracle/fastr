@@ -34,7 +34,7 @@ public abstract class Covcor extends RBuiltinNode {
         int ncx;
         int ncy;
 
-        ansmat = isMatrix(x);
+        ansmat = x.isMatrix();
         if (ansmat) {
             n = nrows(x);
             ncx = ncols(x);
@@ -45,7 +45,7 @@ public abstract class Covcor extends RBuiltinNode {
 
         if (y == null) {
             ncy = ncx;
-        } else if (isMatrix(y)) {
+        } else if (y.isMatrix()) {
             if (nrows(y) != n) {
                 error("incompatible dimensions");
             }
@@ -107,7 +107,7 @@ public abstract class Covcor extends RBuiltinNode {
         }
 
         RDoubleVector ans = null;
-        if (isMatrix(x)) {
+        if (x.isMatrix()) {
             ans = RDataFactory.createDoubleVector(answerData, true, new int[]{ncx, ncy});
         } else {
             ans = RDataFactory.createDoubleVector(answerData, false);
@@ -116,12 +116,12 @@ public abstract class Covcor extends RBuiltinNode {
     }
 
     private static int ncols(RDoubleVector x) {
-        assert isMatrix(x);
+        assert x.isMatrix();
         return x.getDimensions()[1];
     }
 
     private static int nrows(RDoubleVector x) {
-        assert isMatrix(x);
+        assert x.isMatrix();
         return x.getDimensions()[0];
     }
 
@@ -627,10 +627,6 @@ public abstract class Covcor extends RBuiltinNode {
                 xm[i] = checkNAs(sum) ? RRuntime.DOUBLE_NA : Math.sqrt(sum);
             }
         }
-    }
-
-    private static boolean isMatrix(RAbstractVector vector) {
-        return RRuntime.isMatrix(vector);
     }
 
     private static void error(String string) {

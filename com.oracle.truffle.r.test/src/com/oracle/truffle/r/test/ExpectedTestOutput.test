@@ -6522,6 +6522,22 @@ Error: object 'x' not found
 [1] 38587000
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(1) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(1:6) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(matrix(1:6, nrow=2)) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
 #{ is.character("hi") }
 [1] TRUE
 
@@ -6652,6 +6668,44 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ unlist(list("hello", "hi")) }
 [1] "hello" "hi"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x=1;class(x)<-"character"; x}
+[1] "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1; class(x)<-"logical"; x;  class(x)<-c(1,2,3); x; class(x)<-NULL; x;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-NULL; x;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3); x;}
+[1] 1
+attr(,"class")
+[1] "1" "2" "3"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3);class(x)<-c(); x;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-"array"; x; class(x)<-"matrix"; x;}
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x=1; class(x)<-"first"; x;}
+[1] 1
+attr(,"class")
+[1] "first"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateDiagonal
 #{ m <- matrix(1:6, nrow=3) ;  attr(m, "foo")<-"foo"; diag(m) <- c(1,2); attributes(m) }

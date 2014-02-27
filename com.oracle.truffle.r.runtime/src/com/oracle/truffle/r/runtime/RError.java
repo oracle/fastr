@@ -211,7 +211,7 @@ public abstract class RError extends RuntimeException {
     public static final String ARGUMENT_MATCHES_MULTIPLE = "argument %d matches multiple formal arguments";
     public static final String ARGUMENT_EMPTY = "argument %d is empty";
     public static final String REPEATED_FORMAL = "repeated formal argument '%s'";
-    public static final String NOT_A_MATRIX_UPDATE_CLASS = "invalid to set the class to matrix unless the dimension attribute is of length 2 (was '%d')";
+    public static final String NOT_A_MATRIX_UPDATE_CLASS = "invalid to set the class to matrix unless the dimension attribute is of length 2 (was %d)";
     public static final String NOT_ARRAY_UPDATE_CLASS = "cannot set class to \"array\" unless the dimension attribute has length > 0";
     public static final String SET_INVALID_CLASS_ATTR = "attempt to set invalid 'class' attribute";
     // not exactly

@@ -185,14 +185,19 @@ public abstract class UpdateClass extends RBuiltinNode {
             return castDoubleNode.executeDouble(frame, arg);
         }
         if (className.equals(RRuntime.TYPE_MATRIX)) {
-            if (RRuntime.isMatrix(arg)) {
+            if (arg.isMatrix()) {
                 return setClass(arg, RNull.instance);
             }
-            throw RError.getNotMatixUpdateClass(getEncapsulatingSourceSection(), arg.getDimensions().length);
+            final int[] dimensions = arg.getDimensions();
+            int dimLength = 0;
+            if (dimensions != null) {
+                dimLength = dimensions.length;
+            }
+            throw RError.getNotMatixUpdateClass(getEncapsulatingSourceSection(), dimLength);
 
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
-            if (arg.getDimensions().length > 0) {
+            if (arg.isArray()) {
                 return setClass(arg, RNull.instance);
             }
             throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
