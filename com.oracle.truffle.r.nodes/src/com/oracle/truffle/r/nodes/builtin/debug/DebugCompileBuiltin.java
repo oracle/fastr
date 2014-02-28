@@ -33,20 +33,56 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin("debug.compile")
 public abstract class DebugCompileBuiltin extends RBuiltinNode {
 
+    static final class Compiler {
+        private Class<?> optimizedCallTarget;
+        private Method compileMethod;
+
+        private Compiler() {
+            try {
+                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget");
+                compileMethod = optimizedCallTarget.getDeclaredMethod("compile");
+            } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
+                Utils.fail("DebugCompileBuiltin failed to find compile method");
+            }
+        }
+
+        static Compiler getCompiler() {
+            if (System.getProperty("fastr.truffle.compile", "true").equals("true") && Truffle.getRuntime().getName().contains("Graal")) {
+                return new Compiler();
+            } else {
+                Utils.warn("DebugCompileBuiltin not supported in this environment");
+                return null;
+            }
+        }
+
+        boolean compile(CallTarget callTarget) throws InvocationTargetException, IllegalAccessException {
+            if (optimizedCallTarget.isInstance(callTarget)) {
+                compileMethod.invoke(callTarget);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private static final Compiler compiler = Compiler.getCompiler();
+
     @Specialization
     public byte compileFunction(RFunction function) {
-        CallTarget callTarget = function.getTarget();
-        if (Truffle.getRuntime().getName().contains("Graal")) {
+        if (compiler != null) {
             try {
-                Class<?> optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget");
-                if (optimizedCallTarget.isInstance(callTarget)) {
-                    optimizedCallTarget.getDeclaredMethod("compile").invoke(callTarget);
+                if (compiler.compile(function.getTarget())) {
                     return RRuntime.LOGICAL_TRUE;
                 }
-            } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            } catch (InvocationTargetException | IllegalAccessException e) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Generic
+    public byte compileFunction(@SuppressWarnings("unused") Object arg) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'function' argument");
     }
 }

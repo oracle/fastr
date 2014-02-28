@@ -531,7 +531,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            RPackages packages = (RPackages) RContext.getInstance().getLookup();
+            RBuiltinPackages packages = (RBuiltinPackages) RContext.getInstance().getLookup();
             re = adoptChild(ReFactory.create(new RNode[1], packages.lookupBuiltin("Re")));
             im = adoptChild(ImFactory.create(new RNode[1], packages.lookupBuiltin("Im")));
         }

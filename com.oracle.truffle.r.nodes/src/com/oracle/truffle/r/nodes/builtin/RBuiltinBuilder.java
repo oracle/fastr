@@ -26,10 +26,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 
 public final class RBuiltinBuilder {
 
-    private final RPackage pack;
+    private final RBuiltinPackage pack;
     private final RBuiltinFactory factory;
 
-    public RBuiltinBuilder(RPackage pack, RBuiltinFactory factory) {
+    public RBuiltinBuilder(RBuiltinPackage pack, RBuiltinFactory factory) {
         this.factory = factory;
         this.pack = pack;
     }

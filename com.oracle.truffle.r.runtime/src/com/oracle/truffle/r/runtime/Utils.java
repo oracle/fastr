@@ -120,7 +120,23 @@ public final class Utils {
         graphPrinter.printToNetwork(true);
     }
 
-    public static String getResourceAsString(InputStream is) throws IOException {
+    public static String getResourceAsString(Class<?> clazz, String resourceName, boolean mustExist) {
+        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(clazz, resourceName);
+        if (is == null) {
+            if (!mustExist) {
+                return null;
+            }
+        } else {
+            try {
+                return Utils.getResourceAsString(is);
+            } catch (IOException ex) {
+            }
+        }
+        Utils.fail("resource " + resourceName + " not found");
+        return null;
+    }
+
+    private static String getResourceAsString(InputStream is) throws IOException {
         try (BufferedReader bs = new BufferedReader(new InputStreamReader(is))) {
             char[] buf = new char[1024];
             StringBuilder sb = new StringBuilder();
@@ -130,6 +146,11 @@ public final class Utils {
             }
             return sb.toString();
         }
+    }
+
+    public static void warn(String msg) {
+        // CheckStyle: stop system..print check
+        System.err.println("FastR warning: " + msg);
     }
 
     public static void fail(String msg) {

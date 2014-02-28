@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,19 +30,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin("contributors")
 public abstract class Contributors extends RBuiltinNode {
 
-    private static String getContributors() {
-        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(Contributors.class, "CONTRIBUTORS");
-        if (is != null) {
-            try {
-                return Utils.getResourceAsString(is);
-            } catch (IOException ex) {
-            }
-        }
-        Utils.fail("CONTRIBUTORS resource not found");
-        return null;
-    }
-
-    private static final String CONTRIBUTORS = getContributors();
+    private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);
 
     @Specialization
     public Object contributors() {

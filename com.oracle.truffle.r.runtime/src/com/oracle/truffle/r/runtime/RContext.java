@@ -79,47 +79,58 @@ public final class RContext {
         void setPrompt(String prompt);
     }
 
-    private final SourceManager sourceManager;
-    private final RBuiltinLookup lookup;
-    private final String[] commandArgs;
+    private final SourceManager sourceManager = new SourceManager();
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
     private final RRandomNumberGenerator randomNumberGenerator = new RRandomNumberGenerator();
-    private final ConsoleHandler consoleHandler;
     private LinkedList<String> evalWarnings;
 
-    private static RContext singleton;
+    private static RBuiltinLookup lookup;
+
+    private ConsoleHandler consoleHandler;
+    private String[] commandArgs;
+
+    private static final RContext singleton = new RContext();
+
+    private RContext() {
+    }
 
     public GlobalAssumptions getAssumptions() {
         return globalAssumptions;
     }
 
+    public static RContext linkRBuiltinLookupProvider(RBuiltinLookupProvider rbp) {
+        lookup = rbp.getRBuiltinLookup();
+        return singleton;
+    }
+
     public static RContext getInstance() {
-        assert singleton != null;
         return singleton;
     }
 
-    public static RContext instantiate(RBuiltinLookup lookup, String[] commandArgs, ConsoleHandler consoleHandler) {
-        if (singleton != null) {
-            throw new IllegalStateException("RContext already instantiated.");
+    /**
+     * Although there is only ever one instance of a {@code RContext}, the following state fields
+     * are runtime specific and must be set explicitly.
+     * 
+     * @param commandArgs
+     * @param consoleHandler
+     */
+    public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
+        singleton.commandArgs = commandArgs;
+        singleton.consoleHandler = consoleHandler;
+    }
+
+    public static RBuiltinLookup getLookup() {
+        if (lookup == null) {
+            Utils.fail("no builtin lookup set");
         }
-        singleton = new RContext(lookup, commandArgs, consoleHandler);
-        return singleton;
-    }
-
-    private RContext(RBuiltinLookup lookup, String[] commandArgs, ConsoleHandler consoleHandler) {
-        this.sourceManager = new SourceManager();
-        this.lookup = lookup;
-        this.commandArgs = commandArgs;
-        this.consoleHandler = consoleHandler;
-        this.evalWarnings = null;
-    }
-
-    public RBuiltinLookup getLookup() {
         return lookup;
     }
 
     public ConsoleHandler getConsoleHandler() {
+        if (consoleHandler == null) {
+            Utils.fail("no console handler set");
+        }
         return consoleHandler;
     }
 
@@ -137,6 +148,9 @@ public final class RContext {
     }
 
     public String[] getCommandArgs() {
+        if (commandArgs == null) {
+            Utils.fail("no command args set");
+        }
         return commandArgs;
     }
 

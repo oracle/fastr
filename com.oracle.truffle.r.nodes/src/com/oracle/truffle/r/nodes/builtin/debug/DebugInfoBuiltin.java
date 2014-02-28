@@ -36,16 +36,16 @@ public abstract class DebugInfoBuiltin extends RBuiltinNode {
     @SlowPath
     @Specialization
     public Object printTree() {
-        RPackages packages = (RPackages) RContext.getInstance().getLookup();
+        RBuiltinPackages packages = (RBuiltinPackages) RContext.getInstance().getLookup();
         StringBuilder b = new StringBuilder();
-        for (RPackage pack : packages.getPackages()) {
+        for (RBuiltinPackage pack : packages.getPackages()) {
             b.append(createPackageString(pack));
         }
         return b.toString();
     }
 
     @SlowPath
-    private static String createPackageString(RPackage pack) {
+    private static String createPackageString(RBuiltinPackage pack) {
         Map<String, RBuiltinFactory> builtins = pack.getBuiltins();
         StringBuilder msg = new StringBuilder();
         msg.append(String.format("%s functions: %n", pack.getName()));

@@ -25,23 +25,23 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.builtin.debug.*;
 
-public final class RDefaultPackages extends RPackages {
+/**
+ * The default set of builtin packages that are loaded on startup.
+ */
+public final class RDefaultBuiltinPackages extends RBuiltinPackages {
 
-    private RDefaultPackages() {
+    private RDefaultBuiltinPackages() {
         // empty
     }
 
-    public void load() {
-        load(new BasePackage());
-        load(new DebugPackage());
+    private static final RDefaultBuiltinPackages instance = new RDefaultBuiltinPackages();
+
+    static {
+        instance.load(new BasePackage());
+        instance.load(new DebugPackage());
     }
 
-    private static RDefaultPackages instance;
-
-    public static RDefaultPackages getInstance() {
-        if (instance == null) {
-            instance = new RDefaultPackages();
-        }
+    public static RDefaultBuiltinPackages getInstance() {
         return instance;
     }
 }
