@@ -7429,6 +7429,56 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInherits_d44abdb71603cf4c3dd66f3e9be929e1() {
+        assertEval("{x <- 10; inherits(x, \"a\") ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_dfd666ff99448757c43d859d60e8bfa4() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\"); inherits(x,\"a\") ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_c7ded27e57c1310a0844a7607f124b3f() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_1a1360b46e15fc2f2e213641e50470f5() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"a\", \"b\", \"c\"), TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_6e8f9ef4539db9f9a35e6d2a43fc9fc3() {
+        assertEval("{x <- 10;class(x) <- c(\"a\");inherits(x, c(\"a\", \"b\", \"a\"), TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_0027ac15d1bcae36eaa7a69454d148c6() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"c\", \"q\", \"b\"), TRUE) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_b4eba1f1190198ceaa262614f59857b1() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"c\", \"q\", \"b\")) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_f90abf6cde0533d9ea8216062edbc944() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInheritsIgnore_d0dc6389c924878311546ba61d753a22() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInheritsIgnore_89e7444d88aeaed136ad761742bfd5e4() {
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInvisible_8469019c606ff78421cea952d395fa6b() {
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
     }
@@ -10159,6 +10209,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testTypeCheck_c5ae72c4471fe269e025837002cf6b4f() {
+        assertEval("{ is.array(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTypeCheck_9fd110693bdcf0f4f6c80bdbb70502cf() {
+        assertEval("{ is.array(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTypeCheck_1255c1431b609d712fe80ec07f61dfca() {
+        assertEval("{ is.array(matrix(1:6, nrow=2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTypeCheck_d57496c27c1d770f9553513344aaffe8() {
+        assertEval("{ is.array(1:6) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testTypeCheckIgnore_7f8323b03018432a0d32c10f362ec5d7() {
         assertEval("{ is.list(NULL) }");
     }
@@ -10286,6 +10356,51 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testUnlistIgnore_ca79e22b108545ebb9086587d6a71e2f() {
         assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_b026dd671e5d00aa004905d5c6045e7e() {
+        assertEval("{x=1; class(x)<-\"first\"; x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_552769ad36db8589fb70fb1b41993e41() {
+        assertEval("{ x=1;class(x)<-\"character\"; x}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_8a441adef27997e1e1532772e5a9e286() {
+        assertEval("{x<-1; class(x)<-\"logical\"; x;  class(x)<-c(1,2,3); x; class(x)<-NULL; x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_526b2561673ee2a69337f4788254a5eb() {
+        assertEval("{x<-1;class(x)<-c(1,2,3);class(x)<-c(); x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_d03db72108886a98c46295a164ed4d85() {
+        assertEval("{x<-1;class(x)<-c(1,2,3); x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_f32eeb90d7c944249786e8d7f00865db() {
+        assertEval("{x<-1;class(x)<-NULL; x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_463192aaee84feb9609362e07c0be76a() {
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-\"array\"; x; class(x)<-\"matrix\"; x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_49cf6b6a29e324e3eab3a030e50c26a3() {
+        assertEval("{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
+        assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
     }
 
     @Test
@@ -10474,11 +10589,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testUseMethodIgnore_1af23cb23456744d7e6a4cb93888e9a3() {
-        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testUseMethodLocalVars_cd724107886a7c9d25ae3b6aad713cb6() {
         assertEval("{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
@@ -10491,6 +10601,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testUseMethodOneArg_fce364ef2dfa8e366da5615934951253() {
         assertEval("{f <- function(x){ UseMethod(\"f\"); };f.first <- function(x){cat(\"f first\",x)}; f.second <- function(x){cat(\"f second\",x)}; obj <-1; attr(obj,\"class\")  <- \"first\"; f(obj); attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodReturn_1af23cb23456744d7e6a4cb93888e9a3() {
+        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
 
     @Test

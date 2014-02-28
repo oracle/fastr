@@ -5247,6 +5247,38 @@ Error in get("x") : object 'x' not found
 #{ c(1,2,3,4,5) %in% c(1,2,1,2) }
 [1]  TRUE  TRUE FALSE FALSE FALSE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10; inherits(x, "a") ;}
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a");inherits(x, c("a", "b", "a"), TRUE) ;}
+[1] 1 0 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b"); inherits(x,"a") ;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, "a", TRUE) ;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, "a", c(TRUE)) ;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("a", "b", "c"), TRUE) ;}
+[1] 1 2 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b")) ;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b"), TRUE) ;}
+[1] 0 0 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
 #{ f <- function() { invisible(23) } ; f() }
 
@@ -6522,6 +6554,22 @@ Error: object 'x' not found
 [1] 38587000
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(1) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(1:6) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(matrix(1:6, nrow=2)) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
 #{ is.character("hi") }
 [1] TRUE
 
@@ -6652,6 +6700,44 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ unlist(list("hello", "hi")) }
 [1] "hello" "hi"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x=1;class(x)<-"character"; x}
+[1] "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1; class(x)<-"logical"; x;  class(x)<-c(1,2,3); x; class(x)<-NULL; x;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-NULL; x;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3); x;}
+[1] 1
+attr(,"class")
+[1] "1" "2" "3"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3);class(x)<-c(); x;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-"array"; x; class(x)<-"matrix"; x;}
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x=1; class(x)<-"first"; x;}
+[1] 1
+attr(,"class")
+[1] "first"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateDiagonal
 #{ m <- matrix(1:6, nrow=3) ;  attr(m, "foo")<-"foo"; diag(m) <- c(1,2); attributes(m) }
@@ -6828,6 +6914,9 @@ f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodOneArg
 #{f <- function(x){ UseMethod("f"); };f.first <- function(x){cat("f first",x)}; f.second <- function(x){cat("f second",x)}; obj <-1; attr(obj,"class")  <- "first"; f(obj); attr(obj,"class")  <- "second"; f(obj);}
 f first 1f second 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodReturn
+#{f <- function(x){ UseMethod("f");cat("This should not be executed"); }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
+f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
 #{f <- function(x){ UseMethod("f",x); };f.first <- function(x){cat("f first",x)};f.second <- function(x){cat("f second",x)};obj <-1;attr(obj,"class")  <- "first";f(obj);attr(obj,"class")  <- "second";f(obj)}
 f first 1f second 1

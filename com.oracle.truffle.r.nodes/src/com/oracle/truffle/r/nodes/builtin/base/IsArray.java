@@ -8,29 +8,25 @@
  *
  * All rights reserved.
  */
+
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(value = "class")
-public abstract class GetClass extends RBuiltinNode {
+@RBuiltin("is.array")
+public abstract class IsArray extends RBuiltinNode {
+
     @Specialization
-    public Object getClass(RAbstractVector arg) {
-        if (arg.isObject()) {
-            return arg.getAttributes().get(RRuntime.CLASS_ATTR_KEY);
-        }
-        return arg.getClassHierarchy().get(0);
+    public byte isType(RAbstractVector vector) {
+        return RRuntime.asLogical(vector.isArray());
     }
 
     @Specialization
-    public Object getClass(RFunction arg) {
-        return RRuntime.TYPE_FUNCTION;
+    public byte isType(RNull arg) {
+        return RRuntime.FALSE;
     }
-
-    public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }

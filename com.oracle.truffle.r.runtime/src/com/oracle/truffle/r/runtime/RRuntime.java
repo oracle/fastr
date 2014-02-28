@@ -15,7 +15,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RRuntime {
 
@@ -86,9 +85,10 @@ public class RRuntime {
     public static final String TYPE_CHARACTER = new String("character");
     public static final String TYPE_LOGICAL = new String("logical");
     public static final String TYPE_RAW = new String("raw");
+    public static final String TYPE_LIST = new String("list");
+    public static final String TYPE_FUNCTION = new String("function");
     public static final String TYPE_MATRIX = new String("matrix");
     public static final String TYPE_ARRAY = new String("array");
-    public static final String TYPE_LIST = new String("list");
 
     public static final String TYPE_NUMERIC_CAP = new String("Numeric");
     public static final String TYPE_INTEGER_CAP = new String("Integer");
@@ -115,6 +115,10 @@ public class RRuntime {
 
     public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
     public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};
+
+    public static final String WHICH = "which";
+
+    public static final String WHAT = "what";
 
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
@@ -619,7 +623,4 @@ public class RRuntime {
         }
     }
 
-    public static boolean isMatrix(RAbstractVector vector) {
-        return vector.getDimensions() != null && vector.getDimensions().length == 2;
-    }
 }
