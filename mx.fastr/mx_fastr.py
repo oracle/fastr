@@ -153,6 +153,9 @@ def junit(args):
 
     return mx.junit(args, _junit_r_harness, parser=parser)
 
+def junit_simple(args):
+    junit(['--tests',  'com.oracle.truffle.r.test.simple'] + args)
+
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
@@ -239,6 +242,7 @@ def mx_init(suite):
         'gate' : [gate, ''],
         'bench' : [bench, 'options'],
         'junit' : [junit, ['options']],
+        'junitsimple' : [junit_simple, ['options']],
     }
     mx.update_commands(suite, commands)
 
