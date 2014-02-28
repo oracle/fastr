@@ -44,35 +44,31 @@ import com.oracle.truffle.r.runtime.data.*;
  * The engine for the FastR implementation. Handles parsing and evaluation. There is exactly one
  * instance of this class, stored in {link #singleton}.
  */
-public final class REngine {
+public final class REngine implements RBuiltinLookupProvider {
 
-    private final RContext context;
+    private static REngine singleton = new REngine();
+    private static final RContext context = RContext.linkRBuiltinLookupProvider(singleton);
 
-    private static REngine singleton;
-
-    private REngine(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RDefaultPackages defaultPackages = RDefaultPackages.getInstance();
-        this.context = RContext.instantiate(defaultPackages, commandArgs, consoleHandler);
-        defaultPackages.load();
+    private REngine() {
     }
 
-    /**
-     * Get the singleton engine instance, creating it if necessary.
-     */
-    public static REngine getInstance(String[] commandArgs, ConsoleHandler consoleHandler) {
-        if (singleton == null) {
-            singleton = new REngine(commandArgs, consoleHandler);
-        }
+    public RBuiltinLookup getRBuiltinLookup() {
+        return RDefaultBuiltinPackages.getInstance();
+    }
+
+    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext.setRuntimeState(commandArgs, consoleHandler);
+        RBuiltinPackage.loadSnippets();
         return singleton;
     }
 
-    public RContext getContext() {
+    public static RContext getContext() {
         return context;
     }
 
     /**
      * Create a {@link VirtualFrame} for use in {@link #parseAndEval(String, VirtualFrame, boolean)}
-     * , for accumulating the results fromevaluatring expressions in an interactive context. Such a
+     * for accumulating the results from evaluating expressions in an interactive context. Such a
      * value cannot be stored in an object field, so must be passed as an argument.
      */
     public static VirtualFrame createVirtualFrame() {
@@ -123,7 +119,7 @@ public final class REngine {
         return parser.script().v;
     }
 
-    private Object run(CallTarget callTarget, boolean printResult) {
+    private static Object run(CallTarget callTarget, boolean printResult) {
         Object result = null;
         try {
             try {
@@ -143,7 +139,7 @@ public final class REngine {
         return result;
     }
 
-    private Object runGlobal(CallTarget callTarget, VirtualFrame globalFrame, boolean printResult) {
+    private static Object runGlobal(CallTarget callTarget, VirtualFrame globalFrame, boolean printResult) {
         Object result = null;
         try {
             try {
@@ -163,26 +159,26 @@ public final class REngine {
         return result;
     }
 
-    private void printResult(Object result) {
+    private static void printResult(Object result) {
         if (!(result instanceof RInvisible)) {
             RFunction function = context.getLookup().lookup("print");
             RRuntime.toString(function.call(null, RArguments.create(function, new Object[]{result})));
         }
     }
 
-    private void reportRError(RError e) {
+    private static void reportRError(RError e) {
         context.getConsoleHandler().printErrorln("Error: " + e.getMessage());
         reportWarnings(true);
     }
 
-    private void reportImplementationError(Throwable e) {
+    private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
         context.getConsoleHandler().printErrorln(RRuntime.toString(out));
 
     }
 
-    private void reportWarnings(boolean inAddition) {
+    private static void reportWarnings(boolean inAddition) {
         List<String> evalWarnings = context.extractEvalWarnings();
         ConsoleHandler consoleHandler = context.getConsoleHandler();
         // GnuR outputs warnings to the stderr, so we do too

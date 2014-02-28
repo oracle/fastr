@@ -37,7 +37,7 @@ public abstract class Rm extends RBuiltinNode {
     public static Rm create(String name) {
         RNode[] args = getParameterValues0();
         args[0] = ConstantNode.create(name);
-        return RmFactory.create(args, RDefaultPackages.getInstance().lookupBuiltin("rm"));
+        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("rm"));
     }
 
     private static RNode[] getParameterValues0() {
