@@ -125,13 +125,13 @@ public class RRuntime {
     }
 
     @SlowPath
-    public static String classToString(Class<?> c) {
+    public static String classToString(Class<?> c, boolean numeric) {
         if (c == RLogical.class) {
             return TYPE_LOGICAL;
         } else if (c == RInt.class) {
             return TYPE_INTEGER;
         } else if (c == RDouble.class) {
-            return TYPE_NUMERIC;
+            return numeric ? TYPE_NUMERIC : TYPE_DOUBLE;
         } else if (c == RComplex.class) {
             return TYPE_COMPLEX;
         } else if (c == RRaw.class) {
@@ -141,6 +141,11 @@ public class RRuntime {
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
+    }
+
+    @SlowPath
+    public static String classToString(Class<?> c) {
+        return classToString(c, true);
     }
 
     @SlowPath

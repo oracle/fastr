@@ -50,7 +50,7 @@ public abstract class AccessArrayNode extends RNode {
     public RNode[] createCastPositions(RNode[] children) {
         RNode[] positions = new RNode[children.length];
         for (int i = 0; i < positions.length; i++) {
-            positions[i] = ArrayPositionCastFactory.create(i, getVector(), children[i], true);
+            positions[i] = ArrayPositionCastFactory.create(i, positions.length, false, getVector(), children[i], true);
         }
         return new RNode[]{varArgAsObjectArrayNodeFactory.makeList(positions, null)};
     }

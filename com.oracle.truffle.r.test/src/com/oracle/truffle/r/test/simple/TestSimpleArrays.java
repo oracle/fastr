@@ -17,7 +17,7 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleArrays extends TestBase {
 
     @Test
-    public void testAccessScalarIndex() {
+    public void testAccess() {
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1,1] }");
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }");
         assertEval("{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,3]) }");
@@ -266,14 +266,17 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMultiDimensionalUpdate() {
         // update matrix by vector, rows
         assertEval("{ a = matrix(1,3,3); a[1,] = c(3,4,5); c(a[1,1],a[1,2],a[1,3]) }");
 
         // update matrix by vector, cols
         assertEval("{ a = matrix(1,3,3); a[,1] = c(3,4,5); c(a[1,1],a[2,1],a[3,1]) }");
+    }
 
+    @Test
+    @Ignore
+    public void testMultiDimensionalUpdateIgnore() {
         // update array by vector, dim 3
         assertEval("{ a = array(1,c(3,3,3)); a[1,1,] = c(3,4,5); c(a[1,1,1],a[1,1,2],a[1,1,3]) }");
 
@@ -329,19 +332,34 @@ public class TestSimpleArrays extends TestBase {
 
         // element deletion
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,4,6)] <- NULL ; m }");
-    }
 
-    @Test
-    @Ignore
-    public void testUpdateIgnore() {
-        assertEval("{ m <- matrix(1:6, nrow=3) ; m[2] <- list(100) ; m }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1:2,1:2,1]<-y; x }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1,1]<-y; x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:102); z<-(x[1:2,c(1,2,0),1]<-y); x }");
+        assertEvalError("{ x<-1:16; dim(x)<-c(2,2,2,2); y<-c(101:108); dim(y)<-c(2,4); x[1:2,1:2,1]<-y; x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,1),1]<-y); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,0),1]<-y); x }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,1),1]<-y); x }");
+        assertEval("{ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]<-42L; x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,0]<-y); x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,c(0,0)]<-y); x }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[0,5,1]<-y); x }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,NA),1]<-y); x }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x }");
+        assertEvalError("{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x }");
+        assertEvalError("({ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })");
+        assertEvalError("({ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })");
+        assertEvalError("({ x<-as.logical(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })");
+        assertEvalError("({ x<-as.character(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })");
+        assertEvalError("({ x<-as.complex(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); z<-(x[1,1,1]<-42); z }");
 
         // proper update in place
         assertEval("{ m <- matrix(1,2,2) ; m[,1] = 7 ; m }");
         assertEval("{ m <- matrix(1,2,2) ; m[1,] = 7 ; m }");
         assertEval("{ m <- matrix(1,2,2) ; m[,1] = c(10,11) ; m }");
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[2] <- list(100) ; m }");
-        assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[[2]] <- list(100) ; m }");
 
         // error in lengths
         assertEvalError("{ m <- matrix(1,2,2) ; m[,1] = c(1,2,3,4) ; m }");
@@ -349,20 +367,15 @@ public class TestSimpleArrays extends TestBase {
         // column update
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,2] <- 10:11 ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,2:3] <- 10:11 ; m }");
-        assertEval("{ m <- array(1:24, dim=c(2,3,4)) ; m[,,4] <- 10:15 ; m[,,4] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,integer()] <- integer() ; m }");
         assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[,2] <- integer() }");
-
-        // subscript with rewriting
-        assertEval("{  m <- array(1:3, dim=c(3,1,1)) ; f <- function(x,v) { x[[2,1,1]] <- v ; x } ; f(m,10L) ; f(m,10) ; x <- f(m,11L) ; c(x[1],x[2],x[3]) }");
 
         // error reporting
         assertEvalError("{ a <- 1:9 ; a[,,1] <- 10L }");
         assertEvalError("{ a <- 1:9 ; a[,1] <- 10L }");
         assertEvalError("{ a <- 1:9 ; a[1,1] <- 10L }");
         assertEvalError("{ a <- 1:9 ; a[1,1,1] <- 10L }");
-        assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- 1 }");
-        assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[integer(),1]] <- 1 }");
+
         assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[1,1]] <- integer() }");
         assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- integer() }");
         assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[1,2] <- integer() }");
@@ -371,16 +384,40 @@ public class TestSimpleArrays extends TestBase {
         // pushback child of a selector node
         assertEval("{ m <- matrix(1:100, nrow=10) ; z <- 1; s <- 0 ; for(i in 1:3) { m[z <- z + 1,z <- z + 1] <- z * z * 1000 } ; sum(m) }");
 
-        // recovery from scalar selection update
-        assertEval("{ m <- matrix(as.double(1:6), nrow=2) ; mi <- matrix(1:6, nrow=2) ; f <- function(v,i,j) { v[i,j] <- 100 ; v[i,j] * i * j } ; f(m, 1L, 2L) ; f(m,1L,TRUE)  }");
-        assertEval("{ m <- matrix(as.double(1:6), nrow=2) ; mi <- matrix(1:6, nrow=2) ; f <- function(v,i,j) { v[i,j] <- 100 ; v[i,j] * i * j } ; f(m, 1L, 2L) ; f(m,1L,-1)  }");
-
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,-1) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1, c(-1,-10)) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(1,-1) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(-1,2) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(2,1:3) ; m <- f(1,-2) ; m }");
+    }
+
+    @Test
+    @Ignore
+    public void testUpdateIgnore() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; m[2] <- list(100) ; m }");
+
+        // proper update in place
+        assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[[2]] <- list(100) ; m }");
+
+        // column update
+        assertEval("{ m <- array(1:24, dim=c(2,3,4)) ; m[,,4] <- 10:15 ; m[,,4] }");
+
+        // subscript with rewriting
+        assertEval("{  m <- array(1:3, dim=c(3,1,1)) ; f <- function(x,v) { x[[2,1,1]] <- v ; x } ; f(m,10L) ; f(m,10) ; x <- f(m,11L) ; c(x[1],x[2],x[3]) }");
+
+        // error reporting
+        assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- 1 }");
+        assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[integer(),1]] <- 1 }");
+
+        // recovery from scalar selection update
+        assertEval("{ m <- matrix(as.double(1:6), nrow=2) ; mi <- matrix(1:6, nrow=2) ; f <- function(v,i,j) { v[i,j] <- 100 ; v[i,j] * i * j } ; f(m, 1L, 2L) ; f(m,1L,TRUE)  }");
+        assertEval("{ m <- matrix(as.double(1:6), nrow=2) ; mi <- matrix(1:6, nrow=2) ; f <- function(v,i,j) { v[i,j] <- 100 ; v[i,j] * i * j } ; f(m, 1L, 2L) ; f(m,1L,-1)  }");
+
         assertEval("{ x <- array(c(1,2,3), dim=c(3,1)) ; x[1:2,1] <- 2:1 ; x }");
+
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[] = 42; x }");
+        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[] = c(42,7); x }");
+
     }
 
     @Test
