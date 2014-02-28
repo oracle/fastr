@@ -154,7 +154,7 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    junit(['--tests',  'com.oracle.truffle.r.test.simple'] + args)
+    junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
 
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'

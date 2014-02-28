@@ -65,6 +65,10 @@ public abstract class RBuiltinPackage {
         return builtins.get(methodName);
     }
 
+    public TreeMap<String, RBuiltinFactory> getBuiltins() {
+        return builtins;
+    }
+
     public static void loadSnippets() {
         if (!snippetsLoaded) {
             for (Map.Entry<String, String> entry : snippetResources.entrySet()) {
