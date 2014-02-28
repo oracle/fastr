@@ -28,7 +28,7 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object getClass(RFunction arg) {
+    public Object getClass(@SuppressWarnings("unused") RFunction arg) {
         return RRuntime.TYPE_FUNCTION;
     }
 

@@ -90,7 +90,7 @@ public abstract class ReadVariableNode extends RNode {
         }
 
         private ReadVariableNode resolveNonFrame() {
-            RFunction lookupResult = RContext.getInstance().getLookup().lookup(RRuntime.toString(symbol));
+            RFunction lookupResult = RContext.getLookup().lookup(RRuntime.toString(symbol));
             if (lookupResult != null) {
                 return BuiltinFunctionVariableNodeFactory.create(lookupResult);
             } else {

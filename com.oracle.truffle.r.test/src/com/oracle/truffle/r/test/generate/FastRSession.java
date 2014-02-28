@@ -73,17 +73,16 @@ public class FastRSession implements RSession {
 
     }
 
-    private final REngine engine;
     private final ConsoleHandler consoleHandler;
 
     public FastRSession() {
         consoleHandler = new ConsoleHandler();
-        engine = REngine.setRuntimeState(new String[0], consoleHandler);
+        REngine.setRuntimeState(new String[0], consoleHandler);
     }
 
     public String eval(String expression) {
         consoleHandler.reset();
-        engine.parseAndEval(expression, true);
+        REngine.parseAndEval(expression, true);
         return consoleHandler.buffer.toString();
     }
 

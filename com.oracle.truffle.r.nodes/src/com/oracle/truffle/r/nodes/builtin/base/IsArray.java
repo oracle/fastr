@@ -26,7 +26,7 @@ public abstract class IsArray extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isType(RNull arg) {
+    public byte isType(@SuppressWarnings("unused") RNull arg) {
         return RRuntime.FALSE;
     }
 }

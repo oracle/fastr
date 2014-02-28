@@ -75,7 +75,7 @@ public final class REngine implements RBuiltinLookupProvider {
         return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
     }
 
-    public Object parseAndEval(File file, boolean printResult) throws IOException {
+    public static Object parseAndEval(File file, boolean printResult) throws IOException {
         String path = file.getAbsolutePath();
         return parseAndEvalImpl(new ANTLRFileStream(path), context.getSourceManager().get(path), null, printResult);
     }
@@ -84,15 +84,15 @@ public final class REngine implements RBuiltinLookupProvider {
      * Parse and evaluate {@code rscript}. Value of {@code globalFrame} may be null. If
      * {@code printResult == true}, the result of the evaluation is printed to the console.
      */
-    public Object parseAndEval(String rscript, VirtualFrame globalFrame, boolean printResult) {
+    public static Object parseAndEval(String rscript, VirtualFrame globalFrame, boolean printResult) {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), globalFrame, printResult);
     }
 
-    public Object parseAndEval(String rscript, boolean printResult) {
+    public static Object parseAndEval(String rscript, boolean printResult) {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), null, printResult);
     }
 
-    private Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
+    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
         try {
             RTruffleVisitor transform = new RTruffleVisitor();
             RNode node = transform.transform(parseAST(stream, source));
@@ -161,7 +161,7 @@ public final class REngine implements RBuiltinLookupProvider {
 
     private static void printResult(Object result) {
         if (!(result instanceof RInvisible)) {
-            RFunction function = context.getLookup().lookup("print");
+            RFunction function = RContext.getLookup().lookup("print");
             RRuntime.toString(function.call(null, RArguments.create(function, new Object[]{result})));
         }
     }

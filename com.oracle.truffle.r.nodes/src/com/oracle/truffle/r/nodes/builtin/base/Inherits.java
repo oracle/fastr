@@ -87,17 +87,19 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @Specialization
-    public Object doesInherit(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, RMissing which) {
+    public Object doesInherit(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") RMissing which) {
         return doesInherit(frame, x, what, RRuntime.LOGICAL_FALSE);
     }
 
     @Specialization
-    public Object doesInherit(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, Object which) {
+    @SuppressWarnings("unused")
+    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, Object which) {
         throw RError.getNotLengthOneLogicalVector(getSourceSection(), RRuntime.WHICH);
     }
 
     @Specialization
-    public Object doesInherit(VirtualFrame frame, RAbstractVector x, Object what, Object which) {
+    @SuppressWarnings("unused")
+    public Object doesInherit(RAbstractVector x, Object what, Object which) {
         throw RError.getNotCharacterVector(getSourceSection(), RRuntime.WHAT);
     }
 }
