@@ -28,7 +28,6 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -41,42 +40,47 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Intended to be subclassed by definitions of builtin functions.
+ * Intended to be subclassed by packages defining builtin functions. Much of the initialization is
+ * done statically on startup but, currently, the parsing and generation of the snippet ASTs is
+ * delayed until run-time.
  */
-public abstract class RPackage {
-    private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
+public abstract class RBuiltinPackage {
+    private static final Map<String, String> snippetResources = new HashMap<>();
+    private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
+    private static boolean snippetsLoaded;
 
-    private void putBuiltin(String name, RBuiltinFactory factory) {
+    private static void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
     }
 
-    protected RPackage() {
-        loadSnippets();
+    protected RBuiltinPackage() {
+        String rSourceName = getName() + ".r";
+        String content = Utils.getResourceAsString(getClass(), rSourceName, false);
+        if (content != null) {
+            snippetResources.put(rSourceName, content);
+        }
     }
 
-    public final RBuiltinFactory lookupByName(String methodName) {
+    public static RBuiltinFactory lookupByName(String methodName) {
         return builtins.get(methodName);
-    }
-
-    public final Collection<RBuiltinFactory> lookup() {
-        return Collections.unmodifiableCollection(builtins.values());
     }
 
     public TreeMap<String, RBuiltinFactory> getBuiltins() {
         return builtins;
     }
 
-    public final void loadSnippets() {
-        String rSourceName = getName() + ".r";
-        URL rSource = ResourceHandlerFactory.getHandler().getResource(getClass(), rSourceName);
-        if (rSource != null) {
-            RLibraryLoader loader = new RLibraryLoader(new File(rSource.getPath()));
-            Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
-            for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
-                NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
-                RBuiltinFactory builtinFactory = new RBuiltinFactory(new String[]{def.getKey()}, LastParameterKind.VALUE, nodeFactory, new Object[0]);
-                putBuiltin(def.getKey(), builtinFactory);
+    public static void loadSnippets() {
+        if (!snippetsLoaded) {
+            for (Map.Entry<String, String> entry : snippetResources.entrySet()) {
+                RLibraryLoader loader = new RLibraryLoader(entry.getKey(), entry.getValue());
+                Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
+                for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
+                    NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
+                    RBuiltinFactory builtinFactory = new RBuiltinFactory(new String[]{def.getKey()}, LastParameterKind.VALUE, nodeFactory, new Object[0]);
+                    putBuiltin(def.getKey(), builtinFactory);
+                }
             }
+            snippetsLoaded = true;
         }
     }
 
@@ -84,7 +88,7 @@ public abstract class RPackage {
 
     @SuppressWarnings("unchecked")
     protected final void loadBuiltins() {
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(".")))) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), ".")))) {
             while (true) {
                 String l = r.readLine();
                 if (l == null) {

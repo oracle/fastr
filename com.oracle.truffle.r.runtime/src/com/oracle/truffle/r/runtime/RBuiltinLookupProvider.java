@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.nodes.builtin.*;
-
-public class DebugPackage extends RBuiltinPackage {
-
-    public DebugPackage() {
-        loadBuiltins();
-    }
-
-    @Override
-    public String getName() {
-        return "Debug";
-    }
-
-    private static DebugPackage instance;
-
-    public static DebugPackage getInstance() {
-        if (instance == null) {
-            instance = new DebugPackage();
-        }
-        return instance;
-    }
-
+public interface RBuiltinLookupProvider {
+    RBuiltinLookup getRBuiltinLookup();
 }

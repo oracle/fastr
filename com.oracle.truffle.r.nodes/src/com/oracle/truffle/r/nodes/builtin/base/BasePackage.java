@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-public class BasePackage extends RPackage {
+public class BasePackage extends RBuiltinPackage {
 
     public BasePackage() {
         // primitive operations
