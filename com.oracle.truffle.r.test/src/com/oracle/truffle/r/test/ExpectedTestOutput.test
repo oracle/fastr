@@ -6914,6 +6914,9 @@ f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodOneArg
 #{f <- function(x){ UseMethod("f"); };f.first <- function(x){cat("f first",x)}; f.second <- function(x){cat("f second",x)}; obj <-1; attr(obj,"class")  <- "first"; f(obj); attr(obj,"class")  <- "second"; f(obj);}
 f first 1f second 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodReturn
+#{f <- function(x){ UseMethod("f");cat("This should not be executed"); }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
+f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
 #{f <- function(x){ UseMethod("f",x); };f.first <- function(x){cat("f first",x)};f.second <- function(x){cat("f second",x)};obj <-1;attr(obj,"class")  <- "first";f(obj);attr(obj,"class")  <- "second";f(obj)}
 f first 1f second 1

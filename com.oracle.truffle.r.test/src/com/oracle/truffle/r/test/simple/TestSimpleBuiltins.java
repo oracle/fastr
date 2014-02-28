@@ -2395,9 +2395,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testUseMethodIgnore() {
-        // TODO
+    public void testUseMethodReturn() {
         // All the statements after UseMethod() call should get ignored.
         assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }

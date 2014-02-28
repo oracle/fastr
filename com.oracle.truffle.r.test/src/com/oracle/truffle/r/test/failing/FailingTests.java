@@ -3439,11 +3439,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testUseMethodIgnore_1af23cb23456744d7e6a4cb93888e9a3() {
-        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testWhichIgnore_6d01b8ef11e5cdf979ca7122cd3de717() {
         assertEval("{ which(c(a=TRUE,b=FALSE,c=TRUE)) }");
     }

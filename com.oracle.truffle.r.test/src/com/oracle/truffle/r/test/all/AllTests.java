@@ -10589,11 +10589,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testUseMethodIgnore_1af23cb23456744d7e6a4cb93888e9a3() {
-        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testUseMethodLocalVars_cd724107886a7c9d25ae3b6aad713cb6() {
         assertEval("{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
@@ -10606,6 +10601,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testUseMethodOneArg_fce364ef2dfa8e366da5615934951253() {
         assertEval("{f <- function(x){ UseMethod(\"f\"); };f.first <- function(x){cat(\"f first\",x)}; f.second <- function(x){cat(\"f second\",x)}; obj <-1; attr(obj,\"class\")  <- \"first\"; f(obj); attr(obj,\"class\")  <- \"second\"; f(obj);}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUseMethodReturn_1af23cb23456744d7e6a4cb93888e9a3() {
+        assertEval("{f <- function(x){ UseMethod(\"f\");cat(\"This should not be executed\"); }; f.second <- function(x){cat(\"f second\",x);}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
 
     @Test
