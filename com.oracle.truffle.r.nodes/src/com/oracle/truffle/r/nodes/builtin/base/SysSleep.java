@@ -26,30 +26,52 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
-@RBuiltin({"isTRUE"})
-public abstract class IsTRUE extends RBuiltinNode {
+@RBuiltin("Sys.sleep")
+public abstract class SysSleep extends RBuiltinNode {
 
     @Specialization(order = 0)
-    public RLogicalVector isTRUE(byte x) {
-        byte xx = x;
-        if (x == RRuntime.LOGICAL_NA) {
-            xx = RRuntime.LOGICAL_FALSE;
-        }
-        return RDataFactory.createLogicalVectorFromScalar(xx);
+    public Object sysSleep(double seconds) {
+        sleep((int) seconds);
+        return RInvisible.INVISIBLE_NULL;
     }
 
-    @Specialization(order = 1, guards = "exactlyTrue")
-    public RLogicalVector isTRUE(RLogicalVector x) {
-        return RDataFactory.createLogicalVectorFromScalar(exactlyTrue(x) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
+    @Specialization(order = 1)
+    public Object sysSleep(String secondsString) {
+        int seconds = checkIntString(secondsString);
+        sleep(seconds);
+        return RInvisible.INVISIBLE_NULL;
+    }
+
+    @Specialization(order = 2)
+    public Object sysSleep(RStringVector secondsVector) {
+        if (secondsVector.getLength() != 1) {
+            throw invalid();
+        }
+        int seconds = checkIntString(secondsVector.getDataAt(0));
+        sleep(seconds);
+        return RInvisible.INVISIBLE_NULL;
     }
 
     @Generic
-    public RLogicalVector isTRUEGeneric(@SuppressWarnings("unused") Object x) {
-        return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE);
+    public Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
+        throw invalid();
     }
 
-    public static boolean exactlyTrue(RLogicalVector v) {
-        return v.getLength() == 1 && v.getDataAt(0) == RRuntime.LOGICAL_TRUE && (v.getAttributes() == null || v.getAttributes().isEmpty());
+    private RError invalid() throws RError {
+        throw RError.getGenericError(getSourceSection(), "invalid 'time' value");
+    }
+
+    private int checkIntString(String s) throws RError {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ex) {
+            throw invalid();
+        }
+    }
+
+    private static void sleep(int seconds) {
+        BaseRFFIFactory.getRFFI().sleep(seconds);
     }
 }

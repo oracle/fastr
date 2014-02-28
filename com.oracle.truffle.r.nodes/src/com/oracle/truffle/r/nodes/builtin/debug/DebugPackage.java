@@ -24,15 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.debug;
 
 import com.oracle.truffle.r.nodes.builtin.*;
 
-public class DebugPackage extends RPackage {
+public class DebugPackage extends RBuiltinPackage {
 
     public DebugPackage() {
-        load(DebugDumpBuiltin.class);
-        load(DebugInfoBuiltin.class);
-        load(DebugSource.class);
-        load(DebugTreeBuiltin.class);
-        load(DebugTypeOfBuiltin.class);
-        load(DebugCompileBuiltin.class);
+        loadBuiltins();
     }
 
     @Override

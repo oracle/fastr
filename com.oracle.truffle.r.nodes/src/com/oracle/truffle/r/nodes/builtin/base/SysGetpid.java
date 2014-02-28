@@ -32,7 +32,7 @@ public abstract class SysGetpid extends RBuiltinNode {
 
     @Specialization
     public Object sysGetPid() {
-        int pid = BaseRFFIFactory.getFFI().getpid();
+        int pid = BaseRFFIFactory.getRFFI().getpid();
         return RDataFactory.createIntVectorFromScalar(pid);
     }
 }

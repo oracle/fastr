@@ -27,17 +27,17 @@ import mx
 import mx_graal
 import os
 
-def runRCommand(args):
-    '''run R program or shell [path]'''
+def _runR(args, className):
     os.environ['R_HOME'] = mx.suite('fastr').dir
-    mx_graal.vm(['-ea', '-esa', '-cp', rShellCp(), rCommandClass()] + args)
+    mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args)
 
-def rShellCp():
-    return mx.classpath("com.oracle.truffle.r.shell")
+def runRCommand(args):
+    '''run R shell'''
+    _runR(args, "com.oracle.truffle.r.shell.RCommand")
 
-
-def rCommandClass():
-    return "com.oracle.truffle.r.shell.RCommand"
+def runRscriptCommand(args):
+    '''run Rscript file'''
+    _runR(args, "com.oracle.truffle.r.shell.RscriptCommand")
 
 def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)
@@ -153,6 +153,9 @@ def junit(args):
 
     return mx.junit(args, _junit_r_harness, parser=parser)
 
+def junit_simple(args):
+    junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
+
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
@@ -172,7 +175,6 @@ def rbench(args):
     parser = ArgumentParser(prog='mx rbench')
     parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='qualified name of benchmark')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
-    parser.add_argument('--J', dest='vm_args', help='Graal VM arguments (e.g. --J @-dsa)', metavar='@<args>')
     parser.add_argument('--gnur', action='store_true', help='run under GnuR')
     parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
     args = parser.parse_args(args)
@@ -191,10 +193,7 @@ def rbench(args):
         if args.path:
             print bmpath
         else:
-            command = []
-            if args.vm_args is not None:
-                command = ['--J', args.vm_args]
-            command = command + ['-f', bmpath]
+            command = ['-f', bmpath]
             if args.gnur:
                 env = os.environ
                 if args.gnur_jit:
@@ -231,12 +230,15 @@ def mx_init(suite):
         # new commands
         'r' : [runRCommand, '[options]'],
         'R' : [runRCommand, '[options]'],
+        'rscript' : [runRscriptCommand, '[options]'],
+        'Rscript' : [runRscriptCommand, '[options]'],
         'rtestgen' : [testgen, ''],
         'rbench' : [rbench, 'options'],
         # core overrides
         'gate' : [gate, ''],
         'bench' : [bench, 'options'],
         'junit' : [junit, ['options']],
+        'junitsimple' : [junit_simple, ['options']],
     }
     mx.update_commands(suite, commands)
 

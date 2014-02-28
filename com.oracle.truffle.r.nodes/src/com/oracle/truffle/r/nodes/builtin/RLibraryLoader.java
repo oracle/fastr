@@ -29,6 +29,7 @@ import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.control.*;
@@ -41,9 +42,19 @@ import com.oracle.truffle.r.runtime.data.*;
 public class RLibraryLoader {
 
     private final File libFile;
+    private final String libContents;
+    private final String libName;
 
     public RLibraryLoader(File libFile) {
         this.libFile = libFile;
+        this.libContents = null;
+        this.libName = null;
+    }
+
+    public RLibraryLoader(String libName, String libContents) {
+        this.libFile = null;
+        this.libName = libName;
+        this.libContents = libContents;
     }
 
     public Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> loadLibrary() {
@@ -67,11 +78,24 @@ public class RLibraryLoader {
     }
 
     private RNode parseLibrary() {
-        ANTLRFileStream stream;
+        ANTLRStringStream stream;
+        SourceManager sourceManager = RContext.getInstance().getSourceManager();
+        Source source = null;
         try {
-            stream = new ANTLRFileStream(libFile.getAbsolutePath());
+            if (libFile != null) {
+                stream = new ANTLRFileStream(libFile.getAbsolutePath());
+                source = sourceManager.get(libFile.getAbsolutePath());
+            } else {
+                stream = new ANTLRStringStream(libContents) {
+                    @Override
+                    public String getSourceName() {
+                        return libName;
+                    }
+                };
+                source = sourceManager.getFakeFile(libName, libContents);
+            }
             RTruffleVisitor transform = new RTruffleVisitor();
-            RNode node = transform.transform(parseAST(stream, RContext.getInstance().getSourceManager().get(libFile.getAbsolutePath())));
+            RNode node = transform.transform(parseAST(stream, source));
             return node;
         } catch (RecognitionException | IOException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -20,10 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.*;
@@ -32,15 +28,15 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class RPackages implements RBuiltinLookup {
+public abstract class RBuiltinPackages implements RBuiltinLookup {
 
-    private final List<RPackage> packages = new ArrayList<>();
+    private static final List<RBuiltinPackage> packages = new ArrayList<>();
 
-    protected void load(RPackage builtins) {
+    protected void load(RBuiltinPackage builtins) {
         packages.add(builtins);
     }
 
-    public List<RPackage> getPackages() {
+    public List<RBuiltinPackage> getPackages() {
         return packages;
     }
 
@@ -63,14 +59,8 @@ public abstract class RPackages implements RBuiltinLookup {
         return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtin.getBuiltinNames()[0], callTarget, true));
     }
 
-    public RBuiltinFactory lookupBuiltin(String name) {
-        for (RPackage pack : packages) {
-            RBuiltinFactory factory = pack.lookupByName(name);
-            if (factory != null) {
-                return factory;
-            }
-        }
-        return null;
+    public static RBuiltinFactory lookupBuiltin(String name) {
+        return RBuiltinPackage.lookupByName(name);
     }
 
 }

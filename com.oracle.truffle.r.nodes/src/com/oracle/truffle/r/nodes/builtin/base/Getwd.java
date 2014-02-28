@@ -32,7 +32,7 @@ public abstract class Getwd extends RBuiltinNode {
 
     @Specialization
     public Object getwd() {
-        String result = BaseRFFIFactory.getFFI().getwd();
+        String result = BaseRFFIFactory.getRFFI().getwd();
         return RDataFactory.createStringVector(result);
     }
 
