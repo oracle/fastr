@@ -31,6 +31,7 @@ public final class RDataFactory {
     private static final RLogicalVector EMPTY_LOGICAL_VECTOR = createLogicalVector(0);
     private static final RStringVector EMPTY_STRING_VECTOR = createStringVector(0);
     private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(0);
+    private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(0);
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
 
@@ -216,6 +217,10 @@ public final class RDataFactory {
 
     public static RLogicalVector createEmptyLogicalVector() {
         return EMPTY_LOGICAL_VECTOR;
+    }
+
+    public static RRawVector createEmptyRawVector() {
+        return EMPTY_RAW_VECTOR;
     }
 
     public static RComplex createComplex(double realPart, double imaginaryPart) {

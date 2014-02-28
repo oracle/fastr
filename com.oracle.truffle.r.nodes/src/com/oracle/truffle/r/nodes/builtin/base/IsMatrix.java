@@ -26,43 +26,18 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("is.matrix")
-public abstract class IsMatrix extends IsTypeNode {
+public abstract class IsMatrix extends RBuiltinNode {
 
     @Specialization
-    @Override
-    public byte isType(RIntVector vector) {
-        return RRuntime.asLogical(RRuntime.isMatrix(vector));
+    public byte isType(RAbstractVector vector) {
+        return RRuntime.asLogical(vector.isMatrix());
     }
 
     @Specialization
-    @Override
-    public byte isType(RDoubleVector vector) {
-        return RRuntime.asLogical(RRuntime.isMatrix(vector));
-    }
-
-    @Specialization
-    @Override
-    public byte isType(RLogicalVector vector) {
-        return RRuntime.asLogical(RRuntime.isMatrix(vector));
-    }
-
-    @Specialization
-    @Override
-    public byte isType(RRawVector vector) {
-        return RRuntime.asLogical(RRuntime.isMatrix(vector));
-    }
-
-    @Specialization
-    @Override
-    public byte isType(RStringVector vector) {
-        return RRuntime.asLogical(RRuntime.isMatrix(vector));
-    }
-
-    @Specialization
-    @Override
-    public byte isType(RComplexVector vector) {
-        return RRuntime.asLogical(RRuntime.isMatrix(vector));
+    public byte isType(RNull arg) {
+        return RRuntime.FALSE;
     }
 }

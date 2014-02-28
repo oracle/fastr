@@ -1760,11 +1760,11 @@ numeric(0)
 #{ xor(7, 42) }
 [1] FALSE
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }
 [1] 0 0 0
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dimnames(x)<-list(c("a", "b"), c("c", "d"), c("e", "f")) ;x[,0,] }
 , , e
 
@@ -1779,54 +1779,54 @@ a
 b
 
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dimnames(x)<-list(c("a", "b"), c("c", "d"), c("e", "f")) ;x[1,1,NA] }
 <NA> <NA>
   NA   NA
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dimnames(x)<-list(c("a", "b"), c("c", "d"), c("e", "f")) ;x[1,1,] }
 e f
 1 5
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dimnames(x)<-list(c("a", "b"), c("c", "d"), c("e", "f")); x[1,1,c(1,NA,1)] }
    e <NA>    e
    1   NA    1
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); dimnames(x)<-list(c("a", "b"), c("c", "d"), c("e", "f")); x[NA,1,c(1,NA,1)] }
       e <NA>  e
 <NA> NA   NA NA
 <NA> NA   NA NA
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }
 <0 x 0 matrix>
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); x[1,1,NA] }
 [1] NA NA
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); x[1,1,c(1,NA,1)] }
 [1]  1 NA  1
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-(1:8); dim(x)<-c(2, 2, 2); x[NA,1,c(1,NA,1)] }
      [,1] [,2] [,3]
 [1,]   NA   NA   NA
 [2,]   NA   NA   NA
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:16; dim(x)<-c(2,2,4); dim(x[0,-1,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:16; dim(x)<-c(2,2,4); x[,1,1] }
 [1] 1 2
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:16; dim(x)<-c(4,1,4); dimnames(x)<-list(c("a", "b", "c", "d"), "z", c("e", "f", "g", "h")); dimnames(x[-1,1,-1]) }
 [[1]]
 [1] "b" "c" "d"
@@ -1835,35 +1835,35 @@ e f
 [1] "f" "g" "h"
 
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:16; dim(x)<-c(4,1,4); dimnames(x)<-list(c("a", "b", "c", "d"), NULL, c("e", "f", "g", "h")); x[-1,1,-1] }
   f  g  h
 b 6 10 14
 c 7 11 15
 d 8 12 16
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:16; dim(x)<-c(4,1,4); dimnames(x)<-list(c("a", "b", "c", "d"), NULL, c("e", "f", "g", "h")); x[-1,1,1] }
 b c d
 2 3 4
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:256; dim(x)<-c(4,4,4,4); dim(x[1,0, 1,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:256; dim(x)<-c(4,4,4,4); dim(x[1,1, 0,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:32; dim(x)<-c(4,2,4); dim(x[-1,1,1]) }
 NULL
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:32; dim(x)<-c(4,2,4); dimnames(x)<-list(NULL, c("x", "y"), c("e", "f", "g", "h")); x[-1,1,1] }
 [1] 2 3 4
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:32; dim(x)<-c(4,2,4); dimnames(x)<-list(c("a", "b", "c", "d"), NULL, c("e", "f", "g", "h")); x[-1,,-1] }
 , , f
 
@@ -1887,7 +1887,7 @@ c   27   31
 d   28   32
 
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:32; dim(x)<-c(4,2,4); dimnames(x)<-list(c("a", "b", "c", "d"), c("x", "y"), c("e", "f", "g", "h")); x[-1,,-1] }
 , , f
 
@@ -1911,70 +1911,70 @@ c 27 31
 d 28 32
 
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:32; dim(x)<-c(4,2,4); dimnames(x)<-list(c("a", "b", "c", "d"), c("x", "y"), c("e", "f", "g", "h")); x[1,1,1] }
 [1] 1
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,0, 1,-1]) }
 NULL
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, 0,-1]) }
 NULL
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,4); dim(x[0,-1,-1]) }
 [1] 0 3 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,4); dim(x[0,1,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,4); dim(x[1,0,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,4); x[-1,-1,1] }
      [,1] [,2] [,3]
 [1,]    6   10   14
 [2,]    7   11   15
 [3,]    8   12   16
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,4); x[-1,1,3] }
 [1] 34 35 36
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:64; dim(x)<-c(4,4,4); x[1,1,3] }
 [1] 33
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,,-1]) }
 [1] 0 2 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(1,2,4); dim(x[0,1,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,-1]) }
 [1] 0 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(1,2,4); dim(x[1,0,3]) }
 NULL
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,1]) }
 NULL
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1,1] }
 Error in x[1, 1, 1, 1] : incorrect number of dimensions
 
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccessScalarIndex
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
 #{ x<-1:8; dim(x)<-c(2,2,2); x[42,1,1] }
 Error: subscript out of bounds
 
@@ -1998,6 +1998,14 @@ Error: subscript out of bounds
 #{ matrix(1,3,3)[[1,1]] }
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testMultiDimensionalUpdate
+#{ a = matrix(1,3,3); a[,1] = c(3,4,5); c(a[1,1],a[2,1],a[3,1]) }
+[1] 3 4 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testMultiDimensionalUpdate
+#{ a = matrix(1,3,3); a[1,] = c(3,4,5); c(a[1,1],a[1,2],a[1,3]) }
+[1] 3 4 5
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testSelection
 #{ m <- matrix(1:6, nrow=2) ; m[upper.tri(m)] }
 [1] 3 5 6
@@ -2011,10 +2019,154 @@ numeric(0)
 list()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#({ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to integer) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#({ x<-as.character(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to character) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#({ x<-as.complex(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to complex) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#({ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to double) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#({ x<-as.logical(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to logical) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ a <- 1:9 ; a[,,1] <- 10L }
+Error in a[, , 1] <- 10L : incorrect number of subscripts
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ a <- 1:9 ; a[,1] <- 10L }
+Error in a[, 1] <- 10L : incorrect number of subscripts on matrix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ a <- 1:9 ; a[1,1,1] <- 10L }
+Error in a[1, 1, 1] <- 10L : incorrect number of subscripts
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ a <- 1:9 ; a[1,1] <- 10L }
+Error in a[1, 1] <- 10L : incorrect number of subscripts on matrix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1,2,2) ; m[,1] = 7 ; m }
+     [,1] [,2]
+[1,]    7    1
+[2,]    7    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1,2,2) ; m[,1] = c(1,2,3,4) ; m }
+Error in m[, 1] = c(1, 2, 3, 4) :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1,2,2) ; m[,1] = c(10,11) ; m }
+     [,1] [,2]
+[1,]   10    1
+[2,]   11    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1,2,2) ; m[1,] = 7 ; m }
+     [,1] [,2]
+[1,]    7    7
+[2,]    1    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ m <- matrix(1,2,2); m[1,1] = 6; m }
      [,1] [,2]
 [1,]    6    1
 [2,]    1    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:100, nrow=10) ; z <- 1; s <- 0 ; for(i in 1:3) { m[z <- z + 1,z <- z + 1] <- z * z * 1000 } ; sum(m) }
+[1] 39918
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1, c(-1,-10)) ; m }
+     [,1] [,2] [,3]
+[1,]    1   10   10
+[2,]    2    4    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,-1) ; m }
+     [,1] [,2] [,3]
+[1,]    1   10   10
+[2,]    2    4    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(-1,2) ; m }
+     [,1] [,2] [,3]
+[1,]    1   10   10
+[2,]    2   10    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(1,-1) ; m }
+     [,1] [,2] [,3]
+[1,]    1   10   10
+[2,]    2    4    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(2,1:3) ; m <- f(1,-2) ; m }
+     [,1] [,2] [,3]
+[1,]   10    3   10
+[2,]   10   10   10
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[,2:3] <- 10:11 ; m }
+     [,1] [,2] [,3]
+[1,]    1   10   10
+[2,]    2   11   11
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[,2] <- 10:11 ; m }
+     [,1] [,2] [,3]
+[1,]    1   10    5
+[2,]    2   11    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[,2] <- integer() }
+Error in m[, 2] <- integer() : replacement has length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[,integer()] <- integer() ; m }
+     [,1] [,2] [,3]
+[1,]    1    3    5
+[2,]    2    4    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[1,2] <- 1:3 }
+Error in m[1, 2] <- 1:3 :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[1,2] <- integer() }
+Error in m[1, 2] <- integer() : replacement has length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[[1,1]] <- integer() }
+Error in m[[1, 1]] <- integer() : replacement has length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- integer() }
+Error in m[[1:2, 1]] <- integer() : replacement has length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[2] <- list(100) ; m }
+     [,1] [,2]
+[1,] 1    4
+[2,] 100  5
+[3,] 3    6
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,4,6)] <- NULL ; m }
@@ -2023,6 +2175,152 @@ list()
 
 [[2]]
 [1] 5
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x }
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to double) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:16; dim(x)<-c(2,2,2,2); y<-c(101:108); dim(y)<-c(2,4); x[1:2,1:2,1]<-y; x }
+Error in x[1:2, 1:2, 1] <- y : incorrect number of subscripts
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x }
+Error in x[1, 1, 1] = as.raw(42) :
+  incompatible types (from raw to integer) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:102); z<-(x[1:2,c(1,2,0),1]<-y); x }
+, , 1
+
+     [,1] [,2]
+[1,]  101  101
+[2,]  102  102
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1,1]<-y; x }
+Error in x[1, 1] <- y : incorrect number of subscripts on matrix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1:2,1:2,1]<-y; x }
+, , 1
+
+     [,1] [,2]
+[1,]  101  103
+[2,]  102  104
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[0,5,1]<-y); x }
+Error in x[0, 5, 1] <- y : subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,0]<-y); x }
+, , 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,c(0,0)]<-y); x }
+, , 1
+
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,1),1]<-y); x }
+, , 1
+
+     [,1] [,2]
+[1,]  103    3
+[2,]  104    4
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,0),1]<-y); x }
+, , 1
+
+     [,1] [,2]
+[1,]  101  103
+[2,]  102  104
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,1),1]<-y); x }
+Error in x[1:2, c(1, 2, 1), 1] <- y :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }
+Error in x[1:2, c(1, 2, NA), 1] <- y :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,NA),1]<-y); x }
+Error in x[1:2, c(1, NA), 1] <- y :
+  NAs are not allowed in subscripted assignments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); z<-(x[1,1,1]<-42); z }
+[1] 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]<-42L; x }
+, , 1
+
+     [,1] [,2]
+[1,]   42    3
+[2,]    2    4
+
+, , 2
+
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAssignment.testAssign1
@@ -5247,6 +5545,38 @@ Error in get("x") : object 'x' not found
 #{ c(1,2,3,4,5) %in% c(1,2,1,2) }
 [1]  TRUE  TRUE FALSE FALSE FALSE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10; inherits(x, "a") ;}
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a");inherits(x, c("a", "b", "a"), TRUE) ;}
+[1] 1 0 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b"); inherits(x,"a") ;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, "a", TRUE) ;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, "a", c(TRUE)) ;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("a", "b", "c"), TRUE) ;}
+[1] 1 2 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b")) ;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{x <- 10;class(x) <- c("a", "b");inherits(x, c("c", "q", "b"), TRUE) ;}
+[1] 0 0 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInvisible
 #{ f <- function() { invisible(23) } ; f() }
 
@@ -6522,6 +6852,22 @@ Error: object 'x' not found
 [1] 38587000
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(1) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(1:6) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(NULL) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
+#{ is.array(matrix(1:6, nrow=2)) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
 #{ is.character("hi") }
 [1] TRUE
 
@@ -6652,6 +6998,44 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ unlist(list("hello", "hi")) }
 [1] "hello" "hi"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x=1;class(x)<-"character"; x}
+[1] "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1; class(x)<-"logical"; x;  class(x)<-c(1,2,3); x; class(x)<-NULL; x;}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-NULL; x;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3); x;}
+[1] 1
+attr(,"class")
+[1] "1" "2" "3"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3);class(x)<-c(); x;}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-"array"; x; class(x)<-"matrix"; x;}
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x=1; class(x)<-"first"; x;}
+[1] 1
+attr(,"class")
+[1] "first"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateDiagonal
 #{ m <- matrix(1:6, nrow=3) ;  attr(m, "foo")<-"foo"; diag(m) <- c(1,2); attributes(m) }
@@ -6828,6 +7212,9 @@ f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodOneArg
 #{f <- function(x){ UseMethod("f"); };f.first <- function(x){cat("f first",x)}; f.second <- function(x){cat("f second",x)}; obj <-1; attr(obj,"class")  <- "first"; f(obj); attr(obj,"class")  <- "second"; f(obj);}
 f first 1f second 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodReturn
+#{f <- function(x){ UseMethod("f");cat("This should not be executed"); }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
+f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
 #{f <- function(x){ UseMethod("f",x); };f.first <- function(x){cat("f first",x)};f.second <- function(x){cat("f second",x)};obj <-1;attr(obj,"class")  <- "first";f(obj);attr(obj,"class")  <- "second";f(obj)}
 f first 1f second 1

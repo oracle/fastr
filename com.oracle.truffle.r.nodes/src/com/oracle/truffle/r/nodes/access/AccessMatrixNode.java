@@ -50,12 +50,12 @@ public abstract class AccessMatrixNode extends RNode {
 
     @CreateCast({"firstPosition"})
     public RNode createCastFirstPosition(RNode child) {
-        return ArrayPositionCastFactory.create(0, getVector(), child, false);
+        return ArrayPositionCastFactory.create(0, 2, false, getVector(), child, false);
     }
 
     @CreateCast({"secondPosition"})
     public RNode createCastSecondPosition(RNode child) {
-        return ArrayPositionCastFactory.create(1, getVector(), child, false);
+        return ArrayPositionCastFactory.create(1, 2, false, getVector(), child, false);
     }
 
     // dimensions do not match

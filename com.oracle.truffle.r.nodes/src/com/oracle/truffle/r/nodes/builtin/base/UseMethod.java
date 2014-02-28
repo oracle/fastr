@@ -20,6 +20,7 @@ import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -224,7 +225,8 @@ public abstract class UseMethod extends RBuiltinNode {
                     break;
             }
         }
-        return funcDefnNode.execute(newFrame);
+        // Statements after the UseMethod() call are ignored.
+        throw new ReturnException(funcDefnNode.execute(newFrame));
     }
 
 }
