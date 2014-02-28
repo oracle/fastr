@@ -26,32 +26,32 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ffi.*;
 
 @RBuiltin("Sys.sleep")
 public abstract class SysSleep extends RBuiltinNode {
 
     @Specialization(order = 0)
     public Object sysSleep(double seconds) {
-        sleep((int) seconds);
+        sleep(convertToMillis(seconds));
         return RInvisible.INVISIBLE_NULL;
     }
 
     @Specialization(order = 1)
     public Object sysSleep(String secondsString) {
-        int seconds = checkIntString(secondsString);
-        sleep(seconds);
+        long millis = convertToMillis(checkValidString(secondsString));
+        sleep(millis);
         return RInvisible.INVISIBLE_NULL;
     }
 
-    @Specialization(order = 2)
+    @Specialization(order = 2, guards = "lengthOne")
     public Object sysSleep(RStringVector secondsVector) {
-        if (secondsVector.getLength() != 1) {
-            throw invalid();
-        }
-        int seconds = checkIntString(secondsVector.getDataAt(0));
-        sleep(seconds);
+        long millis = convertToMillis(checkValidString(secondsVector.getDataAt(0)));
+        sleep(millis);
         return RInvisible.INVISIBLE_NULL;
+    }
+
+    public static boolean lengthOne(RStringVector vec) {
+        return vec.getLength() == 1;
     }
 
     @Generic
@@ -63,15 +63,23 @@ public abstract class SysSleep extends RBuiltinNode {
         throw RError.getGenericError(getSourceSection(), "invalid 'time' value");
     }
 
-    private int checkIntString(String s) throws RError {
+    private static long convertToMillis(double d) {
+        return (long) (d * 1000);
+    }
+
+    private double checkValidString(String s) throws RError {
         try {
-            return Integer.parseInt(s);
+            return Double.parseDouble(s);
         } catch (NumberFormatException ex) {
             throw invalid();
         }
     }
 
-    private static void sleep(int seconds) {
-        BaseRFFIFactory.getRFFI().sleep(seconds);
+    private static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ex) {
+            // ignore
+        }
     }
 }
