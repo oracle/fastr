@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 @RBuiltin(".Internal.tempfile")
@@ -48,12 +49,12 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization(order = 0, guards = "tempDirL1")
-    public RStringVector tempfile(String pattern, RStringVector tempDir, String fileExt) {
+    public RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         return RDataFactory.createStringVector(createFile(pattern, tempDir.getDataAt(0), fileExt));
     }
 
     @SuppressWarnings("unused")
-    public static boolean tempDirL1(String pattern, RStringVector tempDir, String fileExt) {
+    public static boolean tempDirL1(String pattern, RAbstractStringVector tempDir, String fileExt) {
         return tempDir.getLength() == 1;
     }
 
