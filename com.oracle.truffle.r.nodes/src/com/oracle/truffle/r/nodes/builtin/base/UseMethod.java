@@ -52,16 +52,7 @@ public abstract class UseMethod extends RBuiltinNode {
 
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, RAbstractVector arg) {
-        if (arg.isObject()) {
-            final Object classAttrb = arg.getAttributes().get(RRuntime.CLASS_ATTR_KEY);
-            if (classAttrb instanceof RStringVector) {
-                RStringVector classNames = (RStringVector) classAttrb;
-                return useMethodHelper(frame, generic, classNames);
-            }
-            return useMethodHelper(frame, generic, (String) classAttrb);
-        } else {
-            return useMethodHelper(frame, generic, arg.getClassHierarchy());
-        }
+        return useMethodHelper(frame, generic, arg.getClassHierarchy());
     }
 
     /*
@@ -132,38 +123,7 @@ public abstract class UseMethod extends RBuiltinNode {
         if (newFrame == null) {
             newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
             if (newFrame == null) {
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, Arrays.toString(classNames));
-            }
-        }
-        return dispatchMethod(frame, newFrame);
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, List<String> classNames) {
-        VirtualFrame newFrame = null;
-        for (final String className : classNames) {
-            newFrame = findFunction(className, generic, frame);
-            if (newFrame != null) {
-                break;
-            }
-        }
-        if (newFrame == null) {
-            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
-            if (newFrame == null) {
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, classNames.toString());
-            }
-        }
-        return dispatchMethod(frame, newFrame);
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        VirtualFrame newFrame = null;
-        for (int i = 0; i < classNames.getLength() && newFrame == null; ++i) {
-            newFrame = findFunction(classNames.getDataAt(i), generic, frame);
-        }
-        if (newFrame == null) {
-            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
-            if (newFrame == null) {
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, classNames.toString());
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RRuntime.toString(RDataFactory.createStringVector(classNames, true)));
             }
         }
         return dispatchMethod(frame, newFrame);

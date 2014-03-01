@@ -32,6 +32,8 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
 
     private byte[] data;
 
+    private static final String[] implicitClassHrDyn = new String[]{"", RRuntime.TYPE_RAW};
+
     RRawVector(byte[] data, int[] dims, Object names) {
         super(true, data.length, dims, names);
         this.data = data;
@@ -145,9 +147,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        final List<String> classHr = super.getClassHierarchy();
-        classHr.add(RRuntime.TYPE_RAW);
-        return classHr;
+    protected String[] getImplicitClassHr() {
+        return getClassHierarchyHelper(new String[]{RRuntime.TYPE_RAW}, implicitClassHrDyn);
     }
 }

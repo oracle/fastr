@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
-
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -32,13 +30,6 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
 
     private final double start;
     private final double stride;
-
-    private static final List<String> klass;
-    static {
-        klass = new ArrayList<>();
-        klass.add(RRuntime.TYPE_DOUBLE);
-        klass.add(RRuntime.TYPE_NUMERIC);
-    }
 
     RDoubleSequence(double start, double stride, int length) {
         super(length);
@@ -103,7 +94,7 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        return klass;
+    public String[] getClassHierarchy() {
+        return RRuntime.CLASS_DOUBLE;
     }
 }

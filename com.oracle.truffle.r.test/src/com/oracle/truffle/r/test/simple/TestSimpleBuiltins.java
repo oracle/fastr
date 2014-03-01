@@ -2412,11 +2412,40 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{x<-1;class(x)<-c(1,2,3); x;}");
 
-        assertEval("{x<-1;class(x)<-NULL; x;}");
+        assertEval("{x<-1;class(x)<-c(TRUE,FALSE); x;}");
+
+        assertEval("{x<-1;class(x)<-c(2+3i,4+5i); x;}");
+
+        assertEval("{x<-1;class(x)<-c(1,2,3);class(x)<-NULL; x;}");
 
         assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-\"array\"; x; class(x)<-\"matrix\"; x;}");
 
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)}");
+
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x);dim(x)<-c(2,2,1);class(x)}");
+
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2,1); class(x)}");
+
         assertEval("{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}");
+
+        assertEval("{x<-1;class(x)<-\"a\";x}");
+
+        assertEval("{x<-1;class(x)<-\"a\";class(x)<-\"numeric\";x;}");
+
+        assertEval("{x<-TRUE;class(x)<-\"a\";class(x)<-\"logical\";x;}");
+
+        assertEval("{x<-2+3i;class(x)<-\"a\";class(x)<-\"complex\";x;}");
+
+        assertEval("{x<-c(1,2);class(x)<-\"a\";class(x)<-\"list\";x;}");
+
+        assertEval("{x<-\"abc\";class(x)<-\"a\";class(x)<-\"character\";x;}");
+
+        assertEval("{x<-c(2+3i,4+5i);class(x)<-\"a\";class(x)<-\"complex\";x;}");
+
+        assertEval("{x<-1;attr(x,\"class\")<-c(\"a\",\"b\");x;}");
+
+        // Doesn't remove the class attribute unlike class(x)<-numeric.
+        assertEval("{x<-1;attr(x,\"class\")<-c(\"a\",\"b\");attr(x,\"class\")<-\"numeric\";x}");
     }
 
     @Test
@@ -2424,6 +2453,30 @@ public class TestSimpleBuiltins extends TestBase {
     public void testUpdateClassIgnore() {
         // Fails because of exact string matching in error message.
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
+        assertEval("{x<-1;attr(x,\"class\")<-c(1,2,3);}");
+    }
+
+    @Test
+    public void testGetClass() {
+        assertEval("{x<-1L;class(x)}");
+
+        assertEval("{x<-c(1L,2L,3L);class(x)}");
+
+        assertEval("{x<-seq(1L,10L);class(x)}");
+
+        assertEval("{x<-seq(1.1,10.1);class(x)}");
+
+        assertEval("{x<-1;class(x)}");
+
+        assertEval("{x<-c(1,2,3);class(x)}");
+    }
+
+    @Test
+    @Ignore
+    public void testGetClassIgnore() {
+        // TODO: Fails as seq(1,10) is integer seq in GNU R while
+        // double seq in FastR
+        assertEval("{x<-seq(1,10);class(x)}");
     }
 
     @Test

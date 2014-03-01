@@ -19,16 +19,21 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = "class")
 public abstract class GetClass extends RBuiltinNode {
+
     @Specialization
     public Object getClass(RAbstractVector arg) {
         if (arg.isObject()) {
-            return arg.getAttributes().get(RRuntime.CLASS_ATTR_KEY);
+            return arg.getClassHierarchy();
         }
-        return arg.getClassHierarchy().get(0);
+        final String klass = arg.getClassHierarchy()[0];
+        if (klass.equals(RRuntime.TYPE_DOUBLE)) {
+            return RRuntime.TYPE_NUMERIC;
+        }
+        return klass;
     }
 
     @Specialization
-    public Object getClass(RFunction arg) {
+    public Object getClass(@SuppressWarnings("unused") RFunction arg) {
         return RRuntime.TYPE_FUNCTION;
     }
 

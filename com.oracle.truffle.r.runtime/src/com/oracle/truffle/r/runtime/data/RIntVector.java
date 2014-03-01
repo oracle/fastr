@@ -33,6 +33,14 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     private int[] data;
 
+    private static final String[] implicitClassHr = RRuntime.CLASS_INTEGER;
+    private static final String[] implicitClassHrDyn;
+
+    static {
+        implicitClassHrDyn = new String[implicitClassHr.length + 1];
+        System.arraycopy(implicitClassHr, 0, implicitClassHrDyn, 1, implicitClassHr.length);
+    }
+
     RIntVector(int[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length, dims, names);
         this.data = data;
@@ -159,9 +167,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        final List<String> classHr = super.getClassHierarchy();
-        classHr.addAll(Arrays.asList(RRuntime.CLASS_INTEGER));
-        return classHr;
+    protected String[] getImplicitClassHr() {
+        return getClassHierarchyHelper(implicitClassHr, implicitClassHrDyn);
     }
 }

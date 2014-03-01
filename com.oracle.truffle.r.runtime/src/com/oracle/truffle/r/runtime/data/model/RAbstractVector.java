@@ -61,5 +61,5 @@ public interface RAbstractVector {
 
     boolean isObject();
 
-    List<String> getClassHierarchy();
+    String[] getClassHierarchy();
 }
