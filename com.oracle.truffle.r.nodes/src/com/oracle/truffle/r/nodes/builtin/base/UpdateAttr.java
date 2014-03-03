@@ -129,7 +129,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
                     return resultVector;
                 }
                 if (value instanceof RStringVector) {
-                    resultVector.getAttributes().put(name, ((RStringVector) value).getDataCopy());
+                    resultVector.getAttributes().put(name, value);
                     return resultVector;
                 }
                 if (value instanceof String) {
