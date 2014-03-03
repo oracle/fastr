@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public final class RStringVector extends RVector implements RAbstractStringVector {
 
     private String[] data;
+    private static final String[] implicitClassHrDyn = new String[]{"", RRuntime.TYPE_CHARACTER};
 
     RStringVector(String[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length, dims, names);
@@ -150,9 +151,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        final List<String> classHr = super.getClassHierarchy();
-        classHr.add(RRuntime.TYPE_CHARACTER);
-        return classHr;
+    protected RStringVector getImplicitClassHr() {
+        return getClassHierarchyHelper(new String[]{RRuntime.TYPE_CHARACTER}, implicitClassHrDyn);
     }
 }

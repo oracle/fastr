@@ -1919,6 +1919,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testGetClassIgnore_04e1bbb35c3306f6feb801b5cce80b88() {
+        assertEval("{x<-seq(1,10);class(x)}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testIdentical_c46eaf60fda944bdf1391b5fe9af0427() {
         assertEval("{ identical(1,1) }");
     }
@@ -3281,6 +3286,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testUpdateClassIgnore_dfbd07abb7b6feb1f2afd25c4ad019ef() {
+        assertEval("{x<-1;attr(x,\"class\")<-c(1,2,3);}");
     }
 
     @Ignore

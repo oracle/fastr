@@ -33,6 +33,8 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     private double[] data;
 
+    private static final String[] implicitClassHrDyn = new String[]{"", RRuntime.TYPE_COMPLEX};
+
     RComplexVector(double[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length >> 1, dims, names);
         assert data.length % 2 == 0;
@@ -165,9 +167,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        List<String> klass = super.getClassHierarchy();
-        klass.add(RRuntime.TYPE_COMPLEX);
-        return klass;
+    protected RStringVector getImplicitClassHr() {
+        return getClassHierarchyHelper(new String[]{RRuntime.TYPE_COMPLEX}, implicitClassHrDyn);
     }
 }

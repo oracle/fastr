@@ -33,6 +33,14 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     private double[] data;
 
+    private static final String[] implicitClassHr = RRuntime.CLASS_DOUBLE;
+    private static final String[] implicitClassHrDyn;
+
+    static {
+        implicitClassHrDyn = new String[implicitClassHr.length + 1];
+        System.arraycopy(implicitClassHr, 0, implicitClassHrDyn, 1, implicitClassHr.length);
+    }
+
     RDoubleVector(double[] data, boolean complete, int[] dims, Object names) {
         super(complete, data.length, dims, names);
         this.data = data;
@@ -175,9 +183,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        final List<String> classHr = super.getClassHierarchy();
-        classHr.addAll(Arrays.asList(RRuntime.CLASS_DOUBLE));
-        return classHr;
+    protected RStringVector getImplicitClassHr() {
+        return getClassHierarchyHelper(implicitClassHr, implicitClassHrDyn);
     }
 }

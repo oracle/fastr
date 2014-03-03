@@ -7454,6 +7454,41 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGetClass_50e9635bfb1e3eeed4dd1a14ca0c6d4f() {
+        assertEval("{x<-1L;class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetClass_af81637cccf11bc2161b1d4dedfea724() {
+        assertEval("{x<-c(1L,2L,3L);class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetClass_e61d45b963b2c7350460c3b02c35576e() {
+        assertEval("{x<-seq(1L,10L);class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetClass_dcaf905a90c1ecb53d1c1841d515e555() {
+        assertEval("{x<-seq(1.1,10.1);class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetClass_b4ae30b1b3b31b7f8bf83e725f98bcca() {
+        assertEval("{x<-1;class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetClass_a524770d8c4b8a5d06a826167443fed7() {
+        assertEval("{x<-c(1,2,3);class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetClassIgnore_04e1bbb35c3306f6feb801b5cce80b88() {
+        assertEval("{x<-seq(1,10);class(x)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIdentical_c46eaf60fda944bdf1391b5fe9af0427() {
         assertEval("{ identical(1,1) }");
     }
@@ -10499,8 +10534,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testUpdateClass_f32eeb90d7c944249786e8d7f00865db() {
-        assertEval("{x<-1;class(x)<-NULL; x;}");
+    public void TestSimpleBuiltins_testUpdateClass_776a79e57b4a962db7bcd05dfa5ce8d1() {
+        assertEval("{x<-1;class(x)<-c(TRUE,FALSE); x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_d038930d8b6c578f3bb46297f75874ca() {
+        assertEval("{x<-1;class(x)<-c(2+3i,4+5i); x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_048feec8f0e66e4525a8d8ed08d363c2() {
+        assertEval("{x<-1;class(x)<-c(1,2,3);class(x)<-NULL; x;}");
     }
 
     @Test
@@ -10509,13 +10554,88 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUpdateClass_e8351001b47001baafd3504bb524c875() {
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_fe6405456a75e70bd76c070552f35d60() {
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x);dim(x)<-c(2,2,1);class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_c9e0b14e171ef8219401c574023d3708() {
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2,1); class(x)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUpdateClass_49cf6b6a29e324e3eab3a030e50c26a3() {
         assertEval("{x<-1;class(x)<-c(1,2,3);y<-unclass(x);x;y}");
     }
 
     @Test
+    public void TestSimpleBuiltins_testUpdateClass_ec3513da84f6f670f7d4a57912d6a339() {
+        assertEval("{x<-1;class(x)<-\"a\";x}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_da3101183d77d64cb95eff24c3850c92() {
+        assertEval("{x<-1;class(x)<-\"a\";class(x)<-\"numeric\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_73236b353b738acb3cdbd9c14f9c65df() {
+        assertEval("{x<-TRUE;class(x)<-\"a\";class(x)<-\"logical\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_22ecd3611e61cf5e9eaeb1af64df9713() {
+        assertEval("{x<-2+3i;class(x)<-\"a\";class(x)<-\"complex\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_6baf58e27ad47ba371aca29e93048efd() {
+        assertEval("{x<-c(1,2);class(x)<-\"a\";class(x)<-\"list\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_2b0b627305ea65b93c2163d63403c0de() {
+        assertEval("{x<-\"abc\";class(x)<-\"a\";class(x)<-\"character\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_f8c35e459e547ef07df2f112d6ac592d() {
+        assertEval("{x<-c(2+3i,4+5i);class(x)<-\"a\";class(x)<-\"complex\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_a4af9cf22b0a25e13f9738dcc3fdaa78() {
+        assertEval("{x<-1;attr(x,\"class\")<-c(\"a\",\"b\");x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_72ba9bfd00d92c6921a9f9eeb295663b() {
+        assertEval("{x<-1;attr(x,\"class\")<-c(\"a\",\"b\");attr(x,\"class\")<-\"numeric\";x}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_df40771873a47544ab7bbff308f8277f() {
+        assertEval("{x<-1;attr(x,\"class\")<-\"b\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_d6b803bf6147aa8341ca32569078ae88() {
+        assertEval("{x<-1;y<-\"b\";attr(x,\"class\")<-y;x;}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClassIgnore_dfbd07abb7b6feb1f2afd25c4ad019ef() {
+        assertEval("{x<-1;attr(x,\"class\")<-c(1,2,3);}");
     }
 
     @Test

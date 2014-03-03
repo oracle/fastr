@@ -13,10 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -25,81 +22,50 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(value = "inherits")
 public abstract class Inherits extends RBuiltinNode {
 
-    @Child private GetClass getClass;
-
-    private Object getClassAttr(VirtualFrame frame, RAbstractVector x) {
-        if (getClass == null) {
-            CompilerDirectives.transferToInterpreter();
-            getClass = adoptChild(GetClassFactory.create(new RNode[1], getBuiltin()));
-        }
-        return getClass.execute(frame, x);
-    }
-
     @Specialization
-    public Object doesInherit(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, byte which) {
+    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
         boolean isWhich = which == RRuntime.LOGICAL_TRUE;
-        Object attr = getClassAttr(frame, x);
+        RStringVector klass = x.getClassHierarchy();
 
-        if (attr instanceof RStringVector) {
-            RStringVector klass = (RStringVector) attr;
-            // Create a mapping for elements to their respective positions
-            // in the vector for faster lookup.
-            Map<String, Integer> classToPos = new HashMap<>();
-            for (int i = 0; i < klass.getLength(); ++i) {
-                classToPos.put(klass.getDataAt(i), i);
-            }
-            if (isWhich) {
-                int[] result = new int[what.getLength()];
-                for (int i = 0; i < what.getLength(); ++i) {
-                    final Integer pos = classToPos.get(what.getDataAt(i));
-                    if (pos == null) {
-                        result[i] = 0;
-                    } else {
-                        result[i] = pos + 1;
-                    }
-                }
-                return RDataFactory.createIntVector(result, true);
-            } else {
-                for (int i = 0; i < what.getLength(); ++i) {
-                    if (classToPos.get(what.getDataAt(i)) != null) {
-                        return RRuntime.LOGICAL_TRUE;
-                    }
-                }
-                return RRuntime.LOGICAL_FALSE;
-            }
-        } else {
-            if (!isWhich) {
-                for (int i = 0; i < what.getLength(); ++i) {
-                    if (what.getDataAt(i).equals(attr)) {
-                        return RRuntime.LOGICAL_TRUE;
-                    }
-                }
-                return RRuntime.LOGICAL_FALSE;
-            }
+        // Create a mapping for elements to their respective positions
+        // in the vector for faster lookup.
+        Map<String, Integer> classToPos = new HashMap<>();
+        for (int i = 0; i < klass.getLength(); ++i) {
+            classToPos.put(klass.getDataAt(i), i);
+        }
+        if (isWhich) {
             int[] result = new int[what.getLength()];
             for (int i = 0; i < what.getLength(); ++i) {
-                if (what.getDataAt(i).equals(attr)) {
-                    result[i] = 1;
+                final Integer pos = classToPos.get(what.getDataAt(i));
+                if (pos == null) {
+                    result[i] = 0;
+                } else {
+                    result[i] = pos + 1;
                 }
             }
             return RDataFactory.createIntVector(result, true);
+        } else {
+            for (int i = 0; i < what.getLength(); ++i) {
+                if (classToPos.get(what.getDataAt(i)) != null) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            }
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @Specialization
-    public Object doesInherit(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") RMissing which) {
-        return doesInherit(frame, x, what, RRuntime.LOGICAL_FALSE);
+    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") RMissing which) {
+        return doesInherit(x, what, RRuntime.LOGICAL_FALSE);
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, Object which) {
+    public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") RAbstractStringVector what, @SuppressWarnings("unused") Object which) {
         throw RError.getNotLengthOneLogicalVector(getSourceSection(), RRuntime.WHICH);
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    public Object doesInherit(RAbstractVector x, Object what, Object which) {
+    public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") Object what, @SuppressWarnings("unused") Object which) {
         throw RError.getNotCharacterVector(getSourceSection(), RRuntime.WHAT);
     }
 }

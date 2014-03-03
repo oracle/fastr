@@ -34,6 +34,8 @@ public final class RList extends RVector implements RAbstractVector {
 
     private Object[] data;
 
+    private static final String[] implicitClassHrDyn = {"", RRuntime.TYPE_LIST};
+
     @CompilationFinal public String elementNamePrefix;
 
     @SuppressWarnings("unused")
@@ -165,9 +167,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
-    public List<String> getClassHierarchy() {
-        List<String> klass = super.getClassHierarchy();
-        klass.add(RRuntime.TYPE_LIST);
-        return klass;
+    protected RStringVector getImplicitClassHr() {
+        return getClassHierarchyHelper(new String[]{RRuntime.TYPE_LIST}, implicitClassHrDyn);
     }
 }
