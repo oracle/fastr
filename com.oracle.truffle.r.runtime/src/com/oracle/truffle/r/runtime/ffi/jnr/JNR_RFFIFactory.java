@@ -81,8 +81,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
     public interface LibCX {
         int getcwd(@Out byte[] path);
 
-        int sleep(int seconds);
-
         long mkdtemp(@In @Out ByteBuffer template);
 
         int access(String path, int amode);
@@ -127,10 +125,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
             }
         }
         return s;
-    }
-
-    public void sleep(int seconds) {
-        libcx().sleep(seconds);
     }
 
     public boolean isWriteableDirectory(String path) {

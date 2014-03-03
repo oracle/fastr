@@ -62,7 +62,7 @@ public abstract class AssignVariable extends ASTNode {
         return new SimpleAssignVariable(src, isSuper, name, rhs);
     }
 
-    public static ASTNode writeVector(SourceSection src, boolean isSuper, AccessVector lhs, ASTNode rhs) {
+    public static ASTNode writeVector(@SuppressWarnings("unused") SourceSection src, boolean isSuper, AccessVector lhs, ASTNode rhs) {
         ASTNode first = lhs.getVector();
         if (!(first instanceof SimpleAccessVariable)) {
             Utils.nyi(); // TODO here we need to flatten complex assignments
@@ -76,10 +76,9 @@ public abstract class AssignVariable extends ASTNode {
             newLhs = new AccessVector(lhs.getSource(), newAccessVector, lhs.getArgs(), lhs.isSubset());
             newLhs.setParent(lhs.getParent());
         }
-        // we need to propagate super assignment.
-        SimpleAssignVariable assignVar = new SimpleAssignVariable(src, isSuper, simpleAccessVariable.getSymbol(), new UpdateVector(isSuper, newLhs, rhs));
+        UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
         lhs.args.add("value", rhs);
-        return assignVar;
+        return update;
     }
 
     public static ASTNode writeField(SourceSection src, boolean isSuper, FieldAccess lhs, ASTNode rhs) {

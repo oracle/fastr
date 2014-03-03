@@ -147,15 +147,7 @@ public abstract class RBuiltinPackage {
             if (Modifier.isAbstract(clazz.getModifiers())) {
                 throw new RuntimeException("Custom builtin must not be abstract (builtin " + clazz.getName() + ").");
             }
-            try {
-                Constructor<? extends RBuiltinNode> constructor = clazz.getConstructor(RBuiltinNode.class);
-                constructor.setAccessible(true);
-                nodeFactory = new ReflectiveNodeFactory(clazz, constructor);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException("No constructor with RBuiltinNode found for custom builtin " + clazz.getName() + ".");
-            } catch (SecurityException e) {
-                throw new RuntimeException(e);
-            }
+            nodeFactory = new ReflectiveNodeFactory(clazz);
         }
         RBuiltinFactory factory = new RBuiltinFactory(aliases, lastParameterKind, nodeFactory, new Object[0]);
         for (String name : factory.getBuiltinNames()) {
@@ -170,17 +162,15 @@ public abstract class RBuiltinPackage {
     private static class ReflectiveNodeFactory implements NodeFactory<RBuiltinNode> {
 
         private final Class<? extends RBuiltinNode> clazz;
-        private final Constructor<? extends RBuiltinNode> constructor;
 
-        public ReflectiveNodeFactory(Class<? extends RBuiltinNode> clazz, Constructor<? extends RBuiltinNode> constructor) {
+        public ReflectiveNodeFactory(Class<? extends RBuiltinNode> clazz) {
             this.clazz = clazz;
-            this.constructor = constructor;
         }
 
         public RBuiltinNode createNode(Object... arguments) {
             try {
                 RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1]);
-                return constructor.newInstance(builtin);
+                return RBuiltinCustomConstructors.createNode(clazz.getName(), builtin);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

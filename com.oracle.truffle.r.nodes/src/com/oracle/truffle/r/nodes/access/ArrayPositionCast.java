@@ -53,17 +53,39 @@ public abstract class ArrayPositionCast extends RNode {
 
     private final int dimension;
 
-    protected ArrayPositionCast(int dimension) {
+    private final int numDimensions;
+
+    private final boolean assignment;
+
+    protected ArrayPositionCast(int dimension, int numDimensions, boolean assignment) {
         this.dimension = dimension;
+        this.numDimensions = numDimensions;
+        this.assignment = assignment;
     }
 
     protected ArrayPositionCast(ArrayPositionCast other) {
         this.dimension = other.dimension;
+        this.numDimensions = other.numDimensions;
+        this.assignment = other.assignment;
+    }
+
+    protected static void verifyDimensions(RAbstractVector vector, int dimension, int numDimensions, boolean assignment, SourceSection sourceSection) {
+        if (vector.getDimensions() == null || dimension >= vector.getDimensions().length) {
+            if (assignment) {
+                if (numDimensions == 2) {
+                    throw RError.getIncorrectSubscriptsMatrix(sourceSection);
+                } else {
+                    throw RError.getIncorrectSubscripts(sourceSection);
+                }
+            } else {
+                throw RError.getIncorrectDimensions(sourceSection);
+            }
+        }
     }
 
     @CreateCast({"operand"})
     public RNode createCast(RNode child) {
-        return OperatorConverterNodeFactory.create(dimension, getVector(), child);
+        return OperatorConverterNodeFactory.create(dimension, numDimensions, assignment, getVector(), child);
     }
 
     @Specialization(order = 1, guards = "!allVector")
@@ -73,9 +95,7 @@ public abstract class ArrayPositionCast extends RNode {
 
     @Specialization(order = 2, guards = "allVector")
     public RIntVector doMissingVector(RAbstractVector vector, RMissing operand) {
-        if (vector.getDimensions() == null || dimension >= vector.getDimensions().length) {
-            throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
-        }
+        verifyDimensions(vector, dimension, numDimensions, assignment, getEncapsulatingSourceSection());
         int[] data = new int[vector.getDimensions()[dimension]];
         for (int i = 0; i < data.length; i++) {
             data[i] = i + 1;
@@ -100,16 +120,16 @@ public abstract class ArrayPositionCast extends RNode {
     }
 
     @Specialization(order = 20, guards = {"sizeOneVector", "!allVector"})
-    public int doIntVectorSizeOne(RAbstractVector vector, RIntVector operand) {
+    public int doIntVectorSizeOne(RAbstractVector vector, RAbstractIntVector operand) {
         return operand.getDataAt(0);
     }
 
     @Specialization
-    public RIntVector doIntVector(RAbstractVector vector, RIntVector operand) {
-        return operand;
+    public RIntVector doIntVector(RAbstractVector vector, RAbstractIntVector operand) {
+        return operand.materialize();
     }
 
-    public static boolean sizeOneVector(RAbstractVector vector, RIntVector operand) {
+    public static boolean sizeOneVector(RAbstractVector vector, RAbstractIntVector operand) {
         return operand.getLength() == 1;
     }
 
@@ -117,16 +137,22 @@ public abstract class ArrayPositionCast extends RNode {
     abstract static class OperatorConverterNode extends RNode {
 
         private final int dimension;
+        private final int numDimensions;
+        private final boolean assignment;
         @Child private OperatorConverterNode operatorConvertRecursive;
         @Child private CastIntegerNode castInteger;
         private final NACheck naCheck = NACheck.create();
 
-        protected OperatorConverterNode(int dimension) {
+        protected OperatorConverterNode(int dimension, int numDimensions, boolean assignment) {
             this.dimension = dimension;
+            this.numDimensions = numDimensions;
+            this.assignment = assignment;
         }
 
         protected OperatorConverterNode(OperatorConverterNode other) {
             this.dimension = other.dimension;
+            this.numDimensions = other.numDimensions;
+            this.assignment = other.assignment;
         }
 
         public abstract Object executeConvert(VirtualFrame frame, RAbstractVector vector, Object operand);
@@ -136,7 +162,7 @@ public abstract class ArrayPositionCast extends RNode {
         private void initConvertCast() {
             if (operatorConvertRecursive == null) {
                 CompilerDirectives.transferToInterpreter();
-                operatorConvertRecursive = adoptChild(OperatorConverterNodeFactory.create(this.dimension, null, null));
+                operatorConvertRecursive = adoptChild(OperatorConverterNodeFactory.create(this.dimension, this.numDimensions, this.assignment, null, null));
             }
         }
 
@@ -296,12 +322,12 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization
-        public RIntVector doIntVector(VirtualFrame frame, RAbstractVector vector, RIntVector operand) {
+        public RIntVector doIntVector(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector operand) {
             return transformIntoPositive(vector, operand);
         }
 
         @Specialization
-        public RIntVector doDoubleVector(VirtualFrame frame, RAbstractVector vector, RDoubleVector operand) {
+        public RIntVector doDoubleVector(VirtualFrame frame, RAbstractVector vector, RAbstractDoubleVector operand) {
             RIntVector resultVector = (RIntVector) castInteger(frame, operand);
             return transformIntoPositive(vector, resultVector);
         }
@@ -381,7 +407,7 @@ public abstract class ArrayPositionCast extends RNode {
         @CompilationFinal private boolean hasSeenNegative;
         @CompilationFinal private boolean hasSeenNA;
 
-        private RIntVector transformIntoPositive(RAbstractVector vector, RIntVector positions) {
+        private RIntVector transformIntoPositive(RAbstractVector vector, RAbstractIntVector positions) {
             int zeroCount = 0;
             positionNACheck.enable(positions);
             int positionsLength = positions.getLength();
@@ -430,7 +456,7 @@ public abstract class ArrayPositionCast extends RNode {
                     return RDataFactory.createIntVector(data, positionNACheck.neverSeenNA());
                 } else {
                     // fast path (most common expected behavior)
-                    return positions;
+                    return positions.materialize();
                 }
             } else if (hasSeenNegative) {
                 if (hasSeenNA) {
@@ -464,11 +490,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         private int getDimensionSize(RAbstractVector vector) {
-            if (vector.getDimensions() == null || dimension >= vector.getDimensions().length) {
-                throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
-            } else {
-                return vector.getDimensions()[dimension];
-            }
+            verifyDimensions(vector, dimension, numDimensions, assignment, getEncapsulatingSourceSection());
+            return vector.getDimensions()[dimension];
         }
 
         protected boolean dimLengthOne(RAbstractVector vector, byte operand) {

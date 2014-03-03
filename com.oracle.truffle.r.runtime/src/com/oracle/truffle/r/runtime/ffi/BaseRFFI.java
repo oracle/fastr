@@ -45,8 +45,6 @@ public interface BaseRFFI extends RFFI {
      */
     String readlink(String path) throws IOException;
 
-    void sleep(int seconds);
-
     /**
      * Returns {@code true} if an only if {@code path} denotes a writeable directory.
      */
