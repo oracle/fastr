@@ -59,6 +59,7 @@ public final class REngine implements RBuiltinLookupProvider {
     public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext.setRuntimeState(commandArgs, consoleHandler);
         RBuiltinPackage.loadSnippets();
+        RRuntime.initialize();
         return singleton;
     }
 

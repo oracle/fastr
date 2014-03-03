@@ -120,6 +120,13 @@ public class RRuntime {
 
     public static final String WHAT = "what";
 
+    /**
+     * Perform any runtime initialization necessary before the first R evaluation.
+     */
+    public static void initialize() {
+        TempDirPath.initialize();
+    }
+
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
     }

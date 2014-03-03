@@ -29,11 +29,9 @@ import com.oracle.truffle.r.runtime.*;
 @RBuiltin("tempdir")
 public abstract class TempDir extends RBuiltinNode {
 
-    private static final String tempDirPath = TempDirPath.tempDirPath();
-
     @Specialization
     public Object tempdir() {
-        return tempDirPath;
+        return TempDirPath.tempDirPath();
     }
 
 }
