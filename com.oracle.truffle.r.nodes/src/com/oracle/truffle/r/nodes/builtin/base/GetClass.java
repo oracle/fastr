@@ -25,7 +25,7 @@ public abstract class GetClass extends RBuiltinNode {
         if (arg.isObject()) {
             return arg.getClassHierarchy();
         }
-        final String klass = arg.getClassHierarchy()[0];
+        final String klass = arg.getClassHierarchy().getDataAt(0);
         if (klass.equals(RRuntime.TYPE_DOUBLE)) {
             return RRuntime.TYPE_NUMERIC;
         }

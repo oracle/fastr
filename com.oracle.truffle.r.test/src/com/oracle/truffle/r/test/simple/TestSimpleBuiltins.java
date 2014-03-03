@@ -2444,8 +2444,12 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{x<-1;attr(x,\"class\")<-c(\"a\",\"b\");x;}");
 
-        // Doesn't remove the class attribute unlike class(x)<-numeric.
+        // Doesn't remove the class attribute unlike class(x)<-"numeric".
         assertEval("{x<-1;attr(x,\"class\")<-c(\"a\",\"b\");attr(x,\"class\")<-\"numeric\";x}");
+
+        assertEval("{x<-1;attr(x,\"class\")<-\"b\";x;}");
+
+        assertEval("{x<-1;y<-\"b\";attr(x,\"class\")<-y;x;}");
     }
 
     @Test

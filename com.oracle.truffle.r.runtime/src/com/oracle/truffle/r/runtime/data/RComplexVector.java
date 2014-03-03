@@ -167,7 +167,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
-    protected String[] getImplicitClassHr() {
+    protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(new String[]{RRuntime.TYPE_COMPLEX}, implicitClassHrDyn);
     }
 }

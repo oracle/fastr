@@ -123,7 +123,24 @@ public abstract class UseMethod extends RBuiltinNode {
         if (newFrame == null) {
             newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
             if (newFrame == null) {
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RRuntime.toString(RDataFactory.createStringVector(classNames, true)));
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RRuntime.toString(classNames));
+            }
+        }
+        return dispatchMethod(frame, newFrame);
+    }
+
+    private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
+        VirtualFrame newFrame = null;
+        for (int i = 0; i < classNames.getLength(); ++i) {
+            newFrame = findFunction(classNames.getDataAt(i), generic, frame);
+            if (newFrame != null) {
+                break;
+            }
+        }
+        if (newFrame == null) {
+            newFrame = findFunction(RRuntime.DEFAULT, generic, frame);
+            if (newFrame == null) {
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RRuntime.toString(classNames));
             }
         }
         return dispatchMethod(frame, newFrame);

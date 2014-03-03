@@ -151,7 +151,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     @Override
-    protected String[] getImplicitClassHr() {
+    protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(new String[]{RRuntime.TYPE_CHARACTER}, implicitClassHrDyn);
     }
 }

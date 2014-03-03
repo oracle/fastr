@@ -10619,6 +10619,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUpdateClass_df40771873a47544ab7bbff308f8277f() {
+        assertEval("{x<-1;attr(x,\"class\")<-\"b\";x;}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_d6b803bf6147aa8341ca32569078ae88() {
+        assertEval("{x<-1;y<-\"b\";attr(x,\"class\")<-y;x;}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
     }

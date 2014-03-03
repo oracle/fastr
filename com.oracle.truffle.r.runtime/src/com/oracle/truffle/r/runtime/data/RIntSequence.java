@@ -97,7 +97,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return getDataAt(index);
     }
 
-    public String[] getClassHierarchy() {
-        return RRuntime.CLASS_INTEGER;
+    public RStringVector getClassHierarchy() {
+        return RDataFactory.createStringVector(RRuntime.CLASS_INTEGER, true);
     }
 }

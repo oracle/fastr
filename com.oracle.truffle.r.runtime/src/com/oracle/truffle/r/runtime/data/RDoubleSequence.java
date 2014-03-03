@@ -94,7 +94,7 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public String[] getClassHierarchy() {
-        return RRuntime.CLASS_DOUBLE;
+    public RStringVector getClassHierarchy() {
+        return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, true);
     }
 }

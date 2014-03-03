@@ -125,7 +125,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
             }
             if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value instanceof RString) {
-                    resultVector.getAttributes().put(name, new String[]{((RString) value).getValue()});
+                    resultVector.getAttributes().put(name, RDataFactory.createStringVector(((RString) value).getValue()));
                     return resultVector;
                 }
                 if (value instanceof RStringVector) {
@@ -133,7 +133,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
                     return resultVector;
                 }
                 if (value instanceof String) {
-                    resultVector.getAttributes().put(name, new String[]{(String) value});
+                    resultVector.getAttributes().put(name, RDataFactory.createStringVector((String) value));
                     return resultVector;
                 }
                 throw RError.getInvalidClassAttr(getEncapsulatingSourceSection());

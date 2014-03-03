@@ -147,7 +147,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     }
 
     @Override
-    protected String[] getImplicitClassHr() {
+    protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(new String[]{RRuntime.TYPE_RAW}, implicitClassHrDyn);
     }
 }

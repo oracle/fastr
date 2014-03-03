@@ -84,7 +84,7 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.isArray();
     }
 
-    public String[] getClassHierarchy() {
+    public RStringVector getClassHierarchy() {
         return vector.getClassHierarchy();
     }
 

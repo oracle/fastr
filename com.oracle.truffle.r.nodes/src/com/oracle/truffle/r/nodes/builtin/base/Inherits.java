@@ -25,13 +25,13 @@ public abstract class Inherits extends RBuiltinNode {
     @Specialization
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
         boolean isWhich = which == RRuntime.LOGICAL_TRUE;
-        String[] klass = x.getClassHierarchy();
+        RStringVector klass = x.getClassHierarchy();
 
         // Create a mapping for elements to their respective positions
         // in the vector for faster lookup.
         Map<String, Integer> classToPos = new HashMap<>();
-        for (int i = 0; i < klass.length; ++i) {
-            classToPos.put(klass[i], i);
+        for (int i = 0; i < klass.getLength(); ++i) {
+            classToPos.put(klass.getDataAt(i), i);
         }
         if (isWhich) {
             int[] result = new int[what.getLength()];

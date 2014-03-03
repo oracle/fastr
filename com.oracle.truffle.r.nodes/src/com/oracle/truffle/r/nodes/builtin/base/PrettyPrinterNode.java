@@ -196,10 +196,6 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             builder.append("\n");
             builder.append(concat("attr(,\"", attr.getKey(), "\")\n"));
-            if (attr.getKey().equals(RRuntime.CLASS_ATTR_KEY)) {
-                builder.append(prettyPrintAttributes(frame, RDataFactory.createStringVector((String[]) attr.getValue(), true)));
-                continue;
-            }
             builder.append(prettyPrintAttributes(frame, attr.getValue()));
         }
         return builderToString(builder);

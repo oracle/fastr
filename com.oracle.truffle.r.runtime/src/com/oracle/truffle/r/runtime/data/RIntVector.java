@@ -167,7 +167,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     }
 
     @Override
-    protected String[] getImplicitClassHr() {
+    protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHr, implicitClassHrDyn);
     }
 }

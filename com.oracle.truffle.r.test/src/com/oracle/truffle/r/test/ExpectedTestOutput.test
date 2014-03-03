@@ -7036,6 +7036,12 @@ Error: object 'x' not found
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;attr(x,"class")<-"b";x;}
+[1] 1
+attr(,"class")
+[1] "b"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
 #{x<-1;attr(x,"class")<-c("a","b");attr(x,"class")<-"numeric";x}
 [1] 1
 attr(,"class")
@@ -7086,6 +7092,12 @@ attr(,"class")
 [1] 1
 attr(,"class")
 [1] "TRUE"  "FALSE"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{x<-1;y<-"b";attr(x,"class")<-y;x;}
+[1] 1
+attr(,"class")
+[1] "b"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
 #{x<-2+3i;class(x)<-"a";class(x)<-"complex";x;}

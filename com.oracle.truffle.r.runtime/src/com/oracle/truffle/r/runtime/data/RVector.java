@@ -405,28 +405,28 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         return (this.attributes != null && this.attributes.get(RRuntime.CLASS_ATTR_KEY) != null) ? true : false;
     }
 
-    public String[] getClassHierarchy() {
+    public RStringVector getClassHierarchy() {
         if (isObject()) {
-            return (String[]) this.attributes.get(RRuntime.CLASS_ATTR_KEY);
+            return (RStringVector) this.attributes.get(RRuntime.CLASS_ATTR_KEY);
         }
         return getImplicitClassHr();
     }
 
-    protected String[] getImplicitClassHr() {
+    protected RStringVector getImplicitClassHr() {
         return null;
     }
 
     // As shape of the vector may change at run-time we need to compute
     // class hierarchy on the fly.
-    protected String[] getClassHierarchyHelper(final String[] classHr, final String[] classHrDyn) {
+    protected RStringVector getClassHierarchyHelper(final String[] classHr, final String[] classHrDyn) {
         if (isMatrix()) {
             classHrDyn[0] = RRuntime.TYPE_MATRIX;
-            return classHrDyn;
+            return RDataFactory.createStringVector(classHrDyn, true);
         }
         if (isArray()) {
             classHrDyn[0] = RRuntime.TYPE_ARRAY;
-            return classHrDyn;
+            return RDataFactory.createStringVector(classHrDyn, true);
         }
-        return classHr;
+        return RDataFactory.createStringVector(classHr, true);
     }
 }

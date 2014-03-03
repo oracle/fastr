@@ -46,7 +46,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Specialization
     public Object setClass(RAbstractVector arg, RStringVector className) {
         Map<String, Object> attrb = getAttributes(arg);
-        attrb.put(RRuntime.CLASS_ATTR_KEY, className.getDataCopy());
+        attrb.put(RRuntime.CLASS_ATTR_KEY, className);
         return resultVector;
     }
 
@@ -167,7 +167,7 @@ public abstract class UpdateClass extends RBuiltinNode {
             throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
         }
         Map<String, Object> attrb = getAttributes(arg);
-        attrb.put(RRuntime.CLASS_ATTR_KEY, new String[]{className});
+        attrb.put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(className));
         return resultVector;
     }
 
