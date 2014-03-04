@@ -27,17 +27,17 @@ import mx
 import mx_graal
 import os
 
-def _runR(args, className):
+def _runR(args, className, nonZeroIsFatal=True):
     os.environ['R_HOME'] = mx.suite('fastr').dir
-    mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args)
+    return mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
-def runRCommand(args):
+def runRCommand(args, nonZeroIsFatal=True):
     '''run R shell'''
-    _runR(args, "com.oracle.truffle.r.shell.RCommand")
+    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal)
 
-def runRscriptCommand(args):
+def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
-    _runR(args, "com.oracle.truffle.r.shell.RscriptCommand")
+    return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
 
 def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)
@@ -171,11 +171,12 @@ def testgen(args):
 _fastr_suite = None
 
 def rbench(args):
-    '''run a single R benchmark'''
+    '''run a one or more R benchmarks'''
     parser = ArgumentParser(prog='mx rbench')
-    parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='qualified name of benchmark')
+    parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='comma separated list of benchmarks to run')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
     parser.add_argument('--gnur', action='store_true', help='run under GnuR')
+    parser.add_argument('--fail-fast', action='store_true', help='abort on first failure')
     parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
     args = parser.parse_args(args)
 
@@ -185,33 +186,47 @@ def rbench(args):
     bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
     mx.build_suite(bm_suite)
 
-    # Get the R script location via helper app
-    # N.B. we do not use mx.run_java() as that might check options we don't want for the helper, e.g. debugging agent
-    javacmd = [mx.java().java, '-cp', mx.classpath('r.benchmarks'), 'r.benchmarks.RBenchmarks', args.bm]
-    try:
-        bmpath = subprocess.check_output(javacmd).rstrip()
-        if args.path:
-            print bmpath
-        else:
-            command = ['-f', bmpath]
-            if args.gnur:
-                env = os.environ
-                if args.gnur_jit:
-                    env['R_ENABLE_JIT'] = '3'
-                rc = subprocess.call(['R', '--slave'] + command, env=env)
-                if rc != 0:
-                    mx.abort('GnuR failed with rc: ' + rc)
+    bms = args.bm.split(',')
+    failure = 0
+    for bm in bms:
+        # Get the R script location via helper app
+        # N.B. we do not use mx.run_java() as that might check options we don't want for the helper, e.g. debugging agent
+        rc = 0
+        javacmd = [mx.java().java, '-cp', mx.classpath('r.benchmarks'), 'r.benchmarks.RBenchmarks', bm]
+        try:
+            bmpath = subprocess.check_output(javacmd).rstrip()
+            if args.path:
+                print bmpath
             else:
-                runRCommand(command)
-    except subprocess.CalledProcessError:
-        mx.abort(1)
+                headline = ('GnuR' if args.gnur else 'FastR') + ' running ' + bm
+                print headline
+                command = ['-f', bmpath]
+                if args.gnur:
+                    env = os.environ
+                    if args.gnur_jit:
+                        env['R_ENABLE_JIT'] = '3'
+                    rc = subprocess.call(['R', '--slave'] + command, env=env)
+                else:
+                    rc = runRCommand(command, nonZeroIsFatal=False)
+                if rc != 0:
+                    print 'benchmark ' + bm + ' failed'
+                    emsg = rc
+        except subprocess.CalledProcessError:
+            emsg = 'benchmark ' + bm + ' not found'
+            rc = 1
+        # check error and fail-fast option
+        if rc != 0:
+            failure = failure > rc if failure else rc
+            if args.fail_fast:
+                mx.abort(emsg)
+    # if any failed
+    return failure
 
 def _bench_harness_body(args, vmArgs):
-    marks = ['shootout.binarytrees', 'shootout.fannkuchredux', 'shootout.fasta', 'shootout.fastaredux',
-             'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
-             'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm']
-    for mark in marks:
-        rbench([mark])
+    marks = ('shootout.binarytrees,shootout.fannkuchredux,shootout.fasta,shootout.fastaredux,'
+             'shootout.knucleotide,shootout.mandelbrot-ascii,shootout.nbody,shootout.pidigits,'
+             'shootout.regexdna,shootout.reversecomplement,shootout.spectralnorm')
+    return rbench(marks)
 
 def bench(args):
     '''Run a standard set of R benchmarks'''
