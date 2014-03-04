@@ -38,6 +38,33 @@ import com.oracle.truffle.r.runtime.ffi.*;
  * it can be with JNR.
  */
 public class JNR_RFFIFactory extends BaseRFFIFactory {
+
+    /**
+     * Functions missing from JNR POSIX.
+     */
+    public interface LibCX {
+        int getcwd(@Out byte[] path);
+
+        long mkdtemp(@In @Out ByteBuffer template);
+
+        int access(String path, int amode);
+    }
+
+    private static class LibCXProvider {
+        private static LibCX libcx;
+
+        static LibCX libcx() {
+            if (libcx == null) {
+                libcx = LibraryLoader.create(LibCX.class).load("c");
+            }
+            return libcx;
+        }
+    }
+
+    private static LibCX libcx() {
+        return LibCXProvider.libcx();
+    }
+
     protected POSIX posix;
 
     @Override
@@ -63,26 +90,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
 
     public int setwd(String dir) {
         return posix().chdir(dir);
-    }
-
-    /**
-     * Functions missing from JNR POSIX.
-     */
-    public interface LibCX {
-        int getcwd(@Out byte[] path);
-
-        long mkdtemp(@In @Out ByteBuffer template);
-
-        int access(String path, int amode);
-    }
-
-    private static LibCX libcx;
-
-    private static LibCX libcx() {
-        if (libcx == null) {
-            libcx = LibraryLoader.create(LibCX.class).load("c");
-        }
-        return libcx;
     }
 
     public String getwd() {
