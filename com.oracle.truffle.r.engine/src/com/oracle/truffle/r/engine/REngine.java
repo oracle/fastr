@@ -176,7 +176,8 @@ public final class REngine implements RBuiltinLookupProvider {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
         context.getConsoleHandler().printErrorln(RRuntime.toString(out));
-
+        // R suicide, we don't call quit as the system is broken
+        System.exit(2);
     }
 
     private static void reportWarnings(boolean inAddition) {
