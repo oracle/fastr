@@ -41,9 +41,6 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
 
 def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)
-    t = mx_graal.Task('BuildHotSpotGraalServer: product')
-    mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
-    tasks.append(t.stop())
 
     # check that the expected test output file is up to date
     t = mx_graal.Task('UnitTests: ExpectedTestOutput file check')
