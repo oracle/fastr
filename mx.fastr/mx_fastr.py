@@ -227,7 +227,9 @@ def bench(args):
 
     vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
     with vm:
-        mx.bench(args, harness=_bench_harness_body)
+        rc = mx.bench(args, harness=_bench_harness_body)
+        if rc != 0:
+            mx.abort('benchmark run failed')
 
 def mx_init(suite):
     global _fastr_suite
