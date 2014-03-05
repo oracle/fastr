@@ -210,7 +210,7 @@ def rbench(args):
             rc = 1
         # check error and fail-fast option
         if rc != 0:
-            failure = failure > rc if failure else rc
+            failure = failure if failure > rc else rc
             if args.fail_fast:
                 mx.abort(emsg)
     # if any failed
