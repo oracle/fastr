@@ -214,11 +214,6 @@ public abstract class RBuiltinPackage {
         }
 
         @Override
-        public RBuiltinNode createNodeGeneric(RBuiltinNode thisNode) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         @SuppressWarnings("unchecked")
         public Class<RBuiltinNode> getNodeClass() {
             return (Class<RBuiltinNode>) clazz;
