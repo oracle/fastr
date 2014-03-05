@@ -45,21 +45,15 @@ def _truffle_r_gate_body(args, tasks):
     mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
     tasks.append(t.stop())
 
-    with mx_graal.VM('server', 'product'):
-        # check that the expected test output file is up to date
-        t = mx_graal.Task('UnitTests: ExpectedTestOutput file check')
-        junit(['--tests', _default_unit_tests(), '--check-expected-output'])
-        tasks.append(t.stop())
-        t = mx_graal.Task('UnitTests: simple')
-        rc = junit(['--tests', _default_unit_tests()])
-        if rc != 0:
-            mx.abort('unit tests failed')
-        tasks.append(t.stop())
-
-    if args.jacocout is not None:
-        mx_graal.jacocoreport([args.jacocout])
-
-    mx_graal._jacoco = 'off'
+    # check that the expected test output file is up to date
+    t = mx_graal.Task('UnitTests: ExpectedTestOutput file check')
+    junit(['--tests', _default_unit_tests(), '--check-expected-output'])
+    tasks.append(t.stop())
+    t = mx_graal.Task('UnitTests: simple')
+    rc = junit(['--tests', _default_unit_tests()])
+    if rc != 0:
+        mx.abort('unit tests failed')
+    tasks.append(t.stop())
 
 def gate(args):
     '''Run the R gate'''
