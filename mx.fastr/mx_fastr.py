@@ -226,7 +226,7 @@ def _bench_harness_body(args, vmArgs):
     marks = ('shootout.binarytrees,shootout.fannkuchredux,shootout.fasta,shootout.fastaredux,'
              'shootout.knucleotide,shootout.mandelbrot-ascii,shootout.nbody,shootout.pidigits,'
              'shootout.regexdna,shootout.reversecomplement,shootout.spectralnorm')
-    return rbench(marks)
+    return rbench([marks])
 
 def bench(args):
     '''Run a standard set of R benchmarks'''
