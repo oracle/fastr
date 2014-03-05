@@ -211,6 +211,8 @@ def rbench(args):
             if args.fail_fast:
                 mx.abort(emsg)
     # if any failed
+    if failure != 0:
+        mx.abort('benchmark run failed')
     return failure
 
 def _bench_harness_body(args, vmArgs):
@@ -227,9 +229,7 @@ def bench(args):
 
     vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
     with vm:
-        rc = mx.bench(args, harness=_bench_harness_body)
-        if rc != 0:
-            mx.abort('benchmark run failed')
+        mx.bench(args, harness=_bench_harness_body)
 
 def mx_init(suite):
     global _fastr_suite
