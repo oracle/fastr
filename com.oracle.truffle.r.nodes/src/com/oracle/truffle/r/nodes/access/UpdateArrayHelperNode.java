@@ -39,6 +39,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private static final VarArgsAsObjectArrayNodeFactory varArgAsObjectArrayNodeFactory = new VarArgsAsObjectArrayNodeFactory();
 
+    private final boolean isSubset;
+
     private final NACheck elementNACheck = NACheck.create();
 
     abstract RNode getVector();
@@ -49,6 +51,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Child private CastDoubleNode castDouble;
     @Child private CastIntegerNode castInteger;
     @Child private CastStringNode castString;
+
+    public UpdateArrayHelperNode(boolean isSubset) {
+        this.isSubset = isSubset;
+    }
+
+    public UpdateArrayHelperNode(UpdateArrayHelperNode other) {
+        this.isSubset = other.isSubset;
+    }
 
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
@@ -84,7 +94,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
-        return CastToVectorNodeFactory.create(child, false, false);
+        return CastToVectorNodeFactory.create(child, false, false, false);
     }
 
     @CreateCast({"vector"})
@@ -96,17 +106,34 @@ public abstract class UpdateArrayHelperNode extends RNode {
     public RNode[] createCastPositions(RNode[] children) {
         RNode[] positions = new RNode[children.length];
         for (int i = 0; i < positions.length; i++) {
-            positions[i] = ArrayPositionCastFactory.create(i, positions.length, true, getVector(), children[i], true);
+            positions[i] = ArrayPositionCastFactory.create(i, positions.length, true, isSubset, getVector(), getNewValue(), children[i]);
         }
         return new RNode[]{varArgAsObjectArrayNodeFactory.makeList(positions, null)};
     }
 
-    @Specialization(order = 10, guards = {"emptyValue"})
-    Object update(RAbstractVector value, RAbstractVector vector, Object[] positions) {
-        int replacementLength = getReplacementLength(positions, value.getLength());
-        if (replacementLength == 0) {
-            return vector.materialize();
+    @Specialization(order = 10, guards = "emptyValue")
+    RAbstractVector update(RAbstractVector value, RAbstractVector vector, Object[] positions) {
+        if (isSubset) {
+            int replacementLength = getReplacementLength(positions, value.getLength());
+            if (replacementLength == 0) {
+                return vector;
+            }
         }
+        throw RError.getReplacementZero(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 11, guards = {"emptyValue", "isPositionZero"})
+    RAbstractVector updatePosZero(RAbstractVector value, RAbstractVector vector, int position) {
+        if (!isSubset) {
+            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        }
+        return value;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 12, guards = {"emptyValue", "!isPositionZero"})
+    RAbstractVector update(RAbstractVector value, RAbstractVector vector, int position) {
         throw RError.getReplacementZero(getEncapsulatingSourceSection());
     }
 
@@ -516,6 +543,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @SuppressWarnings("unused")
+    protected boolean emptyValue(RAbstractVector value, RAbstractVector vector, int position) {
+        return value.getLength() == 0;
+    }
+
+    @SuppressWarnings("unused")
     protected boolean wrongDimensionsMatrix(RAbstractVector value, RAbstractVector vector, Object[] positions) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
             throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
@@ -534,6 +566,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @SuppressWarnings("unused")
     protected boolean multiDim(RAbstractVector value, RAbstractVector vector, Object[] positions) {
         return vector.getDimensions() != null && vector.getDimensions().length > 1;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean isPositionZero(RAbstractVector value, RAbstractVector vector, int position) {
+        return position == 0;
     }
 
     @SuppressWarnings("unused")

@@ -418,6 +418,8 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[] = 42; x }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[] = c(42,7); x }");
 
+        assertEval("{ z<-1:4; y<-((z[1]<-42) >  1) }");
+        assertEval("{ z<-1:4; y<-((names(z)<-101:104) >  1) }");
     }
 
     @Test

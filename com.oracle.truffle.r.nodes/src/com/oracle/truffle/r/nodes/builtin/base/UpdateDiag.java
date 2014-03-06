@@ -71,28 +71,36 @@ public abstract class UpdateDiag extends RBuiltinNode {
 
     @Specialization(order = 11, guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
-        int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
-        int nrow = vector.getDimensions()[0];
+        RIntVector resultVector = vector;
+        if (vector.isShared()) {
+            resultVector = (RIntVector) vector.copy();
+        }
+        int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
+        int nrow = resultVector.getDimensions()[0];
         int pos = 0;
-        naCheck.enable(!vector.isComplete());
+        naCheck.enable(!resultVector.isComplete());
         for (int i = 0; i < size; i++) {
-            vector.updateDataAt(pos, valueVector.getDataAt(i % valueVector.getLength()), naCheck);
+            resultVector.updateDataAt(pos, valueVector.getDataAt(i % valueVector.getLength()), naCheck);
             pos += nrow + 1;
         }
-        return vector;
+        return resultVector;
     }
 
     @Specialization(order = 12, guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
-        int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
-        int nrow = vector.getDimensions()[0];
+        RDoubleVector resultVector = vector;
+        if (vector.isShared()) {
+            resultVector = (RDoubleVector) vector.copy();
+        }
+        int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
+        int nrow = resultVector.getDimensions()[0];
         int pos = 0;
-        naCheck.enable(!vector.isComplete());
+        naCheck.enable(!resultVector.isComplete());
         for (int i = 0; i < size; i++) {
-            vector.updateDataAt(pos, valueVector.getDataAt(i % valueVector.getLength()), naCheck);
+            resultVector.updateDataAt(pos, valueVector.getDataAt(i % valueVector.getLength()), naCheck);
             pos += nrow + 1;
         }
-        return vector;
+        return resultVector;
     }
 
     @Specialization(order = 13, guards = {"isMatrix", "correctReplacementLength"})

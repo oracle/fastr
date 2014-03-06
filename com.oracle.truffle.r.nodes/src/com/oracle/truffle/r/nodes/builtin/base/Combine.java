@@ -64,7 +64,7 @@ public abstract class Combine extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false));
+            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false, false));
         }
         RVector resultVector = castVector.executeRAbstractVector(frame, value).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :

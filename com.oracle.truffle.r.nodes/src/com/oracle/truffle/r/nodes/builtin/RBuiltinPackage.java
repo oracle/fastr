@@ -176,6 +176,7 @@ public abstract class RBuiltinPackage {
             }
         }
 
+        @SuppressWarnings("unused")
         public RBuiltinNode createNodeGeneric(RBuiltinNode thisNode) {
             throw new UnsupportedOperationException();
         }
@@ -211,11 +212,6 @@ public abstract class RBuiltinPackage {
         public RBuiltinNode createNode(Object... arguments) {
             RBuiltinNode builtin = new RBuiltinNode.RSnippetNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1], function);
             return builtin;
-        }
-
-        @Override
-        public RBuiltinNode createNodeGeneric(RBuiltinNode thisNode) {
-            throw new UnsupportedOperationException();
         }
 
         @Override

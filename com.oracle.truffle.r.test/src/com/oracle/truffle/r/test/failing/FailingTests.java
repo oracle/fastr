@@ -724,6 +724,16 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleArrays_testUpdateIgnore_f576da04d7eb30be786e850c391cb138() {
+        assertEval("{ z<-1:4; y<-((z[1]<-42) >  1) }");
+    }
+
+    @Ignore
+    public void TestSimpleArrays_testUpdateIgnore_2fcbfbd07a71c18eb466aa1a3b354a61() {
+        assertEval("{ z<-1:4; y<-((names(z)<-101:104) >  1) }");
+    }
+
+    @Ignore
     public void TestSimpleArrays_testUpdateIgnore_916a50ecd7fc7c819f3c19aa10c7bfab() {
         assertEvalError("{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- 1 }");
     }
@@ -4866,21 +4876,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testMatrixIndexIgnore_5b59b84f9c147a0a912e1f5686e3e6ba() {
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,-1] }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testMoreVectorsOther_93ba9dd747c7379e9e2c84ec7231640e() {
-        assertEval("{ x<-c(TRUE,TRUE,FALSE); x[1L] }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testMoreVectorsOther_044b9e85a74f8578c3a768dca065355e() {
-        assertEval("{ x<-c(TRUE,TRUE,FALSE); x[2L] }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testMoreVectorsOther_8e3f96d4a82935b012bfdb246addabf9() {
-        assertEval("{ x<-c(TRUE,TRUE,FALSE); x[3L] }");
     }
 
     @Ignore

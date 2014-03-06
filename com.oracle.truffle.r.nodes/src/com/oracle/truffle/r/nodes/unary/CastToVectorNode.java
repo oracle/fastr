@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 
+@NodeField(name = "nullPreserved", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
 
     @Override
@@ -35,7 +35,19 @@ public abstract class CastToVectorNode extends CastNode {
 
     public abstract RAbstractVector executeRAbstractVector(VirtualFrame frame, Object value);
 
-    @Specialization
+    public abstract boolean isNullPreserved();
+
+    protected boolean preserveNull() {
+        return isNullPreserved();
+    }
+
+    @Specialization(order = 1, guards = "preserveNull")
+    @SuppressWarnings("unused")
+    public RNull castNull(RNull rnull) {
+        return RNull.instance;
+    }
+
+    @Specialization(order = 2, guards = "!preserveNull")
     @SuppressWarnings("unused")
     public RAbstractVector cast(RNull rnull) {
         return RDataFactory.createList();

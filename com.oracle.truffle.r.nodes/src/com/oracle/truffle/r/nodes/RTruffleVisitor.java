@@ -180,31 +180,15 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(AccessVector a) {
         RNode vector = a.getVector().accept(this);
-        if (a.getArgs().size() == 1) {
-            RNode index = a.getArgs().getNode(0).accept(this);
-            AccessVectorNode access = AccessVectorNode.create(vector, index);
-            access.setSubset(a.isSubset());
-            access.assignSourceSection(a.getSource());
-            return access;
-        } else if (a.getArgs().size() == 2) {
-            ASTNode firstNode = a.getArgs().getNode(0);
-            ASTNode secondNode = a.getArgs().getNode(1);
-            RNode firstIndex = firstNode == null ? ConstantNode.create(RMissing.instance) : firstNode.accept(this);
-            RNode secondIndex = secondNode == null ? ConstantNode.create(RMissing.instance) : secondNode.accept(this);
-            AccessMatrixNode access = AccessMatrixNode.create(vector, firstIndex, secondIndex);
-            access.assignSourceSection(a.getSource());
-            return access;
-        } else {
-            int argLength = a.getArgs().size();
-            RNode[] positions = new RNode[argLength];
-            for (int i = 0; i < argLength; i++) {
-                ASTNode node = a.getArgs().getNode(i);
-                positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
-            }
-            AccessArrayNode access = AccessArrayNode.create(vector, positions);
-            access.assignSourceSection(a.getSource());
-            return access;
+        int argLength = a.getArgs().size();
+        RNode[] positions = new RNode[argLength];
+        for (int i = 0; i < argLength; i++) {
+            ASTNode node = a.getArgs().getNode(i);
+            positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
         }
+        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), vector, positions);
+        access.assignSourceSection(a.getSource());
+        return access;
     }
 
     private static final String varSymbol = "*tmp*";
@@ -228,7 +212,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         return rhsSymbol;
     }
 
-    private static SequenceNode construcReplacementSuffix(RNode[] seq, RNode op, String vSymbol, Object rhsSymbol, SourceSection source, boolean isSuper) {
+    private static SequenceNode constructReplacementSuffix(RNode[] seq, RNode op, String vSymbol, Object rhsSymbol, SourceSection source, boolean isSuper) {
 
         // assign var, read rhs
 
@@ -265,7 +249,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             update.setSubset(a.isSubset());
             update.assignSourceSection(u.getSource());
             CoerceBinaryNode updateOp = CoerceBinaryNodeFactory.create(update, varAccess, rhsAccess);
-            return construcReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
+            return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
         } else {
             int argLength = a.getArgs().size();
             RNode[] positions = new RNode[argLength - 1]; // last argument == RHS
@@ -273,8 +257,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 ASTNode node = a.getArgs().getNode(i);
                 positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
             }
-            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(rhsAccess, varAccess, positions);
-            return construcReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
+            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), rhsAccess, varAccess, positions);
+            return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
         }
     }
 
@@ -334,7 +318,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs);
         RCallNode replacementFunctionCall = (RCallNode) visit(rfCall);
 
-        return construcReplacementSuffix(seq, replacementFunctionCall, vSymbol, rhsSymbol, n.getSource(), n.isSuper());
+        return constructReplacementSuffix(seq, replacementFunctionCall, vSymbol, rhsSymbol, n.getSource(), n.isSuper());
     }
 
     @Override
