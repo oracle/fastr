@@ -33,11 +33,10 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * A naive JNR-based factory that supports access to POSIX functions only. Naive because it uses
- * reflection to invoke the (generic) target method. Access to the base functions is as efficient as
- * it can be with JNR.
+ * A simple JNR-based factory that supports access to POSIX functions only. Access to the base
+ * functions is as efficient as it can be with JNR.
  */
-public class JNR_RFFIFactory extends BaseRFFIFactory {
+public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
 
     /**
      * Functions missing from JNR POSIX.
