@@ -23,16 +23,13 @@
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.nio.*;
-import java.util.*;
-
 import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
-import jnr.posix.util.*;
 import jnr.constants.platform.Errno;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -41,39 +38,6 @@ import com.oracle.truffle.r.runtime.ffi.*;
  * it can be with JNR.
  */
 public class JNR_RFFIFactory extends BaseRFFIFactory {
-    protected static final POSIX posix = POSIXFactory.getPOSIX(new DefaultPOSIXHandler(), true);
-    private static final Map<String, Method> posixFunctions = new HashMap<>();
-
-    static {
-        for (Method m : POSIX.class.getDeclaredMethods()) {
-            posixFunctions.put(m.getName(), m);
-        }
-    }
-
-    @Override
-    protected RFFI createRFFI() {
-        return this;
-    }
-
-    public Object invoke(Object handle, Object[] args) throws RFFIException {
-        Method m = posixFunctions.get(handle);
-        if (m == null) {
-            throw new RFFIException("JNR function " + ((String) handle) + " not found", null);
-        }
-        try {
-            return m.invoke(posix, args);
-        } catch (InvocationTargetException | IllegalAccessException ex) {
-            throw new RFFIException("JNR invoke exception", ex);
-        }
-    }
-
-    public int getpid() {
-        return posix.getpid();
-    }
-
-    public int setwd(String dir) {
-        return posix.chdir(dir);
-    }
 
     /**
      * Functions missing from JNR POSIX.
@@ -86,13 +50,46 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
         int access(String path, int amode);
     }
 
-    private static LibCX libcx;
+    private static class LibCXProvider {
+        private static LibCX libcx;
+
+        static LibCX libcx() {
+            if (libcx == null) {
+                libcx = LibraryLoader.create(LibCX.class).load("c");
+            }
+            return libcx;
+        }
+    }
 
     private static LibCX libcx() {
-        if (libcx == null) {
-            libcx = LibraryLoader.create(LibCX.class).load("c");
+        return LibCXProvider.libcx();
+    }
+
+    protected POSIX posix;
+
+    @Override
+    protected RFFI createRFFI() {
+        return this;
+    }
+
+    public Object invoke(Object handle, Object[] args) throws RFFIException {
+        Utils.fail("reflective invoke not implemented");
+        return null;
+    }
+
+    protected POSIX posix() {
+        if (posix == null) {
+            posix = POSIXFactory.getPOSIX();
         }
-        return libcx;
+        return posix;
+    }
+
+    public int getpid() {
+        return posix().getpid();
+    }
+
+    public int setwd(String dir) {
+        return posix().chdir(dir);
     }
 
     public String getwd() {
@@ -114,9 +111,9 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
     }
 
     public String readlink(String path) throws IOException {
-        String s = posix.readlink(path);
+        String s = posix().readlink(path);
         if (s == null) {
-            int n = posix.errno();
+            int n = posix().errno();
             if (n == Errno.EINVAL.intValue()) {
                 // not a link
             } else {
@@ -129,7 +126,7 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
 
     public boolean isWriteableDirectory(String path) {
         if (exists(path)) {
-            FileStat fileStat = posix.stat(path);
+            FileStat fileStat = posix().stat(path);
             return fileStat.isDirectory() && fileStat.isWritable();
         } else {
             return false;
