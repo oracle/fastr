@@ -176,6 +176,7 @@ public abstract class RBuiltinPackage {
             }
         }
 
+        @SuppressWarnings("unused")
         public RBuiltinNode createNodeGeneric(RBuiltinNode thisNode) {
             throw new UnsupportedOperationException();
         }

@@ -7169,6 +7169,13 @@ $foo
 [2,]    2    2
 [3,]    3    6
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateDiagonal
+#{ m <- matrix(1:6, nrow=3); y<-m+42; diag(y) <- c(1,2); y }
+     [,1] [,2]
+[1,]    1   46
+[2,]   44    2
+[3,]   45   48
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateNames
 #{ x <- 1:2 ; names(x) <- c("hello"); names(x) }
 [1] "hello" NA

@@ -10654,6 +10654,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUpdateDiagonal_927e9b7da432914a51553ea8963fd3b0() {
+        assertEval("{ m <- matrix(1:6, nrow=3); y<-m+42; diag(y) <- c(1,2); y }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUpdateDiagonal_36bfcdec38ec4f6e82eac4495b9b385e() {
         assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1,2); attributes(m) }");
     }
