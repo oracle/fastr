@@ -229,6 +229,9 @@ def bench(args):
     # In interactive (development) use, if it is set (interactive use) we use it, otherwise we choose the server variant.
     # The build component of mx.bench causes the vm to be built.
 
+    # suppress the download meter
+    mx._opts.no_download_progress = True
+
     vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
     with vm:
         mx.bench(args, harness=_bench_harness_body)
