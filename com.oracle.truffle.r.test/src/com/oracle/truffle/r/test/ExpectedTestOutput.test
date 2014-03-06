@@ -5514,15 +5514,23 @@ Error in get("x") : object 'x' not found
 [1]   0  -4  NA NaN Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
-#{y<-function(){y<-2;get("y",mode="closure")}};y();
+#{y<-function(){y<-2;get("y",mode="closure")};y();}
 function(){y<-2;get("y",mode="closure")}
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
-#{y<-function(){y<-2;get("y",mode="double")}};y();
+#{y<-function(){y<-2;get("y",mode="double")};y();}
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{y<-function(){y<-2;get("y",mode="double",inherits=FALSE)};y();}
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
 #{y<-function(){y<-2;get("y",mode="integer")};y();}
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{y<-function(){y<-2;get("y",mode="integer",inherits=FALSE);get("y",mode="integer",inherits=FALSE)};y();}
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass

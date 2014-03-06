@@ -38,7 +38,9 @@ public abstract class Get extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "pos", "envir", "mode", "inherits"};
 
-    @Child protected ReadVariableNode lookup;
+    @Child protected ReadVariableNode lookUpInherit;
+    @Child protected ReadVariableNode lookUpNoInherit;
+
     @CompilationFinal protected String lastX;
     @CompilationFinal protected String lastMode;
 
@@ -71,13 +73,25 @@ public abstract class Get extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
+        boolean doesInherit = inherits == RRuntime.LOGICAL_TRUE;
+        ReadVariableNode lookup = null;
+        if (doesInherit) {
+            lookup = lookUpInherit = setLookUp(lookUpInherit, x, mode, doesInherit);
+        } else {
+            lookup = lookUpNoInherit = setLookUp(lookUpNoInherit, x, mode, doesInherit);
+        }
+        return lookup.execute(frame);
+    }
+
+    private ReadVariableNode setLookUp(ReadVariableNode lookup, final String x, final String mode, boolean inherits) {
         if (lookup == null || !lastX.equals(x) || !lastMode.equals(mode)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastX = x;
             lastMode = mode;
-            ReadVariableNode rvn = ReadVariableNode.create(x, mode, false);
-            lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
+            ReadVariableNode rvn = ReadVariableNode.create(x, mode, false, inherits);
+            ReadVariableNode newLookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
+            return newLookup;
         }
-        return lookup.execute(frame);
+        return lookup;
     }
 }

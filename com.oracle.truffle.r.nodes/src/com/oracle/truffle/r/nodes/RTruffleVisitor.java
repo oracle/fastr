@@ -217,7 +217,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         // assign var, read rhs
 
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, op, false, isSuper);
-        ReadVariableNode rhsRead = ReadVariableNode.create(rhsSymbol, RRuntime.TYPE_ANY, false);
+        ReadVariableNode rhsRead = ReadVariableNode.create(rhsSymbol, false);
 
         // assemble
         seq[2] = vAssign;

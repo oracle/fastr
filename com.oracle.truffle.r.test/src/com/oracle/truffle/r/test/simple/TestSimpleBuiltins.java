@@ -2507,7 +2507,16 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testGet() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
-        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\")}};y();");
-        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")}};y();");
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\")};y();}");
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\",inherits=FALSE);get(\"y\",mode=\"integer\",inherits=FALSE)};y();}");
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")};y();}");
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\",inherits=FALSE)};y();}");
+    }
+
+    @Test
+    @Ignore
+    public void testGetIgnore() {
+        // Fails because of error message mismatch.
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
 }
