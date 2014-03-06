@@ -63,6 +63,8 @@ def _truffle_r_gate_body(args, tasks):
 
 def gate(args):
     '''Run the R gate'''
+    # suppress the download meter
+    mx._opts.no_download_progress = True
     # ideally would be a standard gate task - we do it early
     t = mx_graal.Task('Copyright check')
     rc = mx.checkcopyrights(['--primary'])
