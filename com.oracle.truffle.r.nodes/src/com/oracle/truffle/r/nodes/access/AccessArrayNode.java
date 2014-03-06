@@ -215,7 +215,7 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
-    private final RStringVector getName(RAbstractVector vector, int position) {
+    private RStringVector getName(RAbstractVector vector, int position) {
         RStringVector srcNames = (RStringVector) vector.getNames();
         String name = srcNames.getDataAt(position - 1);
         namesNACheck.check(name);
