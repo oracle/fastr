@@ -51,7 +51,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVectorNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castVectorNode = adoptChild(CastToVectorNodeFactory.create(null, false, false));
+            castVectorNode = adoptChild(CastToVectorNodeFactory.create(null, false, false, false));
         }
         return castVectorNode.executeRAbstractVector(frame, value).materialize();
     }

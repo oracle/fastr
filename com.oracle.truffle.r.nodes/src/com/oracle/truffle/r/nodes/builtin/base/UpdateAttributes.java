@@ -64,7 +64,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false));
+            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false, false));
         }
         return castVector.executeRAbstractVector(frame, value);
     }
