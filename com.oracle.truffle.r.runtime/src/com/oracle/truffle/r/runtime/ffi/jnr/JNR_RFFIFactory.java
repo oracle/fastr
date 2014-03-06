@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
  * reflection to invoke the (generic) target method. Access to the base functions is as efficient as
  * it can be with JNR.
  */
-public class JNR_RFFIFactory extends BaseRFFIFactory {
+public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
     protected POSIX posix;
 
     @Override

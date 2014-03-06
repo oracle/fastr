@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.ffi;
 /**
  * {@link RFFIFactory} known to implement the {@link BaseRFFI} interface.
  */
-public abstract class BaseRFFIFactory extends RFFIFactory implements BaseRFFI {
+public abstract class BaseRFFIFactory extends RFFIFactory {
 
     protected static final BaseRFFI baseRFFI = (BaseRFFI) theRFFI;
 
