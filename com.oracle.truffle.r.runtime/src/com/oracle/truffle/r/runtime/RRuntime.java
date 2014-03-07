@@ -89,6 +89,9 @@ public class RRuntime {
     public static final String TYPE_FUNCTION = new String("function");
     public static final String TYPE_MATRIX = new String("matrix");
     public static final String TYPE_ARRAY = new String("array");
+    public static final String TYPE_CLOSURE = new String("closure");
+    public static final String TYPE_BUILTIN = new String("builtin");
+    public static final String TYPE_SPECIAL = new String("special");
 
     public static final String TYPE_NUMERIC_CAP = new String("Numeric");
     public static final String TYPE_INTEGER_CAP = new String("Integer");
@@ -126,6 +129,8 @@ public class RRuntime {
     public static void initialize() {
         TempDirPath.initialize();
     }
+
+    public static final int LEN_METHOD_NAME = 512;
 
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);

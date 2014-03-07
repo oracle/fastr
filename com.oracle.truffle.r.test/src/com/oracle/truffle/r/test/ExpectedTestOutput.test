@@ -5513,6 +5513,18 @@ Error in get("x") : object 'x' not found
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   0  -4  NA NaN Inf
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{y<-function(){y<-2;get("y",mode="closure")}};y();
+function(){y<-2;get("y",mode="closure")}
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{y<-function(){y<-2;get("y",mode="double")}};y();
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{y<-function(){y<-2;get("y",mode="integer")};y();}
+[1] 2
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass
 #{x<-1;class(x)}
 [1] "numeric"

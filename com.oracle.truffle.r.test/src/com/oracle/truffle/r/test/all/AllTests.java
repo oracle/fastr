@@ -7464,6 +7464,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGet_17b5e1592125ebc43403174fb9611f19() {
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_46408d4ea657ea05b61abde7252f03e2() {
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\")}};y();");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_e83ffeba2d6ce0c9996632e773f5b096() {
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")}};y();");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGetClass_50e9635bfb1e3eeed4dd1a14ca0c6d4f() {
         assertEval("{x<-1L;class(x)}");
     }

@@ -99,6 +99,11 @@ public abstract class UseMethod extends RBuiltinNode {
         return useMethodHelper(frame, generic, RRuntime.CLASS_DOUBLE);
     }
 
+    @Specialization
+    public Object useMethod(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object generic, @SuppressWarnings("unused") Object arg) {
+        throw RError.getNonStringGeneric(getEncapsulatingSourceSection());
+    }
+
     private Object useMethodHelper(VirtualFrame frame, String generic, String className) {
         VirtualFrame newFrame = findFunction(className, generic, frame);
         if (newFrame == null) {
@@ -145,6 +150,7 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private VirtualFrame findFunction(final String className, final String generic, VirtualFrame frame) {
+        checkLength(className, generic);
         StringBuilder sbFuncName = new StringBuilder(generic);
         sbFuncName.append(".");
         sbFuncName.append(className);
@@ -152,7 +158,7 @@ public abstract class UseMethod extends RBuiltinNode {
         if (lookup == null || !funcName.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = funcName;
-            ReadVariableNode rvn = ReadVariableNode.create(funcName, true, false);
+            ReadVariableNode rvn = ReadVariableNode.create(funcName, RRuntime.TYPE_FUNCTION, false);
             lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
         }
         Object func = null;
@@ -169,6 +175,12 @@ public abstract class UseMethod extends RBuiltinNode {
             return Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, frame.getFrameDescriptor().copy());
         }
         return null;
+    }
+
+    private void checkLength(String className, String generic) {
+        if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
+            throw RError.getTooLongClassName(getEncapsulatingSourceSection(), generic);
+        }
     }
 
     private Object dispatchMethod(VirtualFrame frame, VirtualFrame newFrame) {

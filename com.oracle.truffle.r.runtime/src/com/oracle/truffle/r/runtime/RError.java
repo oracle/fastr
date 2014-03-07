@@ -216,6 +216,8 @@ public abstract class RError extends RuntimeException {
     public static final String NOT_ARRAY_UPDATE_CLASS = "cannot set class to \"array\" unless the dimension attribute has length > 0";
     public static final String SET_INVALID_CLASS_ATTR = "attempt to set invalid 'class' attribute";
     public static final String NOT_LEN_ONE_LOGICAL_VECTOR = "'%s' must be a length 1 logical vector";
+    private static final String TOO_LONG_CLASS_NAME = "class name too long in '%s'";
+    private static final String NON_STRING_GENERIC = "'generic' argument must be a character string";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -1987,6 +1989,14 @@ public abstract class RError extends RuntimeException {
 
     public static RError getNotCharacterVector(SourceSection sourceSection, final String what) {
         return getGenericError(sourceSection, String.format(NOT_CHARACTER_VECTOR, what));
+    }
+
+    public static RError getTooLongClassName(SourceSection encapsulatingSourceSection, String generic) {
+        return getGenericError(encapsulatingSourceSection, String.format(TOO_LONG_CLASS_NAME, generic));
+    }
+
+    public static RError getNonStringGeneric(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, String.format(NON_STRING_GENERIC));
     }
 
 }

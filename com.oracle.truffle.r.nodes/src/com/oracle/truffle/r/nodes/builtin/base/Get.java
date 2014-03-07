@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -35,6 +37,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Get extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "pos", "envir", "mode", "inherits"};
+
+    @Child protected ReadVariableNode lookup;
+    @CompilationFinal protected String lastX;
+    @CompilationFinal protected String lastMode;
 
     @Override
     public Object[] getParameterNames() {
@@ -65,22 +71,13 @@ public abstract class Get extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
-        // standard case for lookup in current frame
-        Frame frm = frame;
-        FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(x);
-        while (fs == null && frm != null) {
-            frm = RArguments.get(frm).getEnclosingFrame();
-            if (frm != null) {
-                fs = frm.getFrameDescriptor().findFrameSlot(x);
-            }
+        if (lookup == null || !lastX.equals(x) || !lastMode.equals(mode)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lastX = x;
+            lastMode = mode;
+            ReadVariableNode rvn = ReadVariableNode.create(x, mode, false);
+            lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
         }
-        if (fs != null) {
-            Object v = frm.getValue(fs);
-            if (v != null) {
-                return v;
-            }
-        }
-        throw RError.getUnknownVariable(this.getEncapsulatingSourceSection(), x);
+        return lookup.execute(frame);
     }
-
 }

@@ -2503,4 +2503,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
     }
+
+    @Test
+    public void testGet() {
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\")}};y();");
+        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")}};y();");
+    }
 }
