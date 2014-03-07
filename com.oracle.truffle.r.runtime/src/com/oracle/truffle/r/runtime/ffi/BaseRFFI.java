@@ -25,15 +25,23 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.io.*;
 
 /**
- * A statically typed interface to exactly those native functions required by the base package.
- * These methods do not necessarily map 1-1 to a native function, they may involve the invocation of
- * several native functions.
+ * A statically typed interface to exactly those native functions required by the base package,
+ * because the functionality is not provided by the JDK. These methods do not necessarily map 1-1 to
+ * a native function, they may involve the invocation of several native functions.
  */
 public interface BaseRFFI extends RFFI {
     int getpid();
 
+    /**
+     * Returns the current working directory, in the face of calls to {@link #setwd}.
+     */
     String getwd();
 
+    /**
+     * Sets the current working directory to {@code dir}. (cf. Unix {@code chdir}).
+     * 
+     * @return 0 if successful.
+     */
     int setwd(String dir);
 
     /**
@@ -46,18 +54,9 @@ public interface BaseRFFI extends RFFI {
     String readlink(String path) throws IOException;
 
     /**
-     * Returns {@code true} if an only if {@code path} denotes a writeable directory.
-     */
-    boolean isWriteableDirectory(String path);
-
-    /**
      * Creates a temporary directory using {@code template} and return the resulting path or
      * {@code null} if error.
      */
     String mkdtemp(String template);
 
-    /**
-     * Returns {@code true} iff the file denoted by {@code path} exists.
-     */
-    boolean exists(String path);
 }

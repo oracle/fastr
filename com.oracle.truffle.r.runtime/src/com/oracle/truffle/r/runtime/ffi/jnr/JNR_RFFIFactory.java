@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.io.*;
 import java.nio.*;
+
 import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
@@ -45,8 +46,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         int getcwd(@Out byte[] path);
 
         long mkdtemp(@In @Out ByteBuffer template);
-
-        int access(String path, int amode);
     }
 
     private static class LibCXProvider {
@@ -123,15 +122,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         return s;
     }
 
-    public boolean isWriteableDirectory(String path) {
-        if (exists(path)) {
-            FileStat fileStat = posix().stat(path);
-            return fileStat.isDirectory() && fileStat.isWritable();
-        } else {
-            return false;
-        }
-    }
-
     public String mkdtemp(String template) {
         ByteBuffer bb = ByteBuffer.wrap(template.getBytes());
         long result = libcx().mkdtemp(bb);
@@ -140,13 +130,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         } else {
             return new String(bb.array());
         }
-    }
-
-    private static final int F_OK = 0;
-
-    public boolean exists(String path) {
-        int result = libcx().access(path, F_OK);
-        return result == 0;
     }
 
 }
