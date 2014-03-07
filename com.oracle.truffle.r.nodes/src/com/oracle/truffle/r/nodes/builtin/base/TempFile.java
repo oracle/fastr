@@ -119,7 +119,7 @@ public abstract class TempFile extends RBuiltinNode {
                 sb.append(fileExt);
             }
             String path = sb.toString();
-            if (!BaseRFFIFactory.getRFFI().exists(path)) {
+            if (!new File(path).exists()) {
                 return path;
             }
         }

@@ -42,7 +42,7 @@ public class TempDirPath {
             String startingTempDirPath = null;
             for (String envVar : envVars) {
                 String value = System.getenv(envVar);
-                if (value != null && BaseRFFIFactory.getRFFI().isWriteableDirectory(value)) {
+                if (value != null && isWriteableDirectory(value)) {
                     startingTempDirPath = value;
                 }
             }
@@ -59,6 +59,11 @@ public class TempDirPath {
                 Utils.fail("cannot create 'R_TempDir'");
             }
         }
+    }
+
+    private static boolean isWriteableDirectory(String path) {
+        File f = new File(path);
+        return f.exists() && f.isDirectory() && f.canWrite();
     }
 
     public static String tempDirPath() {
