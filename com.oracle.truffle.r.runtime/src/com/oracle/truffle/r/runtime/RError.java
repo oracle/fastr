@@ -218,6 +218,9 @@ public abstract class RError extends RuntimeException {
     public static final String NOT_LEN_ONE_LOGICAL_VECTOR = "'%s' must be a length 1 logical vector";
     private static final String TOO_LONG_CLASS_NAME = "class name too long in '%s'";
     private static final String NON_STRING_GENERIC = "'generic' argument must be a character string";
+    private static final String OBJECT_NOT_SPECIFIED = "object not specified";
+    private static final String NO_METHOD_FOUND = "no method to invoke";
+    private static final String GEN_FUNCTION_NOT_SPECIFIED = "generic function not specified";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -1996,7 +1999,18 @@ public abstract class RError extends RuntimeException {
     }
 
     public static RError getNonStringGeneric(SourceSection encapsulatingSourceSection) {
-        return getGenericError(encapsulatingSourceSection, String.format(NON_STRING_GENERIC));
+        return getGenericError(encapsulatingSourceSection, NON_STRING_GENERIC);
     }
 
+    public static RError getObjectNotSpecified(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, OBJECT_NOT_SPECIFIED);
+    }
+
+    public static RError getNoMethoFound(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NO_METHOD_FOUND);
+    }
+
+    public static RError getUnspecifiedGenFunction(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, GEN_FUNCTION_NOT_SPECIFIED);
+    }
 }

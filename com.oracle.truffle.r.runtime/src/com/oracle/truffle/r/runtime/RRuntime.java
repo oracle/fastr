@@ -115,6 +115,7 @@ public class RRuntime {
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
     public static final String CLASS_ATTR_KEY = "class";
+    public static final String PREVIOUS_ATTR_KEY = "previous";
 
     public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
     public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};
@@ -123,14 +124,28 @@ public class RRuntime {
 
     public static final String WHAT = "what";
 
+    public static final int LEN_METHOD_NAME = 512;
+
+    public static final String RDotGeneric = ".Generic";
+
+    public static final String RDotMethod = ".Method";
+
+    public static final String RDotClass = ".Class";
+
+    public static final String RDotGenericCallEnv = ".GenericCallEnv";
+
+    public static final String RDotGenericDefEnv = ".GenericDefEnv";
+
+    public static final String RDotGroup = ".Group";
+
+    public static final String RDOT = ".";
+
     /**
      * Perform any runtime initialization necessary before the first R evaluation.
      */
     public static void initialize() {
         TempDirPath.initialize();
     }
-
-    public static final int LEN_METHOD_NAME = 512;
 
     public static RComplex createComplexNA() {
         return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
