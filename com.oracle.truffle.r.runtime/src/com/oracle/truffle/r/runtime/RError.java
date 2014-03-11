@@ -2006,7 +2006,7 @@ public abstract class RError extends RuntimeException {
         return getGenericError(encapsulatingSourceSection, OBJECT_NOT_SPECIFIED);
     }
 
-    public static RError getNoMethoFound(SourceSection encapsulatingSourceSection) {
+    public static RError getNoMethodFound(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, NO_METHOD_FOUND);
     }
 

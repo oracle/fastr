@@ -37,6 +37,9 @@ public abstract class NextMethod extends S3MethodDispatch {
     protected String group;
     protected String storedFunctionName;
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object", "..."};
+    private String baseName;
+    private String[] prefix;
+    private boolean hasGroup;
 
     @Override
     public Object[] getParameterNames() {
@@ -55,7 +58,6 @@ public abstract class NextMethod extends S3MethodDispatch {
         if (this.genericName == null) {
             throw RError.getUnspecifiedGenFunction(getEncapsulatingSourceSection());
         }
-        final String baseName = group == null || group.length() == 0 ? this.genericName : group;
         int nextClassIndex = 0;
         String currentFunctionName = null;
         if (storedFunctionName == null) {
@@ -69,15 +71,6 @@ public abstract class NextMethod extends S3MethodDispatch {
                 break;
             }
         }
-        String[] prefix = null;
-        if (group != null && !group.isEmpty()) {
-            prefix = new String[2];
-            prefix[0] = genericName;
-            prefix[1] = group;
-        } else {
-            prefix = new String[1];
-            prefix[0] = genericName;
-        }
         // First try generic.class then group.class.
         for (; nextClassIndex < klass.getLength() && targetFunction == null; ++nextClassIndex) {
             for (int i = 0; i < prefix.length && targetFunction == null; findFunction(prefix[i++], klass.getDataAt(nextClassIndex), genCallEnv)) {
@@ -89,7 +82,7 @@ public abstract class NextMethod extends S3MethodDispatch {
         if (targetFunction == null) {
             findFunction(this.genericName, frame);
             if (targetFunction == null || !targetFunction.isBuiltin()) {
-                throw RError.getNoMethoFound(getEncapsulatingSourceSection());
+                throw RError.getNoMethodFound(getEncapsulatingSourceSection());
             }
         }
         RStringVector classVec = null;
@@ -112,7 +105,7 @@ public abstract class NextMethod extends S3MethodDispatch {
         final RArguments newArguments = RArguments.create(targetFunction, targetFunction.getEnclosingFrame(), mergedArgs, currentArguments.getNames());
         final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, new FrameDescriptor());
         defineVars(newFrame);
-        if (group != null && !group.isEmpty()) {
+        if (hasGroup) {
             wvnGroup = initWvn(wvnGroup, RRuntime.RDotGroup);
             wvnGroup.execute(newFrame, this.group);
         }
@@ -161,12 +154,20 @@ public abstract class NextMethod extends S3MethodDispatch {
         } catch (UnexpectedResultException e) {
             klass = getAlternateClassHr(frame);
         } catch (RError r) {
+            klass = getAlternateClassHr(frame);
         }
         rvnGroup = initRvn(RRuntime.RDotGroup, rvnGroup);
         try {
             group = rvnGroup.executeString(frame);
+            if (!group.isEmpty()) {
+                handlePresentGroup();
+            } else {
+                handleMissingGroup();
+            }
         } catch (UnexpectedResultException e) {
+            handleMissingGroup();
         } catch (RError r) {
+            handleMissingGroup();
         }
         rvnMethod = initRvn(RRuntime.RDotMethod, rvnMethod);
         try {
@@ -174,6 +175,20 @@ public abstract class NextMethod extends S3MethodDispatch {
         } catch (UnexpectedResultException e) {
         } catch (RError r) {
         }
+    }
+
+    private void handleMissingGroup() {
+        baseName = genericName;
+        prefix = new String[1];
+        prefix[0] = genericName;
+    }
+
+    private void handlePresentGroup() {
+        baseName = group;
+        prefix = new String[2];
+        prefix[0] = genericName;
+        prefix[1] = group;
+        hasGroup = true;
     }
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
