@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.io.*;
 import java.util.*;
 
 import org.antlr.runtime.*;
@@ -41,18 +40,10 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class RLibraryLoader {
 
-    private final File libFile;
     private final String libContents;
     private final String libName;
 
-    public RLibraryLoader(File libFile) {
-        this.libFile = libFile;
-        this.libContents = null;
-        this.libName = null;
-    }
-
     public RLibraryLoader(String libName, String libContents) {
-        this.libFile = null;
         this.libName = libName;
         this.libContents = libContents;
     }
@@ -82,22 +73,17 @@ public class RLibraryLoader {
         SourceManager sourceManager = RContext.getInstance().getSourceManager();
         Source source = null;
         try {
-            if (libFile != null) {
-                stream = new ANTLRFileStream(libFile.getAbsolutePath());
-                source = sourceManager.get(libFile.getAbsolutePath());
-            } else {
-                stream = new ANTLRStringStream(libContents) {
-                    @Override
-                    public String getSourceName() {
-                        return libName;
-                    }
-                };
-                source = sourceManager.getFakeFile(libName, libContents);
-            }
+            stream = new ANTLRStringStream(libContents) {
+                @Override
+                public String getSourceName() {
+                    return libName;
+                }
+            };
+            source = sourceManager.getFakeFile(libName, libContents);
             RTruffleVisitor transform = new RTruffleVisitor();
             RNode node = transform.transform(parseAST(stream, source));
             return node;
-        } catch (RecognitionException | IOException e) {
+        } catch (RecognitionException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
