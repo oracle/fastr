@@ -201,7 +201,7 @@ public abstract class SApply extends RBuiltinNode {
     private Object call(VirtualFrame frame, RFunction function) {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreter();
-            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false, false))));
+            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return callNode.execute(frame, function);
     }
@@ -209,7 +209,7 @@ public abstract class SApply extends RBuiltinNode {
     private int callInt(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreter();
-            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false, false))));
+            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return RTypesGen.RTYPES.expectInteger(callNode.execute(frame, function));
     }
@@ -217,7 +217,7 @@ public abstract class SApply extends RBuiltinNode {
     private double callDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreter();
-            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false, false))));
+            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return RTypesGen.RTYPES.expectDouble(callNode.execute(frame, function));
     }

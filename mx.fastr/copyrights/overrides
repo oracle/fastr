@@ -3,7 +3,9 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Covcor.ja
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Inherits.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/IsArray.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Rnorm.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/S3MethodDispatch.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UnClass.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UpdateClass.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UseMethod.java,purdue.copyright
