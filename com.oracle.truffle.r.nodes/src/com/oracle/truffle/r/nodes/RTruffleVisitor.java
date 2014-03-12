@@ -251,14 +251,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             CoerceBinaryNode updateOp = CoerceBinaryNodeFactory.create(update, varAccess, rhsAccess);
             return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
         } else {
-            int argLength = a.getArgs().size();
-            RNode[] positions = new RNode[argLength - 1]; // last argument == RHS
-            for (int i = 0; i < argLength - 1; i++) {
-                ASTNode node = a.getArgs().getNode(i);
-                positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
-            }
-            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), rhsAccess, varAccess, positions);
-            return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
+        int argLength = a.getArgs().size();
+        RNode[] positions = new RNode[argLength - 1]; // last argument == RHS
+        for (int i = 0; i < argLength - 1; i++) {
+            ASTNode node = a.getArgs().getNode(i);
+            positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
+        }
+        UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), rhsAccess, varAccess, ConstantNode.create(0), positions);
+        return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
         }
     }
 
