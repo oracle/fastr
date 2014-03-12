@@ -176,8 +176,11 @@ public final class REngine implements RBuiltinLookupProvider {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
         context.getConsoleHandler().printErrorln(RRuntime.toString(out));
-        // R suicide, we don't call quit as the system is broken
-        System.exit(2);
+        // R suicide, unless we are running units tests.
+        // wWe don't call quit as the system is broken.
+        if (!inTest()) {
+            System.exit(2);
+        }
     }
 
     private static void reportWarnings(boolean inAddition) {
@@ -199,6 +202,24 @@ public final class REngine implements RBuiltinLookupProvider {
                 }
             }
         }
+    }
+
+    /**
+     * Used to suppress the normal exit when the implementation throws an unhandled exception.
+     */
+    private static boolean inTest() {
+        try {
+            throw new AssertionError();
+        } catch (AssertionError ex) {
+            // The first method not in TestBase is the culprit
+            for (StackTraceElement se : ex.getStackTrace()) {
+                if (se.getClassName().contains("org.junit")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+
     }
 
 }
