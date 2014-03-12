@@ -20,18 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell;
+package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
 /**
- * Implements the standard R command line syntax.
- * 
- * R supports {@code --arg=value} or {@code -arg value} for string-valued options.
+ * (Abstract) definition of the standard R options. The setting of the values from the environment
+ * is handled in some other class.
  */
 public class ROptions {
-    // CheckStyle: stop system..print check
-
     private static List<Option<?>> optionList = new ArrayList<>();
     public static final Option<Boolean> HELP = newBooleanOption(true, "h", "help", false, "Print short help message and exit");
     public static final Option<Boolean> VERSION = newBooleanOption(true, "version", false, "Print version info and exit");
@@ -79,88 +76,16 @@ public class ROptions {
         return option;
     }
 
-    /**
-     * Parse the arguments, setting the corresponding {@code Option values}.
-     * 
-     * @return if {@code --args} is set, return the remaining arguments, else {@code null}.
-     */
-    public static String[] parseArguments(String[] args) {
-        int i = 0;
-        while (i < args.length) {
-            final String arg = args[i];
-            Option<?> option = matchOption(arg);
-            if (option == null || (option.matchedShort && i == args.length - 1)) {
-                System.out.println("usage:");
-                printHelp(1);
-            }
-            // check implemented
-            if (!option.implemented) {
-                System.out.println("WARNING: option: " + arg + " is not implemented");
-            }
-            if (option.matchedShort) {
-                i++;
-                option.setValue(args[i]);
-            } else {
-                if (option.type == OptionType.BOOLEAN) {
-                    option.setValue(true);
-                } else if (option.type == OptionType.STRING) {
-                    int eqx = arg.indexOf('=');
-                    option.setValue(arg.substring(eqx + 1));
-                }
-            }
-            i++;
-            // check for --args
-            if (option == ARGS) {
-                int count = args.length - i;
-                String[] remainder = new String[count];
-                if (count > 0) {
-                    System.arraycopy(args, i, remainder, 0, count);
-                }
-                return remainder;
-            }
-        }
-        return null;
+    public static List<Option<?>> optionList() {
+        return optionList;
     }
 
-    private static Option<?> matchOption(String arg) {
-        for (Option<?> option : optionList) {
-            if (option.type == OptionType.BOOLEAN) {
-                // these must match exactly
-                if (option.matches(arg)) {
-                    return option;
-                }
-            } else if (option.type == OptionType.STRING) {
-                // short forms must match exactly (and consume next argument)
-                if (option.shortName != null && option.shortName.equals(arg)) {
-                    option.matchedShort = true;
-                    return option;
-                } else if (arg.indexOf('=') > 0 && option.name != null && arg.startsWith(option.name)) {
-                    return option;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static void printHelp(int exitCode) {
-        System.out.println("\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n"
-                        + "specified options, or invoke an R tool via the 'R CMD' interface.\n");
-        System.out.println("Options:");
-        for (Option<?> option : optionList) {
-            System.out.printf("  %-22s  %s%n", option.getHelpName(), option.help);
-        }
-        System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");
-        if (exitCode >= 0) {
-            System.exit(exitCode);
-        }
-    }
-
-    private static enum OptionType {
+    public static enum OptionType {
         BOOLEAN, STRING
     }
 
     public static class Option<T> {
-        final OptionType type;
+        public final OptionType type;
         /**
          * The option name prefixed by {@code --} or {@code null} if no {@code --} form.
          */
@@ -180,7 +105,7 @@ public class ROptions {
         /**
          * The help text.
          */
-        final String help;
+        public final String help;
         /**
          * The value, either from the default or set on the command line.
          */
@@ -192,7 +117,7 @@ public class ROptions {
         /**
          * Temporary field indicating not implemented.
          */
-        final boolean implemented;
+        public final boolean implemented;
 
         Option(boolean implemented, OptionType type, String shortName, String name, String help, T defaultValue) {
             this.implemented = implemented;
@@ -230,7 +155,7 @@ public class ROptions {
             return "-" + xName;
         }
 
-        T getValue() {
+        public T getValue() {
             return value;
         }
 
@@ -245,16 +170,16 @@ public class ROptions {
         }
 
         @SuppressWarnings("unchecked")
-        void setValue(boolean value) {
+        public void setValue(boolean value) {
             this.value = (T) new Boolean(value);
         }
 
         @SuppressWarnings("unchecked")
-        void setValue(String value) {
+        public void setValue(String value) {
             this.value = (T) value;
         }
 
-        String getHelpName() {
+        public String getHelpName() {
             String result = "";
             if (shortName != null) {
                 result = shortName;
@@ -273,6 +198,30 @@ public class ROptions {
             }
             return result;
         }
+
+        public boolean matchedShort() {
+            return matchedShort;
+        }
+    }
+
+    public static Option<?> matchOption(String arg) {
+        for (Option<?> option : optionList) {
+            if (option.type == OptionType.BOOLEAN) {
+                // these must match exactly
+                if (option.matches(arg)) {
+                    return option;
+                }
+            } else if (option.type == OptionType.STRING) {
+                // short forms must match exactly (and consume next argument)
+                if (option.shortName != null && option.shortName.equals(arg)) {
+                    option.matchedShort = true;
+                    return option;
+                } else if (arg.indexOf('=') > 0 && option.name != null && arg.startsWith(option.name)) {
+                    return option;
+                }
+            }
+        }
+        return null;
     }
 
 }
