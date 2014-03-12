@@ -44,20 +44,68 @@ public abstract class ReadVariableNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
-    public static ReadVariableNode create(Object symbol, boolean functionLookup, boolean shouldCopyValue) {
-        return new UnresolvedReadVariableNode(symbol, functionLookup, shouldCopyValue);
+    public static ReadVariableNode create(Object symbol, boolean shouldCopyValue) {
+        return create(symbol, RRuntime.TYPE_ANY, shouldCopyValue);
     }
 
-    public static ReadVariableNode create(SourceSection src, Object symbol, boolean functionLookup, boolean shouldCopyValue) {
-        ReadVariableNode rvn = create(symbol, functionLookup, shouldCopyValue);
+    public static ReadVariableNode create(Object symbol, boolean shouldCopyValue, boolean isSuper) {
+        return create(symbol, RRuntime.TYPE_ANY, shouldCopyValue, isSuper);
+    }
+
+    public static ReadVariableNode create(SourceSection src, Object symbol, boolean shouldCopyValue) {
+        return create(src, symbol, RRuntime.TYPE_ANY, shouldCopyValue);
+    }
+
+    public static ReadVariableNode create(SourceSection src, Object symbol, boolean shouldCopyValue, boolean isSuper) {
+        return create(src, symbol, RRuntime.TYPE_ANY, shouldCopyValue, isSuper);
+    }
+
+    public static ReadVariableNode create(Object symbol, String mode, boolean shouldCopyValue) {
+        return create(symbol, mode, shouldCopyValue, true);
+    }
+
+    public static ReadVariableNode create(Object symbol, String mode, boolean shouldCopyValue, boolean isSuper) {
+        if (isSuper) {
+            return new UnresolvedReadVariableNode(symbol, mode, shouldCopyValue);
+        }
+        return new UnResolvedReadLocalVariableNode(symbol, mode);
+    }
+
+    public static ReadVariableNode create(SourceSection src, Object symbol, String mode, boolean shouldCopyValue) {
+        ReadVariableNode rvn = create(symbol, mode, shouldCopyValue);
         rvn.assignSourceSection(src);
         return rvn;
+    }
+
+    public static ReadVariableNode create(SourceSection src, Object symbol, String mode, boolean shouldCopyValue, boolean isSuper) {
+        ReadVariableNode rvn = create(symbol, mode, shouldCopyValue, isSuper);
+        rvn.assignSourceSection(src);
+        return rvn;
+    }
+
+    protected boolean checkType(Object obj, String type) {
+        if (type.equals(RRuntime.TYPE_ANY)) {
+            return true;
+        }
+        if (type.equals(RRuntime.TYPE_FUNCTION) || type.equals(RRuntime.TYPE_CLOSURE) || type.equals(RRuntime.TYPE_BUILTIN) || type.equals(RRuntime.TYPE_SPECIAL)) {
+            return obj instanceof RFunction;
+        }
+        if (type.equals(RRuntime.TYPE_CHARACTER)) {
+            return obj instanceof String;
+        }
+        if (type.equals(RRuntime.TYPE_LOGICAL)) {
+            return obj instanceof Byte;
+        }
+        if (type.equals(RRuntime.TYPE_INTEGER) || type.equals(RRuntime.TYPE_DOUBLE)) {
+            return obj instanceof Integer || obj instanceof Double;
+        }
+        return false;
     }
 
     public static final class UnresolvedReadVariableNode extends ReadVariableNode {
 
         private final Object symbol;
-        private final boolean functionLookup;
+        private final String mode;
 
         /**
          * In case this read operation is the one used to read a vector prior to updating one of its
@@ -70,9 +118,9 @@ public abstract class ReadVariableNode extends RNode {
             copyValue = c;
         }
 
-        public UnresolvedReadVariableNode(Object symbol, boolean functionLookup, boolean copyValue) {
+        public UnresolvedReadVariableNode(Object symbol, String mode, boolean copyValue) {
             this.symbol = symbol;
-            this.functionLookup = functionLookup;
+            this.mode = mode;
             this.copyValue = copyValue;
         }
 
@@ -82,7 +130,7 @@ public abstract class ReadVariableNode extends RNode {
             if (enclosingFrame != null) {
                 ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol))
                                 : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol));
-                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, functionLookup, copyValue), functionLookup);
+                ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, mode, copyValue), mode);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
                 return replace(resolveNonFrame()).execute(frame);
@@ -106,10 +154,10 @@ public abstract class ReadVariableNode extends RNode {
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
                 ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol));
-                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, functionLookup, copyValue), functionLookup);
+                readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, mode, copyValue), mode);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
-                readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(symbol, functionLookup, copyValue), symbol);
+                readNode = new ReadVariableNonFrameNode(assumptions, resolveNonFrame(), new UnresolvedReadVariableNode(symbol, mode, copyValue), symbol);
             }
             return replace(readNode).execute(frame);
         }
@@ -175,21 +223,54 @@ public abstract class ReadVariableNode extends RNode {
 
         @Child private ReadLocalVariableNode readNode;
         @Child private ReadVariableNode nextNode;
-        private final boolean functionLookup;
+        private final String mode;
 
-        ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode, boolean functionLookup) {
+        ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode, String mode) {
             this.readNode = adoptChild(readNode);
             this.nextNode = adoptChild(nextNode);
-            this.functionLookup = functionLookup;
+            this.mode = mode;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            if (readNode.getFrameSlotNode().hasValue(frame, frame) && (!functionLookup || readNode.execute(frame) instanceof RFunction)) {
-                return readNode.execute(frame);
-            } else {
-                return nextNode.execute(frame, RArguments.get(frame).getEnclosingFrame());
+            if (readNode.getFrameSlotNode().hasValue(frame, frame)) {
+                Object result = readNode.execute(frame);
+                if (checkType(result, mode)) {
+                    return result;
+                }
             }
+            return nextNode.execute(frame, RArguments.get(frame).getEnclosingFrame());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode {
+
+        private final Object symbol;
+        private final String mode;
+        @Child ReadLocalVariableNode node;
+
+        UnResolvedReadLocalVariableNode(final Object symbol, final String mode) {
+            this.symbol = symbol;
+            this.mode = mode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreter();
+            node = adoptChild(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol)));
+            if (node.getFrameSlotNode().hasValue(frame, frame)) {
+                Object result = node.execute(frame);
+                if (checkType(result, mode)) {
+                    replace(node);
+                    return result;
+                }
+            }
+            return replace(UnknownVariableNodeFactory.create(RRuntime.toString(symbol))).execute(frame);
         }
 
         @Override
@@ -202,12 +283,12 @@ public abstract class ReadVariableNode extends RNode {
 
         @Child private ReadSuperVariableNode readNode;
         @Child private ReadVariableNode nextNode;
-        private final boolean functionLookup;
+        private final String mode;
 
-        ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, boolean functionLookup) {
+        ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, String mode) {
             this.readNode = adoptChild(readNode);
             this.nextNode = adoptChild(nextNode);
-            this.functionLookup = functionLookup;
+            this.mode = mode;
         }
 
         @Override
@@ -217,11 +298,13 @@ public abstract class ReadVariableNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
-            if (readNode.getFrameSlotNode().hasValue(frame, enclosingFrame) && (!functionLookup || readNode.execute(frame, enclosingFrame) instanceof RFunction)) {
-                return readNode.execute(frame, enclosingFrame);
-            } else {
-                return nextNode.execute(frame, RArguments.get(enclosingFrame).getEnclosingFrame());
+            if (readNode.getFrameSlotNode().hasValue(frame, enclosingFrame)) {
+                Object result = readNode.execute(frame, enclosingFrame);
+                if (checkType(result, mode)) {
+                    return result;
+                }
             }
+            return nextNode.execute(frame, RArguments.get(enclosingFrame).getEnclosingFrame());
         }
     }
 

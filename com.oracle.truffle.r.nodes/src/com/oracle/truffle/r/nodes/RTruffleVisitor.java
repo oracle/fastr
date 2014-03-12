@@ -97,7 +97,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
             index++;
         }
-        return RCallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), true, false), CallArgumentsNode.create(nodes, argumentNames));
+        return RCallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), RRuntime.TYPE_FUNCTION, false), CallArgumentsNode.create(nodes, argumentNames));
     }
 
     @Override
@@ -203,7 +203,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         WriteVariableNode rhsAssign = WriteVariableNode.create(rhsSymbol, rhs, false, false, true);
 
-        ReadVariableNode v = isSuper ? ReadSuperVariableNode.create(vAST.getSource(), vSymbol, false, false) : ReadVariableNode.create(vAST.getSource(), vSymbol, false, false);
+        ReadVariableNode v = isSuper ? ReadSuperVariableNode.create(vAST.getSource(), vSymbol, RRuntime.TYPE_ANY, false) : ReadVariableNode.create(vAST.getSource(), vSymbol, RRuntime.TYPE_ANY, false);
         WriteVariableNode varAssign = WriteVariableNode.create(varSymbol, v, false, false);
 
         seq[0] = rhsAssign;
@@ -217,7 +217,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         // assign var, read rhs
 
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, op, false, isSuper);
-        ReadVariableNode rhsRead = ReadVariableNode.create(rhsSymbol, false, false);
+        ReadVariableNode rhsRead = ReadVariableNode.create(rhsSymbol, false);
 
         // assemble
         seq[2] = vAssign;
@@ -323,12 +323,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(SimpleAccessVariable n) {
-        return ReadVariableNode.create(n.getSource(), n.getSymbol(), false, n.shouldCopyValue());
+        return ReadVariableNode.create(n.getSource(), n.getSymbol(), RRuntime.TYPE_ANY, n.shouldCopyValue());
     }
 
     @Override
     public RNode visit(SimpleAccessTempVariable n) {
-        return ReadVariableNode.create(n.getSource(), n.getSymbol(), false, false);
+        return ReadVariableNode.create(n.getSource(), n.getSymbol(), RRuntime.TYPE_ANY, false);
     }
 
     @Override

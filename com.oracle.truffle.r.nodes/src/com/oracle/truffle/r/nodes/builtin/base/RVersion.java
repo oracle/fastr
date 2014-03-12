@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-/**
- * {@link RFFIFactory} known to implement the {@link BaseRFFI} interface.
- */
-public abstract class BaseRFFIFactory extends RFFIFactory {
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-    protected static final BaseRFFI baseRFFI = (BaseRFFI) theRFFI;
+@RBuiltin("R.Version")
+public abstract class RVersion extends RBuiltinNode {
 
-    public static BaseRFFI getRFFI() {
-        return baseRFFI;
+    @Specialization
+    public Object doRVersion(@SuppressWarnings("unused") RMissing x) {
+        return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
     }
-
 }

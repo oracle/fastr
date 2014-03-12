@@ -27,8 +27,10 @@ import mx
 import mx_graal
 import os
 
+_fastr_suite = None
+
 def _runR(args, className, nonZeroIsFatal=True):
-    os.environ['R_HOME'] = mx.suite('fastr').dir
+    os.environ['R_HOME'] = _fastr_suite.dir
     return mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
 def runRCommand(args, nonZeroIsFatal=True):
@@ -54,6 +56,8 @@ def _truffle_r_gate_body(args, tasks):
 
 def gate(args):
     '''Run the R gate'''
+    # suppress the download meter
+    mx._opts.no_download_progress = True
     # ideally would be a standard gate task - we do it early
     t = mx_graal.Task('Copyright check')
     rc = mx.checkcopyrights(['--primary'])
@@ -159,8 +163,6 @@ def testgen(args):
     # now just invoke junit with the appropriate options
     junit(args + ['--tests', _default_unit_tests(), '--gen-expected-output'])
 
-_fastr_suite = None
-
 def rbench(args):
     '''run a one or more R benchmarks'''
     parser = ArgumentParser(prog='mx rbench')
@@ -226,6 +228,9 @@ def bench(args):
     # In the automatic benchmark context, the vm will neither be built nor set.
     # In interactive (development) use, if it is set (interactive use) we use it, otherwise we choose the server variant.
     # The build component of mx.bench causes the vm to be built.
+
+    # suppress the download meter
+    mx._opts.no_download_progress = True
 
     vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
     with vm:

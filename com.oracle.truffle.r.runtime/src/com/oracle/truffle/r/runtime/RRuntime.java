@@ -18,19 +18,10 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class RRuntime {
 
-    public static final String R_HOME;
-
-    static {
-        String rh = System.getenv("R_HOME");
-        R_HOME = rh == null ? "." : rh;
-    }
-
-    public static final String FASTR_VERSION = "0.6";
-
     //@formatter:off
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
-        "FastR version " + FASTR_VERSION + "\n" +
+        "FastR version " + RVersionNumber.FULL + "\n" +
         "Copyright (c) 2013-4, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2012, The R Core Team\n" +
         "Copyright (c) 2003 The R Foundation\n" +
@@ -89,6 +80,9 @@ public class RRuntime {
     public static final String TYPE_FUNCTION = new String("function");
     public static final String TYPE_MATRIX = new String("matrix");
     public static final String TYPE_ARRAY = new String("array");
+    public static final String TYPE_CLOSURE = new String("closure");
+    public static final String TYPE_BUILTIN = new String("builtin");
+    public static final String TYPE_SPECIAL = new String("special");
 
     public static final String TYPE_NUMERIC_CAP = new String("Numeric");
     public static final String TYPE_INTEGER_CAP = new String("Integer");
@@ -112,6 +106,7 @@ public class RRuntime {
     public static final String DIMNAMES_LIST_ELEMENT_NAME_PREFIX = "$dimnames";
 
     public static final String CLASS_ATTR_KEY = "class";
+    public static final String PREVIOUS_ATTR_KEY = "previous";
 
     public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
     public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};
@@ -120,10 +115,29 @@ public class RRuntime {
 
     public static final String WHAT = "what";
 
+    public static final int LEN_METHOD_NAME = 512;
+
+    public static final String RDotGeneric = ".Generic";
+
+    public static final String RDotMethod = ".Method";
+
+    public static final String RDotClass = ".Class";
+
+    public static final String RDotGenericCallEnv = ".GenericCallEnv";
+
+    public static final String RDotGenericDefEnv = ".GenericDefEnv";
+
+    public static final String RDotGroup = ".Group";
+
+    public static final String RDOT = ".";
+
     /**
      * Perform any runtime initialization necessary before the first R evaluation.
      */
     public static void initialize() {
+        RVersionInfo.initialize();
+        REnvVars.initialize();
+        LibPaths.initialize();
         TempDirPath.initialize();
     }
 

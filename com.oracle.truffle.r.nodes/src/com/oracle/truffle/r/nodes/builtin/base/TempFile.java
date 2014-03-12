@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ffi.*;
 
 @RBuiltin(".Internal.tempfile")
 public abstract class TempFile extends RBuiltinNode {
@@ -119,7 +118,7 @@ public abstract class TempFile extends RBuiltinNode {
                 sb.append(fileExt);
             }
             String path = sb.toString();
-            if (!BaseRFFIFactory.getRFFI().exists(path)) {
+            if (!new File(path).exists()) {
                 return path;
             }
         }

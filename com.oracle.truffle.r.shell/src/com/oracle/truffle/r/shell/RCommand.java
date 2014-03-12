@@ -91,13 +91,13 @@ public class RCommand {
 
     private static void printVersionAndExit() {
         System.out.print("FastR version ");
-        System.out.println(RRuntime.FASTR_VERSION);
+        System.out.println(RVersionNumber.FULL);
         System.out.println(RRuntime.LICENSE);
         System.exit(0);
     }
 
     private static void printRHomeAndExit() {
-        System.out.println(RRuntime.R_HOME);
+        System.out.println(REnvVars.rHome());
         System.exit(0);
     }
 

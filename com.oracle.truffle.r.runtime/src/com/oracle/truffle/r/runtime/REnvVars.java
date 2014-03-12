@@ -20,17 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime;
+
+import java.util.*;
 
 /**
- * {@link RFFIFactory} known to implement the {@link BaseRFFI} interface.
+ * Repository for environment variables, including those set by FastR itself, e.g.
+ * {@code R_LIBS_USER}.
  */
-public abstract class BaseRFFIFactory extends RFFIFactory {
+public class REnvVars {
 
-    protected static final BaseRFFI baseRFFI = (BaseRFFI) theRFFI;
+    private static Map<String, String> envVars;
 
-    public static BaseRFFI getRFFI() {
-        return baseRFFI;
+    public static void initialize() {
+        if (envVars == null) {
+            envVars = new HashMap<>(System.getenv());
+        }
     }
 
+    public static String rHome() {
+        String rHome = envVars.get("R_HOME");
+        if (rHome == null) {
+            // Should only happen in a unit test run
+            rHome = System.getProperty("user.dir");
+        }
+        return rHome;
+    }
+
+    public static String put(String key, String value) {
+        return envVars.put(key, value);
+    }
+
+    public static String get(String key) {
+        return envVars.get(key);
+    }
+
+    public static Map<String, String> getMap() {
+        return envVars;
+    }
 }

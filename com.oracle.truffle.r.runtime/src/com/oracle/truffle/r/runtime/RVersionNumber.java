@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime;
 
 /**
- * {@link RFFIFactory} known to implement the {@link BaseRFFI} interface.
+ * Defines the R version number and it's release date. Separate from {@link RVersionInfo} to allow
+ * use in {@code static final} fields and to finesse the fact that such fields cannot precede the
+ * {@code enum} elements.
  */
-public abstract class BaseRFFIFactory extends RFFIFactory {
+public class RVersionNumber {
+    public static final String MAJOR = "0";
+    public static final String MINOR = "6";
+    public static final String PATCH = "1";
 
-    protected static final BaseRFFI baseRFFI = (BaseRFFI) theRFFI;
+    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
+    public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
 
-    public static BaseRFFI getRFFI() {
-        return baseRFFI;
-    }
+    public static final String RELEASE_YEAR = "2014";
+    public static final String RELEASE_MONTH = "03";
+    public static final String RELEASE_DAY = "11";
+
+    public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
 }

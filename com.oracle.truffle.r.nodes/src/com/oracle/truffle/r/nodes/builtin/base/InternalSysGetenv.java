@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * This is the internal component of {@code Sys.getenv}, normally invoked by
@@ -37,9 +38,9 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin({".Internal.Sys.getenv"})
 public abstract class InternalSysGetenv extends RBuiltinNode {
 
-    @Specialization(order = 0)
-    public Object sysGetEnv(RStringVector x, String unset) {
-        Map<String, String> envMap = System.getenv();
+    @Specialization()
+    public Object sysGetEnv(RAbstractStringVector x, String unset) {
+        Map<String, String> envMap = REnvVars.getMap();
         int len = x.getLength();
         String[] data = new String[len == 0 ? envMap.size() : len];
         if (len == 0) {
@@ -66,11 +67,6 @@ public abstract class InternalSysGetenv extends RBuiltinNode {
             }
             return RDataFactory.createStringVector(data, complete);
         }
-    }
-
-    @Specialization(order = 1)
-    public Object sysGetEnv(String x, String unset) {
-        return sysGetEnv(RDataFactory.createStringVector(x), unset);
     }
 
     @Generic

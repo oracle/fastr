@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.io.*;
 import java.nio.*;
+
 import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
@@ -33,11 +34,10 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * A naive JNR-based factory that supports access to POSIX functions only. Naive because it uses
- * reflection to invoke the (generic) target method. Access to the base functions is as efficient as
- * it can be with JNR.
+ * A simple JNR-based factory that supports access to POSIX functions only. Access to the base
+ * functions is as efficient as it can be with JNR.
  */
-public class JNR_RFFIFactory extends BaseRFFIFactory {
+public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
 
     /**
      * Functions missing from JNR POSIX.
@@ -46,8 +46,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
         int getcwd(@Out byte[] path);
 
         long mkdtemp(@In @Out ByteBuffer template);
-
-        int access(String path, int amode);
     }
 
     private static class LibCXProvider {
@@ -124,15 +122,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
         return s;
     }
 
-    public boolean isWriteableDirectory(String path) {
-        if (exists(path)) {
-            FileStat fileStat = posix().stat(path);
-            return fileStat.isDirectory() && fileStat.isWritable();
-        } else {
-            return false;
-        }
-    }
-
     public String mkdtemp(String template) {
         ByteBuffer bb = ByteBuffer.wrap(template.getBytes());
         long result = libcx().mkdtemp(bb);
@@ -141,13 +130,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory {
         } else {
             return new String(bb.array());
         }
-    }
-
-    private static final int F_OK = 0;
-
-    public boolean exists(String path) {
-        int result = libcx().access(path, F_OK);
-        return result == 0;
     }
 
 }
