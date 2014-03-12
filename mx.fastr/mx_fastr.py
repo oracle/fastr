@@ -27,8 +27,10 @@ import mx
 import mx_graal
 import os
 
+_fastr_suite = None
+
 def _runR(args, className, nonZeroIsFatal=True):
-    os.environ['R_HOME'] = mx.suite('fastr').dir
+    os.environ['R_HOME'] = _fastr_suite.dir
     return mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
 def runRCommand(args, nonZeroIsFatal=True):
@@ -160,8 +162,6 @@ def testgen(args):
     mx.build(testOnly)
     # now just invoke junit with the appropriate options
     junit(args + ['--tests', _default_unit_tests(), '--gen-expected-output'])
-
-_fastr_suite = None
 
 def rbench(args):
     '''run a one or more R benchmarks'''

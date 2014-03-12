@@ -18,19 +18,10 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class RRuntime {
 
-    public static final String R_HOME;
-
-    static {
-        String rh = System.getenv("R_HOME");
-        R_HOME = rh == null ? "." : rh;
-    }
-
-    public static final String FASTR_VERSION = "0.6";
-
     //@formatter:off
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
-        "FastR version " + FASTR_VERSION + "\n" +
+        "FastR version " + RVersionNumber.FULL + "\n" +
         "Copyright (c) 2013-4, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2012, The R Core Team\n" +
         "Copyright (c) 2003 The R Foundation\n" +
@@ -124,6 +115,9 @@ public class RRuntime {
      * Perform any runtime initialization necessary before the first R evaluation.
      */
     public static void initialize() {
+        RVersionInfo.initialize();
+        REnvVars.initialize();
+        LibPaths.initialize();
         TempDirPath.initialize();
     }
 

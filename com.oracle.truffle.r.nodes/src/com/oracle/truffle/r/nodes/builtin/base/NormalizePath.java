@@ -31,16 +31,24 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+/**
+ * {@code normalizePath} as a built-in. This could be simplified slightly by defining it in in
+ * {@code base.r} as:
+ * 
+ * <pre>
+ * normalizePath &lt; -function(path, winslash = &quot;\\&quot;, mustWork = NA).Internal(normalizePath(path.expand(path), winslash, mustWork))
+ * </pre>
+ */
 @RBuiltin("normalizePath")
 public abstract class NormalizePath extends RBuiltinNode {
 
     @Specialization(order = 0)
-    public Object doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") RMissing winslash, @SuppressWarnings("unused") RMissing mustWork) {
+    public RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") RMissing winslash, @SuppressWarnings("unused") RMissing mustWork) {
         return doNormalizePath(pathVec, null, RRuntime.LOGICAL_NA);
     }
 
     @Specialization(order = 1)
-    public Object doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
+    public RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
         String[] results = new String[pathVec.getLength()];
         FileSystem fileSystem = FileSystems.getDefault();
         for (int i = 0; i < results.length; i++) {
@@ -51,7 +59,11 @@ public abstract class NormalizePath extends RBuiltinNode {
             } catch (IOException e) {
                 if (mustWork != RRuntime.LOGICAL_FALSE) {
                     String msg = e instanceof NoSuchFileException ? "No such file or directory: " + path : e.toString();
-                    throw RError.getGenericError(getSourceSection(), msg);
+                    if (mustWork == RRuntime.LOGICAL_TRUE) {
+                        throw RError.getGenericError(getSourceSection(), msg);
+                    } else {
+                        RContext.getInstance().setEvalWarning(msg);
+                    }
                 }
             }
             results[i] = normPath;

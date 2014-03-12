@@ -40,7 +40,7 @@ public abstract class InternalSysGetenv extends RBuiltinNode {
 
     @Specialization()
     public Object sysGetEnv(RAbstractStringVector x, String unset) {
-        Map<String, String> envMap = System.getenv();
+        Map<String, String> envMap = REnvVars.getMap();
         int len = x.getLength();
         String[] data = new String[len == 0 ? envMap.size() : len];
         if (len == 0) {
