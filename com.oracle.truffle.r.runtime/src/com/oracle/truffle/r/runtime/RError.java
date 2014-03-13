@@ -1690,7 +1690,12 @@ public abstract class RError extends RuntimeException {
         @Override
         public String toString() {
             if (source != null) {
-                return "Error in " + source.getCode() + " : " + getMessage();
+                String preamble = "Error in " + source.getCode() + " :";
+                if (preamble.length() + 1 + getMessage().length() > 80) {
+                    return preamble + "\n  " + getMessage();
+                } else {
+                    return preamble + " " + getMessage();
+                }
             } else {
                 return "Error: " + getMessage();
             }
