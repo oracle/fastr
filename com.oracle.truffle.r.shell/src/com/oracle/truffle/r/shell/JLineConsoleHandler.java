@@ -77,4 +77,8 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
         console.setPrompt(prompt);
     }
 
+    public int getWidth() {
+        return RContext.CONSOLE_WIDTH;
+    }
+
 }

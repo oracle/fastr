@@ -93,6 +93,10 @@ public class RscriptCommand {
         public void setPrompt(String prompt) {
         }
 
+        public int getWidth() {
+            return RContext.CONSOLE_WIDTH;
+        }
+
     }
 
 }

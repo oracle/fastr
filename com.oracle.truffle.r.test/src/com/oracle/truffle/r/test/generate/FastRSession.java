@@ -71,6 +71,10 @@ public class FastRSession implements RSession {
             buffer.delete(0, buffer.length());
         }
 
+        public int getWidth() {
+            return RContext.CONSOLE_WIDTH;
+        }
+
     }
 
     private final ConsoleHandler consoleHandler;
