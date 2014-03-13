@@ -13179,11 +13179,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleMatrix_testAccessScalarIndex_112ecfdbb435356eb1b836e9064960f2() {
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
-    }
-
-    @Test
     public void TestSimpleMatrix_testAccessScalarIndex_0cfe5fa46c26e276668996e57b232f40() {
         assertEval("{ x<-(1:8); dim(x)<-c(2,4); x[1, c(NA, NA)] }");
     }
@@ -13291,6 +13286,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleMatrix_testAccessScalarIndex_64a62a50d06389f6a1a7d3c61caa35c3() {
         assertEvalError("{ x<-1:8; dim(x)<-c(2, 4); x[c(-1, -2),c(5)] }");
+    }
+
+    @Test
+    public void TestSimpleMatrix_testAccessScalarIndex_112ecfdbb435356eb1b836e9064960f2() {
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
     }
 
     @Test

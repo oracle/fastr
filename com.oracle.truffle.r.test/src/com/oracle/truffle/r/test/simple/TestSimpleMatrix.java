@@ -123,7 +123,7 @@ public class TestSimpleMatrix extends TestBase {
         assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, FALSE] }");
         assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, FALSE)] }");
         assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE)] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,4);  x[1, c(TRUE, FALSE, TRUE, TRUE, TRUE)] }");
         assertEval("{ x<-(1:8); dim(x)<-c(2,4); x[1, c(NA, NA)] }");
         assertEval("{ x<-(1:8); dim(x)<-c(2,4); x[1, c(1, NA)] }");
         assertEval("{ x<-(1:4); dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[1, NA] }");
