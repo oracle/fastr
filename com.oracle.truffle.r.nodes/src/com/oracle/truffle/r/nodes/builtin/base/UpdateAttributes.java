@@ -88,7 +88,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractVector abstractVector, RList list) {
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {
-            throw RError.getAttributesNamed(getSourceSection());
+            throw RError.getAttributesNamed(getEncapsulatingSourceSection());
         }
         RStringVector listNames = (RStringVector) listNamesObject;
         int numAttributes = list.getLength();
@@ -108,13 +108,13 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 for (int i = 1; i < numAttributes; i++) {
                     String attrName = listNames.getDataAt(i);
                     if (attrName == RRuntime.NAMES_ATTR_EMPTY_VALUE) {
-                        throw RError.getAllAttributesNames(getSourceSection(), i + 1);
+                        throw RError.getAllAttributesNames(getEncapsulatingSourceSection(), i + 1);
                     }
                 }
             }
             // has to be reported if no other name is undefined
             if (listNames.getDataAt(0) == RRuntime.NAMES_ATTR_EMPTY_VALUE) {
-                throw RError.getZeroLengthVariable(getSourceSection());
+                throw RError.getZeroLengthVariable(getEncapsulatingSourceSection());
             }
             // set the dim attribute first
             for (int i = 0; i < numAttributes; i++) {
@@ -122,13 +122,13 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 String attrName = listNames.getDataAt(i);
                 if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
                     if (value == RNull.instance) {
-                        resultVector.setDimensions(null, getSourceSection());
+                        resultVector.setDimensions(null, getEncapsulatingSourceSection());
                     } else {
                         RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
                         if (dimsVector.getLength() == 0) {
-                            throw RError.getLengthZeroDimInvalid(getSourceSection());
+                            throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
                         }
-                        resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getSourceSection());
+                        resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
                     }
                 }
             }
@@ -142,9 +142,9 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                     updateNamesStringVector(frame, resultVector, value);
                 } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
                     if (value == RNull.instance) {
-                        resultVector.setDimNames(null, getSourceSection());
+                        resultVector.setDimNames(null, getEncapsulatingSourceSection());
                     } else {
-                        resultVector.setDimNames(castList(frame, value), getSourceSection());
+                        resultVector.setDimNames(castList(frame, value), getEncapsulatingSourceSection());
                     }
                 } else {
                     if (value == RNull.instance) {
@@ -161,7 +161,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Generic
     public RList doOther(VirtualFrame frame, Object vector, Object operand) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.getAttributesListOrNull(getSourceSection());
+        throw RError.getAttributesListOrNull(getEncapsulatingSourceSection());
     }
 
 }

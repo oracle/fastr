@@ -51,7 +51,7 @@ public abstract class UpdateNames extends RBuiltinNode {
     @Specialization
     public RAbstractVector updateNames(RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
         RVector v = vector.materialize();
-        v.setNames(null, this.getSourceSection());
+        v.setNames(null, getEncapsulatingSourceSection());
         return v;
     }
 
@@ -62,7 +62,7 @@ public abstract class UpdateNames extends RBuiltinNode {
         if (names.getLength() < v.getLength()) {
             namesVector = names.copyResized(v.getLength(), true);
         }
-        v.setNames(namesVector, this.getSourceSection());
+        v.setNames(namesVector, getEncapsulatingSourceSection());
         return v;
     }
 
@@ -73,7 +73,7 @@ public abstract class UpdateNames extends RBuiltinNode {
         Arrays.fill(names, RRuntime.STRING_NA);
         names[0] = name;
         RStringVector namesVector = RDataFactory.createStringVector(names, names.length > 1);
-        v.setNames(namesVector, this.getSourceSection());
+        v.setNames(namesVector, getEncapsulatingSourceSection());
         return v;
     }
 
