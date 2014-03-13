@@ -57,10 +57,10 @@ public abstract class UpdateDim extends RBuiltinNode {
     @Specialization(order = 2)
     public RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
         if (dimensions.getLength() == 0) {
-            throw RError.getLengthZeroDimInvalid(getSourceSection());
+            throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
         }
         int[] dimsData = castInteger(frame, dimensions).materialize().getDataCopy();
-        vector.verifyDimensions(dimsData, getSourceSection());
+        vector.verifyDimensions(dimsData, getEncapsulatingSourceSection());
         RVector result = vector.materialize();
         result.resetDimensions(dimsData);
         return result;
