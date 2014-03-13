@@ -683,7 +683,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
 
     @Specialization(order = 1000, guards = "differentDimensions")
     public RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
-        throw RError.getNonConformableArrays(getSourceSection());
+        throw RError.getNonConformableArrays(getEncapsulatingSourceSection());
     }
 
     protected boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
