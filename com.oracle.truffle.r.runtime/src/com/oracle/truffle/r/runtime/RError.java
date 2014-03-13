@@ -1691,7 +1691,10 @@ public abstract class RError extends RuntimeException {
         public String toString() {
             if (source != null) {
                 String preamble = "Error in " + source.getCode() + " :";
-                if (preamble.length() + 1 + getMessage().length() > 80) {
+                // TODO find out about R's line-wrap policy
+                // (is 74 a given percentage of console width?)
+                if (preamble.length() + 1 + getMessage().length() >= 74) {
+                    // +1 is for the extra space following the colon
                     return preamble + "\n  " + getMessage();
                 } else {
                     return preamble + " " + getMessage();
