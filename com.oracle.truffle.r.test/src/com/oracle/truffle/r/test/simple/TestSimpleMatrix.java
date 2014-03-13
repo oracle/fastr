@@ -54,8 +54,8 @@ public class TestSimpleMatrix extends TestBase {
 
     @Test
     public void testAccessScalarIndex() {
-        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1,2] }");
-        assertEvalError("{ x<-1:8; x[1,2] }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[1, 2] }");
+        assertEvalError("{ x<-1:8; x[1, 2] }");
 
         assertEval("{ x<-c(1L,2L,3L,4L,5L,6L); dim(x) <- c(2,3); x[1,2] }");
         assertEval("{ x<-c(1L,2L,3L,4L,5L,6L,7L,8L,9L,10L); dim(x) <- c(2,5); x[2,4] }");
