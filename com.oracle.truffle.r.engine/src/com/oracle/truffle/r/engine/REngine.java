@@ -174,7 +174,7 @@ public final class REngine implements RBuiltinLookupProvider {
     }
 
     private static void reportRError(RError e) {
-        context.getConsoleHandler().printErrorln("Error: " + e.getMessage());
+        context.getConsoleHandler().printErrorln(e.toString());
         reportWarnings(true);
     }
 

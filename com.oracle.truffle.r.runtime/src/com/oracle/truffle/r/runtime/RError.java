@@ -1676,15 +1676,24 @@ public abstract class RError extends RuntimeException {
 
     static class RErrorInExpr extends RError {
 
-        private SourceSection errorNode;
+        private final SourceSection source;
         private static final long serialVersionUID = 1L;
 
-        public RErrorInExpr(SourceSection node) {
-            errorNode = node;
+        public RErrorInExpr(SourceSection source) {
+            this.source = source;
         }
 
-        public SourceSection getErrorNode() {
-            return errorNode;
+        public SourceSection getSource() {
+            return source;
+        }
+
+        @Override
+        public String toString() {
+            if (source != null) {
+                return "Error in " + source.getCode() + " : " + getMessage();
+            } else {
+                return "Error: " + getMessage();
+            }
         }
     }
 
