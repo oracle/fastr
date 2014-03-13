@@ -51,13 +51,13 @@ public abstract class InternalSysGetenv extends RBuiltinNode {
             }
             return RDataFactory.createStringVector(data, true);
         } else {
-            // just those in 'x'
+            // just those in 'x' without the 'name=' which is handled in the R snippet
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < len; i++) {
                 String name = x.getDataAt(i);
                 String value = envMap.get(name);
                 if (value != null) {
-                    data[i] = name + "=" + value;
+                    data[i] = value;
                 } else {
                     data[i] = unset;
                     if (unset == RRuntime.STRING_NA) {

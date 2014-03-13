@@ -50,3 +50,9 @@ tempfile <- function(pattern = "file", tmpdir = tempdir(), fileext = "")
 {
     .Internal.tempfile(pattern, tmpdir, fileext)
 }
+
+identical <- function(x, y, num.eq = TRUE, single.NA = TRUE,
+                      attrib.as.set = TRUE, ignore.bytecode = TRUE,
+                      ignore.environment = FALSE)
+    .Internal.identical(x,y, num.eq, single.NA, attrib.as.set,
+                        ignore.bytecode, ignore.environment)
