@@ -54,13 +54,13 @@ public abstract class UpdateLength extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = "!isLengthOne")
     public RAbstractVector updateLengthError(RAbstractVector vector, RAbstractIntVector lengthVector) {
-        throw RError.getInvalidUnnamedValue(this.getSourceSection());
+        throw RError.getInvalidUnnamedValue(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Generic
     public Object updateLengthError(Object vector, Object lengthVector) {
-        throw RError.getInvalidUnnamedValue(this.getSourceSection());
+        throw RError.getInvalidUnnamedValue(this.getEncapsulatingSourceSection());
     }
 
     protected static boolean isLengthOne(@SuppressWarnings("unused") RAbstractVector vector, RAbstractIntVector length) {

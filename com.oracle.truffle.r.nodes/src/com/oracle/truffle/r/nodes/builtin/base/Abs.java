@@ -38,7 +38,7 @@ public abstract class Abs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RNull abs(RNull x) {
-        throw RError.getNonNumericArgumentFunction(this.getSourceSection());
+        throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
     }
 
     @Specialization
@@ -71,13 +71,13 @@ public abstract class Abs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(RRaw vector) {
-        throw RError.getNonNumericMath(this.getSourceSection());
+        throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(String vector) {
-        throw RError.getNonNumericMath(this.getSourceSection());
+        throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     @Specialization
@@ -123,13 +123,13 @@ public abstract class Abs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(RStringVector vector) {
-        throw RError.getNonNumericMath(this.getSourceSection());
+        throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(RRawVector vector) {
-        throw RError.getNonNumericMath(this.getSourceSection());
+        throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     private int performInt(int value) {

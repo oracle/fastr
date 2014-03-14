@@ -48,7 +48,7 @@ public abstract class Log extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RNull log(RNull x, RNull base) {
-        throw RError.getNonNumericArgumentFunction(this.getSourceSection());
+        throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
     }
 
     @CreateCast("arguments")
