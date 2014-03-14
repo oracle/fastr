@@ -71,7 +71,7 @@ public abstract class InternalSysGetenv extends RBuiltinNode {
 
     @Generic
     public Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
-        throw RError.getWrongTypeOfArgument(getSourceSection());
+        throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }
 
 }

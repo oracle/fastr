@@ -60,7 +60,7 @@ public abstract class SysSleep extends RBuiltinNode {
     }
 
     private RError invalid() throws RError {
-        throw RError.getGenericError(getSourceSection(), "invalid 'time' value");
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'time' value");
     }
 
     private static long convertToMillis(double d) {

@@ -92,7 +92,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
             resultVector = resultVector.copy();
         }
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
-            resultVector.setDimensions(null, getSourceSection());
+            resultVector.setDimensions(null, getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
             return updateNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
@@ -112,9 +112,9 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
             if (dimsVector.getLength() == 0) {
-                throw RError.getLengthZeroDimInvalid(getSourceSection());
+                throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
             }
-            resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getSourceSection());
+            resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
             return updateNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {

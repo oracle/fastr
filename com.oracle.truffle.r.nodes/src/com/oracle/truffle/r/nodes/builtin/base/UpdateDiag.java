@@ -60,13 +60,13 @@ public abstract class UpdateDiag extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 0, guards = "!isMatrix")
     public RIntVector updateDiagNoMatrix(RAbstractVector vector, RAbstractVector valueVector) {
-        throw RError.getOnlyMatrixDiagonals(this.getSourceSection());
+        throw RError.getOnlyMatrixDiagonals(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 1, guards = {"isMatrix", "!correctReplacementLength"})
     public RIntVector updateDiagReplacementDiagonalLength(RAbstractVector vector, RAbstractVector valueVector) {
-        throw RError.getReplacementDiagonalLength(this.getSourceSection());
+        throw RError.getReplacementDiagonalLength(this.getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 11, guards = {"isMatrix", "correctReplacementLength"})

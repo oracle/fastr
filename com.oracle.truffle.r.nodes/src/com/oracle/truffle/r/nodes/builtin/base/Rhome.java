@@ -50,7 +50,7 @@ public abstract class Rhome extends RBuiltinNode {
 
     @Generic
     public Object doRhomeGeneric(@SuppressWarnings("unused") Object x) {
-        throw RError.getWrongTypeOfArgument(getSourceSection());
+        throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }
 
 }

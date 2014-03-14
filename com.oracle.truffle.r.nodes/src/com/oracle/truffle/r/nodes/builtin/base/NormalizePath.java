@@ -60,7 +60,7 @@ public abstract class NormalizePath extends RBuiltinNode {
                 if (mustWork != RRuntime.LOGICAL_FALSE) {
                     String msg = e instanceof NoSuchFileException ? "No such file or directory: " + path : e.toString();
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        throw RError.getGenericError(getSourceSection(), msg);
+                        throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
                     } else {
                         RContext.getInstance().setEvalWarning(msg);
                     }
@@ -74,6 +74,6 @@ public abstract class NormalizePath extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Generic
     public Object doNormalizePath(Object path, Object winslash, Object mustWork) {
-        throw RError.getWrongTypeOfArgument(getSourceSection());
+        throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }
 }
