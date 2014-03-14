@@ -1676,15 +1676,32 @@ public abstract class RError extends RuntimeException {
 
     static class RErrorInExpr extends RError {
 
-        private SourceSection errorNode;
+        private final SourceSection source;
         private static final long serialVersionUID = 1L;
 
-        public RErrorInExpr(SourceSection node) {
-            errorNode = node;
+        public RErrorInExpr(SourceSection source) {
+            this.source = source;
         }
 
-        public SourceSection getErrorNode() {
-            return errorNode;
+        public SourceSection getSource() {
+            return source;
+        }
+
+        @Override
+        public String toString() {
+            if (source != null) {
+                String preamble = "Error in " + source.getCode() + " :";
+                // TODO find out about R's line-wrap policy
+                // (is 74 a given percentage of console width?)
+                if (preamble.length() + 1 + getMessage().length() >= 74) {
+                    // +1 is for the extra space following the colon
+                    return preamble + "\n  " + getMessage();
+                } else {
+                    return preamble + " " + getMessage();
+                }
+            } else {
+                return "Error: " + getMessage();
+            }
         }
     }
 

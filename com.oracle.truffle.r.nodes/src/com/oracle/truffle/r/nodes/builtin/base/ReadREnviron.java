@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,38 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.io.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("path.expand")
-public abstract class PathExpand extends RBuiltinNode {
+@RBuiltin("readRenviron")
+public abstract class ReadREnviron extends RBuiltinNode {
 
-    @Specialization
-    public Object doPathExapnd(RAbstractStringVector vec) {
-        String[] results = new String[vec.getLength()];
-        for (int i = 0; i < results.length; i++) {
-            String path = Utils.tildeExpand(vec.getDataAt(i));
-            results[i] = path;
+    @Specialization(guards = "lengthOneCVector")
+    public Object doReadEnviron(RAbstractStringVector vec) {
+        String path = Utils.tildeExpand(vec.getDataAt(0));
+        byte result = RRuntime.LOGICAL_TRUE;
+        try {
+            REnvVars.readEnvironFile(path);
+        } catch (FileNotFoundException ex) {
+            RContext.getInstance().setEvalWarning(ex.getMessage());
+            result = RRuntime.LOGICAL_FALSE;
+        } catch (IOException ex) {
+            throw RError.getGenericError(getSourceSection(), ex.getMessage());
         }
-        return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
+        return new RInvisible(result);
     }
 
+    public static boolean lengthOneCVector(RAbstractStringVector vec) {
+        return vec.getLength() == 1;
+    }
+
+    @Generic
+    public Object doReadEnvironGeneric(@SuppressWarnings("unused") Object x) {
+        throw RError.getGenericError(getSourceSection(), "argument 'x' must be a character string");
+    }
 }

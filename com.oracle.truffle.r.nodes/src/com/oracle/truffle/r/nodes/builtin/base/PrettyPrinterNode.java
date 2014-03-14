@@ -60,8 +60,6 @@ public abstract class PrettyPrinterNode extends RNode {
 
     public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName);
 
-    public static final int CONSOLE_WIDTH = 80;
-
     private static final String NA_HEADER = "<NA>";
 
     @Child PrettyPrinterNode attributePrettyPrinter;
@@ -228,7 +226,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 maxPositionLength = intString(vector.getLength()).length();
                 leftWidth = maxPositionLength + 2; // There is [] around the number.
             }
-            int forColumns = CONSOLE_WIDTH - leftWidth;
+            int forColumns = RContext.getInstance().getConsoleHandler().getWidth() - leftWidth;
             int numberOfColumns = Math.max(1, forColumns / columnWidth);
 
             int index = 0;

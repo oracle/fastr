@@ -273,6 +273,13 @@ public class TestBase {
      */
 
     /**
+     * If this is set to {@code true}, {@link #assertEvalError} will compare the full output instead
+     * of truncating leading "Error" strings and such. This means it will behave like
+     * {@link #assertEval}.
+     */
+    private static final boolean FULL_COMPARE_ERRORS = false;
+
+    /**
      * Test a given string with R source against expected output. This is (currently) an exact
      * match, so any warnings or errors will cause a failure until FastR matches GnuR in that
      * respect.
@@ -301,7 +308,11 @@ public class TestBase {
      * Test a given R input where an error is expected.
      */
     protected static void assertEvalError(String input) {
-        assertEvalErrorOrWarning(input, "assertEvalError");
+        if (FULL_COMPARE_ERRORS) {
+            assertEval(input);
+        } else {
+            assertEvalErrorOrWarning(input, "assertEvalError");
+        }
     }
 
     /**

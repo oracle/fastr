@@ -48,6 +48,7 @@ public final class REngine implements RBuiltinLookupProvider {
 
     private static REngine singleton = new REngine();
     private static final RContext context = RContext.linkRBuiltinLookupProvider(singleton);
+    private static boolean crashOnFatalError;
 
     private REngine() {
     }
@@ -57,6 +58,11 @@ public final class REngine implements RBuiltinLookupProvider {
     }
 
     public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
+        return setRuntimeState(commandArgs, consoleHandler, true);
+    }
+
+    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalError) {
+        REngine.crashOnFatalError = crashOnFatalError;
         RContext.setRuntimeState(commandArgs, consoleHandler);
         RBuiltinPackage.loadSnippets();
         RRuntime.initialize();
@@ -168,7 +174,7 @@ public final class REngine implements RBuiltinLookupProvider {
     }
 
     private static void reportRError(RError e) {
-        context.getConsoleHandler().printErrorln("Error: " + e.getMessage());
+        context.getConsoleHandler().printErrorln(e.toString());
         reportWarnings(true);
     }
 
@@ -176,9 +182,9 @@ public final class REngine implements RBuiltinLookupProvider {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
         context.getConsoleHandler().printErrorln(RRuntime.toString(out));
-        // R suicide, unless we are running units tests.
-        // wWe don't call quit as the system is broken.
-        if (!inTest()) {
+        // R suicide, unless, e.g., we are running units tests.
+        // We don't call quit as the system is broken.
+        if (crashOnFatalError) {
             System.exit(2);
         }
     }
@@ -202,24 +208,6 @@ public final class REngine implements RBuiltinLookupProvider {
                 }
             }
         }
-    }
-
-    /**
-     * Used to suppress the normal exit when the implementation throws an unhandled exception.
-     */
-    private static boolean inTest() {
-        try {
-            throw new AssertionError();
-        } catch (AssertionError ex) {
-            // The first method not in TestBase is the culprit
-            for (StackTraceElement se : ex.getStackTrace()) {
-                if (se.getClassName().contains("org.junit")) {
-                    return true;
-                }
-            }
-        }
-        return false;
-
     }
 
 }

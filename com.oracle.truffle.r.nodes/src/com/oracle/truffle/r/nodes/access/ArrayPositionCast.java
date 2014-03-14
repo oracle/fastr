@@ -319,7 +319,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 13, guards = {"outOfBounds", "!numDimensionsOne"})
         public int doIntOutOfBounds(RAbstractVector vector, int operand, Object value) {
-            throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+            throw RError.getSubscriptBounds(assignment ? getEncapsulatingSourceSection() : null);
         }
 
         @Specialization(order = 14, guards = {"outOfBoundsNegative", "dimLengthOne"})
@@ -446,7 +446,7 @@ public abstract class ArrayPositionCast extends RNode {
             if (numDimensions == 1) {
                 return RRuntime.INT_NA;
             } else {
-                throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+                throw RError.getSubscriptBounds(isSubset ? null : getEncapsulatingSourceSection());
             }
         }
 
@@ -675,7 +675,7 @@ public abstract class ArrayPositionCast extends RNode {
                         data[i] = RRuntime.INT_NA;
                         seenNA = true;
                     } else {
-                        throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+                        throw RError.getSubscriptBounds(null);
                     }
                 }
             }
@@ -782,7 +782,7 @@ public abstract class ArrayPositionCast extends RNode {
                 Arrays.fill(data, RRuntime.INT_NA);
                 return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
             } else {
-                throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+                throw RError.getSubscriptBounds(null);
             }
         }
 
@@ -843,7 +843,7 @@ public abstract class ArrayPositionCast extends RNode {
                     }
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
-                        throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+                        throw RError.getSubscriptBounds(null);
                     }
                     if (numDimensions == 1 && pos > vector.getLength()) {
                         if (isSubset) {

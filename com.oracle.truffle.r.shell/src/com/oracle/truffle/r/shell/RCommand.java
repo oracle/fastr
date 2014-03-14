@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.shell;
 
-import static com.oracle.truffle.r.shell.ROptions.*;
+import static com.oracle.truffle.r.runtime.ROptions.*;
 
 import java.io.*;
 
@@ -40,9 +40,9 @@ public class RCommand {
 
     @SuppressWarnings("deprecation")
     public static void main(String[] args) {
-        String[] commandArgs = ROptions.parseArguments(args);
+        String[] commandArgs = ROptionsParser.parseArguments(args);
         if (HELP.getValue()) {
-            ROptions.printHelp(0);
+            ROptionsParser.printHelp(0);
         } else if (VERSION.getValue()) {
             printVersionAndExit();
         } else if (RHOME.getValue()) {

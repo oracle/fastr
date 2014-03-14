@@ -80,7 +80,11 @@ public abstract class Get extends RBuiltinNode {
         } else {
             lookup = lookUpNoInherit = setLookUp(lookUpNoInherit, x, mode, doesInherit);
         }
-        return lookup.execute(frame);
+        try {
+            return lookup.execute(frame);
+        } catch (RError e) {
+            throw RError.getUnknownVariable(getEncapsulatingSourceSection(), x);
+        }
     }
 
     private ReadVariableNode setLookUp(ReadVariableNode lookup, final String x, final String mode, boolean inherits) {

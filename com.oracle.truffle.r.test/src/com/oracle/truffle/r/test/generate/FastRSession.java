@@ -71,13 +71,17 @@ public class FastRSession implements RSession {
             buffer.delete(0, buffer.length());
         }
 
+        public int getWidth() {
+            return RContext.CONSOLE_WIDTH;
+        }
+
     }
 
     private final ConsoleHandler consoleHandler;
 
     public FastRSession() {
         consoleHandler = new ConsoleHandler();
-        REngine.setRuntimeState(new String[0], consoleHandler);
+        REngine.setRuntimeState(new String[0], consoleHandler, false);
     }
 
     public String eval(String expression) {

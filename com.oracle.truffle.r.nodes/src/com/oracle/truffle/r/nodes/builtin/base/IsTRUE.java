@@ -27,6 +27,10 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * Arguably unnecessary when {@code identical} is implemented, as {@code isTRUE(x)} is defined to be
+ * {@code identical(TRUE, x}.
+ */
 @RBuiltin({"isTRUE"})
 public abstract class IsTRUE extends RBuiltinNode {
 
@@ -40,8 +44,8 @@ public abstract class IsTRUE extends RBuiltinNode {
     }
 
     @Specialization(order = 1, guards = "exactlyTrue")
-    public RLogicalVector isTRUE(RLogicalVector x) {
-        return RDataFactory.createLogicalVectorFromScalar(exactlyTrue(x) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
+    public RLogicalVector isTRUE(@SuppressWarnings("unused") RLogicalVector x) {
+        return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
     }
 
     @Generic

@@ -405,7 +405,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Specialization
         public Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
-            throw RError.getUnknownVariable(getEncapsulatingSourceSection(), getSymbol());
+            throw RError.getUnknownVariable(null, getSymbol());
         }
     }
 }

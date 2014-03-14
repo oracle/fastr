@@ -61,7 +61,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
         ArrayList<String> resultsList = new ArrayList<>(pathVec.getLength());
         FileSystem fileSystem = FileSystems.getDefault();
         for (int i = 0; i < resultsList.size(); i++) {
-            String path = PathExpand.check(pathVec.getDataAt(i));
+            String path = Utils.tildeExpand(pathVec.getDataAt(i));
             try {
                 resultsList.add(fileSystem.getPath(path).toRealPath().toString());
             } catch (IOException e) {

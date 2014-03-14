@@ -799,9 +799,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-1:4; names(x)<-c(21:24); attr(x, \"foo\")<-\"foo\"; x }");
         assertEval("{ x<-list(1,2,3); names(x)<-c(21:23); attr(x, \"foo\")<-\"foo\"; x }");
 
-        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1,3) ; x }");
-        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1,NA) ; x }");
-        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1,-1) ; x }");
+        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1, 3) ; x }");
+        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1, NA) ; x }");
+        assertEvalError("{ x <- 1:2 ; dim(x) <- c(1, -1) ; x }");
         assertEvalError("{ x <- 1:2 ; dim(x) <- integer() ; x }");
         assertEval("{ b <- c(a=1+2i,b=3+4i) ; attr(b,\"my\") <- 211 ; dim(b) <- c(2,1) ; names(b) }");
 
@@ -824,15 +824,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attributes(x) }");
         // both names and dimnames are set and then re-set
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attr(x, \"dimnames\")<-NULL; attributes(x) }");
-        assertEvalError("{ x<-1:4; attr(x, \"dimnames\")<-list(101, 102, 103, 104) }");
+        assertEvalError("{ x<-1:4; attr(x, \"dimnames\") <- list(101, 102, 103, 104) }");
         // assigning an "invisible" list returned by "attr(y, dimnames)<-" as dimnames attribute for
         // x
         assertEval("{ x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, \"dimnames\")<-(attr(y, \"dimnames\")<-list(\"b\")); attributes(x) }");
         assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(NULL); attributes(x) }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\")); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), NULL, c(\"d\")); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), 42, c(\"d\", \"e\", \"f\")); attributes(x) }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), \"c\", c(\"d\", \"e\"), 7); attributes(x) }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x) <- list(c(\"a\")); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x) <- list(c(\"a\", \"b\"), NULL, c(\"d\")); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x) <- list(c(\"a\", \"b\"), 42, c(\"d\", \"e\", \"f\")); attributes(x) }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x) <- list(c(\"a\", \"b\"), \"c\", c(\"d\", \"e\"), 7); attributes(x) }");
         assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), \"c\", c(\"d\", \"e\")); attributes(x) }");
         assertEval("{ x<-1:4; dim(x)<-c(2,1,2); dimnames(x)<-list(c(\"a\", \"b\"), 42, c(\"d\", \"e\")); attributes(x) }");
 
@@ -851,8 +851,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-1; dimnames(x) }");
         assertEval("{ dimnames(1) }");
         assertEval("{ dimnames(NULL) }");
-        assertEvalError("{ x<-1; dim(x)<-1; dimnames(x)<-1; dimnames(x) }");
-        assertEvalError("{ x<-1; dim(x)<-1; attr(x, \"dimnames\")<-1 }");
+        assertEvalError("{ x<-1; dim(x)<-1; dimnames(x) <- 1; dimnames(x) }");
+        assertEvalError("{ x<-1; dim(x)<-1; attr(x, \"dimnames\") <- 1 }");
         assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list() }");
         assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list(0) }");
         assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list(\"a\"); dimnames(x); dimnames(x)<-list(); dimnames(x) }");
@@ -1271,8 +1271,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(1, 2); names(x)<-c(\"a\", \"b\"); attr(x, \"names\")<-NULL; x }");
         assertEval("{ x<-c(1, 2); names(x)<-42; x }");
         assertEval("{ x<-c(1, 2); names(x)<-c(TRUE, FALSE); x }");
-        assertEvalError("{ x<-c(1,2); names(x)<-42:44; x }");
-        assertEvalError("{ x<-c(1,2); attr(x, \"names\")<-42:45; x }");
+        assertEvalError("{ x<-c(1,2); names(x) <- 42:44; x }");
+        assertEvalError("{ x<-c(1,2); attr(x, \"names\") <- 42:45; x }");
         assertEval("{ x<-list(1,2); names(x)<-c(\"a\",NA); x }");
         assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"$\"); x }");
         assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"b\"); x }");
@@ -1604,10 +1604,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }");
         assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, names=\"name\") ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(names=NULL) ; x }");
-        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, 2) ; x }");
-        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi=2) ; x }");
-        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(ho=1, 2, 3) ; x }");
-        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi=2, 3) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
         assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, names=NULL, hello=3, hi=2, hello=NULL) ; x }");
@@ -2065,9 +2065,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
         assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
 
-        assertEvalError("{ rnorm(n=1,n=2) }");
-        assertEvalError("{ rnorm(s=1,s=1) }");
-        assertEvalError("{ matrix(1:4,n=2) }");
+        assertEvalError("{ rnorm(n = 1, n = 2) }");
+        assertEvalError("{ rnorm(s = 1, s = 1) }");
+        assertEvalError("{ matrix(1:4, n = 2) }");
     }
 
     @Test

@@ -73,27 +73,27 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Specialization(order = 1)
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
-        v.setDimNames(null, this.getSourceSection());
+        v.setDimNames(null, getEncapsulatingSourceSection());
         return v;
     }
 
     @Specialization(order = 2, guards = "isZeroLength")
     public RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
-        v.setDimNames(null, this.getSourceSection());
+        v.setDimNames(null, getEncapsulatingSourceSection());
         return v;
     }
 
     @Specialization(order = 3, guards = "!isZeroLength")
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
-        v.setDimNames(convertToListOfStrings(frame, list), this.getSourceSection());
+        v.setDimNames(convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
         return v;
     }
 
     @Generic
     public Object updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
-        throw RError.getDimnamesList(this.getSourceSection());
+        throw RError.getDimnamesList(getEncapsulatingSourceSection());
     }
 
     protected boolean isZeroLength(VirtualFrame frame, RAbstractVector vector, RList list) {

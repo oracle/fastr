@@ -53,7 +53,7 @@ public abstract class NormalizePath extends RBuiltinNode {
         FileSystem fileSystem = FileSystems.getDefault();
         for (int i = 0; i < results.length; i++) {
             String path = pathVec.getDataAt(i);
-            String normPath = PathExpand.check(path);
+            String normPath = Utils.tildeExpand(path);
             try {
                 normPath = fileSystem.getPath(path).toRealPath().toString();
             } catch (IOException e) {

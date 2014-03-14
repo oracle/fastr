@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.nio.charset.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.impl.*;
@@ -157,6 +158,32 @@ public final class Utils {
         // CheckStyle: stop system..print check
         System.err.println("FastR internal error: " + msg);
         System.exit(1);
+    }
+
+    private static String userHome;
+
+    private static String userHome() {
+        if (userHome == null) {
+            userHome = System.getProperty("user.home");
+        }
+        return userHome;
+    }
+
+    public static String tildeExpand(String path) {
+        if (path.charAt(0) == '~') {
+            return userHome() + path.substring(1);
+        } else {
+            return path;
+        }
+    }
+
+    private static Charset UTF8;
+
+    public static Charset getUTF8() {
+        if (UTF8 == null) {
+            UTF8 = Charset.forName("UTF-8");
+        }
+        return UTF8;
     }
 
 }

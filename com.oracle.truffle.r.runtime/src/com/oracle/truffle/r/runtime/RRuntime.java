@@ -137,6 +137,7 @@ public class RRuntime {
     public static void initialize() {
         RVersionInfo.initialize();
         REnvVars.initialize();
+        RProfile.initialize();
         LibPaths.initialize();
         TempDirPath.initialize();
     }

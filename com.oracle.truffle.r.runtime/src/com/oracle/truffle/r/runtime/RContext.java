@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public final class RContext {
 
+    public static final int CONSOLE_WIDTH = 80;
+
     public interface ConsoleHandler {
         /**
          * Normal output with a new line.
@@ -77,6 +79,11 @@ public final class RContext {
          * Set the R prompt.
          */
         void setPrompt(String prompt);
+
+        /**
+         * Get the console width.
+         */
+        int getWidth();
     }
 
     private final SourceManager sourceManager = new SourceManager();
