@@ -319,6 +319,12 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-NULL; x[1,1,1]<-42; }");
         assertEval("{ x<-c(a=1); x[\"b\"]<-2; x }");
         assertEval("{ x<-c(a=1); x[c(\"a\",\"b\")]<-c(7,42); x }");
+        assertEval("{ x<-c(a=1); x[c(\"a\",\"b\",\"b\")]<-c(7,42,100); x }");
+        assertEval("{ x<-NULL; x[c(\"a\", \"b\")]<-42L; x }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; attr(x, \"foo\")<-\"foo\"; x[\"a\"]<-42; attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; attr(x, \"foo\")<-\"foo\"; x[1]<-42; attributes(x) }");
+        assertEval("{ x <- NULL; x[c(\"a\", as.character(NA))] <- 7; x }");
+        assertEval("{ x <- NULL; x[c(\"a\", as.character(NA), as.character(NA))] <- 7; x }");
     }
 
     @Test

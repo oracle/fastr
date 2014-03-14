@@ -92,7 +92,7 @@ public abstract class ArrayPositionCast extends RNode {
         return operand;
     }
 
-    @Specialization(order = 2)
+    @Specialization(order = 3)
     public RIntVector doMissingVector(RAbstractVector vector, Object value, RMissing operand) {
         verifyDimensions(vector, dimension, numDimensions, assignment, getEncapsulatingSourceSection());
         int[] data = new int[numDimensions == 1 ? vector.getLength() : vector.getDimensions()[dimension]];
@@ -103,14 +103,14 @@ public abstract class ArrayPositionCast extends RNode {
         return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 3)
+    @Specialization(order = 4)
     public RNull doNullSubset(RAbstractVector vector, Object value, RNull operand) {
         // this is a special case - RNull can only appear to represent the x[[NA]] case which has to
         // return null and not a null vector
         return operand;
     }
 
-    @Specialization(order = 10, guards = "oneDimension")
+    @Specialization(order = 10, guards = "numDimensionsOne")
     public int doInt(RAbstractVector vector, Object value, int operand) {
         if (!isSubset && operand == 0) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
@@ -126,7 +126,13 @@ public abstract class ArrayPositionCast extends RNode {
         return RDataFactory.createIntVector(new int[]{operand}, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 20, guards = {"sizeOneVector", "oneDimension"})
+    @Specialization(order = 15, guards = {"sizeOneVector", "numDimensionsOne", "operandHasNames", "isAssignment"})
+    public RAbstractIntVector doIntVectorSizeOneOpNames(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+        assert operand.getDataAt(0) != 0;
+        return operand;
+    }
+
+    @Specialization(order = 16, guards = {"sizeOneVector", "numDimensionsOne", "!operandHasNames"})
     public int doIntVectorSizeOne(RAbstractVector vector, Object value, RAbstractIntVector operand) {
         int val = operand.getDataAt(0);
         if (!isSubset && val == 0) {
@@ -144,8 +150,16 @@ public abstract class ArrayPositionCast extends RNode {
         return operand.getLength() == 1;
     }
 
-    protected boolean oneDimension() {
+    protected boolean operandHasNames(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+        return operand.getNames() != RNull.instance;
+    }
+
+    protected boolean numDimensionsOne() {
         return numDimensions == 1;
+    }
+
+    protected boolean isAssignment() {
+        return assignment;
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})
@@ -215,11 +229,6 @@ public abstract class ArrayPositionCast extends RNode {
         private Object castInteger(VirtualFrame frame, Object operand) {
             initIntCast();
             return castInteger.executeCast(frame, operand);
-        }
-
-        @Specialization(order = 1)
-        public Object doMissingVector(RNull vector, Object operand, Object value) {
-            return operand;
         }
 
         @Specialization(order = 2, guards = {"!isSubset", "emptyValue"})
@@ -441,20 +450,55 @@ public abstract class ArrayPositionCast extends RNode {
             }
         }
 
-        @Specialization(order = 40, guards = {"hasNames", "numDimensionsOne"})
-        public int doStringOneDim(VirtualFrame frame, RAbstractVector vector, String operand, Object value) {
+        private static RIntVector findPositionWithNames(RAbstractVector vector, RStringVector names, String operand) {
+            RStringVector resNames = RDataFactory.createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
+            int position = -1;
+            if (names != null) {
+                for (int j = 0; j < names.getLength(); j++) {
+                    if (operand.equals(names.getDataAt(j))) {
+                        position = j + 1;
+                    }
+                }
+                if (position == -1) {
+                    position = vector.getLength() + 1;
+                }
+            } else {
+                position = vector.getLength() + 1;
+            }
+            return RDataFactory.createIntVector(new int[]{position}, RDataFactory.COMPLETE_VECTOR, resNames);
+        }
+
+        @Specialization(order = 40, guards = {"hasNames", "isAssignment", "numDimensionsOne"})
+        public RIntVector doStringOneDimNamesAssignment(VirtualFrame frame, RAbstractVector vector, String operand, Object value) {
+            RStringVector names = (RStringVector) vector.getNames();
+            return findPositionWithNames(vector, names, operand);
+        }
+
+        @Specialization(order = 41, guards = {"hasNames", "!isAssignment", "numDimensionsOne"})
+        public int doStringOneDimNames(VirtualFrame frame, RAbstractVector vector, String operand, Object value) {
             RStringVector names = (RStringVector) vector.getNames();
             return findPosition(vector, names, operand);
         }
 
-        @Specialization(order = 41, guards = {"hasDimNames", "!numDimensionsOne"})
+        @Specialization(order = 42, guards = {"!hasNames", "isAssignment", "numDimensionsOne"})
+        public RIntVector doStringOneDimAssignment(VirtualFrame frame, RAbstractVector vector, String operand, Object value) {
+            return findPositionWithNames(vector, null, operand);
+        }
+
+        @Specialization(order = 43, guards = {"isAssignment", "numDimensionsOne"})
+        public RIntVector doStringOneDimAssignment(VirtualFrame frame, RNull vector, String operand, Object value) {
+            RStringVector resNames = RDataFactory.createStringVector(new String[]{operand}, !RRuntime.isNA(operand));
+            return RDataFactory.createIntVector(new int[]{1}, RDataFactory.COMPLETE_VECTOR, resNames);
+        }
+
+        @Specialization(order = 44, guards = {"hasDimNames", "!numDimensionsOne"})
         public int doString(VirtualFrame frame, RAbstractVector vector, String operand, Object value) {
             RList dimNames = vector.getDimNames();
             RStringVector names = (RStringVector) dimNames.getDataAt(dimension);
             return findPosition(vector, names, operand);
         }
 
-        @Specialization(order = 42)
+        @Specialization(order = 45)
         public int doStringNoNames(VirtualFrame frame, RAbstractVector vector, String operand, Object value) {
             if (isSubset) {
                 if (numDimensions == 1) {
@@ -467,17 +511,17 @@ public abstract class ArrayPositionCast extends RNode {
             }
         }
 
-        @Specialization(order = 45, guards = "!isSubset")
+        @Specialization(order = 46, guards = "!isSubset")
         public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractIntVector operand, Object value) {
             return operand;
         }
 
-        @Specialization(order = 46, guards = "!isSubset")
+        @Specialization(order = 47, guards = "!isSubset")
         public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractDoubleVector operand, Object value) {
             return (RIntVector) castInteger(frame, operand);
         }
 
-        @Specialization(order = 47, guards = "!isSubset")
+        @Specialization(order = 48, guards = "!isSubset")
         public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractLogicalVector operand, Object value) {
             return (RIntVector) castInteger(frame, operand);
         }
@@ -638,13 +682,83 @@ public abstract class ArrayPositionCast extends RNode {
             return RDataFactory.createIntVector(data, !seenNA);
         }
 
-        @Specialization(order = 69, guards = {"hasNames", "numDimensionsOne", "opLengthOneOrSubset"})
-        public RIntVector doStringVectorDimOne(VirtualFrame frame, RAbstractVector vector, RAbstractStringVector operand, Object value) {
+        private static int eliminateDuplicate(RAbstractStringVector operand, int[] data, int initialPos, int currentElementPos) {
+            int position = initialPos;
+            String name = operand.getDataAt(currentElementPos);
+            if (name == RRuntime.STRING_NA) {
+                // duplicate NAs are not eliminated
+                data[currentElementPos] = (position++) + 1;
+            } else {
+                int j = 0;
+                for (; j < currentElementPos; j++) {
+                    String prevName = operand.getDataAt(j);
+                    if (name.equals(prevName)) {
+                        data[currentElementPos] = j + 1;
+                        break;
+                    }
+                }
+                if (j == currentElementPos) {
+                    data[currentElementPos] = (position++) + 1;
+                }
+            }
+            return position;
+        }
+
+        private static RIntVector findPositionsWithNames(RAbstractVector vector, RStringVector names, RAbstractStringVector operand, boolean retainNames) {
+            RStringVector resNames = operand.materialize();
+            int initialPos = vector.getLength();
+            int[] data = new int[operand.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                if (names != null) {
+                    String positionName = operand.getDataAt(i);
+                    int j = 0;
+                    for (; j < names.getLength(); j++) {
+                        if (positionName.equals(names.getDataAt(j))) {
+                            data[i] = j + 1;
+                            break;
+                        }
+                    }
+                    if (j == names.getLength()) {
+                        // TODO: this is slow - is it important to make it faster?
+                        initialPos = eliminateDuplicate(operand, data, initialPos, i);
+                    }
+                } else {
+                    data[i] = initialPos++;
+                }
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, resNames);
+        }
+
+        @Specialization(order = 69, guards = {"hasNames", "isAssignment", "numDimensionsOne", "opLengthOneOrSubset"})
+        public RIntVector doStringVectorOneDimNamesAssignment(VirtualFrame frame, RAbstractVector vector, RAbstractStringVector operand, Object value) {
+            RStringVector names = (RStringVector) vector.getNames();
+            return findPositionsWithNames(vector, names, operand, assignment);
+        }
+
+        @Specialization(order = 70, guards = {"hasNames", "!isAssignment", "numDimensionsOne", "opLengthOneOrSubset"})
+        public RIntVector doStringVectorOneDimNames(VirtualFrame frame, RAbstractVector vector, RAbstractStringVector operand, Object value) {
             RStringVector names = (RStringVector) vector.getNames();
             return findPositions(vector, names, operand, assignment);
         }
 
-        @Specialization(order = 70, guards = {"hasDimNames", "!numDimensionsOne", "opLengthOneOrSubset"})
+        @Specialization(order = 71, guards = {"!hasNames", "isAssignment", "numDimensionsOne", "opLengthOneOrSubset"})
+        public RIntVector doStringVectorOneDimAssignment(VirtualFrame frame, RAbstractVector vector, RAbstractStringVector operand, Object value) {
+            return findPositionsWithNames(vector, null, operand, assignment);
+        }
+
+        @Specialization(order = 72, guards = {"isAssignment", "numDimensionsOne", "opLengthOneOrSubset"})
+        public RIntVector doStringVectorOneDimAssignment(VirtualFrame frame, RNull vector, RAbstractStringVector operand, Object value) {
+            // we need to get rid of duplicates but retain all NAs
+            int[] data = new int[operand.getLength()];
+            int initialPos = 0;
+            for (int i = 0; i < data.length; i++) {
+                // TODO: this is slow - is it important to make it faster?
+                initialPos = eliminateDuplicate(operand, data, initialPos, i);
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, operand.materialize());
+        }
+
+        @Specialization(order = 73, guards = {"hasDimNames", "!numDimensionsOne", "opLengthOneOrSubset"})
         public RIntVector doStringVector(VirtualFrame frame, RAbstractVector vector, RAbstractStringVector operand, Object value) {
             RList dimNames = vector.getDimNames();
             RStringVector names = (RStringVector) dimNames.getDataAt(dimension);
@@ -672,13 +786,25 @@ public abstract class ArrayPositionCast extends RNode {
             }
         }
 
+        @Specialization(order = 99, guards = {"numDimensionsOne", "operandHasNames"})
+        public RAbstractIntVector doMissingVector(RNull vector, RAbstractIntVector operand, Object value) {
+            RIntVector resPositions = (RIntVector) operand.copy();
+            resPositions.setNames(null);
+            return resPositions;
+        }
+
+        @Specialization(order = 100)
+        public Object doMissingVector(RNull vector, Object operand, Object value) {
+            return operand;
+        }
+
         private final NACheck positionNACheck = NACheck.create();
         @CompilationFinal private boolean hasSeenPositive;
         @CompilationFinal private boolean hasSeenZero;
         @CompilationFinal private boolean hasSeenNegative;
         @CompilationFinal private boolean hasSeenNA;
 
-        private static int[] eliminateZeros(RAbstractVector vector, RAbstractIntVector positions, int zeroCount) {
+        private int[] eliminateZeros(RAbstractVector vector, RAbstractIntVector positions, int zeroCount) {
             int positionsLength = positions.getLength();
             int[] data = new int[positionsLength - zeroCount];
             int ind = 0;
@@ -686,7 +812,12 @@ public abstract class ArrayPositionCast extends RNode {
             for (; i < positionsLength; i++) {
                 int pos = positions.getDataAt(i);
                 if (pos > vector.getLength()) {
-                    data[ind++] = RRuntime.INT_NA;
+                    if (assignment) {
+                        data[ind++] = pos;
+                    } else {
+                        data[ind++] = RRuntime.INT_NA;
+
+                    }
                 } else if (pos != 0) {
                     data[ind++] = pos;
                 }
@@ -714,7 +845,7 @@ public abstract class ArrayPositionCast extends RNode {
                     if (numDimensions != 1 && pos > dimLength) {
                         throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
                     }
-                    if (numDimensions == 1 && pos > vector.getLength() && !assignment) {
+                    if (numDimensions == 1 && pos > vector.getLength()) {
                         if (isSubset) {
                             outOfBounds = true;
                         } else {
@@ -749,8 +880,17 @@ public abstract class ArrayPositionCast extends RNode {
                     int[] data = eliminateZeros(vector, positions, zeroCount);
                     return RDataFactory.createIntVector(data, positionNACheck.neverSeenNA() && !outOfBounds);
                 } else {
-                    // fast path (most common expected behavior)
-                    return positions;
+                    if (assignment && numDimensions == 1 && positions.getNames() != null) {
+                        // in this case, positions having the "names" attribute is considered a
+                        // special case needed for handling assignments using string indexes (which
+                        // update "names" attribute of the updated vector)
+                        RIntVector resPositions = (RIntVector) positions.copy();
+                        resPositions.setNames(null);
+                        return resPositions;
+                    } else {
+                        // fast path (most common expected behavior)
+                        return positions;
+                    }
                 }
             } else if (hasSeenNegative) {
                 if (hasSeenNA) {
@@ -858,6 +998,10 @@ public abstract class ArrayPositionCast extends RNode {
             return operand.getLength() == 1 || isSubset;
         }
 
+        protected boolean opLengthOneOrSubset(RNull vector, RAbstractVector operand) {
+            return operand.getLength() == 1 || isSubset;
+        }
+
         protected boolean opLengthGreaterThanOneAndSubscript(RAbstractVector vector, RAbstractVector operand) {
             return operand.getLength() > 1 && !isSubset;
         }
@@ -888,6 +1032,10 @@ public abstract class ArrayPositionCast extends RNode {
 
         protected boolean isAssignment() {
             return assignment;
+        }
+
+        protected boolean operandHasNames(RNull vector, RAbstractIntVector operand, Object value) {
+            return operand.getNames() != RNull.instance;
         }
 
     }
