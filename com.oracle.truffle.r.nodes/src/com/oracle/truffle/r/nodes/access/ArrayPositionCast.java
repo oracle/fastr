@@ -559,7 +559,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 56, guards = {"outOfBounds", "opLengthOneOrSubset"})
         public RIntVector doLogicalVectorOutOfBounds(RAbstractVector vector, RAbstractLogicalVector operand, Object value) {
-            throw RError.getLogicalSubscriptLong(getEncapsulatingSourceSection());
+            throw RError.getLogicalSubscriptLong(isSubset ? null : getEncapsulatingSourceSection());
         }
 
         @Specialization(order = 57, guards = {"outOfBounds", "opLengthGreaterThanOneAndSubscript"})
