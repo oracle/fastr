@@ -65,7 +65,7 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ \"1+1.1i\" == 1+1.1i }");
         assertEval("{ \"1+1.100i\" == 1+1.100i }");
 
-        assertEvalError("{ 1+1i > FALSE }");
+        assertEvalError("{ x<-1+1i; x > FALSE }");
     }
 
     @Test
@@ -192,10 +192,10 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ 3 != 1:2 }");
         assertEval("{ b <- 1:3 ; z <- FALSE ; b[2==2] }");
 
-        assertEvalError("{ 1+1i > 2+2i }");
-        assertEvalError("{ 1+1i < 2+2i }");
-        assertEvalError("{ 1+1i >= 2+2i }");
-        assertEvalError("{ 1+1i <= 2+2i }");
+        assertEvalError("{ x<-1+1i; y<-2+2i; x > y }");
+        assertEvalError("{ x<-1+1i; y<-2+2i; x < y }");
+        assertEvalError("{ x<-1+1i; y<-2+2i; x >= y }");
+        assertEvalError("{ x<-1+1i; y<-2+2i; x <= y }");
 
         assertEval("{ c(1,2,NA,4) != 2 }");
         assertEval("{ c(1,2,NA,4) == 2 }");

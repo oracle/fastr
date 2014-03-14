@@ -185,19 +185,21 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:2; x[c(TRUE, TRUE)] }");
         assertEvalError("{ x<-1:2; x[[c(TRUE, TRUE)]] }");
         assertEvalError("{ x<-1:2; dim(x)<-c(1,2); x[2+2i, 2+2i] }");
-        assertEvalError("{ x<-1:2; dim(x)<-c(1,2); x[[2+2i, 2+2i]] }");
+        assertEvalError("{ x<-1:2; dim(x)<-c(1,2); u<-2+2i; x[[u, u]] }");
         assertEval("{ x<-2; x[NULL] }");
         assertEvalError("{ x<-2; x[[NULL]] }");
         assertEval("{ x<-1; x[] }");
         assertEvalError("{ x<-1; x[[]] }");
         assertEval("{ x<-1:2; dim(x)=c(1,2); x[,] }");
-        assertEvalError("{ x<-1:2; dim(x)=c(1,2); x[[,]] }");
+        assertEvalError("{ x<-1:2; dim(x)=c(1,2); x[[, ]] }");
         assertEval("{ x<-1:2; dim(x)=c(1,2); x[,1] }");
-        assertEvalError("{ x<-1:2; dim(x)=c(1,2); x[[,1]] }");
-        assertEvalError("{ x<-1:2; dim(x)=c(1,2); x[[1,]] }");
-        assertEvalError("{ x<-1:2; dim(x)=c(1,1,2); x[[1,,1]] }");
-        assertEvalError("{ x<-1:2; dim(x)=c(1,1,2); x[[,,1]] }");
-        assertEvalError("{ x<-1:2; dim(x)=c(1,1,2); x[[1,,]] }");
+        assertEvalError("{ x<-1:2; dim(x)=c(1,2); x[[, 1]] }");
+        assertEvalError("{ x<-1:2; dim(x)=c(1,2); x[[1, ]] }");
+        // Checkstyle: stop
+        assertEvalError("{ x<-1:2; dim(x)=c(1,1,2); x[[1, , 1]] }");
+        assertEvalError("{ x<-1:2; dim(x)=c(1,1,2); x[[, , 1]] }");
+        assertEvalError("{ x<-1:2; dim(x)=c(1,1,2); x[[1, , ]] }");
+        // Checkstyle: resume
         assertEvalError("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(\"a\", c(\"b\", \"c\")); x[\"z\", \"x\"] }");
         assertEvalError("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(\"a\", c(\"b\", \"c\")); x[[\"z\", \"x\"]] }");
         assertEval("{ x<-c(a=1, b=2); x[c(\"z\", \"x\")] }");
@@ -205,11 +207,11 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-as.integer(1:4); x[[as.integer(NA)]] }");
         assertEvalError("{ x<-as.integer(1:4); dim(x)<-c(2,2); x[[as.integer(NA)]] }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[0,0]<-integer(); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[0,0]]<-integer(); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[-1,0]]<-integer(); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[0,-1]]<-integer(); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[-5,0]]<-integer(); x }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[0,-5]]<-integer(); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[0, 0]] <- integer(); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[-1, 0]] <- integer(); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[0, -1]] <- integer(); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[-5, 0]] <- integer(); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[0, -5]] <- integer(); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[-1,0]<-integer(); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[0,-1]<-integer(); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[-5,0]<-integer(); x }");
@@ -239,10 +241,10 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-list(1); x[[-1]] }");
         assertEvalError("{ x<-list(1,2,3); x[[-1]] }");
         assertEvalError("{ x<-list(1,2,3); x[[-5]] }");
-        assertEvalError("{ x<-list(42,2,3); x[[c(NA,1)]] }");
-        assertEvalError("{ x<-list(42,2,3); x[[c(0,1)]] }");
-        assertEvalError("{ x<-list(42,2,3); x[[c(1,-1)]] }");
-        assertEvalError("{ x<-list(42,2,3); x[[c(-1,1)]] }");
+        assertEvalError("{ x<-list(42,2,3); x[[c(NA, 1)]] }");
+        assertEvalError("{ x<-list(42,2,3); x[[c(0, 1)]] }");
+        assertEvalError("{ x<-list(42,2,3); x[[c(1, -1)]] }");
+        assertEvalError("{ x<-list(42,2,3); x[[c(-1, 1)]] }");
         assertEval("{ x<-list(42,2,3); x[[c(NULL,1)]] }");
         assertEval("{ x<-list(42,2,3); x[[c(NULL, NULL,1)]] }");
         assertEvalError("{ x<-list(42,2,3); x[[c(1, NULL, 2)]] }");
@@ -253,7 +255,7 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-list(42,2,3); x[[c(2, 1, 3)]] }");
         assertEval("{ x<-c(a=1, b=2); x[1] }");
         assertEval("{ x<-c(a=1, b=2); x[[1]] }");
-        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[[-3,1,1]] }");
+        assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); x[[-3, 1, 1]] }");
     }
 
     @Test
@@ -857,9 +859,9 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ b <- 1:3 ; b[integer()] <- 3:5 ; b }");
 
-        assertEvalError("{ x <- (0:4); x[c(NA,NA,NA)] <- c(200L,300L); x }");
-        assertEvalError("{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,2,10)] <- c(400L,500L,600L); x }");
-        assertEvalError("{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,0,NA)] <- c(400L,500L,600L); x }");
+        assertEvalError("{ x <- (0:4); x[c(NA, NA, NA)] <- c(200L, 300L); x }");
+        assertEvalError("{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA, 2, 10)] <- c(400L, 500L, 600L); x }");
+        assertEvalError("{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA, 0, NA)] <- c(400L, 500L, 600L); x }");
 
         assertEval("{ b <- as.list(3:6) ; dim(b) <- c(4,1) ; b[c(TRUE,FALSE)] <- NULL ; b }");
         assertEval("{ b <- as.list(3:6) ; names(b) <- c(\"X\",\"Y\",\"Z\",\"Q\") ; b[c(TRUE,FALSE)] <- NULL ; b }");

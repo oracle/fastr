@@ -1971,7 +1971,7 @@ NULL
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
-#{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1,1] }
+#{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1, 1] }
 Error in x[1, 1, 1, 1] : incorrect number of dimensions
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
@@ -1979,7 +1979,7 @@ Error in x[1, 1, 1, 1] : incorrect number of dimensions
 Error: subscript out of bounds
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testAccess
-#{ x<-1:8; dim(x)<-c(2,2,2); x[[,1,1]] }
+#{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }
 Error in x[[, 1, 1]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testArrayUpdate
@@ -2023,56 +2023,56 @@ numeric(0)
 list()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#({ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+#({ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to integer) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#({ x<-as.character(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+#({ x<-as.character(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to character) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#({ x<-as.complex(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+#({ x<-as.complex(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to complex) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#({ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+#({ x<-as.double(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to double) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#({ x<-as.logical(1:8); dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x })
+#({ x<-as.logical(1:8); dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x })
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to logical) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ a <- 1:9 ; a[,,1] <- 10L }
+#{ a <- 1:9 ; a[, , 1] <- 10L }
 Error in a[, , 1] <- 10L : incorrect number of subscripts
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ a <- 1:9 ; a[,1] <- 10L }
+#{ a <- 1:9 ; a[, 1] <- 10L }
 Error in a[, 1] <- 10L : incorrect number of subscripts on matrix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ a <- 1:9 ; a[1,1,1] <- 10L }
+#{ a <- 1:9 ; a[1, 1, 1] <- 10L }
 Error in a[1, 1, 1] <- 10L : incorrect number of subscripts
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ a <- 1:9 ; a[1,1] <- 10L }
+#{ a <- 1:9 ; a[1, 1] <- 10L }
 Error in a[1, 1] <- 10L : incorrect number of subscripts on matrix
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1,2,2) ; m[, 1] = c(1, 2, 3, 4) ; m }
+Error in m[, 1] = c(1, 2, 3, 4) :
+  number of items to replace is not a multiple of replacement length
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ m <- matrix(1,2,2) ; m[,1] = 7 ; m }
      [,1] [,2]
 [1,]    7    1
 [2,]    7    1
-
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ m <- matrix(1,2,2) ; m[,1] = c(1,2,3,4) ; m }
-Error in m[, 1] = c(1, 2, 3, 4) :
-  number of items to replace is not a multiple of replacement length
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ m <- matrix(1,2,2) ; m[,1] = c(10,11) ; m }
@@ -2127,6 +2127,10 @@ Error in m[, 1] = c(1, 2, 3, 4) :
 [2,]   10   10   10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ m <- matrix(1:6, nrow=2) ; m[, 2] <- integer() }
+Error in m[, 2] <- integer() : replacement has length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ m <- matrix(1:6, nrow=2) ; m[,2:3] <- 10:11 ; m }
      [,1] [,2] [,3]
 [1,]    1   10   10
@@ -2139,30 +2143,26 @@ Error in m[, 1] = c(1, 2, 3, 4) :
 [2,]    2   11    6
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ m <- matrix(1:6, nrow=2) ; m[,2] <- integer() }
-Error in m[, 2] <- integer() : replacement has length zero
-
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ m <- matrix(1:6, nrow=2) ; m[,integer()] <- integer() ; m }
      [,1] [,2] [,3]
 [1,]    1    3    5
 [2,]    2    4    6
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ m <- matrix(1:6, nrow=2) ; m[1,2] <- 1:3 }
+#{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- 1:3 }
 Error in m[1, 2] <- 1:3 :
   number of items to replace is not a multiple of replacement length
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ m <- matrix(1:6, nrow=2) ; m[1,2] <- integer() }
+#{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- integer() }
 Error in m[1, 2] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ m <- matrix(1:6, nrow=2) ; m[[1,1]] <- integer() }
+#{ m <- matrix(1:6, nrow=2) ; m[[1, 1]] <- integer() }
 Error in m[[1, 1]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ m <- matrix(1:6, nrow=2) ; m[[1:2,1]] <- integer() }
+#{ m <- matrix(1:6, nrow=2) ; m[[1:2, 1]] <- integer() }
 Error in m[[1:2, 1]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
@@ -2182,16 +2182,16 @@ Error in m[[1:2, 1]] <- integer() : replacement has length zero
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x }
+#{ x<-1.1:8.8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to double) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1:16; dim(x)<-c(2,2,2,2); y<-c(101:108); dim(y)<-c(2,4); x[1:2,1:2,1]<-y; x }
+#{ x<-1:16; dim(x)<-c(2,2,2,2); y<-c(101:108); dim(y)<-c(2,4); x[1:2, 1:2, 1] <- y; x }
 Error in x[1:2, 1:2, 1] <- y : incorrect number of subscripts
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1:8; dim(x)<-c(2,2,2); x[1,1,1]=as.raw(42); x }
+#{ x<-1:8; dim(x)<-c(2,2,2); x[1, 1, 1] = as.raw(42); x }
 Error in x[1, 1, 1] = as.raw(42) :
   incompatible types (from raw to integer) in subassignment type fix
 
@@ -2211,7 +2211,7 @@ Error in x[1, 1, 1] = as.raw(42) :
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1,1]<-y; x }
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); x[1, 1] <- y; x }
 Error in x[1, 1] <- y : incorrect number of subscripts on matrix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
@@ -2233,6 +2233,16 @@ Error in x[1, 1] <- y : incorrect number of subscripts on matrix
 #{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[0,5,1] <- y); x }
 Error in `[<-`(`*tmp*`, 0, 5, 1, value = 101:104) :
   subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, 2, 1), 1] <- y); x }
+Error in x[1:2, c(1, 2, 1), 1] <- y :
+  number of items to replace is not a multiple of replacement length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2, c(1, NA), 1] <- y); x }
+Error in x[1:2, c(1, NA), 1] <- y :
+  NAs are not allowed in subscripted assignments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
 #{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,1:2,0]<-y); x }
@@ -2295,17 +2305,7 @@ Error in `[<-`(`*tmp*`, 0, 5, 1, value = 101:104) :
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,1),1]<-y); x }
-Error in x[1:2, c(1, 2, 1), 1] <- y :
-  number of items to replace is not a multiple of replacement length
-
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,NA),1]<-y); x }
-Error in x[1:2, c(1, NA), 1] <- y :
-  NAs are not allowed in subscripted assignments
-
-##com.oracle.truffle.r.test.simple.TestSimpleArrays.testUpdate
-#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:120); z<-(x[1:2,c(1,2,0),1]<-y); x }
+#{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:120); z<-(x[1:2, c(1, 2, 0), 1] <- y); x }
 Error in x[1:2, c(1, 2, 0), 1] <- y :
   number of items to replace is not a multiple of replacement length
 
@@ -7456,10 +7456,6 @@ $names
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalars
-#{ 1+1i > FALSE }
-Error in 1 + (0+1i) > FALSE : invalid comparison with complex values
-
-##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalars
 #{ 1<=0L }
 [1] FALSE
 
@@ -7534,6 +7530,10 @@ logical(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalars
 #{ as.double(NA)==2L }
 [1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalars
+#{ x<-1+1i; x > FALSE }
+Error in x > FALSE : invalid comparison with complex values
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalars
 #{ x<-2; f<-function(z=x) { if (z<=x) {z} else {x} } ; f(1.4)}
@@ -7836,24 +7836,6 @@ logical(0)
 [1] NA NA NA NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
-#{ 1+1i < 2+2i }
-Error in 1 + (0+1i) < 2 + (0+2i) : invalid comparison with complex values
-
-##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
-#{ 1+1i <= 2+2i }
-Error in 1 + (0+1i) <= 2 + (0+2i) :
-  invalid comparison with complex values
-
-##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
-#{ 1+1i > 2+2i }
-Error in 1 + (0+1i) > 2 + (0+2i) : invalid comparison with complex values
-
-##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
-#{ 1+1i >= 2+2i }
-Error in 1 + (0+1i) >= 2 + (0+2i) :
-  invalid comparison with complex values
-
-##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ 1:3 < NA }
 [1] NA NA NA
 
@@ -8076,6 +8058,22 @@ logical(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ raw() < as.raw(c(2,1,4)) }
 logical(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
+#{ x<-1+1i; y<-2+2i; x < y }
+Error in x < y : invalid comparison with complex values
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
+#{ x<-1+1i; y<-2+2i; x <= y }
+Error in x <= y : invalid comparison with complex values
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
+#{ x<-1+1i; y<-2+2i; x > y }
+Error in x > y : invalid comparison with complex values
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
+#{ x<-1+1i; y<-2+2i; x >= y }
+Error in x >= y : invalid comparison with complex values
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ x<-5;y<-4:6; x<=y }
@@ -8424,6 +8422,10 @@ NULL
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
+#{ f <- function(x) { if (x == 2) 1 else 2 } ; f(1) ; f(NA) }
+Error in if (x == 2) 1 else 2 : missing value where TRUE/FALSE needed
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
 #{ f <- function(x) { if (x) 1 else 2 } ; f(1) ; f("hello") }
 Error in if (x) 1 else 2 : argument is not interpretable as logical
 
@@ -8448,10 +8450,6 @@ Error in if (x) 1 else 2 : argument is of length zero
 Error in if (x) 1 else 2 : missing value where TRUE/FALSE needed
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
-#{ f <- function(x) { if (x==2) 1 else 2 } ; f(1) ; f(NA) }
-Error in if (x == 2) 1 else 2 : missing value where TRUE/FALSE needed
-
-##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
 #{ if (FALSE==1) TRUE else FALSE }
 [1] FALSE
 
@@ -8460,18 +8458,18 @@ Error in if (x == 2) 1 else 2 : missing value where TRUE/FALSE needed
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
-#{ if (NA==TRUE) TRUE else FALSE }
+#{ if (NA == TRUE) TRUE else FALSE }
 Error in if (NA == TRUE) TRUE else FALSE :
+  missing value where TRUE/FALSE needed
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
+#{ if (TRUE == NA) TRUE else FALSE }
+Error in if (TRUE == NA) TRUE else FALSE :
   missing value where TRUE/FALSE needed
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
 #{ if (TRUE==FALSE) TRUE else FALSE }
 [1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
-#{ if (TRUE==NA) TRUE else FALSE }
-Error in if (TRUE == NA) TRUE else FALSE :
-  missing value where TRUE/FALSE needed
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
 #{ x <- 2 ; if (1==x) TRUE else 2 }
@@ -41890,23 +41888,23 @@ NULL
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-1:2; dim(x)<-c(1,2); u<-2+2i; x[[u, u]] }
+Error in x[[u, u]] : invalid subscript type 'complex'
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-1:2; dim(x)<-c(1,2); x[2+2i, 2+2i] }
 Error: invalid subscript type 'complex'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)<-c(1,2); x[[2+2i, 2+2i]] }
-Error in x[[2 + (0+2i), 2 + (0+2i)]] : invalid subscript type 'complex'
-
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)=c(1,1,2); x[[,,1]] }
+#{ x<-1:2; dim(x)=c(1,1,2); x[[, , 1]] }
 Error in x[[, , 1]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)=c(1,1,2); x[[1,,1]] }
+#{ x<-1:2; dim(x)=c(1,1,2); x[[1, , 1]] }
 Error in x[[1, , 1]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)=c(1,1,2); x[[1,,]] }
+#{ x<-1:2; dim(x)=c(1,1,2); x[[1, , ]] }
 Error in x[[1, , ]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
@@ -41918,15 +41916,15 @@ Error in x[[1, , ]] : invalid subscript type 'symbol'
 [1] 1 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)=c(1,2); x[[,1]] }
+#{ x<-1:2; dim(x)=c(1,2); x[[, 1]] }
 Error in x[[, 1]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)=c(1,2); x[[,]] }
+#{ x<-1:2; dim(x)=c(1,2); x[[, ]] }
 Error in x[[, ]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:2; dim(x)=c(1,2); x[[1,]] }
+#{ x<-1:2; dim(x)=c(1,2); x[[1, ]] }
 Error in x[[1, ]] : invalid subscript type 'symbol'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
@@ -41972,27 +41970,27 @@ Error in x[[c(TRUE, TRUE)]] : attempt to select more than one element
 [2,]    2    4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:4; dim(x)<-c(2,2); x[[-1,0]]<-integer(); x }
+#{ x<-1:4; dim(x)<-c(2,2); x[[-1, 0]] <- integer(); x }
 Error in x[[-1, 0]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:4; dim(x)<-c(2,2); x[[-5,0]]<-integer(); x }
+#{ x<-1:4; dim(x)<-c(2,2); x[[-5, 0]] <- integer(); x }
 Error in x[[-5, 0]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:4; dim(x)<-c(2,2); x[[0,-1]]<-integer(); x }
+#{ x<-1:4; dim(x)<-c(2,2); x[[0, -1]] <- integer(); x }
 Error in x[[0, -1]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:4; dim(x)<-c(2,2); x[[0,-5]]<-integer(); x }
+#{ x<-1:4; dim(x)<-c(2,2); x[[0, -5]] <- integer(); x }
 Error in x[[0, -5]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:4; dim(x)<-c(2,2); x[[0,0]]<-integer(); x }
+#{ x<-1:4; dim(x)<-c(2,2); x[[0, 0]] <- integer(); x }
 Error in x[[0, 0]] <- integer() : replacement has length zero
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-1:8; dim(x)<-c(2,2,2); x[[-3,1,1]] }
+#{ x<-1:8; dim(x)<-c(2,2,2); x[[-3, 1, 1]] }
 Error in x[[-3, 1, 1]] : attempt to select more than one element
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
@@ -42178,12 +42176,16 @@ Error in x[[-5]] : attempt to select more than one element
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-list(42,2,3); x[[c(-1,1)]] }
+#{ x<-list(42,2,3); x[[c(-1, 1)]] }
 Error in x[[c(-1, 1)]] : attempt to select more than one element
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-list(42,2,3); x[[c(0,1)]] }
+#{ x<-list(42,2,3); x[[c(0, 1)]] }
 Error in x[[c(0, 1)]] : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(42,2,3); x[[c(1, -1)]] }
+Error in x[[c(1, -1)]] : attempt to select less than one element
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(42,2,3); x[[c(1, 2)]] }
@@ -42194,15 +42196,11 @@ Error in x[[c(1, 2)]] : subscript out of bounds
 Error in x[[c(1, NULL, 2)]] : subscript out of bounds
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-list(42,2,3); x[[c(1,-1)]] }
-Error in x[[c(1, -1)]] : attempt to select less than one element
-
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(42,2,3); x[[c(2, 1, 3)]] }
 Error in x[[c(2, 1, 3)]] : recursive indexing failed at level 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-list(42,2,3); x[[c(NA,1)]] }
+#{ x<-list(42,2,3); x[[c(NA, 1)]] }
 Error in x[[c(NA, 1)]] : no such index at level 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
@@ -44327,7 +44325,7 @@ $Q
 [1] 1 3 4 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
-#{ x <- (0:4); x[c(NA,NA,NA)] <- c(200L,300L); x }
+#{ x <- (0:4); x[c(NA, NA, NA)] <- c(200L, 300L); x }
 Error in x[c(NA, NA, NA)] <- c(200L, 300L) :
   NAs are not allowed in subscripted assignments
 
@@ -44336,12 +44334,12 @@ Error in x[c(NA, NA, NA)] <- c(200L, 300L) :
 [1] 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
-#{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,0,NA)] <- c(400L,500L,600L); x }
+#{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA, 0, NA)] <- c(400L, 500L, 600L); x }
 Error in x[c(NA, 0, NA)] <- c(400L, 500L, 600L) :
   NAs are not allowed in subscripted assignments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorUpdate
-#{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA,2,10)] <- c(400L,500L,600L); x }
+#{ x <- c(1L, 2L, 3L, 4L, 5L); x[c(NA, 2, 10)] <- c(400L, 500L, 600L); x }
 Error in x[c(NA, 2, 10)] <- c(400L, 500L, 600L) :
   NAs are not allowed in subscripted assignments
 
