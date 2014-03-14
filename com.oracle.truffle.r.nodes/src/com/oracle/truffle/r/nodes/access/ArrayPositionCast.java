@@ -429,7 +429,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 37)
         public int doComplex(VirtualFrame frame, RAbstractVector vector, RComplex operand, Object value) {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.getInvalidSubscriptType(isSubset ? null : getEncapsulatingSourceSection(), "complex");
         }
 
         @Specialization(order = 38)
@@ -504,7 +504,7 @@ public abstract class ArrayPositionCast extends RNode {
                 if (numDimensions == 1) {
                     return RRuntime.INT_NA;
                 } else {
-                    throw RError.getNoArrayDimnames(getEncapsulatingSourceSection());
+                    throw RError.getNoArrayDimnames(null);
                 }
             } else {
                 throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
