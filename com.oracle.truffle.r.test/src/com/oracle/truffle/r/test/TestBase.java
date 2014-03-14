@@ -277,7 +277,7 @@ public class TestBase {
      * of truncating leading "Error" strings and such. This means it will behave like
      * {@link #assertEval}.
      */
-    private static final boolean FULL_COMPARE_ERRORS = false;
+    private static final boolean FULL_COMPARE_ERRORS = true;
 
     /**
      * Test a given string with R source against expected output. This is (currently) an exact

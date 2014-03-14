@@ -884,13 +884,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_35ac0106473a77a88243f55da51fc025() {
-        assertEvalError("{ \"hello\" && 1.0 }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_5838ac95b19505178a85db9c0028cc50() {
+        assertEvalError("{ \"hello\" && 1L }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_6f5035456bbc745107c910d9caa30784() {
-        assertEvalError("{ NULL && 1.0 }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_caf963ebc8aa302adef10c8d57b0beb5() {
+        assertEvalError("{ NULL && 1 }");
     }
 
     @Test
@@ -899,8 +899,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_be13e860202c8899e5d75eda9b26f49a() {
-        assertEvalError("{ as.raw(1) && 1.0 }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_3d7fba79ef009650011f6e19d9a66f01() {
+        assertEvalError("{ as.raw(1) && 1 }");
     }
 
     @Test
@@ -924,8 +924,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_5176df002728109dc8b65e2ed168a02a() {
-        assertEvalError("{ 0.0 || \"hello\" }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_79c0fd44f9ee5f8dad0bc89580c3d5c8() {
+        assertEvalError("{ 0L || \"hello\" }");
     }
 
     @Test
@@ -939,28 +939,28 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_f4a86a2f9022d8cd8306771a57c2948f() {
-        assertEvalError("{ \"hello\" || 1.0 }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_fde5b40fd6ac3d81925ea9695a5370ab() {
+        assertEvalError("{ \"hello\" || 1L }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_7eedc6b9e78435ab33264d4b003614eb() {
-        assertEvalError("{ NULL || 1.0 }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_c95444abd5e43a0900d814a17fc28a58() {
+        assertEvalError("{ NULL || 1 }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_d6c2ea5cd489e75b597dd101f9295fd1() {
-        assertEvalError("{ 0.0 || NULL }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_f4f1d0076aac93764444979f2ef93750() {
+        assertEvalError("{ 0 || NULL }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_9c60d5e0fb54a1d8c7bc0bf4f1f3f5fc() {
-        assertEvalError("{ as.raw(1) || 1.0 }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_d43c763bc74de86bfca4c261cbc965f0() {
+        assertEvalError("{ as.raw(1) || 1 }");
     }
 
     @Test
-    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_a5f9e2905f986eeeaa08aef199de537c() {
-        assertEvalError("{ 0.0 || as.raw(1) }");
+    public void TestSimpleArithmetic_testNonvectorizedLogicalSpecialChecks_8e4ec7bd6b3ef0faf637c0b9fa1a3c8b() {
+        assertEvalError("{ 0 || as.raw(1) }");
     }
 
     @Test

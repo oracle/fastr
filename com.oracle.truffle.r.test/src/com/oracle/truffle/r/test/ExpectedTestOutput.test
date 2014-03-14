@@ -440,8 +440,8 @@ In c(a = TRUE, TRUE) | c(TRUE, b = FALSE, FALSE) :
 Error in "hello" && 1 : invalid 'x' type in 'x && y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ "hello" && 1.0 }
-Error in "hello" && 1 : invalid 'x' type in 'x && y'
+#{ "hello" && 1L }
+Error in "hello" && 1L : invalid 'x' type in 'x && y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ "hello" && TRUE }
@@ -452,8 +452,8 @@ Error in "hello" && TRUE : invalid 'x' type in 'x && y'
 Error in "hello" || 1 : invalid 'x' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ "hello" || 1.0 }
-Error in "hello" || 1 : invalid 'x' type in 'x || y'
+#{ "hello" || 1L }
+Error in "hello" || 1L : invalid 'x' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ "hello" || FALSE }
@@ -472,24 +472,20 @@ Error in "hello" || TRUE : invalid 'x' type in 'x || y'
 Error in 0 || "hello" : invalid 'y' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
+#{ 0 || NULL }
+Error in 0 || NULL : invalid 'y' type in 'x || y'
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
+#{ 0 || as.raw(1) }
+Error in 0 || as.raw(1) : invalid 'y' type in 'x || y'
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ 0+0i || FALSE}
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ 0.0 && "hello" }
 [1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ 0.0 || "hello" }
-Error in 0 || "hello" : invalid 'y' type in 'x || y'
-
-##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ 0.0 || NULL }
-Error in 0 || NULL : invalid 'y' type in 'x || y'
-
-##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ 0.0 || as.raw(1) }
-Error in 0 || as.raw(1) : invalid 'y' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ 0.1 && "hello" }
@@ -502,6 +498,10 @@ Error in 0.1 && NULL : invalid 'y' type in 'x && y'
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ 0.1 && as.raw(1) }
 Error in 0.1 && as.raw(1) : invalid 'y' type in 'x && y'
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
+#{ 0L || "hello" }
+Error in 0L || "hello" : invalid 'y' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
 #{ 1 && "hello" }
@@ -548,11 +548,11 @@ Error in FALSE || "hello" : invalid 'y' type in 'x || y'
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ NULL && 1.0 }
+#{ NULL && 1 }
 Error in NULL && 1 : invalid 'x' type in 'x && y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ NULL || 1.0 }
+#{ NULL || 1 }
 Error in NULL || 1 : invalid 'x' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
@@ -568,11 +568,11 @@ Error in TRUE && "hello" : invalid 'y' type in 'x && y'
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ as.raw(1) && 1.0 }
+#{ as.raw(1) && 1 }
 Error in as.raw(1) && 1 : invalid 'x' type in 'x && y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
-#{ as.raw(1) || 1.0 }
+#{ as.raw(1) || 1 }
 Error in as.raw(1) || 1 : invalid 'x' type in 'x || y'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testNonvectorizedLogicalSpecialChecks
