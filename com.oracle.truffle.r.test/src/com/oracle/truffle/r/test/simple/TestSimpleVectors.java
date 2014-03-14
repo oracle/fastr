@@ -259,7 +259,7 @@ public class TestSimpleVectors extends TestBase {
     @Test
     @Ignore
     public void testMoreVectorsOtherIgnore() {
-        assertEvalError("{ x<-1:4; x[1]<-c(1,1); x }");
+        assertEvalWarning("{ x<-1:4; x[1]<-c(1,1); x }");
         assertEvalError("{ x<-1:4; x[[1]]<-c(1,1); x }");
         assertEval("{ x<-1; x[0]<-integer(); x }");
         assertEvalError("{ x<-1; x[[0]]<-integer(); x }");
@@ -285,10 +285,29 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1,4)]]<-c(42, 43); x }");
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[c(1,NA)]<-c(42, 43); x }");
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[c(NA,1)]<-c(42, 43); x }");
-        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0)]]<-c(42, 43); x }");
-        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1)]<-c(42, 43); x }");
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0,0)]]<-c(42, 43); x }");
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0,0)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1,1,0)]]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,1,0)]<-c(42, 43); x }");
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,1)]]<-c(42, 43); x }");
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,1)]]<-c(42, 43); x }");
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0,1)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,1,1)]]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1,1)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0)]]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,0)]]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0,0)]<-c(42, 43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(FALSE,TRUE)]]<-c(42,43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(FALSE,TRUE,TRUE)]]<-c(42,43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i,42+7i)]]<-c(42,43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,42+7i)]]<-c(42,43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,42+71)]]<-c(42,43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(as.raw(42), as.raw(7))]]<-c(42,43); x }");
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(as.raw(42), as.raw(7), as.raw(1))]]<-c(42,43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[-1]<-42; x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[-5]<-42; x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(-1, -2)]<-42; x }");
@@ -315,8 +334,15 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-NULL; x[1]<-42; x }");
         assertEval("{ x<-NULL; x[1]<-42+7i; x }");
         assertEval("{ x<-NULL; x[7]<-42; x }");
-        assertEvalError("{ x<-NULL; x[1,1]<-42; }");
-        assertEvalError("{ x<-NULL; x[1,1,1]<-42; }");
+        assertEval("{ x<-NULL; x[1,1]<-NULL }");
+        assertEvalError("{ x<-NULL; x[1,1]<-42; x }");
+        assertEvalError("{ x<-NULL; x[[1,1]]<-42; x }");
+        assertEvalError("{ x<-NULL; x[1,1,1]<-42; x }");
+        assertEvalError("{ x<-NULL; x[[1,1,1]]<-42; x }");
+        assertEvalError("{ x<-1; x[1,1]<-42; x }");
+        assertEvalError("{ x<-1; x[[1,1]]<-42; x }");
+        assertEvalError("{ x<-1; x[1,1,1]<-42; x }");
+        assertEvalError("{ x<-1; x[[1,1,1]]<-42; x }");
         assertEval("{ x<-c(a=1); x[\"b\"]<-2; x }");
         assertEval("{ x<-c(a=1); x[c(\"a\",\"b\")]<-c(7,42); x }");
         assertEval("{ x<-c(a=1); x[c(\"a\",\"b\",\"b\")]<-c(7,42,100); x }");
