@@ -214,7 +214,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.getComparisonComplex(this.getSourceSection());
+            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
         }
     }
 
@@ -258,7 +258,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.getComparisonComplex(this.getSourceSection());
+            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
         }
     }
 
@@ -302,7 +302,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.getComparisonComplex(this.getSourceSection());
+            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
         }
     }
 
@@ -346,7 +346,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.getComparisonComplex(this.getSourceSection());
+            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
         }
 
     }
