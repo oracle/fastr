@@ -68,7 +68,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 10)
     public Object doNull(RNull operand) {
-        throw RError.getInvalidArgType(this.getSourceSection());
+        throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
     private static byte performRaw(RRaw operand) {
@@ -77,7 +77,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Specialization
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RFunction operand) {
-        throw RError.getInvalidArgType(getSourceSection());
+        throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 20, guards = "isZeroLength")
@@ -87,12 +87,12 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Specialization(order = 30)
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RAbstractStringVector vector) {
-        throw RError.getInvalidArgType(getSourceSection());
+        throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 40)
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RList list) {
-        throw RError.getInvalidArgType(getSourceSection());
+        throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 50, guards = "!isZeroLength")

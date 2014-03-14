@@ -124,7 +124,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
         }
 
         @Override
@@ -137,13 +137,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "&&");
+                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
         }
 
         @Override
@@ -151,33 +151,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0.0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "&&");
+                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "&&");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
         }
     }
 
@@ -239,7 +239,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
         }
 
         @Override
@@ -252,13 +252,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "||");
+                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
         }
 
         @Override
@@ -266,33 +266,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0.0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "||");
+                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "x", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            throw RError.getInvalidTypeIn(this.getSourceSection(), "y", "||");
+            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
         }
     }
 
@@ -345,7 +345,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
@@ -363,13 +363,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
@@ -377,33 +377,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0.0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
     }
 
@@ -456,7 +456,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
@@ -474,13 +474,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
@@ -488,33 +488,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0.0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            throw RError.getOperationsNumericLogicalComplex(this.getSourceSection());
+            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
         }
     }
 }

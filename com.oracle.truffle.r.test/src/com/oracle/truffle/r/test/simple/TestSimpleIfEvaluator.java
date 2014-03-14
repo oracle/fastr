@@ -61,11 +61,11 @@ public class TestSimpleIfEvaluator extends TestBase {
 
         assertEvalError("{ f <- function(x) { if (x) 1 else 2 } ; f(1) ; f(\"hello\") }");
         assertEvalError("{ f <- function(x) { if (x) 1 else 2 } ; f(1) ; f(logical()) }");
-        assertEvalError("{ f <- function(x) { if (x==2) 1 else 2 } ; f(1) ; f(NA) }");
+        assertEvalError("{ f <- function(x) { if (x == 2) 1 else 2 } ; f(1) ; f(NA) }");
 
         assertEval("{ if (TRUE==FALSE) TRUE else FALSE }");
-        assertEvalError("{ if (NA==TRUE) TRUE else FALSE }");
-        assertEvalError("{ if (TRUE==NA) TRUE else FALSE }");
+        assertEvalError("{ if (NA == TRUE) TRUE else FALSE }");
+        assertEvalError("{ if (TRUE == NA) TRUE else FALSE }");
         assertEval("{ if (FALSE==TRUE) TRUE else FALSE }");
         assertEval("{ if (FALSE==1) TRUE else FALSE }");
         assertEval("{ f <- function(v) { if (FALSE==v) TRUE else FALSE } ; f(TRUE) ; f(1) }");

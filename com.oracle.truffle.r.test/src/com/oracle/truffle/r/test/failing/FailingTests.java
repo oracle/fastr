@@ -5039,6 +5039,36 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f05039b2bfc8b504f6930aeba9c35c18() {
+        assertEval("{ x<-c(a=1); x[c(\"a\",\"b\",\"b\")]<-c(7,42,100); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_17b647743be7e4e02cc7a515c2441ac7() {
+        assertEval("{ x<-NULL; x[c(\"a\", \"b\")]<-42L; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_75fa7156e5a5c7e311d917a928bfc204() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; attr(x, \"foo\")<-\"foo\"; x[\"a\"]<-42; attributes(x) }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f46c03ce3faf0d1cd2c7b9fbcfe77972() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; attr(x, \"foo\")<-\"foo\"; x[1]<-42; attributes(x) }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_72cb8c41c1f91cf5cc5e3399ce4a2bda() {
+        assertEval("{ x <- NULL; x[c(\"a\", as.character(NA))] <- 7; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_b7089a4d72fdff3453ebf281883962ef() {
+        assertEval("{ x <- NULL; x[c(\"a\", as.character(NA), as.character(NA))] <- 7; x }");
+    }
+
+    @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_f40e760b22c190582d7b76bb4cfc1734() {
         assertEvalError("{ x<-1:4; x[1]<-c(1,1); x }");
     }
