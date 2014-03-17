@@ -77,6 +77,15 @@ package com.oracle.truffle.r.parser;
         return sourceSection(id, tok, tok);
     }
     
+    /**
+     * Create a {@link SourceSection} from two {@link ASTNode}s, spanning their source.
+     */
+    private SourceSection sourceSection(String id, ASTNode a, ASTNode b) {
+        SourceSection as = a.getSource();
+        int ai = as.getCharIndex();
+        return new DefaultSourceSection(source, id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
+    }
+    
     public void display_next_tokens(){
         System.err.print("Expected tokens: ");
         for(int next: next_tokens()) {
@@ -149,7 +158,7 @@ interactive returns [ASTNode v]
     ;
 
 statement returns [ASTNode v]
-    : e=expr_or_assign n { $v = e; }
+    : e=expr_or_assign n { $v = $e.v; }
     ;
 
 n_ : (NEWLINE | COMMENT)*;
@@ -176,28 +185,40 @@ expr_wo_assign returns [ASTNode v]
 sequence returns [ASTNode v]
     @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
     @after { $v = Sequence.create(sourceSection("sequence", $start, $stop), stmts); }
-    : LBRACE n_ (e=expr_or_assign { stmts.add(e); } (n e=expr_or_assign { stmts.add(e); })* n?)? RBRACE  
+    : LBRACE n_ (e=expr_or_assign { stmts.add($e.v); } (n e=expr_or_assign { stmts.add($e.v); })* n?)? RBRACE  
     ;
 
 assign returns [ASTNode v]
-    @after { $v.setSource(sourceSection("assign", $start, $stop)); }
+    @init { ASTNode rr = null; }
+    @after {
+        if (rr != null) {
+            // assign source to span l..r
+            $v.setSource(sourceSection("assign", $l.v, rr));
+        }
+    }
     : l=tilde_expr    
-      ( ARROW n_ r=expr             { $v = AssignVariable.create(null, false, $l.v, $r.v); }
-      | SUPER_ARROW n_ r=expr       { $v = AssignVariable.create(null, true, $l.v, $r.v); }
-      | RIGHT_ARROW n_ r=expr       { $v = AssignVariable.create(null, false, $r.v, $l.v); }
-      | SUPER_RIGHT_ARROW n_ r=expr { $v = AssignVariable.create(null, true, $r.v, $l.v); }
+      ( ARROW n_ r=expr             { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
+      | SUPER_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(null, true, $l.v, $r.v); }
+      | RIGHT_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(null, false, $r.v, $l.v); }
+      | SUPER_RIGHT_ARROW n_ r=expr { rr = $r.v; $v = AssignVariable.create(null, true, $r.v, $l.v); }
       | { $v = $l.v; }
       )
     ;
 
 alter_assign returns [ASTNode v]
-    @after { $v.setSource(sourceSection("alter_assign", $start, $stop)); }
+    @init { ASTNode rr = null; }
+    @after {
+        if (rr != null) {
+            // assign source to span l..r
+            $v.setSource(sourceSection("alter_assign", $l.v, rr));
+        }
+    }
     : l=tilde_expr    
-      ( (ARROW)=>ARROW n_ r=expr_or_assign                         { $v = AssignVariable.create(null, false, $l.v, $r.v); }
-      | (SUPER_ARROW)=>SUPER_ARROW n_ r=expr_or_assign             { $v = AssignVariable.create(null, true, $l.v, $r.v); }
-      | (RIGHT_ARROW)=>RIGHT_ARROW n_ r=expr_or_assign             { $v = AssignVariable.create(null, false, $r.v, $l.v); }
-      | (SUPER_RIGHT_ARROW)=>SUPER_RIGHT_ARROW n_ r=expr_or_assign { $v = AssignVariable.create(null, true, $r.v, $l.v); }
-      | (ASSIGN)=>ASSIGN n_ r=expr_or_assign                       { $v = AssignVariable.create(null, false, $l.v, $r.v); }
+      ( (ARROW)=>ARROW n_ r=expr_or_assign                         { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
+      | (SUPER_ARROW)=>SUPER_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(null, true, $l.v, $r.v); }
+      | (RIGHT_ARROW)=>RIGHT_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(null, false, $r.v, $l.v); }
+      | (SUPER_RIGHT_ARROW)=>SUPER_RIGHT_ARROW n_ r=expr_or_assign { rr = $r.v; $v = AssignVariable.create(null, true, $r.v, $l.v); }
+      | (ASSIGN)=>ASSIGN n_ r=expr_or_assign                       { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
       | { $v = $l.v; }
       )
     ;
@@ -206,23 +227,23 @@ if_expr returns [ASTNode v]
     @after { $v.setSource(sourceSection("if", $start, $stop)); }
     : IF n_ LPAR n_ cond=expr_or_assign n_ RPAR n_ t=expr_or_assign
       (
-        (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE n_ f=expr_or_assign { $v = If.create(null, cond, t, f); })
-      | { $v = If.create(null, cond, t); }
+        (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE n_ f=expr_or_assign { $v = If.create(null, $cond.v, $t.v, $f.v); })
+      | { $v = If.create(null, $cond.v, $t.v); }
       )
     ;
 
 while_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("while_expr", $start, $stop), c, body); }
+    @after { $v = Loop.create(sourceSection("while_expr", $start, $stop), $c.v, $body.v); }
     : WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_ body=expr_or_assign
     ;
 
 for_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("for_expr", $start, $stop), $i.text, in, body); } 
+    @after { $v = Loop.create(sourceSection("for_expr", $start, $stop), $i.text, $in.v, $body.v); } 
     : FOR n_ LPAR n_ i=ID n_ IN n_ in=expr_or_assign n_ RPAR n_ body=expr_or_assign
     ;
 
 repeat_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("repeat_expr", $start, $stop), body); }
+    @after { $v = Loop.create(sourceSection("repeat_expr", $start, $stop), $body.v); }
     : REPEAT n_ body=expr_or_assign
     ;
 
@@ -233,7 +254,7 @@ function returns [ASTNode v]
     }
     @after {
         SourceSection srcs = sourceSection("function", $start, $stop);
-        vv = Function.create(l, body, srcs);
+        vv = Function.create(l, $body.v, srcs);
         ArgumentList.Default.updateParent(vv, l);
         $v = vv;
     }
@@ -253,9 +274,15 @@ par_decl [ArgumentList l]
     ;
 
 tilde_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("tilde_expr", $start, $stop)); }
+    @init { boolean hasTilde = false; }
+    @after {
+        if (hasTilde) {
+            // In other cases, source info is in l.
+            $v.setSource(sourceSection("tilde_expr", $start, $stop));
+        }
+    }
     : l=utilde_expr { $v = $l.v; }
-      ( ((TILDE) => t=TILDE n_ r=utilde_expr { $v = BinaryOperation.create(sourceSection("tilde_expr/binop", $t, $r.stop), BinaryOperator.ADD, $tilde_expr.v, $r.v); }) )*
+      ( ((TILDE) => t=TILDE n_ r=utilde_expr { hasTilde = true; $v = BinaryOperation.create(sourceSection("tilde_expr/binop", $t, $r.stop), BinaryOperator.ADD, $tilde_expr.v, $r.v); }) )*
     ;
 
 utilde_expr returns [ASTNode v]
@@ -264,15 +291,27 @@ utilde_expr returns [ASTNode v]
     ;
 
 or_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("or_expr", $start, $stop)); }
+    @init { boolean hasOr = false; }
+    @after {
+        if (hasOr) {
+            // In other cases, source info is in l.
+            $v.setSource(sourceSection("or_expr", $start, $stop));
+        }
+    }
     : l=and_expr { $v = $l.v; }
-      ( ((or_operator)=>op=or_operator n_ r=and_expr { $v = BinaryOperation.create(sourceSection("or_expr/binop", $op.start, $r.stop), $op.v, $or_expr.v, $r.v); }) )*
+      ( ((or_operator)=>op=or_operator n_ r=and_expr { hasOr = true; $v = BinaryOperation.create(sourceSection("or_expr/binop", $op.start, $r.stop), $op.v, $or_expr.v, $r.v); }) )*
     ;
 
 and_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("and_expr", $start, $stop)); }
+    @init { boolean hasAnd = false; }
+    @after {
+        if (hasAnd) {
+            // In other cases, source info is in l.
+            $v.setSource(sourceSection("and_expr", $start, $stop));
+        }
+    }
     : l=not_expr { $v = $l.v; }
-      ( ((and_operator)=>op=and_operator n_ r=not_expr { $v = BinaryOperation.create(sourceSection("and_expr/binop", $op.start, $r.stop), $op.v, $and_expr.v, $r.v); }) )*
+      ( ((and_operator)=>op=and_operator n_ r=not_expr { hasAnd = true; $v = BinaryOperation.create(sourceSection("and_expr/binop", $op.start, $r.stop), $op.v, $and_expr.v, $r.v); }) )*
     ;
 
 not_expr returns [ASTNode v]
@@ -281,42 +320,78 @@ not_expr returns [ASTNode v]
     ;
 
 comp_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("comp_expr", $start, $stop)); }
+    @init { boolean hasComp = false; }
+    @after {
+        if (hasComp) {
+            // In other cases, source info is in l.
+            $v.setSource(sourceSection("comp_expr", $start, $stop));
+        }
+    }
     : l=add_expr { $v = $l.v; }
-      ( ((comp_operator)=>op=comp_operator n_ r=add_expr { $v = BinaryOperation.create(sourceSection("comp_expr/binop", $op.start, $r.stop), $op.v, $comp_expr.v, $r.v); }) )*
+      ( ((comp_operator)=>op=comp_operator n_ r=add_expr { hasComp = true; $v = BinaryOperation.create(sourceSection("comp_expr/binop", $op.start, $r.stop), $op.v, $comp_expr.v, $r.v); }) )*
     ;
 
 add_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("add_expr", $start, $stop)); }
+    @init { boolean hasAdd = false; }
+    @after {
+        if (hasAdd) {
+            // In other cases, source info is in l.
+            $v.setSource(sourceSection("add_expr", $start, $stop));
+        }
+    }
     : l=mult_expr { $v = $l.v; }
-      ( ((add_operator)=>op=add_operator n_ r=mult_expr { $v = BinaryOperation.create(sourceSection("add_expr/binop", $op.start, $r.stop), $op.v, $add_expr.v, $r.v); }) )*
+      ( ((add_operator)=>op=add_operator n_ r=mult_expr { hasAdd = true; $v = BinaryOperation.create(sourceSection("add_expr/binop", $op.start, $r.stop), $op.v, $add_expr.v, $r.v); }) )*
     ;
 
 mult_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("mult_expr", $start, $stop)); }
+    @init { boolean hasMult = false; }
+    @after {
+        if (hasMult) {
+            // In other cases, source info is in l.
+            $v.setSource(sourceSection("mult_expr", $start, $stop));
+        }
+    }
     : l=operator_expr { $v = $l.v; }
-      ( ((mult_operator)=>op=mult_operator n_ r=operator_expr { $v = BinaryOperation.create(sourceSection("mult_expr/binop", $op.start, $r.stop), $op.v, $mult_expr.v, $r.v); }) )*
+      ( ((mult_operator)=>op=mult_operator n_ r=operator_expr { hasMult = true; $v = BinaryOperation.create(sourceSection("mult_expr/binop", $op.start, $r.stop), $op.v, $mult_expr.v, $r.v); }) )*
     ;
 
 operator_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("operator_expr", $start, $stop)); }
+    @init { boolean hasOp = false; }
+    @after {
+        if (hasOp) {
+            // In other cases, source information is in l.
+            $v.setSource(sourceSection("operator_expr", $start, $stop));
+        }
+    }
     : l=colon_expr { $v = $l.v; }
-      ( (OP)=>opc=OP n_ r=colon_expr { $v = BinaryOperation.create(sourceSection("operator_expr/binop", $opc, $r.stop), $opc.text, $operator_expr.v, $r.v); } )*
+      ( (OP)=>opc=OP n_ r=colon_expr { hasOp = true; $v = BinaryOperation.create(sourceSection("operator_expr/binop", $opc, $r.stop), $opc.text, $operator_expr.v, $r.v); } )*
     ;
 
 colon_expr returns [ASTNode v] // FIXME
-    @after { $v.setSource(sourceSection("colon_expr", $start, $stop)); }
+    @init { boolean hasColon = false; }
+    @after {
+        if (hasColon) {
+            // In other cases, source information is in l.
+            $v.setSource(sourceSection("colon_expr", $start, $stop));
+        }
+    }
     : l=unary_expression { $v = $l.v; }
-      ( ((COLON)=>op=COLON n_ r=unary_expression { $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), BinaryOperator.COLON, $colon_expr.v, $r.v); }) )*
+      ( ((COLON)=>op=COLON n_ r=unary_expression { hasColon = true; $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), BinaryOperator.COLON, $colon_expr.v, $r.v); }) )*
     ;
 
 unary_expression returns [ASTNode v]
-    @after { $v.setSource(sourceSection("unary_expression", $start, $stop)); }
-    : p=PLUS n_
+    @init { boolean plusOrMinus = false; }
+    @after {
+        if (plusOrMinus) {
+            // In other cases, source information is in b.
+            $v.setSource(sourceSection("unary_expression", $start, $stop));
+        }
+    }
+    : p=PLUS n_ { plusOrMinus = true; }
       ( (number) => num=number { $v = num; }
       | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), UnaryOperator.PLUS, $l.v); }
       )
-    | m=MINUS n_
+    | m=MINUS n_ { plusOrMinus = true; }
       ( (number) => num=number { ((Constant) num).addNegativeSign(); $v = num; }
       | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), UnaryOperator.MINUS, $l.v); }
       )
@@ -324,10 +399,16 @@ unary_expression returns [ASTNode v]
     ;
 
 power_expr returns [ASTNode v]
-    @after { $v.setSource(sourceSection("power_expr", $start, $stop)); }
+    @init { boolean hasPowerOp = false; }
+    @after {
+        if (hasPowerOp) {
+            // In other cases, v already has the source information from l.
+            $v.setSource(sourceSection("power_expr", $start, $stop));
+        }
+    }
     : l=basic_expr { $v = $l.v; }
       (
-        ((power_operator)=>op=power_operator n_ r=power_expr { $v = BinaryOperation.create(sourceSection("power_expr/pow", $op.start, $r.stop), $op.v, $l.v, $r.v); } )
+        ((power_operator)=>op=power_operator n_ r=power_expr { hasPowerOp = true; $v = BinaryOperation.create(sourceSection("power_expr/pow", $op.start, $r.stop), $op.v, $l.v, $r.v); } )
       |
       )
     ;
@@ -337,14 +418,18 @@ basic_expr returns [ASTNode v]
         // NOTE: Using vv is used to work around a bug in ANTLR that occurs when
         // solely working with $v - ANTLR is unhappy about passing it to expr_subset.
         ASTNode vv = null;
+        boolean hasSubset = false;
     }
     @after {
-        vv.setSource(sourceSection("basic_expr", $start, $stop));
+        if (hasSubset) {
+            // In other cases, vv already has the source from lhs.
+            vv.setSource(sourceSection("basic_expr/WITH_SUBSET", $start, $stop));
+        }
         $v = vv;
     }
     : lhs=simple_expr { vv = lhs; }
       (
-        ((FIELD|AT|LBRAKET|LBB|LPAR)=>subset=expr_subset[vv] { vv = subset; })+
+        ((FIELD|AT|LBRAKET|LBB|LPAR)=>subset=expr_subset[vv] { vv = subset; hasSubset = true; })+
       | (n_)=>
       )
     ;
@@ -370,7 +455,7 @@ simple_expr returns [ASTNode v]
     | cstr=conststring                  { $v = cstr; }
     | id NS_GET n_ id
     | id NS_GET_INT n_ id
-    | LPAR n_ ea=expr_or_assign n_ RPAR { $v = ea; }
+    | LPAR n_ ea=expr_or_assign n_ RPAR { $v = $ea.v; $v.setSource(sourceSection("simple_expr/OMIT_PAR", $ea.start, $ea.stop)); }
     | s=sequence                        { $v = $s.v; }
     | e=expr_wo_assign                  { $v = e; }
     ;
