@@ -4944,13 +4944,23 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleVectors_testMoreVectorsOtherIgnore_d96313c3423d43c62a89814f11ae7370() {
-        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_87592c81cfaba6f155729635583ec95b() {
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,1,0)]<-c(42, 43); x }");
     }
 
     @Ignore
-    public void TestSimpleVectors_testMoreVectorsOtherIgnore_ec4f591fac449579997fa4b050f9cb45() {
-        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1)]<-c(42, 43); x }");
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_b5b1ba9bc43a6c264c0e86d9d9456a42() {
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1,1)]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_9ee2e6aa7d9ed695fc792ec5f013e59d() {
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0)]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_8ffe36d4de29230e074c24bd49486086() {
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0,0)]<-c(42, 43); x }");
     }
 
     @Ignore
@@ -5029,6 +5039,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_79892af0b66074eae7db278a1944bf0b() {
+        assertEval("{ x<-NULL; x[1,1]<-NULL }");
+    }
+
+    @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_ae929ae5d06a8c37a041f37d39b0beeb() {
         assertEval("{ x<-c(a=1); x[\"b\"]<-2; x }");
     }
@@ -5066,11 +5081,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_b7089a4d72fdff3453ebf281883962ef() {
         assertEval("{ x <- NULL; x[c(\"a\", as.character(NA), as.character(NA))] <- 7; x }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f40e760b22c190582d7b76bb4cfc1734() {
-        assertEvalError("{ x<-1:4; x[1]<-c(1,1); x }");
     }
 
     @Ignore
@@ -5139,8 +5149,73 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_df586fa72a24f11c1a0096bbd1a56e84() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0,0)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_50122aa69a9095e68504dd5b14fffcaf() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1,1,0)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_42ede1e07b91b73a80514a29b0bb2f06() {
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,1)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_0c13f7f058762cbcca92f64a7b788c19() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,1)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_884863e30908d1f87946572407965125() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,1,1)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_17c4985e036906526f4c692cf73aa7ca() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f97a9898cd6695fe05bdf4b0f647e395() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,0)]]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_1cb851b978ddad132613a2bb05a063c6() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(FALSE,TRUE)]]<-c(42,43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_661021a4962239ad4c19295097119aab() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(FALSE,TRUE,TRUE)]]<-c(42,43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f3096a580a15dd1bfc77e7b43958dca5() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(1+1i,42+7i)]]<-c(42,43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_4cadd28e21376a1cb9b8fb943f6c8d3e() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,42+7i)]]<-c(42,43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_4c40449e6fbd94e06857aee1f1a9cb4b() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,42+71)]]<-c(42,43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f97f06303d96170386df679074599e41() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(as.raw(42), as.raw(7))]]<-c(42,43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_d8d8d99c60ce5b7d2ce505f012e4a8cf() {
+        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); x[[c(as.raw(42), as.raw(7), as.raw(1))]]<-c(42,43); x }");
     }
 
     @Ignore
@@ -5199,13 +5274,48 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleVectors_testMoreVectorsOtherIgnore_5f3ce16fa7281ae6657b6aca02209e2c() {
-        assertEvalError("{ x<-NULL; x[1,1]<-42; }");
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_98e45afe06f34cb156e3a8c4e470661c() {
+        assertEvalError("{ x<-NULL; x[1,1]<-42; x }");
     }
 
     @Ignore
-    public void TestSimpleVectors_testMoreVectorsOtherIgnore_365b11604284c1504fac90ca833e10ec() {
-        assertEvalError("{ x<-NULL; x[1,1,1]<-42; }");
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_5dd1752daaee791916e2eea59e6b3816() {
+        assertEvalError("{ x<-NULL; x[[1,1]]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_811c38fd0ea4276c256f3e2d53a7ee5f() {
+        assertEvalError("{ x<-NULL; x[1,1,1]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_139a97034bdefea13a9e5e527f385837() {
+        assertEvalError("{ x<-NULL; x[[1,1,1]]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_564f32e683589596f081a21c9134751f() {
+        assertEvalError("{ x<-1; x[1,1]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_6db5c49a1df1f6c77bfc6c323469abf2() {
+        assertEvalError("{ x<-1; x[[1,1]]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_2ce483fdd6de8250f0923775c7d456cd() {
+        assertEvalError("{ x<-1; x[1,1,1]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_4c56d8fdea5af593593cd6d73b25b3b3() {
+        assertEvalError("{ x<-1; x[[1,1,1]]<-42; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_f40e760b22c190582d7b76bb4cfc1734() {
+        assertEvalWarning("{ x<-1:4; x[1]<-c(1,1); x }");
     }
 
     @Ignore
@@ -5216,6 +5326,26 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testMoreVectorsOtherIgnore_d5b74507ecdf19e11bfd18dae806dc48() {
         assertEvalWarning("{ x<-1:4;  x[c(0, 1)]<-c(7, 42); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_d96313c3423d43c62a89814f11ae7370() {
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_e0bcad7194383e1687078d57a3d125e2() {
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0,0)]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_ec4f591fac449579997fa4b050f9cb45() {
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1)]<-c(42, 43); x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testMoreVectorsOtherIgnore_887cf433e6cbe81983f8c3c10b81f71c() {
+        assertEvalWarning("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0,1)]<-c(42, 43); x }");
     }
 
     @Ignore

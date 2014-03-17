@@ -91,7 +91,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
 
     @Generic
     public Object libPathsGeneric(@SuppressWarnings("unused") Object x) {
-        throw RError.getGenericError(getSourceSection(), "invalid 'path' argument");
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }
 
 }

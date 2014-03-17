@@ -153,6 +153,7 @@ public abstract class RError extends RuntimeException {
     public static final String DIMNAMES_LIST = "'dimnames' must be a list";
     public static final String NO_ARRAY_DIMNAMES = "no 'dimnames' attribute for array";
     public static final String MISSING_SUBSCRIPT = "[[ ]] with missing subscript";
+    public static final String IMPROPER_SUBSCRIPT = "[[ ]] improper number of subscripts";
 
     public static final String ONLY_FIRST_USED = "numerical expression has %d elements: only the first used";
     public static final String NO_SUCH_INDEX = "no such index at level %d";
@@ -241,6 +242,7 @@ public abstract class RError extends RuntimeException {
     public static final String DOT_DOT_MISSING = "'..%d' is missing";
     public static final String INVALID_TYPE_LENGTH = "invalid type/length (%s/%d) in vector allocation";
     public static final String SUBASSIGN_TYPE_FIX = "incompatible types (from %s to %s) in subassignment type fix";
+    public static final String SUBSCRIPT_TYPES = "incompatible types (from %s to %s) in [[ assignment";
     public static final String RECURSIVE_INDEXING_FAILED = "recursive indexing failed at level %d";
 
     private static final String NOT_CHARACTER_VECTOR = "'%s' must be a character vector";
@@ -1662,6 +1664,18 @@ public abstract class RError extends RuntimeException {
         };
     }
 
+    public static RError getImproperSubscript(SourceSection expr) {
+        return new RErrorInExpr(expr) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public String getMessage() {
+                return RError.IMPROPER_SUBSCRIPT;
+            }
+        };
+    }
+
     public static RError getGenericError(SourceSection source, final String msg) {
         return new RErrorInExpr(source) {
 
@@ -1980,6 +1994,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getSubassignTypeFix(SourceSection ast, String fromType, String toType) {
         return getGenericError(ast, stringFormat(RError.SUBASSIGN_TYPE_FIX, fromType, toType));
+    }
+
+    public static RError getSubscriptTypes(SourceSection ast, String fromType, String toType) {
+        return getGenericError(ast, stringFormat(RError.SUBSCRIPT_TYPES, fromType, toType));
     }
 
     public static RError getRecursiveIndexingFailed(SourceSection ast, int level) {

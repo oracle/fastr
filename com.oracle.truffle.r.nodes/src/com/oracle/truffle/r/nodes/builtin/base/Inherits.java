@@ -61,11 +61,11 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization
     public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") RAbstractStringVector what, @SuppressWarnings("unused") Object which) {
-        throw RError.getNotLengthOneLogicalVector(getSourceSection(), RRuntime.WHICH);
+        throw RError.getNotLengthOneLogicalVector(getEncapsulatingSourceSection(), RRuntime.WHICH);
     }
 
     @Specialization
     public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") Object what, @SuppressWarnings("unused") Object which) {
-        throw RError.getNotCharacterVector(getSourceSection(), RRuntime.WHAT);
+        throw RError.getNotCharacterVector(getEncapsulatingSourceSection(), RRuntime.WHAT);
     }
 }

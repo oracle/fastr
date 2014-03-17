@@ -70,7 +70,7 @@ public abstract class Repeat extends RBuiltinNode {
             return convertInt.executeInteger(frame, o);
         } catch (ConversionFailedException e) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTimes(getSourceSection());
+            throw RError.getInvalidTimes(getEncapsulatingSourceSection());
         }
     }
 

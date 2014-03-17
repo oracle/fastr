@@ -68,13 +68,17 @@ public abstract class ArrayPositionCast extends RNode {
         this.isSubset = other.isSubset;
     }
 
-    protected static void verifyDimensions(RAbstractVector vector, int dimension, int numDimensions, boolean assignment, SourceSection sourceSection) {
+    protected static void verifyDimensions(RAbstractVector vector, int dimension, int numDimensions, boolean assignment, boolean isSubset, SourceSection sourceSection) {
         if ((vector.getDimensions() == null && (dimension != 0 || numDimensions > 1)) || (vector.getDimensions() != null && dimension >= vector.getDimensions().length)) {
             if (assignment) {
-                if (numDimensions == 2) {
-                    throw RError.getIncorrectSubscriptsMatrix(sourceSection);
+                if (isSubset) {
+                    if (numDimensions == 2) {
+                        throw RError.getIncorrectSubscriptsMatrix(sourceSection);
+                    } else {
+                        throw RError.getIncorrectSubscripts(sourceSection);
+                    }
                 } else {
-                    throw RError.getIncorrectSubscripts(sourceSection);
+                    throw RError.getImproperSubscript(sourceSection);
                 }
             } else {
                 throw RError.getIncorrectDimensions(sourceSection);
@@ -94,7 +98,7 @@ public abstract class ArrayPositionCast extends RNode {
 
     @Specialization(order = 3)
     public RIntVector doMissingVector(RAbstractVector vector, Object value, RMissing operand) {
-        verifyDimensions(vector, dimension, numDimensions, assignment, getEncapsulatingSourceSection());
+        verifyDimensions(vector, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
         int[] data = new int[numDimensions == 1 ? vector.getLength() : vector.getDimensions()[dimension]];
         for (int i = 0; i < data.length; i++) {
             data[i] = i + 1;
@@ -369,8 +373,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 20, guards = "!isNegative")
-        public int doDouble(VirtualFrame frame, RAbstractVector vector, double operand, Object value) {
-            return (int) convertOperatorRecursive(frame, vector, castInteger(frame, operand), value);
+        public Object doDouble(VirtualFrame frame, RAbstractVector vector, double operand, Object value) {
+            return convertOperatorRecursive(frame, vector, castInteger(frame, operand), value);
         }
 
         @Specialization(order = 21, guards = "isNegative")
@@ -533,7 +537,11 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 51, guards = "opLengthGreaterThanOneAndSubscript")
         public RIntVector doIntVectorTooManySelected(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector operand, Object value) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            if (operand.getLength() == 2 && operand.getDataAt(0) == 0.0) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            }
         }
 
         @Specialization(order = 52, guards = "opLengthZeroAndSubscript")
@@ -549,7 +557,11 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 54, guards = "opLengthGreaterThanOneAndSubscript")
         public RIntVector doDoubleVectorTooManySelected(VirtualFrame frame, RAbstractVector vector, RAbstractDoubleVector operand, Object value) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            if (operand.getLength() == 2 && operand.getDataAt(0) == 0.0) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            }
         }
 
         @Specialization(order = 55, guards = "opLengthZeroAndSubscript")
@@ -619,7 +631,11 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 61, guards = {"!outOfBounds", "opLengthGreaterThanOneAndSubscript"})
         public RIntVector doLogicalVectorTooManySelected(RAbstractVector vector, RAbstractLogicalVector operand, Object value) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            if (operand.getLength() == 2 && operand.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            }
         }
 
         @Specialization(order = 62, guards = {"!outOfBounds", "opLengthZeroAndSubscript"})
@@ -629,12 +645,16 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 63, guards = "opLengthOneOrSubset")
         public RIntVector doComplexVector(VirtualFrame frame, RAbstractVector vector, RAbstractComplexVector operand, Object value) {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            if (operand.getLength() == 2) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            } else {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            }
         }
 
         @Specialization(order = 64, guards = "opLengthGreaterThanOneAndSubscript")
         public RIntVector doComplexVectoTooManySelectedr(VirtualFrame frame, RAbstractVector vector, RAbstractComplexVector operand, Object value) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
         }
 
         @Specialization(order = 65, guards = "opLengthZeroAndSubscript")
@@ -650,7 +670,11 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 67, guards = "opLengthGreaterThanOneAndSubscript")
         public RIntVector doRawVectorTooManySelected(VirtualFrame frame, RAbstractVector vector, RAbstractRawVector operand, Object value) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            if (operand.getLength() == 2) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            } else {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            }
         }
 
         @Specialization(order = 68, guards = "opLengthZeroAndSubscript")
@@ -794,8 +818,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 100)
-        public Object doMissingVector(RNull vector, Object operand, Object value) {
-            return operand;
+        public Object doMissingVector(VirtualFrame frame, RNull vector, Object operand, Object value) {
+            return castInteger(frame, operand);
         }
 
         private final NACheck positionNACheck = NACheck.create();
@@ -834,9 +858,6 @@ public abstract class ArrayPositionCast extends RNode {
             for (int i = 0; i < positionsLength; ++i) {
                 int pos = positions.getDataAt(i);
                 if (positionNACheck.check(pos)) {
-                    if (assignment && isSubset) {
-                        throw RError.getNASubscripted(getEncapsulatingSourceSection());
-                    }
                     if (!hasSeenNA) {
                         CompilerDirectives.transferToInterpreter();
                         hasSeenNA = true;
@@ -924,7 +945,7 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         private int getDimensionSize(RAbstractVector vector) {
-            verifyDimensions(vector, dimension, numDimensions, assignment, getEncapsulatingSourceSection());
+            verifyDimensions(vector, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
             return numDimensions == 1 ? vector.getLength() : vector.getDimensions()[dimension];
         }
 

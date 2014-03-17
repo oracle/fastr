@@ -35,7 +35,7 @@ public abstract class Setwd extends RBuiltinNode {
     public Object setwd(String dir) {
         int rc = BaseRFFIFactory.getRFFI().setwd(dir);
         if (rc != 0) {
-            throw RError.getCannotChangeDirectory(getSourceSection());
+            throw RError.getCannotChangeDirectory(getEncapsulatingSourceSection());
         } else {
             return new RInvisible(BaseRFFIFactory.getRFFI().getwd());
         }

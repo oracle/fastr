@@ -68,7 +68,7 @@ public abstract class InternalIdentical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
-        throw RError.getGenericError(getSourceSection(), "unimplemented argument types to 'identical'");
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument types to 'identical'");
     }
 
     @Generic
@@ -77,7 +77,7 @@ public abstract class InternalIdentical extends RBuiltinNode {
                     @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
                     @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
                     // @formatter:on
-        throw RError.getGenericError(getSourceSection(), "invalid argument types to 'identical'");
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid argument types to 'identical'");
     }
 
     private static byte rBoolean(boolean b) {

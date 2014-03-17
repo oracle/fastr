@@ -43,7 +43,7 @@ public abstract class ReadREnviron extends RBuiltinNode {
             RContext.getInstance().setEvalWarning(ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
-            throw RError.getGenericError(getSourceSection(), ex.getMessage());
+            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
         }
         return new RInvisible(result);
     }
@@ -54,6 +54,6 @@ public abstract class ReadREnviron extends RBuiltinNode {
 
     @Generic
     public Object doReadEnvironGeneric(@SuppressWarnings("unused") Object x) {
-        throw RError.getGenericError(getSourceSection(), "argument 'x' must be a character string");
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "argument 'x' must be a character string");
     }
 }

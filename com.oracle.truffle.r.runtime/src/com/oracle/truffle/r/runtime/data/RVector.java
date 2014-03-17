@@ -350,9 +350,9 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this.complete = this.complete || this.getLength() <= size;
         resizeInternal(size);
         // reset all atributes other than names;
-        this.dimensions = null;
+        this.setDimNames(null);
+        this.setDimensions(null);
         this.matrixDimension = 0;
-        this.dimNames = null;
         if (this.names != null && this.names != RNull.instance) {
             ((RStringVector) this.names).resizeWithEmpty(size);
         }
