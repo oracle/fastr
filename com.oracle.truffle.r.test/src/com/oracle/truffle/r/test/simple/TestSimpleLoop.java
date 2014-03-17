@@ -50,7 +50,7 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testLoopsErrors() {
-        assertEvalError("{ while(1 < NA) { 1 } }");
+        assertEvalError("{ while (1 < NA) { 1 } }");
 
         assertEvalError("{ break; }");
         assertEvalError("{ next; }");

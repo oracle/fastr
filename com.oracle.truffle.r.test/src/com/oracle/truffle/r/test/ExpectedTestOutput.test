@@ -8782,7 +8782,7 @@ Error: no loop for break/next, jumping to top level
 Error: no loop for break/next, jumping to top level
 
 ##com.oracle.truffle.r.test.simple.TestSimpleLoop.testLoopsErrors
-#{ while(1 < NA) { 1 } }
+#{ while (1 < NA) { 1 } }
 Error in while (1 < NA) { : missing value where TRUE/FALSE needed
 
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testAccessDim

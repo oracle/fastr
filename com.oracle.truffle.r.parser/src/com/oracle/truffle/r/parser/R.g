@@ -233,8 +233,20 @@ if_expr returns [ASTNode v]
     ;
 
 while_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("while_expr", $start, $stop), $c.v, $body.v); }
-    : WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_ body=expr_or_assign
+    @init { boolean blockBody = false; }
+    @after {
+        SourceSection src;
+        if (blockBody) {
+            src = sourceSection("while_expr/BLOCK", $start, $body.start);
+        } else {
+            src = sourceSection("while_expr/EXPR", $start, $stop);
+        }
+        $v = Loop.create(src, $c.v, $body.v);
+    }
+    : WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_
+      ( (LBRACE)=>body=expr_or_assign { blockBody = true; }
+      |           body=expr_or_assign
+      )
     ;
 
 for_expr returns [ASTNode v]
