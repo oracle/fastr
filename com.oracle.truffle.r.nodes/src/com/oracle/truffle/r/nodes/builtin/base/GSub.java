@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("gsub")
 public abstract class GSub extends Sub {
@@ -33,6 +34,12 @@ public abstract class GSub extends Sub {
     @Override
     public String sub(String pattern, String replacement, String x) {
         return replaceMatch(pattern, replacement, x);
+    }
+
+    @Specialization(order = 2)
+    public String sub(RAbstractStringVector pattern, RAbstractStringVector replacement, RAbstractStringVector x) {
+        // TODO print warnings that only the first element of each is used
+        return replaceMatch(pattern.getDataAt(0), replacement.getDataAt(0), x.getDataAt(0));
     }
 
     @Override
