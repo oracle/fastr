@@ -20,20 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ffi.*;
-
-@RBuiltin({".Internal.getwd"})
-public abstract class Getwd extends RBuiltinNode {
-
-    @Specialization
-    public Object getwd() {
-        String result = BaseRFFIFactory.getRFFI().getwd();
-        return RDataFactory.createStringVector(result);
-    }
-
-}
+ /**
+  * This "package" contains R sources that correspond to (some of) the R functions
+  * in the "base" package. They are loaded using the {@link java.lang.Class#getResource}
+  * mechanism on system startup.
+  */
+package com.oracle.truffle.r.nodes.builtin.base.R;

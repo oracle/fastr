@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * invoke the renamed version explicitly from a modified version of {@code getenv.R}.
  */
 @RBuiltin({".Internal.Sys.getenv"})
-public abstract class InternalSysGetenv extends RBuiltinNode {
+public abstract class SysGetenv extends RBuiltinNode {
 
     @Specialization()
     public Object sysGetEnv(RAbstractStringVector x, String unset) {

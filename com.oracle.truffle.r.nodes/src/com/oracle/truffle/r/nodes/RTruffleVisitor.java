@@ -87,7 +87,22 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     }
 
     @Override
-    public RNode visit(FunctionCall call) {
+    public RNode visit(FunctionCall callParam) {
+        FunctionCall call = callParam;
+        Symbol callName = call.getName();
+        SourceSection callSource = call.getSource();
+
+        if (callName.toString().equals(".Internal")) {
+            // A call .Internal(f(args)) is rewritten as .Internal.f(args).
+            // If the first arg is not a function call, then it will be an error,
+            // but we must not crash here.
+            ASTNode callArg1 = call.getArgs().first().getValue();
+            if (callArg1 instanceof FunctionCall) {
+                FunctionCall internalCall = (FunctionCall) callArg1;
+                callName = Symbol.getSymbol(".Internal." + internalCall.getName().toString());
+                call = internalCall;
+            }
+        }
         int index = 0;
         String[] argumentNames = new String[call.getArgs().size()];
         RNode[] nodes = new RNode[call.getArgs().size()];
@@ -97,7 +112,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
             index++;
         }
-        return RCallNode.createCall(call.getSource(), ReadVariableNode.create(call.getName(), RRuntime.TYPE_FUNCTION, false), CallArgumentsNode.create(nodes, argumentNames));
+        return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), CallArgumentsNode.create(nodes, argumentNames));
     }
 
     @Override
@@ -196,7 +211,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     private static Object constructReplacementPrefix(RNode[] seq, RNode rhs, String vSymbol, SimpleAccessVariable vAST, boolean isSuper) {
         //@formatter:off
         // store a - need to use temporary, otherwise there is a failure in case multiple calls to
-        // the replacement form are chained: 
+        // the replacement form are chained:
         // x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, "dimnames")<-(attr(y, "dimnames")<-list("b"))
         //@formatter:on
         final Object rhsSymbol = new Object();
@@ -280,14 +295,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     /**
      * Handle an assignment of the form {@code xxx(v) <- a} (or similar, with additional arguments).
      * These are called "replacements".
-     * 
+     *
      * According to the R language specification, this corresponds to the following code:
      * <pre>
      * '*tmp*' <- v
      * v <- `xxx<-`('*tmp*', a)
      * rm('*tmp*')
      * </pre>
-     * 
+     *
      * We take an anonymous object to store a, as the anonymous object is unique to this
      * replacement. We omit the removal of *tmp*.
      */

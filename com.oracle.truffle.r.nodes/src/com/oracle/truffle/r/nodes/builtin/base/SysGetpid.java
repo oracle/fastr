@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
-@RBuiltin({"Sys.getpid"})
+@RBuiltin({"Sys.getpid", ".Internal.Sys.getpid"})
 public abstract class SysGetpid extends RBuiltinNode {
 
     @Specialization

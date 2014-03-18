@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
-import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -102,7 +101,7 @@ public final class REngine implements RBuiltinLookupProvider {
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
         try {
             RTruffleVisitor transform = new RTruffleVisitor();
-            RNode node = transform.transform(parseAST(stream, source));
+            RNode node = transform.transform(ParseUtil.parseAST(stream, source));
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, transform.getEnvironment(), node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
             CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
             if (globalFrame == null) {
@@ -115,15 +114,6 @@ public final class REngine implements RBuiltinLookupProvider {
             e.printStackTrace();
             return null;
         }
-    }
-
-    private static ASTNode parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
-        CommonTokenStream tokens = new CommonTokenStream();
-        RLexer lexer = new RLexer(stream);
-        tokens.setTokenSource(lexer);
-        RParser parser = new RParser(tokens);
-        parser.setSource(source);
-        return parser.script().v;
     }
 
     private static Object run(CallTarget callTarget, boolean printResult) {

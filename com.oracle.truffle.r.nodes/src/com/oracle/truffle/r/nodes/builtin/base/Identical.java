@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * all set to {@code TRUE/FALSE} by the R snippet.
  */
 @RBuiltin(".Internal.identical")
-public abstract class InternalIdentical extends RBuiltinNode {
+public abstract class Identical extends RBuiltinNode {
 
     @Specialization(order = 0)
     public Object doInternalIdential(byte x, byte y,

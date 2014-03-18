@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin({".Internal.getwd"})
-public abstract class Getwd extends RBuiltinNode {
-
+@RBuiltin(".Internal.file.symlink")
+public abstract class FileSymLink extends FileLinkAdaptor {
     @Specialization
-    public Object getwd() {
-        String result = BaseRFFIFactory.getRFFI().getwd();
-        return RDataFactory.createStringVector(result);
+    public Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+        return doFileLink(vecFrom, vecTo, true);
     }
 
 }

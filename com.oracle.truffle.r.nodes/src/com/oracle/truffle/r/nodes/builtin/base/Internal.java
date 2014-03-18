@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,18 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin({".Internal.getwd"})
-public abstract class Getwd extends RBuiltinNode {
+/**
+ * Currently all (syntactically valid) {@code .Internal(f(args))} calls are rewritten as
+ * {@code .Internal.f(args)}. So this builtin will only ever be invoked for an invalid argument,
+ * i.e., not a function call, e.g. {@code .Internal(f)}.
+ */
+@RBuiltin(".Internal")
+public abstract class Internal extends RBuiltinNode {
 
     @Specialization
-    public Object getwd() {
-        String result = BaseRFFIFactory.getRFFI().getwd();
-        return RDataFactory.createStringVector(result);
+    public Object doInternal(@SuppressWarnings("unused") Object x) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid .Internal() argument");
     }
-
 }
