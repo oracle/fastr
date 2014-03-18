@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -162,6 +163,7 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
     }
 
+    @SlowPath
     private RStringVector getNames(RAbstractVector vector, Object[] positions, int currentDimLevel) {
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
         int numPositions = p.getLength();
@@ -177,6 +179,7 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
+    @SlowPath
     private void getDimNames(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
         if (currentSrcDimLevel == 0) {
             return;
@@ -310,6 +313,7 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
+    @SlowPath
     private void getData(int[] data, RAbstractIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -337,6 +341,7 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
+    @SlowPath
     private void getData(Object[] data, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -612,6 +617,7 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createEmptyIntVector();
     }
 
+    @SlowPath
     private void getData(double[] data, RAbstractDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -733,6 +739,7 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createEmptyDoubleVector();
     }
 
+    @SlowPath
     private void getData(byte[] data, RLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -854,6 +861,7 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createEmptyLogicalVector();
     }
 
+    @SlowPath
     private void getData(String[] data, RStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -975,6 +983,7 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createEmptyStringVector();
     }
 
+    @SlowPath
     private void getDataComplex(double[] data, RComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -1102,6 +1111,7 @@ public abstract class AccessArrayNode extends RNode {
         return RDataFactory.createEmptyComplexVector();
     }
 
+    @SlowPath
     private void getDataRaw(byte[] data, RRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
