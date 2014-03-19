@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(".Internal.normalizePath")
 public abstract class NormalizePath extends RBuiltinNode {
 
-    @Specialization()
+    @Specialization
     public RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
         String[] results = new String[pathVec.getLength()];
         FileSystem fileSystem = FileSystems.getDefault();

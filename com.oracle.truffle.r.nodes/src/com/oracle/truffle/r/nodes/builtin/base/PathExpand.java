@@ -42,7 +42,7 @@ public abstract class PathExpand extends RBuiltinNode {
     }
 
     @Generic
-    public Object doPathEpandGeneric(@SuppressWarnings("unused") Object path) {
+    public Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }
 
