@@ -356,12 +356,11 @@ public abstract class RCallNode extends RNode {
             this.names = names;
         }
 
-        @ExplodeLoop
         @Override
         public RList execute(VirtualFrame frame) {
             Object[] evaluatedElements = new Object[elementNodes.length];
-            for (int i = 0; i < elementNodes.length; i++) {
-                evaluatedElements[i] = elementNodes[i].execute(frame);
+            if (elementNodes.length > 0) {
+                executeElementNodes(frame, elementNodes, evaluatedElements);
             }
             RList argList = RDataFactory.createList(evaluatedElements);
             if (names != null) {
@@ -388,14 +387,20 @@ public abstract class RCallNode extends RNode {
             super(elements);
         }
 
-        @ExplodeLoop
         @Override
         public Object[] execute(VirtualFrame frame) {
             Object[] evaluatedElements = new Object[elementNodes.length];
-            for (int i = 0; i < elementNodes.length; i++) {
-                evaluatedElements[i] = elementNodes[i].execute(frame);
+            if (elementNodes.length > 0) {
+                executeElementNodes(frame, elementNodes, evaluatedElements);
             }
             return evaluatedElements;
+        }
+    }
+
+    @ExplodeLoop
+    protected static void executeElementNodes(VirtualFrame frame, RNode[] elementNodes, Object[] evaluatedElements) {
+        for (int i = 0; i < elementNodes.length; i++) {
+            evaluatedElements[i] = elementNodes[i].execute(frame);
         }
     }
 
