@@ -154,6 +154,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         }
         if (attributes != null && newDimNames == null) {
             attributes.remove(RRuntime.DIMNAMES_ATTR_KEY);
+            this.matrixDimension = 0;
         } else if (newDimNames != null) {
             if (dimensions == null) {
                 throw RError.getDimnamesNonarray(sourceSection);
@@ -346,13 +347,28 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         }
     }
 
+    public void copyRegAttributesFrom(RAbstractVector vector) {
+        Map<String, Object> orgAttributes = vector.getAttributes();
+        if (orgAttributes == null) {
+            return;
+        }
+        if (this.attributes == null) {
+            this.attributes = new LinkedHashMap<>();
+        }
+        for (Map.Entry<String, Object> e : orgAttributes.entrySet()) {
+            String key = e.getKey();
+            if (key != RRuntime.DIM_ATTR_KEY && key != RRuntime.DIMNAMES_ATTR_KEY && key != RRuntime.NAMES_ATTR_KEY) {
+                attributes.put(key, e.getValue());
+            }
+        }
+    }
+
     public void resizeWithNames(int size) {
         this.complete = this.complete || this.getLength() <= size;
         resizeInternal(size);
         // reset all atributes other than names;
         this.setDimNames(null);
         this.setDimensions(null);
-        this.matrixDimension = 0;
         if (this.names != null && this.names != RNull.instance) {
             ((RStringVector) this.names).resizeWithEmpty(size);
         }

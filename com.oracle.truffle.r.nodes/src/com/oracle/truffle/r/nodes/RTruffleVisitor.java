@@ -243,14 +243,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, u.isSuper());
         RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
         RNode varAccess = AccessVariable.create(null, varSymbol).accept(this);
-        if (a.getArgs().size() == 2) {
-            RNode index = a.getArgs().getNode(0).accept(this);
-            UpdateVectorHelperNode update = UpdateVectorHelperNodeFactory.create(null, null, index);
-            update.setSubset(a.isSubset());
-            update.assignSourceSection(u.getSource());
-            CoerceBinaryNode updateOp = CoerceBinaryNodeFactory.create(update, varAccess, rhsAccess);
-            return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
-        } else {
         int argLength = a.getArgs().size();
         RNode[] positions = new RNode[argLength - 1]; // last argument == RHS
         for (int i = 0; i < argLength - 1; i++) {
@@ -259,7 +251,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
         UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), rhsAccess, varAccess, ConstantNode.create(0), positions);
         return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
-        }
     }
 
     @Override

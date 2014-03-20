@@ -114,35 +114,27 @@ public abstract class ArrayPositionCast extends RNode {
         return operand;
     }
 
-    @Specialization(order = 10, guards = "numDimensionsOne")
-    public int doInt(RAbstractVector vector, Object value, int operand) {
-        if (!isSubset && operand == 0) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-        }
-        return operand;
-    }
-
-    @Specialization(order = 11)
-    public RIntVector doIntVector(RAbstractVector vector, Object value, int operand) {
-        if (!isSubset && operand == 0) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-        }
-        return RDataFactory.createIntVector(new int[]{operand}, RDataFactory.COMPLETE_VECTOR);
+    @Specialization(order = 14, guards = {"sizeOneVector", "numDimensionsOne", "operandHasNames", "isAssignment"})
+    public int doIntVectorSizeOneOpNames(RAbstractVector vector, RNull value, RAbstractIntVector operand) {
+        assert operand.getDataAt(0) != 0;
+        return operand.getDataAt(0);
     }
 
     @Specialization(order = 15, guards = {"sizeOneVector", "numDimensionsOne", "operandHasNames", "isAssignment"})
-    public RAbstractIntVector doIntVectorSizeOneOpNames(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    public RIntVector doIntVectorSizeOneOpNames(RAbstractVector vector, Object value, RAbstractIntVector operand) {
         assert operand.getDataAt(0) != 0;
-        return operand;
+        return operand.materialize();
     }
 
     @Specialization(order = 16, guards = {"sizeOneVector", "numDimensionsOne", "!operandHasNames"})
     public int doIntVectorSizeOne(RAbstractVector vector, Object value, RAbstractIntVector operand) {
         int val = operand.getDataAt(0);
-        if (!isSubset && val == 0) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-        }
         return val;
+    }
+
+    @Specialization(order = 20, guards = "emptyOperand")
+    public int doIntVectorZero(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+        return 0;
     }
 
     @Specialization(order = 21)
@@ -164,6 +156,10 @@ public abstract class ArrayPositionCast extends RNode {
 
     protected boolean isAssignment() {
         return assignment;
+    }
+
+    protected boolean emptyOperand(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+        return operand.getLength() == 0;
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})
@@ -515,17 +511,22 @@ public abstract class ArrayPositionCast extends RNode {
             }
         }
 
-        @Specialization(order = 46, guards = "!isSubset")
+        @Specialization(order = 46, guards = {"!isSubset", "opLengthZero"})
+        public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractVector operand, Object value) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
+
+        @Specialization(order = 47, guards = {"!isSubset", "!opLengthZero"})
         public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractIntVector operand, Object value) {
             return operand;
         }
 
-        @Specialization(order = 47, guards = "!isSubset")
+        @Specialization(order = 48, guards = {"!isSubset", "!opLengthZero"})
         public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractDoubleVector operand, Object value) {
             return (RIntVector) castInteger(frame, operand);
         }
 
-        @Specialization(order = 48, guards = "!isSubset")
+        @Specialization(order = 49, guards = {"!isSubset", "!opLengthZero"})
         public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractLogicalVector operand, Object value) {
             return (RIntVector) castInteger(frame, operand);
         }
@@ -1029,6 +1030,10 @@ public abstract class ArrayPositionCast extends RNode {
 
         protected boolean opLengthZeroAndSubscript(RAbstractVector vector, RAbstractVector operand) {
             return operand.getLength() == 0 && !isSubset;
+        }
+
+        protected boolean opLengthZero(RList vector, RAbstractVector operand, Object value) {
+            return operand.getLength() == 0;
         }
 
         protected boolean isSubset() {

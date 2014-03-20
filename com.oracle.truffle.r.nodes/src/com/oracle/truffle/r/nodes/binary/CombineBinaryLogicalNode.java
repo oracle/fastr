@@ -67,6 +67,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     @Specialization(order = 6)
     public RLogicalVector combine(RLogicalVector left, byte right) {
         check.enable(left);
+        check.enable(right);
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -82,6 +83,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     @Specialization(order = 7)
     public RLogicalVector combine(byte left, RLogicalVector right) {
         check.enable(right);
+        check.enable(left);
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {

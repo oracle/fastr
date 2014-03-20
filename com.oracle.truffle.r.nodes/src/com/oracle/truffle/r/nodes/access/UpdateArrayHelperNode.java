@@ -52,6 +52,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     abstract RNode getNewValue();
 
+    abstract Object executeUpdate(VirtualFrame frame, Object value, Object vector, int recLevel, Object positions);
+
+    @Child private UpdateArrayHelperNode updateRecursive;
     @Child private CastComplexNode castComplex;
     @Child private CastDoubleNode castDouble;
     @Child private CastIntegerNode castInteger;
@@ -63,6 +66,14 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     public UpdateArrayHelperNode(UpdateArrayHelperNode other) {
         this.isSubset = other.isSubset;
+    }
+
+    private Object updateRecursive(VirtualFrame frame, Object value, Object vector, Object operand, int recLevel) {
+        if (updateRecursive == null) {
+            CompilerDirectives.transferToInterpreter();
+            updateRecursive = adoptChild(UpdateArrayHelperNodeFactory.create(this.isSubset, null, null, null, null));
+        }
+        return executeUpdate(frame, value, vector, recLevel, operand);
     }
 
     private Object castComplex(VirtualFrame frame, Object operand) {
@@ -109,6 +120,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @CreateCast({"positions"})
     public RNode[] createCastPositions(RNode[] children) {
+        if (children == null) {
+            return null;
+        }
         RNode[] positions;
         if (children.length == 0) {
             // []
@@ -122,7 +136,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return new RNode[]{varArgAsObjectArrayNodeFactory.makeList(positions, null)};
     }
 
-    @Specialization(order = 10, guards = "emptyValue")
+    @Specialization(order = 5, guards = "emptyValue")
     RAbstractVector update(RAbstractVector value, RAbstractVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions) {
         if (isSubset) {
             int replacementLength = getReplacementLength(positions, value.getLength());
@@ -134,17 +148,42 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @SuppressWarnings("unused")
+    @Specialization(order = 8)
+    RAbstractVector update(RNull value, RList vector, int recLevel, Object[] positions) {
+        if (isSubset) {
+            throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
+        } else {
+            throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL", "list");
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 9, guards = "isPosZero")
+    RAbstractVector updateNAOrZero(RNull value, RList vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        } else {
+            return vector;
+        }
+    }
+
+    @SuppressWarnings("unused")
     @Specialization(order = 11)
     RAbstractVector update(RNull value, RAbstractVector vector, int recLevel, Object[] positions) {
         if (isSubset) {
             throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
         } else {
-            throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL", RRuntime.classToString(vector.getElementClass(), false));
+            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            // CheckStyle: stop system..print check
+            // with no "--silent" command flag, this should get thrown
+            // throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL",
+            // RRuntime.classToString(vector.getElementClass(), false));
+            // CheckStyle: resume system..print check
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 12, guards = {"emptyValue", "isPositionZero"})
+    @Specialization(order = 12, guards = {"emptyValue", "isPosZero"})
     RAbstractVector updatePosZero(RAbstractVector value, RAbstractVector vector, int recLevel, int position) {
         if (!isSubset) {
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
@@ -153,34 +192,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 13, guards = {"isPositionZero"})
-    RAbstractVector updatePosZero(RNull value, RAbstractVector vector, int recLevel, int position) {
-        if (!isSubset) {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
-        }
-        return vector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(order = 14, guards = {"emptyValue", "!isPositionZero"})
+    @Specialization(order = 14, guards = {"emptyValue", "!isPosZero"})
     RAbstractVector update(RAbstractVector value, RAbstractVector vector, int recLevel, int position) {
         throw RError.getReplacementZero(getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 15, guards = {"!isPositionZero"})
-    RAbstractVector update(RNull value, RAbstractVector vector, int recLevel, int position) {
-        if (!isSubset) {
-            throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL", RRuntime.classToString(vector.getElementClass(), false));
-        } else {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
-        }
-    }
-
-    @SuppressWarnings("unused")
     @Specialization(order = 16)
     RAbstractVector update(RAbstractVector value, RAbstractVector vector, int recLevel, RNull position) {
-        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
@@ -214,9 +234,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 20, guards = {"!isValueLengthOne", "!isSubset"})
-    RAbstractVector updateTooManyValues(RAbstractVector value, RAbstractVector vector, int recLevel, int position) {
-        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+    @Specialization(order = 20, guards = "isPosZero")
+    RAbstractVector updateNAOrZero(RNull value, RAbstractVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        } else {
+            return vector;
+        }
     }
 
     private int getNewArrayBase(int srcArrayBase, RIntVector p, int i, int newAccSrcDimensions) {
@@ -486,19 +510,262 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
+    private static RList getResultVector(RList vector, int highestPos, boolean resetDims) {
+        RList resultVector = vector;
+        if (resultVector.isShared()) {
+            resultVector = (RList) vector.copy();
+        }
+        if (resultVector.getLength() < highestPos) {
+            int orgLength = resultVector.getLength();
+            resultVector.resizeWithNames(highestPos);
+            for (int i = orgLength; i < highestPos; i++) {
+                resultVector.updateDataAt(i, RNull.instance, null);
+            }
+        } else if (resetDims) {
+            resultVector.setDimensions(null);
+            resultVector.setDimNames(null);
+        }
+        return resultVector;
+    }
+
+    private static RList updateSingleDim(RAbstractVector value, RList resultVector, int position) {
+        resultVector.updateDataAt(position - 1, value.getDataAtAsObject(0), null);
+        return resultVector;
+    }
+
+    private RList updateSingleDimVector(RAbstractVector value, RList resultVector, RIntVector positions) {
+        for (int i = 0; i < positions.getLength(); i++) {
+            int p = positions.getDataAt(i);
+            resultVector.updateDataAt(p - 1, value.getDataAtAsObject(i % value.getLength()), null);
+        }
+        if (positions.getLength() % value.getLength() != 0) {
+            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        }
+        updateNames(resultVector, positions);
+        return resultVector;
+    }
+
     @Specialization(order = 100, guards = {"multiDim", "!wrongDimensionsMatrix", "!wrongDimensions"})
     RList update(RAbstractVector value, RList vector, @SuppressWarnings("unused") int recLevel, Object[] positions) {
         return updateVector(value, vector, positions);
     }
 
+    @Specialization(order = 110, guards = "isSubset")
+    RList update(RAbstractVector value, RList vector, @SuppressWarnings("unused") int recLevel, RIntVector positions) {
+        return updateSingleDimVector(value, getResultVector(vector, getHighestPos(positions), false), positions);
+    }
+
     @SuppressWarnings("unused")
-    @Specialization(order = 190, guards = {"!wrongDimensionsMatrix", "!wrongDimensions"})
-    RList update(RNull value, RList vector, int recLevel, Object[] positions) {
-        RList resultVector = vector;
-        if (vector.isShared()) {
-            resultVector = (RList) vector.copy();
-        }
+    @Specialization(order = 111, guards = {"!isValueLengthOne", "isSubset"})
+    RList updateTooManyValuesSubset(RAbstractVector value, RList vector, int recLevel, int position) {
+        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        return updateSingleDim(value, getResultVector(vector, position, false), position);
+    }
+
+    @Specialization(order = 112, guards = {"isValueLengthOne", "isSubset"})
+    RList update(RAbstractVector value, RList vector, @SuppressWarnings("unused") int recLevel, int position) {
+        return updateSingleDim(value, getResultVector(vector, position, false), position);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 113, guards = "!isSubset")
+    RList updateTooManyValuesSubscript(RAbstractVector value, RList vector, int recLevel, int position) {
+        RList resultVector = getResultVector(vector, position, false);
+        resultVector.updateDataAt(position - 1, value, null);
         return resultVector;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 120, guards = "!isPosZero")
+    RList update(RNull value, RList vector, int recLevel, int position) {
+        if (position > vector.getLength()) {
+            // this is equivalent to extending the vector to appropriate length and then removing
+            // the last element
+            return getResultVector(vector, position - 1, true);
+        } else {
+            Object[] data = new Object[vector.getLength() - 1];
+            RStringVector orgNames = null;
+            String[] namesData = null;
+            if (vector.getNames() != RNull.instance) {
+                namesData = new String[vector.getLength() - 1];
+                orgNames = (RStringVector) vector.getNames();
+            }
+
+            int ind = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                if (i != (position - 1)) {
+                    data[ind] = vector.getDataAt(i);
+                    if (orgNames != null) {
+                        namesData[ind] = orgNames.getDataAt(i);
+                    }
+                    ind++;
+                }
+            }
+
+            RList result;
+            if (orgNames == null) {
+                result = RDataFactory.createList(data);
+            } else {
+                result = RDataFactory.createList(data, RDataFactory.createStringVector(namesData, vector.isComplete()));
+            }
+            result.copyRegAttributesFrom(vector);
+            return result;
+        }
+    }
+
+    private static final Object DELETE_MARKER = new Object();
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 121)
+    RList update(RNull value, RList vector, int recLevel, RIntVector positions) {
+        if (!isSubset) {
+            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        }
+
+        RList list = vector;
+        if (list.isShared()) {
+            list = (RList) vector.copy();
+        }
+        int highestPos = 0;
+        int posDeleted = 0;
+        for (int i = 0; i < positions.getLength(); i++) {
+            int pos = positions.getDataAt(i);
+            if (RRuntime.isNA(pos)) {
+                continue;
+            }
+            if (pos > highestPos) {
+                highestPos = pos;
+            }
+            if (pos <= list.getLength()) {
+                if (list.getDataAt(pos - 1) != DELETE_MARKER) {
+                    list.updateDataAt(pos - 1, DELETE_MARKER, null);
+                }
+            }
+            posDeleted++;
+        }
+        int resultVectorLength = highestPos > list.getLength() ? highestPos - posDeleted : list.getLength() - posDeleted;
+        Object[] data = new Object[resultVectorLength];
+        RStringVector orgNames = null;
+        String[] namesData = null;
+        if (list.getNames() != RNull.instance) {
+            namesData = new String[resultVectorLength];
+            orgNames = (RStringVector) list.getNames();
+        }
+
+        int ind = 0;
+        for (int i = 0; i < list.getLength(); i++) {
+            Object el = list.getDataAt(i);
+            if (el != DELETE_MARKER) {
+                data[ind] = el;
+                if (orgNames != null) {
+                    namesData[ind] = orgNames.getDataAt(i);
+                }
+                ind++;
+            }
+        }
+        for (; ind < data.length; ind++) {
+            data[ind] = RNull.instance;
+            if (orgNames != null) {
+                namesData[ind] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+            }
+        }
+        RList result;
+        if (orgNames == null) {
+            result = RDataFactory.createList(data);
+        } else {
+            result = RDataFactory.createList(data, RDataFactory.createStringVector(namesData, orgNames.isComplete()));
+        }
+        result.copyRegAttributesFrom(vector);
+        return result;
+    }
+
+    private void checkPositionInRecursion(RList vector, int position, int recLevel, boolean lastPos) {
+        if (RRuntime.isNA(position)) {
+            if (lastPos && recLevel > 0) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else if (recLevel == 0) {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            } else {
+                throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
+            }
+        } else if (!lastPos && position > vector.getLength()) {
+            throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
+        } else if (position < 0) {
+            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        } else if (position == 0) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
+    }
+
+    @Specialization(order = 130, guards = {"!isSubset", "!multiPos"})
+    Object accessSubscript(RAbstractVector value, RList vector, int recLevel, RIntVector p) {
+        int position = p.getDataAt(0);
+        checkPositionInRecursion(vector, position, recLevel, true);
+        return updateSingleDim(value, getResultVector(vector, position, false), position);
+    }
+
+    @Specialization(order = 150, guards = {"!isSubset", "multiPos"})
+    Object access(VirtualFrame frame, RAbstractVector value, RList vector, int recLevel, RIntVector p) {
+        int position = p.getDataAt(0);
+        checkPositionInRecursion(vector, position, recLevel, false);
+        if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
+            // catch it here, otherwise it will get caught at lower level of recursion resulting in
+            // a different message
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
+        RIntVector newP = AccessArrayNode.popHead(p, posNACheck);
+
+        Object el = updateRecursive(frame, value, vector.getDataAt(position - 1), newP, recLevel + 1);
+
+        RList resultList = vector;
+        if (vector.isShared()) {
+            resultList = (RList) vector.copy();
+        }
+        resultList.updateDataAt(position - 1, el, null);
+        return resultList;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 160, guards = {"!isSubset", "inRecursion", "multiPos"})
+    Object accessRecFailed(RAbstractVector value, RAbstractVector vector, int recLevel, RIntVector positions) {
+        throw RError.getRecursiveIndexingFailed(getEncapsulatingSourceSection(), recLevel + 1);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 170, guards = {"!isValueLengthOne", "!isSubset"})
+    RAbstractVector updateTooManyValues(RAbstractVector value, RAbstractVector vector, int recLevel, int position) {
+        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+    }
+
+    // null value (with vectors)
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 195, guards = {"isPosZero"})
+    RAbstractVector updatePosZero(RNull value, RAbstractVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        }
+        return vector;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 197, guards = {"!isPosZero"})
+    RAbstractVector update(RNull value, RAbstractVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL", RRuntime.classToString(vector.getElementClass(), false));
+        } else {
+            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 198)
+    RAbstractVector updatePosZero(RNull value, RAbstractVector vector, int recLevel, RIntVector positions) {
+        if (isSubset) {
+            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        } else {
+            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        }
     }
 
     // int vector
@@ -1326,16 +1593,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    protected boolean isPositionZero(RAbstractVector value, RAbstractVector vector, int recLevel, int position) {
-        return position == 0;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isPositionZero(RNull value, RAbstractVector vector, int recLevel, int position) {
-        return position == 0;
-    }
-
-    @SuppressWarnings("unused")
     protected boolean wrongLength(RAbstractVector value, RAbstractVector vector, int recLevel, RIntVector positions) {
         int valLength = value.getLength();
         int posLength = positions.getLength();
@@ -1353,6 +1610,16 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @SuppressWarnings("unused")
+    protected boolean isPosZero(RNull value, RAbstractVector vector, int recLevel, int position) {
+        return position == 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean isPosZero(RNull value, RList vector, int recLevel, int position) {
+        return position == 0;
+    }
+
+    @SuppressWarnings("unused")
     protected boolean isValueLengthOne(RAbstractVector value, RAbstractVector vector, int recLevel, int position) {
         return value.getLength() == 1;
     }
@@ -1364,6 +1631,16 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean isSubset() {
         return isSubset;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean inRecursion(RAbstractVector value, RAbstractVector vector, int recLevel) {
+        return recLevel > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean multiPos(RAbstractVector value, RAbstractVector vector, int recLevel, RIntVector positions) {
+        return positions.getLength() > 1;
     }
 
     @SuppressWarnings("unused")

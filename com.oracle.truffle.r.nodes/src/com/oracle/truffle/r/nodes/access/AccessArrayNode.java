@@ -41,6 +41,7 @@ public abstract class AccessArrayNode extends RNode {
     private final boolean isSubset;
 
     private final NACheck elementNACheck = NACheck.create();
+    private final NACheck posNACheck = NACheck.create();
     private final NACheck namesNACheck = NACheck.create();
 
     @Child private AccessArrayNode accessRecursive;
@@ -52,9 +53,9 @@ public abstract class AccessArrayNode extends RNode {
 
     abstract RNode getVector();
 
-    public abstract Object executeAccess(VirtualFrame frame, RAbstractVector vector, int recLevel, Object operand);
+    public abstract Object executeAccess(VirtualFrame frame, Object vector, int recLevel, Object operand);
 
-    public abstract Object executeAccess(VirtualFrame frame, RAbstractVector vector, int recLevel, int operand);
+    public abstract Object executeAccess(VirtualFrame frame, Object vector, int recLevel, int operand);
 
     public AccessArrayNode(boolean isSubset) {
         this.isSubset = isSubset;
@@ -64,7 +65,7 @@ public abstract class AccessArrayNode extends RNode {
         this.isSubset = other.isSubset;
     }
 
-    private Object accessRecursive(VirtualFrame frame, RAbstractVector vector, Object operand, int recLevel) {
+    private Object accessRecursive(VirtualFrame frame, Object vector, Object operand, int recLevel) {
         if (accessRecursive == null) {
             CompilerDirectives.transferToInterpreter();
             accessRecursive = adoptChild(AccessArrayNodeFactory.create(this.isSubset, null, null, null));
@@ -111,6 +112,16 @@ public abstract class AccessArrayNode extends RNode {
             positions[i] = ArrayPositionCastFactory.create(i, positions.length, false, isSubset, getVector(), ConstantNode.create(RNull.instance) /* dummy */, children[i]);
         }
         return new RNode[]{varArgAsObjectArrayNodeFactory.makeList(positions, null)};
+    }
+
+    public static RIntVector popHead(RIntVector p, NACheck posNACheck) {
+        int[] data = new int[p.getLength() - 1];
+        posNACheck.enable(p);
+        for (int i = 0; i < data.length; i++) {
+            data[i] = p.getDataAt(i + 1);
+            posNACheck.check(data[i]);
+        }
+        return RDataFactory.createIntVector(data, posNACheck.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
@@ -440,7 +451,7 @@ public abstract class AccessArrayNode extends RNode {
         } else if (position > vector.getLength()) {
             throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
         }
-        return vector.getDataAt(0);
+        return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
@@ -449,9 +460,7 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
-    @Specialization(order = 14, guards = {"!isSubset", "twoPosition"})
-    Object accessOnePosRec(VirtualFrame frame, RList vector, int recLevel, RIntVector p) {
-        int position = p.getDataAt(0);
+    private void checkPositionInRecursion(RList vector, int position, int recLevel) {
         if (RRuntime.isNA(position) || position > vector.getLength()) {
             throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
         } else if (position < 0) {
@@ -459,28 +468,34 @@ public abstract class AccessArrayNode extends RNode {
         } else if (position == 0) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
+    }
+
+    @Specialization(order = 14, guards = {"!isSubset", "onePosition", "inRecursion"})
+    Object accessSubscript(@SuppressWarnings("unused") VirtualFrame frame, RList vector, int recLevel, RIntVector p) {
+        int position = p.getDataAt(0);
+        checkPositionInRecursion(vector, position, recLevel);
+        return vector.getDataAt(position - 1);
+    }
+
+    @Specialization(order = 15, guards = {"!isSubset", "twoPosition"})
+    Object accessOnePosRec(VirtualFrame frame, RList vector, int recLevel, RIntVector p) {
+        int position = p.getDataAt(0);
+        checkPositionInRecursion(vector, position, recLevel);
         RAbstractVector newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
         return accessRecursive(frame, newVector, newPosition, recLevel + 1);
     }
 
-    @Specialization(order = 15, guards = "!isSubset")
+    @Specialization(order = 16, guards = {"!isSubset", "multiPos"})
     Object access(VirtualFrame frame, RList vector, int recLevel, RIntVector p) {
         int position = p.getDataAt(0);
-        if (RRuntime.isNA(position) || position > vector.getLength()) {
-            throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
-        } else if (position < 0) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-        } else if (position == 0) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-        }
-        RAbstractVector newVector = castVector(frame, vector.getDataAt(position - 1));
-        RIntVector newP = p.copyResized(p.getLength() - 1, false);
-        return accessRecursive(frame, newVector, newP, recLevel + 1);
+        checkPositionInRecursion(vector, position, recLevel);
+        RIntVector newP = popHead(p, posNACheck);
+        return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 16, guards = "isPositionNA")
+    @Specialization(order = 17, guards = "isPositionNA")
     RList accessNA(RList vector, int recLevel, int position) {
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createList(new Object[]{RNull.instance});
@@ -490,25 +505,28 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
-    @Specialization(order = 17, guards = {"!isPositionZero", "hasNames", "isSubset"})
+    @Specialization(order = 18, guards = {"!isPositionZero", "hasNames", "isSubset"})
     RList accessNames(RList vector, @SuppressWarnings("unused") int recLevel, int position) {
         Object val = vector.getDataAt(position - 1);
         return RDataFactory.createList(new Object[]{val}, getName(vector, position));
     }
 
-    @Specialization(order = 18, guards = {"!isPositionZero", "!hasNames", "isSubset"})
+    @Specialization(order = 19, guards = {"!isPositionZero", "!hasNames", "isSubset"})
     RList accessSubset(RList vector, @SuppressWarnings("unused") int recLevel, int position) {
         return RDataFactory.createList(new Object[]{vector.getDataAt(position - 1)});
     }
 
-    @Specialization(order = 19, guards = {"!isPositionZero", "!hasNames", "!isSubset"})
+    @Specialization(order = 20, guards = {"!isPositionZero", "!hasNames", "!isSubset"})
     Object access(RList vector, @SuppressWarnings("unused") int recLevel, int position) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 20, guards = "isPositionZero")
+    @Specialization(order = 21, guards = "isPositionZero")
     RList accessPosZero(RList vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createList();
     }
 
@@ -609,6 +627,9 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 45, guards = "isPositionZero")
     RIntVector accessPosZero(RAbstractIntVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createEmptyIntVector();
     }
 
@@ -730,6 +751,9 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 55, guards = "isPositionZero")
     RDoubleVector accessPosZero(RAbstractDoubleVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createEmptyDoubleVector();
     }
 
@@ -851,6 +875,9 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 65, guards = "isPositionZero")
     RLogicalVector accessPosZero(RLogicalVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createEmptyLogicalVector();
     }
 
@@ -972,6 +999,9 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 75, guards = "isPositionZero")
     RStringVector accessPosZero(RStringVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -1099,6 +1129,9 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 85, guards = "isPositionZero")
     RComplexVector accessPosZero(RComplexVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createEmptyComplexVector();
     }
 
@@ -1218,6 +1251,9 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 95, guards = "isPositionZero")
     RRawVector accessPosZero(RRawVector vector, int recLevel, int position) {
+        if (!isSubset) {
+            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        }
         return RDataFactory.createEmptyRawVector();
     }
 
