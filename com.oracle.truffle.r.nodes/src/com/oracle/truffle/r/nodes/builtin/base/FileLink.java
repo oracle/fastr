@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,29 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("gsub")
-public abstract class GSub extends Sub {
-
-    @Specialization(order = 1)
-    @Override
-    public String sub(String pattern, String replacement, String x) {
-        return replaceMatch(pattern, replacement, x);
+@RBuiltin(".Internal.file.link")
+public abstract class FileLink extends FileLinkAdaptor {
+    @Specialization
+    public Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+        return doFileLink(vecFrom, vecTo, false);
     }
 
-    @Specialization(order = 2)
-    public String sub(RAbstractStringVector pattern, RAbstractStringVector replacement, RAbstractStringVector x) {
-        // TODO print warnings that only the first element of each is used
-        return replaceMatch(pattern.getDataAt(0), replacement.getDataAt(0), x.getDataAt(0));
-    }
-
-    @Override
-    @SlowPath
-    protected String replaceMatch(String pattern, String replacement, String input) {
-        return input.replaceAll(pattern, replacement);
+    @Generic
+    public Object doFileRemoveGeneric(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
     }
 }

@@ -34,67 +34,91 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
-import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class RLibraryLoader {
 
-    private final String libContents;
-    private final String libName;
+    private List<Component> components;
+
+    public static class Component {
+        final String libContents;
+        final String libName;
+
+        Component(String libName, String libContents) {
+            this.libContents = libContents;
+            this.libName = libName;
+        }
+    }
+
+    public RLibraryLoader(List<Component> components) {
+        this.components = components;
+    }
+
+    public RLibraryLoader(Component component) {
+        this(create(component));
+    }
+
+    private static List<Component> create(Component component) {
+        List<Component> result = new ArrayList<>();
+        result.add(component);
+        return result;
+    }
 
     public RLibraryLoader(String libName, String libContents) {
-        this.libName = libName;
-        this.libContents = libContents;
+        this(new Component(libName, libContents));
     }
 
     public Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> loadLibrary() {
-        RNode library = parseLibrary();
-        assert library instanceof SequenceNode;
-
+        List<RNode> libraryComponents = parseLibrary();
         Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = new HashMap<>();
-        for (Node libNode : library.getChildren()) {
-            if (isFunctionDefinition(libNode)) {
-                WriteVariableNode.UnresolvedWriteLocalVariableNode fnDef = (WriteVariableNode.UnresolvedWriteLocalVariableNode) libNode;
-                String builtinName = RRuntime.toString(fnDef.getSymbol());
-                FunctionExpressionNode.DynamicFunctionExpressionNode builtinExpr = (FunctionExpressionNode.DynamicFunctionExpressionNode) fnDef.getRhs();
-                builtinDefs.put(builtinName, new FunctionExpressionNode.StaticFunctionExpressionNode(new RFunction(builtinName, builtinExpr.getCallTarget(), false)));
+        for (RNode library : libraryComponents) {
+            if (library instanceof SequenceNode) {
+                for (Node libNode : library.getChildren()) {
+                    loadFunctionDefinition(builtinDefs, libNode);
+                }
+            } else {
+                loadFunctionDefinition(builtinDefs, library);
             }
         }
         return builtinDefs;
+    }
+
+    private static void loadFunctionDefinition(Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs, Node libNode) {
+        if (isFunctionDefinition(libNode)) {
+            WriteVariableNode.UnresolvedWriteLocalVariableNode fnDef = (WriteVariableNode.UnresolvedWriteLocalVariableNode) libNode;
+            String builtinName = RRuntime.toString(fnDef.getSymbol());
+            FunctionExpressionNode.DynamicFunctionExpressionNode builtinExpr = (FunctionExpressionNode.DynamicFunctionExpressionNode) fnDef.getRhs();
+            builtinDefs.put(builtinName, new FunctionExpressionNode.StaticFunctionExpressionNode(new RFunction(builtinName, builtinExpr.getCallTarget(), false)));
+        }
     }
 
     private static boolean isFunctionDefinition(Node node) {
         return (node instanceof WriteVariableNode.UnresolvedWriteLocalVariableNode) && (((WriteVariableNode) node).getRhs() instanceof FunctionExpressionNode);
     }
 
-    private RNode parseLibrary() {
-        ANTLRStringStream stream;
-        SourceManager sourceManager = RContext.getInstance().getSourceManager();
-        Source source = null;
-        try {
-            stream = new ANTLRStringStream(libContents) {
-                @Override
-                public String getSourceName() {
-                    return libName;
-                }
-            };
-            source = sourceManager.getFakeFile(libName, libContents);
-            RTruffleVisitor transform = new RTruffleVisitor();
-            RNode node = transform.transform(parseAST(stream, source));
-            return node;
-        } catch (RecognitionException e) {
-            throw new RuntimeException(e.getMessage(), e);
+    private List<RNode> parseLibrary() {
+        List<RNode> rNodes = new ArrayList<>();
+        for (final Component component : components) {
+            ANTLRStringStream stream;
+            SourceManager sourceManager = RContext.getInstance().getSourceManager();
+            Source source = null;
+            try {
+                stream = new ANTLRStringStream(component.libContents) {
+                    @Override
+                    public String getSourceName() {
+                        return component.libName;
+                    }
+                };
+                source = sourceManager.getFakeFile(component.libName, component.libContents);
+                RTruffleVisitor transform = new RTruffleVisitor();
+                RNode node = transform.transform(ParseUtil.parseAST(stream, source));
+                rNodes.add(node);
+            } catch (RecognitionException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
         }
-    }
-
-    private static ASTNode parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
-        CommonTokenStream tokens = new CommonTokenStream();
-        RLexer lexer = new RLexer(stream);
-        tokens.setTokenSource(lexer);
-        RParser parser = new RParser(tokens);
-        parser.setSource(source);
-        return parser.script().v;
+        return rNodes;
     }
 
 }

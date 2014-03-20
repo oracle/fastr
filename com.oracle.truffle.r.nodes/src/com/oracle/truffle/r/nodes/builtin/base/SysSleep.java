@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("Sys.sleep")
+@RBuiltin(".Internal.Sys.sleep")
 public abstract class SysSleep extends RBuiltinNode {
 
     @Specialization(order = 0)

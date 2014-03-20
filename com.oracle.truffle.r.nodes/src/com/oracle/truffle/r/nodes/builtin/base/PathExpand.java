@@ -28,17 +28,22 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("path.expand")
+@RBuiltin(".Internal.path.expand")
 public abstract class PathExpand extends RBuiltinNode {
 
     @Specialization
-    public Object doPathExapnd(RAbstractStringVector vec) {
+    public Object doPathExpand(RAbstractStringVector vec) {
         String[] results = new String[vec.getLength()];
         for (int i = 0; i < results.length; i++) {
             String path = Utils.tildeExpand(vec.getDataAt(i));
             results[i] = path;
         }
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Generic
+    public Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }
 
 }

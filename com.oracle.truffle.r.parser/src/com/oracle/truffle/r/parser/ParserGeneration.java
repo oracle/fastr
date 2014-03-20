@@ -44,7 +44,9 @@ public class ParserGeneration {
         "source attribution prototype",
         "recognise negative numbers as single elements",
         "remove unused handling of --EOF--",
-        "source attribution in parser AST"
+        "source attribution in parser AST",
+        "avoid inclusion of brackets around expressions when generating source attribution",
+        "source attribution for while loops includes opening curly brace or body expression"
     };
 
 }

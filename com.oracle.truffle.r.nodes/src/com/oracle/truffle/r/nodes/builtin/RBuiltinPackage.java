@@ -39,9 +39,16 @@ import com.oracle.truffle.r.runtime.*;
  * Intended to be subclassed by packages defining builtin functions. Much of the initialization is
  * done statically on startup but, currently, the parsing and generation of the snippet ASTs is
  * delayed until run-time.
+ * 
+ * The snippets themselves are expected to be found (as resources) in the 'R' sub-package
+ * (directory) associated with the subclass package, e.g.,
+ * {@code com.oracle.truffle.r.nodes.builtin.base.R}.
+ * 
+ * For debugging parsing errors we maintain the content of the individual snippets, although this is
+ * not functionally necessary.
  */
 public abstract class RBuiltinPackage {
-    private static final Map<String, String> snippetResources = new HashMap<>();
+    private static final Map<String, List<RLibraryLoader.Component>> snippetResources = new HashMap<>();
     private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
     private static boolean snippetsLoaded;
 
@@ -50,10 +57,27 @@ public abstract class RBuiltinPackage {
     }
 
     protected RBuiltinPackage() {
-        String rSourceName = getName() + ".r";
-        String content = Utils.getResourceAsString(getClass(), rSourceName, false);
-        if (content != null) {
-            snippetResources.put(rSourceName, content);
+        try {
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "R");
+            if (is == null) {
+                return;
+            }
+            List<RLibraryLoader.Component> componentList = new ArrayList<>();
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    if (line.endsWith(".r") || line.endsWith(".R")) {
+                        final String rResource = "R/" + line.trim();
+                        String content = Utils.getResourceAsString(getClass(), rResource, true);
+                        componentList.add(new RLibraryLoader.Component(getClass().getSimpleName() + "/" + rResource, content));
+                    }
+                }
+            }
+            if (componentList.size() > 0) {
+                snippetResources.put(getClass().getSimpleName(), componentList);
+            }
+        } catch (IOException ex) {
+            Utils.fail("error loading R snippets classes from " + getClass().getSimpleName() + " : " + ex);
         }
     }
 
@@ -67,8 +91,8 @@ public abstract class RBuiltinPackage {
 
     public static void loadSnippets() {
         if (!snippetsLoaded) {
-            for (Map.Entry<String, String> entry : snippetResources.entrySet()) {
-                RLibraryLoader loader = new RLibraryLoader(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, List<RLibraryLoader.Component>> entry : snippetResources.entrySet()) {
+                RLibraryLoader loader = new RLibraryLoader(entry.getValue());
                 Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
                 for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
                     NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
@@ -85,13 +109,10 @@ public abstract class RBuiltinPackage {
     @SuppressWarnings("unchecked")
     protected final void loadBuiltins() {
         try (BufferedReader r = new BufferedReader(new InputStreamReader(ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), ".")))) {
-            while (true) {
-                String l = r.readLine();
-                if (l == null) {
-                    break;
-                }
-                if (l.endsWith(".class")) {
-                    Class<?> clazz = Class.forName(getClass().getPackage().getName() + "." + l.replace(".class", ""));
+            String line;
+            while ((line = r.readLine()) != null) {
+                if (line.endsWith(".class")) {
+                    Class<?> clazz = Class.forName(getClass().getPackage().getName() + "." + line.replace(".class", ""));
                     if (clazz.getAnnotation(RBuiltin.class) != null) {
                         load((Class<? extends RBuiltinNode>) clazz);
                     }

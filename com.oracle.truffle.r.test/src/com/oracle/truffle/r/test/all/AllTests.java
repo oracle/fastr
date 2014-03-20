@@ -13049,8 +13049,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleLoop_testLoopsErrors_45be147a976b964e6c7ce1be92ca403e() {
-        assertEvalError("{ while(1 < NA) { 1 } }");
+    public void TestSimpleLoop_testLoopsErrors_30290bc6eef9629f585deca4eb7fb0a3() {
+        assertEvalError("{ while (1 < NA) { 1 } }");
     }
 
     @Test

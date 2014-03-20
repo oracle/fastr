@@ -10,7 +10,11 @@
  */
 package com.oracle.truffle.r.parser;
 
+import org.antlr.runtime.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.r.parser.ast.*;
 
 public class ParseUtil {
 
@@ -21,6 +25,15 @@ public class ParseUtil {
             value = value * 16 + Integer.parseInt(chars[i], 16);
         }
         return new String(new int[]{value}, 0, 1);
+    }
+
+    public static ASTNode parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
+        CommonTokenStream tokens = new CommonTokenStream();
+        RLexer lexer = new RLexer(stream);
+        tokens.setTokenSource(lexer);
+        RParser parser = new RParser(tokens);
+        parser.setSource(source);
+        return parser.script().v;
     }
 
 }

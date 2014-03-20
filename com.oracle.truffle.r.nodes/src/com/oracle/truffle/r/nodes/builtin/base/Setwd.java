@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
-@RBuiltin({"setwd"})
+@RBuiltin({".Internal.setwd"})
 public abstract class Setwd extends RBuiltinNode {
 
     @Specialization
