@@ -44,7 +44,7 @@ public class FieldAccess extends ASTNode {
         throw new Error("No node implemented for: '" + op + "' (" + value + ": " + fieldName + ")");
     }
 
-    public ASTNode lhs() {
+    public ASTNode getLhs() {
         return lhs;
     }
 

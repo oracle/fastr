@@ -2079,14 +2079,15 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEvalError("{ max(1,2,) }");
 
-        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
         assertEval("{ f <- function(...) { l <- list(...) ; l[[1]] <- 10; ..1 } ; f(11,12,13) }");
         assertEval("{ g <- function(...) { length(list(...)) } ; f <- function(...) { g(..., ...) } ; f(z = 1, g = 31) }");
         assertEval("{ g <- function(...) { `-`(...) } ; g(1,2) }");
         assertEval("{ f <- function(...) { list(a=1,...) } ; f(b=2,3) }");
         assertEval("{ f <- function(...) { substitute(...) } ; f(x + z) } ");
-        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
         assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
+
+        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
+        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
 
         // FIXME print regressions
         assertEval("{ matrix(da=1:3,1) }");

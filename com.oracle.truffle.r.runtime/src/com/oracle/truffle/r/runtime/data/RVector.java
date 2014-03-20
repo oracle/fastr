@@ -109,6 +109,32 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         return -1;
     }
 
+    /**
+     * Find the first element in the names list that {@code name} is a prefix of, and return its
+     * index. If there are no names, or none is found, or there are multiple inexact matches, return
+     * -1.
+     */
+    public final int getElementIndexByNameInexact(String name) {
+        if (getNames() == RNull.instance) {
+            return -1;
+        }
+        assert names instanceof RStringVector;
+        RStringVector ns = (RStringVector) names;
+        boolean oneMatch = false;
+        int match = -1;
+        for (int i = 0; i < ns.getLength(); ++i) {
+            if (ns.getDataAt(i).startsWith(name)) {
+                if (oneMatch) {
+                    return -1;
+                } else {
+                    match = i;
+                    oneMatch = true;
+                }
+            }
+        }
+        return match;
+    }
+
     public final void setNames(Object newNames) {
         setNames(newNames, null);
     }
@@ -321,7 +347,9 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this.dimNames = vector.getDimNames();
         this.dimensions = vector.getDimensions();
         this.setMatrixDimensions(this.dimensions, this.getLength());
-        this.setAttributes(new LinkedHashMap<>(vector.getAttributes()));
+        if (vector.getAttributes() != null) {
+            this.setAttributes(new LinkedHashMap<>(vector.getAttributes()));
+        }
     }
 
     public void copyNamesDimsDimNamesFrom(RAbstractVector vector, SourceSection sourceSection) {

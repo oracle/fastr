@@ -157,7 +157,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
-    public RVector copyResized(int size, boolean fillNA) {
+    public RList copyResized(int size, boolean fillNA) {
         return RDataFactory.createList(createResizedData(size, fillNA));
     }
 
