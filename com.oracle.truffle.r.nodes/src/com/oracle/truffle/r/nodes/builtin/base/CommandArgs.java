@@ -44,8 +44,8 @@ public abstract class CommandArgs extends RBuiltinNode {
         if (trailingOnly) {
             int index = s.length;
             for (int i = 0; i < s.length; ++i) {
-                if (s.equals("--args")) {
-                    index = i;
+                if (s[i].equals("--args")) {
+                    index = i + 1;
                     break;
                 }
             }
@@ -56,7 +56,7 @@ public abstract class CommandArgs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RStringVector commandArgs(RNull vector) {
+    public RStringVector commandArgs(RMissing vector) {
         return getCommandArgs(false);
     }
 

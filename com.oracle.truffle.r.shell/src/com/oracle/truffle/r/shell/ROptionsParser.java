@@ -30,6 +30,11 @@ import com.oracle.truffle.r.runtime.ROptions.OptionType;
  * Implements the standard R command line syntax.
  * 
  * R supports {@code --arg=value} or {@code -arg value} for string-valued options.
+ * 
+ * The spec for {@code commandArgs()} states that it returns the executable by which R was invoked
+ * in element 0, which is consistent with the C {@code main} function, but defines the exact form to
+ * be platform independent. Java does not provide the executable (for obvious reasons) so we use
+ * "FastR".
  */
 public class ROptionsParser {
     // CheckStyle: stop system..print check
@@ -37,14 +42,19 @@ public class ROptionsParser {
     /**
      * Parse the arguments, setting the corresponding {@code Option values}.
      * 
-     * @return if {@code --args} is set, return the remaining arguments, else {@code null}.
+     * @return an array with element zero set to "FastR", followed by {@code args}.
      */
     public static String[] parseArguments(String[] args) {
         int i = 0;
         while (i < args.length) {
             final String arg = args[i];
             Option<?> option = ROptions.matchOption(arg);
-            if (option == null || (option.matchedShort() && i == args.length - 1)) {
+            if (option == null) {
+                // GnuR does not abort, simply issues a warning
+                System.out.printf("ARGUMENT '%s' __ignored__%n", arg);
+                i++;
+                continue;
+            } else if (option.matchedShort() && i == args.length - 1) {
                 System.out.println("usage:");
                 printHelp(1);
             }
@@ -64,17 +74,15 @@ public class ROptionsParser {
                 }
             }
             i++;
-            // check for --args
+            // check for --args, in which case stop parsing
             if (option == ROptions.ARGS) {
-                int count = args.length - i;
-                String[] remainder = new String[count];
-                if (count > 0) {
-                    System.arraycopy(args, i, remainder, 0, count);
-                }
-                return remainder;
+                break;
             }
         }
-        return null;
+        String[] result = new String[args.length + 1];
+        result[0] = "FastR";
+        System.arraycopy(args, 0, result, 1, args.length);
+        return result;
     }
 
     public static void printHelp(int exitCode) {
