@@ -5657,6 +5657,14 @@ Error in rnorm(s = 1, s = 1) :
   formal argument "sd" matched by multiple actual arguments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
+#{ !is.atomic(function() {}) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
+#{ !is.atomic(list()) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
 #{ is.atomic(1) }
 [1] TRUE
 
@@ -5674,6 +5682,10 @@ Error in rnorm(s = 1, s = 1) :
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
 #{ is.atomic(NULL) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
+#{ is.atomic(TRUE) }
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic

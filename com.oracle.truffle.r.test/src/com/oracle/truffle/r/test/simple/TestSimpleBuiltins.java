@@ -2265,6 +2265,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ is.atomic(c(1,2,3)) }");
         assertEval("{ is.atomic(NA) }");
         assertEval("{ is.atomic(NULL) }");
+        assertEval("{ is.atomic(TRUE) }");
+        assertEval("{ !is.atomic(list()) }");
+        assertEval("{ !is.atomic(function() {}) }");
     }
 
     @Test

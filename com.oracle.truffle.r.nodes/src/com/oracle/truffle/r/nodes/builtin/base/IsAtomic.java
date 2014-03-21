@@ -32,16 +32,23 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class IsAtomic extends RBuiltinNode {
 
     @Specialization
-    @SuppressWarnings("unused")
-    public byte isAtomic(RNull arg) {
+    public byte isAtomic(@SuppressWarnings("unused") RNull arg) {
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    public byte isAtomic(RAbstractVector arg) {
-        // FIXME add check for composite values once supported
+    public byte isAtomic(@SuppressWarnings("unused") RAbstractVector arg) {
         return RRuntime.LOGICAL_TRUE;
+    }
+
+    @Specialization
+    public byte isAtomic(@SuppressWarnings("unused") RFunction arg) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    public byte isAtomic(@SuppressWarnings("unused") RList arg) {
+        return RRuntime.LOGICAL_FALSE;
     }
 
 }
