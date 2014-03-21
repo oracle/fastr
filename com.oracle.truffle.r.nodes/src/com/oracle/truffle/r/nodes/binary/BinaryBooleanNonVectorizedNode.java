@@ -49,7 +49,7 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
 
     public BinaryBooleanNonVectorizedNode(BooleanOperationFactory factory) {
         this.factory = factory;
-        this.logic = adoptChild(factory.create());
+        this.logic = factory.create();
     }
 
     public BinaryBooleanNonVectorizedNode(BinaryBooleanNonVectorizedNode op) {

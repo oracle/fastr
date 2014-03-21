@@ -46,12 +46,12 @@ public abstract class Sd extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Child protected Mean mean = adoptChild(MeanFactory.create(new RNode[2], getBuiltin()));
-    @Child protected Sqrt sqrt = adoptChild(SqrtFactory.create(new RNode[1], getBuiltin()));
-    @Child protected BinaryArithmetic add = adoptChild(BinaryArithmetic.ADD.create());
-    @Child protected BinaryArithmetic sub = adoptChild(BinaryArithmetic.SUBTRACT.create());
-    @Child protected BinaryArithmetic pow = adoptChild(BinaryArithmetic.POW.create());
-    @Child protected BinaryArithmetic div = adoptChild(BinaryArithmetic.DIV.create());
+    @Child protected Mean mean = MeanFactory.create(new RNode[2], getBuiltin());
+    @Child protected Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin());
+    @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child protected BinaryArithmetic sub = BinaryArithmetic.SUBTRACT.create();
+    @Child protected BinaryArithmetic pow = BinaryArithmetic.POW.create();
+    @Child protected BinaryArithmetic div = BinaryArithmetic.DIV.create();
 
     @Specialization
     @SuppressWarnings("unused")

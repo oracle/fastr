@@ -7719,11 +7719,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_d9a5cb384d79347b34d55b8293316a42() {
-        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testInvocationIgnore_dd3e0cc9f1a660be34f8d72900973743() {
         assertEval("{ f <- function(...) { l <- list(...) ; l[[1]] <- 10; ..1 } ; f(11,12,13) }");
     }
@@ -7749,13 +7744,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_aa735a388a824b851e914305a0ee78ec() {
-        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
+    public void TestSimpleBuiltins_testInvocationIgnore_c0649b33488ef441844f88cbeb22d470() {
+        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testInvocationIgnore_c0649b33488ef441844f88cbeb22d470() {
-        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
+    public void TestSimpleBuiltins_testInvocationIgnore_d9a5cb384d79347b34d55b8293316a42() {
+        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInvocationIgnore_aa735a388a824b851e914305a0ee78ec() {
+        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
     }
 
     @Test
@@ -7801,6 +7801,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testIsAtomic_c5aa836cf30d2bfbf49845464431e193() {
         assertEval("{ is.atomic(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsAtomic_e20e6e0a0f334955a28fb3f440bc7100() {
+        assertEval("{ is.atomic(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsAtomic_a6e57d1b16ffb05d8352862ff5be69ba() {
+        assertEval("{ !is.atomic(list()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsAtomic_c5836be5597617c6d0b6f1ff8b620966() {
+        assertEval("{ !is.atomic(function() {}) }");
     }
 
     @Test
@@ -13684,18 +13699,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testEmptyUpdate_92f308555b0238f4ae92a11deaa25a29() {
+        assertEval("{ a <- list(); a$a = 6; a; }");
+    }
+
+    @Test
     public void TestSimpleVectors_testEmptyUpdate_13ac19cb49e0756177e01a71af7bf72f() {
         assertEval("{ a <- list(); a[['b']] = 6; a; }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testEmptyUpdate_696be0311cfbd88419064c03f0155e12() {
-        assertEval("{ a <- integer(); a[['b']] = 6; a; }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testEmptyUpdateIgnore_92f308555b0238f4ae92a11deaa25a29() {
-        assertEval("{ a <- list(); a$a = 6; a; }");
     }
 
     @Test

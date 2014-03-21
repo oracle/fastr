@@ -278,7 +278,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(FieldAccess n) {
-        print(n.lhs());
+        print(n.getLhs());
         print("$");
         print(n.getFieldName().pretty());
         return null;

@@ -131,15 +131,38 @@ public class RRuntime {
 
     public static final String RDOT = ".";
 
+    private static long startTime;
+
+    private static long[] childTimes;
+
     /**
      * Perform any runtime initialization necessary before the first R evaluation.
      */
     public static void initialize() {
+        startTime = System.nanoTime();
+        childTimes = new long[]{0, 0};
         RVersionInfo.initialize();
         REnvVars.initialize();
         RProfile.initialize();
         LibPaths.initialize();
         TempDirPath.initialize();
+    }
+
+    /**
+     * Elapsed time of process.
+     * 
+     * @return elapsed time in nanosecs.
+     */
+    public static long elapsedTimeInNanos() {
+        return System.nanoTime() - startTime;
+    }
+
+    /**
+     * Return user and system times for any spawned child processes in nanosecs, < 0 means not
+     * available (Windows).
+     */
+    public static long[] childTimesInNanos() {
+        return childTimes;
     }
 
     public static RComplex createComplexNA() {

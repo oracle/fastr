@@ -215,7 +215,7 @@ public class DuplicateVisitor extends BasicVisitor<ASTNode> {
 
     @Override
     public ASTNode visit(FieldAccess n) {
-        return new FieldAccess(n.getSource(), d(n.lhs()), n.getFieldName());
+        return new FieldAccess(n.getSource(), d(n.getLhs()), n.getFieldName());
     }
 
     @Override

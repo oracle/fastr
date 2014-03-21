@@ -64,7 +64,7 @@ public abstract class Repeat extends RBuiltinNode {
     private int coerce0(VirtualFrame frame, Object o) {
         if (convertInt == null) {
             CompilerDirectives.transferToInterpreter();
-            convertInt = adoptChild(ConvertIntFactory.create(null));
+            convertInt = insert(ConvertIntFactory.create(null));
         }
         try {
             return convertInt.executeInteger(frame, o);

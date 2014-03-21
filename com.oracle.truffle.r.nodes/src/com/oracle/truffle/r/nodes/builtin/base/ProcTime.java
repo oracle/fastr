@@ -22,23 +22,51 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.lang.management.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("proc.time")
 public abstract class ProcTime extends RBuiltinNode {
 
-    /**
-     * Very basic implementation of proc.time(). Unlike GNU R, we only provide the third (of five)
-     * values, and this value is not the "total elapsed time for the current R process", but rather
-     * the current time (in seconds). Used for benchmarking.
-     */
+    private static String[] NAMES = new String[]{"user.self", "sys.self", "elapsed", "user.child", "sys.child"};
+
+    private static ThreadMXBean bean;
+    private static RStringVector RNAMES;
+
     @Specialization
     public RDoubleVector procTime() {
         double[] data = new double[5];
-        data[2] = System.currentTimeMillis() / 1000.0;
-        return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
+        long nowInNanos = RRuntime.elapsedTimeInNanos();
+        if (bean == null) {
+            bean = ManagementFactory.getThreadMXBean();
+        }
+        long userTimeInNanos = bean.getCurrentThreadUserTime();
+        long sysTimeInNanos = bean.getCurrentThreadCpuTime() - userTimeInNanos;
+        data[0] = asDoubleSecs(userTimeInNanos);
+        data[1] = asDoubleSecs(sysTimeInNanos);
+        data[2] = asDoubleSecs(nowInNanos);
+        long[] childTimes = RRuntime.childTimesInNanos();
+        boolean na = childTimes[0] < 0 || childTimes[1] < 0;
+        boolean complete = na ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR;
+        data[3] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[0]);
+        data[4] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[1]);
+        if (RNAMES == null) {
+            RNAMES = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
+        }
+        return RDataFactory.createDoubleVector(data, complete, RNAMES);
+    }
+
+    private static final long T = 1000;
+
+    private static double asDoubleSecs(long tInNanos) {
+        long tInMillis = tInNanos / (T * T);
+        // round to millis (spec says)
+        long rtInMillis = tInMillis < T ? tInMillis : (tInMillis * T) / T;
+        return (double) rtInMillis / T;
     }
 
 }

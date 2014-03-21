@@ -55,7 +55,7 @@ public class Recall extends RCustomBuiltinNode {
         }
         if (callNode == null) {
             CompilerDirectives.transferToInterpreter();
-            callNode = adoptChild(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(createArgs(arguments[0]))));
+            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(createArgs(arguments[0]))));
             arguments[0] = null;
         }
         return callNode.execute(frame, function);

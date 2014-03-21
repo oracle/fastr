@@ -1593,18 +1593,11 @@ public class TestSimpleVectors extends TestBase {
 
     @Test
     public void testEmptyUpdate() {
-        assertEval("{ a <- list(); a[['b']] = 6; a; }");
-        assertEval("{ a <- integer(); a[['b']] = 6; a; }");
-    }
-
-    @Test
-    @Ignore
-    public void testEmptyUpdateIgnore() {
         assertEval("{ a <- list(); a$a = 6; a; }");
+        assertEval("{ a <- list(); a[['b']] = 6; a; }");
     }
 
     @Test
-    @Ignore
     public void testFieldAccess() {
         assertEval("{ a <- list(a = 1, b = 2); a$a; }");
         assertEval("{ a <- list(a = 1, b = 2); a$b; }");

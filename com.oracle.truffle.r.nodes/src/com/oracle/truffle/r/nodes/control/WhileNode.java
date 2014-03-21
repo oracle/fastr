@@ -38,8 +38,8 @@ public final class WhileNode extends LoopNode {
     @Child private RNode body;
 
     private WhileNode(RNode condition, RNode body) {
-        this.condition = adoptChild(ConvertBooleanNode.create(condition));
-        this.body = adoptChild(body);
+        this.condition = ConvertBooleanNode.create(condition);
+        this.body = body;
     }
 
     public static WhileNode create(RNode condition, RNode body) {

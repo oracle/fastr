@@ -2009,11 +2009,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_d9a5cb384d79347b34d55b8293316a42() {
-        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_dd3e0cc9f1a660be34f8d72900973743() {
         assertEval("{ f <- function(...) { l <- list(...) ; l[[1]] <- 10; ..1 } ; f(11,12,13) }");
     }
@@ -2039,13 +2034,18 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_aa735a388a824b851e914305a0ee78ec() {
-        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
+    public void TestSimpleBuiltins_testInvocationIgnore_c0649b33488ef441844f88cbeb22d470() {
+        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testInvocationIgnore_c0649b33488ef441844f88cbeb22d470() {
-        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
+    public void TestSimpleBuiltins_testInvocationIgnore_d9a5cb384d79347b34d55b8293316a42() {
+        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testInvocationIgnore_aa735a388a824b851e914305a0ee78ec() {
+        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
     }
 
     @Ignore
@@ -3926,96 +3926,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testDynamic_b8cacd46656e5a810809ba31bd8af586() {
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testEmptyUpdateIgnore_92f308555b0238f4ae92a11deaa25a29() {
-        assertEval("{ a <- list(); a$a = 6; a; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_d9784857aabbc17e8cb0685a883e7e4d() {
-        assertEval("{ a <- list(a = 1, b = 2); a$a; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_a6caada15cce0052850c3e16ac54a160() {
-        assertEval("{ a <- list(a = 1, b = 2); a$b; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_dcfb33dfab6ee6defa00678a6ff24c02() {
-        assertEval("{ a <- list(a = 1, b = 2); a$c; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_9909c36bdb9435c94745a47b0cb316fa() {
-        assertEval("{ a <- list(a = 1, b = 2); a$a <- 67; a; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_b8cd0394c85574bf293c492bc0d370fc() {
-        assertEval("{ a <- list(a = 1, b = 2); a$b <- 67; a; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_6f69ae8c4902d61b3baa35e8fe2bf13b() {
-        assertEval("{ a <- list(a = 1, b = 2); a$c <- 67; a; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_8a94c753a099dfe3b5b5e2a65f3ffd69() {
-        assertEval("{ v <- list(xb=1, b=2, aa=3, aa=4) ; v$aa }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_3c609a8b3cd6dbb3e719975ef0a5a888() {
-        assertEval("{ x <- list(1, 2) ; x$b }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_466525eabb17d6e7a344f57792ae4ceb() {
-        assertEval("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_9bb19d29b9ddbc7882974c31817e5826() {
-        assertEval("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; x <- list(c=2,b=10) ; f(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_1370c1274b369491f7dba97204c3b139() {
-        assertEval("{ v <- list(xb=1, b=2, aa=3, aa=4) ; v$x }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_49275e7a0dd60b3f1a9ab26f6a0e3cbc() {
-        assertEval("{ v <- list(xb=1, b=2, aa=3, aa=4) ; v$a }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_13f39dfa58ec5e47b5715397b61c8c15() {
-        assertEval("{ f <- function(v) { v$x } ; f(list(xa=1, xb=2, hello=3)) ; f(list(y=2,x=3)) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_844d753a53a599ab792b7c02eccfc524() {
-        assertEval("{ f <- function(v) { v$x } ; f(list(xa=1, xb=2, hello=3)) ; l <- list(y=2,x=3) ; f(l) ; l[[2]] <- 4 ; f(l) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_5323930bd315d7a9d640f80f09658876() {
-        assertEvalError("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(1:3) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_1bd3fbb975d1db4afe5805404942c275() {
-        assertEvalError("{ a <- c(a=1,b=2); a$a; }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testFieldAccess_904541d16c10de1380f167ea3efaab85() {
-        assertEvalWarning("{ a <- c(1,2); a$a = 3; a; }");
     }
 
     @Ignore

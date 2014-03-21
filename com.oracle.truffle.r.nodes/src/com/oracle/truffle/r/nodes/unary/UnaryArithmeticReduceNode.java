@@ -37,7 +37,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     public UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
         this.semantics = semantics;
-        this.arithmetic = adoptChild(factory.create());
+        this.arithmetic = factory.create();
     }
 
     public UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {

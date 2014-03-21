@@ -36,7 +36,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
 
-    @Child private BinaryArithmetic add = adoptChild(BinaryArithmetic.ADD.create());
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
 
     @Specialization
     public double cumsum(double arg) {

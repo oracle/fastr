@@ -207,7 +207,7 @@ public abstract class NextMethod extends S3MethodDispatch {
         if (node == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             ReadVariableNode rvn = ReadVariableNode.create(name, false);
-            return adoptChild(rvn);
+            return insert(rvn);
         }
         return node;
     }

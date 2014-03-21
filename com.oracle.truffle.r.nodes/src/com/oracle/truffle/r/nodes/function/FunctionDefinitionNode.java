@@ -40,7 +40,7 @@ public final class FunctionDefinitionNode extends RRootNode {
         super(src, parameterNames, descriptor.getDescriptor());
         this.descriptor = descriptor;
         this.uninitializedBody = NodeUtil.cloneNode(body);
-        this.body = adoptChild(body);
+        this.body = body;
         this.description = description;
     }
 
