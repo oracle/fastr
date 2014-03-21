@@ -22,7 +22,7 @@
 #
 import subprocess, tempfile, shutil, filecmp
 from os.path import join, sep
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER
 import mx
 import mx_graal
 import os
@@ -166,11 +166,11 @@ def testgen(args):
 def rbench(args):
     '''run a one or more R benchmarks'''
     parser = ArgumentParser(prog='mx rbench')
-    parser.add_argument('bm', action='store', metavar='benchmarkgroup.name', help='comma separated list of benchmarks to run')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
     parser.add_argument('--gnur', action='store_true', help='run under GnuR')
     parser.add_argument('--fail-fast', action='store_true', help='abort on first failure')
     parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
+    parser.add_argument('benchmarks', nargs=REMAINDER, metavar='benchmarkgroup.name', help='list of benchmarks to run')
     args = parser.parse_args(args)
 
     # dynamically load the benchmarks suite
@@ -179,9 +179,8 @@ def rbench(args):
     bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
     mx.build_suite(bm_suite)
 
-    bms = args.bm.split(',')
     failure = 0
-    for bm in bms:
+    for bm in args.benchmarks:
         # Get the R script location via helper app
         # N.B. we do not use mx.run_java() as that might check options we don't want for the helper, e.g. debugging agent
         rc = 0
