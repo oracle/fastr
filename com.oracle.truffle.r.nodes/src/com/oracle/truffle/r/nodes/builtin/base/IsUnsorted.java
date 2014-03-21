@@ -46,7 +46,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Child protected BinaryBooleanNode ge = adoptChild(BinaryBooleanNodeFactory.create(BinaryCompare.GREATER_EQUAL, new RNode[1], getBuiltin()));
+    @Child protected BinaryBooleanNode ge = BinaryBooleanNodeFactory.create(BinaryCompare.GREATER_EQUAL, new RNode[1], getBuiltin());
 
     @Specialization
     @SuppressWarnings("unused")

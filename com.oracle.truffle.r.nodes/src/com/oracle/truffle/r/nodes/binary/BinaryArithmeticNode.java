@@ -43,16 +43,16 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     private final NACheck resultNACheck;
 
     public BinaryArithmeticNode(BinaryArithmeticFactory factory, UnaryArithmeticFactory unaryFactory) {
-        this.binary = adoptChild(factory.create());
-        this.unary = unaryFactory != null ? adoptChild(unaryFactory.create()) : null;
+        this.binary = factory.create();
+        this.unary = unaryFactory != null ? unaryFactory.create() : null;
         leftNACheck = new NACheck();
         rightNACheck = new NACheck();
         resultNACheck = new NACheck();
     }
 
     public BinaryArithmeticNode(BinaryArithmeticNode op) {
-        this.binary = adoptChild(op.binary);
-        this.unary = adoptChild(op.unary);
+        this.binary = op.binary;
+        this.unary = op.unary;
         this.leftNACheck = op.leftNACheck;
         this.rightNACheck = op.rightNACheck;
         this.resultNACheck = op.resultNACheck;

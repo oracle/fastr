@@ -37,8 +37,8 @@ public abstract class ForNode extends LoopNode {
     @Child private RNode body;
 
     protected ForNode(WriteVariableNode cvar, RNode body) {
-        this.cvar = adoptChild(cvar);
-        this.body = adoptChild(body);
+        this.cvar = cvar;
+        this.body = body;
     }
 
     protected ForNode(ForNode prev) {

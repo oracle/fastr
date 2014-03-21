@@ -235,9 +235,9 @@ public abstract class WriteVariableNode extends RNode {
         @Child private RNode rhs;
 
         WriteSuperVariableConditionalNode(WriteSuperVariableNode writeNode, AbstractWriteSuperVariableNode nextNode, RNode rhs) {
-            this.writeNode = adoptChild(writeNode);
-            this.nextNode = adoptChild(nextNode);
-            this.rhs = adoptChild(rhs);
+            this.writeNode = writeNode;
+            this.nextNode = nextNode;
+            this.rhs = rhs;
         }
 
         @Override
@@ -273,7 +273,7 @@ public abstract class WriteVariableNode extends RNode {
         private final boolean toBeCopied;
 
         public UnresolvedWriteSuperVariableNode(RNode rhs, Object symbol, boolean toBeCopied) {
-            this.rhs = adoptChild(rhs);
+            this.rhs = rhs;
             this.symbol = symbol;
             this.toBeCopied = toBeCopied;
         }

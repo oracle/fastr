@@ -32,7 +32,7 @@ public final class SequenceNode extends RNode {
     @Children private final RNode[] sequence;
 
     public SequenceNode(RNode[] sequence) {
-        this.sequence = adoptChildren(sequence);
+        this.sequence = sequence;
     }
 
     public SequenceNode(SourceSection src, RNode[] sequence) {

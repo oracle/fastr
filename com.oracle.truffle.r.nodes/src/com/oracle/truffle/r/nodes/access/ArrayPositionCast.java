@@ -195,7 +195,7 @@ public abstract class ArrayPositionCast extends RNode {
         private void initConvertCast() {
             if (operatorConvertRecursive == null) {
                 CompilerDirectives.transferToInterpreter();
-                operatorConvertRecursive = adoptChild(OperatorConverterNodeFactory.create(this.dimension, this.numDimensions, this.assignment, this.isSubset, null, null, null));
+                operatorConvertRecursive = insert(OperatorConverterNodeFactory.create(this.dimension, this.numDimensions, this.assignment, this.isSubset, null, null, null));
             }
         }
 
@@ -212,7 +212,7 @@ public abstract class ArrayPositionCast extends RNode {
         private void initIntCast() {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreter();
-                castInteger = adoptChild(CastIntegerNodeFactory.create(null, true, false));
+                castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
             }
         }
 

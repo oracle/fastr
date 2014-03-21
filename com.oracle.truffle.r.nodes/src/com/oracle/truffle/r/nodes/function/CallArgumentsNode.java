@@ -39,7 +39,7 @@ public final class CallArgumentsNode extends RNode {
     private final int nameCount;
 
     private CallArgumentsNode(RNode[] args, String[] names) {
-        this.arguments = adoptChildren(args);
+        this.arguments = args;
         this.names = names;
         this.nameCount = countNonNull(names);
     }

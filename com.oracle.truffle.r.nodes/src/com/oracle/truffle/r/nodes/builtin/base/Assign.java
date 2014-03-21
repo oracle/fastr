@@ -63,7 +63,7 @@ public abstract class Assign extends RBuiltinNode {
             lastName = x;
             lastInherits = inherits == RRuntime.LOGICAL_TRUE;
             WriteVariableNode wvn = WriteVariableNode.create(lastName, null, false, lastInherits);
-            writeVariableNode = writeVariableNode == null ? adoptChild(wvn) : writeVariableNode.replace(wvn);
+            writeVariableNode = writeVariableNode == null ? insert(wvn) : writeVariableNode.replace(wvn);
         }
         if (lastName.equals(x) && (lastInherits == (inherits == RRuntime.LOGICAL_TRUE))) {
             writeVariableNode.execute(frame, value);

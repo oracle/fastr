@@ -49,7 +49,7 @@ public abstract class CastIntegerNode extends CastNode {
     private Object castIntegerRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreter();
-            recursiveCastInteger = adoptChild(CastIntegerNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation()));
+            recursiveCastInteger = insert(CastIntegerNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation()));
         }
         return recursiveCastInteger.executeInt(frame, o);
     }

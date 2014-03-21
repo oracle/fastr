@@ -69,7 +69,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object accessRecursive(VirtualFrame frame, Object vector, Object operand, int recLevel) {
         if (accessRecursive == null) {
             CompilerDirectives.transferToInterpreter();
-            accessRecursive = adoptChild(AccessArrayNodeFactory.create(this.isSubset, null, null, null));
+            accessRecursive = insert(AccessArrayNodeFactory.create(this.isSubset, null, null, null));
         }
         return executeAccess(frame, vector, recLevel, operand);
     }
@@ -77,7 +77,7 @@ public abstract class AccessArrayNode extends RNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false, false));
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
         }
         return castVector.executeRAbstractVector(frame, value).materialize();
     }
@@ -85,7 +85,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object castPosition(VirtualFrame frame, RAbstractVector vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreter();
-            castPosition = adoptChild(ArrayPositionCastFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
+            castPosition = insert(ArrayPositionCastFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
         }
         return castPosition.executeArg(frame, vector, null, operand);
     }
@@ -93,7 +93,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object convertOperand(VirtualFrame frame, RAbstractVector vector, int operand) {
         if (operatorConverter == null) {
             CompilerDirectives.transferToInterpreter();
-            operatorConverter = adoptChild(OperatorConverterNodeFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
+            operatorConverter = insert(OperatorConverterNodeFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
         }
         return operatorConverter.executeConvert(frame, vector, operand, null);
     }

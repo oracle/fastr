@@ -45,7 +45,7 @@ public abstract class Match extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.INT_NA), ConstantNode.create(RNull.instance)};
     }
 
-    @Child protected BooleanOperation eq = adoptChild(BinaryCompare.EQUAL.create());
+    @Child protected BooleanOperation eq = BinaryCompare.EQUAL.create();
 
     // FIXME deal with nomatch and incomparables parameters
     // FIXME deal with NA etc.

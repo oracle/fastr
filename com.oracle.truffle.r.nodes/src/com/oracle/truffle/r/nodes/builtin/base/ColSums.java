@@ -45,7 +45,7 @@ public abstract class ColSums extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(1)};
     }
 
-    @Child protected BinaryArithmetic add = adoptChild(BinaryArithmetic.ADD.create());
+    @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
 
     // FIXME don't ignore na.rm and dims
 
