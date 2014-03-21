@@ -7804,6 +7804,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsAtomic_e20e6e0a0f334955a28fb3f440bc7100() {
+        assertEval("{ is.atomic(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsAtomic_a6e57d1b16ffb05d8352862ff5be69ba() {
+        assertEval("{ !is.atomic(list()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsAtomic_c5836be5597617c6d0b6f1ff8b620966() {
+        assertEval("{ !is.atomic(function() {}) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsNA_b8cf60154d61f3d4fb5896e670ddc520() {
         assertEval("{ is.na(NA) }");
     }
