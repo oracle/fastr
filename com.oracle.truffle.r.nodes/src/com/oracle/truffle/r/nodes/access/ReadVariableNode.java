@@ -96,7 +96,7 @@ public abstract class ReadVariableNode extends RNode {
         if (type.equals(RRuntime.TYPE_LOGICAL)) {
             return obj instanceof Byte;
         }
-        if (type.equals(RRuntime.TYPE_INTEGER) || type.equals(RRuntime.TYPE_DOUBLE)) {
+        if (type.equals(RRuntime.TYPE_INTEGER) || type.equals(RRuntime.TYPE_DOUBLE) || type.equals(RRuntime.TYPE_NUMERIC)) {
             return obj instanceof Integer || obj instanceof Double;
         }
         return false;
