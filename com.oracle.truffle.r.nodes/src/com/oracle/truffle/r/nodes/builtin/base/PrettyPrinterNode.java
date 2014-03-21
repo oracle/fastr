@@ -202,7 +202,11 @@ public abstract class PrettyPrinterNode extends RNode {
     private String printVector(VirtualFrame frame, RAbstractVector vector, String[] values, boolean isStringVector, boolean isRawVector) {
         assert vector.getLength() == values.length;
         if (values.length == 0) {
-            return concat(RRuntime.classToString(vector.getElementClass()), "(0)");
+            String result = concat(RRuntime.classToString(vector.getElementClass()), "(0)");
+            if (vector.getNames() != RNull.instance) {
+                result = concat("named ", result);
+            }
+            return result;
         } else {
             boolean printNamesHeader = (!vector.hasDimensions() && vector.getNames() != null && vector.getNames() != RNull.instance);
             RStringVector names = printNamesHeader ? (RStringVector) vector.getNames() : null;
@@ -406,7 +410,11 @@ public abstract class PrettyPrinterNode extends RNode {
     private String prettyPrintList0(VirtualFrame frame, RList operand, Object listElementName) {
         int length = operand.getLength();
         if (length == 0) {
-            return "list()";
+            String result = "list()";
+            if (operand.getNames() != RNull.instance) {
+                result = concat("named ", result);
+            }
+            return result;
         } else {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < length; i++) {

@@ -135,7 +135,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization(order = 2)
     RNull access(RAbstractVector vector, int recLevel, RNull positions) {
         // this is a special case (see ArrayPositionCast) - RNull can only appear to represent the
-        // x[[NA]] case which has to return null and not a null vector
+        // x[NA] case which has to return null and not a null vector
         return RNull.instance;
     }
 
@@ -532,7 +532,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createList();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createList();
+        } else {
+            return RDataFactory.createList(new Object[0], RDataFactory.createEmptyStringVector());
+        }
     }
 
     @SuppressWarnings("unused")
@@ -635,7 +639,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createEmptyIntVector();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createEmptyIntVector();
+        } else {
+            return RDataFactory.createIntVector(new int[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
+        }
     }
 
     @SlowPath
@@ -760,7 +768,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createEmptyDoubleVector();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createEmptyDoubleVector();
+        } else {
+            return RDataFactory.createDoubleVector(new double[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
+        }
     }
 
     @SlowPath
@@ -885,7 +897,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createEmptyLogicalVector();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createEmptyLogicalVector();
+        } else {
+            return RDataFactory.createLogicalVector(new byte[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
+        }
     }
 
     @SlowPath
@@ -1010,7 +1026,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createEmptyStringVector();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createEmptyStringVector();
+        } else {
+            return RDataFactory.createStringVector(new String[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
+        }
     }
 
     @SlowPath
@@ -1141,7 +1161,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createEmptyComplexVector();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createEmptyComplexVector();
+        } else {
+            return RDataFactory.createComplexVector(new double[0], RDataFactory.COMPLETE_VECTOR, RDataFactory.createEmptyStringVector());
+        }
     }
 
     @SlowPath
@@ -1264,7 +1288,11 @@ public abstract class AccessArrayNode extends RNode {
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
-        return RDataFactory.createEmptyRawVector();
+        if (vector.getNames() == RNull.instance) {
+            return RDataFactory.createEmptyRawVector();
+        } else {
+            return RDataFactory.createRawVector(new byte[0], RDataFactory.createEmptyStringVector());
+        }
     }
 
     protected boolean wrongDimensions(RAbstractVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions) {

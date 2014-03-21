@@ -34,12 +34,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1,2,3); x[2.3] <- FALSE; x }");
         assertEval("{ x<-c(1,2,3); x[2.3] <- 100; x }");
         assertEval("{ x<-c(1,2,3); x[2.3] <- \"hello\"; x }");
-    }
 
-    @Test
-    @Ignore
-    public void testScalarIntIndexScalarValueUpdateOnVectorIgnore() {
-        // FIXME print format
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[2.3] <- 100i; x }");
         assertEval("{ x<-c(1L,2L,3L); x[2.3] <- 100i; x }");
         assertEval("{ x<-c(1,2,3); x[2.3] <- 100i; x }");
@@ -112,16 +107,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1L,2L,3L); x[-2.1] }");
         assertEval("{ x<-1:3; x[-1.1] }");
         assertEval("{ x<-1:3; x[-2.1] }");
-    }
-
-    @Test
-    @Ignore
-    public void testScalarDoubleNegativeIndexOnVectorIgnore() {
-        // FIXME print regression
         assertEval("{ x<-c(1,2,3); x[-3.1] }");
         assertEval("{ x<-c(1L,2L,3L); x[-3.1] }");
         assertEval("{ x<-1:3; x[-3.1] }");
-
     }
 
     @Test
@@ -484,11 +472,7 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x<-as.list(5:1) ; y <- 2L;  x[[y]] }");
         assertEval("{ x <- as.list(1:2) ; f <- function(i) { x[i] <- NULL ; x } ; f(1) ; f(NULL) }");
-    }
 
-    @Test
-    @Ignore
-    public void testScalarIndexIgnore() {
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[0-2] }");
         assertEval("{ x <- c(a=1, b=2, c=3) ; x[2] }");
         assertEval("{ x <- c(a=\"A\", b=\"B\", c=\"C\") ; x[-2] }");
@@ -526,13 +510,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- c(a=1,b=2) ; y <- 2 ; x[y] }");
         assertEval("{ x <- list(1,2,3,4) ; y <- 3 ; x[y] }");
         assertEvalError("{ x <- function(){3} ; y <- 3 ; x[[y]] }");
-        assertEvalError("{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }");
+
         assertEval("{ x <- list(1,4) ; y <- -1 ; x[y] }");
         assertEval("{ x <- list(1,4) ; y <- 4 ; x[y] }");
         assertEval("{ x <- list(a=1,b=4) ; y <- 2 ; x[y] }");
         assertEval("{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") }");
         assertEval("{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(x,2) }");
-        assertEvalError("{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(function(){3},\"b\") }");
+
         assertEvalError("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(list(1,2),FALSE) }");
         assertEval("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(list(1,2),TRUE) }");
         assertEvalError("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(list(1,2),1+0i) }");
@@ -609,10 +593,18 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:4; x[c(-1.5)] }");
         assertEval("{ x<-1:4; x[c(-0.5)] }");
         assertEval("{ x<-1:4; x[c(1.4,1.8)] }");
+
     }
 
     @Test
     @Ignore
+    public void testScalarIndexIgnore() {
+        // TODO: handle error reporting for functions used as vectors
+        assertEvalError("{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }");
+        assertEvalError("{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(function(){3},\"b\") }");
+    }
+
+    @Test
     public void testMultiDimScalarIndexIgnore() {
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,]) }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[,0,]) }");
@@ -1600,10 +1592,15 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testEmptyUpdate() {
-        assertEval("{ a <- list(); a$a = 6; a; }");
         assertEval("{ a <- list(); a[['b']] = 6; a; }");
+        assertEval("{ a <- integer(); a[['b']] = 6; a; }");
+    }
+
+    @Test
+    @Ignore
+    public void testEmptyUpdateIgnore() {
+        assertEval("{ a <- list(); a$a = 6; a; }");
     }
 
     @Test
