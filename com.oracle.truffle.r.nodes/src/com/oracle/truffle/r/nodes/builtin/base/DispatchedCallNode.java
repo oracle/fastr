@@ -95,8 +95,8 @@ public abstract class DispatchedCallNode extends RNode {
         private final RStringVector type;
 
         CachedNode(final DispatchedCallNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
-            this.nextNode = adoptChild(nextNode);
-            this.currentNode = adoptChild(currentNode);
+            this.nextNode = insert(nextNode);
+            this.currentNode = insert(currentNode);
             this.type = type;
         }
 
@@ -126,7 +126,7 @@ public abstract class DispatchedCallNode extends RNode {
         @Child protected DispatchNode aDispatchNode;
 
         public ResolvedDispatchedCallNode(DispatchNode dNode) {
-            this.aDispatchNode = adoptChild(dNode);
+            this.aDispatchNode = insert(dNode);
         }
 
         @Override
@@ -134,7 +134,7 @@ public abstract class DispatchedCallNode extends RNode {
             FunctionCall aFuncCall = (FunctionCall) aDispatchNode.execute(frame);
             if (aCallNode == null) {
                 CompilerDirectives.transferToInterpreter();
-                aCallNode = adoptChild(RCallNode.createCall(null, aFuncCall.args));
+                aCallNode = insert(RCallNode.createCall(null, aFuncCall.args));
             }
             Object result = aCallNode.execute(frame, aFuncCall.function);
             aDispatchNode.unsetEnvironment(frame);

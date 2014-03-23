@@ -41,7 +41,7 @@ public abstract class S3DispatchNode extends DispatchNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = functionName;
             ReadVariableNode rvn = ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false);
-            lookup = lookup == null ? adoptChild(rvn) : lookup.replace(rvn);
+            lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
         Object func = targetFunction = null;
         try {
@@ -70,7 +70,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (node == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             node = WriteVariableNode.create(name, null, false, false);
-            adoptChild(node);
+            insert(node);
         }
         return node;
     }

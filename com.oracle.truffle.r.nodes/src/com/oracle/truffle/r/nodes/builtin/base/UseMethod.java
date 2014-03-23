@@ -107,7 +107,7 @@ public abstract class UseMethod extends RBuiltinNode {
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
         if (distpatchedCallNode == null || !lastGenericName.equals(generic)) {
             DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            distpatchedCallNode = distpatchedCallNode == null ? adoptChild(dcn) : distpatchedCallNode.replace(dcn);
+            distpatchedCallNode = distpatchedCallNode == null ? insert(dcn) : distpatchedCallNode.replace(dcn);
             lastGenericName = generic;
         }
         throw new ReturnException(distpatchedCallNode.execute(frame, classNames));
