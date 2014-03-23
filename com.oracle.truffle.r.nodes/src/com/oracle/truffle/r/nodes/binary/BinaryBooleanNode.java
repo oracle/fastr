@@ -43,7 +43,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
 
     public BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
-        this.logic = adoptChild(factory.create());
+        this.logic = factory.create();
     }
 
     public BinaryBooleanNode(BinaryBooleanNode op) {

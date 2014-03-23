@@ -561,22 +561,22 @@ public abstract class BinaryArithmetic extends Operation {
             // all or nothing: checking just one is sufficient
             if (mult == null) {
                 CompilerDirectives.transferToInterpreter();
-                mult = adoptChild(new Multiply());
-                cpow2 = adoptChild(new CPow2());
+                mult = insert(new Multiply());
+                cpow2 = insert(new CPow2());
             }
         }
 
         protected void ensurePow2() {
             if (cpow2 == null) {
                 CompilerDirectives.transferToInterpreter();
-                cpow2 = adoptChild(new CPow2());
+                cpow2 = insert(new CPow2());
             }
         }
 
         private void ensureChypot() {
             if (chypot == null) {
                 CompilerDirectives.transferToInterpreter();
-                chypot = adoptChild(new CHypot());
+                chypot = insert(new CHypot());
             }
         }
 
@@ -756,8 +756,8 @@ public abstract class BinaryArithmetic extends Operation {
 
     private static final class PowNegative extends Pow {
 
-        @Child private Pow pow = adoptChild(new PowK());
-        @Child protected CReciprocal creciprocal = adoptChild(new CReciprocal());
+        @Child private Pow pow = new PowK();
+        @Child protected CReciprocal creciprocal = new CReciprocal();
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {

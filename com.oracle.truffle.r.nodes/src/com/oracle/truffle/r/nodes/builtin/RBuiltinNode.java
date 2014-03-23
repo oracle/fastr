@@ -94,7 +94,7 @@ public abstract class RBuiltinNode extends RCallNode {
         RNode[] callArguments = node.getArguments();
         for (int i = 0; i < parameterValues.length; i++) {
             if (parameterValues[i] != null && i < callArguments.length && callArguments[i] instanceof AccessArgumentNode) {
-                callArguments[i].replace(new AccessArgumentNode(i, parameterValues[i]));
+                callArguments[i] = new AccessArgumentNode(i, parameterValues[i]);
             }
         }
     }
@@ -164,7 +164,7 @@ public abstract class RBuiltinNode extends RCallNode {
 
         @Override
         protected void onCreate() {
-            delegate = adoptChild(createDelegate());
+            delegate = insert(createDelegate());
         }
 
         @Override
@@ -225,7 +225,7 @@ public abstract class RBuiltinNode extends RCallNode {
         }
 
         public RCustomBuiltinNode(RNode[] arguments, RBuiltinFactory builtin) {
-            this.arguments = adoptChildren(arguments);
+            this.arguments = arguments;
             this.builtin = builtin;
         }
 
@@ -252,7 +252,7 @@ public abstract class RBuiltinNode extends RCallNode {
 
         public RSnippetNode(RNode[] arguments, RBuiltinFactory builtin, FunctionExpressionNode function) {
             super(arguments, builtin);
-            snippetCall = adoptChild(RCallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{})));
+            snippetCall = RCallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{}));
             assignSourceSection(((DefaultCallTarget) ((FunctionExpressionNode.StaticFunctionExpressionNode) function).getFunction().getTarget()).getRootNode().getSourceSection());
         }
 

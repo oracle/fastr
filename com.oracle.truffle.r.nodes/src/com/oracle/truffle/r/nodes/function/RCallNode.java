@@ -96,7 +96,7 @@ public abstract class RCallNode extends RNode {
         @Child protected RNode functionNode;
 
         public RootCallNode(RNode function) {
-            this.functionNode = adoptChild(function);
+            this.functionNode = function;
         }
 
         private RFunction executeFunctionNode(VirtualFrame frame) {
@@ -134,8 +134,8 @@ public abstract class RCallNode extends RNode {
 
         public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
             super(function);
-            this.currentNode = adoptChild(current);
-            this.nextNode = adoptChild(next);
+            this.currentNode = current;
+            this.nextNode = next;
             this.function = cachedFunction;
             this.target = cachedFunction.getTarget();
         }
@@ -180,7 +180,7 @@ public abstract class RCallNode extends RNode {
 
         private UninitializedCallNode(RNode function, CallArgumentsNode args, int depth) {
             super(function);
-            this.args = adoptChild(args);
+            this.args = args;
             this.depth = depth;
         }
 
@@ -190,7 +190,7 @@ public abstract class RCallNode extends RNode {
 
         private UninitializedCallNode(UninitializedCallNode copy, int depth) {
             super(null);
-            this.args = adoptChild(copy.args);
+            this.args = copy.args;
             this.depth = depth;
         }
 
@@ -263,7 +263,7 @@ public abstract class RCallNode extends RNode {
         protected final RFunction function;
 
         DispatchedCallNode(RFunction function, CallArgumentsNode arguments) {
-            this.arguments = adoptChild(arguments);
+            this.arguments = arguments;
             this.function = function;
         }
 
@@ -281,7 +281,7 @@ public abstract class RCallNode extends RNode {
 
         GenericCallNode(RNode functionNode, CallArgumentsNode arguments) {
             super(functionNode);
-            this.arguments = adoptChild(arguments);
+            this.arguments = arguments;
         }
 
         @Override
@@ -340,7 +340,7 @@ public abstract class RCallNode extends RNode {
         @Children protected final RNode[] elementNodes;
 
         protected VarArgsNode(RNode[] elements) {
-            elementNodes = adoptChildren(elements);
+            elementNodes = elements;
         }
 
         public final RNode[] getArgumentNodes() {

@@ -38,7 +38,7 @@ public class AccessArgumentNode extends RNode {
 
     public AccessArgumentNode(int index, RNode defaultValue) {
         this.index = index;
-        this.defaultValue = adoptChild(defaultValue);
+        this.defaultValue = defaultValue;
         this.defaultValueIsMissing = (defaultValue instanceof ConstantNode && ((ConstantNode) defaultValue).getValue() == RMissing.instance);
     }
 

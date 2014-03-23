@@ -186,9 +186,9 @@ public abstract class ReadVariableNode extends RNode {
         private final Object symbol;
 
         ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, Object symbol) {
-            this.readNode = adoptChild(readNode);
-            this.unresolvedNode = adoptChild(unresolvedNode);
-            this.absentFrameSlotNodes = adoptChildren(wrapAssumptions(assumptions));
+            this.readNode = readNode;
+            this.unresolvedNode = unresolvedNode;
+            this.absentFrameSlotNodes = wrapAssumptions(assumptions);
             this.symbol = symbol;
         }
 
@@ -226,8 +226,8 @@ public abstract class ReadVariableNode extends RNode {
         private final String mode;
 
         ReadVariableVirtualNode(ReadLocalVariableNode readNode, ReadVariableNode nextNode, String mode) {
-            this.readNode = adoptChild(readNode);
-            this.nextNode = adoptChild(nextNode);
+            this.readNode = readNode;
+            this.nextNode = nextNode;
             this.mode = mode;
         }
 
@@ -262,7 +262,7 @@ public abstract class ReadVariableNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreter();
-            node = adoptChild(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol)));
+            node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol)));
             if (node.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = node.execute(frame);
                 if (checkType(result, mode)) {
@@ -286,8 +286,8 @@ public abstract class ReadVariableNode extends RNode {
         private final String mode;
 
         ReadVariableMaterializedNode(ReadSuperVariableNode readNode, ReadVariableNode nextNode, String mode) {
-            this.readNode = adoptChild(readNode);
-            this.nextNode = adoptChild(nextNode);
+            this.readNode = readNode;
+            this.nextNode = nextNode;
             this.mode = mode;
         }
 

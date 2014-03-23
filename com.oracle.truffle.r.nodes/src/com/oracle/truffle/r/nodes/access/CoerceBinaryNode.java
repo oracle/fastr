@@ -45,13 +45,13 @@ public abstract class CoerceBinaryNode extends RNode {
     @Child private CoercedBinaryOperationNode updateNode = null;
 
     public CoerceBinaryNode(CoercedBinaryOperationNode operationNode) {
-        this.updateNode = adoptChild(operationNode);
+        this.updateNode = operationNode;
         leftNACheck = new NACheck();
         rightNACheck = new NACheck();
     }
 
     protected CoerceBinaryNode(CoerceBinaryNode op) {
-        this.updateNode = adoptChild(op.updateNode);
+        this.updateNode = op.updateNode;
         this.leftNACheck = op.leftNACheck;
         this.rightNACheck = op.rightNACheck;
     }

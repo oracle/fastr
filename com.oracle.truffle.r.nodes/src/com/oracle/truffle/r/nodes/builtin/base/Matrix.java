@@ -37,7 +37,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     private static final String[] PARAMETER_NAMES = new String[]{"data", "nrow", "ncol", "byrow", "dimnames"};
 
-    @Child private Transpose transpose = this.adoptChild(TransposeFactory.create(new RNode[1], getBuiltin()));
+    @Child private Transpose transpose = TransposeFactory.create(new RNode[1], getBuiltin());
 
     @Override
     public Object[] getParameterNames() {

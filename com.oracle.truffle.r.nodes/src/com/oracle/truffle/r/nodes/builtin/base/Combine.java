@@ -64,7 +64,7 @@ public abstract class Combine extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = adoptChild(CastToVectorNodeFactory.create(null, false, false, false));
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
         }
         RVector resultVector = castVector.executeRAbstractVector(frame, value).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :
@@ -81,8 +81,8 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     protected Combine() {
-        this.foldOperation = adoptChild(new CombineFoldOperationNode());
-        this.precedenceNode = adoptChild(PrecedenceNodeFactory.create(null));
+        this.foldOperation = new CombineFoldOperationNode();
+        this.precedenceNode = PrecedenceNodeFactory.create(null);
     }
 
     protected Combine(Combine previousNode) {
@@ -256,7 +256,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreter();
-            castComplex = adoptChild(CastComplexNodeFactory.create(null, true, false));
+            castComplex = insert(CastComplexNodeFactory.create(null, true, false));
         }
         return castComplex.executeCast(frame, operand);
     }
@@ -264,7 +264,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreter();
-            castDouble = adoptChild(CastDoubleNodeFactory.create(null, true, false));
+            castDouble = insert(CastDoubleNodeFactory.create(null, true, false));
         }
         return castDouble.executeCast(frame, operand);
     }
@@ -272,7 +272,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreter();
-            castInteger = adoptChild(CastIntegerNodeFactory.create(null, true, false));
+            castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
         }
         return castInteger.executeCast(frame, operand);
     }
@@ -280,7 +280,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castLogical(VirtualFrame frame, Object operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreter();
-            castLogical = adoptChild(CastLogicalNodeFactory.create(null, true, false));
+            castLogical = insert(CastLogicalNodeFactory.create(null, true, false));
         }
         return castLogical.executeCast(frame, operand);
     }
@@ -288,7 +288,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreter();
-            castString = adoptChild(CastStringNodeFactory.create(null, false, true, false));
+            castString = insert(CastStringNodeFactory.create(null, false, true, false));
         }
         return castString.executeCast(frame, operand);
     }
@@ -296,7 +296,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreter();
-            castRaw = adoptChild(CastRawNodeFactory.create(null, true, false));
+            castRaw = insert(CastRawNodeFactory.create(null, true, false));
         }
         return castRaw.executeCast(frame, operand);
     }
@@ -304,7 +304,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castList(VirtualFrame frame, Object operand) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreter();
-            castList = adoptChild(CastListNodeFactory.create(null, true, false));
+            castList = insert(CastListNodeFactory.create(null, true, false));
         }
         return castList.executeCast(frame, operand);
     }

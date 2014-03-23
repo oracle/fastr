@@ -32,7 +32,7 @@ public final class RBuiltinRootNode extends RRootNode {
 
     public RBuiltinRootNode(RBuiltinNode builtin, Object[] parameterNames, FrameDescriptor frameDescriptor) {
         super(builtin.getSourceSection(), parameterNames, frameDescriptor);
-        this.builtin = adoptChild(builtin);
+        this.builtin = builtin;
     }
 
     @Override

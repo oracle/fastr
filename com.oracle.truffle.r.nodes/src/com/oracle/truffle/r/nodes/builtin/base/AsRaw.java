@@ -43,7 +43,7 @@ public abstract class AsRaw extends RBuiltinNode {
     private void initCast() {
         if (castRawNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castRawNode = adoptChild(CastRawNodeFactory.create(null, false, false));
+            castRawNode = insert(CastRawNodeFactory.create(null, false, false));
         }
     }
 

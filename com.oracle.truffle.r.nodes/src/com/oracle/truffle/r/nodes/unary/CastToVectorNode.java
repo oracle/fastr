@@ -58,4 +58,9 @@ public abstract class CastToVectorNode extends CastNode {
         return vector;
     }
 
+    @Specialization
+    public RFunction cast(RFunction f) {
+        return f;
+    }
+
 }

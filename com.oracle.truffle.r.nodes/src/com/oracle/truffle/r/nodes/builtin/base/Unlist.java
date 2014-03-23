@@ -50,7 +50,7 @@ public abstract class Unlist extends RBuiltinNode {
     @Child private PrecedenceNode precedenceNode;
 
     protected Unlist() {
-        this.precedenceNode = adoptChild(PrecedenceNodeFactory.create(null));
+        this.precedenceNode = PrecedenceNodeFactory.create(null);
     }
 
     @SuppressWarnings("unused")

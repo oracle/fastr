@@ -48,8 +48,8 @@ public abstract class Mean extends RBuiltinNode {
 
     public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x, Object args);
 
-    @Child protected BinaryArithmetic add = adoptChild(BinaryArithmetic.ADD.create());
-    @Child protected BinaryArithmetic div = adoptChild(BinaryArithmetic.DIV.create());
+    @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child protected BinaryArithmetic div = BinaryArithmetic.DIV.create();
 
     @Specialization
     @SuppressWarnings("unused")

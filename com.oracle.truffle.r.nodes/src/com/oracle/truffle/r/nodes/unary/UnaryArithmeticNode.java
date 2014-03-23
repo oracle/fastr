@@ -35,11 +35,11 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     private final NACheck na = NACheck.create();
 
     public UnaryArithmeticNode(UnaryArithmeticFactory factory) {
-        this.arithmetic = adoptChild(factory.create());
+        this.arithmetic = factory.create();
     }
 
     public UnaryArithmeticNode(UnaryArithmeticNode prev) {
-        this.arithmetic = adoptChild(prev.arithmetic);
+        this.arithmetic = prev.arithmetic;
     }
 
     @Specialization(order = 1, guards = "!isNA")

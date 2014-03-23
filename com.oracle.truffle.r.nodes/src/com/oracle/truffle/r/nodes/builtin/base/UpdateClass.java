@@ -187,49 +187,49 @@ public abstract class UpdateClass extends RBuiltinNode {
     private void initCastString() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castStringNode = adoptChild(CastStringNodeFactory.create(null, false, false, false));
+            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastComplex() {
         if (castComplexNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castComplexNode = adoptChild(CastComplexNodeFactory.create(null, false, false));
+            castComplexNode = insert(CastComplexNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastDouble() {
         if (castDoubleNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castDoubleNode = adoptChild(CastDoubleNodeFactory.create(null, false, false));
+            castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastInteger() {
         if (castIntegerNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castIntegerNode = adoptChild(CastIntegerNodeFactory.create(null, false, false));
+            castIntegerNode = insert(CastIntegerNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastLogical() {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castLogicalNode = adoptChild(CastLogicalNodeFactory.create(null, false, false));
+            castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastRaw() {
         if (castRawNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castRawNode = adoptChild(CastRawNodeFactory.create(null, false, false));
+            castRawNode = insert(CastRawNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastList() {
         if (castListNode == null) {
             CompilerDirectives.transferToInterpreter();
-            castListNode = adoptChild(CastListNodeFactory.create(null, false, false));
+            castListNode = insert(CastListNodeFactory.create(null, false, false));
         }
     }
 
