@@ -93,14 +93,4 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         targetFunction.setEnclosingFrame(frame.getArguments(RArguments.class).getEnclosingFrame());
         frame.getArguments(RArguments.class).setEnclosingFrame(storedEnclosingFrame);
     }
-
-    static final class FunctionCall {
-        RFunction function;
-        CallArgumentsNode args;
-
-        FunctionCall(RFunction function, CallArgumentsNode args) {
-            this.function = function;
-            this.args = args;
-        }
-    }
 }
