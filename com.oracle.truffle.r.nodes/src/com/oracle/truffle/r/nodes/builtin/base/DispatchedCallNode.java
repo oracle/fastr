@@ -95,8 +95,8 @@ public abstract class DispatchedCallNode extends RNode {
         private final RStringVector type;
 
         CachedNode(final DispatchedCallNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
-            this.nextNode = insert(nextNode);
-            this.currentNode = insert(currentNode);
+            this.nextNode = nextNode;
+            this.currentNode = currentNode;
             this.type = type;
         }
 
@@ -126,12 +126,12 @@ public abstract class DispatchedCallNode extends RNode {
         @Child protected DispatchNode aDispatchNode;
 
         public ResolvedDispatchedCallNode(DispatchNode dNode) {
-            this.aDispatchNode = insert(dNode);
+            this.aDispatchNode = dNode;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            FunctionCall aFuncCall = (FunctionCall) aDispatchNode.execute(frame);
+            DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame);
             if (aCallNode == null) {
                 CompilerDirectives.transferToInterpreter();
                 aCallNode = insert(RCallNode.createCall(null, aFuncCall.args));

@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchNode extends RNode {
@@ -20,6 +21,15 @@ public abstract class DispatchNode extends RNode {
     protected RStringVector type;
     protected String genericName;
 
-    protected abstract void unsetEnvironment(VirtualFrame frame);
+    static final class FunctionCall {
+        RFunction function;
+        CallArgumentsNode args;
 
+        FunctionCall(RFunction function, CallArgumentsNode args) {
+            this.function = function;
+            this.args = args;
+        }
+    }
+
+    protected abstract void unsetEnvironment(VirtualFrame frame);
 }

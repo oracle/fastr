@@ -30,14 +30,14 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public FunctionCall execute(VirtualFrame frame) {
+    public DispatchNode.FunctionCall execute(VirtualFrame frame) {
         VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
         if (targetFunction != null && findFunction(targetFunctionName, callerFrame)) {
             assert (funCall != null);
         } else {
             findTargetFunction(callerFrame);
             initArgNodes(frame);
-            funCall = new FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
+            funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
         }
         setEnvironment(frame);
         return funCall;
@@ -93,14 +93,14 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         targetFunction.setEnclosingFrame(frame.getArguments(RArguments.class).getEnclosingFrame());
         frame.getArguments(RArguments.class).setEnclosingFrame(storedEnclosingFrame);
     }
-}
 
-class FunctionCall {
-    RFunction function;
-    CallArgumentsNode args;
+    static final class FunctionCall {
+        RFunction function;
+        CallArgumentsNode args;
 
-    FunctionCall(RFunction function, CallArgumentsNode args) {
-        this.function = function;
-        this.args = args;
+        FunctionCall(RFunction function, CallArgumentsNode args) {
+            this.function = function;
+            this.args = args;
+        }
     }
 }

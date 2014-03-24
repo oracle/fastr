@@ -5519,6 +5519,18 @@ Error in get("x") : object 'x' not found
 [1]   0  -4  NA NaN Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{ get("dummy") }
+Error in get("dummy") : object 'dummy' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{ x <- 33 ; f <- function() { get("x", inherits = FALSE) } ; f() }
+Error in get("x", inherits = FALSE) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get("x", inherits = FALSE) } ; f() }
+Error in get("x", inherits = FALSE) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
 #{y<-function(){y<-2;get("y",mode="closure")};y();}
 function(){y<-2;get("y",mode="closure")}
 

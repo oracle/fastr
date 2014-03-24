@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -27,7 +28,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
-    @Child protected DispatchedCallNode distpatchedCallNode;
+    @Child protected DispatchedCallNode dispatchedCallNode;
     protected String lastGenericName;
 
     @Override
@@ -105,11 +106,12 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (distpatchedCallNode == null || !lastGenericName.equals(generic)) {
+        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            distpatchedCallNode = distpatchedCallNode == null ? insert(dcn) : distpatchedCallNode.replace(dcn);
+            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = generic;
         }
-        throw new ReturnException(distpatchedCallNode.execute(frame, classNames));
+        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
     }
 }
