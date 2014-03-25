@@ -88,7 +88,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         for (; i < leftLength + rightLength; ++i) {
             result[i] = right.getDataAt(i - leftLength);
         }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR, combineNames(left, right));
+        return RDataFactory.createDoubleVector(result, left.isComplete() && right.isComplete(), combineNames(left, right));
     }
 
 }
