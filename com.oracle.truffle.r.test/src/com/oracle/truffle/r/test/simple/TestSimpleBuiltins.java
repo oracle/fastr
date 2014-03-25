@@ -1478,11 +1478,6 @@ public class TestSimpleBuiltins extends TestBase {
         // require first-class environments
         assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
 
-        // lookup
-        // require get
-        assertEvalError("{ get(\"dummy\") }");
-        assertEvalError("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits=FALSE) } ; f() }");
-        assertEvalError("{ x <- 33 ; f <- function() { get(\"x\", inherits=FALSE) } ; f() }");
         assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
 
         // lookup with function matching
@@ -2515,6 +2510,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\",inherits=FALSE);get(\"y\",mode=\"integer\",inherits=FALSE)};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\",inherits=FALSE)};y();}");
+        assertEval("{ get(\"dummy\") }");
+        assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
+        assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
     }
 
     @Test

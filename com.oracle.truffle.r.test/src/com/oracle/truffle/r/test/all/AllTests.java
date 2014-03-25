@@ -7364,21 +7364,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_f2c6b557e11aa719fe83073c7b60a966() {
-        assertEvalError("{ get(\"dummy\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_633aa459a0bfe204065493e3c5e55e10() {
-        assertEvalError("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_bf2a31b9863af1b8b313930f8a0d4458() {
-        assertEvalError("{ x <- 33 ; f <- function() { get(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_c6a4f629877c5c26aa4a01b522eb2649() {
         assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
     }
@@ -7496,6 +7481,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGet_374e182f1c02f32eea8630124198890b() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\",inherits=FALSE)};y();}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_f2c6b557e11aa719fe83073c7b60a966() {
+        assertEval("{ get(\"dummy\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_1087991be7b199d7a0645e3ba9553805() {
+        assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGet_5159e1fa2f3c3b1e9e2819e18d1aaed4() {
+        assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
     }
 
     @Test

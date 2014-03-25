@@ -135,6 +135,8 @@ public class RRuntime {
 
     private static long[] childTimes;
 
+    public static final String USE_METHOD = "UseMethod";
+
     /**
      * Perform any runtime initialization necessary before the first R evaluation.
      */
