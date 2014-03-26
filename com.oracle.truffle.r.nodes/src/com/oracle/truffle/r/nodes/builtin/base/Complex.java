@@ -26,6 +26,8 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("complex")
@@ -44,10 +46,33 @@ public abstract class Complex extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(0), ConstantNode.create(0.0), ConstantNode.create(0.0), ConstantNode.create(1), ConstantNode.create(0)};
     }
 
-    @Specialization
+    @CreateCast("arguments")
+    protected RNode[] castStatusArgument(RNode[] arguments) {
+        // length.out argument is at index 0
+        arguments[0] = CastIntegerNodeFactory.create(arguments[0], true, false);
+        return arguments;
+    }
+
+    @Specialization(guards = "zeroLength")
     @SuppressWarnings("unused")
-    public RComplex complex(int lengthOut, double real, double imaginary, int modulus, int argument) {
+    public RComplex complexZeroLength(int lengthOut, double real, double imaginary, int modulus, int argument) {
         return RDataFactory.createComplex(real, imaginary);
+    }
+
+    @Specialization(guards = "!zeroLength")
+    @SuppressWarnings("unused")
+    public RComplexVector complex(int lengthOut, double real, double imaginary, int modulus, int argument) {
+        double[] data = new double[lengthOut << 1];
+        for (int i = 0; i < data.length; i += 2) {
+            data[i] = real;
+            data[i + 1] = imaginary;
+        }
+        return RDataFactory.createComplexVector(data, !RRuntime.isNA(real) && !RRuntime.isNA(imaginary));
+    }
+
+    @SuppressWarnings("unused")
+    protected static boolean zeroLength(int lengthOut, double real, double imaginary, int modulus, int argument) {
+        return lengthOut == 0;
     }
 
 }

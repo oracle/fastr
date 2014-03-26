@@ -1898,6 +1898,7 @@ public class TestSimpleBuiltins extends TestBase {
     public void testComplex() {
         assertEval("{ complex(real=1,imaginary=2) }");
         assertEval("{ complex(real=1,imag=2) }");
+        assertEval("{ complex(3) }");
     }
 
     @Test

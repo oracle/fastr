@@ -5979,6 +5979,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testComplex_08afe9365f9ccc2563e2efdda7b69a89() {
+        assertEval("{ complex(3) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testComplexIgnore_6c296b051839b1865e7b24f04e0f89d5() {
         assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
     }
