@@ -8729,6 +8729,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testOuterIgnore_da963cbde1784128a50d0bb2220f4a09() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,foo) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOuterIgnore_fa7bab756255d002e9b280b544ccabdb() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,\"foo\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOuterIgnore_4a115174070896c785016a9d9d5d665e() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(1:3,1:3,foo) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOuterIgnore_e5c558a0c7a7981c18d26924fb310194() {
         assertEval("{ outer(c(1,2,3),c(1,2),\"+\") }");
     }
