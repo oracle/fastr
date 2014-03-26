@@ -43500,31 +43500,31 @@ Error in x[[c(1, 2, 2, NA)]] <- 7 :
 Error in `[[<-`(`*tmp*`, c(1, NA, 2, 1), value = 7) :
   no such index at level 2
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[,0,]) }
 [1] 2 0 2
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[0,-1,0]) }
 [1] 0 0
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[0,2,0]) }
 [1] 0 0
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[0,3,0]) }
 Error: subscript out of bounds
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,]) }
 [1] 0 2
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); x[-1,-1, 0] }
 integer(0)
 
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndexIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); x[-1,0,] }
      [,1] [,2]
 
@@ -44880,6 +44880,10 @@ Error in x[[i]] : attempt to select less than one element
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarIndex
+#{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }
+Error in x[[i]] : object of type 'closure' is not subsettable
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarIndex
 #{ f <- function(x,i) { x[i] } ; f(1:4, 2L) ; f(c(a=1), "a") ; f(1:2,-2) }
 [1] 1
 
@@ -45041,6 +45045,10 @@ NULL
 #{ f <- function(x,i) { x[i] } ; f(1:4, 2L) ; f(c(a=1), "a") ; z <- c(a=as.raw(10),b=as.raw(11)) ; attr(z, "my") <- 1 ; f(z,-10) }
  a  b
 0a 0b
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarIndex
+#{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,"a") ; f(function(){3},"b") }
+Error in x[i] : object of type 'closure' is not subsettable
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarIndex
 #{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,"a") ; f(x,2) }
@@ -45884,12 +45892,24 @@ Error in a[[x]] : attempt to select less than one element
 numeric(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ f <- function(b) { b[integer()] } ; f(c(TRUE,FALSE,TRUE)) ; f(f) }
+Error in b[integer()] : object of type 'closure' is not subsettable
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f <- function(b,i) { b[[i]] } ; f(list(1,list(2)),c(2,1)) ; f(1:3,list(1)) }
 Error in b[[i]] : invalid subscript type 'list'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f <- function(b,i) { b[i] } ; f(1:3, c("h","hi")) ; f(1:3,TRUE) }
 [1] 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ f <- function(b,i) { b[i] } ; f(1:3, c("h","hi")) ; f(function(){3},"hi") }
+Error in b[i] : object of type 'closure' is not subsettable
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE)) ; f(f, c(TRUE,NA)) }
+Error in b[i] : object of type 'closure' is not subsettable
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE,NA)) }
@@ -45907,6 +45927,10 @@ Error in b[[i]] : invalid subscript type 'list'
 #{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE,TRUE)) ; f(c(a=1,b=2,c=3),3:1) }
 c b a
 3 2 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE,TRUE)) ; f(function(){2},3:1) }
+Error in b[i] : object of type 'closure' is not subsettable
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f <- function(b,i) { b[i] } ; f(1:3, logical()) }
@@ -45980,6 +46004,11 @@ Error in l[[i]] : attempt to select more than one element
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f <- function(i) { l[[i]] } ; l <- list(1, c(2,3)) ; f(c(2,0)) }
 Error in l[[i]] : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ f <- function(i) { l[[i]] } ; l <- list(1, f) ; f(c(2,1)) }
+Error in f(c(2, 1)) :
+  invalid type/length (closure/1) in vector allocation
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ f<-function(i) { x<-1:5 ; x[i] } ; f(1)  ; f(3:4) }
@@ -46225,6 +46254,10 @@ Error in x[[c(NA, 1)]] : no such index at level 1
 Error in x[[i]] : invalid subscript type 'complex'
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ x <- list(a=1,b=1:3) ; f <- function(i) { x[[i]] } ; f(c(2,2)) ; x <- f ; f(2+3i) }
+Error in x[[i]] : object of type 'closure' is not subsettable
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ x <- list(a=1,b=1:3) ; x[[2+3i]] }
 Error in x[[2 + (0+3i)]] : invalid subscript type 'complex'
 
@@ -46259,6 +46292,18 @@ Error in x[[c(NA, "x")]] : no such index at level 1
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ x <- list(a=1,b=2,d=list(x=3)) ; x[[character()]] }
 Error in x[[character()]] : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ x <- list(a=1,b=function(){3},d=list(x=3)) ; f <- function(i) { x[[i]] } ; f(c("d","x")) ; f(c("b","z")) }
+Error in x[[i]] : subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ x <- list(a=1,b=function(){3},d=list(x=3)) ; x[[c(2,-3)]] }
+Error in x[[c(2, -3)]] : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
+#{ x <- list(a=1,b=function(){3},d=list(x=3)) ; x[[c(2,10)]] }
+Error in x[[c(2, 10)]] : subscript out of bounds
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 #{ x<-(1:5)[2:4] ; x[2:1] }

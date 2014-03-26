@@ -641,18 +641,12 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:4; x[c(-0.5)] }");
         assertEval("{ x<-1:4; x[c(1.4,1.8)] }");
 
-    }
-
-    @Test
-    @Ignore
-    public void testScalarIndexIgnore() {
-        // TODO: handle error reporting for functions used as vectors
         assertEvalError("{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }");
         assertEvalError("{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(function(){3},\"b\") }");
     }
 
     @Test
-    public void testMultiDimScalarIndexIgnore() {
+    public void testMultiDimScalarIndex() {
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[1,0,]) }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); dim(x[,0,]) }");
         assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[-1,0,] }");
@@ -799,12 +793,7 @@ public class TestSimpleVectors extends TestBase {
 
         assertEvalError("{ l <- list(1,2) ; l[[c(1,1,2,3,4,3)]] }");
         assertEvalError("{ l <- list(list(1,2),2) ; l[[c(1,1,2,3,4,3)]] }");
-    }
 
-    @Test
-    @Ignore
-    public void testVectorIndexIgnore() {
-        // TODO: handle error cases when accessing a function the same way as a vector
         assertEvalError("{ f <- function(b) { b[integer()] } ; f(c(TRUE,FALSE,TRUE)) ; f(f) }");
         assertEvalError("{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE,TRUE)) ; f(function(){2},3:1) }");
         assertEvalError("{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE)) ; f(f, c(TRUE,NA)) }");

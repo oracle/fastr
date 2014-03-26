@@ -74,15 +74,15 @@ public abstract class AccessArrayNode extends RNode {
         return executeAccess(frame, vector, recLevel, operand);
     }
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private Object castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreter();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, true));
         }
-        return castVector.executeRAbstractVector(frame, value).materialize();
+        return castVector.executeObject(frame, value);
     }
 
-    private Object castPosition(VirtualFrame frame, RAbstractVector vector, Object operand) {
+    private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreter();
             castPosition = insert(ArrayPositionCastFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
@@ -97,12 +97,12 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
-    private Object convertOperand(VirtualFrame frame, RAbstractVector vector, int operand) {
+    private Object convertOperand(VirtualFrame frame, Object vector, int operand) {
         initOperatorConvert();
         return operatorConverter.executeConvert(frame, vector, operand, null);
     }
 
-    private Object convertOperand(VirtualFrame frame, RAbstractVector vector, String operand) {
+    private Object convertOperand(VirtualFrame frame, Object vector, String operand) {
         initOperatorConvert();
         return operatorConverter.executeConvert(frame, vector, operand, null);
     }
@@ -145,13 +145,55 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1)
+    @Specialization(order = 1, guards = {"inRecursion", "isFirstPositionPositive"})
+    RNull accessNullInRecursionPosPositive(RNull vector, int recLevel, RAbstractIntVector positions) {
+        throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 2, guards = {"inRecursion", "!isFirstPositionPositive"})
+    RNull accessNullInRecursion(RNull vector, int recLevel, RAbstractIntVector positions) {
+        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 3)
     RNull access(RNull vector, int recLevel, Object positions) {
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2)
+    @Specialization(order = 4, guards = {"inRecursion", "isFirstPositionOne"})
+    RNull accessFunctionInRecursionPosOne(RFunction vector, int recLevel, RAbstractIntVector positions) {
+        throw RError.getInvalidTypeLength(getEncapsulatingSourceSection(), "closure", 1);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 5, guards = {"inRecursion", "isFirstPositionPositive", "!isFirstPositionOne"})
+    RNull accessFunctionInRecursionPosPositive(RFunction vector, int recLevel, RAbstractIntVector positions) {
+        throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 6, guards = {"inRecursion", "!isFirstPositionPositive"})
+    RNull accessFunctionInRecursion(RFunction vector, int recLevel, RAbstractIntVector positions) {
+        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 7, guards = "inRecursion")
+    RNull accessFunctionInRecursionString(RFunction vector, int recLevel, RAbstractStringVector positions) {
+        throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 8)
+    RNull accessFunction(RFunction vector, int recLevel, Object position) {
+        throw RError.getObjectNotSubsettable(getEncapsulatingSourceSection(), "closure");
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 9)
     RNull access(RAbstractVector vector, int recLevel, RNull positions) {
         // this is a special case (see ArrayPositionCast) - RNull can only appear to represent the
         // x[NA] case which has to return null and not a null vector
@@ -159,7 +201,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 3)
+    @Specialization(order = 10)
     Object access(RAbstractVector vector, int recLevel, RMissing positions) {
         if (!isSubset) {
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "symbol");
@@ -169,7 +211,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 4, guards = "wrongDimensions")
+    @Specialization(order = 11, guards = "wrongDimensions")
     Object access(RAbstractVector vector, int recLevel, Object[] positions) {
         throw RError.getIncorrectDimensions(getEncapsulatingSourceSection());
     }
@@ -398,7 +440,7 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
-    @Specialization(order = 10)
+    @Specialization(order = 13)
     RList access(RList vector, @SuppressWarnings("unused") int recLevel, Object[] positions) {
         // compute length of dimensions array and of the resulting vector
         DimsAndResultLength res = getDimsAndResultLength(positions);
@@ -445,7 +487,7 @@ public abstract class AccessArrayNode extends RNode {
         }
     }
 
-    @Specialization(order = 11, guards = "isSubset")
+    @Specialization(order = 14, guards = "isSubset")
     RList accessSubset(RList vector, @SuppressWarnings("unused") int recLevel, RIntVector p) {
         int resLength = p.getLength();
         Object[] data = new Object[resLength];
@@ -484,7 +526,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization(order = 16, guards = {"hasNames", "!isSubset", "twoPosition"})
     Object accessStringTwoPosRec(VirtualFrame frame, RList vector, int recLevel, RStringVector p) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel);
-        RAbstractVector newVector = castVector(frame, vector.getDataAt(position - 1));
+        Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
         return accessRecursive(frame, newVector, newPosition, recLevel + 1);
     }
@@ -548,7 +590,7 @@ public abstract class AccessArrayNode extends RNode {
     Object accessTwoPosRec(VirtualFrame frame, RList vector, int recLevel, RIntVector p) {
         int position = p.getDataAt(0);
         position = getPositionInRecursion(vector, position, recLevel);
-        RAbstractVector newVector = castVector(frame, vector.getDataAt(position - 1));
+        Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
         return accessRecursive(frame, newVector, newPosition, recLevel + 1);
     }
@@ -1367,6 +1409,21 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @SuppressWarnings("unused")
+    protected boolean isFirstPositionPositive(RNull vector, int recLevel, RAbstractIntVector positions) {
+        return positions.getDataAt(0) > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean isFirstPositionPositive(RFunction vector, int recLevel, RAbstractIntVector positions) {
+        return positions.getDataAt(0) > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean isFirstPositionOne(RFunction vector, int recLevel, RAbstractIntVector positions) {
+        return positions.getDataAt(0) == 1;
+    }
+
+    @SuppressWarnings("unused")
     protected boolean isPositionZero(RAbstractVector vector, int recLevel, int position) {
         return position == 0;
     }
@@ -1407,6 +1464,26 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     protected boolean inRecursion(RAbstractVector vector, int recLevel, RIntVector positions) {
+        return recLevel > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean inRecursion(RNull vector, int recLevel, RAbstractIntVector positions) {
+        return recLevel > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean inRecursion(RFunction vector, int recLevel, RAbstractIntVector positions) {
+        return recLevel > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean inRecursion(RFunction vector, int recLevel, RAbstractStringVector positions) {
+        return recLevel > 0;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean inRecursion(RFunction vector, int recLevel, Object positions) {
         return recLevel > 0;
     }
 

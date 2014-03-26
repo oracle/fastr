@@ -27,40 +27,45 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 
-@NodeField(name = "nullPreserved", type = boolean.class)
+@NodeField(name = "nonVectorPreserved", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
-
-    @Override
-    public abstract RAbstractVector executeRAbstractVector(VirtualFrame frame);
 
     public abstract RAbstractVector executeRAbstractVector(VirtualFrame frame, Object value);
 
-    public abstract boolean isNullPreserved();
+    public abstract Object executeObject(VirtualFrame frame, Object value);
 
-    protected boolean preserveNull() {
-        return isNullPreserved();
+    public abstract boolean isNonVectorPreserved();
+
+    protected boolean preserveNonVector() {
+        return isNonVectorPreserved();
     }
 
-    @Specialization(order = 1, guards = "preserveNull")
+    @Specialization(order = 1, guards = "preserveNonVector")
     @SuppressWarnings("unused")
     public RNull castNull(RNull rnull) {
         return RNull.instance;
     }
 
-    @Specialization(order = 2, guards = "!preserveNull")
+    @Specialization(order = 2, guards = "!preserveNonVector")
     @SuppressWarnings("unused")
     public RAbstractVector cast(RNull rnull) {
+        return RDataFactory.createList();
+    }
+
+    @Specialization(order = 3, guards = "preserveNonVector")
+    public RFunction castFunction(RFunction f) {
+        return f;
+    }
+
+    @Specialization(order = 4, guards = "!preserveNonVector")
+    @SuppressWarnings("unused")
+    public RAbstractVector cast(RFunction f) {
         return RDataFactory.createList();
     }
 
     @Specialization
     public RAbstractVector cast(RAbstractVector vector) {
         return vector;
-    }
-
-    @Specialization
-    public RFunction cast(RFunction f) {
-        return f;
     }
 
 }

@@ -4814,16 +4814,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleVectors_testScalarIndexIgnore_e779aeb90d80a1638b7a5cde7d6df3e8() {
-        assertEvalError("{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testScalarIndexIgnore_23d48d08709d0c790853d982cc773a44() {
-        assertEvalError("{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(function(){3},\"b\") }");
-    }
-
-    @Ignore
     public void TestSimpleVectors_testScalarUpdateIgnore_1516ce41d7ffe7190bcb5b25ead6f4ee() {
         assertEval("{ x<-5:1; x[0-2]<-1000; x }");
     }
@@ -5351,51 +5341,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleVectors_testStringUpdateIgnore_8f118953ceadc684e87681bfe249ef23() {
         assertEvalWarning("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1+2i,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),c(TRUE,NA)) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_3bc7f294454f97d9cb11d6e1b5558c0c() {
-        assertEvalError("{ f <- function(b) { b[integer()] } ; f(c(TRUE,FALSE,TRUE)) ; f(f) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_9d704c58dc70d171339e0ed2af90602f() {
-        assertEvalError("{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE,TRUE)) ; f(function(){2},3:1) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_6ebbd3a2fad58c0c250e5c792d87ebb8() {
-        assertEvalError("{ f <- function(b,i) { b[i] } ; f(1:3, c(TRUE,FALSE)) ; f(f, c(TRUE,NA)) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_94102136bcc491dd4cef2d68b5ab0304() {
-        assertEvalError("{ f <- function(b,i) { b[i] } ; f(1:3, c(\"h\",\"hi\")) ; f(function(){3},\"hi\") }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_0969e3058322c4ae7f7a03d5dd02e033() {
-        assertEvalError("{ f <- function(i) { l[[i]] } ; l <- list(1, f) ; f(c(2,1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_2d2bb6829bd147ff70ac0628fe64b80e() {
-        assertEvalError("{ x <- list(a=1,b=function(){3},d=list(x=3)) ; x[[c(2,10)]] }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_41b05c97e57278ac385535fb4f47222f() {
-        assertEvalError("{ x <- list(a=1,b=function(){3},d=list(x=3)) ; x[[c(2,-3)]] }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_f18bf8d7ed8664f5b3cd440109c89865() {
-        assertEvalError("{ x <- list(a=1,b=function(){3},d=list(x=3)) ; f <- function(i) { x[[i]] } ; f(c(\"d\",\"x\")) ; f(c(\"b\",\"z\")) }");
-    }
-
-    @Ignore
-    public void TestSimpleVectors_testVectorIndexIgnore_1cad751e84ef65887eda84669bd42192() {
-        assertEvalError("{ x <- list(a=1,b=1:3) ; f <- function(i) { x[[i]] } ; f(c(2,2)) ; x <- f ; f(2+3i) }");
     }
 
     @Ignore

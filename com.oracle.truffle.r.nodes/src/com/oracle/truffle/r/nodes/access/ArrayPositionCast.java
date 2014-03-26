@@ -40,7 +40,7 @@ import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConver
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
 public abstract class ArrayPositionCast extends RNode {
 
-    abstract Object executeArg(VirtualFrame frame, RAbstractVector vector, Object value, Object operand);
+    abstract Object executeArg(VirtualFrame frame, Object vector, Object value, Object operand);
 
     abstract RNode getVector();
 
@@ -93,6 +93,11 @@ public abstract class ArrayPositionCast extends RNode {
 
     @Specialization(order = 1)
     public Object doMissingVector(RNull vector, Object value, Object operand) {
+        return operand;
+    }
+
+    @Specialization(order = 2)
+    public Object doFuncOp(RFunction vector, Object value, Object operand) {
         return operand;
     }
 
@@ -171,13 +176,13 @@ public abstract class ArrayPositionCast extends RNode {
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})
     abstract static class OperatorConverterNode extends RNode {
 
-        abstract Object executeConvert(VirtualFrame frame, RAbstractVector vector, int operand, Object value);
+        abstract Object executeConvert(VirtualFrame frame, Object vector, int operand, Object value);
 
-        abstract Object executeConvert(VirtualFrame frame, RAbstractVector vector, double operand, Object value);
+        abstract Object executeConvert(VirtualFrame frame, Object vector, double operand, Object value);
 
-        abstract Object executeConvert(VirtualFrame frame, RAbstractVector vector, byte operand, Object value);
+        abstract Object executeConvert(VirtualFrame frame, Object vector, byte operand, Object value);
 
-        abstract Object executeConvert(VirtualFrame frame, RAbstractVector vector, Object operand, Object value);
+        abstract Object executeConvert(VirtualFrame frame, Object vector, Object operand, Object value);
 
         private final int dimension;
         private final int numDimensions;
@@ -1008,8 +1013,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 300)
-        public RMissing doFuncOp(RFunction vector, Object operand, Object value) {
-            throw RError.getObjectNotSubsettable(getEncapsulatingSourceSection(), "closure");
+        public Object doFuncOp(RFunction vector, Object operand, Object value) {
+            return operand;
         }
 
         private final NACheck positionNACheck = NACheck.create();
