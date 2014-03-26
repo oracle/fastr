@@ -119,7 +119,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
-                for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
+                for (int i = data.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, data.length)) {
                     newData[i] = data[j];
                     newData[i + 1] = data[j + 1];
                 }
