@@ -235,6 +235,9 @@ def bench(args):
     with vm:
         mx.bench(args, harness=_bench_harness_body)
 
+def unittest(args):
+    print("use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests")
+
 def mx_init(suite):
     global _fastr_suite
     _fastr_suite = suite
@@ -251,6 +254,7 @@ def mx_init(suite):
         'bench' : [bench, 'options'],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
+        'unittest' : [unittest, ['options']],
     }
     mx.update_commands(suite, commands)
 
