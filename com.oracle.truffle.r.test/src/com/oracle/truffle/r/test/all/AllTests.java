@@ -12119,6 +12119,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDefinitionsIgnore_8ef4913016fe9a78ae79cb9f48e3c5ae() {
+        assertEval("{ foo <- function (x) { x } ; foo() }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDefinitionsIgnore_1c3efc0657001d0ce5000a68b2e7b18d() {
+        assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDefinitionsNamedAndDefault_c3181fa02422dff5e566ca113c4fb5b3() {
         assertEval("{ f<-function(a=1,b=2,c=3) {TRUE} ; f(,,) }");
     }

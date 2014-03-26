@@ -3444,6 +3444,16 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleFunctions_testDefinitionsIgnore_8ef4913016fe9a78ae79cb9f48e3c5ae() {
+        assertEval("{ foo <- function (x) { x } ; foo() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDefinitionsIgnore_1c3efc0657001d0ce5000a68b2e7b18d() {
+        assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
+    }
+
+    @Ignore
     public void TestSimpleFunctions_testDotsIgnore_e620898284cbe5e1d40bfe326c77804e() {
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
     }
