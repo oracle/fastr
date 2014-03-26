@@ -36,7 +36,7 @@ public class RProfile {
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
 
-        if (!ROptions.NO_SITE_FILE.getValue()) {
+        if (!RCmdOptions.NO_SITE_FILE.getValue()) {
             String siteProfile = REnvVars.get("R_PROFILE");
             if (siteProfile == null) {
                 siteProfile = fileSystem.getPath(rHome, "etc", "Rprofile.site").toString();
@@ -48,7 +48,7 @@ public class RProfile {
             }
         }
 
-        if (!ROptions.NO_INIT_FILE.getValue()) {
+        if (!RCmdOptions.NO_INIT_FILE.getValue()) {
             String userProfile = REnvVars.get("R_PROFILE_USER");
             if (userProfile == null) {
                 String dotRenviron = ".Rprofile";

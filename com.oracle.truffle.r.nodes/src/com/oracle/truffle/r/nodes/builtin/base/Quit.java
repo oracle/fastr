@@ -57,8 +57,14 @@ public abstract class Quit extends RBuiltinNode {
         String save = saveArg;
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
-            if (consoleHandler.isInteractive()) {
-                save = "ask";
+            if (RCmdOptions.NO_SAVE.getValue()) {
+                save = "no";
+            } else {
+                if (consoleHandler.isInteractive()) {
+                    save = "ask";
+                } else {
+                    // TODO options must be set, check
+                }
             }
         }
         boolean doSave = false;

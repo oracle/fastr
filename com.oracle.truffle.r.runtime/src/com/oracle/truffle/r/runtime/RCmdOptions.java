@@ -25,17 +25,17 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 /**
- * (Abstract) definition of the standard R options. The setting of the values from the environment
- * is handled in some other class.
+ * (Abstract) definition of the standard R command line options. The setting of the values from the
+ * environment is handled in some other class.
  */
-public class ROptions {
+public class RCmdOptions {
     private static List<Option<?>> optionList = new ArrayList<>();
     public static final Option<Boolean> HELP = newBooleanOption(true, "h", "help", false, "Print short help message and exit");
     public static final Option<Boolean> VERSION = newBooleanOption(true, "version", false, "Print version info and exit");
     public static final Option<String> ENCODING = newStringOption(false, null, "encoding=ENC", null, "Specify encoding to be used for stdin");
     public static final Option<Boolean> RHOME = newBooleanOption(true, null, "RHOME", false, "Print path to R home directory and exit");
     public static final Option<Boolean> SAVE = newBooleanOption(false, null, "save", false, "Do save workspace at the end of the session");
-    public static final Option<Boolean> NO_SAVE = newBooleanOption(false, null, "no-save", false, "Don't save it");
+    public static final Option<Boolean> NO_SAVE = newBooleanOption(true, null, "no-save", false, "Don't save it");
     public static final Option<Boolean> NO_ENVIRON = newBooleanOption(false, null, "no-environ", false, "Don't read the site and user environment files");
     public static final Option<Boolean> NO_SITE_FILE = newBooleanOption(false, null, "no-site-file", false, "Don't read the site-wide Rprofile");
     public static final Option<Boolean> NO_INIT_FILE = newBooleanOption(false, null, "no-init-file", false, "Don't read the user R profile");

@@ -47,7 +47,7 @@ public class REnvVars {
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
         envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
 
-        if (!ROptions.NO_ENVIRON.getValue()) {
+        if (!RCmdOptions.NO_ENVIRON.getValue()) {
             String siteFile = envVars.get("R_ENVIRON");
             if (siteFile == null) {
                 siteFile = fileSystem.getPath(rHome, "etc", "Renviron.site").toString();

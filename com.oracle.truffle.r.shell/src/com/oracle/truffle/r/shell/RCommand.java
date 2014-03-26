@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.shell;
 
-import static com.oracle.truffle.r.runtime.ROptions.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
 import java.io.*;
 
