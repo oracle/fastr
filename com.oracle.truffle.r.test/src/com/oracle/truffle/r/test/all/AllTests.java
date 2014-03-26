@@ -8264,18 +8264,48 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_e23499bab4d503ddb354e5bd66c22e08() {
+    public void TestSimpleBuiltins_testMatrix_7da256d3445817db926f36c119414bde() {
+        assertEval("{ matrix(\"a\",10,10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_1ce1dab3390cacefa841400b37b0d20c() {
+        assertEval("{ matrix(c(\"a\",NA),10,10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_e23499bab4d503ddb354e5bd66c22e08() {
         assertEval("{ matrix(1:4, nrow=2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_94213eef23a62612694d36caa8a534f2() {
+    public void TestSimpleBuiltins_testMatrix_94213eef23a62612694d36caa8a534f2() {
         assertEval("{ matrix(c(1,2,3,4), nrow=2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_186bd3d23aff9a5a2f99c0085331c535() {
+    public void TestSimpleBuiltins_testMatrix_186bd3d23aff9a5a2f99c0085331c535() {
         assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_0eae53e6a046f7679e50f8660579fac4() {
+        assertEval("{ matrix(nrow=2,ncol=2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_f7e2a87a6677d6b7b701176c6c9e1036() {
+        assertEval("{ matrix(1:4,2,2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_a7247bc1f1726ae687962cfda709230e() {
+        assertEval("{ matrix(1i,10,10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_fa8d853982879fcc896086fe6addfb0f() {
+        assertEval("{ matrix(c(1i,NA),10,10) }");
     }
 
     @Test
@@ -8284,23 +8314,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_0eae53e6a046f7679e50f8660579fac4() {
-        assertEval("{ matrix(nrow=2,ncol=2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_f7e2a87a6677d6b7b701176c6c9e1036() {
-        assertEval("{ matrix(1:4,2,2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_8daf811c43e5de9f9027463997632ce6() {
-        assertEval("{ matrix(1:4,3,2) }");
+    public void TestSimpleBuiltins_testMatrixIgnore_cc0dd296841e5af699ac9efbf0121ed3() {
+        assertEval("{ matrix(c(1i,100i),10,10) }");
     }
 
     @Test
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_8daf811c43e5de9f9027463997632ce6() {
+        assertEvalWarning("{ matrix(1:4,3,2) }");
     }
 
     @Test
