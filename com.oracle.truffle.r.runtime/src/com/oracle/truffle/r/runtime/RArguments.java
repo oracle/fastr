@@ -30,7 +30,7 @@ public final class RArguments extends Arguments {
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     private final RFunction function;
-    private final MaterializedFrame enclosingFrame;
+    private MaterializedFrame enclosingFrame;
     private final Object[] arguments;
     private final Object[] names;
 
@@ -87,5 +87,10 @@ public final class RArguments extends Arguments {
 
     public Object[] getNames() {
         return names;
+    }
+
+    public void setEnclosingFrame(MaterializedFrame frame) {
+        this.enclosingFrame = frame;
+        this.function.setEnclosingFrame(frame);
     }
 }

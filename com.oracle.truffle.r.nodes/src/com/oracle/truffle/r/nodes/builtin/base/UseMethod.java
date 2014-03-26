@@ -10,8 +10,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -24,12 +22,14 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = "UseMethod")
-public abstract class UseMethod extends S3MethodDispatch {
+public abstract class UseMethod extends RBuiltinNode {
     /*
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
+    @Child protected DispatchedCallNode dispatchedCallNode;
+    protected String lastGenericName;
 
     @Override
     public Object[] getParameterNames() {
@@ -106,67 +106,12 @@ public abstract class UseMethod extends S3MethodDispatch {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
-        for (int i = 0; i < classNames.getLength(); ++i) {
-            findFunction(generic, classNames.getDataAt(i), callerFrame);
-            if (targetFunction != null) {
-                RStringVector classVec = null;
-                if (i > 0) {
-                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(classNames.getDataCopy(), i, classNames.getLength()), true);
-                    LinkedHashMap<String, Object> attr = new LinkedHashMap<>();
-                    attr.put(RRuntime.PREVIOUS_ATTR_KEY, classNames.copyResized(classNames.getLength(), false));
-                    classVec.setAttributes(attr);
-                } else {
-                    classVec = classNames.copyResized(classNames.getLength(), false);
-                }
-                klass = classVec;
-                break;
-            }
+        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+            lastGenericName = generic;
         }
-        if (targetFunction == null) {
-            findFunction(generic, RRuntime.DEFAULT, callerFrame);
-            if (targetFunction == null) {
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RRuntime.toString(classNames));
-            }
-        }
-        this.genericName = generic;
-        return dispatchMethod(frame);
-    }
-
-    private Object dispatchMethod(VirtualFrame frame) {
-        final RArguments currentArguments = frame.getArguments(RArguments.class);
-        final RArguments newArguments = RArguments.create(targetFunction, targetFunction.getEnclosingFrame(), currentArguments.getArgumentsArray(), currentArguments.getNames());
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(frame.getCaller(), newArguments, frame.getFrameDescriptor().copy());
-        genCallEnv = frame.getCaller().unpack().materialize();
-        defineVars(newFrame);
-        // Copy the variables defined(prior to call to UseMethod) in the
-        // current frame to the new frame
-        for (FrameSlot fs : frame.getFrameDescriptor().getSlots()) {
-            switch (fs.getKind()) {
-                case Object:
-                    newFrame.setObject(fs, FrameUtil.getObjectSafe(frame, fs));
-                    break;
-                case Int:
-                    newFrame.setInt(fs, FrameUtil.getIntSafe(frame, fs));
-                    break;
-                case Byte:
-                    newFrame.setByte(fs, FrameUtil.getByteSafe(frame, fs));
-                    break;
-                case Long:
-                    newFrame.setLong(fs, FrameUtil.getLongSafe(frame, fs));
-                    break;
-                case Double:
-                    newFrame.setDouble(fs, FrameUtil.getDoubleSafe(frame, fs));
-                    break;
-                case Float:
-                    newFrame.setFloat(fs, FrameUtil.getFloatSafe(frame, fs));
-                    break;
-                case Boolean:
-                    newFrame.setBoolean(fs, FrameUtil.getBooleanSafe(frame, fs));
-                    break;
-            }
-        }
-        // Statements after the UseMethod() call are ignored.
-        throw new ReturnException(funcDefnNode.execute(newFrame));
+        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
     }
 }

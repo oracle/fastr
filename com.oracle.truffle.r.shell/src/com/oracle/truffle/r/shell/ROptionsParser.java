@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.shell;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ROptions.Option;
-import com.oracle.truffle.r.runtime.ROptions.OptionType;
+import com.oracle.truffle.r.runtime.RCmdOptions.Option;
+import com.oracle.truffle.r.runtime.RCmdOptions.OptionType;
 
 /**
  * Implements the standard R command line syntax.
@@ -48,7 +48,7 @@ public class ROptionsParser {
         int i = 0;
         while (i < args.length) {
             final String arg = args[i];
-            Option<?> option = ROptions.matchOption(arg);
+            Option<?> option = RCmdOptions.matchOption(arg);
             if (option == null) {
                 // GnuR does not abort, simply issues a warning
                 System.out.printf("ARGUMENT '%s' __ignored__%n", arg);
@@ -75,7 +75,7 @@ public class ROptionsParser {
             }
             i++;
             // check for --args, in which case stop parsing
-            if (option == ROptions.ARGS) {
+            if (option == RCmdOptions.ARGS) {
                 break;
             }
         }
@@ -89,7 +89,7 @@ public class ROptionsParser {
         System.out.println("\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n"
                         + "specified options, or invoke an R tool via the 'R CMD' interface.\n");
         System.out.println("Options:");
-        for (Option<?> option : ROptions.optionList()) {
+        for (Option<?> option : RCmdOptions.optionList()) {
             System.out.printf("  %-22s  %s%n", option.getHelpName(), option.help);
         }
         System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");

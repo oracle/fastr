@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("typeof")
@@ -103,6 +104,11 @@ public abstract class Typeof extends RBuiltinNode {
     @Specialization
     public RStringVector typeof(RList list) {
         return RDataFactory.createStringVector("list");
+    }
+
+    @Specialization()
+    public RStringVector typeof(REnvironment env) {
+        return RDataFactory.createStringVector("environment");
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")

@@ -31,7 +31,7 @@ public final class RFunction extends RScalar {
     private final String name;
     private final CallTarget target;
     private final boolean builtin;
-    private final MaterializedFrame enclosingFrame;
+    private MaterializedFrame enclosingFrame;
 
     public RFunction(String name, CallTarget target, boolean builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
@@ -68,4 +68,7 @@ public final class RFunction extends RScalar {
         return target.call(pack, argsObject);
     }
 
+    public void setEnclosingFrame(MaterializedFrame frame) {
+        this.enclosingFrame = frame;
+    }
 }
