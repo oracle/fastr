@@ -1,5 +1,5 @@
 suite=fastr
-mxversion=2.0.2
+mxversion=2.1.0
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 
@@ -55,14 +55,14 @@ library@ASM_UTIL@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-util/4.0/asm
 project@com.oracle.truffle.r.parser.processor@sourceDirs=src
 project@com.oracle.truffle.r.parser.processor@dependencies=JDK_TOOLS,ANTLR,ANTLR-C
 project@com.oracle.truffle.r.parser.processor@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.parser.processor@javaCompliance=1.7
+project@com.oracle.truffle.r.parser.processor@javaCompliance=1.8
 project@com.oracle.truffle.r.parser.processor@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.parser
 project@com.oracle.truffle.r.parser@sourceDirs=src
 project@com.oracle.truffle.r.parser@dependencies=com.oracle.truffle.r.parser.processor,com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.parser@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.parser@javaCompliance=1.7
+project@com.oracle.truffle.r.parser@javaCompliance=1.8
 project@com.oracle.truffle.r.parser@annotationProcessors=com.oracle.truffle.r.parser.processor
 project@com.oracle.truffle.r.parser@workingSets=Truffle,FastR
 
@@ -70,7 +70,7 @@ project@com.oracle.truffle.r.parser@workingSets=Truffle,FastR
 project@com.oracle.truffle.r.nodes@sourceDirs=src
 project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.r.parser,com.oracle.truffle.api.dsl
 project@com.oracle.truffle.r.nodes@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.nodes@javaCompliance=1.7
+project@com.oracle.truffle.r.nodes@javaCompliance=1.8
 project@com.oracle.truffle.r.nodes@annotationProcessors=com.oracle.truffle.dsl.processor
 project@com.oracle.truffle.r.nodes@workingSets=Truffle,FastR
 
@@ -79,14 +79,14 @@ project@com.oracle.truffle.r.test.ignore.processor@sourceDirs=src
 #project@com.oracle.truffle.r.test.ignore.processor@dependencies=JUNIT,JDK_TOOLS
 project@com.oracle.truffle.r.test.ignore.processor@dependencies=JUNIT,JDK_TOOLS
 project@com.oracle.truffle.r.test.ignore.processor@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.test.ignore.processor@javaCompliance=1.7
+project@com.oracle.truffle.r.test.ignore.processor@javaCompliance=1.8
 project@com.oracle.truffle.r.test.ignore.processor@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.test
 project@com.oracle.truffle.r.test@sourceDirs=src
 project@com.oracle.truffle.r.test@dependencies=com.oracle.truffle.r.engine,JUNIT
 project@com.oracle.truffle.r.test@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.test@javaCompliance=1.7
+project@com.oracle.truffle.r.test@javaCompliance=1.8
 project@com.oracle.truffle.r.test@annotationProcessors=com.oracle.truffle.r.test.ignore.processor
 project@com.oracle.truffle.r.test@workingSets=Truffle,FastR,Test
 
@@ -94,20 +94,20 @@ project@com.oracle.truffle.r.test@workingSets=Truffle,FastR,Test
 project@com.oracle.truffle.r.engine@sourceDirs=src
 project@com.oracle.truffle.r.engine@dependencies=com.oracle.truffle.r.nodes
 project@com.oracle.truffle.r.engine@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.engine@javaCompliance=1.7
+project@com.oracle.truffle.r.engine@javaCompliance=1.8
 project@com.oracle.truffle.r.engine@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.shell
 project@com.oracle.truffle.r.shell@sourceDirs=src
 project@com.oracle.truffle.r.shell@dependencies=com.oracle.truffle.r.engine,JLINE
 project@com.oracle.truffle.r.shell@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.shell@javaCompliance=1.7
+project@com.oracle.truffle.r.shell@javaCompliance=1.8
 project@com.oracle.truffle.r.shell@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime@sourceDirs=src
 project@com.oracle.truffle.r.runtime@dependencies=com.oracle.truffle.api,ASM_ANALYSIS,JNR_POSIX,ASM_UTIL,JFFI,JNR_FFI,NETLIB,JNR_CONSTANTS,JFFI_NATIVE,ASM,ASM_TREE,ASM_COMMONS,JNR_X86ASM,com.oracle.graal.runtime
 project@com.oracle.truffle.r.runtime@checkstyle=com.oracle.truffle.r.runtime
-project@com.oracle.truffle.r.runtime@javaCompliance=1.7
+project@com.oracle.truffle.r.runtime@javaCompliance=1.8
 project@com.oracle.truffle.r.runtime@workingSets=Truffle,FastR
 

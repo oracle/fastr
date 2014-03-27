@@ -79,9 +79,6 @@ public abstract class Strsplit extends RBuiltinNode {
     @SlowPath
     private static RStringVector splitIntl(String input, String separator, NACheck check) {
         String[] result = input.split(separator);
-        if (separator.equals("")) {
-            result = Arrays.copyOfRange(result, 1, result.length);
-        }
         return RDataFactory.createStringVector(result, check.neverSeenNA());
     }
 }

@@ -30,7 +30,7 @@ package com.oracle.truffle.r.runtime;
 public class RVersionNumber {
     public static final String MAJOR = "0";
     public static final String MINOR = "6";
-    public static final String PATCH = "1";
+    public static final String PATCH = "2";
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
