@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RCmdOptions.OptionType;
  * be platform independent. Java does not provide the executable (for obvious reasons) so we use
  * "FastR".
  */
-public class ROptionsParser {
+public class RCmdOptionsParser {
     // CheckStyle: stop system..print check
 
     /**

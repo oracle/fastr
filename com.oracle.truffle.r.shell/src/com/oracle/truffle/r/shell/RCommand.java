@@ -40,9 +40,9 @@ public class RCommand {
 
     @SuppressWarnings("deprecation")
     public static void main(String[] args) {
-        String[] commandArgs = ROptionsParser.parseArguments(args);
+        String[] commandArgs = RCmdOptionsParser.parseArguments(args);
         if (HELP.getValue()) {
-            ROptionsParser.printHelp(0);
+            RCmdOptionsParser.printHelp(0);
         } else if (VERSION.getValue()) {
             printVersionAndExit();
         } else if (RHOME.getValue()) {

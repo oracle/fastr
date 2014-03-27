@@ -45,10 +45,10 @@ def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)
 
     # check that the expected test output file is up to date
-    t = mx_graal.Task('UnitTests: ExpectedTestOutput file check')
+    t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
     junit(['--tests', _default_unit_tests(), '--check-expected-output'])
     tasks.append(t.stop())
-    t = mx_graal.Task('UnitTests: simple')
+    t = mx.GateTask('UnitTests: simple')
     rc = junit(['--tests', _default_unit_tests()])
     if rc != 0:
         mx.abort('unit tests failed')
@@ -59,13 +59,13 @@ def gate(args):
     # suppress the download meter
     mx._opts.no_download_progress = True
     # ideally would be a standard gate task - we do it early
-    t = mx_graal.Task('Copyright check')
+    t = mx.GateTask('Copyright check')
     rc = mx.checkcopyrights(['--primary'])
     t.stop()
     if rc != 0:
         mx.abort('copyright errors')
     _check_autogen_tests(True)
-    mx_graal.gate(args, _truffle_r_gate_body)
+    mx.gate(args, _truffle_r_gate_body)
 
 _tempdir = None
 
