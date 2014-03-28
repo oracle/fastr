@@ -26,47 +26,36 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChild(value = "vector", type = RNode.class)
-public abstract class PositionsArrayNode extends RNode {
+public class PositionsArrayNode extends RNode {
     @Children private final ArrayPositionCast[] elements;
     @Children private final RNode[] positions;
     @Children private final OperatorConverterNode[] operatorConverters;
 
-    public abstract Object executeEvaluated(VirtualFrame frame, Object vector);
-
-    protected PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
-        this.elements = elements;
-        this.positions = positions;
-        this.operatorConverters = operatorConverters;
-    }
-
-    protected PositionsArrayNode(PositionsArrayNode other) {
-        this.elements = other.elements;
-        this.positions = other.positions;
-        this.operatorConverters = other.operatorConverters;
-    }
-
-    @Specialization(order = 1, guards = "oneIndex")
-    public Object executeSingle(VirtualFrame frame, Object vector) {
-        Object p = positions[0].execute(frame);
-        Object convertedOperator = operatorConverters[0].executeConvert(frame, vector, p, RNull.instance);
-        return elements[0].executeArg(frame, p, vector, RNull.instance, convertedOperator);
-    }
-
-    @Specialization(order = 2, guards = "!oneIndex")
-    public Object[] execute(VirtualFrame frame, Object vector) {
+    public Object executeEval(VirtualFrame frame, Object vector) {
         Object[] evaluatedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             Object p = positions[i].execute(frame);
             Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p, RNull.instance);
             evaluatedElements[i] = elements[i].executeArg(frame, p, vector, RNull.instance, convertedOperator);
         }
-        return evaluatedElements;
+        return elements.length == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
-    protected boolean oneIndex() {
-        return elements.length == 1;
+    @Override
+    public Object execute(VirtualFrame frame) {
+        // this node is meant to be used only for evaluation by "executeWith" that uses
+        // executeEvaluated method above
+        Utils.fail("should never be executed");
+        return null;
+    }
+
+    public PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
+        this.elements = elements;
+        this.positions = positions;
+        this.operatorConverters = operatorConverters;
     }
 }

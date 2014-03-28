@@ -217,9 +217,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
         }
         if (!isAssignment) {
-            return PositionsArrayNodeFactory.create(castPositions, positions, operatorConverters, null);
+            return new PositionsArrayNode(castPositions, positions, operatorConverters);
         } else {
-            return PositionsArrayNodeValueFactory.create(castPositions, positions, operatorConverters, null, null);
+            return new PositionsArrayNodeValue(castPositions, positions, operatorConverters);
         }
     }
 
