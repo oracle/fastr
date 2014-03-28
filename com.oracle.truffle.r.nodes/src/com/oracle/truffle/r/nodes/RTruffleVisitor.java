@@ -25,7 +25,12 @@ package com.oracle.truffle.r.nodes;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadSuperVariableNode;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceOperand;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceOperandFactory;
+import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.binary.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -192,16 +197,39 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         throw new UnsupportedOperationException("Unsupported AST Node " + n.getClass().getName());
     }
 
+    private RNode createPositions(ArgumentList argList, int argLength, boolean isSubset, boolean isAssignment) {
+        RNode[] positions;
+        OperatorConverterNode[] operatorConverters;
+        ArrayPositionCast[] castPositions;
+        if (argLength == 0) {
+            positions = new RNode[]{ConstantNode.create(RMissing.instance)};
+            operatorConverters = new OperatorConverterNode[]{OperatorConverterNodeFactory.create(0, 1, isAssignment, isSubset, null, null, null)};
+            castPositions = new ArrayPositionCast[]{ArrayPositionCastFactory.create(0, 1, isAssignment, isSubset, null, null, null, null)};
+        } else {
+            positions = new RNode[argLength];
+            operatorConverters = new OperatorConverterNode[argLength];
+            castPositions = new ArrayPositionCast[argLength];
+            for (int i = 0; i < argLength; i++) {
+                ASTNode node = argList.getNode(i);
+                positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
+                operatorConverters[i] = OperatorConverterNodeFactory.create(i, positions.length, isAssignment, isSubset, null, null, null);
+                castPositions[i] = ArrayPositionCastFactory.create(i, positions.length, isAssignment, isSubset, null, null, null, null);
+            }
+        }
+        if (!isAssignment) {
+            return PositionsArrayNodeFactory.create(castPositions, positions, operatorConverters, null);
+        } else {
+            return PositionsArrayNodeValueFactory.create(castPositions, positions, operatorConverters, null, null);
+        }
+    }
+
     @Override
     public RNode visit(AccessVector a) {
         RNode vector = a.getVector().accept(this);
         int argLength = a.getArgs().size();
-        RNode[] positions = new RNode[argLength];
-        for (int i = 0; i < argLength; i++) {
-            ASTNode node = a.getArgs().getNode(i);
-            positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
-        }
-        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), vector, positions);
+        RNode castVector = CastToVectorNodeFactory.create(vector, false, false, true);
+        RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), false);
+        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castVector, (PositionsArrayNode) positions);
         access.assignSourceSection(a.getSource());
         return access;
     }
@@ -256,13 +284,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, u.isSuper());
         RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
         RNode varAccess = AccessVariable.create(null, varSymbol).accept(this);
-        int argLength = a.getArgs().size();
-        RNode[] positions = new RNode[argLength - 1]; // last argument == RHS
-        for (int i = 0; i < argLength - 1; i++) {
-            ASTNode node = a.getArgs().getNode(i);
-            positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
-        }
-        UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), rhsAccess, varAccess, ConstantNode.create(0), positions);
+        int argLength = a.getArgs().size() - 1; // last argument == RHS
+        RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), true);
+        CoerceOperand coerceOperand = CoerceOperandFactory.create(null, null);
+        UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), varAccess, rhsAccess, coerceOperand, ConstantNode.create(0), (PositionsArrayNodeValue) positions);
         return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
     }
 

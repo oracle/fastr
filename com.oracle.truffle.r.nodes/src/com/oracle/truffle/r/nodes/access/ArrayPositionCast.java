@@ -34,13 +34,15 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 
 @SuppressWarnings("unused")
-@NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
+@NodeChildren({@NodeChild(value = "op", type = RNode.class), @NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class),
+                @NodeChild(value = "operand", type = OperatorConverterNode.class, executeWith = {"vector", "op", "newValue"})})
 public abstract class ArrayPositionCast extends RNode {
 
-    abstract Object executeArg(VirtualFrame frame, Object vector, Object value, Object operand);
+    public abstract Object executeArg(VirtualFrame frame, Object op, Object vector, Object value, Object operand);
 
     abstract RNode getVector();
 
@@ -86,23 +88,18 @@ public abstract class ArrayPositionCast extends RNode {
         }
     }
 
-    @CreateCast({"operand"})
-    public RNode createCast(RNode child) {
-        return OperatorConverterNodeFactory.create(dimension, numDimensions, assignment, isSubset, getVector(), child, getNewValue());
-    }
-
     @Specialization(order = 1)
-    public Object doMissingVector(RNull vector, Object value, Object operand) {
+    public Object doMissingVector(Object op, RNull vector, Object value, Object operand) {
         return operand;
     }
 
     @Specialization(order = 2)
-    public Object doFuncOp(RFunction vector, Object value, Object operand) {
+    public Object doFuncOp(Object op, RFunction vector, Object value, Object operand) {
         return operand;
     }
 
     @Specialization(order = 3)
-    public RIntVector doMissingVector(RAbstractVector vector, Object value, RMissing operand) {
+    public RIntVector doMissingVector(Object op, RAbstractVector vector, Object value, RMissing operand) {
         verifyDimensions(vector, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
         int[] data = new int[numDimensions == 1 ? vector.getLength() : vector.getDimensions()[dimension]];
         for (int i = 0; i < data.length; i++) {
@@ -113,51 +110,51 @@ public abstract class ArrayPositionCast extends RNode {
     }
 
     @Specialization(order = 4)
-    public RNull doNullSubset(RAbstractVector vector, Object value, RNull operand) {
+    public RNull doNullSubset(Object op, RAbstractVector vector, Object value, RNull operand) {
         // this is a special case - RNull can only appear to represent the x[[NA]] case which has to
         // return null and not a null vector
         return operand;
     }
 
     @Specialization(order = 5)
-    public RStringVector doStringVector(RList vector, Object value, RStringVector operand) {
+    public RStringVector doStringVector(Object op, RList vector, Object value, RStringVector operand) {
         // recursive access to the list
         return operand;
     }
 
     @Specialization(order = 14, guards = {"sizeOneVector", "numDimensionsOne", "operandHasNames", "isAssignment"})
-    public int doIntVectorSizeOneOpNames(RAbstractVector vector, RNull value, RAbstractIntVector operand) {
+    public int doIntVectorSizeOneOpNames(Object op, RAbstractVector vector, RNull value, RAbstractIntVector operand) {
         assert operand.getDataAt(0) != 0;
         return operand.getDataAt(0);
     }
 
     @Specialization(order = 15, guards = {"sizeOneVector", "numDimensionsOne", "operandHasNames", "isAssignment"})
-    public RIntVector doIntVectorSizeOneOpNames(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    public RIntVector doIntVectorSizeOneOpNames(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         assert operand.getDataAt(0) != 0;
         return operand.materialize();
     }
 
     @Specialization(order = 16, guards = {"sizeOneVector", "numDimensionsOne", "!operandHasNames"})
-    public int doIntVectorSizeOne(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    public int doIntVectorSizeOne(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         int val = operand.getDataAt(0);
         return val;
     }
 
     @Specialization(order = 20, guards = "emptyOperand")
-    public int doIntVectorZero(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    public int doIntVectorZero(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         return 0;
     }
 
     @Specialization(order = 21)
-    public RIntVector doIntVector(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    public RIntVector doIntVector(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         return operand.materialize();
     }
 
-    public static boolean sizeOneVector(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    public static boolean sizeOneVector(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         return operand.getLength() == 1;
     }
 
-    protected boolean operandHasNames(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    protected boolean operandHasNames(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         return operand.getNames() != RNull.instance;
     }
 
@@ -169,20 +166,14 @@ public abstract class ArrayPositionCast extends RNode {
         return assignment;
     }
 
-    protected boolean emptyOperand(RAbstractVector vector, Object value, RAbstractIntVector operand) {
+    protected boolean emptyOperand(Object op, RAbstractVector vector, Object value, RAbstractIntVector operand) {
         return operand.getLength() == 0;
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})
-    abstract static class OperatorConverterNode extends RNode {
+    public abstract static class OperatorConverterNode extends RNode {
 
-        abstract Object executeConvert(VirtualFrame frame, Object vector, int operand, Object value);
-
-        abstract Object executeConvert(VirtualFrame frame, Object vector, double operand, Object value);
-
-        abstract Object executeConvert(VirtualFrame frame, Object vector, byte operand, Object value);
-
-        abstract Object executeConvert(VirtualFrame frame, Object vector, Object operand, Object value);
+        public abstract Object executeConvert(VirtualFrame frame, Object vector, Object operand, Object value);
 
         private final int dimension;
         private final int numDimensions;

@@ -30,13 +30,13 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.nodes.function.RCallNode.VarArgsAsObjectArrayNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class), @NodeChild(value = "positions", type = RNode[].class)})
+@NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
+                @NodeChild(value = "positions", type = PositionsArrayNode.class, executeWith = {"vector"})})
 public abstract class AccessArrayNode extends RNode {
 
     private final boolean isSubset;
@@ -49,8 +49,6 @@ public abstract class AccessArrayNode extends RNode {
     @Child private CastToVectorNode castVector;
     @Child private ArrayPositionCast castPosition;
     @Child private OperatorConverterNode operatorConverter;
-
-    private static final VarArgsAsObjectArrayNodeFactory varArgAsObjectArrayNodeFactory = new VarArgsAsObjectArrayNodeFactory();
 
     abstract RNode getVector();
 
@@ -85,9 +83,9 @@ public abstract class AccessArrayNode extends RNode {
     private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreter();
-            castPosition = insert(ArrayPositionCastFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
+            castPosition = insert(ArrayPositionCastFactory.create(0, 1, false, false, null, null, ConstantNode.create(RNull.instance) /* dummy */, null));
         }
-        return castPosition.executeArg(frame, vector, null, operand);
+        return castPosition.executeArg(frame, operand, vector, null, operand);
     }
 
     private void initOperatorConvert() {
@@ -105,23 +103,6 @@ public abstract class AccessArrayNode extends RNode {
     private Object convertOperand(VirtualFrame frame, Object vector, String operand) {
         initOperatorConvert();
         return operatorConverter.executeConvert(frame, vector, operand, null);
-    }
-
-    @CreateCast({"vector"})
-    public RNode createCastVector(RNode child) {
-        return CastToVectorNodeFactory.create(child, false, false, true);
-    }
-
-    @CreateCast({"positions"})
-    public RNode[] createCastPositions(RNode[] children) {
-        if (children == null) {
-            return null;
-        }
-        RNode[] positions = new RNode[children.length];
-        for (int i = 0; i < positions.length; i++) {
-            positions[i] = ArrayPositionCastFactory.create(i, positions.length, false, isSubset, getVector(), ConstantNode.create(RNull.instance) /* dummy */, children[i]);
-        }
-        return new RNode[]{varArgAsObjectArrayNodeFactory.makeList(positions, null)};
     }
 
     public static RIntVector popHead(RIntVector p, NACheck posNACheck) {
@@ -1492,7 +1473,7 @@ public abstract class AccessArrayNode extends RNode {
         return positions.getLength() > 1;
     }
 
-    public static AccessArrayNode create(boolean isSubset, RNode vector, RNode[] positions) {
+    public static AccessArrayNode create(boolean isSubset, RNode vector, PositionsArrayNode positions) {
         return AccessArrayNodeFactory.create(isSubset, vector, ConstantNode.create(0), positions);
     }
 }
