@@ -25,12 +25,13 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Base class for all vectors.
- * 
+ *
  * <pre>
  * Reference counting on vectors:
  * A vector can have three states: temporary, non-shared, shared
@@ -67,10 +68,10 @@ public abstract class RVector extends RBounded implements RAbstractVector {
                     // since this constructor is for internal use only, the assertion shouldn't fail
                     assert ((RStringVector) names).getLength() == length;
                 }
-                this.attributes.put(RRuntime.NAMES_ATTR_KEY, names);
+                putAttribute(RRuntime.NAMES_ATTR_KEY, names);
             }
             if (dimensions != null) {
-                this.attributes.put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
+                putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
             }
         }
         this.dimNames = null;
@@ -157,10 +158,10 @@ public abstract class RVector extends RBounded implements RAbstractVector {
                 // for "names" function)
                 RList newDimNames = RDataFactory.createList(new Object[]{newNames});
                 newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
-                attributes.put(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+                putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
                 this.dimNames = newDimNames;
             } else {
-                attributes.put(RRuntime.NAMES_ATTR_KEY, newNames);
+                putAttribute(RRuntime.NAMES_ATTR_KEY, newNames);
                 this.names = newNames;
             }
         }
@@ -206,7 +207,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
                     newDimNames.updateDataAt(i, RNull.instance, null);
                 }
             }
-            attributes.put(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+            putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
             newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
         }
         this.dimNames = newDimNames;
@@ -279,7 +280,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         } else if (newDimensions != null) {
             verifyDimensions(newDimensions, sourceSection);
             setMatrixDimensions(newDimensions, getLength());
-            attributes.put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, true));
+            putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, true));
         }
         this.dimensions = newDimensions;
     }
@@ -291,9 +292,19 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         result.dimensions = this.dimensions;
         result.setMatrixDimensions(result.dimensions, result.getLength());
         if (this.getAttributes() != null) {
-            result.setAttributes(new LinkedHashMap<>(this.getAttributes()));
+            result.setAttributes(copyAttributeHashMap(this));
         }
         return result;
+    }
+
+    @SlowPath
+    private static LinkedHashMap<String, Object> copyAttributeHashMap(RAbstractVector origin) {
+        return new LinkedHashMap<>(origin.getAttributes());
+    }
+
+    @SlowPath
+    private void putAttribute(String attribute, Object value) {
+        attributes.put(attribute, value);
     }
 
     public final boolean verify() {
@@ -348,7 +359,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this.dimensions = vector.getDimensions();
         this.setMatrixDimensions(this.dimensions, this.getLength());
         if (vector.getAttributes() != null) {
-            this.setAttributes(new LinkedHashMap<>(vector.getAttributes()));
+            this.setAttributes(copyAttributeHashMap(vector));
         }
     }
 
@@ -386,7 +397,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         for (Map.Entry<String, Object> e : orgAttributes.entrySet()) {
             String key = e.getKey();
             if (key != RRuntime.DIM_ATTR_KEY && key != RRuntime.DIMNAMES_ATTR_KEY && key != RRuntime.NAMES_ATTR_KEY) {
-                attributes.put(key, e.getValue());
+                putAttribute(key, e.getValue());
             }
         }
     }
@@ -416,7 +427,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             } else {
                 this.attributes = new LinkedHashMap<>();
             }
-            this.attributes.put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(this.dimensions, true));
+            putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(this.dimensions, true));
         } else {
             // nullifying dimensions does not reset regular attributes
             if (this.attributes != null) {
