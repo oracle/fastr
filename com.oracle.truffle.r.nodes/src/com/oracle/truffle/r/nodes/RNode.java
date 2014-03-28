@@ -146,6 +146,10 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectREnvironment(execute(frame));
     }
 
+    public RConnection executeRConnection(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRConnection(execute(frame));
+    }
+
     public RInvisible executeRInvisible(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectRInvisible(execute(frame));
     }
