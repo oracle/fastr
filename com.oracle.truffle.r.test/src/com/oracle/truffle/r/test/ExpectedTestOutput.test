@@ -4482,6 +4482,10 @@ a1 a2
  1 42
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
+#{ complex(3) }
+[1] 0+0i 0+0i 0+0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplex
 #{ complex(real=1,imag=2) }
 [1] 1+2i
 
@@ -6062,16 +6066,74 @@ $z
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix("a",10,10) }
+      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [2,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [3,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [4,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [5,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [6,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [7,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [8,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [9,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+[10,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix(1:4, nrow=2) }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix(1:4,2,2) }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
 #{ matrix(as.double(NA),2,2) }
      [,1] [,2]
 [1,]   NA   NA
 [2,]   NA   NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix(c("a",NA),10,10) }
+      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [2,] NA   NA   NA   NA   NA   NA   NA   NA   NA   NA
+ [3,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [4,] NA   NA   NA   NA   NA   NA   NA   NA   NA   NA
+ [5,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [6,] NA   NA   NA   NA   NA   NA   NA   NA   NA   NA
+ [7,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+ [8,] NA   NA   NA   NA   NA   NA   NA   NA   NA   NA
+ [9,] "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"  "a"
+[10,] NA   NA   NA   NA   NA   NA   NA   NA   NA   NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }
+     [,1] [,2]
+[1,] 1+1i 3+3i
+[2,] 2+2i 4+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix(c(1,2,3,4), nrow=2) }
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
 #{ matrix(c(1,2,3,4),2,2) }
      [,1] [,2]
 [1,]    1    3
 [2,]    2    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
+#{ matrix(nrow=2,ncol=2) }
+     [,1] [,2]
+[1,]   NA   NA
+[2,]   NA   NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMaximum
 #{ max((-1):100) }

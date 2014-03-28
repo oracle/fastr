@@ -455,22 +455,26 @@ public class TestSimpleBuiltins extends TestBase {
     public void testMatrix() {
         assertEval("{ matrix(c(1,2,3,4),2,2) }");
         assertEval("{ matrix(as.double(NA),2,2) }");
+        assertEval("{ matrix(\"a\",10,10) }");
+        assertEval("{ matrix(c(\"a\",NA),10,10) }");
+        assertEval("{ matrix(1:4, nrow=2) }");
+        assertEval("{ matrix(c(1,2,3,4), nrow=2) }");
+        assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
+        assertEval("{ matrix(nrow=2,ncol=2) }");
+        assertEval("{ matrix(1:4,2,2) }");
     }
 
     @Test
     @Ignore
     public void testMatrixIgnore() {
-        // FIXME print output format
-        assertEval("{ matrix(1:4, nrow=2) }");
-        assertEval("{ matrix(c(1,2,3,4), nrow=2) }");
-        assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
+        // FIXME pretty printing
+        assertEval("{ matrix(1i,10,10) }");
+        assertEval("{ matrix(c(1i,NA),10,10) }");
         assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
-        assertEval("{ matrix(nrow=2,ncol=2) }");
-        assertEval("{ matrix(1:4,2,2) }");
-        assertEval("{ matrix(1:4,3,2) }");
+        assertEval("{ matrix(c(1i,100i),10,10) }");
         // FIXME missing warning
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
-
+        assertEvalWarning("{ matrix(1:4,3,2) }");
     }
 
     @Test
@@ -677,6 +681,9 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testOuterIgnore() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,foo) }");
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,\"foo\") }");
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(1:3,1:3,foo) }");
         assertEval("{ outer(c(1,2,3),c(1,2),\"+\") }");
         assertEval("{ outer(1:3,1:2) }");
         assertEval("{ outer(1:3,1:2,\"*\") }");
@@ -1894,6 +1901,7 @@ public class TestSimpleBuiltins extends TestBase {
     public void testComplex() {
         assertEval("{ complex(real=1,imaginary=2) }");
         assertEval("{ complex(real=1,imag=2) }");
+        assertEval("{ complex(3) }");
     }
 
     @Test

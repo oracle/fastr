@@ -5979,6 +5979,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testComplex_08afe9365f9ccc2563e2efdda7b69a89() {
+        assertEval("{ complex(3) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testComplexIgnore_6c296b051839b1865e7b24f04e0f89d5() {
         assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
     }
@@ -8264,18 +8269,48 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_e23499bab4d503ddb354e5bd66c22e08() {
+    public void TestSimpleBuiltins_testMatrix_7da256d3445817db926f36c119414bde() {
+        assertEval("{ matrix(\"a\",10,10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_1ce1dab3390cacefa841400b37b0d20c() {
+        assertEval("{ matrix(c(\"a\",NA),10,10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_e23499bab4d503ddb354e5bd66c22e08() {
         assertEval("{ matrix(1:4, nrow=2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_94213eef23a62612694d36caa8a534f2() {
+    public void TestSimpleBuiltins_testMatrix_94213eef23a62612694d36caa8a534f2() {
         assertEval("{ matrix(c(1,2,3,4), nrow=2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_186bd3d23aff9a5a2f99c0085331c535() {
+    public void TestSimpleBuiltins_testMatrix_186bd3d23aff9a5a2f99c0085331c535() {
         assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_0eae53e6a046f7679e50f8660579fac4() {
+        assertEval("{ matrix(nrow=2,ncol=2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_f7e2a87a6677d6b7b701176c6c9e1036() {
+        assertEval("{ matrix(1:4,2,2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_a7247bc1f1726ae687962cfda709230e() {
+        assertEval("{ matrix(1i,10,10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_fa8d853982879fcc896086fe6addfb0f() {
+        assertEval("{ matrix(c(1i,NA),10,10) }");
     }
 
     @Test
@@ -8284,23 +8319,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_0eae53e6a046f7679e50f8660579fac4() {
-        assertEval("{ matrix(nrow=2,ncol=2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_f7e2a87a6677d6b7b701176c6c9e1036() {
-        assertEval("{ matrix(1:4,2,2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_8daf811c43e5de9f9027463997632ce6() {
-        assertEval("{ matrix(1:4,3,2) }");
+    public void TestSimpleBuiltins_testMatrixIgnore_cc0dd296841e5af699ac9efbf0121ed3() {
+        assertEval("{ matrix(c(1i,100i),10,10) }");
     }
 
     @Test
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_8daf811c43e5de9f9027463997632ce6() {
+        assertEvalWarning("{ matrix(1:4,3,2) }");
     }
 
     @Test
@@ -8696,6 +8726,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testOuter_a3cacf25df5ce992f10a406a31e690f2() {
         assertEval("{ outer(1, 3, \"-\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOuterIgnore_da963cbde1784128a50d0bb2220f4a09() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,foo) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOuterIgnore_fa7bab756255d002e9b280b544ccabdb() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,\"foo\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOuterIgnore_4a115174070896c785016a9d9d5d665e() {
+        assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(1:3,1:3,foo) }");
     }
 
     @Test
@@ -12071,6 +12116,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDefinitionsIgnore_ba4a8d210d2bcdac8ede803b28c13172() {
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDefinitionsIgnore_8ef4913016fe9a78ae79cb9f48e3c5ae() {
+        assertEval("{ foo <- function (x) { x } ; foo() }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDefinitionsIgnore_1c3efc0657001d0ce5000a68b2e7b18d() {
+        assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
     }
 
     @Test

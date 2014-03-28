@@ -78,6 +78,8 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
+        assertEval("{ foo <- function (x) { x } ; foo() }");
+        assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
     }
 
     @Test

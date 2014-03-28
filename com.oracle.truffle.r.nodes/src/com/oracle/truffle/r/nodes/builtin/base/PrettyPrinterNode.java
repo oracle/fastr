@@ -335,9 +335,13 @@ public abstract class PrettyPrinterNode extends RNode {
         return builderToString(sb);
     }
 
+    protected static boolean rowHeaderUsesIndices(RList dimNames) {
+        return dimNames == null || dimNames.getDataAt(0) == RNull.instance;
+    }
+
     protected static String rowHeader(int c, RAbstractVector vector) {
         RList dimNames = vector.getDimNames();
-        if (dimNames == null || dimNames.getDataAt(0) == RNull.instance) {
+        if (rowHeaderUsesIndices(dimNames)) {
             return concat("[", intString(c), ",]");
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(0);
@@ -1096,11 +1100,18 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             b.append('\n');
 
+            boolean indexRowHeaders = rowHeaderUsesIndices(vector.getDimNames());
+
             // rows
             for (int r = 1; r <= nrow; ++r) {
                 String headerString = rowHeader(r, vector);
-                b.append(headerString);
-                spaces(b, rowHeaderWidth - headerString.length() + 1);
+                if (indexRowHeaders) {
+                    spaces(b, rowHeaderWidth - headerString.length());
+                    b.append(headerString).append(' ');
+                } else {
+                    b.append(headerString);
+                    spaces(b, rowHeaderWidth - headerString.length() + 1);
+                }
                 for (int c = 1; c <= ncol; ++c) {
                     String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
                     if (isListOrStringVector == RRuntime.LOGICAL_TRUE) {
