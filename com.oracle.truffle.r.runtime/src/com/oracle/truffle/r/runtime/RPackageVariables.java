@@ -22,18 +22,29 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
+import java.util.*;
 
-import com.oracle.truffle.r.runtime.data.*;
+/**
+ * Support for (global) variables deined by packages (e.g. {@code base)}. Similar to
+ * {@link ROptions}, when a package is loaded, if it defines (global) variables, it must register
+ * with this class. On startup, the {@code Handler} is called with the {@link REnvironment} instance
+ * for the package, which can be used to define the variables.
+ */
+public class RPackageVariables {
 
-public class RGlobalVariables {
+    public interface Handler {
+        void initialize(REnvironment env);
+    }
 
-    private static final String[] PLATFORM_NAMES = new String[]{"OS.type", "file.sep", "dynlib.ext", "GUI", "endian", "pkgType", "path.sep", "r_arch"};
+    private static Map<String, Handler> map = new HashMap<>();
 
-    static void initialize() {
-        // .Platform TODO be more accurate
-        String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
-        RList platformValue = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
-        // TODO where do we store this value?
+    public static void registerHandler(String name, Handler handler) {
+        map.put(name, handler);
+    }
+
+    public static void initialize() {
+        for (Map.Entry<String, Handler> entry : map.entrySet()) {
+            entry.getValue().initialize(REnvironment.lookup(entry.getKey()));
+        }
     }
 }

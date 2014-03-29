@@ -76,16 +76,21 @@ public abstract class RBuiltinPackage {
             if (componentList.size() > 0) {
                 snippetResources.put(getClass().getSimpleName(), componentList);
             }
-            String optionsClassName = getClass().getName().replace("Package", "Options");
-            try {
-                Class.forName(optionsClassName).newInstance();
-            } catch (ClassNotFoundException ex) {
-                // ok, no options
-            } catch (IllegalAccessException | InstantiationException ex) {
-                Utils.fail("error instantiating " + optionsClassName);
-            }
+            loadAuxClass("Options");
+            loadAuxClass("Variables");
         } catch (IOException ex) {
             Utils.fail("error loading R snippets classes from " + getClass().getSimpleName() + " : " + ex);
+        }
+    }
+
+    private void loadAuxClass(String auxName) {
+        String auxClassName = getClass().getName().replace("Package", auxName);
+        try {
+            Class.forName(auxClassName).newInstance();
+        } catch (ClassNotFoundException ex) {
+            // ok, no aux class
+        } catch (IllegalAccessException | InstantiationException ex) {
+            Utils.fail("error instantiating " + auxClassName + ": " + ex);
         }
     }
 

@@ -43,6 +43,8 @@ public class REnvironment {
     private final Map<String, Object> map;
     private final String name;
 
+    private static final Map<String, REnvironment> namedEnvironments = new HashMap<>();
+
     public REnvironment() {
         this(null, UNNAMED, 0);
     }
@@ -60,6 +62,13 @@ public class REnvironment {
         this.name = name;
         this.descriptor = new FrameDescriptor();
         this.map = size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
+        if (!name.equals(UNNAMED)) {
+            namedEnvironments.put(name, this);
+        }
+    }
+
+    public static REnvironment lookup(String name) {
+        return namedEnvironments.get(name);
     }
 
     public FrameDescriptor getDescriptor() {

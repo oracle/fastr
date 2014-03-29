@@ -146,17 +146,17 @@ public class RRuntime {
         startTime = System.nanoTime();
         childTimes = new long[]{0, 0};
         RVersionInfo.initialize();
-        RGlobalVariables.initialize();
         REnvVars.initialize();
-        ROptions.initialize();
-        RProfile.initialize();
         LibPaths.initialize();
+        ROptions.initialize();
+        RPackageVariables.initialize();
+        RProfile.initialize();
         TempDirPath.initialize();
     }
 
     /**
      * Elapsed time of process.
-     * 
+     *
      * @return elapsed time in nanosecs.
      */
     public static long elapsedTimeInNanos() {
