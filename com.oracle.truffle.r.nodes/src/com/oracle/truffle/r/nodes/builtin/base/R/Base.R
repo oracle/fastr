@@ -11,12 +11,6 @@
 #
 # builtins for the Base package
 
-nrow <- function(x) dim(x)[1L]
-NROW <- function(x) if (length(d <- dim(x))) d[1L] else length(x)
-
-ncol <- function(x) dim(x)[2L]
-NCOL <- function(x) if (length(d <- dim(x))) d[2L] else 1L
-
 `%in%` <- function(x, table) match(x, table, nomatch=0L) > 0L
 
 `xor` <- function(x, y) (x | y) & !(x & y)
