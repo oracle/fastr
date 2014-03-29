@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import java.io.*;
 
-@RBuiltin("emptyenv")
-public abstract class EmptyEnv extends RBuiltinNode {
+import com.oracle.truffle.r.runtime.data.*;
 
-    @Specialization
-    public REnvironment emptyenv() {
-        return RRuntime.EMPTY_ENV;
+public class RGlobalVariables {
+
+    private static final String[] PLATFORM_NAMES = new String[]{"OS.type", "file.sep", "dynlib.ext", "GUI", "endian", "pkgType", "path.sep", "r_arch"};
+
+    static void initialize() {
+        // .Platform TODO be more accurate
+        String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
+        RList platformValue = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
+        // TODO where do we store this value?
     }
-
 }

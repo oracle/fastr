@@ -93,6 +93,7 @@ public class RRuntime {
 
     public static final REnvironment EMPTY_ENV = REmptyEnvironment.instance;
     public static final REnvironment GLOBAL_ENV = RGlobalEnvironment.instance;
+    public static final REnvironment BASE_ENV = RBaseEnvironment.instance;
 
     public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
@@ -138,13 +139,16 @@ public class RRuntime {
     public static final String USE_METHOD = "UseMethod";
 
     /**
-     * Perform any runtime initialization necessary before the first R evaluation.
+     * Perform any runtime initialization necessary before the first R evaluation. TODO Check
+     * possible ordering issues. It may be that a simple one-phase initialization is inadequate.
      */
     public static void initialize() {
         startTime = System.nanoTime();
         childTimes = new long[]{0, 0};
         RVersionInfo.initialize();
+        RGlobalVariables.initialize();
         REnvVars.initialize();
+        ROptions.initialize();
         RProfile.initialize();
         LibPaths.initialize();
         TempDirPath.initialize();
@@ -642,7 +646,7 @@ public class RRuntime {
         static REnvironment instance = new REmptyEnvironment();
 
         private REmptyEnvironment() {
-            super(null, 0);
+            super(null, "R_EmptyEnv", 0);
         }
 
         @Override
@@ -655,10 +659,16 @@ public class RRuntime {
             // empty
         }
 
-        @Override
-        public String toString() {
-            return "<environment: R_EmptyEnv>";
+    }
+
+    private static final class RBaseEnvironment extends REnvironment {
+
+        static REnvironment instance = new RBaseEnvironment();
+
+        private RBaseEnvironment() {
+            super(REmptyEnvironment.instance, "base");
         }
+
     }
 
     private static final class RGlobalEnvironment extends REnvironment {
@@ -666,12 +676,23 @@ public class RRuntime {
         static REnvironment instance = new RGlobalEnvironment();
 
         private RGlobalEnvironment() {
-            super();
+            // TODO The parent will need to be changed when we start loading default packages, e.g.
+// utils.
+            super(RBaseEnvironment.instance, "R_GlobalEnv");
+        }
+
+    }
+
+    public static final class RFunctionEnvironment extends REnvironment {
+
+        public RFunctionEnvironment(REnvironment parent) {
+            // function environments are not named
+            super(parent, "", 0);
         }
 
         @Override
-        public String toString() {
-            return "<environment: R_GlobalEnv>";
+        protected String getPrintNameHelper() {
+            return String.format("%#x", hashCode());
         }
     }
 
