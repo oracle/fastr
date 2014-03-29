@@ -24,7 +24,6 @@ package com.oracle.truffle.r.shell;
 
 import java.io.*;
 
-import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 

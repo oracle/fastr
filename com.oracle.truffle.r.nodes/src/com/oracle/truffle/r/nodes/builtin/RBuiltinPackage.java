@@ -39,18 +39,18 @@ import com.oracle.truffle.r.runtime.*;
  * Intended to be subclassed by packages defining builtin functions. Much of the initialization is
  * done statically on startup but, currently, the parsing and generation of the snippet ASTs is
  * delayed until run-time.
- * 
+ *
  * The snippets themselves are expected to be found (as resources) in the 'R' sub-package
  * (directory) associated with the subclass package, e.g.,
  * {@code com.oracle.truffle.r.nodes.builtin.base.R}.
- * 
+ *
  * For debugging parsing errors we maintain the content of the individual snippets, although this is
  * not functionally necessary.
  */
 public abstract class RBuiltinPackage {
     private static final Map<String, List<RLibraryLoader.Component>> snippetResources = new HashMap<>();
     private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
-    private static boolean snippetsLoaded;
+    private static boolean initialized;
 
     private static void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
@@ -76,6 +76,14 @@ public abstract class RBuiltinPackage {
             if (componentList.size() > 0) {
                 snippetResources.put(getClass().getSimpleName(), componentList);
             }
+            String optionsClassName = getClass().getName().replace("Package", "Options");
+            try {
+                Class.forName(optionsClassName).newInstance();
+            } catch (ClassNotFoundException ex) {
+                // ok, no options
+            } catch (IllegalAccessException | InstantiationException ex) {
+                Utils.fail("error instantiating " + optionsClassName);
+            }
         } catch (IOException ex) {
             Utils.fail("error loading R snippets classes from " + getClass().getSimpleName() + " : " + ex);
         }
@@ -89,8 +97,8 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
-    public static void loadSnippets() {
-        if (!snippetsLoaded) {
+    public static void initialize() {
+        if (!initialized) {
             for (Map.Entry<String, List<RLibraryLoader.Component>> entry : snippetResources.entrySet()) {
                 RLibraryLoader loader = new RLibraryLoader(entry.getValue());
                 Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
@@ -100,7 +108,7 @@ public abstract class RBuiltinPackage {
                     putBuiltin(def.getKey(), builtinFactory);
                 }
             }
-            snippetsLoaded = true;
+            initialized = true;
         }
     }
 
@@ -158,8 +166,16 @@ public abstract class RBuiltinPackage {
         NodeFactory<RBuiltinNode> nodeFactory;
         if (!RCustomBuiltinNode.class.isAssignableFrom(clazz)) {
             // normal builtin
+            final String className = clazz.getName();
+            String factoryClassName = className;
+            if (className.contains("$")) {
+                // nested class, Factory appear twice
+                int dx = className.lastIndexOf('$');
+                factoryClassName = className.substring(0, dx) + "Factory$" + className.substring(dx + 1);
+            }
+            factoryClassName += "Factory";
             try {
-                nodeFactory = (NodeFactory<RBuiltinNode>) Class.forName(clazz.getCanonicalName() + "Factory").getMethod("getInstance").invoke(null);
+                nodeFactory = (NodeFactory<RBuiltinNode>) Class.forName(factoryClassName).getMethod("getInstance").invoke(null);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
                 throw new RuntimeException("Failed to load builtin " + clazz.getName(), e);
             }

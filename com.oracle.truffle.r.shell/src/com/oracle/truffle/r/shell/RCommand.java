@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 import java.io.*;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
