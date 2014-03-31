@@ -35,6 +35,7 @@ public abstract class Gregexpr extends Regexp {
     @Specialization
     @Override
     public Object regexp(String pattern, RAbstractStringVector vector) {
+        controlVisibility();
         Object[] result = new Object[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i)));

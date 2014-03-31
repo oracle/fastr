@@ -70,6 +70,7 @@ public abstract class SApply extends RBuiltinNode {
 
     @Specialization
     public Object sapply(VirtualFrame frame, RAbstractVector vector, RFunction fun, byte namesEnabled) {
+        controlVisibility();
         int len = vector.getLength();
         RAbstractVector resultVector;
         try {

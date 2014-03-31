@@ -33,18 +33,21 @@ public abstract class IsLogical extends IsTypeNode {
     @Specialization
     @Override
     public byte isType(byte value) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
     public byte isType(RLogicalVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
     public byte isType(Object value) {
+        controlVisibility();
         return RRuntime.asLogical(value instanceof Boolean || value instanceof RLogicalVector);
     }
 }

@@ -34,11 +34,13 @@ public abstract class IsObject extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public byte isObject(RNull arg) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isObject(RAbstractVector arg) {
+        controlVisibility();
         return arg.isObject() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 }

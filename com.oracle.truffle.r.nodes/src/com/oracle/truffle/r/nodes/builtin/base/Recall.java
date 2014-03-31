@@ -49,6 +49,7 @@ public class Recall extends RCustomBuiltinNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
+        controlVisibility();
         RFunction function = RArguments.get(frame).getFunction();
         if (function == null) {
             throw RError.getRecallCalledOutsideClosure(getEncapsulatingSourceSection());

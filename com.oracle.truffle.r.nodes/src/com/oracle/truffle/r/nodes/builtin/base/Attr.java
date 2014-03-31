@@ -49,6 +49,7 @@ public abstract class Attr extends RBuiltinNode {
 
     @Specialization
     public Object attr(RAbstractVector vector, String name) {
+        controlVisibility();
         Map<String, Object> attributes = vector.getAttributes();
         if (attributes == null) {
             return RNull.instance;
@@ -63,6 +64,7 @@ public abstract class Attr extends RBuiltinNode {
 
     @Specialization
     public Object dim(RAbstractVector vector, RStringVector name) {
+        controlVisibility();
         return attr(vector, name.getDataAt(0));
     }
 }

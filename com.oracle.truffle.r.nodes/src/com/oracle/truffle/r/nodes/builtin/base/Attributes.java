@@ -35,11 +35,13 @@ public abstract class Attributes extends RBuiltinNode {
 
     @Specialization(guards = "!hasAttributes")
     public RNull attributesNull(@SuppressWarnings("unused") RAbstractVector vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "hasAttributes")
     public RList attributes(RAbstractVector vector) {
+        controlVisibility();
         Map<String, Object> map = vector.getAttributes();
         int size = map.size();
         String[] names = new String[size];

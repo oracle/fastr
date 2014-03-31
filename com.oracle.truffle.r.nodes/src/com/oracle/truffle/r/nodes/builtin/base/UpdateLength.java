@@ -40,8 +40,14 @@ public abstract class UpdateLength extends RBuiltinNode {
         return arguments;
     }
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization(order = 1, guards = "isLengthOne")
     public RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
+        controlVisibility();
         int length = lengthVector.getDataAt(0);
         RVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
@@ -54,12 +60,14 @@ public abstract class UpdateLength extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = "!isLengthOne")
     public RAbstractVector updateLengthError(RAbstractVector vector, RAbstractIntVector lengthVector) {
+        controlVisibility();
         throw RError.getInvalidUnnamedValue(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
-    @Generic
+    @Specialization
     public Object updateLengthError(Object vector, Object lengthVector) {
+        controlVisibility();
         throw RError.getInvalidUnnamedValue(this.getEncapsulatingSourceSection());
     }
 

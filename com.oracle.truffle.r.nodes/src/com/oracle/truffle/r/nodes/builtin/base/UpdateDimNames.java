@@ -40,6 +40,11 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Child CastStringNode castStringNode;
     @Child CastToVectorNode castVectorNode;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreter();
@@ -74,6 +79,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
         v.setDimNames(null, getEncapsulatingSourceSection());
+        controlVisibility();
         return v;
     }
 
@@ -81,6 +87,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     public RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(null, getEncapsulatingSourceSection());
+        controlVisibility();
         return v;
     }
 
@@ -88,11 +95,13 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
+        controlVisibility();
         return v;
     }
 
-    @Generic
+    @Specialization
     public Object updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
+        controlVisibility();
         throw RError.getDimnamesList(getEncapsulatingSourceSection());
     }
 

@@ -55,9 +55,15 @@ public abstract class Assign extends RBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization(order = 1, guards = "noEnv")
     @SuppressWarnings("unused")
     public Object assign(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
         if (writeVariableNode == null || !x.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastName = x;
@@ -74,6 +80,7 @@ public abstract class Assign extends RBuiltinNode {
     @Specialization(order = 10, guards = "!doesInherit")
     @SuppressWarnings("unused")
     public Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
         pos.put(x, value);
         return value;
     }
@@ -81,6 +88,7 @@ public abstract class Assign extends RBuiltinNode {
     @Specialization(order = 11, guards = "doesInherit")
     @SuppressWarnings("unused")
     public Object assignInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
         REnvironment env = pos;
         while (env != null) {
             if (env.get(x) != null) {
@@ -98,11 +106,13 @@ public abstract class Assign extends RBuiltinNode {
 
     @Specialization(order = 20, guards = "!doesInherit")
     public Object assignNoInherit(RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
         return assignNoInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(order = 21, guards = "doesInherit")
     public Object assignInherit(RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
         return assignInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 

@@ -48,6 +48,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 1, guards = "bothZeroDim")
     public RDoubleVector both0Dim(RDoubleVector a, RDoubleVector b) {
+        controlVisibility();
         int r = b.getDimensions()[1];
         int c = a.getDimensions()[0];
         RDoubleVector result = RDataFactory.createDoubleVector(r * c);
@@ -57,12 +58,14 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 2, guards = "leftHasZeroDim")
     public RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b) {
+        controlVisibility();
         int[] dim = a.getDimensions()[0] == 0 ? new int[]{0, b.getDimensions()[1]} : new int[]{b.getDimensions()[0], 0};
         return a.copyWithNewDimensions(dim);
     }
 
     @Specialization(order = 3, guards = "rightHasZeroDim")
     public RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b) {
+        controlVisibility();
         int[] dim = b.getDimensions()[0] == 0 ? new int[]{0, a.getDimensions()[1]} : new int[]{a.getDimensions()[0], 0};
         return b.copyWithNewDimensions(dim);
     }
@@ -71,6 +74,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 10, guards = "matmat")
     public RDoubleVector matmatmult(RDoubleVector a, RDoubleVector b) {
+        controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         assert aCols == bRows;
@@ -93,6 +97,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 11, guards = "vecvec")
     public RDoubleVector vecvecmult(RDoubleVector a, RDoubleVector b) {
+        controlVisibility();
         assert a.getLength() == b.getLength();
         double result = 0.0;
         na.enable(result);
@@ -105,6 +110,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 12, guards = "matvec")
     public RDoubleVector matvecmult(RDoubleVector a, RDoubleVector b) {
+        controlVisibility();
         final int aCols = a.getDimensions()[1];
         assert aCols == b.getLength();
         final int aRows = a.getDimensions()[0];
@@ -123,6 +129,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 13, guards = "vecmat")
     public RDoubleVector vecmatmult(RDoubleVector a, RDoubleVector b) {
+        controlVisibility();
         final int bRows = b.getDimensions()[0];
         assert a.getLength() == bRows;
         final int bCols = b.getDimensions()[1];
@@ -143,6 +150,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 20, guards = "matmat")
     public RComplexVector matmatmult(RComplexVector a, RComplexVector b) {
+        controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         assert aCols == bRows;
@@ -167,6 +175,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 21, guards = "vecvec")
     public RComplexVector vecvecmult(RComplexVector a, RComplexVector b) {
+        controlVisibility();
         assert a.getLength() == b.getLength();
         RComplex result = RDataFactory.createComplexZero();
         na.enable(result);
@@ -179,6 +188,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 22, guards = "matvec")
     public RComplexVector matvecmult(RComplexVector a, RComplexVector b) {
+        controlVisibility();
         final int aCols = a.getDimensions()[1];
         assert aCols == b.getLength();
         final int aRows = a.getDimensions()[0];
@@ -198,6 +208,7 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 23, guards = "vecmat")
     public RComplexVector vecmatmult(RComplexVector a, RComplexVector b) {
+        controlVisibility();
         final int bRows = b.getDimensions()[0];
         assert a.getLength() == bRows;
         final int bCols = b.getDimensions()[1];

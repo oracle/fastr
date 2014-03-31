@@ -65,45 +65,53 @@ public abstract class All extends RBuiltinNode {
 
     @Specialization
     public byte all(byte value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization(order = 10)
     public byte all(int value) {
+        controlVisibility();
         check.enable(value);
         return check.convertIntToLogical(value);
     }
 
     @Specialization(order = 12)
     public byte all(double value) {
+        controlVisibility();
         check.enable(value);
         return check.convertDoubleToLogical(value);
     }
 
     @Specialization(order = 14)
     public byte all(RComplex value) {
+        controlVisibility();
         check.enable(value);
         return check.convertComplexToLogical(value);
     }
 
     @Specialization
     public byte all(VirtualFrame frame, String value) {
+        controlVisibility();
         check.enable(value);
         return check.convertStringToLogical(value);
     }
 
     @Specialization
     public byte all(RNull vector) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     public byte all(RMissing vector) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     public byte all(RLogicalVector vector) {
+        controlVisibility();
         for (int i = 0; i < vector.getLength(); i++) {
             byte b = vector.getDataAt(i);
             if (b != RRuntime.LOGICAL_TRUE) {
@@ -115,41 +123,49 @@ public abstract class All extends RBuiltinNode {
 
     @Specialization
     public byte all(VirtualFrame frame, RIntVector vector) {
+        controlVisibility();
         return all(castLogicalVector(frame, vector));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, RStringVector vector) {
+        controlVisibility();
         return all(castLogicalVector(frame, vector));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, RDoubleVector vector) {
+        controlVisibility();
         return all(castLogicalVector(frame, vector));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, RComplexVector vector) {
+        controlVisibility();
         return all(castLogicalVector(frame, vector));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, RDoubleSequence sequence) {
+        controlVisibility();
         return all(castLogicalVector(frame, sequence));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, RIntSequence sequence) {
+        controlVisibility();
         return all(castLogicalVector(frame, sequence));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, RRawVector vector) {
+        controlVisibility();
         return all(castLogicalVector(frame, vector));
     }
 
     @Specialization
     public byte all(VirtualFrame frame, Object[] args) {
+        controlVisibility();
         for (int i = 0; i < args.length; i++) {
             byte result;
             if (args[i] instanceof RVector || args[i] instanceof RSequence) {

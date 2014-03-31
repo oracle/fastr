@@ -45,6 +45,11 @@ public abstract class UpdateAttr extends RBuiltinNode {
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreter();
@@ -87,6 +92,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization(guards = "nullValue")
     public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, String name, RNull value) {
+        controlVisibility();
         RVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = resultVector.copy();
@@ -105,6 +111,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization(guards = "!nullValue")
     public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, String name, Object value) {
+        controlVisibility();
         RVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = resultVector.copy();
@@ -145,6 +152,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
 
     @Specialization(guards = "!nullValue")
     public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
+        controlVisibility();
         return updateAttr(frame, vector, name.getDataAt(0), value);
     }
 

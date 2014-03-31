@@ -59,41 +59,49 @@ public abstract class AsLogical extends RBuiltinNode {
 
     @Specialization
     public byte asLogical(byte value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization(order = 10)
     public byte asLogical(VirtualFrame frame, int value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization(order = 12)
     public byte asLogical(VirtualFrame frame, double value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization(order = 14)
     public byte asLogical(VirtualFrame frame, RComplex value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization
     public byte asLogical(VirtualFrame frame, String value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization
     public RLogicalVector asLogical(RNull vector) {
+        controlVisibility();
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization
     public RLogicalVector asLogical(RLogicalVector vector) {
+        controlVisibility();
         return RDataFactory.createLogicalVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     public RLogicalVector asLogical(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castLogicalVector(frame, vector);
     }
 }

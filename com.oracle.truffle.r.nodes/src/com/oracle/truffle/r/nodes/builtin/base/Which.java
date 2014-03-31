@@ -49,6 +49,7 @@ public abstract class Which extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public RIntVector which(RLogicalVector x, byte arrInd, byte useNames) {
+        controlVisibility();
         ArrayList<Integer> w = new ArrayList<>();
         for (int i = 0; i < x.getLength(); ++i) {
             if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {

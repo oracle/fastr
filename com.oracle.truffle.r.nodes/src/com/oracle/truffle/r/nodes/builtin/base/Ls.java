@@ -49,12 +49,14 @@ public abstract class Ls extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, RMissing pattern) {
+        controlVisibility();
         return name.ls();
     }
 
     @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
+        controlVisibility();
         // this is the ls() specialisation
         FrameDescriptor fd = frame.getFrameDescriptor();
         String[] names = fd.getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);

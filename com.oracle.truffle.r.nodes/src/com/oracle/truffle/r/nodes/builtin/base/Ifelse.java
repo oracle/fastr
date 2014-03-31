@@ -43,31 +43,37 @@ public abstract class Ifelse extends RBuiltinNode {
 
     @Specialization(guards = "isNA")
     public byte ifelseNA(byte test, double yes, double no) {
+        controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
     @Specialization(guards = "!isNA")
     public double ifelse(byte test, double yes, double no) {
+        controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
     @Specialization(guards = "isNA")
     public byte ifelseNA(byte test, int yes, int no) {
+        controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
     @Specialization(guards = "!isNA")
     public int ifelse(byte test, int yes, int no) {
+        controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
     @Specialization(guards = "isNA")
     public byte ifelseNA(byte test, String yes, String no) {
+        controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
     @Specialization(guards = "!isNA")
     public String ifelse(byte test, String yes, String no) {
+        controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 }

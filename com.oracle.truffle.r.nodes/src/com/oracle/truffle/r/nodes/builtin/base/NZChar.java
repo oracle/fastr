@@ -55,21 +55,25 @@ public abstract class NZChar extends RBuiltinNode {
 
     @Specialization
     public byte rev(VirtualFrame frame, int value) {
+        controlVisibility();
         return isNonZeroLength(coerceContent(frame, value));
     }
 
     @Specialization
     public byte rev(VirtualFrame frame, double value) {
+        controlVisibility();
         return isNonZeroLength(coerceContent(frame, value));
     }
 
     @Specialization
     public byte rev(VirtualFrame frame, byte value) {
+        controlVisibility();
         return isNonZeroLength(coerceContent(frame, value));
     }
 
     @Specialization
     public RLogicalVector rev(RStringVector vector) {
+        controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];
         for (int i = 0; i < len; i++) {
@@ -80,6 +84,7 @@ public abstract class NZChar extends RBuiltinNode {
 
     @Specialization
     public RLogicalVector rev(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];
         for (int i = 0; i < len; i++) {

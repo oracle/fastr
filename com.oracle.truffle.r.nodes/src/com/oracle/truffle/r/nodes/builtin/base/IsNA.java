@@ -49,11 +49,13 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Specialization
     public byte isNA(int value) {
+        controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
     public RLogicalVector isNA(RIntVector vector) {
+        controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
@@ -63,11 +65,13 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Specialization
     public byte isNA(double value) {
+        controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
     public RLogicalVector isNA(RDoubleVector vector) {
+        controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
@@ -77,17 +81,20 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Specialization
     public byte isNA(String value) {
+        controlVisibility();
         // FIXME NA for Strings
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isNA(RStringVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public RLogicalVector isNA(VirtualFrame frame, RList list) {
+        controlVisibility();
         byte[] resultVector = new byte[list.getLength()];
         for (int i = 0; i < list.getLength(); i++) {
             Object result = isNARecursive(frame, list.getDataAt(i));
@@ -109,11 +116,13 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Specialization
     public byte isNA(byte value) {
+        controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
     public RLogicalVector isNA(RLogicalVector vector) {
+        controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
@@ -123,6 +132,7 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Specialization
     public byte isNA(RNull value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 }

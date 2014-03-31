@@ -40,16 +40,19 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public double cumsum(double arg) {
+        controlVisibility();
         return arg;
     }
 
     @Specialization
     public int cumsum(int arg) {
+        controlVisibility();
         return arg;
     }
 
     @Specialization
     public int cumsum(byte arg) {
+        controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
             return RRuntime.INT_NA;
@@ -59,6 +62,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public RIntVector cumsum(RIntSequence arg) {
+        controlVisibility();
         int[] res = new int[arg.getLength()];
         int current = arg.getStart();
         int prev = 0;
@@ -80,6 +84,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector cumsum(RDoubleVector arg) {
+        controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
         na.enable(arg);
@@ -99,6 +104,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public RIntVector cumsum(RIntVector arg) {
+        controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
@@ -121,6 +127,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public RIntVector cumsum(RLogicalVector arg) {
+        controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
@@ -140,6 +147,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector cumsum(RStringVector arg) {
+        controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
         na.enable(arg);
@@ -160,6 +168,7 @@ public abstract class CumSum extends RBuiltinNode {
 
     @Specialization
     public RComplexVector cumsum(RComplexVector arg) {
+        controlVisibility();
         double[] res = new double[arg.getLength() * 2];
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
         int i;

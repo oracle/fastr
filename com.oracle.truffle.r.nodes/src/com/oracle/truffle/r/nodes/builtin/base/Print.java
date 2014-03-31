@@ -43,17 +43,23 @@ public abstract class Print extends RBuiltinNode {
 
     @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, false);
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);
     }
 
     @Specialization
     public Object print(VirtualFrame frame, Object o) {
+        controlVisibility();
         String s = (String) prettyPrinter.executeString(frame, o, null);
         if (s != null && !s.isEmpty()) {
             printHelper(s);
         }
-        return new RInvisible(o); // TODO should we actually call "invisible(o)"?
+        return o;
     }
 
 }

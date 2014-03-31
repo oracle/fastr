@@ -54,6 +54,7 @@ public abstract class Mean extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public double mean(RDoubleVector x, RMissing args) {
+        controlVisibility();
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
             sum = add.op(sum, x.getDataAt(k));

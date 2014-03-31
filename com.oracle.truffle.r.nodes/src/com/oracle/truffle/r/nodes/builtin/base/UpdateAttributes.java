@@ -45,6 +45,11 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private void updateNamesStringVector(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreter();
@@ -79,6 +84,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @Specialization
     public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractVector abstractVector, RNull list) {
+        controlVisibility();
         RVector resultVector = abstractVector.materialize();
         resultVector.resetAllAttributes(true);
         return resultVector;
@@ -86,6 +92,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     @Specialization
     public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractVector abstractVector, RList list) {
+        controlVisibility();
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {
             throw RError.getAttributesNamed(getEncapsulatingSourceSection());
@@ -161,6 +168,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
     @Generic
     public RList doOther(VirtualFrame frame, Object vector, Object operand) {
         CompilerDirectives.transferToInterpreter();
+        controlVisibility();
         throw RError.getAttributesListOrNull(getEncapsulatingSourceSection());
     }
 

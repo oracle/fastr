@@ -33,11 +33,13 @@ public abstract class GSub extends Sub {
     @Specialization(order = 1)
     @Override
     public String sub(String pattern, String replacement, String x) {
+        controlVisibility();
         return replaceMatch(pattern, replacement, x);
     }
 
     @Specialization(order = 2)
     public String sub(RAbstractStringVector pattern, RAbstractStringVector replacement, RAbstractStringVector x) {
+        controlVisibility();
         // TODO print warnings that only the first element of each is used
         return replaceMatch(pattern.getDataAt(0), replacement.getDataAt(0), x.getDataAt(0));
     }

@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class ReadVariableNode extends RNode {
+public abstract class ReadVariableNode extends RNode implements VisibilityController {
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
@@ -203,6 +203,7 @@ public abstract class ReadVariableNode extends RNode {
         @ExplodeLoop
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             try {
                 for (int i = 0; i < absentFrameSlotNodes.length; i++) {
                     absentFrameSlotNodes[i].getAssumption().check();
@@ -215,6 +216,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            controlVisibility();
             throw new UnsupportedOperationException();
         }
     }
@@ -233,6 +235,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             if (readNode.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = readNode.execute(frame);
                 if (checkType(result, mode)) {
@@ -244,6 +247,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            controlVisibility();
             throw new UnsupportedOperationException();
         }
     }
@@ -262,6 +266,7 @@ public abstract class ReadVariableNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreter();
+            controlVisibility();
             node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol)));
             if (node.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = node.execute(frame);
@@ -275,6 +280,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            controlVisibility();
             throw new UnsupportedOperationException();
         }
     }
@@ -293,11 +299,13 @@ public abstract class ReadVariableNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             throw new UnsupportedOperationException();
         }
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            controlVisibility();
             if (readNode.getFrameSlotNode().hasValue(frame, enclosingFrame)) {
                 Object result = readNode.execute(frame, enclosingFrame);
                 if (checkType(result, mode)) {
@@ -315,21 +323,25 @@ public abstract class ReadVariableNode extends RNode {
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         public byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+            controlVisibility();
             return frame.getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         public int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+            controlVisibility();
             return frame.getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         public double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+            controlVisibility();
             return frame.getDouble(frameSlot);
         }
 
         @Specialization
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
+            controlVisibility();
             try {
                 return frame.getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
@@ -346,21 +358,25 @@ public abstract class ReadVariableNode extends RNode {
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         public byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+            controlVisibility();
             return enclosingFrame.getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         public int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+            controlVisibility();
             return enclosingFrame.getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
         public double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+            controlVisibility();
             return enclosingFrame.getDouble(frameSlot);
         }
 
         @Specialization
         public Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            controlVisibility();
             try {
                 return enclosingFrame.getObject(frameSlot);
             } catch (FrameSlotTypeException e) {
@@ -374,6 +390,7 @@ public abstract class ReadVariableNode extends RNode {
         @Override
         @Specialization
         public Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            controlVisibility();
             try {
                 Object result = enclosingFrame.getObject(frameSlot);
                 if (result instanceof RAbstractVector) {
@@ -394,6 +411,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Specialization
         public Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
+            controlVisibility();
             return getFunction();
         }
     }
@@ -405,6 +423,7 @@ public abstract class ReadVariableNode extends RNode {
 
         @Specialization
         public Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
+            controlVisibility();
             throw RError.getUnknownVariable(null, getSymbol());
         }
     }

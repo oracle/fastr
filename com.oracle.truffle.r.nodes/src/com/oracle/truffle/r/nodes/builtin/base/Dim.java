@@ -33,31 +33,37 @@ public abstract class Dim extends RBuiltinNode {
 
     @Specialization
     public RNull dim(RNull vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull dim(int vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull dim(double vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull dim(byte vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "!hasDimensions")
     public RNull dim(RAbstractVector vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "hasDimensions")
     public RIntVector dimWithDimensions(RAbstractVector vector) {
+        controlVisibility();
         return RDataFactory.createIntVector(vector.getDimensions(), RDataFactory.COMPLETE_VECTOR);
     }
 

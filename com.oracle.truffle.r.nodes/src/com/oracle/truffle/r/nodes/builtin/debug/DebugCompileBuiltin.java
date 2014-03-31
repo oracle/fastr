@@ -69,6 +69,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
 
     @Specialization
     public byte compileFunction(RFunction function) {
+        controlVisibility();
         if (compiler != null) {
             try {
                 if (compiler.compile(function.getTarget())) {
@@ -81,8 +82,9 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Generic
+    @Specialization
     public byte compileFunction(@SuppressWarnings("unused") Object arg) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'function' argument");
     }
 }

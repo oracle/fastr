@@ -43,6 +43,7 @@ public abstract class UseMethod extends RBuiltinNode {
 
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, RAbstractVector arg) {
+        controlVisibility();
         return useMethodHelper(frame, generic, arg.getClassHierarchy());
     }
 
@@ -52,6 +53,7 @@ public abstract class UseMethod extends RBuiltinNode {
      */
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RMissing arg) {
+        controlVisibility();
         RArguments args = frame.getArguments(RArguments.class);
         if (args == null || args.getLength() == 0 || args.getArgument(0) == null) {
             throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
@@ -74,26 +76,31 @@ public abstract class UseMethod extends RBuiltinNode {
 
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") byte arg) {
+        controlVisibility();
         return useMethodHelper(frame, generic, RRuntime.TYPE_LOGICAL);
     }
 
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") String arg) {
+        controlVisibility();
         return useMethodHelper(frame, generic, RRuntime.TYPE_CHARACTER);
     }
 
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") int arg) {
+        controlVisibility();
         return useMethodHelper(frame, generic, RRuntime.CLASS_INTEGER);
     }
 
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") double arg) {
+        controlVisibility();
         return useMethodHelper(frame, generic, RRuntime.CLASS_DOUBLE);
     }
 
     @Specialization
     public Object useMethod(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object generic, @SuppressWarnings("unused") Object arg) {
+        controlVisibility();
         throw RError.getNonStringGeneric(getEncapsulatingSourceSection());
     }
 

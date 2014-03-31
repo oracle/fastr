@@ -26,10 +26,11 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.ColonNodeFactory.ColonCastNodeFactory;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
-public abstract class ColonNode extends RNode {
+public abstract class ColonNode extends RNode implements VisibilityController {
 
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {
@@ -38,41 +39,49 @@ public abstract class ColonNode extends RNode {
 
     @Specialization(order = 1, guards = "isSmaller")
     public RIntSequence colonAscending(int left, int right) {
+        controlVisibility();
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(order = 2, guards = "!isSmaller")
     public RIntSequence colonDescending(int left, int right) {
+        controlVisibility();
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(order = 3, guards = "isSmaller")
     public RIntSequence colonAscending(int left, double right) {
+        controlVisibility();
         return RDataFactory.createAscendingRange(left, (int) right);
     }
 
     @Specialization(order = 4, guards = "!isSmaller")
     public RIntSequence colonDescending(int left, double right) {
+        controlVisibility();
         return RDataFactory.createDescendingRange(left, (int) right);
     }
 
     @Specialization(order = 5, guards = "isSmaller")
     public RDoubleSequence colonAscending(double left, int right) {
+        controlVisibility();
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(order = 6, guards = "!isSmaller")
     public RDoubleSequence colonDescending(double left, int right) {
+        controlVisibility();
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(order = 7, guards = "isSmaller")
     public RDoubleSequence colonAscending(double left, double right) {
+        controlVisibility();
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(order = 8, guards = "!isSmaller")
     public RDoubleSequence colonDescending(double left, double right) {
+        controlVisibility();
         return RDataFactory.createDescendingRange(left, right);
     }
 

@@ -49,7 +49,7 @@ public final class RContext {
 
         /**
          * Error output with a newline.
-         * 
+         *
          * @param s
          */
         void printErrorln(String s);
@@ -92,6 +92,11 @@ public final class RContext {
     private final RRandomNumberGenerator randomNumberGenerator = new RRandomNumberGenerator();
     private LinkedList<String> evalWarnings;
 
+    /**
+     * Denote whether the result of an expression should be printed in the shell or not.
+     */
+    private boolean resultVisible = true;
+
     private static RBuiltinLookup lookup;
 
     private ConsoleHandler consoleHandler;
@@ -118,13 +123,21 @@ public final class RContext {
     /**
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
-     * 
+     *
      * @param commandArgs
      * @param consoleHandler
      */
     public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
+    }
+
+    public static boolean isVisible() {
+        return singleton.resultVisible;
+    }
+
+    public static void setVisible(boolean v) {
+        singleton.resultVisible = v;
     }
 
     public static RBuiltinLookup getLookup() {

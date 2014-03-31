@@ -73,51 +73,61 @@ public abstract class AsInteger extends RBuiltinNode {
 
     @Specialization
     public int asInteger(int value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization
     public int asInteger(VirtualFrame frame, double value) {
+        controlVisibility();
         return castInt(frame, value);
     }
 
     @Specialization
     public int asInteger(VirtualFrame frame, byte value) {
+        controlVisibility();
         return castInt(frame, value);
     }
 
     @Specialization
     public int asInteger(VirtualFrame frame, RComplex value) {
+        controlVisibility();
         return castInt(frame, value);
     }
 
     @Specialization
     public int asInteger(VirtualFrame frame, RRaw value) {
+        controlVisibility();
         return castInt(frame, value);
     }
 
     @Specialization
     public int asInteger(VirtualFrame frame, String value) {
+        controlVisibility();
         return castInt(frame, value);
     }
 
     @Specialization
     public int asInteger(RNull vector) {
+        controlVisibility();
         return RRuntime.INT_NA;
     }
 
     @Specialization(order = 71)
     public RIntVector asInteger(RIntVector vector) {
+        controlVisibility();
         return RDataFactory.createIntVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     public RIntVector asInteger(RIntSequence sequence) {
+        controlVisibility();
         return (RIntVector) sequence.createVector();
     }
 
     @Specialization
     public RIntVector asInteger(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castIntVector(frame, vector);
     }
 }

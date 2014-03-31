@@ -53,6 +53,7 @@ public abstract class NextMethod extends S3MethodDispatch {
 
     @Specialization(order = 1)
     public Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
+        controlVisibility();
         this.genericName = genericMethod;
         readGenericVars(frame);
         if (this.genericName == null) {
@@ -114,11 +115,13 @@ public abstract class NextMethod extends S3MethodDispatch {
 
     @Specialization(order = 10)
     public Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RMissing generic, @SuppressWarnings("unused") RMissing obj, @SuppressWarnings("unused") RMissing args) {
+        controlVisibility();
         return nextMethod(frame, null, null, new Object[0]);
     }
 
     @Specialization(order = 11)
     public Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RMissing args) {
+        controlVisibility();
         return nextMethod(frame, generic, obj, new Object[0]);
     }
 

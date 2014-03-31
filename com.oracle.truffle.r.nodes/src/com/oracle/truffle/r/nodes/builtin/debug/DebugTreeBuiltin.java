@@ -50,6 +50,7 @@ public abstract class DebugTreeBuiltin extends RBuiltinNode {
 
     @Specialization
     public Object printTree(RFunction function, byte verbose) {
+        controlVisibility();
         CallTarget target = function.getTarget();
         if (target instanceof DefaultCallTarget) {
             RootNode root = ((DefaultCallTarget) target).getRootNode();
@@ -59,11 +60,12 @@ public abstract class DebugTreeBuiltin extends RBuiltinNode {
                 return NodeUtil.printCompactTreeToString(root);
             }
         }
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
-    @Generic
+    @Specialization
     public RNull printTree(Object function, @SuppressWarnings("unused") Object verbose) {
+        controlVisibility();
         throw RError.getNYI("Not a function value: " + function.toString());
     }
 }

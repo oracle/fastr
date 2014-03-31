@@ -74,41 +74,49 @@ public abstract class AsComplex extends RBuiltinNode {
 
     @Specialization
     public RComplex doComplex(RComplex value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization
     public RComplex doInt(VirtualFrame frame, int value) {
+        controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
     public RComplex doDouble(VirtualFrame frame, double value) {
+        controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
     public RComplex doLogical(VirtualFrame frame, byte value) {
+        controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
     public RComplex doString(VirtualFrame frame, String value) {
+        controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
     public RComplexVector doNull(RNull value) {
+        controlVisibility();
         return RDataFactory.createComplexVector(0);
     }
 
     @Specialization
     public RComplexVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
+        controlVisibility();
         return RDataFactory.createComplexVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     public RComplexVector doIntVector(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castComplexVector(frame, vector);
     }
 }

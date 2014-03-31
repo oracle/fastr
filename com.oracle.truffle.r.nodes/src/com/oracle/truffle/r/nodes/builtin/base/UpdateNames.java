@@ -38,6 +38,11 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Child CastStringNode castStringNode;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreter();
@@ -50,6 +55,7 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Specialization
     public RAbstractVector updateNames(RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
+        controlVisibility();
         RVector v = vector.materialize();
         v.setNames(null, getEncapsulatingSourceSection());
         return v;
@@ -57,6 +63,7 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Specialization
     public RAbstractVector updateNames(RAbstractVector vector, RStringVector names) {
+        controlVisibility();
         RVector v = vector.materialize();
         RStringVector namesVector = names;
         if (names.getLength() < v.getLength()) {
@@ -68,6 +75,7 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Specialization
     public RAbstractVector updateNames(RAbstractVector vector, String name) {
+        controlVisibility();
         RVector v = vector.materialize();
         String[] names = new String[v.getLength()];
         Arrays.fill(names, RRuntime.STRING_NA);
@@ -79,6 +87,7 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     @Specialization
     public RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object names) {
+        controlVisibility();
         if (names instanceof RAbstractVector) {
             return updateNames(vector, (RStringVector) castString(frame, names));
         } else {

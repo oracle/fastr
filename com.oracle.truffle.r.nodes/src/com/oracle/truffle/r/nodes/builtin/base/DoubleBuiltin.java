@@ -31,17 +31,20 @@ public abstract class DoubleBuiltin extends RBuiltinNode {
 
     @Specialization
     public Object createDoubleVector(int length) {
+        controlVisibility();
         return RDataFactory.createDoubleVector(length);
     }
 
     @Specialization
     public Object createDoubleVector(double length) {
+        controlVisibility();
         return RDataFactory.createDoubleVector((int) length);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object createDoubleVector(RMissing length) {
+        controlVisibility();
         return RDataFactory.createDoubleVector(0);
     }
 }

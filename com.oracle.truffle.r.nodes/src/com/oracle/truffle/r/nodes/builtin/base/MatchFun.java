@@ -61,6 +61,7 @@ public abstract class MatchFun extends RBuiltinNode {
 
     @Specialization
     public Object matchFun(VirtualFrame frame, String fun, @SuppressWarnings("unused") byte descend) {
+        controlVisibility();
         if (lookup == null || !fun.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = fun;

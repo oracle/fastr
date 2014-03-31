@@ -39,6 +39,7 @@ public abstract class Im extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector im(RAbstractComplexVector vector) {
+        controlVisibility();
         double[] result = new double[vector.getLength()];
         check.enable(vector);
         for (int i = 0; i < vector.getLength(); ++i) {
@@ -50,6 +51,7 @@ public abstract class Im extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector im(RAbstractDoubleVector vector) {
+        controlVisibility();
         return RDataFactory.createDoubleVector(vector.getLength());
     }
 

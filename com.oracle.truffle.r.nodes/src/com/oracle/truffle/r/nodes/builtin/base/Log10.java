@@ -33,21 +33,25 @@ public abstract class Log10 extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RNull log(RNull x) {
+        controlVisibility();
         throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
     }
 
     @Specialization
     public double log(int value) {
+        controlVisibility();
         return Math.log10(value);
     }
 
     @Specialization
     public double log(double value) {
+        controlVisibility();
         return Math.log10(value);
     }
 
     @Specialization
     public RDoubleVector log(RIntVector vector) {
+        controlVisibility();
         double[] resultVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             int inputValue = vector.getDataAt(i);
@@ -62,6 +66,7 @@ public abstract class Log10 extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector log(RDoubleVector vector) {
+        controlVisibility();
         double[] doubleVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             double value = vector.getDataAt(i);

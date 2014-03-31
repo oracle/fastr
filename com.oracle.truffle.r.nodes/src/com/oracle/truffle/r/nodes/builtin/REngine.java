@@ -173,7 +173,7 @@ public final class REngine implements RBuiltinLookupProvider {
     }
 
     private static void printResult(Object result) {
-        if (!(result instanceof RInvisible)) {
+        if (RContext.isVisible()) {
             RFunction function = RContext.getLookup().lookup("print");
             RRuntime.toString(function.call(null, RArguments.create(function, new Object[]{result})));
         }

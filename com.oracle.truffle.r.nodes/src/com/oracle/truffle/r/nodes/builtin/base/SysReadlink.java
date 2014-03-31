@@ -36,8 +36,15 @@ import com.oracle.truffle.r.runtime.ffi.*;
 @RBuiltin("Sys.readlink")
 public abstract class SysReadlink extends RBuiltinNode {
 
+    @Specialization(order = 0)
+    public Object sysReadLink(String path) {
+        controlVisibility();
+        return RDataFactory.createStringVector(doSysReadLink(path));
+    }
+
     @Specialization(order = 1)
     public Object sysReadlink(RStringVector vector) {
+        controlVisibility();
         String[] paths = new String[vector.getLength()];
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         for (int i = 0; i < paths.length; i++) {
@@ -52,11 +59,6 @@ public abstract class SysReadlink extends RBuiltinNode {
             }
         }
         return RDataFactory.createStringVector(paths, complete);
-    }
-
-    @Specialization(order = 0)
-    public Object sysReadLink(String path) {
-        return RDataFactory.createStringVector(doSysReadLink(path));
     }
 
     private static String doSysReadLink(String path) {
@@ -74,6 +76,7 @@ public abstract class SysReadlink extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'paths' argument");
     }
 }

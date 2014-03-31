@@ -31,17 +31,20 @@ public abstract class LogicalBuiltin extends RBuiltinNode {
 
     @Specialization
     public Object createLogicalVector(int length) {
+        controlVisibility();
         return RDataFactory.createLogicalVector(length);
     }
 
     @Specialization
     public Object createLogicalVector(double length) {
+        controlVisibility();
         return RDataFactory.createLogicalVector((int) length);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object createLogicalVector(RMissing length) {
+        controlVisibility();
         return RDataFactory.createLogicalVector(0);
     }
 }

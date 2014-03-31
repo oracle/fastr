@@ -52,21 +52,25 @@ public abstract class NChar extends RBuiltinNode {
 
     @Specialization
     public int rev(VirtualFrame frame, int value) {
+        controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @Specialization
     public int rev(VirtualFrame frame, double value) {
+        controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @Specialization
     public int rev(VirtualFrame frame, byte value) {
+        controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @Specialization
     public RIntVector rev(RStringVector vector) {
+        controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];
         for (int i = 0; i < len; i++) {
@@ -77,6 +81,7 @@ public abstract class NChar extends RBuiltinNode {
 
     @Specialization
     public RIntVector rev(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];
         for (int i = 0; i < len; i++) {

@@ -34,10 +34,16 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin("on.exit")
 public abstract class OnExit extends RBuiltinNode {
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization
-    public RInvisible onExit(@SuppressWarnings("unused") Object expr, @SuppressWarnings("unused") Object add) {
+    public Object onExit(@SuppressWarnings("unused") Object expr, @SuppressWarnings("unused") Object add) {
+        controlVisibility();
         RContext.getInstance().setEvalWarning("on.exit ignored");
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
 }

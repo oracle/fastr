@@ -33,18 +33,21 @@ public abstract class IsRaw extends IsTypeNode {
     @Specialization
     @Override
     public byte isType(RRaw value) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
     public byte isType(RRawVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
     public byte isType(Object value) {
+        controlVisibility();
         return RRuntime.asLogical(value instanceof RRaw || value instanceof RRawVector);
     }
 }

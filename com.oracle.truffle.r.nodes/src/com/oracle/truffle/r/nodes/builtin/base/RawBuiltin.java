@@ -31,17 +31,20 @@ public abstract class RawBuiltin extends RBuiltinNode {
 
     @Specialization
     public Object createRawVector(int length) {
+        controlVisibility();
         return RDataFactory.createRawVector(length);
     }
 
     @Specialization
     public Object createRawVector(double length) {
+        controlVisibility();
         return RDataFactory.createRawVector((int) length);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object createRawVector(RMissing length) {
+        controlVisibility();
         return RDataFactory.createRawVector(0);
     }
 }

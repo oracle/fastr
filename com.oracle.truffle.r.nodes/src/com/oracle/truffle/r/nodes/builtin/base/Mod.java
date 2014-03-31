@@ -38,6 +38,7 @@ public abstract class Mod extends RBuiltinNode {
 
     @Specialization
     public double mod(RComplex x) {
+        controlVisibility();
         return sqrt.sqrt(add.doDoubleDouble(pow.doDoubleInt(x.getRealPart(), 2), pow.doDoubleInt(x.getImaginaryPart(), 2)));
     }
 

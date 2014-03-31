@@ -75,12 +75,14 @@ public abstract class Paste extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public RStringVector paste(RMissing value, Object sep, Object collapse) {
+        controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
     @Specialization
     @SuppressWarnings("unused")
     public RStringVector paste(RNull value, Object sep, Object collapse) {
+        controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -88,6 +90,7 @@ public abstract class Paste extends RBuiltinNode {
     @Specialization
     @SlowPath
     public String paste(int value, Object sep, Object collapse) {
+        controlVisibility();
         return String.valueOf(value);
     }
 
@@ -95,65 +98,76 @@ public abstract class Paste extends RBuiltinNode {
     @Specialization
     @SlowPath
     public String paste(double value, Object sep, Object collapse) {
+        controlVisibility();
         return String.valueOf(value);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public String paste(byte value, Object sep, Object collapse) {
+        controlVisibility();
         return RRuntime.logicalToString(value);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public String paste(String value, Object sep, Object collapse) {
+        controlVisibility();
         return value;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public String paste(RComplex value, Object sep, Object collapse) {
+        controlVisibility();
         return RRuntime.toString(value);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector paste(RStringVector vector, Object sep, Object collapse) {
+        controlVisibility();
         return checkCollapse(vector, collapse);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector paste(VirtualFrame frame, RIntVector vector, Object sep, Object collapse) {
+        controlVisibility();
         return checkCollapse(castCharacterVector(frame, vector), collapse);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector paste(VirtualFrame frame, RDoubleVector vector, Object sep, Object collapse) {
+        controlVisibility();
         return checkCollapse(castCharacterVector(frame, vector), collapse);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector paste(VirtualFrame frame, RIntSequence sequence, Object sep, Object collapse) {
+        controlVisibility();
         return checkCollapse(castCharacterVector(frame, sequence), collapse);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector paste(VirtualFrame frame, RDoubleSequence sequence, Object sep, Object collapse) {
+        controlVisibility();
         return checkCollapse(castCharacterVector(frame, sequence), collapse);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector paste(VirtualFrame frame, RLogicalVector vector, Object sep, Object collapse) {
+        controlVisibility();
         return checkCollapse(castCharacterVector(frame, vector), collapse);
     }
 
     @Specialization
     public RStringVector paste(VirtualFrame frame, Object[] args, Object sep, Object collapse) {
+        controlVisibility();
         Object[] converted = new Object[args.length];
         int maxLength = 1;
         for (int i = 0; i < args.length; i++) {

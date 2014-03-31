@@ -32,6 +32,7 @@ public abstract class Runif extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector runif(int n) {
+        controlVisibility();
         RRandomNumberGenerator rng = RContext.getInstance().getRandomNumberGenerator();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
@@ -42,6 +43,7 @@ public abstract class Runif extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector runif(double d) {
+        controlVisibility();
         return runif((int) d);
     }
 }

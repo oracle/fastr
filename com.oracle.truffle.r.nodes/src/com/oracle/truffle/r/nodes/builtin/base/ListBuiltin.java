@@ -44,52 +44,62 @@ public abstract class ListBuiltin extends RBuiltinNode {
 
     @Specialization
     public RList list(@SuppressWarnings("unused") RMissing missing) {
+        controlVisibility();
         return list(new Object[0]);
     }
 
     @Specialization
     public RList list(byte value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(int value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(double value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(RRaw value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(RComplex value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(String value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(RAbstractVector value) {
+        controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
     public RList list(Object[] args) {
+        controlVisibility();
         // TODO: should we duplicate all specializations for no-args and args case?
         return RDataFactory.createList(args, argNameVector());
     }
 
     @Specialization
     public RList list(RNull value) {
+        controlVisibility();
         return RDataFactory.createList(new Object[]{value}, argNameVector());
     }
 

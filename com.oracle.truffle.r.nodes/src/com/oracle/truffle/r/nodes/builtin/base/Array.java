@@ -43,11 +43,13 @@ public abstract class Array extends RBuiltinNode {
 
     @Specialization(order = 0, guards = "lengthMatches")
     public Object doArray(RAbstractVector vec, int dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
         return vec.copyWithNewDimensions(new int[]{dim});
     }
 
     @Specialization(order = 1, guards = "totalLengthMatches")
     public Object doArray(RAbstractVector vec, RDoubleVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
         int[] dims = new int[dim.getLength()];
         for (int i = 0; i < dim.getLength(); i++) {
             dims[i] = (int) dim.getDataAt(i);
@@ -58,6 +60,7 @@ public abstract class Array extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 100)
     public Object doArray(Object vec, Object dim, Object dimnames) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented or invalid argument types to 'array'");
     }
 

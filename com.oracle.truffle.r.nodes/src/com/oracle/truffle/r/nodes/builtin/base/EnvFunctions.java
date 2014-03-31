@@ -40,6 +40,7 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment emptyenv() {
+            controlVisibility();
             return RRuntime.EMPTY_ENV;
         }
     }
@@ -49,6 +50,7 @@ public class EnvFunctions {
 
         @Specialization
         public Object globalenv() {
+            controlVisibility();
             return RRuntime.GLOBAL_ENV;
         }
     }
@@ -58,6 +60,7 @@ public class EnvFunctions {
 
         @Specialization
         public Object baseenv() {
+            controlVisibility();
             return RRuntime.BASE_ENV;
         }
     }
@@ -67,6 +70,7 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment parentenv(REnvironment env) {
+            controlVisibility();
             if (env == RRuntime.EMPTY_ENV) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
             }
@@ -75,6 +79,7 @@ public class EnvFunctions {
 
         @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
     }
@@ -84,6 +89,7 @@ public class EnvFunctions {
 
         @Specialization
         public byte isEnvironment(Object env) {
+            controlVisibility();
             return env instanceof REnvironment ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
     }
@@ -93,16 +99,19 @@ public class EnvFunctions {
 
         @Specialization
         public Object environment(@SuppressWarnings("unused") RNull x) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(NULL) is not implemented");
         }
 
         @Specialization
         public Object environment(@SuppressWarnings("unused") RFunction func) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(func) is not implemented");
         }
 
         @Specialization(order = 100)
         public RNull environment(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             // Not an error according to GnuR
             return RNull.instance;
         }
@@ -113,11 +122,13 @@ public class EnvFunctions {
 
         @Specialization
         public String environmentName(REnvironment env) {
+            controlVisibility();
             return env.getName();
         }
 
         @Specialization(order = 100)
         public String environmentName(@SuppressWarnings("unused") Object env) {
+            controlVisibility();
             // Not an error according to GnuR
             return "";
         }
@@ -148,12 +159,14 @@ public class EnvFunctions {
         @Specialization
         @SuppressWarnings("unused")
         public REnvironment newEnv(byte hash, RMissing parent, int size) {
+            controlVisibility();
             // FIXME don't ignore hash parameter
             return new REnvironment(RRuntime.GLOBAL_ENV, REnvironment.UNNAMED, size);
         }
 
         @Specialization
         public REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+            controlVisibility();
             // FIXME don't ignore hash parameter
             return new REnvironment(parent, REnvironment.UNNAMED, size);
         }
@@ -166,6 +179,7 @@ public class EnvFunctions {
     public abstract static class ParentFrame extends RBuiltinNode {
         @Specialization
         public Object parentFrame(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             return RNull.instance;
         }
     }

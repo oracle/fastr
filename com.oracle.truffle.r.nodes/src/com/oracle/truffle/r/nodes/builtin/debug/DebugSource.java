@@ -39,6 +39,7 @@ public abstract class DebugSource extends RBuiltinNode {
     @SlowPath
     @Specialization
     public String debugSource(RFunction f) {
+        controlVisibility();
         CallTarget ct = f.getTarget();
         if (!(ct instanceof DefaultCallTarget)) {
             return "<no default call target>";

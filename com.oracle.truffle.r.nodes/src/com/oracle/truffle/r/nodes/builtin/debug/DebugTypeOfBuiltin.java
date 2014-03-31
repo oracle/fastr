@@ -31,6 +31,7 @@ public abstract class DebugTypeOfBuiltin extends RBuiltinNode {
 
     @Specialization
     public String type(Object value) {
+        controlVisibility();
         return value.getClass().getSimpleName();
     }
 
