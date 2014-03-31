@@ -73,7 +73,7 @@ public class EnvFunctions {
             return env.getParent();
         }
 
-        @Generic
+        @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
@@ -101,7 +101,7 @@ public class EnvFunctions {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(func) is not implemented");
         }
 
-        @Generic
+        @Specialization(order = 100)
         public RNull environment(@SuppressWarnings("unused") Object x) {
             // Not an error according to GnuR
             return RNull.instance;
@@ -116,7 +116,7 @@ public class EnvFunctions {
             return env.getName();
         }
 
-        @Generic
+        @Specialization(order = 100)
         public String environmentName(@SuppressWarnings("unused") Object env) {
             // Not an error according to GnuR
             return "";
@@ -165,7 +165,7 @@ public class EnvFunctions {
     @RBuiltin(".Internal.parent.frame")
     public abstract static class ParentFrame extends RBuiltinNode {
         @Specialization
-        public Object parentFrame(Object x) {
+        public Object parentFrame(@SuppressWarnings("unused") Object x) {
             return RNull.instance;
         }
     }

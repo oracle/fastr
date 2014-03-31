@@ -41,7 +41,7 @@ public abstract class PathExpand extends RBuiltinNode {
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }

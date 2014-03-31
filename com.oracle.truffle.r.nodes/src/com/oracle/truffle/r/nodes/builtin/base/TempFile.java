@@ -57,7 +57,7 @@ public abstract class TempFile extends RBuiltinNode {
         return tempDir.getLength() == 1;
     }
 
-    @Generic
+    @Specialization(order = 100)
     public RStringVector tempfileGeneric(Object pattern, Object tempDir, Object fileExt) throws RError {
         RStringVector[] argVecs = new RStringVector[]{checkVector(pattern, INVALID_PATTERN), checkVector(tempDir, INVALID_TEMPDIR), checkVector(fileExt, INVALID_FILEEXT)};
         // Now we have RStringVectors of at least length 1

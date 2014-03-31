@@ -52,7 +52,7 @@ public abstract class ReadREnviron extends RBuiltinNode {
         return vec.getLength() == 1;
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object doReadEnvironGeneric(@SuppressWarnings("unused") Object x) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "argument 'x' must be a character string");
     }

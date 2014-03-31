@@ -59,7 +59,7 @@ public abstract class NormalizePath extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Generic
+    @Specialization(order = 100)
     public Object doNormalizePath(Object path, Object winslash, Object mustWork) {
         throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }

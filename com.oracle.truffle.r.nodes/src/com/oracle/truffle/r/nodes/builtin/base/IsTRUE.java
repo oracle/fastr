@@ -48,7 +48,7 @@ public abstract class IsTRUE extends RBuiltinNode {
         return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
     }
 
-    @Generic
+    @Specialization(order = 100)
     public RLogicalVector isTRUEGeneric(@SuppressWarnings("unused") Object x) {
         return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE);
     }
