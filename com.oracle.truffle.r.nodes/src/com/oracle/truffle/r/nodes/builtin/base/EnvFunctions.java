@@ -165,7 +165,7 @@ public class EnvFunctions {
     @RBuiltin(".Internal.parent.frame")
     public abstract static class ParentFrame extends RBuiltinNode {
         @Specialization
-        public Object parentFrame(Object x) {
+        public Object parentFrame(@SuppressWarnings("unused") Object x) {
             return RNull.instance;
         }
     }
