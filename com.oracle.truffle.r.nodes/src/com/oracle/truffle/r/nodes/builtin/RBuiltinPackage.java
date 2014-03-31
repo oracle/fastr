@@ -74,7 +74,7 @@ public abstract class RBuiltinPackage {
                 }
             }
             if (componentList.size() > 0) {
-                snippetResources.put(getClass().getSimpleName(), componentList);
+                snippetResources.put(getName(), componentList);
             }
             loadAuxClass("Options");
             loadAuxClass("Variables");
@@ -105,7 +105,7 @@ public abstract class RBuiltinPackage {
     public static void initialize() {
         if (!initialized) {
             for (Map.Entry<String, List<RLibraryLoader.Component>> entry : snippetResources.entrySet()) {
-                RLibraryLoader loader = new RLibraryLoader(entry.getValue());
+                RLibraryLoader loader = new RLibraryLoader(entry.getKey(), entry.getValue());
                 Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
                 for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
                     NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
