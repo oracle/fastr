@@ -77,7 +77,7 @@ public abstract class ConnectionFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Generic
+        @Specialization(order = 100)
         public Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
         }
@@ -108,7 +108,7 @@ public abstract class ConnectionFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Generic
+        @Specialization(order = 100)
         public Object readLines(Object con, Object n, Object ok, Object warn, Object encoding) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
         }

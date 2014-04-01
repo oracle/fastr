@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * {@code .libPaths} built in. Ultimately, this should revert to a snippet:
- * 
+ *
  * <pre>
  * function (new)
  * {
@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *      else .lib.loc
  * }
  * </pre>
- * 
+ *
  */
 @RBuiltin(".libPaths")
 public abstract class DotLibpaths extends RBuiltinNode {
@@ -89,7 +89,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
         return array;
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object libPathsGeneric(@SuppressWarnings("unused") Object x) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }

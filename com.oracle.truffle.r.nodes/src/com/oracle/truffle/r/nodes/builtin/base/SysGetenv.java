@@ -69,7 +69,7 @@ public abstract class SysGetenv extends RBuiltinNode {
         }
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
         throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }

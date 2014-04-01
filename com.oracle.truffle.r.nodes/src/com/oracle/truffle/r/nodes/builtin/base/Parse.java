@@ -64,7 +64,7 @@ public abstract class Parse extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Generic
+    @Specialization(order = 100)
     public Object parseGeneric(Object file, Object n, Object text, Object prompt, Object srcFile, Object encoding) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
     }

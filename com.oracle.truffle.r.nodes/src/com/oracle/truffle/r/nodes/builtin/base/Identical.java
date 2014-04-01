@@ -40,7 +40,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
-        return RDataFactory.createLogicalVectorFromScalar(rBoolean(x == y));
+        return RDataFactory.createLogicalVectorFromScalar(x == y);
     }
 
     @Specialization(order = 1)
@@ -49,7 +49,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
-        return RDataFactory.createLogicalVectorFromScalar(rBoolean(x.equals(y)));
+        return RDataFactory.createLogicalVectorFromScalar(x.equals(y));
     }
 
     @Specialization(order = 2)
@@ -59,29 +59,16 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         boolean truth = numEq == RRuntime.LOGICAL_TRUE ? x == y : Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y);
-        return RDataFactory.createLogicalVectorFromScalar(rBoolean(truth));
+        return RDataFactory.createLogicalVectorFromScalar(truth);
     }
 
-    @Specialization(order = 99)
+    @Specialization(order = 100)
     public Object doInternalIdentialGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument types to 'identical'");
-    }
-
-    @Generic
-    public Object doInternalIdentialGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
-                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
-                    // @formatter:on
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid argument types to 'identical'");
-    }
-
-    private static byte rBoolean(boolean b) {
-        return b ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented or invalid argument types to 'identical'");
     }
 
 }

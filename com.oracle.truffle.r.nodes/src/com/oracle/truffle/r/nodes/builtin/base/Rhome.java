@@ -31,11 +31,11 @@ import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * R.home builtin.
- * 
+ *
  * TODO This is currently a complete implementation of the {@code R.home} functionality, as
  * {@code switch} is not implemented, which is used by the R code for {@code R.home} in
  * {@code files.R}.
- * 
+ *
  * N.B. GnuR seems to allow other types as the component, e.g. integer, although the spec does not
  * mention coercions.
  */
@@ -54,7 +54,7 @@ public abstract class Rhome extends RBuiltinNode {
         return RDataFactory.createStringVector(result);
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object doRhomeGeneric(@SuppressWarnings("unused") Object x) {
         throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }

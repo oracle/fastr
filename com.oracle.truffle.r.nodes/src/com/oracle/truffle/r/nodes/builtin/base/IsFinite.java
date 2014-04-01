@@ -40,7 +40,7 @@ public abstract class IsFinite extends RBuiltinNode {
         return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument type");
     }
