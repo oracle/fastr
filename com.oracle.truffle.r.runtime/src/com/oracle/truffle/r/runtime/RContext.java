@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -97,6 +98,12 @@ public final class RContext {
      */
     private boolean resultVisible = true;
 
+    /**
+     * Denote whether the FastR instance is running in headless mode ({@code true}), or in the shell
+     * or test harness ({@code false}).
+     */
+    @CompilationFinal private boolean headless;
+
     private static RBuiltinLookup lookup;
 
     private ConsoleHandler consoleHandler;
@@ -127,9 +134,10 @@ public final class RContext {
      * @param commandArgs
      * @param consoleHandler
      */
-    public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
+    public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
+        singleton.headless = headless;
     }
 
     public static boolean isVisible() {
@@ -138,6 +146,10 @@ public final class RContext {
 
     public static void setVisible(boolean v) {
         singleton.resultVisible = v;
+    }
+
+    public static boolean isHeadless() {
+        return singleton.headless;
     }
 
     public static RBuiltinLookup getLookup() {

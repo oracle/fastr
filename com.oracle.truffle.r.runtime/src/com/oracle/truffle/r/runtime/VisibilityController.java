@@ -49,7 +49,9 @@ public interface VisibilityController {
      * guaranteed to always replace and execute, as is common in "unresolved" node implementations.
      */
     default void controlVisibility() {
-        RContext.setVisible(getVisibility());
+        if (!RContext.isHeadless()) {
+            RContext.setVisible(getVisibility());
+        }
     }
 
 }

@@ -55,13 +55,13 @@ public final class REngine implements RBuiltinLookupProvider {
         return RDefaultBuiltinPackages.getInstance();
     }
 
-    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
-        return setRuntimeState(commandArgs, consoleHandler, true);
+    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
+        return setRuntimeState(commandArgs, consoleHandler, true, headless);
     }
 
-    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalError) {
+    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalError, boolean headless) {
         REngine.crashOnFatalError = crashOnFatalError;
-        RContext.setRuntimeState(commandArgs, consoleHandler);
+        RContext.setRuntimeState(commandArgs, consoleHandler, headless);
         RBuiltinPackage.initialize();
         RRuntime.initialize();
         return singleton;
