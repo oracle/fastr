@@ -116,7 +116,7 @@ public abstract class UpdateDiag extends RBuiltinNode {
     public RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         if (castDouble == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, false, false));
         }
         RDoubleVector resultVector = (RDoubleVector) castDouble.executeDoubleVector(frame, vector);

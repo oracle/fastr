@@ -126,7 +126,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             if (enclosingFrame != null) {
                 ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol))
                                 : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol));
@@ -148,7 +148,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Override
         public Object execute(VirtualFrame frame) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             ArrayList<Assumption> assumptions = allMissingAssumptions(frame);
             ReadVariableNode readNode;
             if (assumptions == null) {
@@ -265,7 +265,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Override
         public Object execute(VirtualFrame frame) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             controlVisibility();
             node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol)));
             if (node.getFrameSlotNode().hasValue(frame, frame)) {

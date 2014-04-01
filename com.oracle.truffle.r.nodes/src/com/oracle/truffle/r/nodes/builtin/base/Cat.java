@@ -61,7 +61,7 @@ public abstract class Cat extends RBuiltinNode {
 
     private void ensureToString(String sep) {
         if (toString == null || !sep.equals(currentSep)) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             toString = insert(ToStringFactory.create(new RNode[1], getBuiltin()));
             toString.setSeparator(sep);
             toString.setQuotes(false);

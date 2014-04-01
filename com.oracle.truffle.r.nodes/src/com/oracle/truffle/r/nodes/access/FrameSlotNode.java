@@ -57,7 +57,7 @@ public abstract class FrameSlotNode extends Node {
 
         @Override
         public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             return resolveFrameSlot(frame).hasValue(virtualFrame, frame);
         }
 
@@ -155,7 +155,7 @@ public abstract class FrameSlotNode extends Node {
             if (!initialized) {
                 return false;
             } else {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new MaybeInitializedFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
             }
         }
@@ -173,7 +173,7 @@ public abstract class FrameSlotNode extends Node {
             if (initialized) {
                 return true;
             } else {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new MaybeInitializedFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
             }
         }

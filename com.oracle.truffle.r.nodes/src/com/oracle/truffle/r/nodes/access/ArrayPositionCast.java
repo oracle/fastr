@@ -200,7 +200,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         private void initConvertCast() {
             if (operatorConvertRecursive == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 operatorConvertRecursive = insert(OperatorConverterNodeFactory.create(this.dimension, this.numDimensions, this.assignment, this.isSubset, null, null, null));
             }
         }
@@ -227,7 +227,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         private void initIntCast() {
             if (castInteger == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
             }
         }
@@ -1045,7 +1045,7 @@ public abstract class ArrayPositionCast extends RNode {
                 int pos = positions.getDataAt(i);
                 if (positionNACheck.check(pos)) {
                     if (!hasSeenNA) {
-                        CompilerDirectives.transferToInterpreter();
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
                         hasSeenNA = true;
                     }
                 } else if (pos > 0) {
@@ -1060,7 +1060,7 @@ public abstract class ArrayPositionCast extends RNode {
                         }
                     }
                     if (!hasSeenPositive) {
-                        CompilerDirectives.transferToInterpreter();
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
                         hasSeenPositive = true;
                     }
                 } else if (pos == 0) {

@@ -202,49 +202,49 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     private void initCastString() {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastComplex() {
         if (castComplexNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplexNode = insert(CastComplexNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastDouble() {
         if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastInteger() {
         if (castIntegerNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntegerNode = insert(CastIntegerNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastLogical() {
         if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastRaw() {
         if (castRawNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castRawNode = insert(CastRawNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastList() {
         if (castListNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castListNode = insert(CastListNodeFactory.create(null, false, false));
         }
     }

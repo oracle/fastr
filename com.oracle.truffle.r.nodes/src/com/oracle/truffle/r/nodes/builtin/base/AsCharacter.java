@@ -39,7 +39,7 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     private void initCast() {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, false, false));
         }
     }

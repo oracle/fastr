@@ -41,7 +41,7 @@ public abstract class AsInteger extends RBuiltinNode {
 
     private void initCast() {
         if (castIntNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntNode = insert(CastIntegerNodeFactory.create(null, false, false));
         }
     }

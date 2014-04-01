@@ -63,7 +63,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
         }
         RVector resultVector = castVector.executeRAbstractVector(frame, value).materialize();
@@ -278,7 +278,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeFactory.create(null, true, false));
         }
         return castComplex.executeCast(frame, operand);
@@ -286,7 +286,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, true, false));
         }
         return castDouble.executeCast(frame, operand);
@@ -294,7 +294,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
         }
         return castInteger.executeCast(frame, operand);
@@ -302,7 +302,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castLogical(VirtualFrame frame, Object operand) {
         if (castLogical == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeFactory.create(null, true, false));
         }
         return castLogical.executeCast(frame, operand);
@@ -310,7 +310,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeFactory.create(null, false, true, false));
         }
         return castString.executeCast(frame, operand);
@@ -318,7 +318,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castRaw = insert(CastRawNodeFactory.create(null, true, false));
         }
         return castRaw.executeCast(frame, operand);
@@ -326,7 +326,7 @@ public abstract class Combine extends RBuiltinNode {
 
     private Object castList(VirtualFrame frame, Object operand) {
         if (castList == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, false));
         }
         return castList.executeCast(frame, operand);

@@ -46,7 +46,7 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);

@@ -55,7 +55,7 @@ public class Recall extends RCustomBuiltinNode {
             throw RError.getRecallCalledOutsideClosure(getEncapsulatingSourceSection());
         }
         if (callNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(createArgs(arguments[0]))));
             arguments[0] = null;
         }

@@ -231,7 +231,7 @@ public abstract class UnaryArithmetic extends Operation {
             }
             if (RRuntime.isFinite(x) && RRuntime.isFinite(y)) {
                 if (pow == null) {
-                    CompilerDirectives.transferToInterpreter();
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     pow = insert(BinaryArithmetic.POW.create());
                 }
                 return pow.op(x, y);

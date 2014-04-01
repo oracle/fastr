@@ -45,7 +45,7 @@ public abstract class UpdateNames extends RBuiltinNode {
 
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, true, false));
         }
         return castStringNode.executeStringVector(frame, o);

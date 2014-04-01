@@ -52,7 +52,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     private void updateNamesStringVector(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin()));
         }
         updateNames.executeStringVector(frame, vector, o);
@@ -60,7 +60,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
@@ -68,7 +68,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
         }
         return castVector.executeRAbstractVector(frame, value);
@@ -76,7 +76,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     private RList castList(VirtualFrame frame, Object value) {
         if (castList == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, false));
         }
         return castList.executeList(frame, value);

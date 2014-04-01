@@ -39,7 +39,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeComplex(VirtualFrame frame, Object left, Object right) {
         if (combineComplex == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineComplex = insert(CombineBinaryComplexNodeFactory.create(new RNode[2], null));
         }
         return combineComplex.executeCombine(frame, left, right);
@@ -48,7 +48,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeDouble(VirtualFrame frame, Object left, Object right) {
         if (combineDouble == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineDouble = insert(CombineBinaryDoubleNodeFactory.create(new RNode[2], null));
         }
         return combineDouble.executeCombine(frame, left, right);
@@ -57,7 +57,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeInteger(VirtualFrame frame, Object left, Object right) {
         if (combineInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineInteger = insert(CombineBinaryIntegerNodeFactory.create(new RNode[2], null));
         }
         return combineInteger.executeCombine(frame, left, right);
@@ -66,7 +66,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeString(VirtualFrame frame, Object left, Object right) {
         if (combineString == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineString = insert(CombineBinaryStringNodeFactory.create(new RNode[2], null));
         }
         return combineString.executeCombine(frame, left, right);
@@ -75,7 +75,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeLogical(VirtualFrame frame, Object left, Object right) {
         if (combineLogical == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineLogical = insert(CombineBinaryLogicalNodeFactory.create(new RNode[2], null));
         }
         return combineLogical.executeCombine(frame, left, right);
@@ -84,7 +84,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeRaw(VirtualFrame frame, Object left, Object right) {
         if (combineRaw == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineRaw = insert(CombineBinaryRawNodeFactory.create(new RNode[2], null));
         }
         return combineRaw.executeCombine(frame, left, right);
@@ -93,7 +93,7 @@ public final class CombineFoldOperationNode extends FoldOperationNode {
     @Override
     public Object executeList(VirtualFrame frame, Object left, Object right) {
         if (combineList == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             combineList = insert(CombineBinaryListNodeFactory.create(new RNode[2], null));
         }
         return combineList.executeCombine(frame, left, right);

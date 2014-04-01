@@ -69,7 +69,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel) {
         if (updateRecursive == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             updateRecursive = insert(UpdateArrayHelperNodeFactory.create(this.isSubset, null, null, null, null, null));
         }
         return executeUpdate(frame, v, value, vector, recLevel, operand);
@@ -77,7 +77,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeFactory.create(null, true, true));
         }
         return castComplex.executeCast(frame, operand);
@@ -85,7 +85,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private Object castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, true, true));
         }
         return castDouble.executeCast(frame, operand);
@@ -93,7 +93,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private Object castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, true, true));
         }
         return castInteger.executeCast(frame, operand);
@@ -101,7 +101,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeFactory.create(null, false, true, true));
         }
         return castString.executeCast(frame, operand);
@@ -1606,7 +1606,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         private Object castComplex(VirtualFrame frame, Object operand) {
             if (castComplex == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 castComplex = insert(CastComplexNodeFactory.create(null, true, true));
             }
             return castComplex.executeCast(frame, operand);
@@ -1614,7 +1614,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         private Object castDouble(VirtualFrame frame, Object operand) {
             if (castDouble == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 castDouble = insert(CastDoubleNodeFactory.create(null, true, true));
             }
             return castDouble.executeCast(frame, operand);
@@ -1622,7 +1622,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         private Object castInteger(VirtualFrame frame, Object operand) {
             if (castInteger == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 castInteger = insert(CastIntegerNodeFactory.create(null, true, true));
             }
             return castInteger.executeCast(frame, operand);
@@ -1630,7 +1630,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         private Object castString(VirtualFrame frame, Object operand) {
             if (castString == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 castString = insert(CastStringNodeFactory.create(null, false, true, true));
             }
             return castString.executeCast(frame, operand);

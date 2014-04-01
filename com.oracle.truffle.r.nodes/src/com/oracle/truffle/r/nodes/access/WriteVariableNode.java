@@ -284,7 +284,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractWriteSuperVariableNode writeNode;
             if (RArguments.get(enclosingFrame).getEnclosingFrame() == null) {
                 // we've reached the global scope, do unconditional write
@@ -301,7 +301,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         @Override
         public void execute(VirtualFrame frame, Object value) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             MaterializedFrame enclosingFrame = RArguments.get(frame).getEnclosingFrame();
             if (enclosingFrame != null) {
                 execute(frame, value, enclosingFrame);

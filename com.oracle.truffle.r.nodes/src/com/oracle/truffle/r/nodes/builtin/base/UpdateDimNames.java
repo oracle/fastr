@@ -47,7 +47,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, true, true, false));
         }
         return castStringNode.executeCast(frame, o);
@@ -55,7 +55,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVectorNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeFactory.create(null, false, false, false));
         }
         return castVectorNode.executeRAbstractVector(frame, value).materialize();
