@@ -23,9 +23,13 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,12 +39,72 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class EnvFunctions {
 
+    @RBuiltin("as.environment")
+    public abstract static class AsEnvironment extends RBuiltinNode {
+
+        @Specialization
+        public REnvironment asEnvironment(REnvironment env) {
+            return env;
+        }
+
+        @Specialization
+        public REnvironment asEnvironment(VirtualFrame frame, double dpos) {
+            return asEnvironment(frame, (int) dpos);
+        }
+
+        @Specialization
+        public REnvironment asEnvironment(VirtualFrame frame, int pos) {
+            if (pos == -1) {
+                PackedFrame caller = frame.getCaller();
+                if (caller == null) {
+                    throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
+                } else {
+                    // TODO handle parent properly
+                    PackedFrame callerCaller = ((VirtualFrame) caller.unpack()).getCaller();
+                    if (callerCaller == null) {
+                        return REnvironment.globalEnv();
+                    } else {
+                        throw RError.getGenericError(getEncapsulatingSourceSection(), "not implemented");
+                    }
+                }
+
+            }
+            String[] searchPath = REnvironment.searchPath();
+            if (pos == searchPath.length + 1) {
+                // although the empty env does not appear in the result of "search", and it is
+                // not accessible by name, GnuR allows it to be accessible by index
+                return REnvironment.emptyEnv();
+            } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
+                throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'pos' argument");
+            } else {
+                return REnvironment.lookupBySearchName(searchPath[pos - 1]);
+            }
+        }
+
+        @Specialization
+        public REnvironment asEnvironment(String name) {
+            String[] searchPath = REnvironment.searchPath();
+            for (String e : searchPath) {
+                if (e.equals(name)) {
+                    return REnvironment.lookupBySearchName(e);
+                }
+            }
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "no item named '" + name + "' on the search list");
+        }
+
+        @Specialization(order = 100)
+        public REnvironment asEnvironment(@SuppressWarnings("unused") Object x) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), " invalid object for 'as.environment'");
+        }
+
+    }
+
     @RBuiltin("emptyenv")
     public abstract static class EmptyEnv extends RBuiltinNode {
 
         @Specialization
         public REnvironment emptyenv() {
-            return RRuntime.EMPTY_ENV;
+            return REnvironment.emptyEnv();
         }
     }
 
@@ -49,16 +113,19 @@ public class EnvFunctions {
 
         @Specialization
         public Object globalenv() {
-            return RRuntime.GLOBAL_ENV;
+            return REnvironment.globalEnv();
         }
     }
 
+    /**
+     * Returns the "package:base" environment.
+     */
     @RBuiltin("baseenv")
     public abstract static class BaseEnv extends RBuiltinNode {
 
         @Specialization
         public Object baseenv() {
-            return RRuntime.BASE_ENV;
+            return REnvironment.baseEnv();
         }
     }
 
@@ -67,7 +134,7 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment parentenv(REnvironment env) {
-            if (env == RRuntime.EMPTY_ENV) {
+            if (env == REnvironment.emptyEnv()) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
             }
             return env.getParent();
@@ -91,14 +158,30 @@ public class EnvFunctions {
     @RBuiltin(".Internal.environment")
     public abstract static class Environment extends RBuiltinNode {
 
-        @Specialization
-        public Object environment(@SuppressWarnings("unused") RNull x) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(NULL) is not implemented");
+        @Specialization(order = 0)
+        public Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
+            // Owing to the .Internal, the caller is environment(), so we want the caller of that
+            VirtualFrame envFrame = (VirtualFrame) frame.getCaller().unpack();
+            PackedFrame pf = envFrame.getCaller();
+            if (pf == null) {
+                return REnvironment.globalEnv();
+            } else {
+                VirtualFrame pfu = (VirtualFrame) pf.unpack();
+                // TODO handle parent properly
+                PackedFrame pfuCaller = pfu.getCaller();
+                return REnvironment.Function.create(pfuCaller == null ? REnvironment.globalEnv() : null, pf);
+            }
         }
 
-        @Specialization
-        public Object environment(@SuppressWarnings("unused") RFunction func) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(func) is not implemented");
+        @Specialization(order = 1)
+        public REnvironment environment(RFunction func) {
+            RootNode rootNode = ((DefaultCallTarget) func.getTarget()).getRootNode();
+            if (rootNode instanceof RBuiltinRootNode) {
+                return REnvironment.baseNamespaceEnv();
+            } else {
+                // environment where function was defined (lexical scoping)
+                return ((FunctionDefinitionNode) rootNode).getDescriptor().getParent();
+            }
         }
 
         @Specialization(order = 100)
@@ -147,15 +230,23 @@ public class EnvFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        public REnvironment newEnv(byte hash, RMissing parent, int size) {
+        public RInvisible newEnv(byte hash, RMissing parent, int size) {
             // FIXME don't ignore hash parameter
-            return new REnvironment(RRuntime.GLOBAL_ENV, REnvironment.UNNAMED, size);
+            return new RInvisible(new REnvironment.User(REnvironment.globalEnv(), REnvironment.UNNAMED, size));
         }
 
         @Specialization
-        public REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+        public RInvisible newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             // FIXME don't ignore hash parameter
-            return new REnvironment(parent, REnvironment.UNNAMED, size);
+            return new RInvisible(new REnvironment.User(parent, REnvironment.UNNAMED, size));
+        }
+    }
+
+    @RBuiltin("search")
+    public abstract static class Search extends RBuiltinNode {
+        @Specialization
+        public RStringVector search() {
+            return RDataFactory.createStringVector(REnvironment.searchPath(), RDataFactory.COMPLETE_VECTOR);
         }
     }
 

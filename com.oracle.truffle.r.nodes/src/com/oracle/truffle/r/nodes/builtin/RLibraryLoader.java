@@ -62,12 +62,6 @@ public class RLibraryLoader {
         this.components = components;
     }
 
-    private static List<Component> create(Component component) {
-        List<Component> result = new ArrayList<>();
-        result.add(component);
-        return result;
-    }
-
     public Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> loadLibrary() {
         List<RNode> libraryComponents = parseLibrary();
         Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = new HashMap<>();
@@ -110,7 +104,7 @@ public class RLibraryLoader {
                     }
                 };
                 source = sourceManager.getFakeFile(component.libName, component.libContents);
-                RTruffleVisitor transform = new RTruffleVisitor();
+                RTruffleVisitor transform = new RTruffleVisitor(REnvironment.lookupByName(packageName));
                 RNode node = transform.transform(ParseUtil.parseAST(stream, source));
                 rNodes.add(node);
             } catch (RecognitionException e) {

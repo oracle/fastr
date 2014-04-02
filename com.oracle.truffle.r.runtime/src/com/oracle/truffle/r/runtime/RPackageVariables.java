@@ -44,7 +44,7 @@ public class RPackageVariables {
 
     public static void initialize() {
         for (Map.Entry<String, Handler> entry : map.entrySet()) {
-            entry.getValue().initialize(REnvironment.lookup(entry.getKey()));
+            entry.getValue().initialize(REnvironment.lookupByName(entry.getKey()));
         }
     }
 }

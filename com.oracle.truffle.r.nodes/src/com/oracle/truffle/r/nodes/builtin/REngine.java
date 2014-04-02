@@ -55,29 +55,44 @@ public final class REngine implements RBuiltinLookupProvider {
         return RDefaultBuiltinPackages.getInstance();
     }
 
-    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
-        return setRuntimeState(commandArgs, consoleHandler, true);
+    /**
+     * Convenience method equivalent to {@code initialize(commandArgs, consoleHandler, true)}.
+     */
+    public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler) {
+        return initialize(commandArgs, consoleHandler, true);
     }
 
-    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalError) {
-        REngine.crashOnFatalError = crashOnFatalError;
+    /**
+     * Initialize the engine.
+     *
+     * @param commandArgs
+     * @param consoleHandler for console inpout/output
+     * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
+     *            process.
+     * @return a {@link VirtualFrame} that can be passed to
+     *         {@link #parseAndEval(String, VirtualFrame, boolean)}
+     */
+    public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg) {
+        crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler);
+        VirtualFrame frame = createVirtualFrame();
+        REnvironment.initialize(frame);
         RBuiltinPackage.initialize();
         RRuntime.initialize();
-        return singleton;
+        return frame;
+    }
+
+    /**
+     * Create a {@link VirtualFrame} for use in {@link #parseAndEval} for accumulating the results
+     * from evaluating expressions in an interactive context. Such a value cannot be stored in an
+     * object field, so must be passed as an argument.
+     */
+    private static VirtualFrame createVirtualFrame() {
+        return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
     }
 
     public static RContext getContext() {
         return context;
-    }
-
-    /**
-     * Create a {@link VirtualFrame} for use in {@link #parseAndEval(String, VirtualFrame, boolean)}
-     * for accumulating the results from evaluating expressions in an interactive context. Such a
-     * value cannot be stored in an object field, so must be passed as an argument.
-     */
-    public static VirtualFrame createVirtualFrame() {
-        return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
     }
 
     public static Object parseAndEval(File file, boolean printResult) throws IOException {
@@ -93,8 +108,15 @@ public final class REngine implements RBuiltinLookupProvider {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), globalFrame, printResult);
     }
 
+    /**
+     *
+     * This is intended for use by the unit test environment, where a fresh global environment is
+     * desired for each evaluation.
+     */
     public static Object parseAndEval(String rscript, boolean printResult) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), null, printResult);
+        VirtualFrame frame = createVirtualFrame();
+        REnvironment.resetGlobalEnv(frame);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), frame, printResult);
     }
 
     public static class ParseException extends Exception {
@@ -105,10 +127,9 @@ public final class REngine implements RBuiltinLookupProvider {
         }
     }
 
-    public static RNode parse(String rscript) throws ParseException {
-        RTruffleVisitor transform = new RTruffleVisitor();
+    public static Object parse(String rscript) throws ParseException {
         try {
-            return transform.transform(ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript)));
+            return ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript));
         } catch (RecognitionException ex) {
             throw new ParseException(ex.getMessage());
         }
@@ -116,9 +137,11 @@ public final class REngine implements RBuiltinLookupProvider {
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
         try {
-            RTruffleVisitor transform = new RTruffleVisitor();
+            RTruffleVisitor transform = new RTruffleVisitor(REnvironment.globalEnv());
             RNode node = transform.transform(ParseUtil.parseAST(stream, source));
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, transform.getEnvironment(), node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
+            // Create an anonymous function (why?)
+            REnvironment.Function rootNodeEnvironment = new REnvironment.Function(REnvironment.globalEnv());
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
             CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
             if (globalFrame == null) {
                 return run(callTarget, printResult);

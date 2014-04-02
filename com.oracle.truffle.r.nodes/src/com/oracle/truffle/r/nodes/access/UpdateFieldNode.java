@@ -83,6 +83,13 @@ public abstract class UpdateFieldNode extends RNode {
         return result;
     }
 
+    @Specialization(order = 2)
+    public Object updateField(VirtualFrame frame, REnvironment env, Object value) {
+        // reference semantics for environments
+        env.put(getField(), value);
+        return env;
+    }
+
     @Specialization(order = 1000)
     public Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
         if (castList == null) {

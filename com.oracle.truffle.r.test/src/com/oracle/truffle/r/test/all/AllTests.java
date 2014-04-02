@@ -6639,171 +6639,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_3a5345078701581c660c582e0464b9da() {
-        assertEval("{ f <- function() { assign(\"x\", 1) ; x } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_39e78cb4d5d82c567efcfcc580f74363() {
-        assertEval("{ f <- function() { x <- 2 ; g <- function() { x <- 3 ; assign(\"x\", 1, inherits=FALSE) ; x } ; g() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_548434da986ff8aa88f0f6a76e458833() {
-        assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=FALSE) } ; g() ; x } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_16e998e313fb51e237cac840df83519f() {
-        assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=TRUE) } ; g() ; x } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_9fb00dc9e429b3567af94555695cf89f() {
-        assertEval("{ f <- function() {  g <- function() { assign(\"x\", 1, inherits=TRUE) } ; g() } ; f() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_0d33a9cf9cdcc65307f78d195cc549ef() {
-        assertEval("{ x <- 3 ; g <- function() { x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6a2bfceedc36d0b2ff994b5a30df433a() {
-        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 2) ; g <- function() { x } ; g() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_3a86279a40eaa4f21960a2abfc0764dc() {
-        assertEval("{ h <- function() { x <- 3 ; g <- function() { x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_5b652ae1ae9d60ef8850d5f3b3843f5a() {
-        assertEval("{ h <- function() { x <- 3  ; f <- function() { assign(\"x\", 2) ; g <- function() { x } ; g() } ; f() }  ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_73733642fbadb8ac6edf05a8acf5d6de() {
-        assertEval("{ x <- 3 ; h <- function() { g <- function() { x } ; f <- function() { assign(\"x\", 2, inherits=TRUE) } ; f() ; g() }  ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_2d61a18e5af79bced1a351870a9d514e() {
-        assertEval("{ x <- 3 ; h <- function(s) { if (s == 2) { assign(\"x\", 2) } ; x }  ; h(1) ; h(2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_492925abedef28fc7b3e0bfae9ba8a52() {
-        assertEval("{ x <- 3 ; h <- function(s) { y <- x ; if (s == 2) { assign(\"x\", 2) } ; c(y,x) }  ; c(h(1),h(2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_0f7e2fdb465f6c47ae4b0a1085eea1b1() {
-        assertEval("{ g <- function() { x <- 2 ; f <- function() { x ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_3780dc57c780fbb8cec9704dc7de17ed() {
-        assertEval("{ g <- function() { f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_3ae3e1ea3a68f0a98203b1398c63a59c() {
-        assertEval("{ g <- function() { f <- function() { if (FALSE) { x } ; assign(\"x\", 1) ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_1e7c2d8dd4c08474021c9e95ef2232ff() {
-        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_1afe1fb2b81d78394742bc213196d303() {
-        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; assign(\"x\", 2) ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_9bb2b5cc4a3c0540f6289c0c070aa49a() {
-        assertEval("{ h <- function() { g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_daf243dde25f3873d1202df260bb3114() {
-        assertEval("{ h <- function() { x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_5b0f9d198fb49e36c8af3be9834dabd1() {
-        assertEval("{ f <- function(z) { exists(\"z\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_48b08b9590e75552578d0fb596c87287() {
-        assertEval("{ f <- function() { x <- 3 ; exists(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_38aded252ff8f6a6c63dd7e8bbe684b1() {
-        assertEval("{ f <- function() { z <- 3 ; exists(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_4ab259967887738519b4bf25c2ae70de() {
-        assertEval("{ f <- function() { if (FALSE) { x <- 3 } ; exists(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6a8e5da083d06d4e72430b9f3870fef2() {
-        assertEval("{ f <- function() { assign(\"x\", 2) ; exists(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_1677e8dba1f8ac3830d985614e17644c() {
-        assertEval("{ g <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 3 } ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6aec41beabbda969b6aed4c316d4d445() {
-        assertEval("{ g <- function() { x <- 2 ; f <- function() { x <- 5 ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_3a3976ee840d8ae83ac739ddc0f60bf6() {
-        assertEval("{ g <- function() { f <- function() { assign(\"x\", 3) ; if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_c89981601d0bb40314d41b0df22de379() {
-        assertEval("{ g <- function() { f <- function() { assign(\"z\", 3) ; if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_615e5eabb7122045650a11c6e8e1b14a() {
-        assertEval("{ h <- function() { assign(\"x\", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_4d5704d9f1b90efda2c59502caa0c315() {
-        assertEval("{ h <- function() { assign(\"z\", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_a7f5ec2e61d3f25ff85aeb7cf82b97f0() {
-        assertEval("{ h <- function() { x <- 3 ; g <- function() { f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_56f22eb0a023e8f286f44ce532f7dd73() {
-        assertEval("{ x <- 3 ; f <- function() { exists(\"x\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6ee73db0e1b11e0b48199609cb7170b1() {
-        assertEval("{ x <- 3 ; f <- function() { exists(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testEnvironment_1b8319a6952fc86b59ba9a33e6463213() {
         assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"abc\", \"def\"), h) }");
     }
@@ -6829,378 +6664,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_1b704057d0a3b32717c4812143a5f57f() {
-        assertEval("{ x <- 2 ; y <- 3 ; rm(\"y\") ; ls() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_5f9149f4bb0770f64df8392c8f0f1560() {
-        assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_9f7ce37cec840951bd4c5c058fa11af0() {
-        assertEval("{ f <- function() { for (i in rev(1:10)) { assign(as.character(i), i) } ; ls() } ; length(f()) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6d315a9f02daf4ce58004586f3de768e() {
-        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f2bb3dcedd62406c5e49354fc09e0aa8() {
-        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; g <- function() { assign(\"y\", 3) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; g()  } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_18db76eaec1c42a5a710f01e49b79444() {
-        assertEval("{ f <- function() { assign(\"x\", 2, inherits=TRUE) ; assign(\"x\", 1) ; h <- function() { x } ; h() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_30309b638e880e9d3cfbde105cc95686() {
-        assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_d83ca8b14b8ce96aab4d3c068cc01d37() {
-        assertEval("{ x <- 3 ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() } ; gg() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_78b53abedd804defaf12eb15b203d3c6() {
-        assertEval("{ h <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_324112969e78fa9f195b1551bbe8e4b2() {
-        assertEval("{ f <- function() { assign(\"x\", 3) ; g <- function() { x } ; g() } ; x <- 10 ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_ae7740eaeaefe74759fbc829bade39e0() {
-        assertEval("{ f <- function() { assign(\"x\", 3) ; h <- function() { assign(\"z\", 4) ; g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_75c39aaa83d4cde89f3f39d408e4504d() {
-        assertEval("{ f <- function() { assign(\"x\", 3) ; h <- function() { g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f229f5696856e7d097d3e2b6cd84ad7e() {
-        assertEval("{ f <- function() { assign(\"x\", 1) ; g <- function() { assign(\"z\", 2) ; x } ; g() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_d41ff44d767d83bfd35007621e1eac60() {
-        assertEval("{ h <- function() { x <- 3 ; g <- function() { assign(\"z\", 2) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_d966bf2f7931aa1107f571930d7c5741() {
-        assertEval("{ h <- function() { x <- 3 ; g <- function() { assign(\"x\", 5) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_e602c31474de55d9faf2ff34075b7cfb() {
-        assertEval("{ x <- 10 ; g <- function() { x <- 100 ; z <- 2 ; f <- function() { assign(\"z\", 1); x <- x ; x } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f2d9a62ccea6f97320c4b9dcb3db8dcb() {
-        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; y <- 3} ; f <- function() { if (FALSE) { x } ; assign(\"y\", 2) ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_23d1c3aae3a7b25d923ab1a04acdcc5a() {
-        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; exists(\"x\") }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_c6c8e0f9c3bbb80af43935eacb608104() {
-        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; h <- function() { exists(\"x\") } ; h() }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_c5d265d6092f4dd023538cd02e7f1bc9() {
-        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"y\", 2) ; h <- function() { exists(\"x\") } ; h() }  ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_c0a2d99911ad04c0e8587f08a546f0fa() {
-        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { exists(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_e89d9d3f7ae96ba78c6773593f947412() {
-        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_e1b77ad90ab35bc1e2c43c6082cc3eab() {
-        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_4e6bde1abd5de65801380cf42006b6cc() {
-        assertEval("{ f <- function() { x <- 2 ; g <- function() { if (FALSE) { x <- 2 } ; assign(\"x\", 1, inherits=TRUE) } ; g() ; x } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_e1d9cbe74522cc75d4891616afca4c9d() {
-        assertEval("{ h <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; g <- function() { assign(\"z\", 3) ; if (FALSE) { x <- 4 } ;  f <- function() { exists(\"x\") } ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_47089dcda7fca6ff9b671c7e318eb58f() {
-        assertEval("{ f <- function(x) { assign(x, 23) ; exists(x) } ; c(f(\"a\"),f(\"b\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_60546b187f8a5219bf72536c8824dab6() {
-        assertEval("{ f <- function() { x <- 2 ; get(\"x\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f6a5f0c10480af1d2547ce0768efd58f() {
-        assertEval("{ x <- 3 ; f <- function() { get(\"x\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_81780ae1edf74a449351bc1cc7bf5e99() {
-        assertEval("{ x <- 3 ; f <- function() { x <- 2 ; get(\"x\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_db082090d084c963d4553b4120231e83() {
-        assertEval("{ x <- 3 ; f <- function() { x <- 2; h <- function() {  get(\"x\") }  ; h() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_339a4adbc575c5f1423bd5477c48e02b() {
-        assertEval("{ f <- function() { g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_aaaf86fd401db53b800026b8eb4724ce() {
-        assertEval("{ f <- function() { assign(\"z\", 2) ; g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_be81c769a08855b15887cc765467b5e5() {
-        assertEval("{ f <- function() { x <- 22 ; get(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_5dd4780ce6e2667b02ccb16a838a7057() {
-        assertEval("{ x <- 33 ; f <- function() { assign(\"x\", 44) ; get(\"x\", inherits=FALSE) } ; f() }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testEnvironment_b58f915b8ffcad4f39b069e781f79c8b() {
         assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_ddb48b4bb7fa157390e03b1f4822a35b() {
-        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { get(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_2d20392fa0238bebf581e87c3ae5e40b() {
-        assertEval("{ x <- function(){3} ; f <- function() { assign(\"x\", function(){4}) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x() } ; h() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_a0d2460a2e8d29a01faad9f15a7300ac() {
-        assertEval("{ f <- function() { assign(\"x\", function(){2}, inherits=TRUE) ; assign(\"x\", function(){1}) ; h <- function() { x() } ; h() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_2909415dd11417ff5c2c2f2d8c31723e() {
-        assertEval("{ x <- function(){3} ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f7ec9350e3e49b28cda6909084c5230f() {
-        assertEval("{ x <- function(){3} ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_45a53720348ebc4d67c11a38c334bfeb() {
-        assertEval("{ h <- function() { x <- function(){2} ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; z <- h() ; z() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f47389c544ecea804ef4bbcdbdddd787() {
-        assertEval("{ h <- function() { g <- function() {4} ; f <- function() { if (FALSE) { g <- 4 } ; g() } ; f() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f1b20896d2c392017c0654d07d5e398b() {
-        assertEval("{ h <- function() { assign(\"f\", function() {4}) ; f() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_4eb6105ac5a6aed8ae0b1b7faf6d66c9() {
-        assertEval("{ f <- function() { 4 } ; h <- function() { assign(\"f\", 5) ; f() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_52bac7c5c3cb46bc9622cbfc09f2bc6b() {
-        assertEval("{ f <- function() { 4 } ; h <- function() { assign(\"z\", 5) ; f() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f7462e1b64e98cc4342dbd4bdba53a77() {
-        assertEval("{ gg <- function() {  assign(\"x\", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_7ccbe91c968b460f891aa1e191584ae2() {
-        assertEval("{ x <- function(){3} ; gg <- function() { assign(\"x\", 4) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_87c7111434f45f87d7319f771a86725e() {
-        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"z\", 2) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; z <- h() ; z() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6091ece90f56a846f7bad3990789920d() {
-        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"x\", function() {5} ) ; x() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_de6ad73e27aa42d2a1c28e095d312b61() {
-        assertEval("{ h <- function() { z <- 3 ; x <- function() {3} ; g <- function() { x <- 1 ; assign(\"z\", 5) ; x() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6ba1690b3bf1582ad21a41b4aa7cade9() {
-        assertEval("{ h <- function() { x <- function() {3} ; gg <- function() { assign(\"x\", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_ac90cce2345fd5bf30230331ed0d7db5() {
-        assertEval("{ h <- function() { z <- 2 ; x <- function() {3} ; gg <- function() { assign(\"z\", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_003c1247fa6a427b0135d9e892c80f28() {
-        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"x\", function() {4}) ; x() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_111cf7d36f024022a02d162c42fc40bd() {
-        assertEval("{ h <- function() { z <- 2 ; x <- function() {3} ; g <- function() { assign(\"z\", 1) ; x() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_53723d83f879f9403ce15de376c091eb() {
-        assertEval("{ x <- function() { 3 } ; h <- function() { if (FALSE) { x <- 2 } ;  z <- 2  ; g <- function() { assign(\"z\", 1) ; x() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_d015a488b299b2257ba745357ad94008() {
-        assertEval("{ x <- function() { 3 } ; h <- function() { g <- function() { f <- function() { x <- 1 ; x() } ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_d7019c82bbbda92b379335a1d2354896() {
-        assertEval("{ h <- function() { myfunc <- function(i) { sum(i) } ; g <- function() { myfunc <- 2 ; f <- function() { myfunc(2) } ; f() } ; g() } ; h() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_12172006720445a9282465095e950a98() {
-        assertEval("{ x <- function() {11} ; g <- function() { f <- function() { assign(\"x\", 2) ; x() } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_a733251bb5b3310685899a2e93b53f4a() {
-        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f3882a86c6251ac810356b60b0e51d56() {
-        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_5282ed3905bf098d2a7e10398d20b473() {
-        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_14f99f57844c42586b995c05bb9a1ea3() {
-        assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_786bcc90eafc890d1a4b6bed053ad73a() {
-        assertEval("{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_8b36fb11373ffcb6297193370232ae16() {
-        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; g() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_7e7c1d01be25a13c8d5699c87a856b60() {
-        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign(\"z\", 10) ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; h() } ; g() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_f0114d38bafb636ba6a61ca6429641fc() {
-        assertEval("{ gg <- function() { assign(\"x\", 100) ; g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign(\"z\", 10) ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_5426ebb4d5aeea5d12cbe2bdcf8e0dbe() {
-        assertEval("{ gg <- function() { if (FALSE) { x <- 100 } ; g <- function() { if (FALSE) { x <- 100 } ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_b831c18619a7befa072aec4032bd1dac() {
-        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { assign(\"z\", 10) ; f <- function() { x <<- 3 } ; f() } ; h() } ; g() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_395e80de24e62b38db1e3d5060112adf() {
-        assertEval("{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign(\"z\", 2) ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; hh() } ; x <- 10 ; g() ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_ffd862131767a28190fc8acc7a56c8ef() {
-        assertEval("{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign(\"z\", 2) ; h <- function() { assign(\"x\", 1); f <- function() { x <<- 3 } ; f() } ; h() } ; hh() ; x } ; x <- 10 ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_550606f41244ab5b72ac0d403f76be03() {
-        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f1(10) ; f2(11) ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_6a487bd0ec6e3ba9cf00d0bfc3636608() {
-        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f2(10) ; f1(11) ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_2865497f22f615139b2590662d15a2cb() {
-        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x <<- 6 } ; h() ; get(\"x\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_25848b87f12bed3b5c48ec094616f48b() {
-        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; hh <- function() { if (FALSE) { x <- 100 } ; h <- function() { x <<- 6 } ; h() } ; hh() ; get(\"x\") } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_fab0f3eded79eede99bca42c84977de5() {
-        assertEval("{ assign(\"z\", 10, inherits=TRUE) ; z }");
     }
 
     @Test
@@ -7254,18 +6719,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_48d8f6c2d2586ee471cfa0421ea5b4ae() {
-        assertEval("{ exists(\"sum\") }");
+    public void TestSimpleBuiltins_testEnvironment_9e2a6f71d6db27159d2decade3c9ba3d() {
+        assertEval("{ globalenv() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_2b36458da0b28ae1a46b3e3404e77bb2() {
-        assertEval("{ exists(\"sum\", inherits = FALSE) }");
+    public void TestSimpleBuiltins_testEnvironment_f3ba3e5d35d964724cc7d40b83ce40d8() {
+        assertEval("{ emptyenv() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_1b9568eed30d48488f00c0eef8b9866f() {
-        assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
+    public void TestSimpleBuiltins_testEnvironment_4209dd6f0954b5bf18cdf4e5ef11ce2b() {
+        assertEval("{ baseenv() }");
     }
 
     @Test
@@ -7274,8 +6739,93 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_9e2a6f71d6db27159d2decade3c9ba3d() {
-        assertEval("{ globalenv() }");
+    public void TestSimpleBuiltins_testEnvironment_158d5d1e9a2d6c61d8dac661de0e1a5e() {
+        assertEval("{ f <- function(x, y) { ls() }; f(1, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_e3f6ba9f37472794e38c7ad678f810e3() {
+        assertEval("{ x <- 1; ls(globalenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_35855ecba908e6027f9dc0a2580910bf() {
+        assertEval("{ x <- 1; .y <- 2; ls(globalenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_4adda712c70fefdfd0544421b1063c36() {
+        assertEval("{ is.environment(globalenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_ee00382b21f4a44fba3b55a71a042763() {
+        assertEval("{ is.environment(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_8a26b290c7ede675e52cdbe4ac3b88b5() {
+        assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_2c96b7a4989b55bba289512b17fa40b4() {
+        assertEval("{ as.environment(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_9ef27d8439d61318b0db2162cfc73474() {
+        assertEval("{ as.environment(length(search())) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_fed6dc80140fa4f060c531f74dbbd8a7() {
+        assertEval("{ as.environment(length(search()) + 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_d5339cb20f7ff6e01af46dfe67eb60a7() {
+        assertEval("{ as.environment(\".GlobalEnv\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_285eb0ed975eee2bda3e2fb19417637b() {
+        assertEval("{ as.environment(\"package:base\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_557a9faf503e7318f90b201e74850df7() {
+        assertEval("{ identical(parent.env(baseenv()), emptyenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_5ae3e8f410ab5a9c4d8d6b31651a8bd2() {
+        assertEval("{ environment() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_dbf0f3e90a92de00cbc4faef09918256() {
+        assertEval("{ environment(environment) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_7394d15ed01a61085d62175d9e69de66() {
+        assertEval("{ environmentName(baseenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_943f70856f148035b3bfbdbdff0c2222() {
+        assertEval("{ environmentName(globalenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_c7d3f6936e31e8863fb6663435e1593b() {
+        assertEval("{ environmentName(emptyenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_4c7392e14b704a6b75055d48d5d5dc5f() {
+        assertEval("{ environmentName(1) }");
     }
 
     @Test
@@ -7284,58 +6834,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_bf436a43a6caacd418317cd684d67d8e() {
-        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; f() }");
+    public void TestSimpleBuiltins_testEnvironment_aa6736b0cb4026ec2d0e5ccfe392d192() {
+        assertEvalError("{ as.environment(-1) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_23454b3e47dfe4aa28afa243683df359() {
-        assertEvalAlt("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }");
+    public void TestSimpleBuiltins_testEnvironment_7f18e387cfa483bb9e5d1ccf3f036cfc() {
+        assertEvalError("{ as.environment(0) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_f5b6d5670ee3679c2214a7720ed4f5e9() {
-        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }");
+    public void TestSimpleBuiltins_testEnvironment_6659f77b69ee9ac64f532e27438f6a00() {
+        assertEvalError("{ as.environment(length(search()) + 2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_d2b207ebaf757535786aa553fb1fe90a() {
-        assertEvalError("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_72bcfb2ecee83734cf418b9ff1c34f8c() {
-        assertEvalError("{ get(\"x\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_7e5d40be5a03aac06880b44eefa7d94b() {
-        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_8a26b290c7ede675e52cdbe4ac3b88b5() {
-        assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_7623faf4c356905dacd205a8b10eac15() {
-        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_2c371d6a6d4b74a871402788dbf16cf8() {
-        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_fc0e56627d1b08ab2d6c38875a68a1f0() {
-        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_2deae78feff592acd7d61159c8e39ea7() {
-        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    public void TestSimpleBuiltins_testEnvironment_14d25c1c38347070f388d2f433245dab() {
+        assertEvalError("{ as.environment(as.environment) }");
     }
 
     @Test
@@ -7349,11 +6864,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_c418c1e9834a7fa0fc493f18b95ccd7a() {
-        assertEval("{ x <- 1 ; ls(globalenv()) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_0902b89753b80fe43a8612bd6c00d063() {
         assertEval("{ ls(.GlobalEnv) }");
     }
@@ -7361,11 +6871,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_5482bc17285fec304815fd90301c9e13() {
         assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_f3ba3e5d35d964724cc7d40b83ce40d8() {
-        assertEval("{ emptyenv() }");
     }
 
     @Test
@@ -8146,6 +7651,606 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLogIgnore_6568d70e4d076fc4b14b58158162a0ea() {
         assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_3a5345078701581c660c582e0464b9da() {
+        assertEval("{ f <- function() { assign(\"x\", 1) ; x } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_39e78cb4d5d82c567efcfcc580f74363() {
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { x <- 3 ; assign(\"x\", 1, inherits=FALSE) ; x } ; g() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_548434da986ff8aa88f0f6a76e458833() {
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=FALSE) } ; g() ; x } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_16e998e313fb51e237cac840df83519f() {
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=TRUE) } ; g() ; x } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_9fb00dc9e429b3567af94555695cf89f() {
+        assertEval("{ f <- function() {  g <- function() { assign(\"x\", 1, inherits=TRUE) } ; g() } ; f() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_0d33a9cf9cdcc65307f78d195cc549ef() {
+        assertEval("{ x <- 3 ; g <- function() { x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6a2bfceedc36d0b2ff994b5a30df433a() {
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 2) ; g <- function() { x } ; g() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_3a86279a40eaa4f21960a2abfc0764dc() {
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_5b652ae1ae9d60ef8850d5f3b3843f5a() {
+        assertEval("{ h <- function() { x <- 3  ; f <- function() { assign(\"x\", 2) ; g <- function() { x } ; g() } ; f() }  ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_73733642fbadb8ac6edf05a8acf5d6de() {
+        assertEval("{ x <- 3 ; h <- function() { g <- function() { x } ; f <- function() { assign(\"x\", 2, inherits=TRUE) } ; f() ; g() }  ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_2d61a18e5af79bced1a351870a9d514e() {
+        assertEval("{ x <- 3 ; h <- function(s) { if (s == 2) { assign(\"x\", 2) } ; x }  ; h(1) ; h(2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_492925abedef28fc7b3e0bfae9ba8a52() {
+        assertEval("{ x <- 3 ; h <- function(s) { y <- x ; if (s == 2) { assign(\"x\", 2) } ; c(y,x) }  ; c(h(1),h(2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_0f7e2fdb465f6c47ae4b0a1085eea1b1() {
+        assertEval("{ g <- function() { x <- 2 ; f <- function() { x ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_3780dc57c780fbb8cec9704dc7de17ed() {
+        assertEval("{ g <- function() { f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_3ae3e1ea3a68f0a98203b1398c63a59c() {
+        assertEval("{ g <- function() { f <- function() { if (FALSE) { x } ; assign(\"x\", 1) ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_1e7c2d8dd4c08474021c9e95ef2232ff() {
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_1afe1fb2b81d78394742bc213196d303() {
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; assign(\"x\", 2) ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_9bb2b5cc4a3c0540f6289c0c070aa49a() {
+        assertEval("{ h <- function() { g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_daf243dde25f3873d1202df260bb3114() {
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_5b0f9d198fb49e36c8af3be9834dabd1() {
+        assertEval("{ f <- function(z) { exists(\"z\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_48b08b9590e75552578d0fb596c87287() {
+        assertEval("{ f <- function() { x <- 3 ; exists(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_38aded252ff8f6a6c63dd7e8bbe684b1() {
+        assertEval("{ f <- function() { z <- 3 ; exists(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_4ab259967887738519b4bf25c2ae70de() {
+        assertEval("{ f <- function() { if (FALSE) { x <- 3 } ; exists(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6a8e5da083d06d4e72430b9f3870fef2() {
+        assertEval("{ f <- function() { assign(\"x\", 2) ; exists(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_1677e8dba1f8ac3830d985614e17644c() {
+        assertEval("{ g <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 3 } ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6aec41beabbda969b6aed4c316d4d445() {
+        assertEval("{ g <- function() { x <- 2 ; f <- function() { x <- 5 ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_3a3976ee840d8ae83ac739ddc0f60bf6() {
+        assertEval("{ g <- function() { f <- function() { assign(\"x\", 3) ; if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_c89981601d0bb40314d41b0df22de379() {
+        assertEval("{ g <- function() { f <- function() { assign(\"z\", 3) ; if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_615e5eabb7122045650a11c6e8e1b14a() {
+        assertEval("{ h <- function() { assign(\"x\", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_4d5704d9f1b90efda2c59502caa0c315() {
+        assertEval("{ h <- function() { assign(\"z\", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_a7f5ec2e61d3f25ff85aeb7cf82b97f0() {
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { f <- function() { if (FALSE) { x } ; exists(\"x\") }  ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_56f22eb0a023e8f286f44ce532f7dd73() {
+        assertEval("{ x <- 3 ; f <- function() { exists(\"x\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6ee73db0e1b11e0b48199609cb7170b1() {
+        assertEval("{ x <- 3 ; f <- function() { exists(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_1b704057d0a3b32717c4812143a5f57f() {
+        assertEval("{ x <- 2 ; y <- 3 ; rm(\"y\") ; ls() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_5f9149f4bb0770f64df8392c8f0f1560() {
+        assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_9f7ce37cec840951bd4c5c058fa11af0() {
+        assertEval("{ f <- function() { for (i in rev(1:10)) { assign(as.character(i), i) } ; ls() } ; length(f()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6d315a9f02daf4ce58004586f3de768e() {
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f2bb3dcedd62406c5e49354fc09e0aa8() {
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; g <- function() { assign(\"y\", 3) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; g()  } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_18db76eaec1c42a5a710f01e49b79444() {
+        assertEval("{ f <- function() { assign(\"x\", 2, inherits=TRUE) ; assign(\"x\", 1) ; h <- function() { x } ; h() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_30309b638e880e9d3cfbde105cc95686() {
+        assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_d83ca8b14b8ce96aab4d3c068cc01d37() {
+        assertEval("{ x <- 3 ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() } ; gg() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_78b53abedd804defaf12eb15b203d3c6() {
+        assertEval("{ h <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_324112969e78fa9f195b1551bbe8e4b2() {
+        assertEval("{ f <- function() { assign(\"x\", 3) ; g <- function() { x } ; g() } ; x <- 10 ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_ae7740eaeaefe74759fbc829bade39e0() {
+        assertEval("{ f <- function() { assign(\"x\", 3) ; h <- function() { assign(\"z\", 4) ; g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_75c39aaa83d4cde89f3f39d408e4504d() {
+        assertEval("{ f <- function() { assign(\"x\", 3) ; h <- function() { g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f229f5696856e7d097d3e2b6cd84ad7e() {
+        assertEval("{ f <- function() { assign(\"x\", 1) ; g <- function() { assign(\"z\", 2) ; x } ; g() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_d41ff44d767d83bfd35007621e1eac60() {
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { assign(\"z\", 2) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_d966bf2f7931aa1107f571930d7c5741() {
+        assertEval("{ h <- function() { x <- 3 ; g <- function() { assign(\"x\", 5) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_e602c31474de55d9faf2ff34075b7cfb() {
+        assertEval("{ x <- 10 ; g <- function() { x <- 100 ; z <- 2 ; f <- function() { assign(\"z\", 1); x <- x ; x } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f2d9a62ccea6f97320c4b9dcb3db8dcb() {
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; y <- 3} ; f <- function() { if (FALSE) { x } ; assign(\"y\", 2) ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_23d1c3aae3a7b25d923ab1a04acdcc5a() {
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; exists(\"x\") }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_c6c8e0f9c3bbb80af43935eacb608104() {
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; h <- function() { exists(\"x\") } ; h() }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_c5d265d6092f4dd023538cd02e7f1bc9() {
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"y\", 2) ; h <- function() { exists(\"x\") } ; h() }  ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_c0a2d99911ad04c0e8587f08a546f0fa() {
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { exists(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_e89d9d3f7ae96ba78c6773593f947412() {
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_e1b77ad90ab35bc1e2c43c6082cc3eab() {
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_4e6bde1abd5de65801380cf42006b6cc() {
+        assertEval("{ f <- function() { x <- 2 ; g <- function() { if (FALSE) { x <- 2 } ; assign(\"x\", 1, inherits=TRUE) } ; g() ; x } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_e1d9cbe74522cc75d4891616afca4c9d() {
+        assertEval("{ h <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; g <- function() { assign(\"z\", 3) ; if (FALSE) { x <- 4 } ;  f <- function() { exists(\"x\") } ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_47089dcda7fca6ff9b671c7e318eb58f() {
+        assertEval("{ f <- function(x) { assign(x, 23) ; exists(x) } ; c(f(\"a\"),f(\"b\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_60546b187f8a5219bf72536c8824dab6() {
+        assertEval("{ f <- function() { x <- 2 ; get(\"x\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f6a5f0c10480af1d2547ce0768efd58f() {
+        assertEval("{ x <- 3 ; f <- function() { get(\"x\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_81780ae1edf74a449351bc1cc7bf5e99() {
+        assertEval("{ x <- 3 ; f <- function() { x <- 2 ; get(\"x\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_db082090d084c963d4553b4120231e83() {
+        assertEval("{ x <- 3 ; f <- function() { x <- 2; h <- function() {  get(\"x\") }  ; h() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_339a4adbc575c5f1423bd5477c48e02b() {
+        assertEval("{ f <- function() { g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_aaaf86fd401db53b800026b8eb4724ce() {
+        assertEval("{ f <- function() { assign(\"z\", 2) ; g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_be81c769a08855b15887cc765467b5e5() {
+        assertEval("{ f <- function() { x <- 22 ; get(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_5dd4780ce6e2667b02ccb16a838a7057() {
+        assertEval("{ x <- 33 ; f <- function() { assign(\"x\", 44) ; get(\"x\", inherits=FALSE) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_ddb48b4bb7fa157390e03b1f4822a35b() {
+        assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { get(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_2d20392fa0238bebf581e87c3ae5e40b() {
+        assertEval("{ x <- function(){3} ; f <- function() { assign(\"x\", function(){4}) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x() } ; h() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_a0d2460a2e8d29a01faad9f15a7300ac() {
+        assertEval("{ f <- function() { assign(\"x\", function(){2}, inherits=TRUE) ; assign(\"x\", function(){1}) ; h <- function() { x() } ; h() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_2909415dd11417ff5c2c2f2d8c31723e() {
+        assertEval("{ x <- function(){3} ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f7ec9350e3e49b28cda6909084c5230f() {
+        assertEval("{ x <- function(){3} ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_45a53720348ebc4d67c11a38c334bfeb() {
+        assertEval("{ h <- function() { x <- function(){2} ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; z <- h() ; z() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f47389c544ecea804ef4bbcdbdddd787() {
+        assertEval("{ h <- function() { g <- function() {4} ; f <- function() { if (FALSE) { g <- 4 } ; g() } ; f() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f1b20896d2c392017c0654d07d5e398b() {
+        assertEval("{ h <- function() { assign(\"f\", function() {4}) ; f() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_4eb6105ac5a6aed8ae0b1b7faf6d66c9() {
+        assertEval("{ f <- function() { 4 } ; h <- function() { assign(\"f\", 5) ; f() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_52bac7c5c3cb46bc9622cbfc09f2bc6b() {
+        assertEval("{ f <- function() { 4 } ; h <- function() { assign(\"z\", 5) ; f() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f7462e1b64e98cc4342dbd4bdba53a77() {
+        assertEval("{ gg <- function() {  assign(\"x\", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_7ccbe91c968b460f891aa1e191584ae2() {
+        assertEval("{ x <- function(){3} ; gg <- function() { assign(\"x\", 4) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_87c7111434f45f87d7319f771a86725e() {
+        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"z\", 2) ; x } ; f <- function() { assign(\"x\", 2) ; g() } ; f() }  ; z <- h() ; z() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6091ece90f56a846f7bad3990789920d() {
+        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"x\", function() {5} ) ; x() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_de6ad73e27aa42d2a1c28e095d312b61() {
+        assertEval("{ h <- function() { z <- 3 ; x <- function() {3} ; g <- function() { x <- 1 ; assign(\"z\", 5) ; x() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6ba1690b3bf1582ad21a41b4aa7cade9() {
+        assertEval("{ h <- function() { x <- function() {3} ; gg <- function() { assign(\"x\", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_ac90cce2345fd5bf30230331ed0d7db5() {
+        assertEval("{ h <- function() { z <- 2 ; x <- function() {3} ; gg <- function() { assign(\"z\", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_003c1247fa6a427b0135d9e892c80f28() {
+        assertEval("{ h <- function() { x <- function() {3} ; g <- function() { assign(\"x\", function() {4}) ; x() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_111cf7d36f024022a02d162c42fc40bd() {
+        assertEval("{ h <- function() { z <- 2 ; x <- function() {3} ; g <- function() { assign(\"z\", 1) ; x() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_53723d83f879f9403ce15de376c091eb() {
+        assertEval("{ x <- function() { 3 } ; h <- function() { if (FALSE) { x <- 2 } ;  z <- 2  ; g <- function() { assign(\"z\", 1) ; x() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_d015a488b299b2257ba745357ad94008() {
+        assertEval("{ x <- function() { 3 } ; h <- function() { g <- function() { f <- function() { x <- 1 ; x() } ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_d7019c82bbbda92b379335a1d2354896() {
+        assertEval("{ h <- function() { myfunc <- function(i) { sum(i) } ; g <- function() { myfunc <- 2 ; f <- function() { myfunc(2) } ; f() } ; g() } ; h() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_12172006720445a9282465095e950a98() {
+        assertEval("{ x <- function() {11} ; g <- function() { f <- function() { assign(\"x\", 2) ; x() } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_a733251bb5b3310685899a2e93b53f4a() {
+        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f3882a86c6251ac810356b60b0e51d56() {
+        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_5282ed3905bf098d2a7e10398d20b473() {
+        assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_14f99f57844c42586b995c05bb9a1ea3() {
+        assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_786bcc90eafc890d1a4b6bed053ad73a() {
+        assertEval("{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_8b36fb11373ffcb6297193370232ae16() {
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; g() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_7e7c1d01be25a13c8d5699c87a856b60() {
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign(\"z\", 10) ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; h() } ; g() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f0114d38bafb636ba6a61ca6429641fc() {
+        assertEval("{ gg <- function() { assign(\"x\", 100) ; g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign(\"z\", 10) ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_5426ebb4d5aeea5d12cbe2bdcf8e0dbe() {
+        assertEval("{ gg <- function() { if (FALSE) { x <- 100 } ; g <- function() { if (FALSE) { x <- 100 } ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_b831c18619a7befa072aec4032bd1dac() {
+        assertEval("{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { assign(\"z\", 10) ; f <- function() { x <<- 3 } ; f() } ; h() } ; g() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_395e80de24e62b38db1e3d5060112adf() {
+        assertEval("{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign(\"z\", 2) ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; hh() } ; x <- 10 ; g() ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_ffd862131767a28190fc8acc7a56c8ef() {
+        assertEval("{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign(\"z\", 2) ; h <- function() { assign(\"x\", 1); f <- function() { x <<- 3 } ; f() } ; h() } ; hh() ; x } ; x <- 10 ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_550606f41244ab5b72ac0d403f76be03() {
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f1(10) ; f2(11) ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_6a487bd0ec6e3ba9cf00d0bfc3636608() {
+        assertEval("{ x <- 3 ; f <- function(i) { if (i == 1) { assign(\"x\", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f2(10) ; f1(11) ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_2865497f22f615139b2590662d15a2cb() {
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x <<- 6 } ; h() ; get(\"x\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_25848b87f12bed3b5c48ec094616f48b() {
+        assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; hh <- function() { if (FALSE) { x <- 100 } ; h <- function() { x <<- 6 } ; h() } ; hh() ; get(\"x\") } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_fab0f3eded79eede99bca42c84977de5() {
+        assertEval("{ assign(\"z\", 10, inherits=TRUE) ; z }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_48d8f6c2d2586ee471cfa0421ea5b4ae() {
+        assertEval("{ exists(\"sum\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_2b36458da0b28ae1a46b3e3404e77bb2() {
+        assertEval("{ exists(\"sum\", inherits = FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_1b9568eed30d48488f00c0eef8b9866f() {
+        assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_bf436a43a6caacd418317cd684d67d8e() {
+        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_23454b3e47dfe4aa28afa243683df359() {
+        assertEvalAlt("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_f5b6d5670ee3679c2214a7720ed4f5e9() {
+        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_d2b207ebaf757535786aa553fb1fe90a() {
+        assertEvalError("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_72bcfb2ecee83734cf418b9ff1c34f8c() {
+        assertEvalError("{ get(\"x\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_7e5d40be5a03aac06880b44eefa7d94b() {
+        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_7623faf4c356905dacd205a8b10eac15() {
+        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_2c371d6a6d4b74a871402788dbf16cf8() {
+        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_fc0e56627d1b08ab2d6c38875a68a1f0() {
+        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookupIgnore_2deae78feff592acd7d61159c8e39ea7() {
+        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
     }
 
     @Test

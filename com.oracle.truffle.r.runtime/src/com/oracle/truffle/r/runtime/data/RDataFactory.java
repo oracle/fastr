@@ -236,7 +236,7 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(boolean data) {
-        return createLogicalVector(data ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
+        return createLogicalVector(new byte[]{data ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE}, COMPLETE_VECTOR);
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(byte operand) {

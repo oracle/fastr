@@ -4983,8 +4983,45 @@ attr(,"foo")
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ assign("z", 10, inherits=TRUE) ; z }
-[1] 10
+#{ as.environment(".GlobalEnv") }
+<environment: R_GlobalEnv>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment("package:base") }
+<environment: base>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(-1) }
+Error in as.environment(-1) : no enclosing environment
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(0) }
+Error in as.environment(0) : invalid 'pos' argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(1) }
+<environment: R_GlobalEnv>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(as.environment) }
+Error in as.environment(as.environment) :
+  invalid object for 'as.environment'
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(length(search()) + 1) }
+<environment: R_EmptyEnv>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(length(search()) + 2) }
+Error in as.environment(length(search()) + 2) : invalid 'pos' argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ as.environment(length(search())) }
+<environment: base>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ baseenv() }
+<environment: base>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ e<-new.env() ; assign("x",1,e) ; get("x",e) }
@@ -4999,320 +5036,44 @@ attr(,"foo")
 character(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ exists("sum") }
-[1] TRUE
+#{ emptyenv() }
+<environment: R_EmptyEnv>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ exists("sum", inherits = FALSE) }
-[1] FALSE
+#{ environment() }
+<environment: R_GlobalEnv>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() {  g <- function() { assign("x", 1, inherits=TRUE) } ; g() } ; f() ; x }
-[1] 1
+#{ environment(environment) }
+<environment: namespace:base>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { 4 } ; h <- function() { assign("f", 5) ; f() } ; h() }
-[1] 4
+#{ environmentName(1) }
+[1] ""
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { 4 } ; h <- function() { assign("z", 5) ; f() } ; h() }
-[1] 4
+#{ environmentName(baseenv()) }
+[1] "base"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 1) ; g <- function() { assign("z", 2) ; x } ; g() } ; f() }
-[1] 1
+#{ environmentName(emptyenv()) }
+[1] "R_EmptyEnv"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 1) ; x } ; f() }
-[1] 1
+#{ environmentName(globalenv()) }
+[1] "R_GlobalEnv"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }
+#{ f <- function()  { as.environment(-1) } ; f() }
+<environment: R_GlobalEnv>
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ f <- function(x, y) { ls() }; f(1, 2) }
 [1] "x" "y"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 1) ; y <- 2 ; ls() } ; f() }
-[1] "x" "y"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 2) ; exists("x", inherits=FALSE) } ; f() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 2, inherits=TRUE) ; assign("x", 1) ; h <- function() { x } ; h() } ; f() }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 3) ; g <- function() { x } ; g() } ; x <- 10 ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 3) ; h <- function() { assign("z", 4) ; g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", 3) ; h <- function() { g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("x", function(){2}, inherits=TRUE) ; assign("x", function(){1}) ; h <- function() { x() } ; h() } ; f() }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { assign("z", 2) ; g <- function() { get("x", inherits=TRUE) } ; g() } ; x <- 3 ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { for (i in rev(1:10)) { assign(as.character(i), i) } ; ls() } ; length(f()) }
-[1] 11
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { g <- function() { get("x", inherits=TRUE) } ; g() } ; x <- 3 ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }
-[1] "y"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { if (FALSE) { x <- 3 } ; exists("x", inherits=FALSE) } ; f() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }
-[1] "x" "y"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 2 ; g <- function() { assign("x", 1, inherits=FALSE) } ; g() ; x } ; f() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 2 ; g <- function() { assign("x", 1, inherits=TRUE) } ; g() ; x } ; f() }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 2 ; g <- function() { if (FALSE) { x <- 2 } ; assign("x", 1, inherits=TRUE) } ; g() ; x } ; f() }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 2 ; g <- function() { x <- 3 ; assign("x", 1, inherits=FALSE) ; x } ; g() } ; f() }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 2 ; get("x") } ; f() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 22 ; get("x", inherits=FALSE) } ; f() }
-[1] 22
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { x <- 3 ; exists("x", inherits=FALSE) } ; f() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function() { z <- 3 ; exists("x", inherits=FALSE) } ; f() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function(x) { assign(x, 23) ; exists(x) } ; c(f("a"),f("b")) }
-[1] TRUE TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ f <- function(z) { exists("z") } ; f() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { f <- function() { assign("x", 3) ; if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { f <- function() { assign("z", 3) ; if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { f <- function() { if (FALSE) { x } ; assign("x", 1) ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) { x <- 2 ; y <- 3} ; f <- function() { if (FALSE) { x } ; assign("y", 2) ; exists("x") }  ; f() } ; g() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { assign("z", 10) ; f <- function() { x <<- 3 } ; f() } ; h() } ; g() ; x }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign("z", 10) ; f <- function() { assign("x", 4) ; x <<- 3 } ; f() } ; h() } ; g() ; x }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign("x", 4) ; x <<- 3 } ; f() } ; g() ; x }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; assign("x", 2) ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; gg <- function() { h <- function() { exists("x") } ; h() } ; gg() } ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; gg <- function() { h <- function() { get("x") } ; h() } ; gg() } ; f() } ; g() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; h <- function() { exists("x") } ; h() }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("y", 2) ; h <- function() { exists("x") } ; h() }  ; f() } ; g() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 3 } ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { x <- 2 ; f <- function() { x ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { x <- 2 ; f <- function() { x <- 5 ; exists("x") }  ; f() } ; g() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign("z", 2) ; h <- function() { assign("x", 1); f <- function() { x <<- 3 } ; f() } ; h() } ; hh() ; x } ; x <- 10 ; g() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign("z", 2) ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; hh() } ; x <- 10 ; g() ; x }
-[1] 10
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ get("x") }
-Error in get("x") : object 'x' not found
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ gg <- function() {  assign("x", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
-[1] 11
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ gg <- function() { assign("x", 100) ; g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign("z", 10) ; f <- function() { assign("x", 4) ; x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }
-[1] 10
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ gg <- function() { if (FALSE) { x <- 100 } ; g <- function() { if (FALSE) { x <- 100 } ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }
-[1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ globalenv() }
 <environment: R_GlobalEnv>
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { assign("f", function() {4}) ; f() } ; h() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { assign("x", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { assign("z", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { g <- function() {4} ; f <- function() { if (FALSE) { g <- 4 } ; g() } ; f() } ; h() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; g <- function() { assign("z", 3) ; if (FALSE) { x <- 4 } ;  f <- function() { exists("x") } ; f() } ; g() } ; h() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { myfunc <- function(i) { sum(i) } ; g <- function() { myfunc <- 2 ; f <- function() { myfunc(2) } ; f() } ; g() } ; h() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; h() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 3  ; f <- function() { assign("x", 2) ; g <- function() { x } ; g() } ; f() }  ; h() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 3 ; g <- function() { assign("x", 5) ; x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; h() }
-[1] 5
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 3 ; g <- function() { assign("z", 2) ; x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 3 ; g <- function() { f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- 3 ; g <- function() { x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- function() {3} ; g <- function() { assign("x", function() {4}) ; x() } ; g() } ; h() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- function() {3} ; g <- function() { assign("x", function() {5} ) ; x() } ; g() } ; h() }
-[1] 5
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- function() {3} ; g <- function() { assign("z", 2) ; x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; z <- h() ; z() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- function() {3} ; gg <- function() { assign("x", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { x <- function(){2} ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; z <- h() ; z() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { z <- 2 ; x <- function() {3} ; g <- function() { assign("z", 1) ; x() } ; g() } ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { z <- 2 ; x <- function() {3} ; gg <- function() { assign("z", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ h <- function() { z <- 3 ; x <- function() {3} ; g <- function() { x <- 1 ; assign("z", 5) ; x() } ; g() } ; h() }
-[1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ h <- new.env() ; assign("abc", "yes", h) ; exists(c("abc", "def"), h) }
@@ -5367,6 +5128,18 @@ Error in get("x") : object 'x' not found
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ identical(parent.env(baseenv()), emptyenv()) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ is.environment(1) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ is.environment(globalenv()) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ ls() }
 character(0)
 
@@ -5375,148 +5148,12 @@ character(0)
 [1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 10 ; g <- function() { x <- 100 ; z <- 2 ; f <- function() { assign("z", 1); x <- x ; x } ; f() } ; g() }
-[1] 100
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 1; exists("x", inherits = FALSE) }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 2 ; rm("x") ; get("x") }
-Error in get("x") : object 'x' not found
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 2 ; y <- 3 ; rm("y") ; ls() }
+#{ x <- 1; .y <- 2; ls(globalenv()) }
 [1] "x"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { assign("x", 2) ; g <- function() { x } ; g() } ; f() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { assign("x", 4) ; g <- function() { assign("y", 3) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; g()  } ; f() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { assign("x", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x <<- 6 } ; h() ; get("x") } ; f() }
-[1] 6
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { assign("x", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; f() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { assign("x", 4) ; hh <- function() { if (FALSE) { x <- 100 } ; h <- function() { x <<- 6 } ; h() } ; hh() ; get("x") } ; f() }
-[1] 6
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { exists("x") } ; f() }
-[1] TRUE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { exists("x", inherits=FALSE) } ; f() }
-[1] FALSE
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { get("x") } ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { x <- 2 ; get("x") } ; f() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function() { x <- 2; h <- function() {  get("x") }  ; h() } ; f() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f1(10) ; f2(11) ; x }
-[1] 11
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f2(10) ; f1(11) ; x }
-[1] 10
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; g <- function() { x } ; f <- function() { assign("x", 2) ; g() } ; f() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() } ; gg() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; h <- function() { g <- function() { x } ; f <- function() { assign("x", 2, inherits=TRUE) } ; f() ; g() }  ; h() }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; h <- function(s) { if (s == 2) { assign("x", 2) } ; x }  ; h(1) ; h(2) }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 3 ; h <- function(s) { y <- x ; if (s == 2) { assign("x", 2) } ; c(y,x) }  ; c(h(1),h(2)) }
-[1] 3 3 3 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- 33 ; f <- function() { assign("x", 44) ; get("x", inherits=FALSE) } ; f() }
-[1] 44
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function() { 3 } ; h <- function() { g <- function() { f <- function() { x <- 1 ; x() } ; f() } ; g() } ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function() { 3 } ; h <- function() { if (FALSE) { x <- 2 } ;  z <- 2  ; g <- function() { assign("z", 1) ; x() } ; g() } ; h() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function() {11} ; g <- function() { f <- function() { assign("x", 2) ; x() } ; f() } ; g() }
-[1] 11
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign("x", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign("x", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign("x", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function(){3} ; f <- function() { assign("x", function(){4}) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x() } ; h() } ; f() }
-[1] 4
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function(){3} ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function(){3} ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ x <- function(){3} ; gg <- function() { assign("x", 4) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
-[1] 3
+#{ x <- 1; ls(globalenv()) }
+[1] "x"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFloor
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
@@ -6020,6 +5657,466 @@ $z
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLog2
 #{ log2(c(0,1)) }
 [1] -Inf    0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ assign("z", 10, inherits=TRUE) ; z }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ exists("sum") }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ exists("sum", inherits = FALSE) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() {  g <- function() { assign("x", 1, inherits=TRUE) } ; g() } ; f() ; x }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { 4 } ; h <- function() { assign("f", 5) ; f() } ; h() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { 4 } ; h <- function() { assign("z", 5) ; f() } ; h() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 1) ; g <- function() { assign("z", 2) ; x } ; g() } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 1) ; x } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }
+[1] "x" "y"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 1) ; y <- 2 ; ls() } ; f() }
+[1] "x" "y"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 2) ; exists("x", inherits=FALSE) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 2, inherits=TRUE) ; assign("x", 1) ; h <- function() { x } ; h() } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 3) ; g <- function() { x } ; g() } ; x <- 10 ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 3) ; h <- function() { assign("z", 4) ; g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", 3) ; h <- function() { g <- function() { x } ; g() } ; h() } ; x <- 10 ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("x", function(){2}, inherits=TRUE) ; assign("x", function(){1}) ; h <- function() { x() } ; h() } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { assign("z", 2) ; g <- function() { get("x", inherits=TRUE) } ; g() } ; x <- 3 ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { for (i in rev(1:10)) { assign(as.character(i), i) } ; ls() } ; length(f()) }
+[1] 11
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { g <- function() { get("x", inherits=TRUE) } ; g() } ; x <- 3 ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }
+[1] "y"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { if (FALSE) { x <- 3 } ; exists("x", inherits=FALSE) } ; f() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }
+[1] "x" "y"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 2 ; g <- function() { assign("x", 1, inherits=FALSE) } ; g() ; x } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 2 ; g <- function() { assign("x", 1, inherits=TRUE) } ; g() ; x } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 2 ; g <- function() { if (FALSE) { x <- 2 } ; assign("x", 1, inherits=TRUE) } ; g() ; x } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 2 ; g <- function() { x <- 3 ; assign("x", 1, inherits=FALSE) ; x } ; g() } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 2 ; get("x") } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 22 ; get("x", inherits=FALSE) } ; f() }
+[1] 22
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { x <- 3 ; exists("x", inherits=FALSE) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function() { z <- 3 ; exists("x", inherits=FALSE) } ; f() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function(x) { assign(x, 23) ; exists(x) } ; c(f("a"),f("b")) }
+[1] TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ f <- function(z) { exists("z") } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { f <- function() { assign("x", 3) ; if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { f <- function() { assign("z", 3) ; if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { f <- function() { if (FALSE) { x } ; assign("x", 1) ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) { x <- 2 ; y <- 3} ; f <- function() { if (FALSE) { x } ; assign("y", 2) ; exists("x") }  ; f() } ; g() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { assign("z", 10) ; f <- function() { x <<- 3 } ; f() } ; h() } ; g() ; x }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign("z", 10) ; f <- function() { assign("x", 4) ; x <<- 3 } ; f() } ; h() } ; g() ; x }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign("x", 4) ; x <<- 3 } ; f() } ; g() ; x }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; assign("x", 2) ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; gg <- function() { h <- function() { exists("x") } ; h() } ; gg() } ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; gg <- function() { h <- function() { get("x") } ; h() } ; gg() } ; f() } ; g() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("x", 2) ; h <- function() { exists("x") } ; h() }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign("y", 2) ; h <- function() { exists("x") } ; h() }  ; f() } ; g() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 3 } ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { x <- 2 ; f <- function() { x ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { x <- 2 ; f <- function() { x <- 5 ; exists("x") }  ; f() } ; g() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign("z", 2) ; h <- function() { assign("x", 1); f <- function() { x <<- 3 } ; f() } ; h() } ; hh() ; x } ; x <- 10 ; g() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ g <- function() { x <- 2 ; z <- 3 ; hh <- function() { assign("z", 2) ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; hh() } ; x <- 10 ; g() ; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ get("x") }
+Error in get("x") : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ gg <- function() {  assign("x", function(){11}) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
+[1] 11
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ gg <- function() { assign("x", 100) ; g <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; h <- function() { if (FALSE) { x <- 1 } ; assign("z", 10) ; f <- function() { assign("x", 4) ; x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ gg <- function() { if (FALSE) { x <- 100 } ; g <- function() { if (FALSE) { x <- 100 } ; h <- function() { f <- function() { x <<- 3 } ; f() } ; h() } ; g() } ; x <- 10 ; gg() ; x }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { assign("f", function() {4}) ; f() } ; h() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { assign("x", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { assign("z", 1) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { g <- function() {4} ; f <- function() { if (FALSE) { g <- 4 } ; g() } ; f() } ; h() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { if (FALSE) { x <- 2 ; z <- 3 } ; g <- function() { assign("z", 3) ; if (FALSE) { x <- 4 } ;  f <- function() { exists("x") } ; f() } ; g() } ; h() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { myfunc <- function(i) { sum(i) } ; g <- function() { myfunc <- 2 ; f <- function() { myfunc(2) } ; f() } ; g() } ; h() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 2 ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; h() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 3  ; f <- function() { assign("x", 2) ; g <- function() { x } ; g() } ; f() }  ; h() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 3 ; g <- function() { assign("x", 5) ; x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; h() }
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 3 ; g <- function() { assign("z", 2) ; x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 3 ; g <- function() { f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { if (FALSE) { x } ; exists("x") }  ; f() } ; g() } ; h() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- 3 ; g <- function() { x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- function() {3} ; g <- function() { assign("x", function() {4}) ; x() } ; g() } ; h() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- function() {3} ; g <- function() { assign("x", function() {5} ) ; x() } ; g() } ; h() }
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- function() {3} ; g <- function() { assign("z", 2) ; x } ; f <- function() { assign("x", 2) ; g() } ; f() }  ; z <- h() ; z() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- function() {3} ; gg <- function() { assign("x", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { x <- function(){2} ; f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() } ; z <- h() ; z() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { z <- 2 ; x <- function() {3} ; g <- function() { assign("z", 1) ; x() } ; g() } ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { z <- 2 ; x <- function() {3} ; gg <- function() { assign("z", 5) ; g <- function() { x() } ; g() } ; gg() } ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ h <- function() { z <- 3 ; x <- function() {3} ; g <- function() { x <- 1 ; assign("z", 5) ; x() } ; g() } ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 10 ; g <- function() { x <- 100 ; z <- 2 ; f <- function() { assign("z", 1); x <- x ; x } ; f() } ; g() }
+[1] 100
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 1; exists("x", inherits = FALSE) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 2 ; rm("x") ; get("x") }
+Error in get("x") : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 2 ; y <- 3 ; rm("y") ; ls() }
+[1] "x"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { assign("x", 2) ; g <- function() { x } ; g() } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { assign("x", 4) ; g <- function() { assign("y", 3) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; g()  } ; f() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { assign("x", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x <<- 6 } ; h() ; get("x") } ; f() }
+[1] 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { assign("x", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; f() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { assign("x", 4) ; hh <- function() { if (FALSE) { x <- 100 } ; h <- function() { x <<- 6 } ; h() } ; hh() ; get("x") } ; f() }
+[1] 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { exists("x") } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { exists("x", inherits=FALSE) } ; f() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { get("x") } ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { x <- 2 ; get("x") } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function() { x <- 2; h <- function() {  get("x") }  ; h() } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function() { x } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f1(10) ; f2(11) ; x }
+[1] 11
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; f <- function(i) { if (i == 1) { assign("x", 4) } ; function(v) { x <<- v} } ; f1 <- f(1) ; f2 <- f(2) ; f2(10) ; f1(11) ; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; g <- function() { x } ; f <- function() { assign("x", 2) ; g() } ; f() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x } ; h() } ; f() } ; g() } ; gg() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; h <- function() { g <- function() { x } ; f <- function() { assign("x", 2, inherits=TRUE) } ; f() ; g() }  ; h() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; h <- function(s) { if (s == 2) { assign("x", 2) } ; x }  ; h(1) ; h(2) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 3 ; h <- function(s) { y <- x ; if (s == 2) { assign("x", 2) } ; c(y,x) }  ; c(h(1),h(2)) }
+[1] 3 3 3 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- 33 ; f <- function() { assign("x", 44) ; get("x", inherits=FALSE) } ; f() }
+[1] 44
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function() { 3 } ; h <- function() { g <- function() { f <- function() { x <- 1 ; x() } ; f() } ; g() } ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function() { 3 } ; h <- function() { if (FALSE) { x <- 2 } ;  z <- 2  ; g <- function() { assign("z", 1) ; x() } ; g() } ; h() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function() {11} ; g <- function() { f <- function() { assign("x", 2) ; x() } ; f() } ; g() }
+[1] 11
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign("x", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign("x", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign("x", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f2() ; f1() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function(){3} ; f <- function() { assign("x", function(){4}) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x() } ; h() } ; f() }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function(){3} ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function(){3} ; gg <- function() {  g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLookup
+#{ x <- function(){3} ; gg <- function() { assign("x", 4) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
+[1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatMult
 #{ c(1,0,4) %*% matrix(c(3,1,2,0,1,2),3) }

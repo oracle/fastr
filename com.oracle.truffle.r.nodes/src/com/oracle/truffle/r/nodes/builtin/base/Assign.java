@@ -91,7 +91,7 @@ public abstract class Assign extends RBuiltinNode {
         if (env != null) {
             env.put(x, value);
         } else {
-            RRuntime.GLOBAL_ENV.put(x, value);
+            REnvironment.globalEnv().put(x, value);
         }
         return value;
     }
