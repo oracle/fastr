@@ -235,6 +235,10 @@ public final class RDataFactory {
         return createStringVector(new String[]{operand}, RRuntime.isComplete(operand));
     }
 
+    public static RLogicalVector createLogicalVectorFromScalar(boolean data) {
+        return createLogicalVector(data ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
+    }
+
     public static RLogicalVector createLogicalVectorFromScalar(byte operand) {
         return createLogicalVector(new byte[]{operand}, RRuntime.isComplete(operand));
     }

@@ -31,13 +31,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * Whenever you add a type {@code T} to the list below, make sure a corresponding {@code executeT()}
  * method is added to {@link RNode}.
- * 
+ *
  * @see RNode
  */
 @TypeSystem({byte.class, int.class, double.class, RRaw.class, RComplex.class, String.class, RIntSequence.class, RDoubleSequence.class, RIntVector.class, RDoubleVector.class, RRawVector.class,
-                RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, RInvisible.class, REnvironment.class, MaterializedFrame.class,
-                FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class, RAbstractStringVector.class,
-                RAbstractRawVector.class, RList.class, RAbstractVector.class, Object[].class})
+                RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, RInvisible.class, REnvironment.class, RConnection.class,
+                MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
+                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, Object[].class})
 public class RTypes {
 
     @TypeCheck

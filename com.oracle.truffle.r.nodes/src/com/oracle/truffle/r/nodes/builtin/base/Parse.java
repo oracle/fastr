@@ -25,35 +25,47 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.REngine.ParseException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("readRenviron")
-public abstract class ReadREnviron extends RBuiltinNode {
+/**
+ * Internal component of the {@code parse} base package function.
+ *
+ * <pre>
+ * parse(file, n, text, prompt, srcfile, encoding)
+ * </pre>
+ */
+@RBuiltin(".Internal.parse")
+public abstract class Parse extends RBuiltinNode {
 
-    @Specialization(guards = "lengthOneCVector")
-    public Object doReadEnviron(RAbstractStringVector vec) {
-        String path = Utils.tildeExpand(vec.getDataAt(0));
-        byte result = RRuntime.LOGICAL_TRUE;
+    @SuppressWarnings("unused")
+    @Specialization
+    public Object parse(RConnection file, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
         try {
-            REnvVars.readEnvironFile(path);
-        } catch (FileNotFoundException ex) {
-            RContext.getInstance().setEvalWarning(ex.getMessage());
-            result = RRuntime.LOGICAL_FALSE;
-        } catch (IOException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+            String[] lines = file.readLines(0);
+            RNode node = REngine.parse(coalesce(lines));
+            System.console();
+        } catch (IOException | ParseException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");
         }
-        return new RInvisible(result);
+        return null;
     }
 
-    public static boolean lengthOneCVector(RAbstractStringVector vec) {
-        return vec.getLength() == 1;
+    private static String coalesce(String[] lines) {
+        StringBuffer sb = new StringBuffer();
+        for (String line : lines) {
+            sb.append(line);
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 100)
-    public Object doReadEnvironGeneric(@SuppressWarnings("unused") Object x) {
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "argument 'x' must be a character string");
+    public Object parseGeneric(Object file, Object n, Object text, Object prompt, Object srcFile, Object encoding) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
     }
 }

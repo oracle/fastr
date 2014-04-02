@@ -30,7 +30,7 @@ import javax.lang.model.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.parser.processor.GenerateRParser")
 public class GenerateRParserProcessor extends AbstractProcessor {
     private static final String ANTLRC = "antlr-complete-3.5.1.jar";

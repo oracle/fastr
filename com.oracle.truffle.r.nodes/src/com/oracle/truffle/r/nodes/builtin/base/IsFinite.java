@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,23 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("emptyenv")
-public abstract class EmptyEnv extends RBuiltinNode {
+@RBuiltin("is.finite")
+public abstract class IsFinite extends RBuiltinNode {
 
     @Specialization
-    public REnvironment emptyenv() {
-        return RRuntime.EMPTY_ENV;
+    public RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
+        byte[] b = new byte[vec.getLength()];
+        for (int i = 0; i < b.length; i++) {
+            b[i] = RRuntime.isFinite(vec.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        }
+        return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @Specialization(order = 100)
+    public Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument type");
+    }
 }

@@ -54,7 +54,7 @@ public abstract class SysSleep extends RBuiltinNode {
         return vec.getLength() == 1;
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
         throw invalid();
     }

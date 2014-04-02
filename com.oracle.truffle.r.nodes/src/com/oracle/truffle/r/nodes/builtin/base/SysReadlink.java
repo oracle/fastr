@@ -72,7 +72,7 @@ public abstract class SysReadlink extends RBuiltinNode {
         return s;
     }
 
-    @Generic
+    @Specialization(order = 100)
     public Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'paths' argument");
     }

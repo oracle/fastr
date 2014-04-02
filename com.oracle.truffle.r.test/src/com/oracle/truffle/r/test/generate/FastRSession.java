@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
 public class FastRSession implements RSession {

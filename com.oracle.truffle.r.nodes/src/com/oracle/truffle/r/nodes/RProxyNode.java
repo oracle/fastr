@@ -213,6 +213,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    protected RConnection wrap(RConnection x) {
+        return proxy(x);
+    }
+
+    protected RConnection proxy(RConnection x) {
+        return (RConnection) proxyScalar(x);
+    }
+
+    @Specialization
     protected RInvisible wrap(RInvisible x) {
         return proxy(x);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,35 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(".Internal.file.exists")
-public abstract class FileExists extends RBuiltinNode {
+/**
+ * TODO flesh this out, it only supports the identify function currently (for b25).
+ */
+@RBuiltin("as.matrix")
+public abstract class AsMatrix extends RBuiltinNode {
 
-    @Specialization
-    public Object doFileExists(RAbstractStringVector vec) {
-        byte[] status = new byte[vec.getLength()];
-        for (int i = 0; i < status.length; i++) {
-            String path = vec.getDataAt(i);
-            if (path == RRuntime.STRING_NA) {
-                status[i] = RRuntime.LOGICAL_FALSE;
-            } else {
-                File f = new File(Utils.tildeExpand(path));
-                boolean ok = f.exists();
-                status[i] = ok ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-            }
-        }
-        return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
+    @Specialization(order = 0, guards = "isMatrix")
+    public Object doAsMatrix(RAbstractVector vec) {
+        return vec;
     }
 
-    @Generic
-    public Object doFileRemoveGeneric(@SuppressWarnings("unused") Object x) {
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
+    @Specialization(order = 100)
+    public Object doAsMatrixNot(@SuppressWarnings("unused") Object vec) {
+        throw RError.getGenericError(getEncapsulatingSourceSection(), "invslid or unimplemented arg to as.matrix");
     }
+
+    public boolean isMatrix(RAbstractVector vec) {
+        return vec.isMatrix();
+    }
+
 }

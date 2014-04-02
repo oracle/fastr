@@ -32,6 +32,13 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+/**
+ * <pre>
+ * matrix &lt; -function(data = NA, nrow = 1, ncol = 1, byrow = FALSE, dimnames = NULL)
+ * </pre>
+ * 
+ * TODO rework as {@code .Internal} to use the wrapper in {@code matrix.R}.
+ */
 @RBuiltin("matrix")
 public abstract class Matrix extends RBuiltinNode {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import java.io.*;
 
-@RBuiltin(".Internal.file.symlink")
-public abstract class FileSymLink extends FileLinkAdaptor {
-    @Specialization
-    public Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
-        return doFileLink(vecFrom, vecTo, true);
-    }
-
+/**
+ * Denotes an R {@code connection} instance used in the {@code base} I/O library.
+ */
+public abstract class RConnection {
+    /**
+     * Read (n > 0 up to n else unlimited) lines on the connection.
+     */
+    public abstract String[] readLines(int n) throws IOException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,47 +22,45 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("new.env")
-public abstract class NewEnv extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"hash", "parent", "size"};
+@RBuiltin(".Internal.options")
+// @NodeField(name = "argNames", type = String[].class)
+public abstract class Options extends RBuiltinNode {
+    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
 
     @Override
     public Object[] getParameterNames() {
         return PARAMETER_NAMES;
     }
 
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RMissing.instance), ConstantNode.create(29)};
-    }
+// public abstract String[] getArgNames();
 
-    @CreateCast("arguments")
-    protected RNode[] castStatusArgument(RNode[] arguments) {
-        // size argument is at index 2, and an int
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false);
-        return arguments;
+    @Specialization
+    public RList options(@SuppressWarnings("unused") RMissing x) {
+        Set<Map.Entry<String, Object>> optionSettings = ROptions.getValues();
+        Object[] data = new Object[optionSettings.size()];
+        String[] names = new String[data.length];
+        int i = 0;
+        for (Map.Entry<String, Object> entry : optionSettings) {
+            names[i] = entry.getKey();
+            data[i] = entry.getValue();
+            i++;
+        }
+        return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    public REnvironment newEnv(byte hash, RMissing parent, int size) {
-        // FIXME don't ignore hash parameter
-        return new REnvironment(RRuntime.GLOBAL_ENV, size);
+    public RList options(RAbstractStringVector vec) {
+        String key = vec.getDataAt(0);
+        Object value = ROptions.getValue(key);
+        Object rObject = value == null ? RNull.instance : value;
+        return RDataFactory.createList(new Object[]{rObject}, RDataFactory.createStringVectorFromScalar(key));
     }
-
-    @Specialization
-    public REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
-        // FIXME don't ignore hash parameter
-        return new REnvironment(parent, size);
-    }
-
 }

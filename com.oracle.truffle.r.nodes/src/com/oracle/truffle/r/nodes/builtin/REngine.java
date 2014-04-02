@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine;
+package com.oracle.truffle.r.nodes.builtin;
 
 import java.io.*;
 import java.util.*;
@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.runtime.*;
@@ -63,7 +62,7 @@ public final class REngine implements RBuiltinLookupProvider {
     public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalError) {
         REngine.crashOnFatalError = crashOnFatalError;
         RContext.setRuntimeState(commandArgs, consoleHandler);
-        RBuiltinPackage.loadSnippets();
+        RBuiltinPackage.initialize();
         RRuntime.initialize();
         return singleton;
     }
@@ -96,6 +95,23 @@ public final class REngine implements RBuiltinLookupProvider {
 
     public static Object parseAndEval(String rscript, boolean printResult) {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), null, printResult);
+    }
+
+    public static class ParseException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public ParseException(String msg) {
+            super(msg);
+        }
+    }
+
+    public static RNode parse(String rscript) throws ParseException {
+        RTruffleVisitor transform = new RTruffleVisitor();
+        try {
+            return transform.transform(ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript)));
+        } catch (RecognitionException ex) {
+            throw new ParseException(ex.getMessage());
+        }
     }
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
