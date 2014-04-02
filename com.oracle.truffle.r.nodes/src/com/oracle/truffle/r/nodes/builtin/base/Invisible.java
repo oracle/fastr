@@ -47,9 +47,15 @@ public abstract class Invisible extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RNull.instance)};
     }
 
+    @Override
+    public boolean getVisibility() {
+        return false;
+    }
+
     @Specialization
-    public RInvisible doInvisible(Object o) {
-        return new RInvisible(o);
+    public Object doInvisible(Object o) {
+        controlVisibility();
+        return o;
     }
 
 }

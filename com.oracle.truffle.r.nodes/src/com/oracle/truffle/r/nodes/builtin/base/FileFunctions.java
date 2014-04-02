@@ -38,6 +38,7 @@ public class FileFunctions {
 
         @Specialization
         public Object doFileCreate(RAbstractStringVector vec, byte showWarnings) {
+            controlVisibility();
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
@@ -60,7 +61,8 @@ public class FileFunctions {
         }
 
         @Specialization(order = 100)
-        public Object doFileRemoveGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+        public Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
         }
     }
@@ -107,11 +109,13 @@ public class FileFunctions {
     public abstract static class FileLink extends FileLinkAdaptor {
         @Specialization
         public Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+            controlVisibility();
             return doFileLink(vecFrom, vecTo, false);
         }
 
         @Specialization(order = 100)
-        public Object doFileRemoveGeneric(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+        public Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
         }
     }
@@ -120,6 +124,7 @@ public class FileFunctions {
     public abstract static class FileSymLink extends FileLinkAdaptor {
         @Specialization
         public Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+            controlVisibility();
             return doFileLink(vecFrom, vecTo, true);
         }
 
@@ -130,6 +135,7 @@ public class FileFunctions {
 
         @Specialization
         public Object doFileRemove(RAbstractStringVector vec) {
+            controlVisibility();
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
@@ -148,7 +154,8 @@ public class FileFunctions {
         }
 
         @Specialization(order = 100)
-        public Object doFileRemoveGeneric(@SuppressWarnings("unused") Object x) {
+        public Object doFileRemove(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
         }
     }
@@ -157,6 +164,7 @@ public class FileFunctions {
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
         public Object doFileRemove(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+            controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "'from' and 'to' are of different lengths");
@@ -181,7 +189,8 @@ public class FileFunctions {
         }
 
         @Specialization(order = 100)
-        public Object doFileRemoveGeneric(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+        public Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
         }
     }

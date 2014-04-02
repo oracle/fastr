@@ -37,22 +37,26 @@ public abstract class Sub extends RBuiltinNode {
 
     @Specialization(order = 1)
     public String sub(String pattern, String replacement, String x) {
+        controlVisibility();
         return replaceMatch(pattern, replacement, x);
     }
 
     @Specialization(order = 10)
     public RStringVector sub(String pattern, String replacement, RStringVector vector) {
+        controlVisibility();
         return doSub(pattern, replacement, vector);
     }
 
     @Specialization(order = 12)
     public RStringVector sub(RStringVector pattern, String replacement, RStringVector vector) {
+        controlVisibility();
         // FIXME print a warning that only pattern[1] is used
         return doSub(pattern.getDataAt(0), replacement, vector);
     }
 
     @Specialization(order = 13)
     public RStringVector sub(String pattern, RStringVector replacement, RStringVector vector) {
+        controlVisibility();
         // FIXME print a warning that only replacement[1] is used
         return doSub(pattern, replacement.getDataAt(0), vector);
     }

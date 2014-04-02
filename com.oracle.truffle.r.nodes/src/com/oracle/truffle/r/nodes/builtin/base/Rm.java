@@ -57,21 +57,28 @@ public abstract class Rm extends RBuiltinNode {
         return getParameterValues0();
     }
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
+        controlVisibility();
         removeFromCurrentFrame(frame, name);
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
     @Specialization
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
+        controlVisibility();
         for (Object o : names) {
             assert o instanceof String;
             removeFromCurrentFrame(frame, (String) o);
         }
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
     private void removeFromCurrentFrame(VirtualFrame frame, String x) {

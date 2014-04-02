@@ -43,6 +43,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector repInt(double value, int times) {
+        controlVisibility();
         double[] array = new double[times];
         Arrays.fill(array, value);
         return RDataFactory.createDoubleVector(array, RRuntime.isComplete(value));
@@ -50,6 +51,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     public RRawVector repInt(RRaw value, int times) {
+        controlVisibility();
         byte[] array = new byte[times];
         Arrays.fill(array, value.getValue());
         return RDataFactory.createRawVector(array);
@@ -57,6 +59,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     public RIntVector repInt(RIntSequence value, int times) {
+        controlVisibility();
         int oldLength = value.getLength();
         int length = oldLength * times;
         int[] array = new int[length];
@@ -70,6 +73,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector repInt(RDoubleVector value, int times) {
+        controlVisibility();
         int oldLength = value.getLength();
         int length = value.getLength() * times;
         double[] array = new double[length];
@@ -83,6 +87,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     public RIntVector repInt(int value, int times) {
+        controlVisibility();
         int[] array = new int[times];
         Arrays.fill(array, value);
         return RDataFactory.createIntVector(array, RDataFactory.COMPLETE_VECTOR);
@@ -90,6 +95,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
 
     @Specialization
     public RStringVector repInt(String value, int times) {
+        controlVisibility();
         String[] array = new String[times];
         Arrays.fill(array, value);
         return RDataFactory.createStringVector(array, RDataFactory.COMPLETE_VECTOR);

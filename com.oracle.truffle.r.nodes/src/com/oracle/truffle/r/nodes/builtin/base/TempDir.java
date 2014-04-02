@@ -31,6 +31,7 @@ public abstract class TempDir extends RBuiltinNode {
 
     @Specialization
     public Object tempdir() {
+        controlVisibility();
         return TempDirPath.tempDirPath();
     }
 

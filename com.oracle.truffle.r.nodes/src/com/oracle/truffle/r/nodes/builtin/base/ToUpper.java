@@ -33,11 +33,13 @@ public abstract class ToUpper extends RBuiltinNode {
     @Specialization
     @SlowPath
     public String toUpper(String value) {
+        controlVisibility();
         return value.toUpperCase();
     }
 
     @Specialization
     public RStringVector toUpper(RStringVector vector) {
+        controlVisibility();
         String[] stringVector = new String[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             stringVector[i] = toUpper(vector.getDataAt(i));
@@ -48,6 +50,7 @@ public abstract class ToUpper extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector toupper(RNull empty) {
+        controlVisibility();
         return RDataFactory.createStringVector(0);
     }
 }

@@ -150,10 +150,6 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRConnection(execute(frame));
     }
 
-    public RInvisible executeRInvisible(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.RTYPES.expectRInvisible(execute(frame));
-    }
-
     public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
         return a.getLength() == b.getLength();
     }

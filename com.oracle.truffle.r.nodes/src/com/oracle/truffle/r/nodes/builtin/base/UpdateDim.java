@@ -39,9 +39,14 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
@@ -49,6 +54,7 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Specialization(order = 1)
     public RAbstractVector updateDim(RAbstractVector vector, RNull dimensions) {
+        controlVisibility();
         RVector result = vector.materialize();
         result.resetDimensions(null);
         return result;
@@ -56,6 +62,7 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Specialization(order = 2)
     public RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
+        controlVisibility();
         if (dimensions.getLength() == 0) {
             throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
         }

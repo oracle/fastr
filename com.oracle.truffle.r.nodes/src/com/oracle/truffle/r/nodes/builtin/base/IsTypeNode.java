@@ -33,71 +33,85 @@ public abstract class IsTypeNode extends RBuiltinNode {
 
     @Specialization
     public byte isType(int value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RIntVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(double value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RDoubleVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(String value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RStringVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(byte value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RLogicalVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RNull value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RComplex value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RComplexVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RRaw value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(RRawVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
     public byte isType(Object value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 }

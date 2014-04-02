@@ -39,7 +39,7 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     private void initCast() {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, false, false));
         }
     }
@@ -71,41 +71,49 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Specialization
     public String doInt(VirtualFrame frame, int value) {
+        controlVisibility();
         return castString(frame, value);
     }
 
     @Specialization
     public String doDouble(VirtualFrame frame, double value) {
+        controlVisibility();
         return castString(frame, value);
     }
 
     @Specialization
     public String doLogical(VirtualFrame frame, byte value) {
+        controlVisibility();
         return castString(frame, value);
     }
 
     @Specialization
     public String doString(VirtualFrame frame, String value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization
     public RStringVector doNull(RNull value) {
+        controlVisibility();
         return RDataFactory.createStringVector(0);
     }
 
     @Specialization
     public RStringVector doStringVector(VirtualFrame frame, RStringVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     public RStringVector doList(VirtualFrame frame, RList list) {
+        controlVisibility();
         throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
     }
 
     @Specialization
     public RStringVector doVector(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castStringVector(frame, vector);
     }
 }

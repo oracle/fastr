@@ -32,6 +32,7 @@ public abstract class RVersion extends RBuiltinNode {
 
     @Specialization
     public Object doRVersion(@SuppressWarnings("unused") RMissing x) {
+        controlVisibility();
         return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
     }
 }

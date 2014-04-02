@@ -22,6 +22,7 @@ public abstract class GetClass extends RBuiltinNode {
 
     @Specialization
     public Object getClass(RAbstractVector arg) {
+        controlVisibility();
         if (arg.isObject()) {
             return arg.getClassHierarchy();
         }
@@ -34,6 +35,7 @@ public abstract class GetClass extends RBuiltinNode {
 
     @Specialization
     public Object getClass(@SuppressWarnings("unused") RFunction arg) {
+        controlVisibility();
         return RRuntime.TYPE_FUNCTION;
     }
 

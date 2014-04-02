@@ -43,7 +43,7 @@ public abstract class AsLogical extends RBuiltinNode {
 
     private byte castLogical(VirtualFrame frame, Object o) {
         if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false));
         }
         return (byte) castLogicalNode.executeByte(frame, o);
@@ -51,7 +51,7 @@ public abstract class AsLogical extends RBuiltinNode {
 
     private RLogicalVector castLogicalVector(VirtualFrame frame, Object o) {
         if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false));
         }
         return (RLogicalVector) castLogicalNode.executeLogicalVector(frame, o);
@@ -59,41 +59,49 @@ public abstract class AsLogical extends RBuiltinNode {
 
     @Specialization
     public byte asLogical(byte value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization(order = 10)
     public byte asLogical(VirtualFrame frame, int value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization(order = 12)
     public byte asLogical(VirtualFrame frame, double value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization(order = 14)
     public byte asLogical(VirtualFrame frame, RComplex value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization
     public byte asLogical(VirtualFrame frame, String value) {
+        controlVisibility();
         return castLogical(frame, value);
     }
 
     @Specialization
     public RLogicalVector asLogical(RNull vector) {
+        controlVisibility();
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization
     public RLogicalVector asLogical(RLogicalVector vector) {
+        controlVisibility();
         return RDataFactory.createLogicalVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     public RLogicalVector asLogical(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castLogicalVector(frame, vector);
     }
 }

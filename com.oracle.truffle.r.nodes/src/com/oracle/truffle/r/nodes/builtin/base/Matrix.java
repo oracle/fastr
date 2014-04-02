@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * <pre>
  * matrix &lt; -function(data = NA, nrow = 1, ncol = 1, byrow = FALSE, dimnames = NULL)
  * </pre>
- * 
+ *
  * TODO rework as {@code .Internal} to use the wrapper in {@code matrix.R}.
  */
 @RBuiltin("matrix")
@@ -85,6 +85,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "isByRow")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, int nrowp, int ncolp, @SuppressWarnings("unused") byte byrow, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
         RVector vdata = data.materialize().copy();
         int[] nrowncol = computeNrowNcol(vdata, ncolp, nrowp);
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol));
@@ -93,6 +94,7 @@ public abstract class Matrix extends RBuiltinNode {
     @Specialization(guards = "!isByRow")
     public RAbstractVector matrix(@SuppressWarnings("unused") VirtualFrame frame, RAbstractVector data, int nrowp, int ncolp, @SuppressWarnings("unused") byte byrow,
                     @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
         RVector vdata = data.materialize().copy();
         int[] nrowncol = computeNrowNcol(vdata, nrowp, ncolp);
         return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);

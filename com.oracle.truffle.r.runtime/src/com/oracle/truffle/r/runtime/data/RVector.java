@@ -67,8 +67,8 @@ public abstract class RVector extends RBounded implements RAbstractVector {
                 if (names != RNull.instance) {
                     // since this constructor is for internal use only, the assertion shouldn't fail
                     assert ((RStringVector) names).getLength() == length;
+                    putAttribute(RRuntime.NAMES_ATTR_KEY, names);
                 }
-                putAttribute(RRuntime.NAMES_ATTR_KEY, names);
             }
             if (dimensions != null) {
                 putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));

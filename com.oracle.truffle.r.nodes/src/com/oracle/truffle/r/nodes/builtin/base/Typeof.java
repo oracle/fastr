@@ -33,91 +33,109 @@ public abstract class Typeof extends RBuiltinNode {
 
     @Specialization
     public RStringVector typeof(RNull vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("NULL");
     }
 
     @Specialization
     public RStringVector typeof(byte x) {
+        controlVisibility();
         return RDataFactory.createStringVector("logical");
     }
 
     @Specialization
     public RStringVector typeof(int s) {
+        controlVisibility();
         return RDataFactory.createStringVector("integer");
     }
 
     @Specialization
     public RStringVector typeof(double x) {
+        controlVisibility();
         return RDataFactory.createStringVector("double");
     }
 
     @Specialization
     public RStringVector typeof(RComplex x) {
+        controlVisibility();
         return RDataFactory.createStringVector("complex");
     }
 
     @Specialization
     public RStringVector typeof(RRaw x) {
+        controlVisibility();
         return RDataFactory.createStringVector("raw");
     }
 
     @Specialization
     public RStringVector typeof(String x) {
+        controlVisibility();
         return RDataFactory.createStringVector("character");
     }
 
     @Specialization
     public RStringVector typeof(RIntSequence vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("integer");
     }
 
     @Specialization
     public RStringVector typeof(RLogicalVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("logical");
     }
 
     @Specialization
     public RStringVector typeof(RIntVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("integer");
     }
 
     @Specialization
     public RStringVector typeof(RDoubleVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("double");
     }
 
     @Specialization
     public RStringVector typeof(RStringVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("character");
     }
 
     @Specialization
     public RStringVector typeof(RComplexVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("complex");
     }
 
     @Specialization
     public RStringVector typeof(RRawVector vector) {
+        controlVisibility();
         return RDataFactory.createStringVector("raw");
     }
 
     @Specialization
     public RStringVector typeof(RList list) {
+        controlVisibility();
         return RDataFactory.createStringVector("list");
     }
 
     @Specialization()
     public RStringVector typeof(REnvironment env) {
+        controlVisibility();
         return RDataFactory.createStringVector("environment");
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")
     public RStringVector typeofBuiltin(RFunction obj) {
+        controlVisibility();
         return RDataFactory.createStringVector("builtin");
     }
 
     @Specialization(order = 101, guards = "!isFunctionBuiltin")
     public RStringVector typeofClosure(RFunction obj) {
+        controlVisibility();
         return RDataFactory.createStringVector("closure");
     }
 

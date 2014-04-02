@@ -44,6 +44,7 @@ public abstract class Parse extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public Object parse(RConnection file, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
+        controlVisibility();
         try {
             String[] lines = file.readLines(0);
             RNode node = REngine.parse(coalesce(lines));
@@ -66,6 +67,7 @@ public abstract class Parse extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 100)
     public Object parseGeneric(Object file, Object n, Object text, Object prompt, Object srcFile, Object encoding) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
     }
 }

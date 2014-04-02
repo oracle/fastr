@@ -196,7 +196,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             return specialize(function).execute(frame, function);
         }
 

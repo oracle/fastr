@@ -63,21 +63,25 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(order = 1)
     public int round(int x, @SuppressWarnings("unused") int digits) {
+        controlVisibility();
         return roundOp.op(x);
     }
 
     @Specialization(order = 20, guards = "!hasDigits")
     public double round(double x, @SuppressWarnings("unused") int digits) {
+        controlVisibility();
         return roundOp.op(x);
     }
 
     @Specialization(order = 21, guards = "hasDigits")
     public double roundDigits(double x, int digits) {
+        controlVisibility();
         return roundOp.opd(x, digits);
     }
 
     @Specialization(order = 22, guards = "!hasDigits")
     public RDoubleVector round(RDoubleVector x, int digits) {
+        controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
@@ -89,6 +93,7 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(order = 23, guards = "hasDigits")
     public RDoubleVector roundDigits(RDoubleVector x, int digits) {
+        controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
@@ -100,16 +105,19 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(order = 30, guards = "!hasDigits")
     public RComplex round(RComplex x, @SuppressWarnings("unused") int digits) {
+        controlVisibility();
         return roundOp.op(x.getRealPart(), x.getImaginaryPart());
     }
 
     @Specialization(order = 31, guards = "hasDigits")
     public RComplex roundDigits(RComplex x, int digits) {
+        controlVisibility();
         return roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
     }
 
     @Specialization(order = 32, guards = "!hasDigits")
     public RComplexVector round(RComplexVector x, int digits) {
+        controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
@@ -124,6 +132,7 @@ public abstract class Round extends RBuiltinNode {
 
     @Specialization(order = 33, guards = "hasDigits")
     public RComplexVector roundDigits(RComplexVector x, int digits) {
+        controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {

@@ -66,7 +66,7 @@ public abstract class AccessArrayNode extends RNode {
 
     private Object accessRecursive(VirtualFrame frame, Object vector, Object operand, int recLevel) {
         if (accessRecursive == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             accessRecursive = insert(AccessArrayNodeFactory.create(this.isSubset, null, null, null));
         }
         return executeAccess(frame, vector, recLevel, operand);
@@ -74,7 +74,7 @@ public abstract class AccessArrayNode extends RNode {
 
     private Object castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeFactory.create(null, false, false, true));
         }
         return castVector.executeObject(frame, value);
@@ -82,7 +82,7 @@ public abstract class AccessArrayNode extends RNode {
 
     private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
         if (castPosition == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castPosition = insert(ArrayPositionCastFactory.create(0, 1, false, false, null, null, ConstantNode.create(RNull.instance) /* dummy */, null));
         }
         return castPosition.executeArg(frame, operand, vector, null, operand);
@@ -90,7 +90,7 @@ public abstract class AccessArrayNode extends RNode {
 
     private void initOperatorConvert() {
         if (operatorConverter == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             operatorConverter = insert(OperatorConverterNodeFactory.create(0, 1, false, false, null, ConstantNode.create(RNull.instance) /* dummy */, null));
         }
     }
@@ -538,22 +538,26 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
+    public static int getPositionFromNegative(RList vector, int position, SourceSection sourceSection) {
+        if (vector.getLength() == 1 && position == -1) {
+            // x<-c(1); x[-1] <==> x[0]
+            throw RError.getSelectLessThanOne(sourceSection);
+        } else if (vector.getLength() > 1 && position < -vector.getLength()) {
+            // x<-c(1,2); x[-3] <==> x[1,2]
+            throw RError.getSelectMoreThanOne(sourceSection);
+        } else if (vector.getLength() > 2 && position > -vector.getLength()) {
+            // x<-c(1,2,3); x[-2] <==> x[1,3]
+            throw RError.getSelectMoreThanOne(sourceSection);
+        }
+        assert (vector.getLength() == 2);
+        return position == -1 ? 2 : 1;
+    }
+
     private int getPositionInRecursion(RList vector, int position, int recLevel) {
         if (RRuntime.isNA(position) || position > vector.getLength()) {
             throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
         } else if (position < 0) {
-            if (vector.getLength() == 1 && position == -1) {
-                // x<-c(1); x[-1] <==> x[0]
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-            } else if (vector.getLength() > 1 && position < -vector.getLength()) {
-                // x<-c(1,2); x[-3] <==> x[1,2]
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-            } else if (vector.getLength() > 2 && position > -vector.getLength()) {
-                // x<-c(1,2,3); x[-2] <==> x[1,3]
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-            }
-            assert (vector.getLength() == 2);
-            return position == -1 ? 2 : 1;
+            return getPositionFromNegative(vector, position, getEncapsulatingSourceSection());
         } else if (position == 0) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }

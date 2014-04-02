@@ -38,8 +38,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin({".Internal.Sys.getenv"})
 public abstract class SysGetenv extends RBuiltinNode {
 
-    @Specialization()
+    @Specialization
     public Object sysGetEnv(RAbstractStringVector x, String unset) {
+        controlVisibility();
         Map<String, String> envMap = REnvVars.getMap();
         int len = x.getLength();
         String[] data = new String[len == 0 ? envMap.size() : len];
@@ -71,6 +72,7 @@ public abstract class SysGetenv extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
+        controlVisibility();
         throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }
 

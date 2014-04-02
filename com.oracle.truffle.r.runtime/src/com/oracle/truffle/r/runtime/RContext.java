@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -49,7 +50,7 @@ public final class RContext {
 
         /**
          * Error output with a newline.
-         * 
+         *
          * @param s
          */
         void printErrorln(String s);
@@ -92,6 +93,17 @@ public final class RContext {
     private final RRandomNumberGenerator randomNumberGenerator = new RRandomNumberGenerator();
     private LinkedList<String> evalWarnings;
 
+    /**
+     * Denote whether the result of an expression should be printed in the shell or not.
+     */
+    private boolean resultVisible = true;
+
+    /**
+     * Denote whether the FastR instance is running in headless mode ({@code true}), or in the shell
+     * or test harness ({@code false}).
+     */
+    @CompilationFinal private boolean headless;
+
     private static RBuiltinLookup lookup;
 
     private ConsoleHandler consoleHandler;
@@ -118,13 +130,26 @@ public final class RContext {
     /**
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
-     * 
+     *
      * @param commandArgs
      * @param consoleHandler
      */
-    public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler) {
+    public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
+        singleton.headless = headless;
+    }
+
+    public static boolean isVisible() {
+        return singleton.resultVisible;
+    }
+
+    public static void setVisible(boolean v) {
+        singleton.resultVisible = v;
+    }
+
+    public static boolean isHeadless() {
+        return singleton.headless;
     }
 
     public static RBuiltinLookup getLookup() {

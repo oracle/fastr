@@ -72,11 +72,13 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 10)
     public String substr(String x, int start, int stop) {
+        controlVisibility();
         return substr0(x, start, stop);
     }
 
     @Specialization(order = 11)
     public String substr(String x, double start, double stop) {
+        controlVisibility();
         na.enable(true);
         if (na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
@@ -86,6 +88,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 100)
     public String substr(byte x, double start, double stop) {
+        controlVisibility();
         na.enable(true);
         if (na.check(x)) {
             return RRuntime.STRING_NA;
@@ -95,6 +98,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 101)
     public String substr(String x, byte start, double stop) {
+        controlVisibility();
         na.enable(true);
         if (na.check(start)) {
             return RRuntime.STRING_NA;
@@ -104,6 +108,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 102)
     public String substr(String x, double start, byte stop) {
+        controlVisibility();
         na.enable(true);
         if (na.check(stop)) {
             return RRuntime.STRING_NA;
@@ -113,6 +118,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 103)
     public String substr(String x, RDoubleVector start, RIntVector stop) {
+        controlVisibility();
         return substr(x, start.getDataAt(0), stop.getDataAt(0));
     }
 
@@ -126,11 +132,13 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 50)
     public RStringVector substr(RAbstractStringVector x, int start, int stop) {
+        controlVisibility();
         return substr0(x, start, stop);
     }
 
     @Specialization(order = 53)
     public RStringVector substr(RAbstractStringVector x, int start, RIntVector stop) {
+        controlVisibility();
         String[] res = new String[x.getLength()];
         for (int i = 0, j = 0; i < x.getLength(); ++i, j = Utils.incMod(j, stop.getLength())) {
             res[i] = substr0(x.getDataAt(i), start, stop.getDataAt(j));
@@ -140,11 +148,13 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 61)
     public RStringVector substr(RAbstractStringVector x, double start, double stop) {
+        controlVisibility();
         return substr0(x, (int) start, (int) stop);
     }
 
     @Specialization(order = 62)
     public RStringVector substr(RAbstractStringVector x, RDoubleVector start, double stop) {
+        controlVisibility();
         String[] res = new String[x.getLength()];
         for (int i = 0, j = 0; i < x.getLength(); ++i, j = Utils.incMod(j, start.getLength())) {
             res[i] = substr0(x.getDataAt(i), (int) start.getDataAt(j), (int) stop);
@@ -154,6 +164,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 63)
     public RStringVector substr(RAbstractStringVector x, double start, RDoubleVector stop) {
+        controlVisibility();
         String[] res = new String[x.getLength()];
         for (int i = 0, j = 0; i < x.getLength(); ++i, j = Utils.incMod(j, stop.getLength())) {
             res[i] = substr0(x.getDataAt(i), (int) start, (int) stop.getDataAt(j));
@@ -163,6 +174,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 64)
     public RStringVector substr(RAbstractStringVector x, double start, RIntVector stop) {
+        controlVisibility();
         String[] res = new String[x.getLength()];
         for (int i = 0, j = 0; i < x.getLength(); ++i, j = Utils.incMod(j, stop.getLength())) {
             res[i] = substr0(x.getDataAt(i), (int) start, stop.getDataAt(j));
@@ -172,6 +184,7 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 65)
     public RStringVector substr(RAbstractStringVector x, RDoubleVector start, RDoubleVector stop) {
+        controlVisibility();
         String[] res = new String[x.getLength()];
         for (int i = 0, j = 0, k = 0; i < x.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength())) {
             res[i] = substr0(x.getDataAt(i), (int) start.getDataAt(j), (int) stop.getDataAt(k));
@@ -181,24 +194,28 @@ public abstract class Substr extends RBuiltinNode {
 
     @Specialization(order = 500, guards = "!isStringVector")
     public String substr(VirtualFrame frame, Object x, double start, double stop) {
+        controlVisibility();
         ensureCast();
         return substr((String) castString.executeCast(frame, x), start, stop);
     }
 
     @Specialization(order = 501, guards = "!isStringVector")
     public String substr(VirtualFrame frame, Object x, int start, int stop) {
+        controlVisibility();
         ensureCast();
         return substr((String) castString.executeCast(frame, x), start, stop);
     }
 
     @Specialization(order = 502, guards = "!isStringVector")
     public String substr(VirtualFrame frame, Object x, double start, int stop) {
+        controlVisibility();
         ensureCast();
         return substr((String) castString.executeCast(frame, x), start, stop);
     }
 
     @Specialization(order = 503, guards = "!isStringVector")
     public String substr(VirtualFrame frame, Object x, int start, double stop) {
+        controlVisibility();
         ensureCast();
         return substr((String) castString.executeCast(frame, x), start, stop);
     }
@@ -209,7 +226,7 @@ public abstract class Substr extends RBuiltinNode {
 
     private void ensureCast() {
         if (castString == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeFactory.create(null, false, true, false));
         }
     }

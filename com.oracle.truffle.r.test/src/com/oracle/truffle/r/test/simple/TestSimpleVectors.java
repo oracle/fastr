@@ -369,7 +369,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1,1]<-NULL; x }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
         assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1]<-NULL; x }");
-        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
         assertEvalError("{ x<-1:4; x[1]<-NULL; x }");
         assertEval("{ x<-1:4; x[0]<-NULL; x }");
         assertEval("{ n<-1; n[7]<-42; n }");
@@ -415,7 +414,25 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(list(1,list(42,list(list(143))))); x[[c(1, 2, 2, 1)]]<-7; x }");
         assertEvalError("{ x<-list(list(1,list(42,list(list(143))))); x[[c(1, NA, 2, 1)]]<-7; x }");
         assertEvalError("{ x<-list(list(1,list(42,list(list(143))))); x[[c(1, 2, 2, NA)]]<-7; x }");
+        assertEvalError("{ x<-list(1, list(42)); x[[c(-3, 1)]]<-7; x }");
+        assertEvalError("{ x<-list(1, 2, list(42)); x[[c(-1, 1)]]<-7; x }");
+        assertEval("{ x<-list(1, list(42, 1)); x[[c(-1, -2)]]<-7; x }");
+        assertEvalError("{ x<-list(1, list(42, 1)); x[[c(-1, -3)]]<-7; x }");
+        assertEvalError("{ x<-list(1, list(42, 1, 2)); x[[c(-1, -2)]]<-7; x }");
+        assertEval("{ x<-list(1, list(42)); x[[c(-1, 1)]]<-7; x }");
+        assertEval("{ x<-list(1, list(42)); x[[c(2, 5)]]<-7; x }");
+        assertEval("{ x<-list(1, list(42)); x[c(2, 5)]<-7; x }");
+        assertEval("{ x<-list(1, list(42)); dim(x)<-c(1,2); x[[c(2, 5)]]<-7; x }");
+        assertEval("{ x<-list(1, list(42)); dim(x)<-c(1,2); x[c(2, 5)]<-7; x }");
+        assertEval("{ y<-list(42,7); dim(y)<-c(1:2); attr(y, \"foo\")<-\"foo\"; x<-list(1, y); dim(x)<-c(1,2); x[[c(2, 1)]]<-7; x[2] }");
         assertEval("{ l<-list(1,2,3,4); l[c(1,3)]<-list(NULL); l }");
+        assertEval("{ x<-list(1, list(42)); x[[c(2, 1)]]<-NULL; x }");
+        assertEval("{ x<-list(1, list(42)); x[[c(2, 5)]]<-NULL; x }");
+        assertEval("{ x<-list(1, list(42)); x[[c(-1, 1)]]<-NULL; x }");
+        assertEvalError("{ x <- list() ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x <- list(1) ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x <- list(1,2) ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x <- list(1,2,3) ; x[[NA]] <- NULL ; x }");
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,6,7)] <- NULL ; m }");
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,6,8)] <- NULL ; m }");
         assertEval("{ m <- matrix(list(1,2,3,4,5,6), nrow=3) ; m[c(2,3,7)] <- NULL ; m }");
@@ -447,6 +464,11 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-1:4; x[[0]]<-NULL; x }");
         assertEvalError("{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
         assertEvalError("{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
+        assertEvalError("{ x <- integer() ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x <- c(1) ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
+        assertEvalError("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
     }
 
     @Test
@@ -852,18 +874,12 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- c(\"a\",\"b\") ; z <- b ; b[[3L]] <- \"xx\" ; b }");
 
         assertEval("{ x <- as.list(1:2) ; x[[\"z\"]] <- NULL ; x }");
-    }
 
-    @Test
-    @Ignore
-    public void testScalarUpdateIgnore() {
         assertEval("{ x<-5:1; x[0-2]<-1000; x }");
         assertEval("{ x<-c(); x[[TRUE]] <- 2; x }");
         assertEval("{ x<-1:2; x[[0-2]]<-100; x }");
 
         assertEvalError("{ f <- function() { a[3] <- 4 } ; f() }");
-        assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
-        assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
         assertEvalWarning("{ b <- c(1,2) ; z <- c(10,11) ; attr(z,\"my\") <- 4 ; b[2] <- z ; b }");
         assertEval("{ b <- c(1,2) ; z <- b ; b[-2] <- 3L ; b }");
         assertEval("{ b <- c(1,2) ; z <- b ; b[-10L] <- FALSE ; b }");
@@ -874,7 +890,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(list(TRUE,NA),FALSE) ; f(3,3) }");
         assertEval("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(list(TRUE,NA),FALSE) ; f(list(3),NULL) }");
         assertEval("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(list(TRUE,NA),FALSE) ; f(list(),NULL) }");
-        assertEvalError("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
         assertEval("{ b <- c(\"a\",\"b\") ; z <- b ; b[[-1L]] <- \"xx\" ; b }");
         assertEval("{ b <- c(1,2) ; b[3] <- 2+3i ; b }");
         assertEval("{ b <- c(1+2i,3+4i) ; b[3] <- 2 ; b }");
@@ -911,7 +926,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- list(1,2) ; dim(x) <- c(2,1) ; x[2] <- NULL ; x }");
         assertEval("{ x <- list(1,2) ; dim(x) <- c(2,1) ; x[[2]] <- NULL ; x }");
         assertEvalError("{ x <- list(1,2) ; x[[0]] <- NULL ; x }");
-        assertEvalError("{ x <- list(1,2) ; x[[NA]] <- NULL ; x }");
         assertEval("{ x <- list(1,2) ; x[0] <- NULL ; x }");
         assertEval("{ x <- list(1,2) ; x[NA] <- NULL ; x }");
         assertEval("{ x <- list(1,2) ; x[as.integer(NA)] <- NULL ; x }");
@@ -925,7 +939,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x <- list(3,4) ; x[[-10]] <- NULL ; x }");
         assertEval("{ x <- list(a=3,b=4) ; x[[\"a\"]] <- NULL ; x }");
         assertEval("{ x <- list(a=3,b=4) ; x[\"z\"] <- NULL ; x }");
-        assertEvalError("{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(1:2,\"hi\",3L) ; f(1:2,-2,10) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(1:2,\"hi\",3L) ; f(1:2,2,10) ; f(1:2,as.integer(NA), 10) }");
         assertEvalError("{ x <- 1:2; x[[as.integer(NA)]] <- 10 ; x }");
@@ -936,6 +949,18 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(1:2,\"hi\",3L) ; f(1:2,2,10) ; f(as.list(1:2),1:3, 10) }");
 
         assertEval("{ b <- list(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[3] <- NULL ; b }");
+    }
+
+    @Test
+    @Ignore
+    public void testScalarUpdateIgnore() {
+        // quote and eval are not supported yet
+        assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
+        assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
+
+        // weird problems with fluctuating error messages in GNU R
+        assertEvalError("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
+        assertEvalError("{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
     }
 
     @Test

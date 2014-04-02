@@ -24,6 +24,7 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
+        controlVisibility();
         boolean isWhich = which == RRuntime.LOGICAL_TRUE;
         RStringVector klass = x.getClassHierarchy();
 
@@ -56,16 +57,19 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Specialization
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") RMissing which) {
+        controlVisibility();
         return doesInherit(x, what, RRuntime.LOGICAL_FALSE);
     }
 
     @Specialization
     public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") RAbstractStringVector what, @SuppressWarnings("unused") Object which) {
+        controlVisibility();
         throw RError.getNotLengthOneLogicalVector(getEncapsulatingSourceSection(), RRuntime.WHICH);
     }
 
     @Specialization
     public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") Object what, @SuppressWarnings("unused") Object which) {
+        controlVisibility();
         throw RError.getNotCharacterVector(getEncapsulatingSourceSection(), RRuntime.WHAT);
     }
 }

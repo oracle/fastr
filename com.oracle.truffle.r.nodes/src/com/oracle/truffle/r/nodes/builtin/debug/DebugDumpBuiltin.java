@@ -49,13 +49,19 @@ public abstract class DebugDumpBuiltin extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private static final int FUNCTION_LENGTH_LIMIT = 40;
 
     @Specialization
     public Object dump(RFunction function) {
+        controlVisibility();
         String source = ((RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode()).getSourceCode();
         Utils.dumpFunction("dump: " + (source.length() <= FUNCTION_LENGTH_LIMIT ? source : source.substring(0, FUNCTION_LENGTH_LIMIT) + "..."), function);
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
 }

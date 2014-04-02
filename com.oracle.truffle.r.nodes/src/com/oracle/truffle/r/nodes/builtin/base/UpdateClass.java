@@ -35,8 +35,14 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, RAbstractVector vector, Object o);
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractVector arg, RAbstractVector className) {
+        controlVisibility();
         if (className.getLength() == 0) {
             return setClass(arg, RNull.instance);
         }
@@ -45,6 +51,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(RAbstractVector arg, RStringVector className) {
+        controlVisibility();
         Map<String, Object> attrb = getAttributes(arg);
         attrb.put(RRuntime.CLASS_ATTR_KEY, className);
         return resultVector;
@@ -52,6 +59,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(RAbstractVector arg, @SuppressWarnings("unused") RNull className) {
+        controlVisibility();
         Map<String, Object> attrb = getAttributes(arg);
         if (attrb != null) {
             attrb.remove(RRuntime.CLASS_ATTR_KEY);
@@ -61,6 +69,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractLogicalVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_LOGICAL)) {
             return setClass(arg, RNull.instance);
         }
@@ -69,6 +78,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractStringVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_CHARACTER)) {
             return setClass(arg, RNull.instance);
         }
@@ -77,6 +87,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractComplexVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_COMPLEX)) {
             return setClass(arg, RNull.instance);
         }
@@ -85,6 +96,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractDoubleVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_DOUBLE) || className.equals(RRuntime.TYPE_NUMERIC)) {
             return setClass(arg, RNull.instance);
         }
@@ -93,6 +105,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractIntVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_INTEGER) || className.equals(RRuntime.TYPE_NUMERIC)) {
             return setClass(arg, RNull.instance);
         }
@@ -101,6 +114,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractRawVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_RAW)) {
             return setClass(arg, RNull.instance);
         }
@@ -109,6 +123,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClass(VirtualFrame frame, RList arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_LIST)) {
             return setClass(arg, RNull.instance);
         }
@@ -117,6 +132,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     @Specialization
     public Object setClassHelper(VirtualFrame frame, RAbstractVector arg, String className) {
+        controlVisibility();
         if (className.equals(RRuntime.TYPE_CHARACTER)) {
             initCastString();
             return castStringNode.executeString(frame, arg);
@@ -186,49 +202,49 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     private void initCastString() {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastComplex() {
         if (castComplexNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplexNode = insert(CastComplexNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastDouble() {
         if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastInteger() {
         if (castIntegerNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntegerNode = insert(CastIntegerNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastLogical() {
         if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastRaw() {
         if (castRawNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castRawNode = insert(CastRawNodeFactory.create(null, false, false));
         }
     }
 
     private void initCastList() {
         if (castListNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castListNode = insert(CastListNodeFactory.create(null, false, false));
         }
     }

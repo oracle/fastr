@@ -49,12 +49,13 @@ public class Recall extends RCustomBuiltinNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
+        controlVisibility();
         RFunction function = RArguments.get(frame).getFunction();
         if (function == null) {
             throw RError.getRecallCalledOutsideClosure(getEncapsulatingSourceSection());
         }
         if (callNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(createArgs(arguments[0]))));
             arguments[0] = null;
         }

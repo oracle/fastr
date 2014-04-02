@@ -61,10 +61,15 @@ public class REnvironment {
         this.parent = parent;
         this.name = name;
         this.descriptor = new FrameDescriptor();
-        this.map = size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
+        this.map = newHashMap(size);
         if (!name.equals(UNNAMED)) {
             namedEnvironments.put(name, this);
         }
+    }
+
+    @SlowPath
+    private static LinkedHashMap<String, Object> newHashMap(int size) {
+        return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
     }
 
     public static REnvironment lookup(String name) {

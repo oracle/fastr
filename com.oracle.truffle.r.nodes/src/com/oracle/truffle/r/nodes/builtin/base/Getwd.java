@@ -32,6 +32,7 @@ public abstract class Getwd extends RBuiltinNode {
 
     @Specialization
     public Object getwd() {
+        controlVisibility();
         String result = BaseRFFIFactory.getRFFI().getwd();
         return RDataFactory.createStringVector(result);
     }

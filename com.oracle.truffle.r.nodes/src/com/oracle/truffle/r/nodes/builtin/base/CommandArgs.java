@@ -35,6 +35,7 @@ public abstract class CommandArgs extends RBuiltinNode {
 
     @Specialization
     public RStringVector commandArgs(byte trailingOnly) {
+        controlVisibility();
         return getCommandArgs(trailingOnly == RRuntime.LOGICAL_TRUE);
     }
 
@@ -57,6 +58,7 @@ public abstract class CommandArgs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RStringVector commandArgs(RMissing vector) {
+        controlVisibility();
         return getCommandArgs(false);
     }
 

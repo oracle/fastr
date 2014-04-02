@@ -27,14 +27,19 @@ import java.io.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("readRenviron")
 public abstract class ReadREnviron extends RBuiltinNode {
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization(guards = "lengthOneCVector")
     public Object doReadEnviron(RAbstractStringVector vec) {
+        controlVisibility();
         String path = Utils.tildeExpand(vec.getDataAt(0));
         byte result = RRuntime.LOGICAL_TRUE;
         try {
@@ -45,7 +50,7 @@ public abstract class ReadREnviron extends RBuiltinNode {
         } catch (IOException ex) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
         }
-        return new RInvisible(result);
+        return result;
     }
 
     public static boolean lengthOneCVector(RAbstractStringVector vec) {
@@ -54,6 +59,7 @@ public abstract class ReadREnviron extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object doReadEnvironGeneric(@SuppressWarnings("unused") Object x) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "argument 'x' must be a character string");
     }
 }

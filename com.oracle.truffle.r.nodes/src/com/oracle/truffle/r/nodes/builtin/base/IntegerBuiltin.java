@@ -31,17 +31,20 @@ public abstract class IntegerBuiltin extends RBuiltinNode {
 
     @Specialization
     public Object createIntegerVector(int length) {
+        controlVisibility();
         return RDataFactory.createIntVector(length);
     }
 
     @Specialization
     public Object createIntegerVector(double length) {
+        controlVisibility();
         return RDataFactory.createIntVector((int) length);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object createIntegerVector(RMissing length) {
+        controlVisibility();
         return RDataFactory.createIntVector(0);
     }
 }

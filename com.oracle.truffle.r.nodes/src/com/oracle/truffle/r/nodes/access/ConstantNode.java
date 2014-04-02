@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class ConstantNode extends RNode {
+public abstract class ConstantNode extends RNode implements VisibilityController {
 
     public final Object getValue() {
         return execute(null);
@@ -79,11 +79,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return objectValue;
         }
 
         @Override
         public double executeDouble(VirtualFrame frame) {
+            controlVisibility();
             return doubleValue;
         }
 
@@ -109,21 +111,25 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return logicalValue;
         }
 
         @Override
         public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
+            controlVisibility();
             return intValue;
         }
 
         @Override
         public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
+            controlVisibility();
             return logicalValue;
         }
 
         @Override
         public double executeDouble(VirtualFrame frame) {
+            controlVisibility();
             return doubleValue;
         }
 
@@ -143,16 +149,19 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return objectValue;
         }
 
         @Override
         public int executeInteger(VirtualFrame frame) {
+            controlVisibility();
             return intValue;
         }
 
         @Override
         public double executeDouble(VirtualFrame frame) {
+            controlVisibility();
             return doubleValue;
         }
 
@@ -168,11 +177,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return objectValue;
         }
 
         @Override
         public String executeString(VirtualFrame frame) {
+            controlVisibility();
             return objectValue;
         }
 
@@ -188,11 +199,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public RComplex executeRComplex(VirtualFrame frame) {
+            controlVisibility();
             return complexValue;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return complexValue;
         }
 
@@ -202,11 +215,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
+            controlVisibility();
             return RNull.instance;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return RNull.instance;
         }
     }
@@ -215,11 +230,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
+            controlVisibility();
             return RMissing.instance;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return RMissing.instance;
         }
     }
@@ -228,11 +245,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
+            controlVisibility();
             return EMPTY_OBJECT_ARRAY;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return EMPTY_OBJECT_ARRAY;
         }
     }
@@ -247,11 +266,13 @@ public abstract class ConstantNode extends RNode {
 
         @Override
         public RAbstractVector executeRAbstractVector(VirtualFrame frame) {
+            controlVisibility();
             return vector;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            controlVisibility();
             return vector;
         }
     }

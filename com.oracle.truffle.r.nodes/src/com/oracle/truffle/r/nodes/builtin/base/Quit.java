@@ -52,8 +52,14 @@ public abstract class Quit extends RBuiltinNode {
         return arguments;
     }
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization
     public Object doQuit(final String saveArg, int status, byte runLast) {
+        controlVisibility();
         String save = saveArg;
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
@@ -82,7 +88,7 @@ public abstract class Quit extends RBuiltinNode {
                 switch (response.charAt(0)) {
                     case 'c':
                         consoleHandler.setPrompt("> ");
-                        return new RInvisible(RNull.instance);
+                        return RNull.instance;
                     case 'y':
                         doSave = true;
                         break W;

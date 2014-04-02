@@ -38,6 +38,7 @@ public abstract class Re extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector re(RAbstractComplexVector vector) {
+        controlVisibility();
         double[] result = new double[vector.getLength()];
         check.enable(vector);
         for (int i = 0; i < vector.getLength(); ++i) {
@@ -49,6 +50,7 @@ public abstract class Re extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector re(RAbstractDoubleVector vector) {
+        controlVisibility();
         return (RDoubleVector) vector.copy();
     }
 

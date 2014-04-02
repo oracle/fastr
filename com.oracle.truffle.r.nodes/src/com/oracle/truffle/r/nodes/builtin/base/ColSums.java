@@ -51,6 +51,7 @@ public abstract class ColSums extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector colSums(RIntVector x, @SuppressWarnings("unused") byte narm, @SuppressWarnings("unused") int dims) {
+        controlVisibility();
         assert x.isMatrix();
         int rows = x.getDimensions()[0];
         int cols = x.getDimensions()[1];
@@ -67,6 +68,7 @@ public abstract class ColSums extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector colSums(RLogicalVector x, @SuppressWarnings("unused") byte narm, @SuppressWarnings("unused") int dims) {
+        controlVisibility();
         assert x.isMatrix();
         int rows = x.getDimensions()[0];
         int cols = x.getDimensions()[1];

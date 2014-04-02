@@ -22,11 +22,13 @@ public abstract class IsArray extends RBuiltinNode {
 
     @Specialization
     public byte isType(RAbstractVector vector) {
+        controlVisibility();
         return RRuntime.asLogical(vector.isArray());
     }
 
     @Specialization
     public byte isType(@SuppressWarnings("unused") RNull arg) {
+        controlVisibility();
         return RRuntime.FALSE;
     }
 }

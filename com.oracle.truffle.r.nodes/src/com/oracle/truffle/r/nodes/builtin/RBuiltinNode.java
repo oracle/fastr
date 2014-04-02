@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @NodeField(name = "builtin", type = RBuiltinFactory.class)
 @NodeChild(value = "arguments", type = RNode[].class)
-public abstract class RBuiltinNode extends RCallNode {
+public abstract class RBuiltinNode extends RCallNode implements VisibilityController {
 
     public String getSourceCode() {
         return "<builtin>";
