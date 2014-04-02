@@ -538,22 +538,26 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
+    public static int getPositionFromNegative(RList vector, int position, SourceSection sourceSection) {
+        if (vector.getLength() == 1 && position == -1) {
+            // x<-c(1); x[-1] <==> x[0]
+            throw RError.getSelectLessThanOne(sourceSection);
+        } else if (vector.getLength() > 1 && position < -vector.getLength()) {
+            // x<-c(1,2); x[-3] <==> x[1,2]
+            throw RError.getSelectMoreThanOne(sourceSection);
+        } else if (vector.getLength() > 2 && position > -vector.getLength()) {
+            // x<-c(1,2,3); x[-2] <==> x[1,3]
+            throw RError.getSelectMoreThanOne(sourceSection);
+        }
+        assert (vector.getLength() == 2);
+        return position == -1 ? 2 : 1;
+    }
+
     private int getPositionInRecursion(RList vector, int position, int recLevel) {
         if (RRuntime.isNA(position) || position > vector.getLength()) {
             throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
         } else if (position < 0) {
-            if (vector.getLength() == 1 && position == -1) {
-                // x<-c(1); x[-1] <==> x[0]
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-            } else if (vector.getLength() > 1 && position < -vector.getLength()) {
-                // x<-c(1,2); x[-3] <==> x[1,2]
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-            } else if (vector.getLength() > 2 && position > -vector.getLength()) {
-                // x<-c(1,2,3); x[-2] <==> x[1,3]
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-            }
-            assert (vector.getLength() == 2);
-            return position == -1 ? 2 : 1;
+            return getPositionFromNegative(vector, position, getEncapsulatingSourceSection());
         } else if (position == 0) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }

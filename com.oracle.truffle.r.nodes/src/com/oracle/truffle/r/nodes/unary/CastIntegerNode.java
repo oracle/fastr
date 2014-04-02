@@ -170,94 +170,125 @@ public abstract class CastIntegerNode extends CastNode {
         return idata;
     }
 
-    @Specialization(order = 101, guards = "preserveDimensions")
+    @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doComplexVectorDims(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
-    @Specialization(order = 102, guards = "preserveNames")
+    @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doComplexVectorNames(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
-    @Specialization(order = 103)
+    @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
+    public RIntVector doComplexVectorDimsNames(RComplexVector vector) {
+        int[] result = dataFromComplex(vector);
+        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+    }
+
+    @Specialization(order = 104)
     public RIntVector doComplexVector(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
-    @Specialization(order = 104, guards = "preserveDimensions")
+    @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doStringVectorDims(RStringVector vector) {
         int[] result = dataFromString(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
-    @Specialization(order = 105, guards = "preserveNames")
+    @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doStringVectorNames(RStringVector vector) {
         int[] result = dataFromString(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
-    @Specialization(order = 106)
+    @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
+    public RIntVector doStringVectorDimsNames(RStringVector vector) {
+        int[] result = dataFromString(vector);
+        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+    }
+
+    @Specialization(order = 108)
     public RIntVector doStringVector(RStringVector vector) {
         int[] result = dataFromString(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
-    @Specialization(order = 107, guards = "preserveDimensions")
+    @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doLogicalVectorDims(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
-    @Specialization(order = 108, guards = "preserveNames")
+    @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doLogicalVectorNames(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
-    @Specialization(order = 109)
+    @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
+    public RIntVector doLogicalVectorDimsNames(RLogicalVector vector) {
+        int[] result = dataFromLogical(vector);
+        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+    }
+
+    @Specialization(order = 112)
     public RIntVector doLogicalVector(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
-    @Specialization(order = 110, guards = "preserveDimensions")
+    @Specialization(order = 113, guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doDoubleVectorDims(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
-    @Specialization(order = 111, guards = "preserveNames")
+    @Specialization(order = 114, guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doDoubleVectorNames(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
-    @Specialization(order = 112)
+    @Specialization(order = 115, guards = {"preserveNames", "preserveDimensions"})
+    public RIntVector doDoubleVectorDimsNames(RDoubleVector vector) {
+        check.enable(vector);
+        int[] result = check.convertDoubleVectorToIntData(vector);
+        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+    }
+
+    @Specialization(order = 116)
     public RIntVector doDoubleVector(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
-    @Specialization(order = 113, guards = "preserveDimensions")
+    @Specialization(order = 117, guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doRawVectorDims(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
     }
 
-    @Specialization(order = 114, guards = "preserveNames")
+    @Specialization(order = 118, guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doRawVectorNames(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
     }
 
-    @Specialization(order = 115)
+    @Specialization(order = 119, guards = {"preserveNames", "preserveDimensions"})
+    public RIntVector doRawVectorDimsNames(RRawVector vector) {
+        int[] result = dataFromRaw(vector);
+        return RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+    }
+
+    @Specialization(order = 120)
     public RIntVector doRawVector(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         return RDataFactory.createIntVector(result, check.neverSeenNA());

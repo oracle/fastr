@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.runtime.*;
@@ -35,6 +36,7 @@ public class PositionsArrayNode extends RNode {
     @Children private final RNode[] positions;
     @Children private final OperatorConverterNode[] operatorConverters;
 
+    @ExplodeLoop
     public Object executeEval(VirtualFrame frame, Object vector) {
         Object[] evaluatedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
