@@ -174,55 +174,73 @@ public abstract class CastRawNode extends CastNode {
         return performAbstractIntVector(value);
     }
 
-    @Specialization(order = 101, guards = "preserveDimensions")
+    @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
     public RRawVector doLogicalVectorDims(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         return RDataFactory.createRawVector(bdata, operand.getDimensions());
     }
 
-    @Specialization(order = 102, guards = "preserveNames")
+    @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
     public RRawVector doLogicalVectorNames(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         return RDataFactory.createRawVector(bdata, operand.getNames());
     }
 
-    @Specialization(order = 103)
+    @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
+    public RRawVector doLogicalVectorDimsNames(RLogicalVector operand) {
+        byte[] bdata = dataFromLogical(operand);
+        return RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+    }
+
+    @Specialization(order = 104)
     public RRawVector doLogicalVector(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         return RDataFactory.createRawVector(bdata);
     }
 
-    @Specialization(order = 104, guards = "preserveDimensions")
+    @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
     public RRawVector doStringVectorDims(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         return RDataFactory.createRawVector(bdata, operand.getDimensions());
     }
 
-    @Specialization(order = 105, guards = "preserveNames")
+    @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
     public RRawVector doStringVectorNames(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         return RDataFactory.createRawVector(bdata, operand.getNames());
     }
 
-    @Specialization(order = 106)
+    @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
+    public RRawVector doStringVectorDimsNames(RStringVector operand) {
+        byte[] bdata = dataFromString(operand);
+        return RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+    }
+
+    @Specialization(order = 108)
     public RRawVector doStringVector(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         return RDataFactory.createRawVector(bdata);
     }
 
-    @Specialization(order = 107, guards = "preserveDimensions")
+    @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
     public RRawVector doRawVectorDims(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         return RDataFactory.createRawVector(bdata, operand.getDimensions());
     }
 
-    @Specialization(order = 108, guards = "preserveNames")
+    @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
     public RRawVector doComplexVectorNames(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         return RDataFactory.createRawVector(bdata, operand.getNames());
     }
 
-    @Specialization(order = 109)
+    @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
+    public RRawVector doComplexVectorDimsNames(RComplexVector operand) {
+        byte[] bdata = dataFromComplex(operand);
+        return RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+    }
+
+    @Specialization(order = 112)
     public RRawVector doComplexVector(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         return RDataFactory.createRawVector(bdata);
@@ -264,7 +282,9 @@ public abstract class CastRawNode extends CastNode {
         if (warning) {
             RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
         }
-        if (preserveDimensions()) {
+        if (preserveDimensions() && preserveNames()) {
+            return RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
+        } else if (preserveDimensions()) {
             return RDataFactory.createRawVector(array, value.getDimensions());
         } else if (preserveNames()) {
             return RDataFactory.createRawVector(array, value.getNames());
@@ -288,7 +308,9 @@ public abstract class CastRawNode extends CastNode {
         if (warning) {
             RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
         }
-        if (preserveDimensions()) {
+        if (preserveDimensions() && preserveNames()) {
+            return RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
+        } else if (preserveDimensions()) {
             return RDataFactory.createRawVector(array, value.getDimensions());
         } else if (preserveNames()) {
             return RDataFactory.createRawVector(array, value.getNames());

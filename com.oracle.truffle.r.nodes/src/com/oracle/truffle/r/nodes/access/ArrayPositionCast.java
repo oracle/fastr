@@ -511,6 +511,7 @@ public abstract class ArrayPositionCast extends RNode {
                 for (int j = 0; j < names.getLength(); j++) {
                     if (operand.equals(names.getDataAt(j))) {
                         position = j + 1;
+                        break;
                     }
                 }
                 if (position == -1) {

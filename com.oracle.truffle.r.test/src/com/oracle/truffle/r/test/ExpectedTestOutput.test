@@ -42501,6 +42501,22 @@ Error in `[[<-`(`*tmp*`, c(7, 8), value = c(42, 43)) :
    7    7    7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x <- list() ; x[[NA]] <- NULL ; x }
+Error in x[[NA]] <- NULL : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x <- list(1) ; x[[NA]] <- NULL ; x }
+Error in x[[NA]] <- NULL : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x <- list(1,2) ; x[[NA]] <- NULL ; x }
+Error in x[[NA]] <- NULL : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x <- list(1,2,3) ; x[[NA]] <- NULL ; x }
+Error in x[[NA]] <- NULL : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-1:2; dim(x)<-c(1,2); u<-2+2i; x[[u, u]] }
 Error in x[[u, u]] : invalid subscript type 'complex'
 
@@ -43211,11 +43227,6 @@ Error in x[[1, 1]] <- NULL :
   more elements supplied than there are to replace
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
-#{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }
-Error in x[[1]] <- NULL :
-  incompatible types (from NULL to double) in [[ assignment
-
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[NA]] }
 Error in x[[NA]] : subscript out of bounds
 
@@ -43337,6 +43348,140 @@ Error in x[[c(TRUE, FALSE)]] : attempt to select less than one element
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(1); x[[c(TRUE, TRUE)]] }
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, 2, list(42)); x[[c(-1, 1)]]<-7; x }
+Error in x[[c(-1, 1)]] <- 7 : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); dim(x)<-c(1,2); x[[c(2, 5)]]<-7; x }
+     [,1] [,2]
+[1,] 1    List,5
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); dim(x)<-c(1,2); x[c(2, 5)]<-7; x }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 7
+
+[[3]]
+NULL
+
+[[4]]
+NULL
+
+[[5]]
+[1] 7
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[[c(-1, 1)]]<-7; x }
+[[1]]
+[1] 1
+
+[[2]]
+[[2]][[1]]
+[1] 7
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[[c(-1, 1)]]<-NULL; x }
+[[1]]
+[1] 1
+
+[[2]]
+list()
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[[c(-3, 1)]]<-7; x }
+Error in x[[c(-3, 1)]] <- 7 : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[[c(2, 1)]]<-NULL; x }
+[[1]]
+[1] 1
+
+[[2]]
+list()
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[[c(2, 5)]]<-7; x }
+[[1]]
+[1] 1
+
+[[2]]
+[[2]][[1]]
+[1] 42
+
+[[2]][[2]]
+NULL
+
+[[2]][[3]]
+NULL
+
+[[2]][[4]]
+NULL
+
+[[2]][[5]]
+[1] 7
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[[c(2, 5)]]<-NULL; x }
+[[1]]
+[1] 1
+
+[[2]]
+[[2]][[1]]
+[1] 42
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42)); x[c(2, 5)]<-7; x }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 7
+
+[[3]]
+NULL
+
+[[4]]
+NULL
+
+[[5]]
+[1] 7
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42, 1)); x[[c(-1, -2)]]<-7; x }
+[[1]]
+[1] 1
+
+[[2]]
+[[2]][[1]]
+[1] 7
+
+[[2]][[2]]
+[1] 1
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42, 1)); x[[c(-1, -3)]]<-7; x }
+Error in x[[c(-1, -3)]] <- 7 : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(1, list(42, 1, 2)); x[[c(-1, -2)]]<-7; x }
+Error in x[[c(-1, -2)]] <- 7 : attempt to select more than one element
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(1,2,3); x[[-1]] }
@@ -43573,6 +43718,15 @@ Error in x[[c(1, 2, 2, NA)]] <- 7 :
 #{ x<-list(list(1,list(42,list(list(143))))); x[[c(1, NA, 2, 1)]]<-7; x }
 Error in `[[<-`(`*tmp*`, c(1, NA, 2, 1), value = 7) :
   no such index at level 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ y<-list(42,7); dim(y)<-c(1:2); attr(y, "foo")<-"foo"; x<-list(1, y); dim(x)<-c(1,2); x[[c(2, 1)]]<-7; x[2] }
+[[1]]
+     [,1] [,2]
+[1,] 7    7
+attr(,"foo")
+[1] "foo"
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMultiDimScalarIndex
 #{ x<-1:8; dim(x)<-c(2,2,2); dim(x[,0,]) }
@@ -45732,12 +45886,63 @@ integer(0)
 [1]  1 13  3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+# { x <- as.raw(c(10,11)) ; x["a"] <- NA ; x }
+Error in x["a"] <- NA :
+  incompatible types (from logical to raw) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+# { x <- c(a=1+2i, b=3+4i) ; x["a"] <- as.raw(13) ; x }
+Error in x["a"] <- as.raw(13) :
+  incompatible types (from raw to complex) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ a <- c(1L,2L,3L); a <- 1:5; a[3] <- TRUE; a }
 [1] 1 2 1 4 5
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(1) ; b[[-3]] <- as.raw(13) ; b }
+Error in b[[-3]] <- as.raw(13) : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2)) ; b[3] <- 3 ; b }
+Error in b[3] <- 3 :
+  incompatible types (from double to raw) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2)) ; b[3] <- as.raw(13) ; b }
+[1] 01 02 0d
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2)) ; b[[-1]] <- as.raw(13) ; b }
+[1] 01 0d
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2)) ; b[[-2]] <- as.raw(13) ; b }
+[1] 0d 02
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2)) ; b[[-3]] <- as.raw(13) ; b }
+Error in b[[-3]] <- as.raw(13) : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2)) ; b[as.double(NA)] <- as.raw(13) ; b }
+[1] 01 02
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- as.raw(c(1,2,3)) ; b[[-2]] <- as.raw(13) ; b }
+Error in b[[-2]] <- as.raw(13) : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c("a","b") ; z <- b ; b[[-1L]] <- "xx" ; b }
+[1] "a"  "xx"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c("a","b") ; z <- b ; b[[3L]] <- "xx" ; b }
 [1] "a"  "b"  "xx"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(1+2i,3+4i) ; b[3] <- 2 ; b }
+[1] 1+2i 3+4i 2+0i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c(1,2) ; b[0L] <- 3 ; b }
@@ -45746,6 +45951,15 @@ integer(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c(1,2) ; b[0] <- 1+2i ; b }
 [1] 1+0i 2+0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(1,2) ; b[3] <- 2+3i ; b }
+[1] 1+0i 2+0i 2+3i
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(1,2) ; b[3] <- as.raw(13) ; b }
+Error in b[3] <- as.raw(13) :
+  incompatible types (from raw to double) in subassignment type fix
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c(1,2) ; b[5L] <- 3 ; b }
@@ -45772,12 +45986,27 @@ integer(0)
 [1]  1 13
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(1,2) ; z <- b ; b[-10L] <- FALSE ; b }
+[1] 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(1,2) ; z <- b ; b[-2] <- 3L ; b }
+[1] 3 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c(1,2) ; z <- b ; b[3L] <- 3L ; b }
 [1] 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c(1,2) ; z <- b ; b[3L] <- FALSE ; b }
 [1] 1 2 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(1,2) ; z <- c(10,11) ; attr(z,"my") <- 4 ; b[2] <- z ; b }
+[1]  1 10
+Warning message:
+In b[2] <- z :
+  number of items to replace is not a multiple of replacement length
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ b <- c(1L,2L) ; b[0] <- 13L ; b }
@@ -45792,12 +46021,99 @@ integer(0)
 [1]  1  2 13
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(TRUE,NA) ; b[3] <- FALSE ; b }
+[1]  TRUE    NA FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(TRUE,NA) ; z <- b ; b[-10L] <- FALSE ; b }
+[1] FALSE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- c(TRUE,NA) ; z <- b ; b[4L] <- FALSE ; b }
+[1]  TRUE    NA    NA FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- list(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[3] <- NULL ; b }
+[[1]]
+[1] 1+2i
+
+[[2]]
+[1] 3+4i
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- list(TRUE,NA) ; z <- b ; b[[-1L]] <- FALSE ; b }
+[[1]]
+[1] TRUE
+
+[[2]]
+[1] FALSE
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ b <- list(TRUE,NA) ; z <- b ; b[[4L]] <- FALSE ; b }
+[[1]]
+[1] TRUE
+
+[[2]]
+[1] NA
+
+[[3]]
+NULL
+
+[[4]]
+[1] FALSE
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function() { a[3] <- 4 } ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i) { b[i] <- 1 } ; f(1:3,2) ; f(1:2, f) }
+Error in b[i] <- 1 : invalid subscript type 'closure'
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i) { b[i] <- 1 } ; f(1:3,2) ; f(f, 3) }
+Error in b[i] <- 1 : object of type 'closure' is not subsettable
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(1:2,"hi",3L) ; f(1:2,2,10) ; f(1:2,1:3, 10) }
+Error in `[[<-`(`*tmp*`, i, value = 10) :
+  attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(1:2,"hi",3L) ; f(1:2,2,10) ; f(as.list(1:2),1:3, 10) }
+Error in `[[<-`(`*tmp*`, i, value = 10) :
+  recursive indexing failed at level 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(1:2,"hi",3L) ; f(1:2,c(2),10) ; f(1:2,0, 10) }
+Error in b[[i]] <- v : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(1:2,"hi",3L) ; f(1:2,c(2),10) ; f(1:2,2, 10) }
+[1]  1 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[[i]] <- v ; v } ; f(1:2,"hi",3L) ; f(1:2,c(2),10) ; f(1:2,as.integer(NA), 10) }
+Error in b[[i]] <- v : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ f <- function(b,i,v) { b[i] <- v ; b } ; b <- c(10L,2L) ; b[0] <- TRUE ; b }
 [1] 10  2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ f <- function(b,i,v) { b[i] <- v ; b } ; b <- c(10L,2L) ; b[3] <- TRUE ; b }
 [1] 10  2  1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[i] <- v ; b } ; f(1:2,"hi",3L) ; f(1:2,-2,10) }
+[1] 10  2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,i,v) { b[i] <- v ; b } ; f(1:2,"hi",3L) ; f(1:2,2,10) ; f(1:2,as.integer(NA), 10) }
+[1] 1 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ f <- function(b,v) { b[2] <- v ; b } ; f(c(1,2),FALSE) ; f(10,3) }
@@ -45832,8 +46148,27 @@ integer(0)
 [1] 0 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,v) { b[2] <- v } ; f(1:3,2) ; f(1:2, f) }
+Error in b[2] <- v :
+  incompatible types (from closure to integer) in subassignment type fix
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c("a","b"),"d") ; f(1:3,"x") }
 [1] "1" "x" "3"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,v) { b[[2]] <- v ; b } ; f(list(TRUE,NA),FALSE) ; f(3,3) }
+[1] 3 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,v) { b[[2]] <- v ; b } ; f(list(TRUE,NA),FALSE) ; f(list(),NULL) }
+list()
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ f <- function(b,v) { b[[2]] <- v ; b } ; f(list(TRUE,NA),FALSE) ; f(list(3),NULL) }
+[[1]]
+[1] 3
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ f<-function(x,i,v) { x<-1:5; x[i]<-v; x} ; f(c(1L,2L),1,3L) ; f(c(1L,2L),2,3) }
@@ -45852,6 +46187,26 @@ integer(0)
 [1]  1  2  3  4  5 NA NA  1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- 1:2 ; x["a"] <- 10 ; x }
+       a
+ 1  2 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- 1:2 ; x["a"] <- 10+3i ; x }
+                a
+ 1+0i  2+0i 10+3i
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- 1:2 ; x["a"] <- FALSE ; x }
+    a
+1 2 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- 1:2; x[[as.integer(NA)]] <- 10 ; x }
+Error in x[[as.integer(NA)]] <- 10 :
+  attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ x <- 1:3 ; x[2] <- "hi"; x }
 [1] "1"  "hi" "3"
 
@@ -45863,6 +46218,11 @@ integer(0)
 [[2]]
 [1] 2
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- as.raw(c(10,11)) ; x["a"] <- as.raw(13) ; x }
+       a
+0a 0b 0d
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ x <- c(1,2,3) ; x[2] <- "hi"; x }
@@ -45877,12 +46237,180 @@ integer(0)
 [1] "TRUE"  "hi"    "FALSE"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(a=1+2i, b=3+4i) ; x["a"] <- "hi" ; x }
+     a      b
+  "hi" "3+4i"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(a=1+2i, b=3+4i) ; x["a"] <- 10 ; x }
+    a     b
+10+0i  3+4i
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(a=1,a=2) ; x["a"] <- 10L ; x }
+ a  a
+10  2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(aa=TRUE) ; x["a"] <- list(2L) ; x }
+$aa
+[1] TRUE
+
+$a
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(aa=TRUE) ; x[["a"]] <- list(2L) ; x }
+$aa
+[1] TRUE
+
+$a
+$a[[1]]
+[1] 2
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(aa=TRUE,b=FALSE) ; x["a"] <- 2L ; x }
+aa  b  a
+ 1  0  2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- c(b=2,a=3) ; z <- x ; x["a"] <- 1 ; x }
+b a
+2 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1) ; x[[-1]] <- NULL ; x }
+Error in x[[-1]] <- NULL : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1) ; x[[-2]] <- NULL ; x }
+Error in x[[-2]] <- NULL : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; dim(x) <- c(2,1) ; x[2] <- NULL ; x }
+[[1]]
+[1] 1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; dim(x) <- c(2,1) ; x[3] <- NULL ; x }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; dim(x) <- c(2,1) ; x[[2]] <- NULL ; x }
+[[1]]
+[1] 1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; dim(x) <- c(2,1) ; x[[3]] <- NULL ; x }
+     [,1]
+[1,] 1
+[2,] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; x[-1] <- NULL ; x }
+[[1]]
+[1] 1
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; x[0] <- NULL ; x }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; x[NA] <- NULL ; x }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; x[[0]] <- NULL ; x }
+Error in x[[0]] <- NULL : attempt to select less than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2) ; x[as.integer(NA)] <- NULL ; x }
+[[1]]
+[1] 1
+
+[[2]]
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2,3) ; x[[-1]] <- NULL ; x }
+Error in x[[-1]] <- NULL : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(1,2,3) ; x[[-5]] <- NULL ; x }
+Error in x[[-5]] <- NULL : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(3,4) ; x[[-10]] <- NULL ; x }
+Error in x[[-10]] <- NULL : attempt to select more than one element
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(3,4) ; x[[-1]] <- NULL ; x }
+[[1]]
+[1] 3
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(3,4) ; x[[-2]] <- NULL ; x }
+[[1]]
+[1] 4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(a=3,b=4) ; x["z"] <- NULL ; x }
+$a
+[1] 3
+
+$b
+[1] 4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x <- list(a=3,b=4) ; x[["a"]] <- NULL ; x }
+$b
+[1] 4
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x<-1:2; x[[0-2]]<-100; x }
+[1] 100   2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ x<-1:3; x[1]<-100L; x }
 [1] 100   2   3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ x<-1:5; x[2]<-1000; x[3] <- TRUE; x[8]<-3L; x }
 [1]    1 1000    1    4    5   NA   NA    3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x<-5:1; x[0-2]<-1000; x }
+[1] 1000    4 1000 1000 1000
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
+#{ x<-c(); x[[TRUE]] <- 2; x }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testScalarUpdate
 #{ x<-c(1,2,3); x[2L]<-100; x }
