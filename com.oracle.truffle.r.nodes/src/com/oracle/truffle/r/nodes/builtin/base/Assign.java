@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("assign")
-public abstract class Assign extends RBuiltinNode {
+public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Child private WriteVariableNode writeVariableNode;
 
@@ -53,11 +53,6 @@ public abstract class Assign extends RBuiltinNode {
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(-1), ConstantNode.create(RMissing.instance),
                         ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-    }
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
     }
 
     @Specialization(order = 1, guards = "noEnv")

@@ -35,14 +35,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("dim<-")
 @SuppressWarnings("unused")
-public abstract class UpdateDim extends RBuiltinNode {
+public abstract class UpdateDim extends RInvisibleBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {

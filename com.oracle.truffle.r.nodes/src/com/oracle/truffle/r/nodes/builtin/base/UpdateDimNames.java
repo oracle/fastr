@@ -35,15 +35,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("dimnames<-")
 @SuppressWarnings("unused")
-public abstract class UpdateDimNames extends RBuiltinNode {
+public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     @Child CastStringNode castStringNode;
     @Child CastToVectorNode castVectorNode;
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {

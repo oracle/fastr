@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(value = {"rm", "remove"}, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
-public abstract class Rm extends RBuiltinNode {
+public abstract class Rm extends RInvisibleBuiltinNode {
 
     public static Rm create(String name) {
         RNode[] args = getParameterValues0();
@@ -55,11 +55,6 @@ public abstract class Rm extends RBuiltinNode {
     @Override
     public RNode[] getParameterValues() {
         return getParameterValues0();
-    }
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
     }
 
     @Specialization

@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin({"quit", "q"})
-public abstract class Quit extends RBuiltinNode {
+public abstract class Quit extends RInvisibleBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"save", "status", "runLast"};
 
@@ -50,11 +50,6 @@ public abstract class Quit extends RBuiltinNode {
         // status argument is at index 1
         arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
         return arguments;
-    }
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
     }
 
     @Specialization

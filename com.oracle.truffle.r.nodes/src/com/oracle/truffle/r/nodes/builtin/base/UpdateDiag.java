@@ -33,16 +33,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin("diag<-")
-public abstract class UpdateDiag extends RBuiltinNode {
+public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
 
     @Child protected CastDoubleNode castDouble;
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     public static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;

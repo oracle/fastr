@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = "class<-")
-public abstract class UpdateClass extends RBuiltinNode {
+public abstract class UpdateClass extends RInvisibleBuiltinNode {
 
     private RVector resultVector;
     @Child private CastStringNode castStringNode;
@@ -34,11 +34,6 @@ public abstract class UpdateClass extends RBuiltinNode {
     @Child private CastListNode castListNode;
 
     public abstract Object execute(VirtualFrame frame, RAbstractVector vector, Object o);
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     @Specialization
     public Object setClass(VirtualFrame frame, RAbstractVector arg, RAbstractVector className) {

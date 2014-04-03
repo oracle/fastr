@@ -31,18 +31,13 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("length<-")
-public abstract class UpdateLength extends RBuiltinNode {
+public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // length argument is at index 1, and cast to int
         arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
         return arguments;
-    }
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
     }
 
     @Specialization(order = 1, guards = "isLengthOne")

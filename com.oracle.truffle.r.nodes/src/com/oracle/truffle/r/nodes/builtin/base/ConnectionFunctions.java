@@ -59,12 +59,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(".Internal.file")
-    public abstract static class File extends RBuiltinNode {
-        @Override
-        public final boolean getVisibility() {
-            return false;
-        }
-
+    public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
         public Object file(String description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
@@ -91,12 +86,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin("close")
-    public abstract static class Close extends RBuiltinNode {
-        @Override
-        public final boolean getVisibility() {
-            return false;
-        }
-
+    public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
         public Object close(@SuppressWarnings("unused") Object con) {
             controlVisibility();

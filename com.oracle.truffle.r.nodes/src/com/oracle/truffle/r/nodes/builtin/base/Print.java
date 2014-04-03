@@ -39,14 +39,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("print")
 @SuppressWarnings("unused")
-public abstract class Print extends RBuiltinNode {
+public abstract class Print extends RInvisibleBuiltinNode {
 
     @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, false);
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);

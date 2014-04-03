@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+public abstract class RInvisibleBuiltinNode extends RBuiltinNode {
 
-@RBuiltin("set.seed")
-public abstract class SetSeed extends RInvisibleBuiltinNode {
-
-    @Specialization
-    public RNull setseed(int n) {
-        controlVisibility();
-        RContext.getInstance().getRandomNumberGenerator().setSeed(n);
-        return RNull.instance;
+    @Override
+    public final boolean getVisibility() {
+        return false;
     }
 
-    @Specialization
-    public RNull setseed(double d) {
-        controlVisibility();
-        return setseed((int) d);
-    }
 }
