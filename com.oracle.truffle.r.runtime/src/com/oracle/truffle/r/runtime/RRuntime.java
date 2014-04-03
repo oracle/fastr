@@ -596,6 +596,11 @@ public class RRuntime {
         return object.toString();
     }
 
+    @SlowPath
+    public static String toString(StringBuilder sb) {
+        return sb.toString();
+    }
+
     public static boolean isNA(String value) {
         return value == STRING_NA;
     }
