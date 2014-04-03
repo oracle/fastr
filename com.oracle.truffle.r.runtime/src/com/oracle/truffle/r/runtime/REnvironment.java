@@ -63,13 +63,18 @@ public class REnvironment {
         this.descriptor = new FrameDescriptor();
         this.map = newHashMap(size);
         if (!name.equals(UNNAMED)) {
-            namedEnvironments.put(name, this);
+            namedEnvironmentsPut(name, this);
         }
     }
 
     @SlowPath
     private static LinkedHashMap<String, Object> newHashMap(int size) {
         return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
+    }
+
+    @SlowPath
+    private static void namedEnvironmentsPut(String name, REnvironment env) {
+        namedEnvironments.put(name, env);
     }
 
     public static REnvironment lookup(String name) {
@@ -101,6 +106,7 @@ public class REnvironment {
         return map.get(key);
     }
 
+    @SlowPath
     public void put(String key, Object value) {
         map.put(key, value);
     }
