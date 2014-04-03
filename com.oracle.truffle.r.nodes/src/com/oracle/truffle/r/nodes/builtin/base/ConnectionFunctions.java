@@ -60,16 +60,22 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(".Internal.file")
     public abstract static class File extends RBuiltinNode {
+        @Override
+        public final boolean getVisibility() {
+            return false;
+        }
+
         @Specialization
         @SuppressWarnings("unused")
         public Object file(String description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
+            controlVisibility();
             if (!open.equals("r")) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented open mode:" + open);
             }
             String ePath = Utils.tildeExpand(description);
             try {
                 // temporarily return invisible to avoid missing print support
-                return new RInvisible(new FileReadRConnection(ePath));
+                return new FileReadRConnection(ePath);
             } catch (IOException ex) {
                 RContext.getInstance().setEvalWarning("cannot open file '" + description + "': " + ex.getMessage());
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot open connection");
@@ -79,16 +85,23 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Specialization(order = 100)
         public Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
         }
     }
 
     @RBuiltin("close")
     public abstract static class Close extends RBuiltinNode {
+        @Override
+        public final boolean getVisibility() {
+            return false;
+        }
+
         @Specialization
         public Object close(@SuppressWarnings("unused") Object con) {
+            controlVisibility();
             // TODO implement when on.exit doesn't evaluate it's argument
-            return new RInvisible(RNull.instance);
+            return RNull.instance;
         }
     }
 
@@ -96,6 +109,7 @@ public abstract class ConnectionFunctions {
     public abstract static class ReadLines extends RBuiltinNode {
         @Specialization
         public Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {
+            controlVisibility();
             try {
                 String[] lines = con.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
@@ -110,6 +124,7 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Specialization(order = 100)
         public Object readLines(Object con, Object n, Object ok, Object warn, Object encoding) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
         }
     }

@@ -63,7 +63,7 @@ public abstract class Repeat extends RBuiltinNode {
 
     private int coerce0(VirtualFrame frame, Object o) {
         if (convertInt == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             convertInt = insert(ConvertIntFactory.create(null));
         }
         try {
@@ -77,12 +77,14 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public RNull repeat(VirtualFrame frame, RNull value, Object times, Object lengthOut, Object each) {
+        controlVisibility();
         coerceTimesOrLength(frame, times, lengthOut);
         return RNull.instance;
     }
 
     @Specialization
     public RIntVector repeat(VirtualFrame frame, int value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+        controlVisibility();
         int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         int[] array = new int[times];
         Arrays.fill(array, value);
@@ -91,6 +93,7 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector repeat(VirtualFrame frame, double value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+        controlVisibility();
         int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         double[] array = new double[times];
         Arrays.fill(array, value);
@@ -99,6 +102,7 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization
     public RRawVector repeat(VirtualFrame frame, RRaw value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+        controlVisibility();
         int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         byte[] array = new byte[times];
         Arrays.fill(array, value.getValue());
@@ -107,6 +111,7 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization
     public RComplexVector repeat(VirtualFrame frame, RComplex value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+        controlVisibility();
         int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         double[] array = new double[times << 1];
         for (int i = 0; i < times; ++i) {
@@ -119,6 +124,7 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization
     public RStringVector repeat(VirtualFrame frame, String value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+        controlVisibility();
         int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         String[] array = new String[times];
         Arrays.fill(array, value);
@@ -132,54 +138,63 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(order = 10, guards = "!lengthOutGiven")
     @SuppressWarnings("unused")
     public RIntVector repeatT(VirtualFrame frame, RIntVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractIntVectorT(value, coerce0(frame, timesObject));
     }
 
     @Specialization(order = 11, guards = "lengthOutGiven")
     @SuppressWarnings("unused")
     public RIntVector repeatL(VirtualFrame frame, RIntVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractIntVectorL(value, coerce0(frame, lengthOut));
     }
 
     @Specialization(order = 20, guards = "!lengthOutGiven")
     @SuppressWarnings("unused")
     public RIntVector repeatT(VirtualFrame frame, RIntSequence value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractIntVectorT(value, coerce0(frame, timesObject));
     }
 
     @Specialization(order = 21, guards = "lengthOutGiven")
     @SuppressWarnings("unused")
     public RIntVector repeatL(VirtualFrame frame, RIntSequence value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractIntVectorL(value, coerce0(frame, lengthOut));
     }
 
     @Specialization(order = 30, guards = "!lengthOutGiven")
     @SuppressWarnings("unused")
     public RDoubleVector repeatT(VirtualFrame frame, RDoubleVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractDoubleVectorT(value, coerce0(frame, timesObject));
     }
 
     @Specialization(order = 31, guards = "lengthOutGiven")
     @SuppressWarnings("unused")
     public RDoubleVector repeatL(VirtualFrame frame, RDoubleVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractDoubleVectorL(value, coerce0(frame, lengthOut));
     }
 
     @Specialization(order = 40, guards = "!lengthOutGiven")
     @SuppressWarnings("unused")
     public RDoubleVector repeatT(VirtualFrame frame, RDoubleSequence value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractDoubleVectorT(value, coerce0(frame, timesObject));
     }
 
     @Specialization(order = 41, guards = "lengthOutGiven")
     @SuppressWarnings("unused")
     public RDoubleVector repeatL(VirtualFrame frame, RDoubleSequence value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         return performAbstractDoubleVectorL(value, coerce0(frame, lengthOut));
     }
 
     @Specialization(order = 50, guards = "!lengthOutGiven")
     @SuppressWarnings("unused")
     public RRawVector repeatT(VirtualFrame frame, RRawVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         int times = coerce0(frame, timesObject);
         int oldLength = value.getLength();
         int length = oldLength * times;
@@ -195,6 +210,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(order = 51, guards = "lengthOutGiven")
     @SuppressWarnings("unused")
     public RRawVector repeatL(VirtualFrame frame, RRawVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         int length = coerce0(frame, lengthOut);
         byte[] array = new byte[length];
         for (int i = 0, j = 0; i < length; ++i, j = Utils.incMod(j, value.getLength())) {
@@ -206,6 +222,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(order = 60, guards = "!lengthOutGiven")
     @SuppressWarnings("unused")
     public RComplexVector repeatT(VirtualFrame frame, RComplexVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         int times = coerce0(frame, timesObject);
         int oldLength = value.getLength();
         int length = value.getLength() * times;
@@ -224,6 +241,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(order = 61, guards = "lengthOutGiven")
     @SuppressWarnings("unused")
     public RComplexVector repeatL(VirtualFrame frame, RComplexVector value, Object timesObject, Object lengthOut, Object each) {
+        controlVisibility();
         int length = coerce0(frame, lengthOut) << 1;
         double[] array = new double[length];
         for (int i = 0, j = 0; i < length; i += 2, j = Utils.incMod(j, value.getLength())) {

@@ -30,14 +30,21 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin("set.seed")
 public abstract class SetSeed extends RBuiltinNode {
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization
     public RNull setseed(int n) {
+        controlVisibility();
         RContext.getInstance().getRandomNumberGenerator().setSeed(n);
         return RNull.instance;
     }
 
     @Specialization
     public RNull setseed(double d) {
+        controlVisibility();
         return setseed((int) d);
     }
 }

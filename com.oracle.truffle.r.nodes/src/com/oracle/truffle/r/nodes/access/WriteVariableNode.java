@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeField(name = "argWrite", type = boolean.class)
-public abstract class WriteVariableNode extends RNode {
+public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
     public abstract boolean isArgWrite();
 
@@ -46,6 +46,11 @@ public abstract class WriteVariableNode extends RNode {
     @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenShared;
     @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenTemporary;
     @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenSequence;
+
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
 
     // the toBeCopied parameter is meant to prevent creation of the shared/non-temp vector; this
     // needed for the implementation of the replacement forms of builtin functions as their last
@@ -158,12 +163,6 @@ public abstract class WriteVariableNode extends RNode {
         }
 
         @Specialization
-        public Object doObject(VirtualFrame frame, RInvisible value) {
-            resolveAndSet(frame, value.get(), FrameSlotKind.Object);
-            return value;
-        }
-
-        @Specialization
         public Object doObject(VirtualFrame frame, Object value) {
             resolveAndSet(frame, value, FrameSlotKind.Object);
             return value;
@@ -187,30 +186,28 @@ public abstract class WriteVariableNode extends RNode {
 
         @Specialization(guards = "isBooleanKind")
         public byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
+            controlVisibility();
             frame.setByte(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isIntegerKind")
         public int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
+            controlVisibility();
             frame.setInt(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isDoubleKind")
         public double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
+            controlVisibility();
             frame.setDouble(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isObjectKind")
-        public Object doObject(VirtualFrame frame, FrameSlot frameSlot, RInvisible value) {
-            super.writeObjectValue(frame, frame, frameSlot, value.get(), isToBeCopied());
-            return value;
-        }
-
-        @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
+            controlVisibility();
             super.writeObjectValue(frame, frame, frameSlot, value, isToBeCopied());
             return value;
         }
@@ -247,6 +244,7 @@ public abstract class WriteVariableNode extends RNode {
 
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
+            controlVisibility();
             if (writeNode.getFrameSlotNode().hasValue(frame, enclosingFrame)) {
                 writeNode.execute(frame, value, enclosingFrame);
             } else {
@@ -256,6 +254,7 @@ public abstract class WriteVariableNode extends RNode {
 
         @Override
         public void execute(VirtualFrame frame, Object value) {
+            controlVisibility();
             assert RArguments.get(frame).getEnclosingFrame() != null;
             execute(frame, value, RArguments.get(frame).getEnclosingFrame());
         }
@@ -285,7 +284,7 @@ public abstract class WriteVariableNode extends RNode {
 
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractWriteSuperVariableNode writeNode;
             if (RArguments.get(enclosingFrame).getEnclosingFrame() == null) {
                 // we've reached the global scope, do unconditional write
@@ -302,7 +301,7 @@ public abstract class WriteVariableNode extends RNode {
 
         @Override
         public void execute(VirtualFrame frame, Object value) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             MaterializedFrame enclosingFrame = RArguments.get(frame).getEnclosingFrame();
             if (enclosingFrame != null) {
                 execute(frame, value, enclosingFrame);
@@ -329,30 +328,28 @@ public abstract class WriteVariableNode extends RNode {
 
         @Specialization(guards = "isBooleanKind")
         public byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            controlVisibility();
             enclosingFrame.setByte(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isIntegerKind")
         public int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            controlVisibility();
             enclosingFrame.setInt(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isDoubleKind")
         public double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            controlVisibility();
             enclosingFrame.setDouble(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isObjectKind")
-        public Object doObject(VirtualFrame frame, RInvisible value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            super.writeObjectValue(frame, enclosingFrame, frameSlot, value.get(), isToBeCopied());
-            return value;
-        }
-
-        @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+            controlVisibility();
             super.writeObjectValue(frame, enclosingFrame, frameSlot, value, isToBeCopied());
             return value;
         }

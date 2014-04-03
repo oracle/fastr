@@ -53,7 +53,7 @@ public abstract class DispatchedCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RStringVector type) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             return specialize(type).execute(frame, type);
         }
 
@@ -133,7 +133,7 @@ public abstract class DispatchedCallNode extends RNode {
         public Object execute(VirtualFrame frame) {
             DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame);
             if (aCallNode == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 aCallNode = insert(RCallNode.createCall(null, aFuncCall.args));
             }
             Object result = aCallNode.execute(frame, aFuncCall.function);

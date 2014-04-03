@@ -53,11 +53,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class DotLibpaths extends RBuiltinNode {
     @Specialization(order = 0)
     public Object libPathsVec(@SuppressWarnings("unused") RMissing missing) {
+        controlVisibility();
         return RDataFactory.createStringVector(LibPaths.dotLibPaths(), RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(order = 1)
     public Object libPathsVec(RAbstractStringVector pathVec) {
+        controlVisibility();
         ArrayList<String> resultsList = new ArrayList<>(pathVec.getLength());
         FileSystem fileSystem = FileSystems.getDefault();
         for (int i = 0; i < resultsList.size(); i++) {
@@ -91,6 +93,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object libPathsGeneric(@SuppressWarnings("unused") Object x) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }
 

@@ -56,12 +56,14 @@ public abstract class Complex extends RBuiltinNode {
     @Specialization(guards = "zeroLength")
     @SuppressWarnings("unused")
     public RComplex complexZeroLength(int lengthOut, double real, double imaginary, int modulus, int argument) {
+        controlVisibility();
         return RDataFactory.createComplex(real, imaginary);
     }
 
     @Specialization(guards = "!zeroLength")
     @SuppressWarnings("unused")
     public RComplexVector complex(int lengthOut, double real, double imaginary, int modulus, int argument) {
+        controlVisibility();
         double[] data = new double[lengthOut << 1];
         for (int i = 0; i < data.length; i += 2) {
             data[i] = real;

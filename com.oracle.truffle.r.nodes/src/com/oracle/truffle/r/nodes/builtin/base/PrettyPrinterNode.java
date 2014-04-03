@@ -568,11 +568,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(frame, operand, values, false, false);
     }
 
-    @Specialization
-    public String prettyPrint(VirtualFrame frame, RInvisible operand, Object listElementName) {
-        return prettyPrintRecursive(frame, operand.get(), listElementName);
-    }
-
     protected static boolean twoDimsOrMore(RAbstractVector v) {
         return v.hasDimensions() && v.getDimensions().length > 1;
     }
@@ -807,11 +802,6 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @Specialization
-        public String prettyPrintListElement(VirtualFrame frame, RInvisible operand, Object listElementName) {
-            return prettyPrintSingleElement(frame, operand, listElementName);
-        }
-
-        @Specialization
         public String prettyPrintListElement(VirtualFrame frame, RAbstractVector operand, Object listElementName) {
             return prettyPrintSingleElement(frame, operand, listElementName);
         }
@@ -865,11 +855,6 @@ public abstract class PrettyPrinterNode extends RNode {
         @Specialization
         public String prettyPrintVectorElement(RRaw operand) {
             return prettyPrint(operand);
-        }
-
-        @Specialization
-        public String prettyPrintVectorElement(RInvisible operand) {
-            return prettyPrintRecursive(operand.get());
         }
 
         @Specialization(order = 1, guards = "!isLengthOne")

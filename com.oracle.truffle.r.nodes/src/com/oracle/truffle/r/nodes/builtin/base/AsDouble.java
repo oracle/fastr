@@ -41,7 +41,7 @@ public abstract class AsDouble extends RBuiltinNode {
 
     private void initCast() {
         if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false));
         }
     }
@@ -73,46 +73,55 @@ public abstract class AsDouble extends RBuiltinNode {
 
     @Specialization
     public double asDouble(double value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization(order = 10)
     public double asDoubleInt(VirtualFrame frame, int value) {
+        controlVisibility();
         return castDouble(frame, value);
     }
 
     @Specialization
     public double asDouble(VirtualFrame frame, byte value) {
+        controlVisibility();
         return castDouble(frame, value);
     }
 
     @Specialization
     public double asDouble(VirtualFrame frame, RComplex value) {
+        controlVisibility();
         return castDouble(frame, value);
     }
 
     @Specialization
     public double asDouble(VirtualFrame frame, String value) {
+        controlVisibility();
         return castDouble(frame, value);
     }
 
     @Specialization
     public RDoubleVector asDouble(RNull vector) {
+        controlVisibility();
         return RDataFactory.createDoubleVector(0);
     }
 
     @Specialization
     public RDoubleVector asDouble(RDoubleVector vector) {
+        controlVisibility();
         return RDataFactory.createDoubleVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
     public RDoubleVector asDouble(RDoubleSequence sequence) {
+        controlVisibility();
         return (RDoubleVector) sequence.createVector();
     }
 
     @Specialization
     public RDoubleVector asDouble(VirtualFrame frame, RIntSequence sequence) {
+        controlVisibility();
         double current = sequence.getStart();
         double[] result = new double[sequence.getLength()];
         for (int i = 0; i < sequence.getLength(); ++i) {
@@ -124,6 +133,7 @@ public abstract class AsDouble extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector asDouble(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castDoubleVector(frame, vector);
     }
 }

@@ -42,7 +42,7 @@ public abstract class AsRaw extends RBuiltinNode {
 
     private void initCast() {
         if (castRawNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castRawNode = insert(CastRawNodeFactory.create(null, false, false));
         }
     }
@@ -76,51 +76,61 @@ public abstract class AsRaw extends RBuiltinNode {
 
     @Specialization
     public RRawVector asRaw(RNull vector) {
+        controlVisibility();
         return RDataFactory.createRawVector(0);
     }
 
     @Specialization
     public RRaw asRaw(VirtualFrame frame, byte logical) {
+        controlVisibility();
         return castRaw(frame, logical);
     }
 
     @Specialization
     public RRaw asRaw(VirtualFrame frame, int value) {
+        controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
     public RRaw asRaw(VirtualFrame frame, double value) {
+        controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
     public RRaw asRaw(VirtualFrame frame, RComplex value) {
+        controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
     public RRaw asRaw(VirtualFrame frame, String value) {
+        controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
     public RRaw asRaw(RRaw value) {
+        controlVisibility();
         return value;
     }
 
     @Specialization
     public RRawVector asRaw(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
         return castRawVector(frame, vector);
     }
 
     @Specialization
     public RRawVector asRaw(RRawVector value) {
+        controlVisibility();
         return RDataFactory.createRawVector(value.getDataCopy());
     }
 
     @Specialization
     public RRawVector asRaw(VirtualFrame frame, RList value) {
+        controlVisibility();
         int length = value.getLength();
         RRawVector result = RDataFactory.createRawVector(length);
         for (int i = 0; i < length; ++i) {

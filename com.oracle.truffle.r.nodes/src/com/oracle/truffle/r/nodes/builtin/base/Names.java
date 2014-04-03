@@ -41,51 +41,61 @@ public abstract class Names extends RBuiltinNode {
 
     @Specialization
     public RNull getNames(RNull vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(byte operand) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(int operand) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(double operand) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(RComplex operand) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(String operand) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(RRaw operand) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull getNames(RFunction function) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "!hasNames")
     public RNull getEmptyNames(RAbstractVector vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "hasNames")
     public RStringVector getNames(RAbstractVector vector) {
+        controlVisibility();
         return (RStringVector) vector.getNames();
     }
 

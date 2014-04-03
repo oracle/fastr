@@ -36,6 +36,7 @@ public abstract class DebugInfoBuiltin extends RBuiltinNode {
     @SlowPath
     @Specialization
     public Object printTree() {
+        controlVisibility();
         RContext.getInstance();
         RBuiltinPackages packages = (RBuiltinPackages) RContext.getLookup();
         StringBuilder b = new StringBuilder();

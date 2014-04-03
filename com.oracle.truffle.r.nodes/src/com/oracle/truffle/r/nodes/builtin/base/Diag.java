@@ -36,26 +36,31 @@ public abstract class Diag extends RBuiltinNode {
 
     @Specialization
     public RNull dim(RNull vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull dim(int vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull dim(double vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
     public RNull dim(byte vector) {
+        controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "isMatrix")
     public RIntVector dimWithDimensions(RIntVector vector) {
+        controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
         int[] result = new int[size];
         int nrow = vector.getDimensions()[0];
@@ -72,6 +77,7 @@ public abstract class Diag extends RBuiltinNode {
 
     @Specialization(guards = "isMatrix")
     public RDoubleVector dimWithDimensions(RDoubleVector vector) {
+        controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
         double[] result = new double[size];
         int nrow = vector.getDimensions()[0];

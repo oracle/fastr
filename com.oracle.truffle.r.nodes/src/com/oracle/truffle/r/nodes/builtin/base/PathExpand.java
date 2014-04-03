@@ -33,6 +33,7 @@ public abstract class PathExpand extends RBuiltinNode {
 
     @Specialization
     public Object doPathExpand(RAbstractStringVector vec) {
+        controlVisibility();
         String[] results = new String[vec.getLength()];
         for (int i = 0; i < results.length; i++) {
             String path = Utils.tildeExpand(vec.getDataAt(i));
@@ -43,6 +44,7 @@ public abstract class PathExpand extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
     }
 

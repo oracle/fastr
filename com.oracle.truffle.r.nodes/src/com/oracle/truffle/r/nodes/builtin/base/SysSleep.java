@@ -30,24 +30,32 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(".Internal.Sys.sleep")
 public abstract class SysSleep extends RBuiltinNode {
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     @Specialization(order = 0)
     public Object sysSleep(double seconds) {
+        controlVisibility();
         sleep(convertToMillis(seconds));
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
     @Specialization(order = 1)
     public Object sysSleep(String secondsString) {
+        controlVisibility();
         long millis = convertToMillis(checkValidString(secondsString));
         sleep(millis);
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
     @Specialization(order = 2, guards = "lengthOne")
     public Object sysSleep(RStringVector secondsVector) {
+        controlVisibility();
         long millis = convertToMillis(checkValidString(secondsVector.getDataAt(0)));
         sleep(millis);
-        return RInvisible.INVISIBLE_NULL;
+        return RNull.instance;
     }
 
     public static boolean lengthOne(RStringVector vec) {
@@ -56,6 +64,7 @@ public abstract class SysSleep extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
+        controlVisibility();
         throw invalid();
     }
 

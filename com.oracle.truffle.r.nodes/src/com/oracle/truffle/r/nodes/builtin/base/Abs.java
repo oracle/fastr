@@ -38,17 +38,20 @@ public abstract class Abs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public RNull abs(RNull x) {
+        controlVisibility();
         throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
     }
 
     @Specialization
     public int abs(int value) {
+        controlVisibility();
         check.enable(value);
         return performInt(value);
     }
 
     @Specialization
     public int abs(byte value) {
+        controlVisibility();
         check.enable(value);
         if (check.check(value)) {
             return RRuntime.INT_NA;
@@ -58,12 +61,14 @@ public abstract class Abs extends RBuiltinNode {
 
     @Specialization
     public double abs(double value) {
+        controlVisibility();
         check.enable(value);
         return performDouble(value);
     }
 
     @Specialization
     public double abs(RComplex value) {
+        controlVisibility();
         check.enable(value);
         return performComplex(value);
     }
@@ -71,23 +76,27 @@ public abstract class Abs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(RRaw vector) {
+        controlVisibility();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(String vector) {
+        controlVisibility();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     @Specialization
     public RIntVector abs(RLogicalVector value) {
+        controlVisibility();
         check.enable(value);
         return doAbs(RClosures.createLogicalToIntVector(value, check));
     }
 
     @Specialization
     public RIntVector abs(RIntVector vector) {
+        controlVisibility();
         return doAbs(vector);
     }
 
@@ -102,6 +111,7 @@ public abstract class Abs extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector abs(RDoubleVector vector) {
+        controlVisibility();
         check.enable(vector);
         double[] doubleVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -112,6 +122,7 @@ public abstract class Abs extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector abs(RComplexVector vector) {
+        controlVisibility();
         check.enable(vector);
         double[] doubleVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -123,12 +134,14 @@ public abstract class Abs extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(RStringVector vector) {
+        controlVisibility();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object abs(RRawVector vector) {
+        controlVisibility();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 

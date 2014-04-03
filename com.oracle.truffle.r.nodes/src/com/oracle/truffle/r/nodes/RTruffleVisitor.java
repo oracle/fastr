@@ -120,7 +120,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     public RNode visit(Function func) {
         ArgumentList argumentsList = func.getSignature();
 
-        REnvironment.Function funcEnvironment = new REnvironment.Function(environment);
+        REnvironment.StaticFunction funcEnvironment = new REnvironment.StaticFunction(environment);
         this.environment = funcEnvironment;
         CallTarget callTarget;
         try {

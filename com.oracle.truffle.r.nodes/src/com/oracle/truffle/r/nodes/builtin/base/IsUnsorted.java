@@ -51,6 +51,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public byte isUnsorted(RDoubleVector x, byte narm, byte strictly) {
+        controlVisibility();
         double last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
             double current = x.getDataAt(k);

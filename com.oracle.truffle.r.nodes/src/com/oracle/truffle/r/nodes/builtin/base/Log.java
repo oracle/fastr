@@ -45,12 +45,6 @@ public abstract class Log extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(Math.E)};
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    public RNull log(RNull x, RNull base) {
-        throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
-    }
-
     @CreateCast("arguments")
     protected static RNode[] castStatusArgument(RNode[] arguments) {
         // base argument is at index 1, and double
@@ -58,18 +52,28 @@ public abstract class Log extends RBuiltinNode {
         return arguments;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    public RNull log(RNull x, RNull base) {
+        controlVisibility();
+        throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
+    }
+
     @Specialization
     public double log(int x, double base) {
+        controlVisibility();
         return logb(x, base);
     }
 
     @Specialization
     public double log(double x, double base) {
+        controlVisibility();
         return logb(x, base);
     }
 
     @Specialization
     public RDoubleVector log(RIntVector vector, double base) {
+        controlVisibility();
         double[] resultVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             int inputValue = vector.getDataAt(i);
@@ -84,6 +88,7 @@ public abstract class Log extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector log(RDoubleVector vector, double base) {
+        controlVisibility();
         double[] doubleVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             double value = vector.getDataAt(i);

@@ -36,6 +36,7 @@ public abstract class Regexp extends RBuiltinNode {
 
     @Specialization
     public Object regexp(String pattern, RAbstractStringVector vector) {
+        controlVisibility();
         int[] result = new int[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
             result[i] = findIndex(pattern, vector.getDataAt(i)).get(0);

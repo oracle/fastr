@@ -35,12 +35,12 @@ public final class FunctionDefinitionNode extends RRootNode {
      * The "parent" of this environment instance is the lexically enclosing environment when the
      * function was defined.
      */
-    private final REnvironment.Function descriptor;
+    private final REnvironment.StaticFunction descriptor;
     private final RNode uninitializedBody;
     @Child private RNode body;
     private final String description;
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment.Function descriptor, RNode body, Object[] parameterNames, String description) {
+    public FunctionDefinitionNode(SourceSection src, REnvironment.StaticFunction descriptor, RNode body, Object[] parameterNames, String description) {
         super(src, parameterNames, descriptor.getDescriptor());
         this.descriptor = descriptor;
         this.uninitializedBody = NodeUtil.cloneNode(body);

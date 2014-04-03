@@ -104,6 +104,7 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment emptyenv() {
+            controlVisibility();
             return REnvironment.emptyEnv();
         }
     }
@@ -113,6 +114,7 @@ public class EnvFunctions {
 
         @Specialization
         public Object globalenv() {
+            controlVisibility();
             return REnvironment.globalEnv();
         }
     }
@@ -125,6 +127,7 @@ public class EnvFunctions {
 
         @Specialization
         public Object baseenv() {
+            controlVisibility();
             return REnvironment.baseEnv();
         }
     }
@@ -134,7 +137,9 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment parentenv(REnvironment env) {
+            controlVisibility();
             if (env == REnvironment.emptyEnv()) {
+                controlVisibility();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
             }
             return env.getParent();
@@ -142,6 +147,7 @@ public class EnvFunctions {
 
         @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
     }
@@ -151,6 +157,7 @@ public class EnvFunctions {
 
         @Specialization
         public byte isEnvironment(Object env) {
+            controlVisibility();
             return env instanceof REnvironment ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
     }
@@ -160,6 +167,7 @@ public class EnvFunctions {
 
         @Specialization(order = 0)
         public Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
+            controlVisibility();
             // Owing to the .Internal, the caller is environment(), so we want the caller of that
             VirtualFrame envFrame = (VirtualFrame) frame.getCaller().unpack();
             PackedFrame pf = envFrame.getCaller();
@@ -169,23 +177,34 @@ public class EnvFunctions {
                 VirtualFrame pfu = (VirtualFrame) pf.unpack();
                 // TODO handle parent properly
                 PackedFrame pfuCaller = pfu.getCaller();
-                return REnvironment.Function.create(pfuCaller == null ? REnvironment.globalEnv() : null, pf);
+                return REnvironment.DynamicFunction.create(pfuCaller == null ? REnvironment.globalEnv() : null, pf);
             }
         }
 
+        /**
+         * Returns the environment that {@code func} was created in.
+         */
         @Specialization(order = 1)
         public REnvironment environment(RFunction func) {
+            controlVisibility();
+            /*
+             * This is the simplest way to access the enclosing environment, as it already exists in
+             * the FunctionDefinitionNode (although, obviously, without a frame). We could instead
+             * use the MaterializedFrame in the RFunction instance and create a new
+             * REnvironment.Function instance. That would remove the need to special case builtins.
+             */
             RootNode rootNode = ((DefaultCallTarget) func.getTarget()).getRootNode();
             if (rootNode instanceof RBuiltinRootNode) {
                 return REnvironment.baseNamespaceEnv();
             } else {
-                // environment where function was defined (lexical scoping)
-                return ((FunctionDefinitionNode) rootNode).getDescriptor().getParent();
+                REnvironment funcEnv = ((FunctionDefinitionNode) rootNode).getDescriptor();
+                return funcEnv.getParent();
             }
         }
 
         @Specialization(order = 100)
         public RNull environment(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             // Not an error according to GnuR
             return RNull.instance;
         }
@@ -196,11 +215,13 @@ public class EnvFunctions {
 
         @Specialization
         public String environmentName(REnvironment env) {
+            controlVisibility();
             return env.getName();
         }
 
         @Specialization(order = 100)
         public String environmentName(@SuppressWarnings("unused") Object env) {
+            controlVisibility();
             // Not an error according to GnuR
             return "";
         }
@@ -230,15 +251,17 @@ public class EnvFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        public RInvisible newEnv(byte hash, RMissing parent, int size) {
+        public REnvironment newEnv(byte hash, RMissing parent, int size) {
+            controlVisibility();
             // FIXME don't ignore hash parameter
-            return new RInvisible(new REnvironment.User(REnvironment.globalEnv(), REnvironment.UNNAMED, size));
+            return new REnvironment.User(REnvironment.globalEnv(), REnvironment.UNNAMED, size);
         }
 
         @Specialization
-        public RInvisible newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+        public REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+            controlVisibility();
             // FIXME don't ignore hash parameter
-            return new RInvisible(new REnvironment.User(parent, REnvironment.UNNAMED, size));
+            return new REnvironment.User(parent, REnvironment.UNNAMED, size);
         }
     }
 
@@ -257,6 +280,7 @@ public class EnvFunctions {
     public abstract static class ParentFrame extends RBuiltinNode {
         @Specialization
         public Object parentFrame(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
             return RNull.instance;
         }
     }

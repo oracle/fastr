@@ -149,7 +149,7 @@ public abstract class BinaryArithmetic extends Operation {
             try {
                 return ExactMath.addExact(left, right);
             } catch (ArithmeticException e) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new AddOverflow());
                 return INT_NA;
             }
@@ -193,7 +193,7 @@ public abstract class BinaryArithmetic extends Operation {
             try {
                 return ExactMath.subtractExact(left, right);
             } catch (ArithmeticException e) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new SubtractOverflow());
                 return INT_NA;
             }
@@ -235,7 +235,7 @@ public abstract class BinaryArithmetic extends Operation {
             try {
                 return ExactMath.multiplyExact(left, right);
             } catch (ArithmeticException e) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new MultiplyOverflow());
                 return INT_NA;
             }
@@ -256,7 +256,7 @@ public abstract class BinaryArithmetic extends Operation {
             double[] interm = new double[4];
             complexMult(leftReal, leftImag, rightReal, rightImag, res, interm);
             if (Double.isNaN(res[0]) && Double.isNaN(res[1])) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 MultiplyNaN multNaN = new MultiplyNaN();
                 replace(multNaN);
                 return MultiplyNaN.handleNaN(leftReal, leftImag, rightReal, rightImag, res, interm);
@@ -525,7 +525,7 @@ public abstract class BinaryArithmetic extends Operation {
             if (isFinite(a) && isFinite(b)) {
                 return Math.pow(a, b);
             }
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             return replace(new PowFull()).op(a, b);
         }
 
@@ -560,7 +560,7 @@ public abstract class BinaryArithmetic extends Operation {
         protected void ensurePowKNodes() {
             // all or nothing: checking just one is sufficient
             if (mult == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 mult = insert(new Multiply());
                 cpow2 = insert(new CPow2());
             }
@@ -568,14 +568,14 @@ public abstract class BinaryArithmetic extends Operation {
 
         protected void ensurePow2() {
             if (cpow2 == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 cpow2 = insert(new CPow2());
             }
         }
 
         private void ensureChypot() {
             if (chypot == null) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 chypot = insert(new CHypot());
             }
         }
@@ -583,7 +583,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             if (rightImag == 0.0) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (rightReal == 0.0) {
                     return replace(new Pow0()).op(leftReal, leftImag, rightReal, rightImag);
                 } else if (rightReal == 1.0) {
@@ -705,7 +705,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             if (rightImag != 0.0 || ((int) rightReal) != rightReal) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
             ensurePowKNodes();
@@ -719,7 +719,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             if (rightImag != 0.0 || rightReal != 0.0) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
             return RDataFactory.createComplex(1.0, 0.0);
@@ -732,7 +732,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             if (rightImag != 0.0 || rightReal != 1.0) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
             return RDataFactory.createComplex(leftReal, leftImag);
@@ -745,7 +745,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             if (rightImag != 0.0 || rightReal != 2.0) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
             ensurePow2();
@@ -762,7 +762,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             if (rightImag != 0.0 || rightReal >= 0.0) {
-                CompilerDirectives.transferToInterpreter();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
             RComplex r = pow.op(leftReal, leftImag, -rightReal, 0.0); // x^(-k)

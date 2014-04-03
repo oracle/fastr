@@ -54,6 +54,7 @@ public abstract class Exists extends RBuiltinNode {
     @Specialization(order = 10, guards = "noEnv")
     @SuppressWarnings("unused")
     public byte existsString(VirtualFrame frm, String name, Object where, RMissing envir, Object frame, String mode, byte inherits) {
+        controlVisibility();
         return frm.getFrameDescriptor().findFrameSlot(name) != null || (inherits == RRuntime.LOGICAL_TRUE && findEnclosing(RArguments.get(frm).getEnclosingFrame(), name)) ? RRuntime.LOGICAL_TRUE
                         : RRuntime.asLogical(inherits == RRuntime.LOGICAL_TRUE && packageLookup(name));
     }
@@ -61,6 +62,7 @@ public abstract class Exists extends RBuiltinNode {
     @Specialization(order = 11)
     @SuppressWarnings("unused")
     public byte existsStringEnv(String name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
+        controlVisibility();
         if (inherits == RRuntime.LOGICAL_FALSE) {
             return RRuntime.asLogical(where.get(name) != null);
         }
@@ -74,6 +76,7 @@ public abstract class Exists extends RBuiltinNode {
 
     @Specialization(order = 12)
     public byte existsStringEnv(RStringVector name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
+        controlVisibility();
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
     }
 

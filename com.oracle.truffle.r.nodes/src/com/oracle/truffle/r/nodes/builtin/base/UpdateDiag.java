@@ -39,6 +39,11 @@ public abstract class UpdateDiag extends RBuiltinNode {
 
     @Child protected CastDoubleNode castDouble;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     public static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
@@ -60,17 +65,20 @@ public abstract class UpdateDiag extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 0, guards = "!isMatrix")
     public RIntVector updateDiagNoMatrix(RAbstractVector vector, RAbstractVector valueVector) {
+        controlVisibility();
         throw RError.getOnlyMatrixDiagonals(this.getEncapsulatingSourceSection());
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 1, guards = {"isMatrix", "!correctReplacementLength"})
     public RIntVector updateDiagReplacementDiagonalLength(RAbstractVector vector, RAbstractVector valueVector) {
+        controlVisibility();
         throw RError.getReplacementDiagonalLength(this.getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 11, guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
+        controlVisibility();
         RIntVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RIntVector) vector.copy();
@@ -88,6 +96,7 @@ public abstract class UpdateDiag extends RBuiltinNode {
 
     @Specialization(order = 12, guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
+        controlVisibility();
         RDoubleVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RDoubleVector) vector.copy();
@@ -105,8 +114,9 @@ public abstract class UpdateDiag extends RBuiltinNode {
 
     @Specialization(order = 13, guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
+        controlVisibility();
         if (castDouble == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, false, false));
         }
         RDoubleVector resultVector = (RDoubleVector) castDouble.executeDoubleVector(frame, vector);

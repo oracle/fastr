@@ -48,6 +48,7 @@ public abstract class Outer extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 1, guards = "functionIsPlus")
     public RIntVector outerPlus(RAbstractIntVector x, RAbstractIntVector y, String function) {
+        controlVisibility();
         int[] dimX = x.getDimensions();
         int[] dimY = y.getDimensions();
         int[] result = new int[dimProd(dimX) * dimProd(dimY)];
@@ -70,6 +71,7 @@ public abstract class Outer extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 20, guards = "functionIsMinus")
     public RIntVector outerMinus(RAbstractIntVector x, RAbstractIntVector y, String function) {
+        controlVisibility();
         int[] dimX = x.getDimensions();
         int[] dimY = y.getDimensions();
         int[] result = new int[dimProd(dimX) * dimProd(dimY)];
@@ -92,6 +94,7 @@ public abstract class Outer extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 21, guards = "functionIsMinus")
     public RDoubleVector outerMinus(RAbstractDoubleVector x, RAbstractDoubleVector y, String function) {
+        controlVisibility();
         int[] dimX = x.getDimensions();
         int[] dimY = y.getDimensions();
         int lengthX = dimX == null ? x.getLength() : dimProd(dimX);
@@ -124,6 +127,7 @@ public abstract class Outer extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 30, guards = "functionIsLt")
     public RLogicalVector outerLt(RAbstractDoubleVector x, RAbstractDoubleVector y, String function) {
+        controlVisibility();
         int[] dimX = x.getDimensions();
         int[] dimY = y.getDimensions();
         int lengthX = dimX == null ? x.getLength() : dimProd(dimX);
@@ -156,6 +160,7 @@ public abstract class Outer extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 41, guards = "functionIsMult")
     public RDoubleVector outerMult(RAbstractDoubleVector x, RAbstractDoubleVector y, String function) {
+        controlVisibility();
         return outerMultImpl(x, y);
     }
 

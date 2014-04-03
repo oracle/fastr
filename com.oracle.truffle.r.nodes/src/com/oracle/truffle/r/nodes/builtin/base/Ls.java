@@ -49,14 +49,16 @@ public abstract class Ls extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, RMissing pattern) {
+        controlVisibility();
         return name.ls(allNames == RRuntime.LOGICAL_TRUE, null);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
+        controlVisibility();
         // this is the ls() specialisation
-        return REnvironment.Function.createLsCurrent(frame).ls(allNames == RRuntime.LOGICAL_TRUE, null);
+        return REnvironment.DynamicFunction.createLsCurrent(frame).ls(allNames == RRuntime.LOGICAL_TRUE, null);
     }
 
 }

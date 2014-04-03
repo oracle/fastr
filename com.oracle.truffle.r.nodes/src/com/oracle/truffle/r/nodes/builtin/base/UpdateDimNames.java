@@ -40,9 +40,14 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Child CastStringNode castStringNode;
     @Child CastToVectorNode castVectorNode;
 
+    @Override
+    public final boolean getVisibility() {
+        return false;
+    }
+
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, true, true, false));
         }
         return castStringNode.executeCast(frame, o);
@@ -50,7 +55,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVectorNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeFactory.create(null, false, false, false));
         }
         return castVectorNode.executeRAbstractVector(frame, value).materialize();
@@ -74,6 +79,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
         v.setDimNames(null, getEncapsulatingSourceSection());
+        controlVisibility();
         return v;
     }
 
@@ -81,6 +87,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     public RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(null, getEncapsulatingSourceSection());
+        controlVisibility();
         return v;
     }
 
@@ -88,11 +95,13 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
+        controlVisibility();
         return v;
     }
 
-    @Generic
+    @Specialization
     public Object updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
+        controlVisibility();
         throw RError.getDimnamesList(getEncapsulatingSourceSection());
     }
 

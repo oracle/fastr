@@ -39,6 +39,7 @@ public abstract class ProcTime extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector procTime() {
+        controlVisibility();
         double[] data = new double[5];
         long nowInNanos = RRuntime.elapsedTimeInNanos();
         if (bean == null) {

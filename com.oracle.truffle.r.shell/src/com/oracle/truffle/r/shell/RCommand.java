@@ -111,7 +111,7 @@ public class RCommand {
             is.read(bytes);
             String content = new String(bytes);
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
-            VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler);
+            VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
             REngine.parseAndEval(content, frame, true);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
@@ -122,7 +122,7 @@ public class RCommand {
     private static void readEvalPrint(boolean isInteractive, ConsoleReader console, String[] commandArgs) {
         System.out.println(RRuntime.WELCOME_MESSAGE);
         try {
-            VirtualFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console));
+            VirtualFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
             for (;;) {
                 String line = console.readLine();
                 if (line == null) {

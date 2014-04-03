@@ -53,6 +53,7 @@ public abstract class Match extends RBuiltinNode {
     @Specialization(order = 10)
     @SuppressWarnings("unused")
     public byte match(double x, RDoubleVector table, int nomatch, Object incomparables) {
+        controlVisibility();
         for (int k = 0; k < table.getLength(); ++k) {
             if (eq.op(x, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
                 return RRuntime.LOGICAL_TRUE;
@@ -64,6 +65,7 @@ public abstract class Match extends RBuiltinNode {
     @Specialization(order = 11)
     @SuppressWarnings("unused")
     public RLogicalVector match(RDoubleVector x, RDoubleVector table, int nomatch, Object incomparables) {
+        controlVisibility();
         byte[] result = new byte[x.getLength()]; // pre-initialised with LOGICAL_FALSE (0)
         for (int i = 0; i < result.length; ++i) {
             double xx = x.getDataAt(i);
@@ -80,6 +82,7 @@ public abstract class Match extends RBuiltinNode {
     @Specialization(order = 20)
     @SuppressWarnings("unused")
     public byte match(String x, RStringVector table, int nomatch, Object incomparables) {
+        controlVisibility();
         for (int k = 0; k < table.getLength(); ++k) {
             if (eq.op(x, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
                 return RRuntime.LOGICAL_TRUE;
@@ -91,6 +94,7 @@ public abstract class Match extends RBuiltinNode {
     @Specialization(order = 21)
     @SuppressWarnings("unused")
     public RLogicalVector match(RStringVector x, RStringVector table, int nomatch, Object incomparables) {
+        controlVisibility();
         byte[] result = new byte[x.getLength()]; // pre-initialised with LOGICAL_FALSE (0)
         for (int i = 0; i < result.length; ++i) {
             String xx = x.getDataAt(i);

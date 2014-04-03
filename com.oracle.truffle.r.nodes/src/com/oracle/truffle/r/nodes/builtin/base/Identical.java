@@ -40,6 +40,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
+        controlVisibility();
         return RDataFactory.createLogicalVectorFromScalar(x == y);
     }
 
@@ -49,6 +50,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
+        controlVisibility();
         return RDataFactory.createLogicalVectorFromScalar(x.equals(y));
     }
 
@@ -58,6 +60,7 @@ public abstract class Identical extends RBuiltinNode {
                     byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
+        controlVisibility();
         boolean truth = numEq == RRuntime.LOGICAL_TRUE ? x == y : Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y);
         return RDataFactory.createLogicalVectorFromScalar(truth);
     }
@@ -68,6 +71,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
+        controlVisibility();
         // reference equality for environments
         return RDataFactory.createLogicalVectorFromScalar(x == y);
     }
@@ -78,6 +82,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented or invalid argument types to 'identical'");
     }
 

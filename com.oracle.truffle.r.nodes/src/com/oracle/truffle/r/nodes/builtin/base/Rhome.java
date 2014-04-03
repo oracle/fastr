@@ -44,11 +44,13 @@ public abstract class Rhome extends RBuiltinNode {
 
     @Specialization(order = 0)
     public Object doRhome(@SuppressWarnings("unused") RMissing component) {
+        controlVisibility();
         return RDataFactory.createStringVector(REnvVars.rHome());
     }
 
     @Specialization(order = 1)
     public Object doRhome(String component) {
+        controlVisibility();
         String rHome = REnvVars.rHome();
         String result = component.equals("home") ? rHome : FileSystems.getDefault().getPath(rHome, component).toAbsolutePath().toString();
         return RDataFactory.createStringVector(result);
@@ -56,6 +58,7 @@ public abstract class Rhome extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object doRhomeGeneric(@SuppressWarnings("unused") Object x) {
+        controlVisibility();
         throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }
 

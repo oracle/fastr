@@ -22,6 +22,7 @@ public abstract class UnClass extends RBuiltinNode {
 
     @Specialization
     public Object unClass(RAbstractVector arg) {
+        controlVisibility();
         if (arg.isObject()) {
             RVector resultVector = arg.materialize();
             if (resultVector.isShared()) {

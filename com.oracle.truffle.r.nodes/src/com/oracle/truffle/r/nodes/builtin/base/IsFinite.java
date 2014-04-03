@@ -33,6 +33,7 @@ public abstract class IsFinite extends RBuiltinNode {
 
     @Specialization
     public RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
+        controlVisibility();
         byte[] b = new byte[vec.getLength()];
         for (int i = 0; i < b.length; i++) {
             b[i] = RRuntime.isFinite(vec.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
@@ -42,6 +43,7 @@ public abstract class IsFinite extends RBuiltinNode {
 
     @Specialization(order = 100)
     public Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument type");
     }
 }

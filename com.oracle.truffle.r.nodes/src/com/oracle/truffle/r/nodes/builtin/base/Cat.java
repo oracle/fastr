@@ -50,13 +50,18 @@ public abstract class Cat extends RBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
+    @Override
+    public boolean getVisibility() {
+        return false;
+    }
+
     @Child private ToString toString;
 
     @CompilationFinal private String currentSep;
 
     private void ensureToString(String sep) {
         if (toString == null || !sep.equals(currentSep)) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             toString = insert(ToStringFactory.create(new RNode[1], getBuiltin()));
             toString.setSeparator(sep);
             toString.setQuotes(false);
@@ -66,19 +71,22 @@ public abstract class Cat extends RBuiltinNode {
 
     @Specialization
     public Object cat(RNull arg, String file, String sep, byte fill, Object labels, byte append) {
-        return RInvisible.INVISIBLE_NULL;
+        controlVisibility();
+        return RNull.instance;
     }
 
     @Specialization
     public Object cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
-        return RInvisible.INVISIBLE_NULL;
+        controlVisibility();
+        return RNull.instance;
     }
 
     @Specialization
     public Object cat(VirtualFrame frame, RAbstractVector arg, String file, String sep, byte fill, Object labels, byte append) {
         ensureToString(sep);
         catIntl(toString.executeString(frame, arg));
-        return RInvisible.INVISIBLE_NULL;
+        controlVisibility();
+        return RNull.instance;
     }
 
     @Specialization
@@ -90,7 +98,8 @@ public abstract class Cat extends RBuiltinNode {
                 catIntl(sep);
             }
         }
-        return RInvisible.INVISIBLE_NULL;
+        controlVisibility();
+        return RNull.instance;
     }
 
     @SlowPath

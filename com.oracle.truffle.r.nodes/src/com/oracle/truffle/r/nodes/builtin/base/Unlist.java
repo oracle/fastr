@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -56,12 +57,14 @@ public abstract class Unlist extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!isNonEmptyList")
     public Object unlistNoop(Object object, byte recursive, byte useNames) {
+        controlVisibility();
         return object;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isNonEmptyList")
     public RAbstractVector unlist(VirtualFrame frame, Object object, byte recursive, byte useNames) {
+        controlVisibility();
         RList list = (RList) object;
 
         int precedence = -1;
@@ -79,7 +82,7 @@ public abstract class Unlist extends RBuiltinNode {
         return unlistHelper(precedence, totalSize, list);
     }
 
-    @com.oracle.truffle.api.CompilerDirectives.SlowPath
+    @SlowPath
     private static RAbstractVector unlistHelper(int precedence, int totalSize, RList list) {
         if (precedence == PrecedenceNode.RAW_PRECEDENCE) {
             byte[] result = new byte[totalSize];

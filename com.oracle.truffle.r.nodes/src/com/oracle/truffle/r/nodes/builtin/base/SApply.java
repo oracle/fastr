@@ -70,6 +70,7 @@ public abstract class SApply extends RBuiltinNode {
 
     @Specialization
     public Object sapply(VirtualFrame frame, RAbstractVector vector, RFunction fun, byte namesEnabled) {
+        controlVisibility();
         int len = vector.getLength();
         RAbstractVector resultVector;
         try {
@@ -200,7 +201,7 @@ public abstract class SApply extends RBuiltinNode {
 
     private Object call(VirtualFrame frame, RFunction function) {
         if (callNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return callNode.execute(frame, function);
@@ -208,7 +209,7 @@ public abstract class SApply extends RBuiltinNode {
 
     private int callInt(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         if (callNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return RTypesGen.RTYPES.expectInteger(callNode.execute(frame, function));
@@ -216,7 +217,7 @@ public abstract class SApply extends RBuiltinNode {
 
     private double callDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         if (callNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return RTypesGen.RTYPES.expectDouble(callNode.execute(frame, function));
@@ -224,7 +225,7 @@ public abstract class SApply extends RBuiltinNode {
 
     private void write(VirtualFrame frame, Object value) {
         if (writeNode == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             writeNode = insert(WriteVariableNode.create(temporaryVariableSymbol, null, false, false));
         }
         writeNode.execute(frame, value);
@@ -232,7 +233,7 @@ public abstract class SApply extends RBuiltinNode {
 
     private RStringVector castString(VirtualFrame frame, RAbstractVector value) {
         if (castString == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeFactory.create(null, false, true, false));
         }
         return (RStringVector) castString.executeStringVector(frame, value);

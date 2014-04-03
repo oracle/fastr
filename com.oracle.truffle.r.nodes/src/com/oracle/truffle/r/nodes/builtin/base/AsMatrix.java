@@ -35,11 +35,13 @@ public abstract class AsMatrix extends RBuiltinNode {
 
     @Specialization(order = 0, guards = "isMatrix")
     public Object doAsMatrix(RAbstractVector vec) {
+        controlVisibility();
         return vec;
     }
 
     @Specialization(order = 100)
     public Object doAsMatrixNot(@SuppressWarnings("unused") Object vec) {
+        controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invslid or unimplemented arg to as.matrix");
     }
 

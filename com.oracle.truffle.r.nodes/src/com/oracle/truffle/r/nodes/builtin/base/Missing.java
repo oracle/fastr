@@ -33,6 +33,7 @@ public abstract class Missing extends IsTypeNode {
     @SuppressWarnings("unused")
     @Specialization
     public byte isType(RMissing value) {
+        controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 }

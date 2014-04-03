@@ -48,6 +48,7 @@ public abstract class Stop extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public Object stop(String msg, byte call, Object domain) {
+        controlVisibility();
         throw RError.getGenericError(null, msg);
     }
 

@@ -36,6 +36,7 @@ public abstract class IsTRUE extends RBuiltinNode {
 
     @Specialization(order = 0)
     public RLogicalVector isTRUE(byte x) {
+        controlVisibility();
         byte xx = x;
         if (x == RRuntime.LOGICAL_NA) {
             xx = RRuntime.LOGICAL_FALSE;
@@ -45,11 +46,13 @@ public abstract class IsTRUE extends RBuiltinNode {
 
     @Specialization(order = 1, guards = "exactlyTrue")
     public RLogicalVector isTRUE(@SuppressWarnings("unused") RLogicalVector x) {
+        controlVisibility();
         return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
     }
 
     @Specialization(order = 100)
     public RLogicalVector isTRUEGeneric(@SuppressWarnings("unused") Object x) {
+        controlVisibility();
         return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE);
     }
 

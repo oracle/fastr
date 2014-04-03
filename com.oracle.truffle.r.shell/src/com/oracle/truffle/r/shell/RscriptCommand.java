@@ -46,7 +46,7 @@ public class RscriptCommand {
             byte[] bytes = new byte[(int) file.length()];
             is.read(bytes);
             String content = new String(bytes);
-            VirtualFrame frame = REngine.initialize(commandArgs, new SysoutConsoleHandler());
+            VirtualFrame frame = REngine.initialize(commandArgs, new SysoutConsoleHandler(), true, true);
             REngine.parseAndEval(content, frame, true);
         } catch (IOException ex) {
             fail("unexpected error reading file input");

@@ -51,11 +51,13 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization
     public String sprintf(String fmt, int x) {
+        controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization
     public RStringVector sprintf(String fmt, RAbstractIntVector x) {
+        controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
             r[k] = format(fmt, x.getDataAt(k));
@@ -65,6 +67,7 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization
     public String sprintf(String fmt, double x) {
+        controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
         if (f == 'x' || f == 'd') {
             if (Math.floor(x) == x) {
@@ -77,6 +80,7 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization
     public RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
+        controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
             r[k] = sprintf(fmt, x.getDataAt(k));
@@ -86,6 +90,7 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization
     public String sprintf(String fmt, Object[] args) {
+        controlVisibility();
         return format(fmt, args);
     }
 
@@ -234,7 +239,7 @@ public abstract class Sprintf extends RBuiltinNode {
      * The grammar understood by the format info extractor is as follows. Note that the
      * leading {@code %} has already been consumed in the caller and is not given in the
      * grammar.
-     * 
+     *
      * formatInfo        = '%'
      *                   | arg? (widthAndPrecision | '-' | '+' | ' ' | '0' | '#')* conversion
      * arg               = number '$'

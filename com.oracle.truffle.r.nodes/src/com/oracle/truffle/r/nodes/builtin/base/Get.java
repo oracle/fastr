@@ -58,6 +58,7 @@ public abstract class Get extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+        controlVisibility();
         String sx = x.getDataAt(0);
         REnvironment env = pos;
         Object r = env.get(sx);
@@ -73,6 +74,7 @@ public abstract class Get extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
+        controlVisibility();
         boolean doesInherit = inherits == RRuntime.LOGICAL_TRUE;
         ReadVariableNode lookup = null;
         if (doesInherit) {

@@ -31,8 +31,8 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * Denotes an R {@code environment}.
  *
- * Environments consist of a frame, or collection of named objects, and a pointer to an enclosing
- * environment.
+ * Abstractly, environments consist of a frame, or collection of named objects, and a pointer to an
+ * enclosing environment.
  *
  * R environments (also) can be named or unnamed. {@code base} is an example of a named environment.
  * Environments associated with function invocations are unnamed. The {@code environmentName}
@@ -57,15 +57,18 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public abstract class REnvironment {
 
+    /**
+     * Tagging interface indicating that the environment class is a component of
+     * {@link #searchListEnvironments}.
+     */
     private interface InSearchList {
-
     }
 
     /**
      * Map is keyed by the simple name and, for packages, currently only contains the "package:xxx"
      * environment.
      */
-    private static final Map<String, REnvironment> namedEnvironments = new HashMap<>();
+    private static final Map<String, REnvironment> searchListEnvironments = new HashMap<>();
 
     public static final String UNNAMED = "";
 
@@ -79,32 +82,47 @@ public abstract class REnvironment {
     private final REnvironment parent;
     private final String name;
 
+    /**
+     * Value returned by {@code emptyenv()}.
+     */
     public static Empty emptyEnv() {
         return emptyEnv;
     }
 
+    /**
+     * Value returned by {@code globalenv()}.
+     */
     public static Global globalEnv() {
         assert globalEnv != null;
         return globalEnv;
     }
 
+    /**
+     * Value returned by {@code baseenv()}. This is the "package:base" environment.
+     */
     public static Base baseEnv() {
         assert basePackageEnv != null;
         return basePackageEnv;
     }
 
+    /**
+     * Value set in {@code .baseNameSpaceEnv} variable. This is the "namespace:base" environment.
+     */
     public static NamespaceBase baseNamespaceEnv() {
         assert baseNamespaceEnv != null;
         return baseNamespaceEnv;
     }
 
+    /**
+     * Value set in the {@code .AutoloadEnv} variable.
+     */
     public static Autoload autoloadEnv() {
         assert autoloadEnv != null;
         return autoloadEnv;
     }
 
     /**
-     * Invoked on startup to setup the values of {@link #globalEnv} and {@link #basePackageEnv}.
+     * Invoked on startup to setup the global values.
      *
      */
     public static void initialize(VirtualFrame globalFrame) {
@@ -123,6 +141,9 @@ public abstract class REnvironment {
         globalEnv.setFrame(globalFrame);
     }
 
+    /**
+     * Data for the {@code search} function.
+     */
     public static String[] searchPath() {
         if (searchPath == null) {
             searchPath = new String[]{".GlobalEnv", "Autoloads", "package:base"};
@@ -130,16 +151,8 @@ public abstract class REnvironment {
         return searchPath;
     }
 
-    protected REnvironment(REnvironment parent, String name) {
-        this.parent = parent;
-        this.name = name;
-        if (!name.equals(UNNAMED) && this instanceof InSearchList) {
-            namedEnvironments.put(name, this);
-        }
-    }
-
     public static REnvironment lookupByName(String name) {
-        return namedEnvironments.get(name);
+        return searchListEnvironments.get(name);
     }
 
     public static REnvironment lookupBySearchName(String name) {
@@ -154,13 +167,23 @@ public abstract class REnvironment {
         }
     }
 
+    // end of static members
+
+    protected REnvironment(REnvironment parent, String name) {
+        this.parent = parent;
+        this.name = name;
+        if (!name.equals(UNNAMED) && this instanceof InSearchList) {
+            searchListEnvironments.put(name, this);
+        }
+    }
+
     public REnvironment getParent() {
         return parent;
     }
 
     /**
      * The "simple" name of the environment. E.g. "namespace:xxx" return "xxx". TODO Evidently this
-     * can be changed using attributes.
+     * can be changed using attributes, which is not yet supported..
      */
     public String getName() {
         return name;
@@ -186,14 +209,38 @@ public abstract class REnvironment {
     }
 
     /*
-     * Access to the "frame" component is subclass specific.
+     * Access to the "frame" component is subclass specific. The default implementations all throw
+     * RuntimeException.
      */
 
-    public abstract Object get(String key);
+    /**
+     * Return the value of object named {@code name} or {@code null} if not found.
+     */
+    public Object get(@SuppressWarnings({"hiding", "unused"}) String name) {
+        throw notImplemented("get");
+    }
 
-    public abstract void put(String key, Object value);
+    /**
+     * Set the value of object named {@code name} to {@code value}. if {@code value == null},
+     * effectively removes the name.
+     */
+    public void put(@SuppressWarnings({"hiding", "unused"}) String name, @SuppressWarnings("unused") Object value) {
+        throw notImplemented("put");
+    }
 
-    public abstract RStringVector ls(boolean allNames, String pattern);
+    /**
+     * Used by {@code ls()} function.
+     *
+     * @param allNames {@code true} means include names starting with ".".
+     * @param pattern regexp to match names returned.
+     */
+    public RStringVector ls(boolean allNames, String pattern) {
+        throw notImplemented("ls");
+    }
+
+    private RuntimeException notImplemented(String method) {
+        return new RuntimeException(getClass().getName() + "." + method + " called but not implemented");
+    }
 
     /**
      * Helper class that encapsulates access to actual execution frames.
@@ -224,6 +271,7 @@ public abstract class REnvironment {
 
         @Override
         public RStringVector ls(boolean allNames, String pattern) {
+            // TODO support pattern
             FrameDescriptor fd = frame.getFrameDescriptor();
             String[] names = fd.getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);
             int undefinedIdentifiers = 0;
@@ -248,7 +296,7 @@ public abstract class REnvironment {
     }
 
     /**
-     * The environment for the "base" package.
+     * The environment for the {@code package:base} package.
      */
     private static class Base extends WithFrame implements InSearchList {
 
@@ -262,7 +310,7 @@ public abstract class REnvironment {
     }
 
     /**
-     * The namespace:base environment.
+     * The {@code namespace:base} environment.
      */
     private static final class NamespaceBase extends WithFrame {
         private NamespaceBase() {
@@ -277,7 +325,8 @@ public abstract class REnvironment {
     }
 
     /**
-     * The users workspace environment. The parent depends on the set of default packages loaded.
+     * The users workspace environment (global). The parent depends on the set of default packages
+     * loaded.
      */
     public static final class Global extends WithFrame implements InSearchList {
 
@@ -288,40 +337,51 @@ public abstract class REnvironment {
     }
 
     /**
-     * {@link Function} environments are created when a function is defined see
+     * Denotes an environment associated with a function definition during AST building.
+     *
+     * {@link StaticFunction} environments are created when a function is defined see
      * {@code RFunctionDefinitonNode} and {@code RTruffleVisitor}. In that situation the
-     * {@code parent} is the lexically enclosing environment. When a function is invoked a
-     * {@link Function} environment may be created in response to the R {@code environment()} base
-     * package function, but in this case the parent is the environment of the caller, which may
-     * differ from the lexically enclosing environment (e.g. recursion).
+     * {@code parent} is the lexically enclosing environment and there is no associated frame.
      */
-    public static final class Function extends WithFrame {
 
+    public static final class StaticFunction extends REnvironment {
         private FrameDescriptor descriptor;
 
-        public Function(REnvironment parent) {
+        public StaticFunction(REnvironment parent) {
             // function environments are not named
             super(parent, "");
             this.descriptor = new FrameDescriptor();
         }
 
+        public FrameDescriptor getDescriptor() {
+            return descriptor;
+        }
+
+    }
+
+    /**
+     * When a function is invoked a {@link DynamicFunction} environment may be created in response
+     * to the R {@code environment()} base package function, and it will have an associated frame.
+     */
+    public static final class DynamicFunction extends WithFrame {
+
+        public DynamicFunction(REnvironment parent) {
+            super(parent, "");
+        }
+
         /**
-         * Specifically for {@code ls()}, we don't care about the parent.
+         * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
          */
-        public static Function createLsCurrent(VirtualFrame frame) {
-            Function result = new Function(null);
+        public static DynamicFunction createLsCurrent(VirtualFrame frame) {
+            DynamicFunction result = new DynamicFunction(null);
             result.setFrame(frame);
             return result;
         }
 
-        public static Function create(REnvironment parent, PackedFrame frame) {
-            Function result = new Function(parent);
+        public static DynamicFunction create(REnvironment parent, PackedFrame frame) {
+            DynamicFunction result = new DynamicFunction(parent);
             result.setFrame(frame.unpack());
             return result;
-        }
-
-        public FrameDescriptor getDescriptor() {
-            return descriptor;
         }
 
     }
@@ -334,7 +394,12 @@ public abstract class REnvironment {
 
         public User(REnvironment parent, String name, int size) {
             super(parent, name);
-            this.map = new LinkedHashMap<>(size);
+            this.map = newHashMap(size);
+        }
+
+        @SlowPath
+        private static LinkedHashMap<String, Object> newHashMap(int size) {
+            return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
         }
 
         @Override
@@ -379,6 +444,9 @@ public abstract class REnvironment {
         return names;
     }
 
+    /**
+     * A placeholder for the package autload mechanism.
+     */
     private static final class Autoload extends REnvironment implements InSearchList {
         Autoload() {
             super(baseEnv(), "");
@@ -405,7 +473,7 @@ public abstract class REnvironment {
 
     /**
      * The empty environment has no runtime state and so can be allocated statically. TODO Attempts
-     * to assign should cause an error.
+     * to assign should cause an error, if not prevented in caller. TODO check.
      */
     private static final class Empty extends REnvironment implements InSearchList {
 

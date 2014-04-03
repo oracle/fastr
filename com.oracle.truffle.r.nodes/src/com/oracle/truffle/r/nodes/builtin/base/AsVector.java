@@ -48,7 +48,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, false, false));
         }
         return (RIntVector) castInteger.executeIntVector(frame, operand);
@@ -56,7 +56,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RDoubleVector castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, false, false));
         }
         return (RDoubleVector) castDouble.executeDoubleVector(frame, operand);
@@ -64,7 +64,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RComplexVector castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeFactory.create(null, false, false));
         }
         return (RComplexVector) castComplex.executeComplexVector(frame, operand);
@@ -72,7 +72,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RLogicalVector castLogical(VirtualFrame frame, Object operand) {
         if (castLogical == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeFactory.create(null, false, false));
         }
         return (RLogicalVector) castLogical.executeLogicalVector(frame, operand);
@@ -80,7 +80,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RStringVector castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeFactory.create(null, false, false, false));
         }
         return (RStringVector) castString.executeStringVector(frame, operand);
@@ -88,7 +88,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RRawVector castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castRaw = insert(CastRawNodeFactory.create(null, false, false));
         }
         return (RRawVector) castRaw.executeRawVector(frame, operand);
@@ -96,7 +96,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     private RList castList(VirtualFrame frame, Object operand) {
         if (castList == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, false));
         }
         return castList.executeList(frame, operand);
@@ -114,46 +114,55 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Specialization(order = 10)
     public Object asVector(RNull x, @SuppressWarnings("unused") RMissing mode) {
+        controlVisibility();
         return x;
     }
 
     @Specialization(order = 100, guards = "castToInt")
     public RAbstractVector asVectorInt(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castInteger(frame, x);
     }
 
     @Specialization(order = 200, guards = "castToDouble")
     public RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castDouble(frame, x);
     }
 
     @Specialization(order = 300, guards = "castToComplex")
     public RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castComplex(frame, x);
     }
 
     @Specialization(order = 400, guards = "castToLogical")
     public RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castLogical(frame, x);
     }
 
     @Specialization(order = 500, guards = "castToString")
     public RAbstractVector asVectorString(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castString(frame, x);
     }
 
     @Specialization(order = 600, guards = "castToRaw")
     public RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castRaw(frame, x);
     }
 
     @Specialization(order = 700, guards = "castToList")
     public RAbstractVector asVectorList(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return castList(frame, x);
     }
 
     @Specialization(order = 1000)
     public RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         RList result = x.copyWithNewDimensions(null);
         result.copyNamesFrom(x);
         return result;
@@ -161,12 +170,14 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Specialization(order = 1001, guards = "modeIsAnyOrMatches")
     public RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
         return x.copyWithNewDimensions(null);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 1002, guards = "invalidMode")
     public RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
+        controlVisibility();
         throw RError.getInvalidMode(getEncapsulatingSourceSection());
     }
 
