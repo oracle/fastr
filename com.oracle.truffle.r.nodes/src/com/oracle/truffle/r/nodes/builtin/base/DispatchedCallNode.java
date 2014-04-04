@@ -22,9 +22,14 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
+    protected Object[] args;
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType);
+    }
+
+    public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args) {
+        return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
     }
 
     @Override
@@ -45,10 +50,15 @@ public abstract class DispatchedCallNode extends RNode {
             this.dispatchType = dispatchType;
         }
 
-        private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
+        private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
             this.genericName = copy.genericName;
             this.dispatchType = copy.dispatchType;
             this.depth = depth;
+        }
+
+        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, final Object[] args) {
+            this(genericName, dispatchType);
+            this.args = args;
         }
 
         @Override
@@ -74,6 +84,9 @@ public abstract class DispatchedCallNode extends RNode {
         protected DispatchedCallNode createCurrentNode(RStringVector type) {
             if (this.dispatchType == RRuntime.USE_METHOD) {
                 return new ResolvedDispatchedCallNode(new UseMethodDispatchNode(this.genericName, type));
+            }
+            if (this.dispatchType == RRuntime.NEXT_METHOD) {
+                return new ResolvedDispatchedCallNode(new NextMethodDispatchNode(this.genericName, type, this.args));
             }
             // TODO: throw error
             return null;

@@ -91,6 +91,8 @@ public final class RArguments extends Arguments {
 
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
-        this.function.setEnclosingFrame(frame);
+        if (this.function != null) {
+            this.function.setEnclosingFrame(frame);
+        }
     }
 }

@@ -128,11 +128,13 @@ public class RRuntime {
 
     public static final String RDOT = ".";
 
+    public static final String USE_METHOD = "UseMethod";
+
+    public static final String NEXT_METHOD = "NextMethod";
+
     private static long startTime;
 
     private static long[] childTimes;
-
-    public static final String USE_METHOD = "UseMethod";
 
     /**
      * Perform any runtime initialization necessary before the first R evaluation. TODO Check
