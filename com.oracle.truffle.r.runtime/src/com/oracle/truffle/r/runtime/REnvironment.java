@@ -295,7 +295,7 @@ public abstract class REnvironment {
         return parent;
     }
 
-    public void setParent(@SuppressWarnings("unused") REnvironment env) {
+    public void setParent(REnvironment env) {
         parent = env;
     }
 
