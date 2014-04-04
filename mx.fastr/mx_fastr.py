@@ -219,7 +219,7 @@ def rbench(args):
 def _bench_harness_body(args, vmArgs):
     marks = ['shootout.binarytrees', 'shootout.fannkuchredux', 'shootout.fasta', 'shootout.fastaredux',
              'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
-             'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm']
+             'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm', 'b25.bench-{1,2,3,4,5}']
     return rbench(marks)
 
 def bench(args):
