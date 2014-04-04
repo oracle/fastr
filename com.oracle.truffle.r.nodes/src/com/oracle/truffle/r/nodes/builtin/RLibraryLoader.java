@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class RLibraryLoader {
 
+    private String packageName;
     private List<Component> components;
 
     public static class Component {
@@ -49,24 +50,16 @@ public class RLibraryLoader {
             this.libContents = libContents;
             this.libName = libName;
         }
+
+        @Override
+        public String toString() {
+            return libName;
+        }
     }
 
-    public RLibraryLoader(List<Component> components) {
+    public RLibraryLoader(String packageName, List<Component> components) {
+        this.packageName = packageName;
         this.components = components;
-    }
-
-    public RLibraryLoader(Component component) {
-        this(create(component));
-    }
-
-    private static List<Component> create(Component component) {
-        List<Component> result = new ArrayList<>();
-        result.add(component);
-        return result;
-    }
-
-    public RLibraryLoader(String libName, String libContents) {
-        this(new Component(libName, libContents));
     }
 
     public Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> loadLibrary() {
@@ -111,7 +104,7 @@ public class RLibraryLoader {
                     }
                 };
                 source = sourceManager.getFakeFile(component.libName, component.libContents);
-                RTruffleVisitor transform = new RTruffleVisitor();
+                RTruffleVisitor transform = new RTruffleVisitor(REnvironment.lookupByName(packageName));
                 RNode node = transform.transform(ParseUtil.parseAST(stream, source));
                 rNodes.add(node);
             } catch (RecognitionException e) {

@@ -1316,10 +1316,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testEnvironment() {
-        // note: this function also includes lookup tests that do not explicitly invoke
-        // environment-related builtins
-
+    public void testLookup() {
         assertEval("{ f <- function() { assign(\"x\", 1) ; x } ; f() }");
         assertEval("{ f <- function() { x <- 2 ; g <- function() { x <- 3 ; assign(\"x\", 1, inherits=FALSE) ; x } ; g() } ; f() }");
         assertEval("{ f <- function() { x <- 2 ; g <- function() { assign(\"x\", 1, inherits=FALSE) } ; g() ; x } ; f() }");
@@ -1354,14 +1351,6 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x <- 3 ; f <- function() { exists(\"x\") } ; f() }");
         assertEval("{ x <- 3 ; f <- function() { exists(\"x\", inherits=FALSE) } ; f() }");
-
-        assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"abc\", \"def\"), h) }");
-        assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"def\", \"abc\"), h) }");
-        assertEval("{ h <- new.env() ; assign(c(\"a\"), 1, h) ; ls(h) }");
-        assertEval("{ h <- new.env() ; assign(c(\"a\"), 1L, h) ; ls(h) }");
-
-        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; assign(\"y\", 2, h) ; ls(h) }");
-        assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }", "[1] \"y\" \"x\"\n", "[1] \"x\" \"y\"\n");
 
         assertEval("{ x <- 2 ; y <- 3 ; rm(\"y\") ; ls() }");
         assertEvalError("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
@@ -1406,7 +1395,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { assign(\"z\", 2) ; g <- function() { get(\"x\", inherits=TRUE) } ; g() } ; x <- 3 ; f() }");
         assertEval("{ f <- function() { x <- 22 ; get(\"x\", inherits=FALSE) } ; f() }");
         assertEval("{ x <- 33 ; f <- function() { assign(\"x\", 44) ; get(\"x\", inherits=FALSE) } ; f() }");
-        assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
         assertEval("{ g <- function() { if (FALSE) {y <- 3; x <- 2} ; f <- function() { assign(\"x\", 2) ; gg <- function() { h <- function() { get(\"x\") } ; h() } ; gg() } ; f() } ; g() }");
 
         // lookup with function matching
@@ -1452,8 +1440,42 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x <<- 6 } ; h() ; get(\"x\") } ; f() }");
         assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; hh <- function() { if (FALSE) { x <- 100 } ; h <- function() { x <<- 6 } ; h() } ; hh() ; get(\"x\") } ; f() }");
 
-        // hashmaps
         assertEval("{ assign(\"z\", 10, inherits=TRUE) ; z }");
+
+        // top-level lookups
+        assertEval("{ exists(\"sum\") }");
+        assertEval("{ exists(\"sum\", inherits = FALSE) }");
+        assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testLookupIgnore() {
+        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }"); // requires promises
+
+        // lookup with function matching
+        // require lapply
+        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+
+    }
+
+    @Test
+    public void testEnvironment() {
+        assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"abc\", \"def\"), h) }");
+        assertEval("{ h <- new.env() ; assign(\"abc\", \"yes\", h) ; exists(c(\"def\", \"abc\"), h) }");
+        assertEval("{ h <- new.env() ; assign(c(\"a\"), 1, h) ; ls(h) }");
+        assertEval("{ h <- new.env() ; assign(c(\"a\"), 1L, h) ; ls(h) }");
+
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; assign(\"y\", 2, h) ; ls(h) }");
+        assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }", "[1] \"y\" \"x\"\n", "[1] \"x\" \"y\"\n");
+
+        assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+
+        // hashmaps
         assertEval("{ e<-new.env() ; ls(e) }");
         assertEval("{ e<-new.env() ; assign(\"x\",1,e) ; ls(e) }");
         assertEval("{ e<-new.env() ; assign(\"x\",1,e) ; get(\"x\",e) }");
@@ -1465,49 +1487,87 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; exists(\"z\", h) }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
 
-        // top-level lookups
-        assertEval("{ exists(\"sum\") }");
-        assertEval("{ exists(\"sum\", inherits = FALSE) }");
-        assertEval("{ x <- 1; exists(\"x\", inherits = FALSE) }");
-
-        // globalenv
-        assertEval("{ ls() }");
+        // env queries
         assertEval("{ globalenv() }");
+        assertEval("{ emptyenv() }");
+        assertEval("{ baseenv() }");
+
+        // ls
+        assertEval("{ ls() }");
+        assertEval("{ f <- function(x, y) { ls() }; f(1, 2) }");
+        assertEval("{ x <- 1; ls(globalenv()) }");
+        assertEval("{ x <- 1; .y <- 2; ls(globalenv()) }");
+
+        assertEval("{ is.environment(globalenv()) }");
+        assertEval("{ is.environment(1) }");
+
+        // as.environment
+        assertEvalError("{ as.environment(-1) }");
+        assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
+        assertEvalError("{ as.environment(0) }");
+        assertEval("{ as.environment(1) }");
+        // GnuR has more packages loaded so can't test in the middle
+        assertEval("{ as.environment(length(search())) }");
+        assertEval("{ as.environment(length(search()) + 1) }");
+        assertEvalError("{ as.environment(length(search()) + 2) }");
+
+        assertEval("{ as.environment(\".GlobalEnv\") }");
+        assertEval("{ as.environment(\"package:base\") }");
+        assertEvalError("{ as.environment(as.environment) }");
+
+        // parent.env
+        assertEval("{ identical(parent.env(baseenv()), emptyenv()) }");
+
+        // environment
+        assertEval("{ environment() }");
+        assertEval("{ environment(environment) }");
+
+        // environmentName
+        assertEval("{ environmentName(baseenv()) }");
+        assertEval("{ environmentName(globalenv()) }");
+        assertEval("{ environmentName(emptyenv()) }");
+        assertEval("{ environmentName(1) }");
+
+        // locking
+        assertEval("{ e<-new.env(); environmentIsLocked(e) }");
+        assertEval("{ e<-new.env(); lockEnvironment(e); environmentIsLocked(e) }");
+        assertEvalError("{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); assign(\"a\", 2, e) }");
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); unlockBinding(\"a\", e); assign(\"a\", 2, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); bindingIsLocked(\"a\", e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); bindingIsLocked(\"a\", e) }");
+
+        // rm
+        assertEvalError("{ rm(\"foo\", envir = baseenv()) }");
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); rm(\"a\",envir = e); }");
+        // ok to removed a locked binding
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockBinding(\"a\", e); rm(\"a\",envir = e); ls() }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; rm(\"a\",envir = e); ls() }");
+
+        // get
+        assertEvalError("{ e<-new.env(); get(\"x\", e) }");
+        assertEval("{ e<-new.env(); x<-1; get(\"x\", e) }");
+        assertEval("{ e<-new.env(); assign(\"x\", 1, e); get(\"x\", e) }");
+        assertEvalError("{ e<-new.env(); x<-1; get(\"x\", e, inherits=FALSE) }");
+        assertEvalError("{ e<-new.env(parent=emptyenv()); x<-1; get(\"x\", e) }");
+
     }
 
     @Test
     @Ignore
     public void testEnvironmentIgnore() {
-        // note: this function also includes lookup tests that do not explicitly invoke
-        // environment-related builtins
-        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }"); // requires promises
-
-        // require first-class environments
-        assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
-
+        // misc
         assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
-
-        // lookup with function matching
-        // require lapply
-        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-
-        // hashmaps
-        // require first-class environments
         assertEvalError("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
-        // globalenv
-        // require first-class environments, ls
-        assertEval("{ x <- 1 ; ls(globalenv()) }");
+        // requires .GlobalEnv to be defined in base
         assertEval("{ ls(.GlobalEnv) }");
         assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-
-        assertEval("{ emptyenv() }"); // FIXME Unsupported values in print
 
     }
 
@@ -2360,7 +2420,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testRm() {
+    public void testSimpleRm() {
         assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");

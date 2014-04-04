@@ -1769,36 +1769,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_7e5d40be5a03aac06880b44eefa7d94b() {
-        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_8a26b290c7ede675e52cdbe4ac3b88b5() {
-        assertEval("{ f <- function()  { as.environment(-1) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_7623faf4c356905dacd205a8b10eac15() {
-        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_2c371d6a6d4b74a871402788dbf16cf8() {
-        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_fc0e56627d1b08ab2d6c38875a68a1f0() {
-        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_2deae78feff592acd7d61159c8e39ea7() {
-        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testEnvironmentIgnore_c29f313075292391e27de42119da385a() {
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
     }
@@ -1809,11 +1779,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_c418c1e9834a7fa0fc493f18b95ccd7a() {
-        assertEval("{ x <- 1 ; ls(globalenv()) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testEnvironmentIgnore_0902b89753b80fe43a8612bd6c00d063() {
         assertEval("{ ls(.GlobalEnv) }");
     }
@@ -1821,11 +1786,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testEnvironmentIgnore_5482bc17285fec304815fd90301c9e13() {
         assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_f3ba3e5d35d964724cc7d40b83ce40d8() {
-        assertEval("{ emptyenv() }");
     }
 
     @Ignore
@@ -2056,6 +2016,31 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testLogIgnore_6568d70e4d076fc4b14b58158162a0ea() {
         assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLookupIgnore_7e5d40be5a03aac06880b44eefa7d94b() {
+        assertEval("{ f <- function(z) { exists(\"z\") } ; f(a) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLookupIgnore_7623faf4c356905dacd205a8b10eac15() {
+        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLookupIgnore_2c371d6a6d4b74a871402788dbf16cf8() {
+        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLookupIgnore_fc0e56627d1b08ab2d6c38875a68a1f0() {
+        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLookupIgnore_2deae78feff592acd7d61159c8e39ea7() {
+        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
     }
 
     @Ignore

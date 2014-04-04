@@ -30,10 +30,13 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("assign")
 public abstract class Assign extends RInvisibleBuiltinNode {
+
+    // TODO convert to .Internal using assign.R to simplify the environment specializations
 
     @Child private WriteVariableNode writeVariableNode;
 
@@ -76,11 +79,24 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     @SuppressWarnings("unused")
     public Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
-        pos.put(x, value);
+        if (pos == REnvironment.emptyEnv()) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot assign values in the empty environment");
+        }
+        try {
+            pos.put(x, value);
+        } catch (PutException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+        }
         return value;
     }
 
-    @Specialization(order = 11, guards = "doesInherit")
+    @Specialization(order = 11, guards = "!doesInheritX")
+    @SuppressWarnings("unused")
+    public Object assignNoInherit(String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
+        return assignNoInherit(x, value, envir, RMissing.instance, inherits, immediate);
+    }
+
+    @Specialization(order = 12, guards = "doesInherit")
     @SuppressWarnings("unused")
     public Object assignInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
@@ -91,10 +107,14 @@ public abstract class Assign extends RInvisibleBuiltinNode {
             }
             env = env.getParent();
         }
-        if (env != null) {
-            env.put(x, value);
-        } else {
-            RRuntime.GLOBAL_ENV.put(x, value);
+        try {
+            if (env != null) {
+                env.put(x, value);
+            } else {
+                REnvironment.globalEnv().put(x, value);
+            }
+        } catch (PutException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
         }
         return value;
     }
@@ -111,8 +131,19 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return assignInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
+    @Specialization(order = 22, guards = "doesInheritX")
+    public Object assignInherit(RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
+        controlVisibility();
+        return assignInherit(x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);
+    }
+
     @SuppressWarnings("unused")
     protected static boolean doesInherit(Object x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+        return inherits == RRuntime.LOGICAL_TRUE;
+    }
+
+    @SuppressWarnings("unused")
+    protected static boolean doesInheritX(Object x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
         return inherits == RRuntime.LOGICAL_TRUE;
     }
 

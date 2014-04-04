@@ -91,10 +91,6 @@ public class RRuntime {
     public static final String TYPE_LOGICAL_CAP = new String("Logical");
     public static final String TYPE_RAW_CAP = new String("Raw");
 
-    public static final REnvironment EMPTY_ENV = REmptyEnvironment.instance;
-    public static final REnvironment GLOBAL_ENV = RGlobalEnvironment.instance;
-    public static final REnvironment BASE_ENV = RBaseEnvironment.instance;
-
     public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
 
@@ -644,61 +640,6 @@ public class RRuntime {
     @SlowPath
     public static String quoteString(String data) {
         return data == STRING_NA ? STRING_NA : "\"" + data + "\"";
-    }
-
-    private static final class REmptyEnvironment extends REnvironment {
-
-        static REnvironment instance = new REmptyEnvironment();
-
-        private REmptyEnvironment() {
-            super(null, "R_EmptyEnv", 0);
-        }
-
-        @Override
-        public Object get(String key) {
-            return null;
-        }
-
-        @Override
-        public void put(String key, Object value) {
-            // empty
-        }
-
-    }
-
-    private static final class RBaseEnvironment extends REnvironment {
-
-        static REnvironment instance = new RBaseEnvironment();
-
-        private RBaseEnvironment() {
-            super(REmptyEnvironment.instance, "base");
-        }
-
-    }
-
-    private static final class RGlobalEnvironment extends REnvironment {
-
-        static REnvironment instance = new RGlobalEnvironment();
-
-        private RGlobalEnvironment() {
-            // TODO The parent will need to be changed when we start loading default packages, e.g.
-// utils.
-            super(RBaseEnvironment.instance, "R_GlobalEnv");
-        }
-
-    }
-
-    public static final class RFunctionEnvironment extends REnvironment {
-
-        public RFunctionEnvironment(REnvironment parent) {
-            // function environments are not named
-            super(parent, "", 0);
-        }
-
-        @Override
-        protected String getPrintNameHelper() {
-            return String.format("%#x", hashCode());
-        }
     }
 
 }
