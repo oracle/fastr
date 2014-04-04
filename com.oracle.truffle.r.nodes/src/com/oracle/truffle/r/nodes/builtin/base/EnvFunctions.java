@@ -280,7 +280,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(".Internal.lockEnvironment")
-    public abstract static class LockEnvironment extends InvisibleRBuiltinNode {
+    public abstract static class LockEnvironment extends RInvisibleBuiltinNode {
         @Specialization(order = 0)
         public Object lockEnvironment(REnvironment env, byte bindings) {
             controlVisibility();
@@ -312,7 +312,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(".Internal.lockBinding")
-    public abstract static class LockBinding extends InvisibleRBuiltinNode {
+    public abstract static class LockBinding extends RInvisibleBuiltinNode {
         @Specialization(order = 0)
         public Object lockBinding(String sym, REnvironment env) {
             controlVisibility();
@@ -329,7 +329,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(".Internal.unlockBinding")
-    public abstract static class UnlockBinding extends InvisibleRBuiltinNode {
+    public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
         @Specialization(order = 0)
         public Object unlockBinding(String sym, REnvironment env) {
             controlVisibility();
@@ -362,7 +362,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(".Internal.makeActiveBinding")
-    public abstract static class MakeActiveBinding extends InvisibleRBuiltinNode {
+    public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization(order = 0)
         public Object makeActiveBinding(Object sym, Object fun, Object env) {
@@ -372,7 +372,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(".Internal.bindingIsActive")
-    public abstract static class BindingIsActive extends InvisibleRBuiltinNode {
+    public abstract static class BindingIsActive extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization(order = 0)
         public Object bindingIsActive(Object sym, Object fun, Object env) {
