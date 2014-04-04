@@ -86,6 +86,12 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization
+    public RIntSequence doDoubleSequence(RDoubleSequence operand) {
+        check.enable(operand);
+        return RDataFactory.createIntSequence(check.convertDoubleToInt(operand.getStart()), check.convertDoubleToInt(operand.getStride()), operand.getLength());
+    }
+
+    @Specialization
     public int doComplex(RComplex operand) {
         check.enable(operand);
         int result = check.convertComplexToInt(operand);

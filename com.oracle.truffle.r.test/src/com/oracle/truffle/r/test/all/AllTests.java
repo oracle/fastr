@@ -4684,6 +4684,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsInteger_27316ea084f9b602e2ca9b7756c0b726() {
+        assertEval("{ as.integer(1.1:5.1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsInteger_bdee86802f4d5a14a501cbdf208e49b7() {
         assertEvalWarning("{ as.integer(10+2i) }");
     }
@@ -9756,6 +9761,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSequence_75ce42236f5c48ebe0a94226935498bc() {
         assertEval("{ (0-5):(0-9) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequence_05358d747ae7f4d160ef82b11ff90f30() {
+        assertEval("{ 1.1:5.1 }");
     }
 
     @Test

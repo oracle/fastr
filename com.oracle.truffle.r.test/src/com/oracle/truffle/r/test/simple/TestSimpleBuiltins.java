@@ -31,6 +31,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ (0-1.5):(0-12) }");
         assertEval("{ 10:1 }");
         assertEval("{ (0-5):(0-9) }");
+        assertEval("{ 1.1:5.1 }");
     }
 
     @Test
@@ -330,6 +331,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.integer(as.raw(1)) }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
+        assertEval("{ as.integer(1.1:5.1) }");
     }
 
     @Test

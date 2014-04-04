@@ -713,7 +713,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 121, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
         public RAbstractIntVector doDoubleVector(VirtualFrame frame, RAbstractVector vector, RAbstractDoubleVector operand, Object value) {
-            RIntVector resultVector = (RIntVector) castInteger(frame, operand);
+            RAbstractIntVector resultVector = (RAbstractIntVector) castInteger(frame, operand);
             return transformIntoPositive(vector, resultVector);
         }
 
