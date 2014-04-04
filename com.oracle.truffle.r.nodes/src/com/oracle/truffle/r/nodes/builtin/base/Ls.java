@@ -58,7 +58,7 @@ public abstract class Ls extends RBuiltinNode {
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
         controlVisibility();
         // this is the ls() specialisation
-        return REnvironment.DynamicFunction.createLsCurrent(frame).ls(allNames == RRuntime.LOGICAL_TRUE, null);
+        return REnvironment.Function.createLsCurrent(frame.materialize()).ls(allNames == RRuntime.LOGICAL_TRUE, null);
     }
 
 }

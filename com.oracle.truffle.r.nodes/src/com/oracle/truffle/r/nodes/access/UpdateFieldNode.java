@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -84,9 +85,13 @@ public abstract class UpdateFieldNode extends RNode {
     }
 
     @Specialization(order = 2)
-    public Object updateField(VirtualFrame frame, REnvironment env, Object value) {
+    public Object updateField(@SuppressWarnings("unused") VirtualFrame frame, REnvironment env, Object value) {
         // reference semantics for environments
-        env.put(getField(), value);
+        try {
+            env.put(getField(), value);
+        } catch (PutException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+        }
         return env;
     }
 

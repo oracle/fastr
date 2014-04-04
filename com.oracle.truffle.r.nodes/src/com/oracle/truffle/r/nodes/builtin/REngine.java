@@ -103,7 +103,7 @@ public final class REngine implements RBuiltinLookupProvider {
      */
     public static Object parseAndEval(String rscript, boolean printResult) {
         VirtualFrame frame = createVirtualFrame();
-        REnvironment.resetGlobalEnv(frame);
+        REnvironment.resetGlobalEnv(frame.materialize());
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), frame, printResult);
     }
 
@@ -136,7 +136,7 @@ public final class REngine implements RBuiltinLookupProvider {
     private static CallTarget parseToCallTarget(ANTLRStringStream stream, Source source) throws RecognitionException {
         RTruffleVisitor transform = new RTruffleVisitor(REnvironment.globalEnv());
         RNode node = transform.transform(ParseUtil.parseAST(stream, source));
-        REnvironment.StaticFunction rootNodeEnvironment = new REnvironment.StaticFunction(REnvironment.globalEnv());
+        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.globalEnv());
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
         CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;

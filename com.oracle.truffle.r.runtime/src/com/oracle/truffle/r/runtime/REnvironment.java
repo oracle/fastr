@@ -31,15 +31,20 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * Denotes an R {@code environment}.
  *
- * Abstractly, environments consist of a frame, or collection of named objects, and a pointer to an
+ * Abstractly, environments consist of a frame (collection of named objects), and a pointer to an
  * enclosing environment.
  *
- * R environments (also) can be named or unnamed. {@code base} is an example of a named environment.
+ * R environments can be named or unnamed. {@code base} is an example of a named environment.
  * Environments associated with function invocations are unnamed. The {@code environmentName}
  * builtin returns "" for an unnamed environment. However, unnamed environments print using a unique
  * numeric id in the place where the name would appear for a named environment. This is finessed
  * using the {@link #getPrintNameHelper} method. Finally, environments on the {@code search} path
  * return a yet different name in the result of {@code search}, e.g. ".GlobalEnv", "package:base".
+ *
+ * Environments can also be locked preventing any bindings from being added or removed. N.B. the
+ * empty environment can't be assigned to but is not locked (see GnuR). Further, individual bindings
+ * within an environment can be locked, although they can be removed unless the environment is also
+ * locked.
  *
  * Environments are used for many different things in R, including something close to a
  * {@link java.util.Map} created in R code using the {@code new.env} function. This is the only case
@@ -64,6 +69,113 @@ public abstract class REnvironment {
     private interface InSearchList {
     }
 
+    public static class PutException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        PutException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Access to the frame component, handled by delegation.
+     *
+     */
+    private abstract static class FrameAccess {
+        /**
+         * Records which bindings are locked. In normal use we don't expect any bindings to be
+         * locked so this set is allocated lazily.
+         */
+        protected Set<String> lockedBindings;
+
+        /**
+         * Return the value of object named {@code name} or {@code null} if not found.
+         */
+        Object get(@SuppressWarnings("unused") String key) {
+            return null;
+        }
+
+        /**
+         * Set the value of object named {@code name} to {@code value}. if {@code value == null},
+         * effectively removes the name.
+         *
+         * @throws PutException if the binding is locked
+         */
+        void put(String key, @SuppressWarnings("unused") Object value) throws REnvironment.PutException {
+            if (lockedBindings != null && lockedBindings.contains(key)) {
+                throw createPutException(key);
+            }
+        }
+
+        /**
+         * Remove binding.
+         */
+        void rm(String key) {
+            if (lockedBindings != null) {
+                lockedBindings.remove(key);
+            }
+        }
+
+        @SuppressWarnings("unused")
+        RStringVector ls(boolean allNames, String pattern) {
+            return RDataFactory.createEmptyStringVector();
+        }
+
+        @SlowPath
+        void lockBindings() {
+            Set<String> bindings = getBindingsForLock();
+            if (bindings != null) {
+                for (String binding : bindings) {
+                    lockBinding(binding);
+                }
+            }
+        }
+
+        protected abstract Set<String> getBindingsForLock();
+
+        /**
+         * Disallow updates to {@code key}.
+         */
+        @SlowPath
+        void lockBinding(String key) {
+            if (lockedBindings == null) {
+                lockedBindings = new HashSet<>();
+            }
+            lockedBindings.add(key);
+        }
+
+        @SlowPath
+        PutException createPutException(String key) {
+            return new PutException("cannot change value of locked binding for '" + key + "'");
+        }
+
+        /**
+         * Allow updates to (previously locked) {@code key}.
+         */
+        void unlockBinding(String key) {
+            if (lockedBindings != null) {
+                lockedBindings.remove(key);
+            }
+        }
+
+        boolean bindingIsLocked(String key) {
+            return lockedBindings != null && lockedBindings.contains(key);
+        }
+
+    }
+
+    private static class DefaultFrameAccess extends FrameAccess {
+
+        @Override
+        protected Set<String> getBindingsForLock() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+    }
+
+    private static final FrameAccess defaultFrameAccess = new DefaultFrameAccess();
+
     /**
      * Map is keyed by the simple name and, for packages, currently only contains the "package:xxx"
      * environment.
@@ -79,8 +191,10 @@ public abstract class REnvironment {
     private static Autoload autoloadEnv;
     private static String[] searchPath;
 
-    private final REnvironment parent;
+    private REnvironment parent;
     private final String name;
+    private final FrameAccess frameAccess;
+    private boolean locked;
 
     /**
      * Value returned by {@code emptyenv()}.
@@ -129,16 +243,15 @@ public abstract class REnvironment {
         basePackageEnv = new Base();
         autoloadEnv = new Autoload();
         // The following is only true if there are no other default packages loaded.
-        globalEnv = new Global(autoloadEnv);
-        globalEnv.setFrame(globalFrame);
+        globalEnv = new Global(autoloadEnv, globalFrame.materialize());
         baseNamespaceEnv = new NamespaceBase();
     }
 
     /**
-     * Intended for use by unit test environment to reset the state of the global frame.
+     * Intended for use by unit test environment to reset the global environment to a clean state.
      */
-    public static void resetGlobalEnv(VirtualFrame globalFrame) {
-        globalEnv.setFrame(globalFrame);
+    public static void resetGlobalEnv(MaterializedFrame globalFrame) {
+        globalEnv = new Global(globalEnv.getParent(), globalFrame);
     }
 
     /**
@@ -169,9 +282,10 @@ public abstract class REnvironment {
 
     // end of static members
 
-    protected REnvironment(REnvironment parent, String name) {
+    protected REnvironment(REnvironment parent, String name, FrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
+        this.frameAccess = frameAccess;
         if (!name.equals(UNNAMED) && this instanceof InSearchList) {
             searchListEnvironments.put(name, this);
         }
@@ -181,12 +295,66 @@ public abstract class REnvironment {
         return parent;
     }
 
+    public void setParent(@SuppressWarnings("unused") REnvironment env) {
+        parent = env;
+    }
+
     /**
      * The "simple" name of the environment. E.g. "namespace:xxx" return "xxx". TODO Evidently this
      * can be changed using attributes, which is not yet supported..
      */
     public String getName() {
         return name;
+    }
+
+    public void lock(boolean bindings) {
+        locked = true;
+        if (bindings) {
+            frameAccess.lockBindings();
+        }
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public Object get(String key) {
+        return frameAccess.get(key);
+    }
+
+    public void put(String key, Object value) throws PutException {
+        if (locked) {
+            // if the binding exists already, can try to update it
+            if (frameAccess.get(key) == null) {
+                throw new PutException("cannot add bindings to a locked environment");
+            }
+        }
+        frameAccess.put(key, value);
+    }
+
+    public void rm(String key) throws PutException {
+        if (locked) {
+            throw new PutException("cannot remove bindings from a locked environment");
+        }
+        frameAccess.rm(key);
+    }
+
+    public RStringVector ls(boolean allNames, String pattern) {
+        return frameAccess.ls(allNames, pattern);
+    }
+
+    public void lockBinding(String key) {
+        frameAccess.lockBinding(key);
+
+    }
+
+    public void unlockBinding(String key) {
+        frameAccess.unlockBinding(key);
+
+    }
+
+    public boolean bindingIsLocked(String key) {
+        return frameAccess.bindingIsLocked(key);
     }
 
     @SlowPath
@@ -208,65 +376,45 @@ public abstract class REnvironment {
         return getPrintName();
     }
 
-    /*
-     * Access to the "frame" component is subclass specific. The default implementations all throw
-     * RuntimeException.
-     */
-
     /**
-     * Return the value of object named {@code name} or {@code null} if not found.
+     * Variant of {@link FrameAccess} that provides access to the actual execution frame.
      */
-    public Object get(@SuppressWarnings({"hiding", "unused"}) String name) {
-        throw notImplemented("get");
-    }
-
-    /**
-     * Set the value of object named {@code name} to {@code value}. if {@code value == null},
-     * effectively removes the name.
-     */
-    public void put(@SuppressWarnings({"hiding", "unused"}) String name, @SuppressWarnings("unused") Object value) {
-        throw notImplemented("put");
-    }
-
-    /**
-     * Used by {@code ls()} function.
-     *
-     * @param allNames {@code true} means include names starting with ".".
-     * @param pattern regexp to match names returned.
-     */
-    public RStringVector ls(boolean allNames, String pattern) {
-        throw notImplemented("ls");
-    }
-
-    private RuntimeException notImplemented(String method) {
-        return new RuntimeException(getClass().getName() + "." + method + " called but not implemented");
-    }
-
-    /**
-     * Helper class that encapsulates access to actual execution frames.
-     */
-    private static class WithFrame extends REnvironment {
+    private static class TruffleFrameAccess extends FrameAccess {
 
         private MaterializedFrame frame;
 
-        WithFrame(REnvironment parent, String name) {
-            super(parent, name);
-        }
-
-        void setFrame(Frame frame) {
-            this.frame = frame.materialize();
+        TruffleFrameAccess(MaterializedFrame frame) {
+            this.frame = frame;
         }
 
         @Override
-        public Object get(String name) {
-            // TODO Auto-generated method stub
-            return null;
+        public Object get(String key) {
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            FrameSlot slot = fd.findFrameSlot(key);
+            if (slot == null) {
+                return null;
+            } else {
+                return frame.getValue(slot);
+            }
         }
 
         @Override
-        public void put(String name, Object value) {
-            // TODO Auto-generated method stub
+        public void put(String key, Object value) throws PutException {
+            // check locking
+            super.put(key, value);
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            FrameSlot slot = fd.findFrameSlot(key);
+            if (slot != null) {
+                frame.setObject(slot, value);
+            } else {
+                // this should never happen as the caller is required to check existence first
+                throw new PutException("variable '" + key + "' not found");
+            }
+        }
 
+        @Override
+        public void rm(String key) {
+            super.rm(key);
         }
 
         @Override
@@ -293,28 +441,40 @@ public abstract class REnvironment {
             }
             return RDataFactory.createStringVector(definedNames, RDataFactory.COMPLETE_VECTOR);
         }
+
+        @Override
+        protected Set<String> getBindingsForLock() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
     }
 
     /**
      * The environment for the {@code package:base} package.
      */
-    private static class Base extends WithFrame implements InSearchList {
+    private static class Base extends REnvironment implements InSearchList {
 
         private Base() {
             this(emptyEnv);
         }
 
         protected Base(REnvironment parent) {
-            super(parent, "base");
+            super(parent, "base", defaultFrameAccess);
+        }
+
+        @Override
+        public void rm(String key) throws PutException {
+            throw new PutException("cannot remove variables from the base environment");
         }
     }
 
     /**
      * The {@code namespace:base} environment.
      */
-    private static final class NamespaceBase extends WithFrame {
+    private static final class NamespaceBase extends REnvironment {
         private NamespaceBase() {
-            super(globalEnv, "base");
+            super(globalEnv, "base", defaultFrameAccess);
         }
 
         @Override
@@ -322,16 +482,46 @@ public abstract class REnvironment {
             return "namespace:" + getName();
         }
 
+        @Override
+        public void rm(String key) throws PutException {
+            throw new PutException("cannot remove variables from the namespace:base environment");
+        }
     }
 
     /**
-     * The users workspace environment (global). The parent depends on the set of default packages
-     * loaded.
+     * The users workspace environment (so called global). The parent depends on the set of default
+     * packages loaded.
      */
-    public static final class Global extends WithFrame implements InSearchList {
+    public static final class Global extends REnvironment implements InSearchList {
 
-        private Global(REnvironment parent) {
-            super(parent, "R_GlobalEnv");
+        private Global(REnvironment parent, MaterializedFrame frame) {
+            super(parent, "R_GlobalEnv", new TruffleFrameAccess(frame));
+        }
+
+    }
+
+    /**
+     * When a function is invoked a {@link Function} environment may be created in response to the R
+     * {@code environment()} base package function, and it will have an associated frame.
+     */
+    public static final class Function extends REnvironment {
+
+        public Function(REnvironment parent, FrameAccess frameAccess) {
+            // function environments are not named
+            super(parent, "", frameAccess);
+        }
+
+        /**
+         * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
+         */
+        public static Function createLsCurrent(MaterializedFrame frame) {
+            Function result = new Function(null, new TruffleFrameAccess(frame));
+            return result;
+        }
+
+        public static Function create(REnvironment parent, MaterializedFrame frame) {
+            Function result = new Function(parent, new TruffleFrameAccess(frame));
+            return result;
         }
 
     }
@@ -339,17 +529,17 @@ public abstract class REnvironment {
     /**
      * Denotes an environment associated with a function definition during AST building.
      *
-     * {@link StaticFunction} environments are created when a function is defined see
+     * {@link FunctionDefinition} environments are created when a function is defined see
      * {@code RFunctionDefinitonNode} and {@code RTruffleVisitor}. In that situation the
      * {@code parent} is the lexically enclosing environment and there is no associated frame.
      */
 
-    public static final class StaticFunction extends REnvironment {
+    public static final class FunctionDefinition extends REnvironment {
         private FrameDescriptor descriptor;
 
-        public StaticFunction(REnvironment parent) {
+        public FunctionDefinition(REnvironment parent) {
             // function environments are not named
-            super(parent, "");
+            super(parent, "", new DefaultFrameAccess());
             this.descriptor = new FrameDescriptor();
         }
 
@@ -359,41 +549,10 @@ public abstract class REnvironment {
 
     }
 
-    /**
-     * When a function is invoked a {@link DynamicFunction} environment may be created in response
-     * to the R {@code environment()} base package function, and it will have an associated frame.
-     */
-    public static final class DynamicFunction extends WithFrame {
+    private static class NewEnvFrameAccess extends FrameAccess {
+        private final Map<String, Object> map;
 
-        public DynamicFunction(REnvironment parent) {
-            super(parent, "");
-        }
-
-        /**
-         * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
-         */
-        public static DynamicFunction createLsCurrent(VirtualFrame frame) {
-            DynamicFunction result = new DynamicFunction(null);
-            result.setFrame(frame);
-            return result;
-        }
-
-        public static DynamicFunction create(REnvironment parent, PackedFrame frame) {
-            DynamicFunction result = new DynamicFunction(parent);
-            result.setFrame(frame.unpack());
-            return result;
-        }
-
-    }
-
-    /**
-     * A named environment explicitly created with {@code new.env}.
-     */
-    public static final class User extends REnvironment {
-        private Map<String, Object> map;
-
-        public User(REnvironment parent, String name, int size) {
-            super(parent, name);
+        NewEnvFrameAccess(int size) {
             this.map = newHashMap(size);
         }
 
@@ -408,7 +567,15 @@ public abstract class REnvironment {
         }
 
         @Override
-        public void put(String key, Object value) {
+        public void rm(String key) {
+            super.rm(key);
+            map.remove(key);
+        }
+
+        @SlowPath
+        @Override
+        public void put(String key, Object value) throws PutException {
+            super.put(key, value);
             map.put(key, value);
         }
 
@@ -419,6 +586,22 @@ public abstract class REnvironment {
                 names = removeHiddenNames(names);
             }
             return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @Override
+        protected Set<String> getBindingsForLock() {
+            return map.keySet();
+        }
+
+    }
+
+    /**
+     * A named environment explicitly created with {@code new.env}.
+     */
+    public static final class NewEnv extends REnvironment {
+
+        public NewEnv(REnvironment parent, String name, int size) {
+            super(parent, name, new NewEnvFrameAccess(size));
         }
     }
 
@@ -449,51 +632,24 @@ public abstract class REnvironment {
      */
     private static final class Autoload extends REnvironment implements InSearchList {
         Autoload() {
-            super(baseEnv(), "");
+            super(baseEnv(), "", defaultFrameAccess);
         }
 
-        @Override
-        public Object get(String key) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public void put(String key, Object value) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public RStringVector ls(boolean allNames, String pattern) {
-            // TODO Auto-generated method stub
-            return null;
-        }
     }
 
     /**
      * The empty environment has no runtime state and so can be allocated statically. TODO Attempts
-     * to assign should cause an error, if not prevented in caller. TODO check.
+     * to assign should cause an R error, if not prevented in caller. TODO check.
      */
     private static final class Empty extends REnvironment implements InSearchList {
 
         private Empty() {
-            super(null, "R_EmptyEnv");
+            super(null, "R_EmptyEnv", defaultFrameAccess);
         }
 
         @Override
-        public Object get(String key) {
-            return null;
-        }
-
-        @Override
-        public void put(String key, Object value) {
-            // empty
-        }
-
-        @Override
-        public RStringVector ls(boolean allNames, String pattern) {
-            return RDataFactory.createEmptyStringVector();
+        public void put(String key, Object value) throws PutException {
+            throw new PutException("cannot assign values in the empty environment");
         }
 
     }

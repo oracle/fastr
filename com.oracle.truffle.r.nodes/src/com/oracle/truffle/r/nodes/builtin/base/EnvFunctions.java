@@ -168,17 +168,10 @@ public class EnvFunctions {
         @Specialization(order = 0)
         public Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
             controlVisibility();
-            // Owing to the .Internal, the caller is environment(), so we want the caller of that
+            // Owing to the .Internal, the caller is environment(),
+            // so we need to find the caller of that
             VirtualFrame envFrame = (VirtualFrame) frame.getCaller().unpack();
-            PackedFrame pf = envFrame.getCaller();
-            if (pf == null) {
-                return REnvironment.globalEnv();
-            } else {
-                VirtualFrame pfu = (VirtualFrame) pf.unpack();
-                // TODO handle parent properly
-                PackedFrame pfuCaller = pfu.getCaller();
-                return REnvironment.DynamicFunction.create(pfuCaller == null ? REnvironment.globalEnv() : null, pf);
-            }
+            return enclosingEnvironment(this, envFrame);
         }
 
         /**
@@ -251,17 +244,18 @@ public class EnvFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        public REnvironment newEnv(byte hash, RMissing parent, int size) {
+        public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.User(REnvironment.globalEnv(), REnvironment.UNNAMED, size);
+            REnvironment.Function currentEnv = REnvironment.Function.create(null, frame.materialize());
+            return new REnvironment.NewEnv(enclosingEnvironment(this, frame), REnvironment.UNNAMED, size);
         }
 
         @Specialization
-        public REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+        public REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.User(parent, REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(parent, REnvironment.UNNAMED, size);
         }
     }
 
@@ -283,6 +277,125 @@ public class EnvFunctions {
             controlVisibility();
             return RNull.instance;
         }
+    }
+
+    @RBuiltin(".Internal.lockEnvironment")
+    public abstract static class LockEnvironment extends InvisibleRBuiltinNode {
+        @Specialization(order = 0)
+        public Object lockEnvironment(REnvironment env, byte bindings) {
+            controlVisibility();
+            env.lock(bindings == RRuntime.LOGICAL_TRUE);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object lockEnvironment(Object x, byte y) {
+            controlVisibility();
+            throw notAnEnvironment(this);
+        }
+    }
+
+    @RBuiltin(".Internal.environmentIsLocked")
+    public abstract static class EnvironmentIsLocked extends RBuiltinNode {
+        @Specialization(order = 0)
+        public Object lockEnvironment(REnvironment env) {
+            controlVisibility();
+            return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
+        }
+
+        @Specialization(order = 100)
+        public Object lockEnvironment(@SuppressWarnings("unused") Object env) {
+            controlVisibility();
+            throw notAnEnvironment(this);
+        }
+    }
+
+    @RBuiltin(".Internal.lockBinding")
+    public abstract static class LockBinding extends InvisibleRBuiltinNode {
+        @Specialization(order = 0)
+        public Object lockBinding(String sym, REnvironment env) {
+            controlVisibility();
+            env.lockBinding(sym);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object lockBinding(Object x, Object y) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+        }
+    }
+
+    @RBuiltin(".Internal.unlockBinding")
+    public abstract static class UnlockBinding extends InvisibleRBuiltinNode {
+        @Specialization(order = 0)
+        public Object unlockBinding(String sym, REnvironment env) {
+            controlVisibility();
+            env.unlockBinding(sym);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object unlockBinding(Object x, Object y) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+        }
+    }
+
+    @RBuiltin(".Internal.bindingIsLocked")
+    public abstract static class BindingIsLocked extends RBuiltinNode {
+        @Specialization(order = 0)
+        public Object bindingIsLocked(String sym, REnvironment env) {
+            controlVisibility();
+            return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object bindingIsLocked(Object x, Object y) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+        }
+    }
+
+    @RBuiltin(".Internal.makeActiveBinding")
+    public abstract static class MakeActiveBinding extends InvisibleRBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization(order = 0)
+        public Object makeActiveBinding(Object sym, Object fun, Object env) {
+            // TODO implement
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
+        }
+    }
+
+    @RBuiltin(".Internal.bindingIsActive")
+    public abstract static class BindingIsActive extends InvisibleRBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization(order = 0)
+        public Object bindingIsActive(Object sym, Object fun, Object env) {
+            // TODO implement
+            return RDataFactory.createLogicalVectorFromScalar(false);
+        }
+    }
+
+    private static REnvironment enclosingEnvironment(RBuiltinNode node, VirtualFrame frame) {
+        PackedFrame callerFrame = frame.getCaller();
+        if (callerFrame == null) {
+            // invoked at the top level
+            return REnvironment.globalEnv();
+        } else {
+            // in some function, needs its lexically enclosing environment
+            // currently, we do not have a way to map from a VirtualFrame to the associated function
+            throw RError.getGenericError(node.getEncapsulatingSourceSection(), "unable to locate enclosing environment");
+        }
+
+    }
+
+    private static RError notAnEnvironment(RBuiltinNode node) {
+        return RError.getGenericError(node.getEncapsulatingSourceSection(), "not an envionment");
     }
 
 }

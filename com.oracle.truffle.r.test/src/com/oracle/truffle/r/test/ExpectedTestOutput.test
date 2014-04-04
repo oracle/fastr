@@ -5036,6 +5036,75 @@ Error in as.environment(length(search()) + 2) : invalid 'pos' argument
 character(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e) ; lockBinding("a", e); rm("a",envir = e); ls() }
+[1] "e"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e) ; lockEnvironment(e); assign("a", 2, e) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e) ; lockEnvironment(e); rm("a",envir = e); }
+Error in rm("a", envir = e) :
+  cannot remove bindings from a locked environment
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e) ; lockEnvironment(e, TRUE); assign("a", 2, e) }
+Error in assign("a", 2, e) :
+  cannot change value of locked binding for 'a'
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e) ; lockEnvironment(e, TRUE); unlockBinding("a", e); assign("a", 2, e) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e) ; rm("a",envir = e); ls() }
+[1] "e"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e); bindingIsLocked("a", e) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e); lockBinding("a", e); assign("a", 2, e) }
+Error in assign("a", 2, e) :
+  cannot change value of locked binding for 'a'
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("a", 1, e); lockBinding("a", e); bindingIsLocked("a", e) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); assign("x", 1, e); get("x", e) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); environmentIsLocked(e) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); get("x", e) }
+Error in get("x", e) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); lockEnvironment(e); assign("a", 1, e) }
+Error in assign("a", 1, e) : cannot add bindings to a locked environment
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); lockEnvironment(e); environmentIsLocked(e) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); x<-1; get("x", e) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(); x<-1; get("x", e, inherits=FALSE) }
+Error in get("x", e, inherits = FALSE) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e<-new.env(parent=emptyenv()); x<-1; get("x", e) }
+Error in get("x", e) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ emptyenv() }
 <environment: R_EmptyEnv>
 
@@ -5146,6 +5215,11 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ ph <- new.env() ; h <- new.env(parent=ph) ; assign("x", 2, ph) ; assign("x", 10, h, inherits=TRUE) ; get("x", ph)}
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ rm("foo", envir = baseenv()) }
+Error in rm("foo", envir = baseenv()) :
+  cannot remove variables from the base environment
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ x <- 1; .y <- 2; ls(globalenv()) }
@@ -6701,18 +6775,6 @@ numeric(0)
 #{ rev(c(1+1i, 2+2i)) }
 [1] 2+2i 1+1i
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRm
-#{ rm("ieps") }
-Warning message:
-In rm("ieps") : object 'ieps' not found
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRm
-#{ x <- 200 ; rm("x") ; x }
-Error: object 'x' not found
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRm
-#{ x <- 200 ; rm("x") }
-
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRound
 #{ round(-1.5) }
 [1] -2
@@ -6845,6 +6907,18 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatementNamedParams
 #{ seq(length.out=1) }
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ rm("ieps") }
+Warning message:
+In rm("ieps") : object 'ieps' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x <- 200 ; rm("x") ; x }
+Error: object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
+#{ x <- 200 ; rm("x") }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSprintf
 #{ sprintf("%03d", 1:3) }

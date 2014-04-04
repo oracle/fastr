@@ -6829,6 +6829,56 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_3602079d5fdc38d030056e67704d6461() {
+        assertEval("{ e<-new.env(); environmentIsLocked(e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_4b733b3c8920f029f34b48ebacda5606() {
+        assertEval("{ e<-new.env(); lockEnvironment(e); environmentIsLocked(e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_f3087d3aadebff13ac0e65ae3b77ccec() {
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); assign(\"a\", 2, e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_804a9447db172c80fb207ca48b0de263() {
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); unlockBinding(\"a\", e); assign(\"a\", 2, e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_7e0380fcca98529bec6f3984c0f5f0d1() {
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); bindingIsLocked(\"a\", e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_5f8448cc1a1e6ab105de27796ae2269b() {
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); bindingIsLocked(\"a\", e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_55690b9e7007c6c718afe28a4356ee75() {
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockBinding(\"a\", e); rm(\"a\",envir = e); ls() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_ecad558961e82bd73a386034c871ed68() {
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; rm(\"a\",envir = e); ls() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_ca04651afc834382c8dd7df7d55d8862() {
+        assertEval("{ e<-new.env(); x<-1; get(\"x\", e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_1137907b5efe300e13b83d852b13db42() {
+        assertEval("{ e<-new.env(); assign(\"x\", 1, e); get(\"x\", e) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_9da65acccab58ab951f83fcc62eb2a9d() {
         assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }");
     }
@@ -6851,6 +6901,46 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironment_14d25c1c38347070f388d2f433245dab() {
         assertEvalError("{ as.environment(as.environment) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_ce252c65c0262f6fbb8778c80f154db0() {
+        assertEvalError("{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_c70e2f98803cf9712a16f3c05963a400() {
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_9710d6ff5c3e123234468d4f0455fc7b() {
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_a066900fcbfdda8bef1990a02d8d21e7() {
+        assertEvalError("{ rm(\"foo\", envir = baseenv()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_96f7f8ea59f79d0925519d113eed4fee() {
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); rm(\"a\",envir = e); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_7da93587d25bdae28c3a9f5eb37c27a5() {
+        assertEvalError("{ e<-new.env(); get(\"x\", e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_fc01d2ee012ac0a5e709be2214a69320() {
+        assertEvalError("{ e<-new.env(); x<-1; get(\"x\", e, inherits=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_ecd1935ae926eb5338e4af77d14276f3() {
+        assertEvalError("{ e<-new.env(parent=emptyenv()); x<-1; get(\"x\", e) }");
     }
 
     @Test
@@ -9494,21 +9584,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testRm_ca7a9f28edcdd3c7bf66a0b3735a11dc() {
-        assertEval("{ x <- 200 ; rm(\"x\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testRm_7c0682fb8c9a86ff5b94ead1d97dbab6() {
-        assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testRm_638fe08c6d320c8475e37234929ca562() {
-        assertEvalWarning("{ rm(\"ieps\") }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testRound_33dc93cb0d4989bdf0b386cebae13f9d() {
         assertEval("{ round(0.4) }");
     }
@@ -9806,6 +9881,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_6e790dfb1de4a070282c353b0be255bd() {
         assertEval("{ seq(along=c(10,11,12)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSimpleRm_ca7a9f28edcdd3c7bf66a0b3735a11dc() {
+        assertEval("{ x <- 200 ; rm(\"x\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSimpleRm_7c0682fb8c9a86ff5b94ead1d97dbab6() {
+        assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSimpleRm_638fe08c6d320c8475e37234929ca562() {
+        assertEvalWarning("{ rm(\"ieps\") }");
     }
 
     @Test

@@ -1528,6 +1528,31 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ environmentName(emptyenv()) }");
         assertEval("{ environmentName(1) }");
 
+        // locking
+        assertEval("{ e<-new.env(); environmentIsLocked(e) }");
+        assertEval("{ e<-new.env(); lockEnvironment(e); environmentIsLocked(e) }");
+        assertEvalError("{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); assign(\"a\", 2, e) }");
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); unlockBinding(\"a\", e); assign(\"a\", 2, e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); bindingIsLocked(\"a\", e) }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); bindingIsLocked(\"a\", e) }");
+
+        // rm
+        assertEvalError("{ rm(\"foo\", envir = baseenv()) }");
+        assertEvalError("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); rm(\"a\",envir = e); }");
+        // ok to removed a locked binding
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockBinding(\"a\", e); rm(\"a\",envir = e); ls() }");
+        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; rm(\"a\",envir = e); ls() }");
+
+        // get
+        assertEvalError("{ e<-new.env(); get(\"x\", e) }");
+        assertEval("{ e<-new.env(); x<-1; get(\"x\", e) }");
+        assertEval("{ e<-new.env(); assign(\"x\", 1, e); get(\"x\", e) }");
+        assertEvalError("{ e<-new.env(); x<-1; get(\"x\", e, inherits=FALSE) }");
+        assertEvalError("{ e<-new.env(parent=emptyenv()); x<-1; get(\"x\", e) }");
+
     }
 
     @Test
@@ -2395,7 +2420,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testRm() {
+    public void testSimpleRm() {
         assertEvalError("{ x <- 200 ; rm(\"x\") ; x }");
         assertEvalWarning("{ rm(\"ieps\") }");
         assertEval("{ x <- 200 ; rm(\"x\") }");
