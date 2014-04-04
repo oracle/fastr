@@ -44,28 +44,26 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment asEnvironment(REnvironment env) {
+            controlVisibility();
             return env;
         }
 
         @Specialization
         public REnvironment asEnvironment(VirtualFrame frame, double dpos) {
+            controlVisibility();
             return asEnvironment(frame, (int) dpos);
         }
 
         @Specialization
         public REnvironment asEnvironment(VirtualFrame frame, int pos) {
+            controlVisibility();
             if (pos == -1) {
                 PackedFrame caller = frame.getCaller();
                 if (caller == null) {
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
                 } else {
-                    // TODO handle parent properly
-                    PackedFrame callerCaller = ((VirtualFrame) caller.unpack()).getCaller();
-                    if (callerCaller == null) {
-                        return REnvironment.globalEnv();
-                    } else {
-                        throw RError.getGenericError(getEncapsulatingSourceSection(), "not implemented");
-                    }
+                    VirtualFrame callerFrame = (VirtualFrame) caller.unpack();
+                    return callerEnvironment(callerFrame);
                 }
 
             }
@@ -83,6 +81,7 @@ public class EnvFunctions {
 
         @Specialization
         public REnvironment asEnvironment(String name) {
+            controlVisibility();
             String[] searchPath = REnvironment.searchPath();
             for (String e : searchPath) {
                 if (e.equals(name)) {
@@ -139,7 +138,6 @@ public class EnvFunctions {
         public REnvironment parentenv(REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                controlVisibility();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
             }
             return env.getParent();
@@ -147,6 +145,26 @@ public class EnvFunctions {
 
         @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
+        }
+    }
+
+    @RBuiltin(".Internal.parent.env<-")
+    public abstract static class SetParentEnv extends RBuiltinNode {
+
+        @Specialization
+        public REnvironment setParentenv(REnvironment env, REnvironment parent) {
+            controlVisibility();
+            if (env == REnvironment.emptyEnv()) {
+                throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot set the parent of the empty environment");
+            }
+            env.setParent(parent);
+            return env;
+        }
+
+        @Specialization(order = 100)
+        public REnvironment setParentenv(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
@@ -170,8 +188,8 @@ public class EnvFunctions {
             controlVisibility();
             // Owing to the .Internal, the caller is environment(),
             // so we need to find the caller of that
-            VirtualFrame envFrame = (VirtualFrame) frame.getCaller().unpack();
-            return enclosingEnvironment(this, envFrame);
+            VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
+            return callerEnvironment(callerFrame);
         }
 
         /**
@@ -180,18 +198,11 @@ public class EnvFunctions {
         @Specialization(order = 1)
         public REnvironment environment(RFunction func) {
             controlVisibility();
-            /*
-             * This is the simplest way to access the enclosing environment, as it already exists in
-             * the FunctionDefinitionNode (although, obviously, without a frame). We could instead
-             * use the MaterializedFrame in the RFunction instance and create a new
-             * REnvironment.Function instance. That would remove the need to special case builtins.
-             */
             RootNode rootNode = ((DefaultCallTarget) func.getTarget()).getRootNode();
             if (rootNode instanceof RBuiltinRootNode) {
                 return REnvironment.baseNamespaceEnv();
             } else {
-                REnvironment funcEnv = ((FunctionDefinitionNode) rootNode).getDescriptor();
-                return funcEnv.getParent();
+                return lexicalChain(func);
             }
         }
 
@@ -247,8 +258,7 @@ public class EnvFunctions {
         public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            REnvironment.Function currentEnv = REnvironment.Function.create(null, frame.materialize());
-            return new REnvironment.NewEnv(enclosingEnvironment(this, frame), REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(callerEnvironment(frame), REnvironment.UNNAMED, size);
         }
 
         @Specialization
@@ -264,18 +274,6 @@ public class EnvFunctions {
         @Specialization
         public RStringVector search() {
             return RDataFactory.createStringVector(REnvironment.searchPath(), RDataFactory.COMPLETE_VECTOR);
-        }
-    }
-
-    /**
-     * TODO implement.
-     */
-    @RBuiltin(".Internal.parent.frame")
-    public abstract static class ParentFrame extends RBuiltinNode {
-        @Specialization
-        public Object parentFrame(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            return RNull.instance;
         }
     }
 
@@ -367,6 +365,7 @@ public class EnvFunctions {
         @Specialization(order = 0)
         public Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
+            controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
         }
     }
@@ -377,21 +376,47 @@ public class EnvFunctions {
         @Specialization(order = 0)
         public Object bindingIsActive(Object sym, Object fun, Object env) {
             // TODO implement
+            controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(false);
         }
     }
 
-    private static REnvironment enclosingEnvironment(RBuiltinNode node, VirtualFrame frame) {
-        PackedFrame callerFrame = frame.getCaller();
-        if (callerFrame == null) {
-            // invoked at the top level
+    static RFunction frameToFunction(VirtualFrame frame) {
+        return frame.getArguments(RArguments.class).getFunction();
+    }
+
+    /**
+     * Handles the common case where the caller is the global environment and is therefore not an
+     * {@link com.oracle.truffle.r.runtime.REnvironment.Function} function environment.
+     */
+    static REnvironment callerEnvironment(VirtualFrame callerFrame) {
+        RFunction callerFunc = frameToFunction(callerFrame);
+        if (callerFunc == null) {
             return REnvironment.globalEnv();
         } else {
-            // in some function, needs its lexically enclosing environment
-            // currently, we do not have a way to map from a VirtualFrame to the associated function
-            throw RError.getGenericError(node.getEncapsulatingSourceSection(), "unable to locate enclosing environment");
+            return REnvironment.Function.create(lexicalChain(callerFunc), callerFrame.materialize());
         }
+    }
 
+    /**
+     * When functions are defined, the associated {@link FunctionDefinitionNode} contains an
+     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment instance
+     * whose parent is the lexically enclosing environment. This chain can be followed back to
+     * whichever "base" (i.e. non-function) environment the outermost function was defined in, e.g.
+     * "global" or "base". These environments evidently do not have an associated execution frame.
+     * The purpose of this method is to create an analogous lexical parent chain of
+     * {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
+     * {@link MaterializedFrame}.
+     */
+    static REnvironment lexicalChain(RFunction func) {
+        MaterializedFrame enclosingFrame = func.getEnclosingFrame();
+        if (enclosingFrame == REnvironment.globalEnv().getFrame()) {
+            return REnvironment.globalEnv();
+        } else {
+            // How do we get the RFunction associated with enclosingFrame?
+            RArguments args = enclosingFrame.getArguments(RArguments.class);
+            return REnvironment.Function.create(lexicalChain(args.getFunction()), enclosingFrame);
+        }
     }
 
     private static RError notAnEnvironment(RBuiltinNode node) {
