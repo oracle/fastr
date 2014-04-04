@@ -6804,6 +6804,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_39dce27a0b9a7269596592d1d23c6b20() {
+        assertEval("{ e <- new.env(); `parent.env<-`(e, emptyenv()); identical(parent.env(e), emptyenv()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_5ae3e8f410ab5a9c4d8d6b31651a8bd2() {
         assertEval("{ environment() }");
     }
@@ -6949,6 +6954,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_c6a4f629877c5c26aa4a01b522eb2649() {
+        assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_c29f313075292391e27de42119da385a() {
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
     }
@@ -6959,6 +6969,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironmentIgnore_f9bf2bff62b5ca445def1eed9808f98c() {
+        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_0902b89753b80fe43a8612bd6c00d063() {
         assertEval("{ ls(.GlobalEnv) }");
     }
@@ -6966,11 +6981,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_5482bc17285fec304815fd90301c9e13() {
         assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_c6a4f629877c5c26aa4a01b522eb2649() {
-        assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
     }
 
     @Test

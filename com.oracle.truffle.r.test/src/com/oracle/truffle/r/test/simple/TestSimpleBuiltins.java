@@ -1519,6 +1519,7 @@ public class TestSimpleBuiltins extends TestBase {
 
         // parent.env
         assertEval("{ identical(parent.env(baseenv()), emptyenv()) }");
+        assertEval("{ e <- new.env(); `parent.env<-`(e, emptyenv()); identical(parent.env(e), emptyenv()) }");
 
         // environment
         assertEval("{ environment() }");
@@ -1555,17 +1556,24 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ e<-new.env(); x<-1; get(\"x\", e, inherits=FALSE) }");
         assertEvalError("{ e<-new.env(parent=emptyenv()); x<-1; get(\"x\", e) }");
 
+        // misc
+        assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+
     }
 
     @Test
     @Ignore
     public void testEnvironmentIgnore() {
         // misc
-        assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
+
         assertEvalError("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
+
+        // This works in the shell, fails in the test related to different MaterializedFrame
+// behavior
+        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
 
         // requires .GlobalEnv to be defined in base
         assertEval("{ ls(.GlobalEnv) }");

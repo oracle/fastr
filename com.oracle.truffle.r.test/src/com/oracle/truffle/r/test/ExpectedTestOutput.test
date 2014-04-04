@@ -5028,6 +5028,10 @@ Error in as.environment(length(search()) + 2) : invalid 'pos' argument
 <environment: base>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ e <- new.env(); `parent.env<-`(e, emptyenv()); identical(parent.env(e), emptyenv()) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ e<-new.env() ; assign("x",1,e) ; get("x",e) }
 [1] 1
 
@@ -5191,6 +5195,10 @@ Error in get("x", e) : object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ h <- new.env(parent=emptyenv()) ; assign("y", 1, h) ; assign("x", 2, h) ; ls(h) }
 [1] "x" "y"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ h <- new.env(parent=emptyenv()) ; assign("y", 2, h) ; get("z", h) }
+Error in get("z", h) : object 'z' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ hh <- new.env() ; assign("z", 3, hh) ; h <- new.env(parent=hh) ; assign("y", 2, h) ; exists("z", h) }

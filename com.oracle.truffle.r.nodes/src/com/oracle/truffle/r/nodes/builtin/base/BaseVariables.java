@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.io.*;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -32,14 +33,14 @@ import com.oracle.truffle.r.runtime.data.*;
  * {@link BaseOptions} the definition and initialization is two-step process handled through the
  * {@link RPackageVariables} class.
  *
- * TODO Some of these are defined in the R (base) source code in GnuR, so long term FastR should do
- * the same.
- *
+ * N.B. Some variables are assigned explicitly in the R source files associated with the base
+ * package. However, FastR does not evaluate those files in the same way as user code, so the
+ * assignments are ignored. That might change at some point.
  */
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
     private static final String[] VARS = new String[]{
-        ".Platform", ".Library", ".LibrarySite"
+        ".BaseNamespaceEnv", ".GlobalEnv", ".Platform", ".Library", ".LibrarySite"
     };
     // @formatter:on
 
@@ -55,26 +56,33 @@ public class BaseVariables implements RPackageVariables.Handler {
 
     public void initialize(REnvironment env) {
         for (String var : VARS) {
-            @SuppressWarnings("unused")
             Object value = null;
             switch (var) {
+                case ".GlobalEnv":
+                    value = REnvironment.globalEnv();
+                    break;
+                case ".BaseNamespaceEnv":
+                    value = env;
+                    break;
                 case ".Platform":
                     // .Platform TODO be more accurate
                     String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
                     value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
                     break;
-
                 case ".Library":
                     value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrary());
                     break;
-
                 case ".LibrarySite":
                     value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrarySite(), RDataFactory.COMPLETE_VECTOR);
                     break;
 
             }
+            try {
+                env.put(var, value);
+            } catch (PutException ex) {
+                Utils.fail("error initializing base variables");
+            }
         }
-        // TODO store the value through env (TBD)
     }
 
 }
