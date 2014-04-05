@@ -59,6 +59,8 @@ public abstract class Get extends RBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
+    public abstract Object execute(VirtualFrame frame, String name, int pos, RMissing envir, String mode, byte inherits);
+
     @Specialization(order = 0)
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
