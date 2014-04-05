@@ -1779,6 +1779,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testEnvironmentIgnore_f9bf2bff62b5ca445def1eed9808f98c() {
+        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testEnvironmentIgnore_0902b89753b80fe43a8612bd6c00d063() {
         assertEval("{ ls(.GlobalEnv) }");
     }
@@ -1786,11 +1791,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testEnvironmentIgnore_5482bc17285fec304815fd90301c9e13() {
         assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEnvironmentIgnore_c6a4f629877c5c26aa4a01b522eb2649() {
-        assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
     }
 
     @Ignore

@@ -40,25 +40,30 @@ import com.oracle.truffle.r.runtime.data.*;
  * numeric id in the place where the name would appear for a named environment. This is finessed
  * using the {@link #getPrintNameHelper} method. Finally, environments on the {@code search} path
  * return a yet different name in the result of {@code search}, e.g. ".GlobalEnv", "package:base".
- *
+ * <p>
  * Environments can also be locked preventing any bindings from being added or removed. N.B. the
  * empty environment can't be assigned to but is not locked (see GnuR). Further, individual bindings
  * within an environment can be locked, although they can be removed unless the environment is also
  * locked.
- *
+ * <p>
  * Environments are used for many different things in R, including something close to a
  * {@link java.util.Map} created in R code using the {@code new.env} function. This is the only case
  * where the {@code size} parameter is specified. All the other instances of environments are
  * implicitly created by the virtual machine, for example, on function call.
- *
- * The different kinds of environments are implemented as subclasses. Currently the variation in
- * behavior regarding access to the "frame" is handled by static subclassing. If an environment can
- * change its "kind" at runtime, then this will have to be handled by delegation instead.
- *
+ * <p>
+ * The different kinds of environments are implemented as subclasses. The variation in behavior
+ * regarding access to the "frame" is handled by delegation to an instance of {@link FrameAccess}.
+ * <p>
  * Packages have three associated environments, "package:xxx", "imports:xxx" and "namespace:xxx",
  * for package "xxx". The {@code base} package is a special case in that it does not have an
  * "imports" environment. The parent of "package:base" is the empty environment, but the parent of
  * "namespace:base" is the global environment.
+ *
+ * The frame access for the "base" environment is handled specially, using a "map" style
+ * environment. This is due to the fact that the R code for the base package is not evaluated by
+ * Truffle in the usual way, so there is no Truffle frame. The function definitions are handled
+ * specially as {@code RBuiltinNode} and the variables are set into the frame manually. The
+ * "namespace:base" and "package:base" environments share the same map.
  */
 public abstract class REnvironment {
 
@@ -78,21 +83,16 @@ public abstract class REnvironment {
     }
 
     /**
-     * Access to the frame component, handled by delegation.
-     *
+     * Access to the frame component, handled by delegation in {@link REnvironment}. The default
+     * implementation throws an exception for all calls and is used in the FunctionDefinition
+     * environment which has no associated frame.
      */
-    private abstract static class FrameAccess {
-        /**
-         * Records which bindings are locked. In normal use we don't expect any bindings to be
-         * locked so this set is allocated lazily.
-         */
-        protected Set<String> lockedBindings;
-
+    private static class FrameAccess {
         /**
          * Return the value of object named {@code name} or {@code null} if not found.
          */
         Object get(@SuppressWarnings("unused") String key) {
-            return null;
+            throw notImplemented("get");
         }
 
         /**
@@ -101,26 +101,92 @@ public abstract class REnvironment {
          *
          * @throws PutException if the binding is locked
          */
-        void put(String key, @SuppressWarnings("unused") Object value) throws REnvironment.PutException {
-            if (lockedBindings != null && lockedBindings.contains(key)) {
-                throw createPutException(key);
-            }
+        @SuppressWarnings("unused")
+        void put(String key, Object value) throws REnvironment.PutException {
+            throw notImplemented("put");
         }
 
         /**
          * Remove binding.
          */
+        void rm(@SuppressWarnings("unused") String key) {
+            throw notImplemented("rm");
+        }
+
+        @SuppressWarnings("unused")
+        RStringVector ls(boolean allNames, String pattern) {
+            throw notImplemented("ls");
+        }
+
+        void lockBindings() {
+            throw notImplemented("lockBindings");
+        }
+
+        /**
+         * Disallow updates to {@code key}.
+         */
+        void lockBinding(@SuppressWarnings("unused") String key) {
+            throw notImplemented("lockBinding");
+        }
+
+        /**
+         * Allow updates to (previously locked) {@code key}.
+         */
+        void unlockBinding(@SuppressWarnings("unused") String key) {
+            throw notImplemented("unlockBinding");
+        }
+
+        boolean bindingIsLocked(@SuppressWarnings("unused") String key) {
+            throw notImplemented("bindingIsLocked");
+        }
+
+        MaterializedFrame getFrame() {
+            throw notImplemented("getFrame");
+        }
+
+        private static RuntimeException notImplemented(String methodName) {
+            return new RuntimeException("FrameAccess method '" + methodName + "' not implemented");
+        }
+
+    }
+
+    /**
+     * This adapter class handles the locking of bindings, but has null implementations of the basic
+     * methods, which must be overridden by a subclass, while calling {@code super.method}
+     * appropriately to invoke the locking logic.
+     */
+    private static class FrameAccessBindingsAdapter extends FrameAccess {
+        /**
+         * Records which bindings are locked. In normal use we don't expect any bindings to be
+         * locked so this set is allocated lazily.
+         */
+        protected Set<String> lockedBindings;
+
+        @Override
+        Object get(String key) {
+            return null;
+        }
+
+        @Override
+        void put(String key, Object value) throws REnvironment.PutException {
+            if (lockedBindings != null && lockedBindings.contains(key)) {
+                throw createPutException(key);
+            }
+        }
+
+        @Override
         void rm(String key) {
             if (lockedBindings != null) {
                 lockedBindings.remove(key);
             }
         }
 
-        @SuppressWarnings("unused")
+        @Override
         RStringVector ls(boolean allNames, String pattern) {
             return RDataFactory.createEmptyStringVector();
         }
 
+        @Override
         @SlowPath
         void lockBindings() {
             Set<String> bindings = getBindingsForLock();
@@ -131,11 +197,11 @@ public abstract class REnvironment {
             }
         }
 
-        protected abstract Set<String> getBindingsForLock();
+        protected Set<String> getBindingsForLock() {
+            return null;
+        }
 
-        /**
-         * Disallow updates to {@code key}.
-         */
+        @Override
         @SlowPath
         void lockBinding(String key) {
             if (lockedBindings == null) {
@@ -149,32 +215,27 @@ public abstract class REnvironment {
             return new PutException("cannot change value of locked binding for '" + key + "'");
         }
 
-        /**
-         * Allow updates to (previously locked) {@code key}.
-         */
+        @Override
         void unlockBinding(String key) {
             if (lockedBindings != null) {
                 lockedBindings.remove(key);
             }
         }
 
+        @Override
         boolean bindingIsLocked(String key) {
             return lockedBindings != null && lockedBindings.contains(key);
         }
 
-    }
-
-    private static class DefaultFrameAccess extends FrameAccess {
-
         @Override
-        protected Set<String> getBindingsForLock() {
-            // TODO Auto-generated method stub
+        MaterializedFrame getFrame() {
             return null;
         }
-
     }
 
-    private static final FrameAccess defaultFrameAccess = new DefaultFrameAccess();
+    private static final FrameAccess defaultFrameAccess = new FrameAccessBindingsAdapter();
+    private static final FrameAccess noFrameAccess = new FrameAccess();
+    private static final FrameAccess baseFrameAccess = new NewEnvFrameAccess(0);
 
     /**
      * Map is keyed by the simple name and, for packages, currently only contains the "package:xxx"
@@ -307,6 +368,14 @@ public abstract class REnvironment {
         return name;
     }
 
+    /**
+     * Return the {@link MaterializedFrame} associated with this environment, or {@code null} if
+     * there is none.
+     */
+    public MaterializedFrame getFrame() {
+        return frameAccess.getFrame();
+    }
+
     public void lock(boolean bindings) {
         locked = true;
         if (bindings) {
@@ -377,9 +446,9 @@ public abstract class REnvironment {
     }
 
     /**
-     * Variant of {@link FrameAccess} that provides access to the actual execution frame.
+     * Variant of {@link FrameAccess} that provides access to an actual Truffle execution frame.
      */
-    private static class TruffleFrameAccess extends FrameAccess {
+    private static class TruffleFrameAccess extends FrameAccessBindingsAdapter {
 
         private MaterializedFrame frame;
 
@@ -388,7 +457,12 @@ public abstract class REnvironment {
         }
 
         @Override
-        public Object get(String key) {
+        MaterializedFrame getFrame() {
+            return frame;
+        }
+
+        @Override
+        Object get(String key) {
             FrameDescriptor fd = frame.getFrameDescriptor();
             FrameSlot slot = fd.findFrameSlot(key);
             if (slot == null) {
@@ -399,7 +473,7 @@ public abstract class REnvironment {
         }
 
         @Override
-        public void put(String key, Object value) throws PutException {
+        void put(String key, Object value) throws PutException {
             // check locking
             super.put(key, value);
             FrameDescriptor fd = frame.getFrameDescriptor();
@@ -413,12 +487,12 @@ public abstract class REnvironment {
         }
 
         @Override
-        public void rm(String key) {
+        void rm(String key) {
             super.rm(key);
         }
 
         @Override
-        public RStringVector ls(boolean allNames, String pattern) {
+        RStringVector ls(boolean allNames, String pattern) {
             // TODO support pattern
             FrameDescriptor fd = frame.getFrameDescriptor();
             String[] names = fd.getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);
@@ -460,7 +534,7 @@ public abstract class REnvironment {
         }
 
         protected Base(REnvironment parent) {
-            super(parent, "base", defaultFrameAccess);
+            super(parent, "base", baseFrameAccess);
         }
 
         @Override
@@ -474,7 +548,7 @@ public abstract class REnvironment {
      */
     private static final class NamespaceBase extends REnvironment {
         private NamespaceBase() {
-            super(globalEnv, "base", defaultFrameAccess);
+            super(globalEnv, "base", baseFrameAccess);
         }
 
         @Override
@@ -539,7 +613,7 @@ public abstract class REnvironment {
 
         public FunctionDefinition(REnvironment parent) {
             // function environments are not named
-            super(parent, "", new DefaultFrameAccess());
+            super(parent, "", noFrameAccess);
             this.descriptor = new FrameDescriptor();
         }
 
@@ -549,7 +623,11 @@ public abstract class REnvironment {
 
     }
 
-    private static class NewEnvFrameAccess extends FrameAccess {
+    /**
+     * Variant of {@link FrameAccess} for {@link NewEnv} environments where the "frame" is a
+     * {@link LinkedHashMap}.
+     */
+    private static class NewEnvFrameAccess extends FrameAccessBindingsAdapter {
         private final Map<String, Object> map;
 
         NewEnvFrameAccess(int size) {
