@@ -7114,6 +7114,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGet_454f5be352adc770dd02ec79976ed693() {
+        assertEval("{ get(\".Platform\", globalenv())$endian }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGetClass_50e9635bfb1e3eeed4dd1a14ca0c6d4f() {
         assertEval("{x<-1L;class(x)}");
     }
@@ -7146,6 +7151,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGetClassIgnore_04e1bbb35c3306f6feb801b5cce80b88() {
         assertEval("{x<-seq(1,10);class(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGetIgnore_1360e7f9c659eacd7ee24ef5ca6b274c() {
+        assertEval("{ get(\".Platform\")$endian }");
     }
 
     @Test
@@ -13811,6 +13821,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleValues_testComplex_65fd146574282acbbc892c088995981c() {
         assertEval("{ 1i }");
+    }
+
+    @Test
+    public void TestSimpleValues_testDefaultVariables_71c55934e32576774664d7bc1d063085() {
+        assertEval("{ .Platform$endian }");
     }
 
     @Test

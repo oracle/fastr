@@ -2591,11 +2591,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ get(\"dummy\") }");
         assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
         assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
+        assertEval("{ get(\".Platform\", globalenv())$endian }");
     }
 
     @Test
     @Ignore
     public void testGetIgnore() {
+        // fails because there is no connection of frames to the environment-based lookup chain
+        assertEval("{ get(\".Platform\")$endian }");
         // Fails because of error message mismatch.
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }

@@ -117,7 +117,6 @@ public abstract class Get extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object get(RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
         return get(x, envir, RMissing.instance, mode, inherits);
-
     }
 
 }

@@ -5246,6 +5246,10 @@ Error in rm("foo", envir = baseenv()) :
 [1]   0  -4  NA NaN Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
+#{ get(".Platform", globalenv())$endian }
+[1] "little"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
 #{ get("dummy") }
 Error in get("dummy") : object 'dummy' not found
 
