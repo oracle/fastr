@@ -130,7 +130,13 @@ public abstract class MatMult extends RBuiltinNode {
     @Specialization(order = 13, guards = "vecmat")
     public RDoubleVector vecmatmult(RDoubleVector a, RDoubleVector b) {
         // convert a to a matrix with one column, perform matrix multiplication
-        RDoubleVector amat = a.copyWithNewDimensions(new int[]{a.getLength(), 1});
+        int[] dims;
+        if (b.getDimensions()[0] == 1) {
+            dims = new int[]{a.getLength(), 1};
+        } else {
+            dims = new int[]{1, a.getLength()};
+        }
+        RDoubleVector amat = a.copyWithNewDimensions(dims);
         return matmatmult(amat, b);
     }
 
