@@ -132,7 +132,7 @@ public abstract class RBuiltinPackage {
                 }
             }
         } catch (IOException | ClassNotFoundException ex) {
-            Utils.fail("error loading RBuiltIn classes from " + getClass().getSimpleName() + " : " + ex);
+            Utils.fail("error loading RBuiltin classes from " + getClass().getSimpleName() + " : " + ex);
         }
 
     }

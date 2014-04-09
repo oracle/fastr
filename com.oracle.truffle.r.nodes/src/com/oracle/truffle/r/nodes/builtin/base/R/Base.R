@@ -17,4 +17,4 @@
 
 as.list <- function(x, ...) if (typeof(x) == "list") x else as.vector(x, "list")
 
-`%o%` <- function(x, y) outer(x, y)
+vector <- function(mode = "logical", length = 0L) .Internal(vector(mode, length))
