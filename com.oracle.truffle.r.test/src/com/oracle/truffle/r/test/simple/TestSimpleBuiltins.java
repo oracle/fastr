@@ -479,16 +479,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
         assertEval("{ matrix(nrow=2,ncol=2) }");
         assertEval("{ matrix(1:4,2,2) }");
+        assertEval("{ matrix(1i,10,10) }");
+        assertEval("{ matrix(c(1i,NA),10,10) }");
+        assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
+        assertEval("{ matrix(c(1i,100i),10,10) }");
     }
 
     @Test
     @Ignore
     public void testMatrixIgnore() {
-        // FIXME pretty printing
-        assertEval("{ matrix(1i,10,10) }");
-        assertEval("{ matrix(c(1i,NA),10,10) }");
-        assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
-        assertEval("{ matrix(c(1i,100i),10,10) }");
         // FIXME missing warning
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
         assertEvalWarning("{ matrix(1:4,3,2) }");
@@ -771,6 +770,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1,2) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=3); y<-m+42; diag(y) <- c(1,2); y }");
         assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1,2); attributes(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1.1,2.2); m }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1.1,2); m }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1,2.2); m }");
         assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1.1,2.2); attributes(m) }");
         assertEval("{ x <- (m <- matrix(1:6, nrow=3)) ; diag(m) <- c(1,2) ; x }");
         assertEval("{ m <- matrix(1:6, nrow=3) ; f <- function() { diag(m) <- c(100,200) } ; f() ; m }");

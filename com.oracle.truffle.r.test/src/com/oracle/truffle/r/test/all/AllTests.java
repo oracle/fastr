@@ -8414,22 +8414,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_a7247bc1f1726ae687962cfda709230e() {
+    public void TestSimpleBuiltins_testMatrix_a7247bc1f1726ae687962cfda709230e() {
         assertEval("{ matrix(1i,10,10) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_fa8d853982879fcc896086fe6addfb0f() {
+    public void TestSimpleBuiltins_testMatrix_fa8d853982879fcc896086fe6addfb0f() {
         assertEval("{ matrix(c(1i,NA),10,10) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_9e26083c44caa7c52f4f651cad7b0af3() {
+    public void TestSimpleBuiltins_testMatrix_9e26083c44caa7c52f4f651cad7b0af3() {
         assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMatrixIgnore_cc0dd296841e5af699ac9efbf0121ed3() {
+    public void TestSimpleBuiltins_testMatrix_cc0dd296841e5af699ac9efbf0121ed3() {
         assertEval("{ matrix(c(1i,100i),10,10) }");
     }
 
@@ -11001,6 +11001,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testUpdateDiagonal_36bfcdec38ec4f6e82eac4495b9b385e() {
         assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1,2); attributes(m) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateDiagonal_7c8f4662acfa9913ff8d6b9d25042c7f() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1.1,2.2); m }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateDiagonal_f4a7c352af2d5f2b21300e141f70bfa6() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1.1,2); m }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateDiagonal_0c9c209deab9bdd4a4dc6d6c967f9050() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1,2.2); m }");
     }
 
     @Test

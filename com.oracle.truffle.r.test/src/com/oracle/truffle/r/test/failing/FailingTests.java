@@ -1979,26 +1979,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testMatrixIgnore_a7247bc1f1726ae687962cfda709230e() {
-        assertEval("{ matrix(1i,10,10) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMatrixIgnore_fa8d853982879fcc896086fe6addfb0f() {
-        assertEval("{ matrix(c(1i,NA),10,10) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMatrixIgnore_9e26083c44caa7c52f4f651cad7b0af3() {
-        assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMatrixIgnore_cc0dd296841e5af699ac9efbf0121ed3() {
-        assertEval("{ matrix(c(1i,100i),10,10) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
     }
