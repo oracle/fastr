@@ -593,32 +593,27 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ h <- new.env() ; assign(\"a\",1,h) ; assign(\"b\",2,h) ; sa <- sapply(ls(h), function(k) get(k,h,inherits=FALSE)) ; names(sa) }");
 
+        assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list() } }) }");
+        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }");
+        assertEval("{ f<-function() { x<-2 ; sapply(1, function(i) { x }) } ; f() }");
+
+        assertEval("{ sapply(1:3,function(x){x*2L}) }");
+        assertEval("{ sapply(c(1,2,3),function(x){x*2}) }");
+        assertEval("{ sapply(1:3, length) }");
+        assertEval("{ f<-length; sapply(1:3, f) }");
+        assertEval("{ sapply(list(1,2,3),function(x){x*2}) }");
+
+        assertEval("{ sapply(1:3, function(x) { if (x==1) { 1 } else if (x==2) { integer() } else { TRUE } }) }");
     }
 
     @Test
     @Ignore
     public void testSapplyIgnore() {
-        // FIXME these all regressed with the change to 'print'
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { as.raw(10) } }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { \"hello\" }} ) } ");
         assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list(2) } }) }");
-    }
-
-    @Test
-    @Ignore
-    public void testApplyIgnore() {
-        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
-        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
-
-        assertEval("{ sapply(1:3,function(x){x*2L}) }"); // FIXME print format
-        assertEval("{ sapply(c(1,2,3),function(x){x*2}) }"); // FIXME print format
-        assertEval("{ sapply(1:3, length) }"); // FIXME print format
-        assertEval("{ f<-length; sapply(1:3, f) }"); // FIXME print format
-
-        assertEval("{ sapply(list(1,2,3),function(x){x*2}) }");
-        assertEval("{ sapply(1:3, function(x) { if (x==1) { 1 } else if (x==2) { integer() } else { TRUE } }) }");
 
         assertEval("{ sapply(1:3, `-`, 2) }");
         assertEval("{ sapply(1:3, \"-\", 2) }");
@@ -633,23 +628,27 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ (sapply(1:3, function(i) { list(xxx=1:i) } )) }");
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { list(xxx=1) } else {list(2)} }) }");
         assertEval("{ (sapply(1:3, function(i) { if (i < 3) { c(xxx=1) } else {c(2)} })) }");
-        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(1,2), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=1,Y=2), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(\"a\",\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
+    }
 
-        // FIXME print regression
-        assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) }");
-        assertEval("{ f<-function() { x<-2 ; sapply(1, function(i) { x }) } ; f() }");  // FIXME
+    @Test
+    @Ignore
+    public void testApplyIgnore() {
+        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
+        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
+
+        // names
+        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
     }
 
     @Test
     public void testApply() {
         assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,1,sum) }");
         assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,2,sum) }");
-        assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list() } }) }");
     }
 
     @Test
@@ -736,15 +735,8 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testUpperTriangular() {
-    }
-
-    @Test
-    @Ignore
-    public void testUpperTriangularIgnore() {
-        // FIXME print regression
         assertEval("{ m <- matrix(1:6, nrow=2) ;  upper.tri(m, diag=TRUE) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ;  upper.tri(m, diag=FALSE) }");
-
         assertEval("{ upper.tri(1:3, diag=TRUE) }");
         assertEval("{ upper.tri(1:3, diag=FALSE) }");
     }
@@ -780,12 +772,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=3); y<-m+42; diag(y) <- c(1,2); y }");
         assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1,2); attributes(m) }");
         assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1.1,2.2); attributes(m) }");
-    }
-
-    @Test
-    @Ignore
-    public void testUpdateDiagonalIgnore() {
-        // FIXME print regression
         assertEval("{ x <- (m <- matrix(1:6, nrow=3)) ; diag(m) <- c(1,2) ; x }");
         assertEval("{ m <- matrix(1:6, nrow=3) ; f <- function() { diag(m) <- c(100,200) } ; f() ; m }");
     }
@@ -880,12 +866,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list() }");
         assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list(0) }");
         assertEval("{ x<-1; dim(x)<-1; dimnames(x)<-list(\"a\"); dimnames(x); dimnames(x)<-list(); dimnames(x) }");
-    }
 
-    @Test
-    @Ignore
-    public void testDimensionsIgnore() {
-        // FIXME print regressions
         assertEval("{ x <- 1:2 ; dim(x) <- c(1,2) ; x }");
         assertEval("{ x <- 1:2 ; attr(x, \"dim\") <- c(2,1) ; x }");
     }
@@ -1604,12 +1585,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ m <- matrix(c(rep(1:10,100200),100L), nrow=1001) ; sum(m * t(m)) }");
 
         assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) }");
-    }
 
-    @Test
-    @Ignore
-    public void testTransposeIgnore() {
-        // FIXME print regressions
         assertEval("{ t(1:3) }");
         assertEval("{ t(t(t(1:3))) }");
         assertEval("{ t(matrix(1:6, nrow=2)) }");
@@ -1862,6 +1838,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCbind() {
         assertEval("{ cbind() }");
         assertEval("{ cbind(1:3,2) }");
+        assertEval("{ cbind(1:3,1:3) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; cbind(11:12, m) }");
     }
 
     @Test
@@ -1869,10 +1847,6 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCbindIgnore() {
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
         assertEval("{ cbind(1:3,1:2) }");
-
-        // FIXME print regressions
-        assertEval("{ cbind(1:3,1:3) }");
-        assertEval("{ m <- matrix(1:6, nrow=2) ; cbind(11:12, m) }");
     }
 
     @Test
@@ -1880,17 +1854,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rbind(1.1:3.3,1.1:3.3) }");
         assertEval("{ rbind() }");
         assertEval("{ rbind(1:3,2) }");
+        assertEval("{ rbind(1:3,1:3) }");
+        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
+        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
     }
 
     @Test
     @Ignore
     public void testRbindIgnore() {
-        // FIXME print regressions
-        assertEval("{ rbind(1:3,1:3) }");
-        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
-        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
-
     }
 
     @Test
@@ -2156,6 +2128,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ rnorm(n = 1, n = 2) }");
         assertEvalError("{ rnorm(s = 1, s = 1) }");
         assertEvalError("{ matrix(1:4, n = 2) }");
+
+        assertEval("{ matrix(da=1:3,1) }");
     }
 
     @Test
@@ -2176,9 +2150,6 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
         assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
-
-        // FIXME print regressions
-        assertEval("{ matrix(da=1:3,1) }");
     }
 
     @Test
@@ -2386,7 +2357,6 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testMatchIgnore() {
-        // FIXME print regressions
         assertEval("{ match(2,c(1,2,3)) }");
         assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
         assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
