@@ -624,6 +624,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return String.format(format, arg);
     }
 
+    @SlowPath
     private static String concat(String... ss) {
         StringBuilder sb = new StringBuilder();
         for (String s : ss) {
@@ -637,6 +638,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return s.substring(start);
     }
 
+    @SlowPath
     private static int requiresDecimalPointsAndTrailingZeroes(String[] values, int[] decimalPointOffsets, int[] lenAfterPoint) {
         boolean foundWithDecimalPoint = false;
         boolean foundWithoutDecimalPoint = false;
@@ -663,6 +665,7 @@ public abstract class PrettyPrinterNode extends RNode {
         return (foundWithDecimalPoint && foundWithoutDecimalPoint) || inequalLenAfterPoint ? maxLenAfterPoint : -1;
     }
 
+    @SlowPath
     private static void padTrailingDecimalPointAndZeroesIfRequired(String[] values) {
         int[] decimalPointOffsets = new int[values.length];
         int[] lenAfterPoint = new int[values.length];
@@ -685,6 +688,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
     private static void rightJustify(String[] values) {
         int maxLen = 0;
         boolean inequalLengths = false;
@@ -717,6 +721,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
     private static void removeLeadingMinus(String[] values) {
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
@@ -974,6 +979,20 @@ public abstract class PrettyPrinterNode extends RNode {
 
         public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector);
 
+        @SlowPath
+        private static void postProcessColumn(String[] dataStrings, int nrow, int ncol, int col) {
+            // create and populate array with column data
+            String[] columnData = new String[nrow];
+            for (int r = 0; r < nrow; ++r) {
+                columnData[r] = dataStrings[col * nrow + r];
+            }
+            padTrailingDecimalPointAndZeroesIfRequired(columnData);
+            // put possibly changed data back
+            for (int r = 0; r < nrow; ++r) {
+                dataStrings[col * nrow + r] = columnData[r];
+            }
+        }
+
         private static String getDimId(RList dimNames, int dimension, int ind, byte isComplexOrRawVector) {
             StringBuilder sb = new StringBuilder();
             if (dimNames == null || dimNames.getDataAt(dimension) == RNull.instance) {
@@ -1036,7 +1055,46 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(sb);
         }
 
-        @Specialization(order = 2, guards = "!isEmpty")
+        @Specialization(order = 10, guards = "!isEmpty")
+        public String printVector2Dim(VirtualFrame frame, RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+            int nrow = dimensions.getDataAt(0);
+            int ncol = dimensions.getDataAt(1);
+
+            // prepare data (relevant for column widths)
+            String[] dataStrings = new String[nrow * ncol];
+            int[] dataColWidths = new int[ncol];
+            RList dimNames = vector.getDimNames();
+            RStringVector columnDimNames = null;
+            if (dimNames != null && dimNames.getDataAt(1) != RNull.instance) {
+                columnDimNames = (RStringVector) dimNames.getDataAt(1);
+            }
+            int rowHeaderWidth = 0;
+            for (int r = 0; r < nrow; ++r) {
+                for (int c = 0; c < ncol; ++c) {
+                    int index = c * nrow + r;
+                    dataStrings[index] = prettyPrintSingleVectorElement(frame, vector.getDataAtAsObject(index + offset));
+                    maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
+                }
+                rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
+            }
+
+            // probably add trailing decimal points and zeroes
+            // iterate over columns
+            for (int c = 0; c < ncol; ++c) {
+                postProcessColumn(dataStrings, nrow, ncol, c);
+                // final adjustment of column width
+                for (int r = 0; r < nrow; ++r) {
+                    int l = dataStrings[c * nrow + r].length();
+                    if (l > dataColWidths[c]) {
+                        dataColWidths[c] = l;
+                    }
+                }
+            }
+
+            return formatResult(vector, isListOrStringVector == RRuntime.LOGICAL_TRUE, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
+        }
+
+        @Specialization(order = 200, guards = "!isEmpty")
         public String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1053,24 +1111,33 @@ public abstract class PrettyPrinterNode extends RNode {
             for (int r = 0; r < nrow; ++r) {
                 for (int c = 0; c < ncol; ++c) {
                     int index = c * nrow + r;
-                    String data = prettyPrintSingleVectorElement(frame, vector.getDataAtAsObject(index + offset));
-                    dataStrings[index] = data;
-                    if (data.length() > dataColWidths[c]) {
-                        dataColWidths[c] = data.length();
-                    }
-                    if (columnDimNames != null) {
-                        String columnName = columnDimNames.getDataAt(c);
-                        if (columnName == RRuntime.STRING_NA) {
-                            columnName = NA_HEADER;
-                        }
-                        if (columnName.length() > dataColWidths[c]) {
-                            dataColWidths[c] = columnName.length();
-                        }
-                    }
+                    dataStrings[index] = prettyPrintSingleVectorElement(frame, vector.getDataAtAsObject(index + offset));
+                    maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
                 }
                 rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
             }
 
+            return formatResult(vector, isListOrStringVector == RRuntime.LOGICAL_TRUE, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
+        }
+
+        @SlowPath
+        private static void maintainColumnData(int[] dataColWidths, RStringVector columnDimNames, int c, String data) {
+            if (data.length() > dataColWidths[c]) {
+                dataColWidths[c] = data.length();
+            }
+            if (columnDimNames != null) {
+                String columnName = columnDimNames.getDataAt(c);
+                if (columnName == RRuntime.STRING_NA) {
+                    columnName = NA_HEADER;
+                }
+                if (columnName.length() > dataColWidths[c]) {
+                    dataColWidths[c] = columnName.length();
+                }
+            }
+        }
+
+        @SlowPath
+        private static String formatResult(RAbstractVector vector, boolean isListOrStringVector, int nrow, int ncol, String[] dataStrings, int[] dataColWidths, int rowHeaderWidth) {
             String rowFormat = concat("%", intString(rowHeaderWidth), "s");
 
             StringBuilder b = new StringBuilder();
@@ -1078,7 +1145,7 @@ public abstract class PrettyPrinterNode extends RNode {
             // column header
             spaces(b, rowHeaderWidth + 1);
             for (int c = 1; c <= ncol; ++c) {
-                b.append(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector == RRuntime.LOGICAL_TRUE));
+                b.append(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector));
                 if (c < ncol) {
                     b.append(' ');
                 }
@@ -1099,12 +1166,12 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
                 for (int c = 1; c <= ncol; ++c) {
                     String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
-                    if (isListOrStringVector == RRuntime.LOGICAL_TRUE) {
+                    if (isListOrStringVector) {
                         // list elements are aligned to the left and vector's to the right
                         b.append(dataString);
-                        spaces(b, padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector == RRuntime.LOGICAL_TRUE).length() - dataString.length());
+                        spaces(b, padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector).length() - dataString.length());
                     } else {
-                        String cellFormat = concat("%", intString(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector == RRuntime.LOGICAL_TRUE).length()), "s");
+                        String cellFormat = concat("%", intString(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector).length()), "s");
                         b.append(stringFormat(cellFormat, dataString));
                     }
                     if (c < ncol) {
@@ -1115,7 +1182,6 @@ public abstract class PrettyPrinterNode extends RNode {
                     b.append('\n');
                 }
             }
-
             return builderToString(b);
         }
 
