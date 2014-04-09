@@ -3334,6 +3334,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testVectorConstructorIgnore_4c533a47811eec5d654d8bc9cada841a() {
+        assertEval("{ vector(length=3) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testWhichIgnore_6d01b8ef11e5cdf979ca7122cd3de717() {
         assertEval("{ which(c(a=TRUE,b=FALSE,c=TRUE)) }");
     }

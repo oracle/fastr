@@ -8414,6 +8414,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatMult_54cb220edcef0e3e4aaea1e10c57a1e9() {
+        assertEval("{ as.vector(c(1,2,3)) %*% t(as.vector(c(1,2))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatMultIgnore_e9ba9d6fa9abe7cec2ddbabcc73934ca() {
         assertEval("{ matrix(c(1+1i,2-2i,3+3i,4-4i), 2) %*% matrix(c(5+5i,6-6i,7+7i,8-8i), 2) }");
     }
@@ -9516,6 +9521,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testRep_a4d795c5d590995b4351345df5bcada9() {
         assertEval("{ rep(\"hello\", 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_1304ebded16b81c3bf627d5d6636af76() {
+        assertEval("{ rep(c(1,2),c(3,3)) }");
     }
 
     @Test
@@ -11191,6 +11201,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testUseMethodSimple_3daab073549d57abf4b3cece0fae9dd2() {
         assertEval("{f <- function(x){ UseMethod(\"f\",x); };f.first <- function(x){cat(\"f first\",x)};f.second <- function(x){cat(\"f second\",x)};obj <-1;attr(obj,\"class\")  <- \"first\";f(obj);attr(obj,\"class\")  <- \"second\";}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testVectorConstructor_629fc5f98d9d6659735740d0b0894210() {
+        assertEval("{ vector() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testVectorConstructor_2e5c4cbba72ce650f6121a120e852297() {
+        assertEval("{ vector(\"integer\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testVectorConstructor_57cd36b68776561d2902b2e76a15bd6b() {
+        assertEval("{ vector(\"numeric\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testVectorConstructor_d015a194b16ec70f1861f3e0a5e36ece() {
+        assertEval("{ vector(\"numeric\", length=4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testVectorConstructorIgnore_4c533a47811eec5d654d8bc9cada841a() {
+        assertEval("{ vector(length=3) }");
     }
 
     @Test

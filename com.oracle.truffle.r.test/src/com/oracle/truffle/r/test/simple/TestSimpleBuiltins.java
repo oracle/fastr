@@ -84,6 +84,20 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testVectorConstructor() {
+        assertEval("{ vector() }");
+        assertEval("{ vector(\"integer\") }");
+        assertEval("{ vector(\"numeric\") }");
+        assertEval("{ vector(\"numeric\", length=4) }");
+    }
+
+    @Test
+    @Ignore
+    public void testVectorConstructorIgnore() {
+        assertEval("{ vector(length=3) }");
+    }
+
+    @Test
     public void testMaximum() {
         assertEval("{ max((-1):100) }");
         assertEval("{ max(2L, 4L) }");
@@ -126,6 +140,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(as.raw(14), 4) }");
         assertEval("{ rep(1:3, length.out=4) }");
         assertEval("{ rep(\"hello\", 3) }");
+        assertEval("{ rep(c(1,2),c(3,3)) }");
     }
 
     @Test
@@ -2350,7 +2365,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ c(1,2,3) %*% c(4,5,6) }");
         assertEval("{ matrix(c(3,1,2,0,1,2),2) %*% c(1,0,4) }");
         assertEval("{ c(1,0,4) %*% matrix(c(3,1,2,0,1,2),3) }");
-
+        assertEval("{ as.vector(c(1,2,3)) %*% t(as.vector(c(1,2))) }");
     }
 
     @Test
@@ -2362,7 +2377,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ c(1+1i,2-2i,3+3i) %*% c(4-4i,5+5i,6-6i) }");
         assertEval("{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),2) %*% c(1+1i,0-0i,4+4i) }");
         assertEval("{ c(1+1i,0-0i,4+4i) %*% matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),3) }");
-
     }
 
     @Test
