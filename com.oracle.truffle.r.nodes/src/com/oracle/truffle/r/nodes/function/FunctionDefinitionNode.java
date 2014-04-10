@@ -31,12 +31,16 @@ import com.oracle.truffle.r.runtime.*;
 
 public final class FunctionDefinitionNode extends RRootNode {
 
-    private final REnvironment descriptor;
+    /**
+     * The "parent" of this environment instance is the lexically enclosing environment when the
+     * function was defined.
+     */
+    private final REnvironment.FunctionDefinition descriptor;
     private final RNode uninitializedBody;
     @Child private RNode body;
     private final String description;
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment descriptor, RNode body, Object[] parameterNames, String description) {
+    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description) {
         super(src, parameterNames, descriptor.getDescriptor());
         this.descriptor = descriptor;
         this.uninitializedBody = NodeUtil.cloneNode(body);

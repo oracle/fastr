@@ -57,7 +57,7 @@ public class BasePackage extends RBuiltinPackage {
 
     @Override
     public String getName() {
-        return "Base";
+        return "base";
     }
 
 }

@@ -29,10 +29,11 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(value = {"rm", "remove"}, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
-public abstract class Rm extends RBuiltinNode {
+public abstract class Rm extends RInvisibleBuiltinNode {
 
     public static Rm create(String name) {
         RNode[] args = getParameterValues0();
@@ -57,12 +58,7 @@ public abstract class Rm extends RBuiltinNode {
         return getParameterValues0();
     }
 
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
-
-    @Specialization
+    @Specialization(order = 0)
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
@@ -70,13 +66,39 @@ public abstract class Rm extends RBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization
+    @Specialization(order = 1)
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
         for (Object o : names) {
             assert o instanceof String;
             removeFromCurrentFrame(frame, (String) o);
+        }
+        return RNull.instance;
+    }
+
+    @Specialization(order = 2)
+    @SuppressWarnings("unused")
+    public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+        controlVisibility();
+        try {
+            envir.rm(name);
+        } catch (PutException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+        }
+        return RNull.instance;
+    }
+
+    @Specialization(order = 3)
+    @SuppressWarnings("unused")
+    public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+        controlVisibility();
+        try {
+            for (Object o : names) {
+                envir.rm((String) (o));
+            }
+        } catch (PutException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
         }
         return RNull.instance;
     }

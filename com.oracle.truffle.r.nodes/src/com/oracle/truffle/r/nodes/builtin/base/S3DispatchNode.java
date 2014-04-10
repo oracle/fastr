@@ -35,6 +35,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     protected FunctionCall funCall;
     protected Frame genCallEnv;
     protected Frame genDefEnv;
+    protected boolean isFirst;
 
     protected boolean findFunction(final String functionName, Frame frame) {
         if (lookup == null || !functionName.equals(lastFun)) {
@@ -44,6 +45,7 @@ public abstract class S3DispatchNode extends DispatchNode {
             lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
         Object func = targetFunction = null;
+        targetFunctionName = null;
         try {
             if (frame instanceof VirtualFrame) {
                 func = lookup.execute((VirtualFrame) frame);
@@ -78,14 +80,21 @@ public abstract class S3DispatchNode extends DispatchNode {
     protected void defineVars(VirtualFrame frame) {
         wvnGeneric = initWvn(wvnGeneric, RRuntime.RDotGeneric);
         wvnGeneric.execute(frame, genericName);
-        wvnMethod = initWvn(wvnMethod, RRuntime.RDotMethod);
-        wvnMethod.execute(frame, targetFunctionName);
         wvnClass = initWvn(wvnClass, RRuntime.RDotClass);
         wvnClass.execute(frame, klass);
         wvnCallEnv = initWvn(wvnCallEnv, RRuntime.RDotGenericCallEnv);
         wvnCallEnv.execute(frame, genCallEnv);
         wvnDefEnv = initWvn(wvnDefEnv, RRuntime.RDotGenericDefEnv);
         wvnDefEnv.execute(frame, genDefEnv);
+    }
+
+    protected void removeVars(VirtualFrame frame) {
+        FrameDescriptor fDesc = frame.getFrameDescriptor();
+        fDesc.removeFrameSlot(RRuntime.RDotGeneric);
+        fDesc.removeFrameSlot(RRuntime.RDotMethod);
+        fDesc.removeFrameSlot(RRuntime.RDotClass);
+        fDesc.removeFrameSlot(RRuntime.RDotGenericCallEnv);
+        fDesc.removeFrameSlot(RRuntime.RDotGenericDefEnv);
     }
 
     private void checkLength(final String className, final String generic) {

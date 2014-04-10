@@ -34,14 +34,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("names<-")
-public abstract class UpdateNames extends RBuiltinNode {
+public abstract class UpdateNames extends RInvisibleBuiltinNode {
 
     @Child CastStringNode castStringNode;
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {

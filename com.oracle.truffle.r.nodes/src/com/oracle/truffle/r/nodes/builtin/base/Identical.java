@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Identical extends RBuiltinNode {
 
     @Specialization(order = 0)
-    public Object doInternalIdential(byte x, byte y,
+    public Object doInternalIdentical(byte x, byte y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -55,7 +55,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization(order = 2)
-    public Object doInternalIdential(double x, double y,
+    public Object doInternalIdentical(double x, double y,
                     // @formatter:off
                     byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -63,6 +63,17 @@ public abstract class Identical extends RBuiltinNode {
         controlVisibility();
         boolean truth = numEq == RRuntime.LOGICAL_TRUE ? x == y : Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y);
         return RDataFactory.createLogicalVectorFromScalar(truth);
+    }
+
+    @Specialization(order = 3)
+    public Object doInternalIdentical(REnvironment x, REnvironment y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
+                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        // reference equality for environments
+        return RDataFactory.createLogicalVectorFromScalar(x == y);
     }
 
     @Specialization(order = 100)

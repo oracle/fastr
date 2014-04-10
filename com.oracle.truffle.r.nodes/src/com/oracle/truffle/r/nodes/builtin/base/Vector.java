@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,44 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("set.seed")
-public abstract class SetSeed extends RInvisibleBuiltinNode {
+@RBuiltin(".Internal.vector")
+public abstract class Vector extends RBuiltinNode {
 
-    @Specialization
-    public RNull setseed(int n) {
-        controlVisibility();
-        RContext.getInstance().getRandomNumberGenerator().setSeed(n);
-        return RNull.instance;
+    @CreateCast("arguments")
+    protected RNode[] castLength(RNode[] arguments) {
+        // length is at index 1
+        arguments[1] = ConvertIntFactory.create(arguments[1]);
+        return arguments;
     }
 
     @Specialization
-    public RNull setseed(double d) {
+    public RAbstractVector vector(String mode, int length) {
         controlVisibility();
-        return setseed((int) d);
+        switch (mode) {
+            case "logical":
+                return RDataFactory.createLogicalVector(length);
+            case "numeric":
+            case "double":
+                return RDataFactory.createDoubleVector(length);
+            case "integer":
+                return RDataFactory.createIntVector(length);
+            case "list":
+                Object[] data = new Object[length];
+                Arrays.fill(data, RNull.instance);
+                return RDataFactory.createList(data);
+            default:
+                throw RError.getCannotMakeVectorOfMode(getEncapsulatingSourceSection(), mode);
+        }
     }
+
 }

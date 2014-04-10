@@ -23,9 +23,13 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,13 +39,72 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class EnvFunctions {
 
+    @RBuiltin("as.environment")
+    public abstract static class AsEnvironment extends RBuiltinNode {
+
+        @Specialization
+        public REnvironment asEnvironment(REnvironment env) {
+            controlVisibility();
+            return env;
+        }
+
+        @Specialization
+        public REnvironment asEnvironment(VirtualFrame frame, double dpos) {
+            controlVisibility();
+            return asEnvironment(frame, (int) dpos);
+        }
+
+        @Specialization
+        public REnvironment asEnvironment(VirtualFrame frame, int pos) {
+            controlVisibility();
+            if (pos == -1) {
+                PackedFrame caller = frame.getCaller();
+                if (caller == null) {
+                    throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
+                } else {
+                    VirtualFrame callerFrame = (VirtualFrame) caller.unpack();
+                    return callerEnvironment(callerFrame);
+                }
+
+            }
+            String[] searchPath = REnvironment.searchPath();
+            if (pos == searchPath.length + 1) {
+                // although the empty env does not appear in the result of "search", and it is
+                // not accessible by name, GnuR allows it to be accessible by index
+                return REnvironment.emptyEnv();
+            } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
+                throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'pos' argument");
+            } else {
+                return REnvironment.lookupBySearchName(searchPath[pos - 1]);
+            }
+        }
+
+        @Specialization
+        public REnvironment asEnvironment(String name) {
+            controlVisibility();
+            String[] searchPath = REnvironment.searchPath();
+            for (String e : searchPath) {
+                if (e.equals(name)) {
+                    return REnvironment.lookupBySearchName(e);
+                }
+            }
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "no item named '" + name + "' on the search list");
+        }
+
+        @Specialization(order = 100)
+        public REnvironment asEnvironment(@SuppressWarnings("unused") Object x) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), " invalid object for 'as.environment'");
+        }
+
+    }
+
     @RBuiltin("emptyenv")
     public abstract static class EmptyEnv extends RBuiltinNode {
 
         @Specialization
         public REnvironment emptyenv() {
             controlVisibility();
-            return RRuntime.EMPTY_ENV;
+            return REnvironment.emptyEnv();
         }
     }
 
@@ -51,17 +114,20 @@ public class EnvFunctions {
         @Specialization
         public Object globalenv() {
             controlVisibility();
-            return RRuntime.GLOBAL_ENV;
+            return REnvironment.globalEnv();
         }
     }
 
+    /**
+     * Returns the "package:base" environment.
+     */
     @RBuiltin("baseenv")
     public abstract static class BaseEnv extends RBuiltinNode {
 
         @Specialization
         public Object baseenv() {
             controlVisibility();
-            return RRuntime.BASE_ENV;
+            return REnvironment.baseEnv();
         }
     }
 
@@ -71,7 +137,7 @@ public class EnvFunctions {
         @Specialization
         public REnvironment parentenv(REnvironment env) {
             controlVisibility();
-            if (env == RRuntime.EMPTY_ENV) {
+            if (env == REnvironment.emptyEnv()) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
             }
             return env.getParent();
@@ -79,6 +145,26 @@ public class EnvFunctions {
 
         @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
+        }
+    }
+
+    @RBuiltin(".Internal.parent.env<-")
+    public abstract static class SetParentEnv extends RBuiltinNode {
+
+        @Specialization
+        public REnvironment setParentenv(REnvironment env, REnvironment parent) {
+            controlVisibility();
+            if (env == REnvironment.emptyEnv()) {
+                throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot set the parent of the empty environment");
+            }
+            env.setParent(parent);
+            return env;
+        }
+
+        @Specialization(order = 100)
+        public REnvironment setParentenv(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
@@ -97,16 +183,27 @@ public class EnvFunctions {
     @RBuiltin(".Internal.environment")
     public abstract static class Environment extends RBuiltinNode {
 
-        @Specialization
-        public Object environment(@SuppressWarnings("unused") RNull x) {
+        @Specialization(order = 0)
+        public Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
             controlVisibility();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(NULL) is not implemented");
+            // Owing to the .Internal, the caller is environment(),
+            // so we need to find the caller of that
+            VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
+            return callerEnvironment(callerFrame);
         }
 
-        @Specialization
-        public Object environment(@SuppressWarnings("unused") RFunction func) {
+        /**
+         * Returns the environment that {@code func} was created in.
+         */
+        @Specialization(order = 1)
+        public REnvironment environment(RFunction func) {
             controlVisibility();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "environment(func) is not implemented");
+            RootNode rootNode = ((DefaultCallTarget) func.getTarget()).getRootNode();
+            if (rootNode instanceof RBuiltinRootNode) {
+                return REnvironment.baseNamespaceEnv();
+            } else {
+                return lexicalChain(func);
+            }
         }
 
         @Specialization(order = 100)
@@ -158,30 +255,172 @@ public class EnvFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        public REnvironment newEnv(byte hash, RMissing parent, int size) {
+        public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment(RRuntime.GLOBAL_ENV, REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(callerEnvironment(frame), REnvironment.UNNAMED, size);
         }
 
         @Specialization
-        public REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+        public REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment(parent, REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(parent, REnvironment.UNNAMED, size);
+        }
+    }
+
+    @RBuiltin("search")
+    public abstract static class Search extends RBuiltinNode {
+        @Specialization
+        public RStringVector search() {
+            return RDataFactory.createStringVector(REnvironment.searchPath(), RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(".Internal.lockEnvironment")
+    public abstract static class LockEnvironment extends RInvisibleBuiltinNode {
+        @Specialization(order = 0)
+        public Object lockEnvironment(REnvironment env, byte bindings) {
+            controlVisibility();
+            env.lock(bindings == RRuntime.LOGICAL_TRUE);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object lockEnvironment(Object x, byte y) {
+            controlVisibility();
+            throw notAnEnvironment(this);
+        }
+    }
+
+    @RBuiltin(".Internal.environmentIsLocked")
+    public abstract static class EnvironmentIsLocked extends RBuiltinNode {
+        @Specialization(order = 0)
+        public Object lockEnvironment(REnvironment env) {
+            controlVisibility();
+            return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
+        }
+
+        @Specialization(order = 100)
+        public Object lockEnvironment(@SuppressWarnings("unused") Object env) {
+            controlVisibility();
+            throw notAnEnvironment(this);
+        }
+    }
+
+    @RBuiltin(".Internal.lockBinding")
+    public abstract static class LockBinding extends RInvisibleBuiltinNode {
+        @Specialization(order = 0)
+        public Object lockBinding(String sym, REnvironment env) {
+            controlVisibility();
+            env.lockBinding(sym);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object lockBinding(Object x, Object y) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+        }
+    }
+
+    @RBuiltin(".Internal.unlockBinding")
+    public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
+        @Specialization(order = 0)
+        public Object unlockBinding(String sym, REnvironment env) {
+            controlVisibility();
+            env.unlockBinding(sym);
+            return RNull.instance;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object unlockBinding(Object x, Object y) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+        }
+    }
+
+    @RBuiltin(".Internal.bindingIsLocked")
+    public abstract static class BindingIsLocked extends RBuiltinNode {
+        @Specialization(order = 0)
+        public Object bindingIsLocked(String sym, REnvironment env) {
+            controlVisibility();
+            return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(order = 100)
+        public Object bindingIsLocked(Object x, Object y) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+        }
+    }
+
+    @RBuiltin(".Internal.makeActiveBinding")
+    public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization(order = 0)
+        public Object makeActiveBinding(Object sym, Object fun, Object env) {
+            // TODO implement
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
+        }
+    }
+
+    @RBuiltin(".Internal.bindingIsActive")
+    public abstract static class BindingIsActive extends RInvisibleBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization(order = 0)
+        public Object bindingIsActive(Object sym, Object fun, Object env) {
+            // TODO implement
+            controlVisibility();
+            return RDataFactory.createLogicalVectorFromScalar(false);
+        }
+    }
+
+    static RFunction frameToFunction(VirtualFrame frame) {
+        return frame.getArguments(RArguments.class).getFunction();
+    }
+
+    /**
+     * Handles the common case where the caller is the global environment and is therefore not an
+     * {@link com.oracle.truffle.r.runtime.REnvironment.Function} function environment.
+     */
+    static REnvironment callerEnvironment(VirtualFrame callerFrame) {
+        RFunction callerFunc = frameToFunction(callerFrame);
+        if (callerFunc == null) {
+            return REnvironment.globalEnv();
+        } else {
+            return REnvironment.Function.create(lexicalChain(callerFunc), callerFrame.materialize());
         }
     }
 
     /**
-     * TODO implement.
+     * When functions are defined, the associated {@link FunctionDefinitionNode} contains an
+     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment instance
+     * whose parent is the lexically enclosing environment. This chain can be followed back to
+     * whichever "base" (i.e. non-function) environment the outermost function was defined in, e.g.
+     * "global" or "base". These environments evidently do not have an associated execution frame.
+     * The purpose of this method is to create an analogous lexical parent chain of
+     * {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
+     * {@link MaterializedFrame}.
      */
-    @RBuiltin(".Internal.parent.frame")
-    public abstract static class ParentFrame extends RBuiltinNode {
-        @Specialization
-        public Object parentFrame(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            return RNull.instance;
+    static REnvironment lexicalChain(RFunction func) {
+        MaterializedFrame enclosingFrame = func.getEnclosingFrame();
+        if (enclosingFrame == REnvironment.globalEnv().getFrame()) {
+            return REnvironment.globalEnv();
+        } else {
+            // How do we get the RFunction associated with enclosingFrame?
+            RArguments args = enclosingFrame.getArguments(RArguments.class);
+            return REnvironment.Function.create(lexicalChain(args.getFunction()), enclosingFrame);
         }
+    }
+
+    private static RError notAnEnvironment(RBuiltinNode node) {
+        return RError.getGenericError(node.getEncapsulatingSourceSection(), "not an envionment");
     }
 
 }

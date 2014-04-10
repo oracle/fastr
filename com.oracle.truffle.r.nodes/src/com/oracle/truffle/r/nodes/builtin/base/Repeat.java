@@ -24,14 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -54,65 +52,77 @@ public abstract class Repeat extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(1), ConstantNode.create(RMissing.instance), ConstantNode.create(1)};
     }
 
-    @Child ConvertInt convertInt;
-
-    private int coerceTimesOrLength(VirtualFrame frame, Object times, Object lengthOut) {
-        // length.out supersedes times
-        return coerce0(frame, lengthOut == RMissing.instance ? times : lengthOut);
+    @CreateCast("arguments")
+    protected RNode[] castTimesLength(RNode[] arguments) {
+        // times is at index 1; length.out, at 2
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
+        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false);
+        return arguments;
     }
 
-    private int coerce0(VirtualFrame frame, Object o) {
-        if (convertInt == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertInt = insert(ConvertIntFactory.create(null));
-        }
-        try {
-            return convertInt.executeInteger(frame, o);
-        } catch (ConversionFailedException e) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTimes(getEncapsulatingSourceSection());
-        }
-    }
-
-    @Specialization
+    @Specialization(order = 0)
     @SuppressWarnings("unused")
     public RNull repeat(VirtualFrame frame, RNull value, Object times, Object lengthOut, Object each) {
         controlVisibility();
-        coerceTimesOrLength(frame, times, lengthOut);
         return RNull.instance;
     }
 
-    @Specialization
-    public RIntVector repeat(VirtualFrame frame, int value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+    //
+    // Specialisations for single values.
+    // For each value type, these specialisations are given:
+    // * if times is given but length.out is not,
+    // * if length.out is given (it supersedes times)
+    //
+
+    @Specialization(order = 10)
+    @SuppressWarnings("unused")
+    public RIntVector repeat(int value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         int[] array = new int[times];
         Arrays.fill(array, value);
         return RDataFactory.createIntVector(array, RRuntime.isComplete(value));
     }
 
-    @Specialization
-    public RDoubleVector repeat(VirtualFrame frame, double value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+    @Specialization(order = 11)
+    @SuppressWarnings("unused")
+    public RIntVector repeat(int value, Object times, int lengthOut, Object each) {
+        return repeat(value, lengthOut, RMissing.instance, each);
+    }
+
+    @Specialization(order = 20)
+    @SuppressWarnings("unused")
+    public RDoubleVector repeat(double value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         double[] array = new double[times];
         Arrays.fill(array, value);
         return RDataFactory.createDoubleVector(array, RRuntime.isComplete(value));
     }
 
-    @Specialization
-    public RRawVector repeat(VirtualFrame frame, RRaw value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+    @Specialization(order = 21)
+    @SuppressWarnings("unused")
+    public RDoubleVector repeat(double value, Object times, int lengthOut, Object each) {
+        return repeat(value, lengthOut, RMissing.instance, each);
+    }
+
+    @Specialization(order = 30)
+    @SuppressWarnings("unused")
+    public RRawVector repeat(RRaw value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         byte[] array = new byte[times];
         Arrays.fill(array, value.getValue());
         return RDataFactory.createRawVector(array);
     }
 
-    @Specialization
-    public RComplexVector repeat(VirtualFrame frame, RComplex value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+    @Specialization(order = 31)
+    @SuppressWarnings("unused")
+    public RRawVector repeat(RRaw value, Object times, int lengthOut, Object each) {
+        return repeat(value, lengthOut, RMissing.instance, each);
+    }
+
+    @Specialization(order = 40)
+    @SuppressWarnings("unused")
+    public RComplexVector repeat(RComplex value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         double[] array = new double[times << 1];
         for (int i = 0; i < times; ++i) {
             int index = i << 1;
@@ -122,80 +132,90 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createComplexVector(array, !value.isNA());
     }
 
-    @Specialization
-    public RStringVector repeat(VirtualFrame frame, String value, Object timesObject, Object lengthOut, @SuppressWarnings("unused") Object each) {
+    @Specialization(order = 41)
+    @SuppressWarnings("unused")
+    public RComplexVector repeat(RComplex value, Object times, int lengthOut, Object each) {
+        return repeat(value, lengthOut, RMissing.instance, each);
+    }
+
+    @Specialization(order = 50)
+    @SuppressWarnings("unused")
+    public RStringVector repeat(String value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        int times = coerceTimesOrLength(frame, timesObject, lengthOut);
         String[] array = new String[times];
         Arrays.fill(array, value);
         return RDataFactory.createStringVector(array, !RRuntime.isNA(value));
     }
 
-    // All subsequent specialisations either use the times parameter, or the length.out parameter.
-    // As the shape of the inner loop is different depending on which parameter is used, they are
-    // specialised for parameter presence.
-
-    @Specialization(order = 10, guards = "!lengthOutGiven")
+    @Specialization(order = 51)
     @SuppressWarnings("unused")
-    public RIntVector repeatT(VirtualFrame frame, RIntVector value, Object timesObject, Object lengthOut, Object each) {
-        controlVisibility();
-        return performAbstractIntVectorT(value, coerce0(frame, timesObject));
+    public RStringVector repeat(String value, Object times, int lengthOut, Object each) {
+        return repeat(value, lengthOut, RMissing.instance, each);
     }
 
-    @Specialization(order = 11, guards = "lengthOutGiven")
+    //
+    // Specialisations for vector values.
+    // The specialisations given for each value type are as follows:
+    // * single times argument
+    // * single length.out argument (supersedes times)
+    //
+
+    @Specialization(order = 100)
     @SuppressWarnings("unused")
-    public RIntVector repeatL(VirtualFrame frame, RIntVector value, Object timesObject, Object lengthOut, Object each) {
+    public RIntVector repeatT(RAbstractIntVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        return performAbstractIntVectorL(value, coerce0(frame, lengthOut));
+        int oldLength = value.getLength();
+        int length = oldLength * times;
+        int[] array = new int[length];
+        for (int i = 0; i < times; i++) {
+            for (int j = 0; j < oldLength; ++j) {
+                array[i * oldLength + j] = value.getDataAt(j);
+            }
+        }
+        return RDataFactory.createIntVector(array, value.isComplete());
     }
 
-    @Specialization(order = 20, guards = "!lengthOutGiven")
+    @Specialization(order = 102)
     @SuppressWarnings("unused")
-    public RIntVector repeatT(VirtualFrame frame, RIntSequence value, Object timesObject, Object lengthOut, Object each) {
+    public RIntVector repeatL(RAbstractIntVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
-        return performAbstractIntVectorT(value, coerce0(frame, timesObject));
+        int[] array = new int[lengthOut];
+        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
+            array[i] = value.getDataAt(j);
+        }
+        return RDataFactory.createIntVector(array, value.isComplete());
     }
 
-    @Specialization(order = 21, guards = "lengthOutGiven")
+    @Specialization(order = 110)
     @SuppressWarnings("unused")
-    public RIntVector repeatL(VirtualFrame frame, RIntSequence value, Object timesObject, Object lengthOut, Object each) {
+    public RDoubleVector repeatT(RAbstractDoubleVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        return performAbstractIntVectorL(value, coerce0(frame, lengthOut));
+        int oldLength = value.getLength();
+        int length = value.getLength() * times;
+        double[] array = new double[length];
+        for (int i = 0; i < times; i++) {
+            for (int j = 0; j < oldLength; ++j) {
+                array[i * oldLength + j] = value.getDataAt(j);
+            }
+        }
+        return RDataFactory.createDoubleVector(array, value.isComplete());
     }
 
-    @Specialization(order = 30, guards = "!lengthOutGiven")
+    @Specialization(order = 111)
     @SuppressWarnings("unused")
-    public RDoubleVector repeatT(VirtualFrame frame, RDoubleVector value, Object timesObject, Object lengthOut, Object each) {
+    public RDoubleVector repeatL(RAbstractDoubleVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
-        return performAbstractDoubleVectorT(value, coerce0(frame, timesObject));
+        double[] array = new double[lengthOut];
+        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
+            array[i] = value.getDataAt(j);
+        }
+        return RDataFactory.createDoubleVector(array, value.isComplete());
     }
 
-    @Specialization(order = 31, guards = "lengthOutGiven")
+    @Specialization(order = 120)
     @SuppressWarnings("unused")
-    public RDoubleVector repeatL(VirtualFrame frame, RDoubleVector value, Object timesObject, Object lengthOut, Object each) {
+    public RRawVector repeatT(RRawVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        return performAbstractDoubleVectorL(value, coerce0(frame, lengthOut));
-    }
-
-    @Specialization(order = 40, guards = "!lengthOutGiven")
-    @SuppressWarnings("unused")
-    public RDoubleVector repeatT(VirtualFrame frame, RDoubleSequence value, Object timesObject, Object lengthOut, Object each) {
-        controlVisibility();
-        return performAbstractDoubleVectorT(value, coerce0(frame, timesObject));
-    }
-
-    @Specialization(order = 41, guards = "lengthOutGiven")
-    @SuppressWarnings("unused")
-    public RDoubleVector repeatL(VirtualFrame frame, RDoubleSequence value, Object timesObject, Object lengthOut, Object each) {
-        controlVisibility();
-        return performAbstractDoubleVectorL(value, coerce0(frame, lengthOut));
-    }
-
-    @Specialization(order = 50, guards = "!lengthOutGiven")
-    @SuppressWarnings("unused")
-    public RRawVector repeatT(VirtualFrame frame, RRawVector value, Object timesObject, Object lengthOut, Object each) {
-        controlVisibility();
-        int times = coerce0(frame, timesObject);
         int oldLength = value.getLength();
         int length = oldLength * times;
         byte[] array = new byte[length];
@@ -207,23 +227,21 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createRawVector(array);
     }
 
-    @Specialization(order = 51, guards = "lengthOutGiven")
+    @Specialization(order = 121)
     @SuppressWarnings("unused")
-    public RRawVector repeatL(VirtualFrame frame, RRawVector value, Object timesObject, Object lengthOut, Object each) {
+    public RRawVector repeatL(RRawVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
-        int length = coerce0(frame, lengthOut);
-        byte[] array = new byte[length];
-        for (int i = 0, j = 0; i < length; ++i, j = Utils.incMod(j, value.getLength())) {
+        byte[] array = new byte[lengthOut];
+        for (int i = 0, j = 0; i < lengthOut; ++i, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j).getValue();
         }
         return RDataFactory.createRawVector(array);
     }
 
-    @Specialization(order = 60, guards = "!lengthOutGiven")
+    @Specialization(order = 130)
     @SuppressWarnings("unused")
-    public RComplexVector repeatT(VirtualFrame frame, RComplexVector value, Object timesObject, Object lengthOut, Object each) {
+    public RComplexVector repeatT(RComplexVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
-        int times = coerce0(frame, timesObject);
         int oldLength = value.getLength();
         int length = value.getLength() * times;
         double[] array = new double[length];
@@ -238,11 +256,11 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createComplexVector(array, value.isComplete());
     }
 
-    @Specialization(order = 61, guards = "lengthOutGiven")
+    @Specialization(order = 131)
     @SuppressWarnings("unused")
-    public RComplexVector repeatL(VirtualFrame frame, RComplexVector value, Object timesObject, Object lengthOut, Object each) {
+    public RComplexVector repeatL(RComplexVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
-        int length = coerce0(frame, lengthOut) << 1;
+        int length = lengthOut << 1;
         double[] array = new double[length];
         for (int i = 0, j = 0; i < length; i += 2, j = Utils.incMod(j, value.getLength())) {
             RComplex complex = value.getDataAt(j);
@@ -252,49 +270,40 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createComplexVector(array, value.isComplete());
     }
 
-    private static RIntVector performAbstractIntVectorT(RAbstractIntVector value, int times) {
-        int oldLength = value.getLength();
-        int length = oldLength * times;
-        int[] array = new int[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        return RDataFactory.createIntVector(array, value.isComplete());
-    }
+    //
+    // abstract specialisation for vector times arguments
+    //
 
-    private static RIntVector performAbstractIntVectorL(RAbstractIntVector value, int length) {
-        int[] array = new int[length];
-        for (int i = 0, j = 0; i < length; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        return RDataFactory.createIntVector(array, value.isComplete());
-    }
-
-    private static RDoubleVector performAbstractDoubleVectorT(RAbstractDoubleVector value, int times) {
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        double[] array = new double[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        return RDataFactory.createDoubleVector(array, value.isComplete());
-    }
-
-    private static RDoubleVector performAbstractDoubleVectorL(RAbstractDoubleVector value, int length) {
-        double[] array = new double[length];
-        for (int i = 0, j = 0; i < length; ++i, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        return RDataFactory.createDoubleVector(array, value.isComplete());
-    }
-
+    @Specialization(order = 500)
     @SuppressWarnings("unused")
-    protected static boolean lengthOutGiven(Object x, Object timesObject, Object lengthOut, Object each) {
-        return lengthOut != RMissing.instance;
+    public RAbstractVector repeatTV(RAbstractVector value, RIntVector times, RMissing lengthOut, Object each) {
+        controlVisibility();
+        if (value.getLength() != times.getLength()) {
+            throw RError.getInvalidTimes(getEncapsulatingSourceSection());
+        }
+        RVector valueMaterialized = value.materialize();
+        RVector result = valueMaterialized.createEmptySameType(resultLength(times), valueMaterialized.isComplete());
+
+        int w = 0; // write index
+        for (int r = 0; r < valueMaterialized.getLength(); ++r) {
+            for (int k = 0; k < times.getDataAt(r); ++k) {
+                result.transferElementSameType(w++, valueMaterialized, r);
+            }
+        }
+
+        return result;
+    }
+
+    //
+    // auxiliary methods
+    //
+
+    private static int resultLength(RAbstractIntVector times) {
+        int l = 0;
+        for (int i = 0; i < times.getLength(); ++i) {
+            l += times.getDataAt(i);
+        }
+        return l;
     }
 
 }

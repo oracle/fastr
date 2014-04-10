@@ -28,14 +28,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("contributors")
-public abstract class Contributors extends RBuiltinNode {
+public abstract class Contributors extends RInvisibleBuiltinNode {
 
     private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     @Specialization
     public Object contributors() {

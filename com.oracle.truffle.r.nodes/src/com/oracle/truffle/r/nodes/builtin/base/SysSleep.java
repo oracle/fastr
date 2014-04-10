@@ -28,12 +28,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(".Internal.Sys.sleep")
-public abstract class SysSleep extends RBuiltinNode {
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
+public abstract class SysSleep extends RInvisibleBuiltinNode {
 
     @Specialization(order = 0)
     public Object sysSleep(double seconds) {

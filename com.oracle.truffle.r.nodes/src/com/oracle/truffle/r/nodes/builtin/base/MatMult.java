@@ -129,21 +129,15 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(order = 13, guards = "vecmat")
     public RDoubleVector vecmatmult(RDoubleVector a, RDoubleVector b) {
-        controlVisibility();
-        final int bRows = b.getDimensions()[0];
-        assert a.getLength() == bRows;
-        final int bCols = b.getDimensions()[1];
-        double[] result = new double[bCols];
-        for (int col = 0; col < bCols; ++col) {
-            double x = 0.0;
-            na.enable(x);
-            for (int k = 0; k < bRows; ++k) {
-                x = add.doDoubleDouble(x, mult.doDoubleDouble(a.getDataAt(k), b.getDataAt(col * bRows + k)));
-                na.check(x);
-            }
-            result[col] = x;
+        // convert a to a matrix with one column, perform matrix multiplication
+        int[] dims;
+        if (b.getDimensions()[0] == 1) {
+            dims = new int[]{a.getLength(), 1};
+        } else {
+            dims = new int[]{1, a.getLength()};
         }
-        return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{1, bCols});
+        RDoubleVector amat = a.copyWithNewDimensions(dims);
+        return matmatmult(amat, b);
     }
 
     // complex-complex

@@ -28,12 +28,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 @RBuiltin({".Internal.setwd"})
-public abstract class Setwd extends RBuiltinNode {
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
+public abstract class Setwd extends RInvisibleBuiltinNode {
 
     @Specialization
     public Object setwd(String dir) {

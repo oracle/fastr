@@ -32,7 +32,7 @@ public class DebugPackage extends RBuiltinPackage {
 
     @Override
     public String getName() {
-        return "Debug";
+        return "debug";
     }
 
     private static DebugPackage instance;

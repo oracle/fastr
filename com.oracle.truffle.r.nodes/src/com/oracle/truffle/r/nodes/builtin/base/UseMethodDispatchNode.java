@@ -32,15 +32,25 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public DispatchNode.FunctionCall execute(VirtualFrame frame) {
         VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
-        if (targetFunction != null && findFunction(targetFunctionName, callerFrame)) {
+        if (targetFunction != null && isFirst && findFunction(targetFunctionName, callerFrame)) {
             assert (funCall != null);
         } else {
             findTargetFunction(callerFrame);
-            initArgNodes(frame);
+            initArgNodes(frame.getArguments(RArguments.class));
             funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
         }
         setEnvironment(frame);
         return funCall;
+    }
+
+    private void initArgNodes(RArguments arguments) {
+        if (argNodes != null) {
+            return;
+        }
+        argNodes = new RNode[arguments.getLength()];
+        for (int i = 0; i < arguments.getLength(); ++i) {
+            argNodes[i] = ConstantNode.create(arguments.getArgument(i));
+        }
     }
 
     private void findTargetFunction(VirtualFrame callerFrame) {
@@ -49,11 +59,13 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             if (targetFunction != null) {
                 RStringVector classVec = null;
                 if (i > 0) {
+                    isFirst = false;
                     classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataCopy(), i, this.type.getLength()), true);
                     LinkedHashMap<String, Object> attr = new LinkedHashMap<>();
                     attr.put(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
                     classVec.setAttributes(attr);
                 } else {
+                    isFirst = true;
                     classVec = this.type.copyResized(this.type.getLength(), false);
                 }
                 klass = classVec;
@@ -68,19 +80,10 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
     }
 
-    private void initArgNodes(VirtualFrame frame) {
-        if (argNodes != null) {
-            return;
-        }
-        final RArguments currentArguments = frame.getArguments(RArguments.class);
-        argNodes = new RNode[currentArguments.getLength()];
-        for (int i = 0; i < currentArguments.getLength(); ++i) {
-            argNodes[i] = ConstantNode.create(currentArguments.getArgument(i));
-        }
-    }
-
     private void setEnvironment(VirtualFrame frame) {
         genCallEnv = frame.getCaller().unpack().materialize();
+        wvnMethod = initWvn(wvnMethod, RRuntime.RDotMethod);
+        wvnMethod.execute(frame, targetFunctionName);
         defineVars(frame);
         storedEnclosingFrame = frame.getArguments(RArguments.class).getEnclosingFrame();
         frame.getArguments(RArguments.class).setEnclosingFrame(targetFunction.getEnclosingFrame());
@@ -89,7 +92,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @Override
     protected void unsetEnvironment(VirtualFrame frame) {
-        // TODO:Remove all generic variables added by defineVars
+        // Remove all generic variables added by defineVars
+        removeVars(frame);
         targetFunction.setEnclosingFrame(frame.getArguments(RArguments.class).getEnclosingFrame());
         frame.getArguments(RArguments.class).setEnclosingFrame(storedEnclosingFrame);
     }

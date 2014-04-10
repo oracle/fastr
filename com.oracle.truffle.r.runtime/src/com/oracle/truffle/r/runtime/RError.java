@@ -247,6 +247,7 @@ public abstract class RError extends RuntimeException {
     public static final String RECURSIVE_INDEXING_FAILED = "recursive indexing failed at level %d";
 
     private static final String NOT_CHARACTER_VECTOR = "'%s' must be a character vector";
+    private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
 
     public static void warning(SourceSection source, String message) {
         RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
@@ -2060,5 +2061,9 @@ public abstract class RError extends RuntimeException {
 
     public static RError getUnspecifiedGenFunction(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, GEN_FUNCTION_NOT_SPECIFIED);
+    }
+
+    public static RError getCannotMakeVectorOfMode(SourceSection encapsulatingSourceSection, String mode) {
+        return getGenericError(encapsulatingSourceSection, String.format(CANNOT_MAKE_VECTOR_OF_MODE, mode));
     }
 }

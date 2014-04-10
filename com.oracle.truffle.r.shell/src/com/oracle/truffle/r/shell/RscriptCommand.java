@@ -24,6 +24,7 @@ package com.oracle.truffle.r.shell;
 
 import java.io.*;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -45,8 +46,8 @@ public class RscriptCommand {
             byte[] bytes = new byte[(int) file.length()];
             is.read(bytes);
             String content = new String(bytes);
-            REngine.setRuntimeState(commandArgs, new SysoutConsoleHandler(), true);
-            REngine.parseAndEval(content, REngine.createVirtualFrame(), true);
+            VirtualFrame frame = REngine.initialize(commandArgs, new SysoutConsoleHandler(), true, true);
+            REngine.parseAndEval(content, frame, true);
         } catch (IOException ex) {
             fail("unexpected error reading file input");
         }

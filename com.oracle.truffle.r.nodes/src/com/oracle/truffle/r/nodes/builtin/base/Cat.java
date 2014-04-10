@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = "cat", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 @SuppressWarnings("unused")
-public abstract class Cat extends RBuiltinNode {
+public abstract class Cat extends RInvisibleBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"...", "file", "sep", "fill", "labels", "append"};
 
     @Override
@@ -48,11 +48,6 @@ public abstract class Cat extends RBuiltinNode {
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(""), ConstantNode.create(" "), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RNull.instance),
                         ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-    }
-
-    @Override
-    public boolean getVisibility() {
-        return false;
     }
 
     @Child private ToString toString;

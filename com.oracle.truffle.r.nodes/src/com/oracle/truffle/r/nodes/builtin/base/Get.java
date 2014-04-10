@@ -36,6 +36,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin("get")
 public abstract class Get extends RBuiltinNode {
 
+    // TODO
+    // 1. handle mode parameter (we should perhaps guard against mode being set in call right now)
+    // 2. revert to .Internal using get.R
+
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "pos", "envir", "mode", "inherits"};
 
     @Child protected ReadVariableNode lookUpInherit;
@@ -55,23 +59,9 @@ public abstract class Get extends RBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
-    @Specialization
-    @SuppressWarnings("unused")
-    public Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
-        controlVisibility();
-        String sx = x.getDataAt(0);
-        REnvironment env = pos;
-        Object r = env.get(sx);
-        while (r == null && env != null) {
-            env = env.getParent();
-            if (env != null) {
-                r = env.get(sx);
-            }
-        }
-        return r;
-    }
+    public abstract Object execute(VirtualFrame frame, String name, int pos, RMissing envir, String mode, byte inherits);
 
-    @Specialization
+    @Specialization(order = 0)
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
@@ -100,4 +90,33 @@ public abstract class Get extends RBuiltinNode {
         }
         return lookup;
     }
+
+    @Specialization(order = 1)
+    @SuppressWarnings("unused")
+    public Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+        controlVisibility();
+        String sx = x.getDataAt(0);
+        REnvironment env = pos;
+        Object r = env.get(sx);
+        if (r == null && inherits == RRuntime.LOGICAL_TRUE) {
+            while (r == null && env != null) {
+                env = env.getParent();
+                if (env != null) {
+                    r = env.get(sx);
+                }
+            }
+        }
+        if (r == null) {
+            throw RError.getUnknownVariable(getEncapsulatingSourceSection(), sx);
+        } else {
+            return r;
+        }
+    }
+
+    @Specialization(order = 2)
+    @SuppressWarnings("unused")
+    public Object get(RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
+        return get(x, envir, RMissing.instance, mode, inherits);
+    }
+
 }

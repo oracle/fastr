@@ -32,12 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * evaluated, but {@code add} is.
  */
 @RBuiltin("on.exit")
-public abstract class OnExit extends RBuiltinNode {
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
+public abstract class OnExit extends RInvisibleBuiltinNode {
 
     @Specialization
     public Object onExit(@SuppressWarnings("unused") Object expr, @SuppressWarnings("unused") Object add) {

@@ -37,18 +37,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("attr<-")
 @SuppressWarnings("unused")
-public abstract class UpdateAttr extends RBuiltinNode {
+public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
     @Child UpdateNames updateNames;
     @Child UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
 
     private RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {

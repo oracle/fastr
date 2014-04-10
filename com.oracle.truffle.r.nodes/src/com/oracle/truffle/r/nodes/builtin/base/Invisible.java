@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("invisible")
-public abstract class Invisible extends RBuiltinNode {
+public abstract class Invisible extends RInvisibleBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
 
@@ -45,11 +45,6 @@ public abstract class Invisible extends RBuiltinNode {
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RNull.instance)};
-    }
-
-    @Override
-    public boolean getVisibility() {
-        return false;
     }
 
     @Specialization

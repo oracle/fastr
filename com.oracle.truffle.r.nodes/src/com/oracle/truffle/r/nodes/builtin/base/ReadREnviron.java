@@ -30,12 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("readRenviron")
-public abstract class ReadREnviron extends RBuiltinNode {
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
+public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector")
     public Object doReadEnviron(RAbstractStringVector vec) {

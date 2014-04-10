@@ -28,12 +28,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin({"license", "licence"})
-public abstract class License extends RBuiltinNode {
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
+public abstract class License extends RInvisibleBuiltinNode {
 
     @Specialization
     public Object license() {

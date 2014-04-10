@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.REngine.ParseException;
 import com.oracle.truffle.r.runtime.*;
@@ -47,7 +46,7 @@ public abstract class Parse extends RBuiltinNode {
         controlVisibility();
         try {
             String[] lines = file.readLines(0);
-            RNode node = REngine.parse(coalesce(lines));
+            Object expr = REngine.parse(coalesce(lines));
             System.console();
         } catch (IOException | ParseException ex) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");

@@ -37,6 +37,7 @@ public abstract class Exists extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "where", "envir", "frame", "mode", "inherits"};
 
+    @Child protected Get getNode;
     @CompilationFinal protected String lastName;
     @CompilationFinal protected boolean lastLookup;
 
@@ -53,10 +54,18 @@ public abstract class Exists extends RBuiltinNode {
 
     @Specialization(order = 10, guards = "noEnv")
     @SuppressWarnings("unused")
-    public byte existsString(VirtualFrame frm, String name, Object where, RMissing envir, Object frame, String mode, byte inherits) {
+    public byte existsString(VirtualFrame frm, String name, int where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
-        return frm.getFrameDescriptor().findFrameSlot(name) != null || (inherits == RRuntime.LOGICAL_TRUE && findEnclosing(RArguments.get(frm).getEnclosingFrame(), name)) ? RRuntime.LOGICAL_TRUE
-                        : RRuntime.asLogical(inherits == RRuntime.LOGICAL_TRUE && packageLookup(name));
+        if (getNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin()));
+        }
+        try {
+            getNode.execute(frm, name, where, envir, mode, inherits);
+        } catch (RError e) {
+            return inherits == RRuntime.LOGICAL_TRUE ? (packageLookup(name) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE) : RRuntime.LOGICAL_FALSE;
+        }
+        return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization(order = 11)
@@ -78,14 +87,6 @@ public abstract class Exists extends RBuiltinNode {
     public byte existsStringEnv(RStringVector name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
-    }
-
-    private static boolean findEnclosing(MaterializedFrame frame, Object name) {
-        if (frame == null) {
-            // TODO lookup builtin
-            return false;
-        }
-        return frame.getFrameDescriptor().findFrameSlot(name) != null || findEnclosing(RArguments.get(frame).getEnclosingFrame(), name);
     }
 
     private boolean packageLookup(String name) {

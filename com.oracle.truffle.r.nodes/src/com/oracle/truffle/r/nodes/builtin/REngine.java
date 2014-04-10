@@ -55,34 +55,37 @@ public final class REngine implements RBuiltinLookupProvider {
         return RDefaultBuiltinPackages.getInstance();
     }
 
-    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
-        return setRuntimeState(commandArgs, consoleHandler, true, headless);
-    }
-
-    public static REngine setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalError, boolean headless) {
-        REngine.crashOnFatalError = crashOnFatalError;
+    /**
+     * Initialize the engine.
+     *
+     * @param commandArgs
+     * @param consoleHandler for console inpout/output
+     * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
+     *            process.
+     * @return a {@link VirtualFrame} that can be passed to
+     *         {@link #parseAndEval(String, VirtualFrame, boolean)}
+     */
+    public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+        crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
+        VirtualFrame frame = createVirtualFrame();
+        REnvironment.initialize(frame);
         RBuiltinPackage.initialize();
         RRuntime.initialize();
-        return singleton;
+        return frame;
+    }
+
+    /**
+     * Create a {@link VirtualFrame} for use in {@link #parseAndEval} for accumulating the results
+     * from evaluating expressions in an interactive context. Such a value cannot be stored in an
+     * object field, so must be passed as an argument.
+     */
+    private static VirtualFrame createVirtualFrame() {
+        return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
     }
 
     public static RContext getContext() {
         return context;
-    }
-
-    /**
-     * Create a {@link VirtualFrame} for use in {@link #parseAndEval(String, VirtualFrame, boolean)}
-     * for accumulating the results from evaluating expressions in an interactive context. Such a
-     * value cannot be stored in an object field, so must be passed as an argument.
-     */
-    public static VirtualFrame createVirtualFrame() {
-        return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
-    }
-
-    public static Object parseAndEval(File file, boolean printResult) throws IOException {
-        String path = file.getAbsolutePath();
-        return parseAndEvalImplNoFrame(new ANTLRFileStream(path), context.getSourceManager().get(path), printResult);
     }
 
     /**
@@ -93,8 +96,15 @@ public final class REngine implements RBuiltinLookupProvider {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), globalFrame, printResult);
     }
 
+    /**
+     *
+     * This is intended for use by the unit test environment, where a fresh global environment is
+     * desired for each evaluation.
+     */
     public static Object parseAndEval(String rscript, boolean printResult) {
-        return parseAndEvalImplNoFrame(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), printResult);
+        VirtualFrame frame = createVirtualFrame();
+        REnvironment.resetGlobalEnv(frame.materialize());
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), frame, printResult);
     }
 
     public static class ParseException extends Exception {
@@ -105,10 +115,9 @@ public final class REngine implements RBuiltinLookupProvider {
         }
     }
 
-    public static RNode parse(String rscript) throws ParseException {
-        RTruffleVisitor transform = new RTruffleVisitor();
+    public static Object parse(String rscript) throws ParseException {
         try {
-            return transform.transform(ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript)));
+            return ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript));
         } catch (RecognitionException ex) {
             throw new ParseException(ex.getMessage());
         }
@@ -124,42 +133,13 @@ public final class REngine implements RBuiltinLookupProvider {
         }
     }
 
-    private static Object parseAndEvalImplNoFrame(ANTLRStringStream stream, Source source, boolean printResult) {
-        try {
-            return run(parseToCallTarget(stream, source), printResult);
-        } catch (RecognitionException | RuntimeException e) {
-            context.getConsoleHandler().println("Exception while parsing: " + e);
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     private static CallTarget parseToCallTarget(ANTLRStringStream stream, Source source) throws RecognitionException {
-        RTruffleVisitor transform = new RTruffleVisitor();
+        RTruffleVisitor transform = new RTruffleVisitor(REnvironment.globalEnv());
         RNode node = transform.transform(ParseUtil.parseAST(stream, source));
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, transform.getEnvironment(), node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
+        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.globalEnv());
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
         CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
-    }
-
-    private static Object run(CallTarget callTarget, boolean printResult) {
-        Object result = null;
-        try {
-            try {
-                result = callTarget.call(null, RArguments.create());
-            } catch (ControlFlowException cfe) {
-                throw RError.getNoLoopForBreakNext(null);
-            }
-            if (printResult) {
-                printResult(result);
-            }
-            reportWarnings(false);
-        } catch (RError e) {
-            reportRError(e);
-        } catch (Throwable e) {
-            reportImplementationError(e);
-        }
-        return result;
     }
 
     private static Object runGlobal(CallTarget callTarget, VirtualFrame globalFrame, boolean printResult) {
