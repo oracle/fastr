@@ -152,12 +152,12 @@ public abstract class ArrayPositionCast extends RNode {
         return operand.materialize();
     }
 
-    @Specialization(order = 22, guards = {"!sizeOneOp", "!numDimensionsOne"})
+    @Specialization(order = 22, guards = {"!emptyOperand", "!sizeOneOp", "!numDimensionsOne"})
     public RIntVector doIntVectorMultiDim(Object op, RAbstractVector vector, RAbstractIntVector operand) {
         return operand.materialize();
     }
 
-    @Specialization(order = 23, guards = {"!sizeOneOp", "numDimensionsOne"})
+    @Specialization(order = 23, guards = {"!emptyOperand", "!sizeOneOp", "numDimensionsOne"})
     public RIntVector doIntVectorOneDim(Object op, RAbstractVector vector, RAbstractIntVector operand) {
         return operand.materialize();
     }
@@ -497,8 +497,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 41, guards = {"!indTrue", "!indNA", "isSubset"})
         public int doLogicalIndFalse(VirtualFrame frame, RAbstractVector vector, byte operand) {
-            return (int) castInteger(frame, operand);
-
+            return 0;
         }
 
         @Specialization(order = 42, guards = {"!indNA", "!isSubset"})
