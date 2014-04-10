@@ -27,22 +27,26 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.access.AccessArrayNode.MultiDimPosConverterNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChild(value = "vector", type = RNode.class)
 public class PositionsArrayNode extends RNode {
     @Children private final ArrayPositionCast[] elements;
     @Children private final RNode[] positions;
     @Children private final OperatorConverterNode[] operatorConverters;
+    @Children private final MultiDimPosConverterNode[] multiDimOperatorConverters;
 
     @ExplodeLoop
     public Object executeEval(VirtualFrame frame, Object vector) {
         Object[] evaluatedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             Object p = positions[i].execute(frame);
-            Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p, RNull.instance);
-            evaluatedElements[i] = elements[i].executeArg(frame, p, vector, RNull.instance, convertedOperator);
+            Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p);
+            evaluatedElements[i] = elements[i].executeArg(frame, p, vector, convertedOperator);
+            if (multiDimOperatorConverters != null && multiDimOperatorConverters.length > 1) {
+                evaluatedElements[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, evaluatedElements[i]);
+            }
         }
         return elements.length == 1 ? evaluatedElements[0] : evaluatedElements;
     }
@@ -55,9 +59,10 @@ public class PositionsArrayNode extends RNode {
         return null;
     }
 
-    public PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
+    public PositionsArrayNode(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterNode[] multiDimOperatorConverters) {
         this.elements = elements;
         this.positions = positions;
         this.operatorConverters = operatorConverters;
+        this.multiDimOperatorConverters = multiDimOperatorConverters;
     }
 }

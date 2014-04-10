@@ -29,6 +29,10 @@ import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceOperand;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceOperandFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.access.AccessArrayNode.MultiDimPosConverterNode;
+import com.oracle.truffle.r.nodes.access.AccessArrayNodeFactory.MultiDimPosConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.MultiDimPosConverterValueNode;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.MultiDimPosConverterValueNodeFactory;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
@@ -200,26 +204,38 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     private RNode createPositions(ArgumentList argList, int argLength, boolean isSubset, boolean isAssignment) {
         RNode[] positions;
         OperatorConverterNode[] operatorConverters;
+        MultiDimPosConverterNode[] multiDimConverters = null;
+        MultiDimPosConverterValueNode[] multiDimConvertersValue = null;
         ArrayPositionCast[] castPositions;
         if (argLength == 0) {
             positions = new RNode[]{ConstantNode.create(RMissing.instance)};
-            operatorConverters = new OperatorConverterNode[]{OperatorConverterNodeFactory.create(0, 1, isAssignment, isSubset, null, null, null)};
-            castPositions = new ArrayPositionCast[]{ArrayPositionCastFactory.create(0, 1, isAssignment, isSubset, null, null, null, null)};
+            operatorConverters = new OperatorConverterNode[]{OperatorConverterNodeFactory.create(0, 1, isAssignment, isSubset, null, null)};
+            castPositions = new ArrayPositionCast[]{ArrayPositionCastFactory.create(0, 1, isAssignment, isSubset, null, null, null)};
         } else {
             positions = new RNode[argLength];
             operatorConverters = new OperatorConverterNode[argLength];
+            if (isAssignment) {
+                multiDimConvertersValue = new MultiDimPosConverterValueNode[argLength];
+            } else {
+                multiDimConverters = new MultiDimPosConverterNode[argLength];
+            }
             castPositions = new ArrayPositionCast[argLength];
             for (int i = 0; i < argLength; i++) {
                 ASTNode node = argList.getNode(i);
                 positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
-                operatorConverters[i] = OperatorConverterNodeFactory.create(i, positions.length, isAssignment, isSubset, null, null, null);
-                castPositions[i] = ArrayPositionCastFactory.create(i, positions.length, isAssignment, isSubset, null, null, null, null);
+                if (isAssignment) {
+                    multiDimConvertersValue[i] = MultiDimPosConverterValueNodeFactory.create(isSubset, null, null, null);
+                } else {
+                    multiDimConverters[i] = MultiDimPosConverterNodeFactory.create(isSubset, null, null);
+                }
+                operatorConverters[i] = OperatorConverterNodeFactory.create(i, positions.length, isAssignment, isSubset, null, null);
+                castPositions[i] = ArrayPositionCastFactory.create(i, positions.length, isAssignment, isSubset, null, null, null);
             }
         }
         if (!isAssignment) {
-            return new PositionsArrayNode(castPositions, positions, operatorConverters);
+            return new PositionsArrayNode(castPositions, positions, operatorConverters, multiDimConverters);
         } else {
-            return new PositionsArrayNodeValue(castPositions, positions, operatorConverters);
+            return new PositionsArrayNodeValue(castPositions, positions, operatorConverters, multiDimConvertersValue);
         }
     }
 

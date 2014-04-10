@@ -45,6 +45,16 @@ public abstract class CastDoubleNode extends CastNode {
 
     public abstract Object executeDoubleVector(VirtualFrame frame, Object o);
 
+    @Child CastDoubleNode recursiveCastDouble;
+
+    private Object castDoubleRecursive(VirtualFrame frame, Object o) {
+        if (recursiveCastDouble == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveCastDouble = insert(CastDoubleNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation()));
+        }
+        return recursiveCastDouble.executeDouble(frame, o);
+    }
+
     @Specialization
     public RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
@@ -259,6 +269,39 @@ public abstract class CastDoubleNode extends CastNode {
     @Specialization
     public RDoubleSequence doDoubleSequence(RDoubleSequence operand) {
         return operand;
+    }
+
+    @Specialization
+    public RDoubleVector doList(VirtualFrame frame, RList list) {
+        int length = list.getLength();
+        double[] result = new double[length];
+        for (int i = 0; i < length; i++) {
+            Object entry = list.getDataAt(i);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.DOUBLE_NA;
+            } else {
+                Object castEntry = castDoubleRecursive(frame, entry);
+                if (castEntry instanceof Double) {
+                    result[i] = (Double) castEntry;
+                } else if (castEntry instanceof RDoubleVector) {
+                    RDoubleVector doubleVector = (RDoubleVector) castEntry;
+                    if (doubleVector.getLength() == 1) {
+                        result[i] = doubleVector.getDataAt(0);
+                    } else if (doubleVector.getLength() == 0) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                    } else {
+                        return cannotCoerceListError();
+                    }
+                } else {
+                    return cannotCoerceListError();
+                }
+            }
+        }
+        return RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
+    }
+
+    private RDoubleVector cannotCoerceListError() {
+        throw RError.getListCoercion(this.getSourceSection(), "numeric");
     }
 
     @Generic

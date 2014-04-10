@@ -28,6 +28,7 @@ public abstract class RError extends RuntimeException {
     public static final String INTEGER_OVERFLOW = "NAs produced by integer overflow";
     public static final String NA_OR_NAN = "NA/NaN argument";
     public static final String SUBSCRIPT_BOUNDS = "subscript out of bounds";
+    public static final String SUBSCRIPT_BOUNDS_SUB = "[[ ]] subscript out of bounds";
     public static final String SELECT_LESS_1 = "attempt to select less than one element";
     public static final String SELECT_MORE_1 = "attempt to select more than one element";
     public static final String ONLY_0_MIXED = "only 0's may be mixed with negative subscripts";
@@ -328,6 +329,18 @@ public abstract class RError extends RuntimeException {
             @Override
             public String getMessage() {
                 return SUBSCRIPT_BOUNDS;
+            }
+        };
+    }
+
+    public static RError getSubscriptBoundsSub(SourceSection expr) {
+        return new RErrorInExpr(expr) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public String getMessage() {
+                return SUBSCRIPT_BOUNDS_SUB;
             }
         };
     }

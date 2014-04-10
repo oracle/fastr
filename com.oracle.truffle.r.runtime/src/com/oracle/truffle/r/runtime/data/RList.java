@@ -103,7 +103,7 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     public Class<?> getElementClass() {
-        return RString.class;
+        return Object.class;
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.MultiDimPosConverterValueNode;
 import com.oracle.truffle.r.runtime.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})
@@ -34,6 +35,7 @@ public class PositionsArrayNodeValue extends RNode {
     @Children private final ArrayPositionCast[] elements;
     @Children private final RNode[] positions;
     @Children private final OperatorConverterNode[] operatorConverters;
+    @Children private final MultiDimPosConverterValueNode[] multiDimOperatorConverters;
 
     @ExplodeLoop
     public Object executeEval(VirtualFrame frame, Object vector, Object value) {
@@ -41,8 +43,11 @@ public class PositionsArrayNodeValue extends RNode {
         if (elements.length > 0) {
             for (int i = 0; i < elements.length; i++) {
                 Object p = positions[i].execute(frame);
-                Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p, value);
-                evaluatedElements[i] = elements[i].executeArg(frame, p, vector, value, convertedOperator);
+                Object convertedOperator = operatorConverters[i].executeConvert(frame, vector, p);
+                evaluatedElements[i] = elements[i].executeArg(frame, p, vector, convertedOperator);
+                if (multiDimOperatorConverters != null && multiDimOperatorConverters.length > 1) {
+                    evaluatedElements[i] = multiDimOperatorConverters[i].executeConvert(frame, vector, value, evaluatedElements[i]);
+                }
             }
         }
         return elements.length == 1 ? evaluatedElements[0] : evaluatedElements;
@@ -56,9 +61,10 @@ public class PositionsArrayNodeValue extends RNode {
         return null;
     }
 
-    public PositionsArrayNodeValue(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters) {
+    public PositionsArrayNodeValue(ArrayPositionCast[] elements, RNode[] positions, OperatorConverterNode[] operatorConverters, MultiDimPosConverterValueNode[] multiDimOperatorConverters) {
         this.elements = elements;
         this.positions = positions;
         this.operatorConverters = operatorConverters;
+        this.multiDimOperatorConverters = multiDimOperatorConverters;
     }
 }

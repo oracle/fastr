@@ -37,7 +37,19 @@ public abstract class CastLogicalNode extends CastNode {
 
     public abstract Object executeByte(VirtualFrame frame, Object o);
 
+    public abstract Object executeLogical(VirtualFrame frame, Object o);
+
     public abstract Object executeLogicalVector(VirtualFrame frame, Object o);
+
+    @Child CastLogicalNode recursiveCastLogical;
+
+    private Object castLogicalRecursive(VirtualFrame frame, Object o) {
+        if (recursiveCastLogical == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveCastLogical = insert(CastLogicalNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation()));
+        }
+        return recursiveCastLogical.executeLogical(frame, o);
+    }
 
     @Specialization
     public RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -202,6 +214,39 @@ public abstract class CastLogicalNode extends CastNode {
     public RLogicalVector doRawVector(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         return RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Specialization
+    public RLogicalVector doList(VirtualFrame frame, RList list) {
+        int length = list.getLength();
+        byte[] result = new byte[length];
+        for (int i = 0; i < length; i++) {
+            Object entry = list.getDataAt(i);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.LOGICAL_NA;
+            } else {
+                Object castEntry = castLogicalRecursive(frame, entry);
+                if (castEntry instanceof Byte) {
+                    result[i] = (Byte) castEntry;
+                } else if (castEntry instanceof RLogicalVector) {
+                    RLogicalVector logicalVector = (RLogicalVector) castEntry;
+                    if (logicalVector.getLength() == 1) {
+                        result[i] = logicalVector.getDataAt(0);
+                    } else if (logicalVector.getLength() == 0) {
+                        result[i] = RRuntime.LOGICAL_NA;
+                    } else {
+                        return cannotCoerceListError();
+                    }
+                } else {
+                    return cannotCoerceListError();
+                }
+            }
+        }
+        return RDataFactory.createLogicalVector(result, naCheck.neverSeenNA());
+    }
+
+    private RLogicalVector cannotCoerceListError() {
+        throw RError.getListCoercion(this.getSourceSection(), "logical");
     }
 
     @Generic
