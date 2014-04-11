@@ -59,11 +59,6 @@ import com.oracle.truffle.r.runtime.data.*;
  * "imports" environment. The parent of "package:base" is the empty environment, but the parent of
  * "namespace:base" is the global environment.
  *
- * The frame access for the "base" environment is handled specially, using a "map" style
- * environment. This is due to the fact that the R code for the base package is not evaluated by
- * Truffle in the usual way, so there is no Truffle frame. The function definitions are handled
- * specially as {@code RBuiltinNode} and the variables are set into the frame manually. The
- * "namespace:base" and "package:base" environments share the same map.
  */
 public abstract class REnvironment {
 
@@ -235,7 +230,6 @@ public abstract class REnvironment {
 
     private static final FrameAccess defaultFrameAccess = new FrameAccessBindingsAdapter();
     private static final FrameAccess noFrameAccess = new FrameAccess();
-    private static final FrameAccess baseFrameAccess = new NewEnvFrameAccess(0);
 
     /**
      * Map is keyed by the simple name and, for packages, currently only contains the "package:xxx"
@@ -299,13 +293,16 @@ public abstract class REnvironment {
     /**
      * Invoked on startup to setup the global values.
      *
+     * @param baseFrame TODO
+     *
      */
-    public static void initialize(VirtualFrame globalFrame) {
-        basePackageEnv = new Base();
+    public static void initialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
+        MaterializedFrame materializedBaseFrame = baseFrame.materialize();
+        basePackageEnv = new Base(materializedBaseFrame);
         autoloadEnv = new Autoload();
         // The following is only true if there are no other default packages loaded.
         globalEnv = new Global(autoloadEnv, globalFrame.materialize());
-        baseNamespaceEnv = new NamespaceBase();
+        baseNamespaceEnv = new NamespaceBase(materializedBaseFrame);
     }
 
     /**
@@ -451,9 +448,15 @@ public abstract class REnvironment {
     private static class TruffleFrameAccess extends FrameAccessBindingsAdapter {
 
         private MaterializedFrame frame;
+        private final boolean allowPutNew;
 
         TruffleFrameAccess(MaterializedFrame frame) {
+            this(frame, false);
+        }
+
+        TruffleFrameAccess(MaterializedFrame frame, boolean allowPutNew) {
             this.frame = frame;
+            this.allowPutNew = allowPutNew;
         }
 
         @Override
@@ -481,8 +484,13 @@ public abstract class REnvironment {
             if (slot != null) {
                 frame.setObject(slot, value);
             } else {
-                // this should never happen as the caller is required to check existence first
-                throw new PutException("variable '" + key + "' not found");
+                if (allowPutNew) {
+                    slot = fd.addFrameSlot(key, FrameSlotKind.Object);
+                    frame.setObject(slot, value);
+                } else {
+                    // this should never happen as the caller is required to check existence first
+                    throw new PutException("variable '" + key + "' not found");
+                }
             }
         }
 
@@ -524,41 +532,38 @@ public abstract class REnvironment {
 
     }
 
-    /**
-     * The environment for the {@code package:base} package.
-     */
-    private static class Base extends REnvironment implements InSearchList {
-
-        private Base() {
-            this(emptyEnv);
-        }
-
-        protected Base(REnvironment parent) {
-            super(parent, "base", baseFrameAccess);
+    private static class BaseAdapter extends REnvironment {
+        protected BaseAdapter(REnvironment parent, MaterializedFrame frame) {
+            super(parent, "base", new TruffleFrameAccess(frame, true));
         }
 
         @Override
         public void rm(String key) throws PutException {
-            throw new PutException("cannot remove variables from the base environment");
+            throw new PutException("cannot remove variables from the " + getPrintNameHelper() + " environment");
+        }
+    }
+
+    /**
+     * The environment for the {@code package:base} package.
+     */
+    private static class Base extends BaseAdapter implements InSearchList {
+
+        Base(MaterializedFrame frame) {
+            super(emptyEnv, frame);
         }
     }
 
     /**
      * The {@code namespace:base} environment.
      */
-    private static final class NamespaceBase extends REnvironment {
-        private NamespaceBase() {
-            super(globalEnv, "base", baseFrameAccess);
+    private static final class NamespaceBase extends BaseAdapter {
+        private NamespaceBase(MaterializedFrame frame) {
+            super(globalEnv, frame);
         }
 
         @Override
         protected String getPrintNameHelper() {
             return "namespace:" + getName();
-        }
-
-        @Override
-        public void rm(String key) throws PutException {
-            throw new PutException("cannot remove variables from the namespace:base environment");
         }
     }
 

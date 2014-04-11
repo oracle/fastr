@@ -62,7 +62,7 @@ public class BaseVariables implements RPackageVariables.Handler {
                     value = REnvironment.globalEnv();
                     break;
                 case ".BaseNamespaceEnv":
-                    value = env;
+                    value = REnvironment.baseNamespaceEnv();
                     break;
                 case ".Platform":
                     // .Platform TODO be more accurate
