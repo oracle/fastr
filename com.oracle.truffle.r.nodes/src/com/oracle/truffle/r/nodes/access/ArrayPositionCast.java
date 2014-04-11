@@ -685,8 +685,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 121, guards = "!opLengthOne")
         public Object doDoubleVector(VirtualFrame frame, RAbstractVector vector, RAbstractDoubleVector operand) {
-            RIntVector intVector = (RIntVector) castInteger(frame, operand);
-            return convertOperatorRecursive(frame, vector, intVector);
+            return convertOperatorRecursive(frame, vector, castInteger(frame, operand));
         }
 
         @Specialization(order = 135, guards = "opLengthOne")
