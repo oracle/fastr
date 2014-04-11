@@ -25,8 +25,8 @@ package com.oracle.truffle.r.nodes;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadSuperVariableNode;
-import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceOperand;
-import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceOperandFactory;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceVector;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceVectorFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.access.AccessArrayNode.MultiDimPosConverterNode;
@@ -299,8 +299,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode varAccess = AccessVariable.create(null, varSymbol).accept(this);
         int argLength = a.getArgs().size() - 1; // last argument == RHS
         RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), true);
-        CoerceOperand coerceOperand = CoerceOperandFactory.create(null, null);
-        UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), varAccess, rhsAccess, coerceOperand, ConstantNode.create(0), (PositionsArrayNodeValue) positions);
+        CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
+        UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), varAccess, rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions, coerceVector);
         return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
     }
 

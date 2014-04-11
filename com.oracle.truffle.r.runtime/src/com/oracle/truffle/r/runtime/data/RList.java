@@ -54,6 +54,21 @@ public final class RList extends RVector implements RAbstractVector {
     }
 
     @Override
+    protected RVector internalDeepCopy() {
+        // TOOD: only used for nested list updates, but still could be made faster (through a
+        // separate AST node?)
+        RList listCopy = new RList(Arrays.copyOf(data, data.length), this.isComplete(), null);
+        for (int i = 0; i < listCopy.getLength(); i++) {
+            Object el = listCopy.getDataAt(i);
+            if (el instanceof RVector) {
+                Object elCopy = ((RVector) el).deepCopy();
+                listCopy.updateDataAt(i, elCopy, null);
+            }
+        }
+        return listCopy;
+    }
+
+    @Override
     protected int internalGetLength() {
         return data.length;
     }

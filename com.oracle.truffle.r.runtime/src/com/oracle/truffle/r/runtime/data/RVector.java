@@ -285,8 +285,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this.dimensions = newDimensions;
     }
 
-    public final RVector copy() {
-        RVector result = internalCopy();
+    private void setAttributes(RVector result) {
         result.names = this.names;
         result.dimNames = this.dimNames;
         result.dimensions = this.dimensions;
@@ -294,7 +293,23 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         if (this.getAttributes() != null) {
             result.setAttributes(copyAttributeHashMap(this));
         }
+    }
+
+    public final RVector copy() {
+        RVector result = internalCopy();
+        setAttributes(result);
         return result;
+    }
+
+    public final RVector deepCopy() {
+        RVector result = internalDeepCopy();
+        setAttributes(result);
+        return result;
+    }
+
+    // to be overridden by recursive structures
+    protected RVector internalDeepCopy() {
+        return internalCopy();
     }
 
     @SlowPath

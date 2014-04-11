@@ -1726,11 +1726,7 @@ public class TestSimpleVectors extends TestBase {
 
         // copying
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,b=list(x=3)),character(),10) }");
-    }
 
-    @Test
-    @Ignore
-    public void testListUpdateIgnore() {
         // scalar update
         assertEval("{ l<-list(1,2L,TRUE) ; l[[2]]<-100 ; l }");
         assertEval("{ l<-list(1,2L,TRUE) ; l[[5]]<-100 ; l }");
@@ -1835,7 +1831,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x <- as.list(1:3) ; x[[integer()]] <- 3 }");
         assertEval("{ x <- list(1,list(2,3),4) ; x[[c(2,3)]] <- 3 ; x }");
         assertEval("{ x <- list(1,list(2,3),4) ; z <- x[[2]] ; x[[c(2,3)]] <- 3 ; z }");
-        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(list(1,2,3), 2L, 3) }");
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(list(f,f), c(1,1), 3) }");
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(list(1,2,3), 2L, NULL) }");
@@ -1867,6 +1862,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ l <- matrix(list(1,2)) ; l[[3]] <- NULL ; l }");
         assertEval("{ l <- matrix(list(1,2)) ; l[[4]] <- NULL ; l }");
 
+    }
+
+    @Test
+    @Ignore
+    public void testListUpdateIgnore() {
+        // unlist is not supported
+        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
 
     @Test
@@ -1972,7 +1974,6 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testIn() {
         assertEval("{ 1:3 %in% 1:10 }");
         assertEval("{ 1 %in% 1:10 }");

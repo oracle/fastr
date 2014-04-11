@@ -494,14 +494,16 @@ public abstract class AccessArrayNode extends RNode {
     // lists require special handling for one-dimensional "subscript", that is [[]], accesses due to
     // support for recursive access
 
-    private int getPositionInRecursion(RList vector, String position, int recLevel) {
-        RStringVector names = (RStringVector) vector.getNames();
-        for (int i = 0; i < names.getLength(); i++) {
-            if (position.equals(names.getDataAt(i))) {
-                return i + 1;
+    public static int getPositionInRecursion(RList vector, String position, int recLevel, SourceSection sourceSection) {
+        if (vector.getNames() != RNull.instance) {
+            RStringVector names = (RStringVector) vector.getNames();
+            for (int i = 0; i < names.getLength(); i++) {
+                if (position.equals(names.getDataAt(i))) {
+                    return i + 1;
+                }
             }
         }
-        throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
+        throw RError.getNoSuchIndexAtLevel(sourceSection, recLevel + 1);
     }
 
     @SuppressWarnings("unused")
@@ -512,7 +514,7 @@ public abstract class AccessArrayNode extends RNode {
 
     @Specialization(order = 16, guards = {"hasNames", "!isSubset", "twoPosition"})
     Object accessStringTwoPosRec(VirtualFrame frame, RList vector, int recLevel, RStringVector p) {
-        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel);
+        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
         Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
         return accessRecursive(frame, newVector, newPosition, recLevel + 1);
@@ -520,7 +522,7 @@ public abstract class AccessArrayNode extends RNode {
 
     @Specialization(order = 17, guards = {"hasNames", "!isSubset", "!twoPosition"})
     Object accessString(VirtualFrame frame, RList vector, int recLevel, RStringVector p) {
-        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel);
+        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
         RStringVector newP = popHead(p, posNACheck);
         return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1);
     }
