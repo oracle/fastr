@@ -1661,7 +1661,6 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testListDefinitions() {
         assertEval("{ list(1:4) }");
         assertEval("{ list(1,list(2,list(3,4))) }");
@@ -1675,11 +1674,7 @@ public class TestSimpleVectors extends TestBase {
     public void testListAccess() {
         // indexing
         assertEval("{ l<-list(1,2L,TRUE) ; l[[2]] }");
-    }
 
-    @Test
-    @Ignore
-    public void testListAccessIgnore() {
         // indexing
         assertEval("{ l<-list(1,2L,TRUE) ; l[c(FALSE,FALSE,TRUE)] }");
         assertEval("{ l<-list(1,2L,TRUE) ; l[FALSE] }");

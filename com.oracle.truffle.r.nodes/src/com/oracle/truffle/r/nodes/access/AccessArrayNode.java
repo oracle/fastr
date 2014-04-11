@@ -518,7 +518,7 @@ public abstract class AccessArrayNode extends RNode {
         return accessRecursive(frame, newVector, newPosition, recLevel + 1);
     }
 
-    @Specialization(order = 17, guards = {"hasNames", "!isSubset"})
+    @Specialization(order = 17, guards = {"hasNames", "!isSubset", "!twoPosition"})
     Object accessString(VirtualFrame frame, RList vector, int recLevel, RStringVector p) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel);
         RStringVector newP = popHead(p, posNACheck);
