@@ -104,7 +104,7 @@ public final class REngine implements RBuiltinLookupProvider {
      */
     public static Object parseAndEval(String rscript, boolean printResult) {
         VirtualFrame frame = createVirtualFrame();
-        REnvironment.resetGlobalEnv(frame.materialize());
+        REnvironment.resetGlobalEnv(frame);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), frame, printResult);
     }
 
