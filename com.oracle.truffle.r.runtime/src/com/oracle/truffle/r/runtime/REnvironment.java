@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+import java.util.stream.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
@@ -264,6 +265,21 @@ public abstract class REnvironment {
     public static Global globalEnv() {
         assert globalEnv != null;
         return globalEnv;
+    }
+
+    /**
+     * Check whether the given frame is indeed the frame stored in the global environment.
+     */
+    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
+        FrameSlot idSlot = frame.getFrameDescriptor().findFrameSlot(Global.GLOBAL_ENV_ID);
+        if (idSlot == null) {
+            return false;
+        }
+        try {
+            return frame.getObject(idSlot) == Global.GLOBAL_ENV_ID;
+        } catch (FrameSlotTypeException fste) {
+            return false;
+        }
     }
 
     /**
@@ -526,7 +542,7 @@ public abstract class REnvironment {
         RStringVector ls(boolean allNames, String pattern) {
             // TODO support pattern
             FrameDescriptor fd = frame.getFrameDescriptor();
-            String[] names = fd.getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);
+            String[] names = getStringIdentifiers(fd);
             int undefinedIdentifiers = 0;
             for (int i = 0; i < names.length; ++i) {
                 if (frame.getValue(fd.findFrameSlot(names[i])) == null) {
@@ -551,6 +567,10 @@ public abstract class REnvironment {
         protected Set<String> getBindingsForLock() {
             // TODO Auto-generated method stub
             return null;
+        }
+
+        private static String[] getStringIdentifiers(FrameDescriptor fd) {
+            return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).collect(Collectors.toSet()).toArray(RRuntime.STRING_ARRAY_SENTINEL);
         }
 
     }
@@ -600,8 +620,21 @@ public abstract class REnvironment {
      */
     public static final class Global extends REnvironment implements InSearchList {
 
+        public static final Object GLOBAL_ENV_ID = new Object();
+
         private Global(REnvironment parent, VirtualFrame frame) {
-            super(parent, "R_GlobalEnv", frame, false);
+            super(parent, "R_GlobalEnv", storeGlobalEnvID(frame), false);
+        }
+
+        /**
+         * The global environment ID is an object that is stored in the global environment frame and
+         * is its own name.
+         */
+        private static VirtualFrame storeGlobalEnvID(VirtualFrame frame) {
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            FrameSlot idSlot = fd.addFrameSlot(GLOBAL_ENV_ID);
+            frame.setObject(idSlot, GLOBAL_ENV_ID);
+            return frame;
         }
 
     }

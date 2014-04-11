@@ -410,7 +410,7 @@ public class EnvFunctions {
      */
     static REnvironment lexicalChain(RFunction func) {
         MaterializedFrame enclosingFrame = func.getEnclosingFrame();
-        if (enclosingFrame == REnvironment.globalEnv().getFrame()) {
+        if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
             return REnvironment.globalEnv();
         } else {
             // How do we get the RFunction associated with enclosingFrame?
