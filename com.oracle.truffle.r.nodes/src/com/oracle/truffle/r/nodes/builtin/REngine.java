@@ -59,7 +59,7 @@ public final class REngine implements RBuiltinLookupProvider {
      * Initialize the engine.
      *
      * @param commandArgs
-     * @param consoleHandler for console inpout/output
+     * @param consoleHandler for console input/output
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
      * @return a {@link VirtualFrame} that can be passed to
@@ -68,11 +68,12 @@ public final class REngine implements RBuiltinLookupProvider {
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
-        VirtualFrame frame = createVirtualFrame();
-        REnvironment.initialize(frame);
+        VirtualFrame globalFrame = createVirtualFrame();
+        VirtualFrame baseFrame = createVirtualFrame();
+        REnvironment.initialize(globalFrame, baseFrame);
         RBuiltinPackage.initialize();
         RRuntime.initialize();
-        return frame;
+        return globalFrame;
     }
 
     /**
