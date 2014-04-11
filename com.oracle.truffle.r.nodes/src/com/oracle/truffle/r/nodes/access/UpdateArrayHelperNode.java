@@ -345,8 +345,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 numNAs++;
                 continue;
             } else if (pos < 0) {
-                if (-pos > highestPos)
+                if (-pos > highestPos) {
                     highestPos = -pos;
+                }
             } else if (pos > highestPos) {
                 highestPos = pos;
             }
