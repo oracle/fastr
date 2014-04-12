@@ -313,6 +313,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private int getReplacementLength(Object[] positions, RAbstractVector value, boolean isList) {
         int valueLength = value.getLength();
         int length = 1;
+        boolean seenNA = false;
         for (int i = 0; i < positions.length; i++) {
             RIntVector p = (RIntVector) positions[i];
             int len = p.getLength();
@@ -322,8 +323,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 int pos = p.getDataAt(j);
                 if (pos != 0) {
                     allZeros = false;
-                    if (seenNAMultiDim(pos, value, isList)) {
-                        continue;
+                    if (posNACheck.check(pos)) {
+                        if (len == 1) {
+                            seenNAMultiDim(true, value, isList);
+                        } else {
+                            seenNA = true;
+                        }
                     }
                 }
             }
@@ -335,6 +340,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (valueLength != 0 && length != 0 && length % valueLength != 0) {
             throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
+        } else if (seenNA) {
+            seenNAMultiDim(true, value, isList);
         }
         return length;
     }
@@ -560,7 +567,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, true)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, true)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -570,7 +577,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, true)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, true)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -599,7 +606,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, true)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, true)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1018,7 +1025,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -1028,7 +1035,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -1058,7 +1065,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1096,8 +1103,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    private boolean seenNAMultiDim(int p, RAbstractVector value, boolean isList) {
-        if (posNACheck.check(p)) {
+    private boolean seenNAMultiDim(boolean isPosNA, RAbstractVector value, boolean isList) {
+        if (isPosNA) {
             if (value.getLength() == 1) {
                 if (!isSubset) {
                     throw RError.getSubscriptBoundsSub(getEncapsulatingSourceSection());
@@ -1246,7 +1253,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -1256,7 +1263,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -1286,7 +1293,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1460,7 +1467,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -1470,7 +1477,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -1500,7 +1507,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1599,7 +1606,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -1609,7 +1616,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -1639,7 +1646,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1774,7 +1781,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -1784,7 +1791,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -1814,7 +1821,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1985,7 +1992,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -1995,7 +2002,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (seenNAMultiDim(pos, value, false)) {
+                if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2024,7 +2031,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(pos, value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -2582,46 +2589,73 @@ public abstract class UpdateArrayHelperNode extends RNode {
             this.isSubset = other.isSubset;
         }
 
-        @Specialization(order = 1, guards = {"!singleOpNegative", "!multiPos"})
-        public RAbstractIntVector doIntVector(Object vector, RNull value, RAbstractIntVector operand) {
-            return operand;
+        @Specialization(order = 1, guards = {"!singlePosNegative", "!multiPos"})
+        public RAbstractIntVector doIntVector(RNull vector, RNull value, RAbstractIntVector positions) {
+            return positions;
         }
 
-        @Specialization(order = 2, guards = {"!singleOpNegative", "multiPos"})
-        public RAbstractIntVector doIntVectorMultiPos(Object vector, RNull value, RAbstractIntVector operand) {
+        @Specialization(order = 2, guards = {"!isPosVectorInt", "!multiPos"})
+        public RAbstractVector doIntVector(RNull vector, RNull value, RAbstractVector positions) {
+            return positions;
+        }
+
+        @Specialization(order = 3, guards = {"!singlePosNegative", "multiPos"})
+        public RAbstractIntVector doIntVectorMultiPos(RNull vector, RNull value, RAbstractIntVector positions) {
             if (isSubset) {
-                return operand;
+                return positions;
             } else {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             }
         }
 
-        @Specialization(order = 4, guards = {"!emptyValue", "!singleOpNegative", "!multiPos"})
-        public RAbstractIntVector doIntVector(Object vector, RAbstractVector value, RAbstractIntVector operand) {
-            return operand;
+        @Specialization(order = 4, guards = {"!isPosVectorInt", "multiPos"})
+        public RAbstractVector doIntVectorMultiPos(RNull vector, RNull value, RAbstractVector positions) {
+            if (isSubset) {
+                return positions;
+            } else {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            }
         }
 
-        @Specialization(order = 5, guards = {"!emptyValue", "!singleOpNegative", "multiPos"})
-        public RAbstractIntVector doIntVectorMultiPos(Object vector, RAbstractVector value, RAbstractIntVector operand) {
+        @Specialization(order = 5, guards = {"!emptyValue", "!singlePosNegative", "!multiPos"})
+        public RAbstractIntVector doIntVector(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
+            return positions;
+        }
+
+        @Specialization(order = 6, guards = {"!emptyValue", "!isPosVectorInt", "!multiPos"})
+        public RAbstractVector doIntVector(RNull vector, RAbstractVector value, RAbstractVector positions) {
+            return positions;
+        }
+
+        @Specialization(order = 7, guards = {"!emptyValue", "!singlePosNegative", "multiPos"})
+        public RAbstractIntVector doIntVectorMultiPos(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
             if (isSubset) {
-                return operand;
+                return positions;
             } else {
                 throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
             }
         }
 
-        @Specialization(order = 6, guards = {"!emptyValue", "singleOpNegative"})
-        public RAbstractIntVector doIntVectorNegative(Object vector, RAbstractVector value, RAbstractIntVector operand) {
+        @Specialization(order = 8, guards = {"!emptyValue", "!isPosVectorInt", "multiPos"})
+        public RAbstractVector doIntVectorMultiPos(RNull vector, RAbstractVector value, RAbstractVector positions) {
+            if (isSubset) {
+                return positions;
+            } else {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            }
+        }
+
+        @Specialization(order = 9, guards = {"!emptyValue", "singlePosNegative"})
+        public RAbstractIntVector doIntVectorNegative(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         }
 
-        @Specialization(order = 7, guards = "emptyValue")
-        public RAbstractIntVector doIntVectorEmptyValue(Object vector, RAbstractVector value, RAbstractIntVector operand) {
+        @Specialization(order = 10, guards = "emptyValue")
+        public RAbstractVector doIntVectorEmptyValue(RNull vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
-
             } else {
-                return operand;
+                return positions;
             }
         }
 
@@ -2710,240 +2744,434 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
 
         @Specialization(order = 100, guards = {"noPosition", "emptyValue"})
-        Object accessListEmptyPosEmptyValueList(RList vector, RAbstractVector value, RList positions) {
+        RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
         @Specialization(order = 101, guards = {"noPosition", "emptyValue", "!isVectorList"})
-        Object accessListEmptyPosEmptyValue(RAbstractVector vector, RAbstractVector value, RList positions) {
+        RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
         @Specialization(order = 102, guards = {"noPosition", "valueLengthOne"})
-        Object accessListEmptyPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RList positions) {
+        RAbstractVector accessListEmptyPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
         @Specialization(order = 103, guards = {"noPosition", "valueLongerThanOne"})
-        Object accessListEmptyPosValueLongerThanOneList(RList vector, RAbstractVector value, RList positions) {
+        RAbstractVector accessListEmptyPosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
         @Specialization(order = 104, guards = {"noPosition", "valueLongerThanOne", "!isVectorList"})
-        Object accessListEmptyPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RList positions) {
+        RAbstractVector accessListEmptyPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
         @Specialization(order = 105, guards = "noPosition")
-        Object accessListEmptyPosEmptyValueList(RList vector, RNull value, RList positions) {
+        RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
         @Specialization(order = 106, guards = {"noPosition", "!isVectorList"})
-        Object accessListEmptyPosEmptyValue(RAbstractVector vector, RNull value, RList positions) {
+        RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
-            } else {
+            } else if (positions.getElementClass() == Object.class) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
             }
         }
 
-        @Specialization(order = 110, guards = {"onePosition", "emptyValue"})
-        Object accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RList positions) {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        @Specialization(order = 110, guards = {"onePosition", "emptyValue", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
         }
 
-        @Specialization(order = 111, guards = {"onePosition", "emptyValue", "!isVectorList"})
-        Object accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RList positions) {
+        @Specialization(order = 111, guards = {"onePosition", "emptyValue", "!firstPosZero"})
+        RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 112, guards = {"onePosition", "emptyValue", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 113, guards = {"onePosition", "emptyValue", "!isVectorList", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 114, guards = {"onePosition", "emptyValue", "!isVectorList", "!firstPosZero"})
+        RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                return positions;
             }
         }
 
-        @Specialization(order = 112, guards = {"onePosition", "valueLengthOne"})
-        Object accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RList positions) {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-        }
-
-        @Specialization(order = 113, guards = {"onePosition", "valueLongerThanOne"})
-        Object accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RList positions) {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-        }
-
-        @Specialization(order = 114, guards = {"onePosition", "valueLongerThanOne", "!isVectorList"})
-        Object accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RList positions) {
-            if (!isSubset) {
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
-            } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-            }
-        }
-
-        @Specialization(order = 115, guards = "onePosition")
-        Object accessListOnePosEmptyValueList(RList vector, RNull value, RList positions) {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-        }
-
-        @Specialization(order = 116, guards = {"onePosition", "!isVectorList"})
-        Object accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RList positions) {
-            if (!isSubset) {
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
-            } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-            }
-        }
-
-        @Specialization(order = 120, guards = "multiPos")
-        Object accessListTwoPosEmptyValueList(RList vector, RAbstractVector value, RList positions) {
-            if (!isSubset) {
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-            } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-            }
-        }
-
-        @Specialization(order = 121, guards = {"multiPos", "emptyValue", "!isVectorList"})
-        Object accessListTwoPosEmptyValue(RAbstractVector vector, RAbstractVector value, RList positions) {
+        @Specialization(order = 115, guards = {"onePosition", "emptyValue", "!isVectorList", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                return positions;
             }
         }
 
-        @Specialization(order = 122, guards = {"multiPos", "valueLengthOne", "!isVectorList"})
-        Object accessListTwoPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RList positions) {
-            if (!isSubset) {
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        @Specialization(order = 116, guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                return positions;
             }
         }
 
-        @Specialization(order = 123, guards = {"multiPos", "valueLongerThanOne", "!isVectorList"})
-        Object accessListTwoPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RList positions) {
+        @Specialization(order = 117, guards = {"onePosition", "valueLengthOne", "!firstPosZero"})
+        RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+            return positions;
+        }
+
+        @Specialization(order = 118, guards = {"onePosition", "valueLengthOne", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 119, guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 120, guards = {"onePosition", "valueLongerThanOne", "!firstPosZero"})
+        RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 121, guards = {"onePosition", "valueLongerThanOne", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 122, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 123, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!firstPosZero"})
+        RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                return positions;
             }
         }
 
-        @Specialization(order = 124, guards = "multiPos")
-        Object accessListTwoPosEmptyValueList(RList vector, RNull value, RList positions) {
-            if (!isSubset) {
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
-            } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
-            }
-        }
-
-        @Specialization(order = 125, guards = {"multiPos", "!isVectorList"})
-        Object accessListTwoPosValueLongerThanOne(RAbstractVector vector, RNull value, RList positions) {
+        @Specialization(order = 124, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                return positions;
             }
         }
 
-        protected boolean singleOpNegative(Object vector, RNull value, RAbstractIntVector p) {
+        @Specialization(order = 125, guards = {"onePosition", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 126, guards = {"onePosition", "!firstPosZero"})
+        RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
+            if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 127, guards = {"onePosition", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 128, guards = {"onePosition", "!isVectorList", "!isPosVectorInt"})
+        RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 129, guards = {"onePosition", "!isVectorList", "!firstPosZero"})
+        RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
+            if (!isSubset) {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 130, guards = {"onePosition", "!isVectorList", "firstPosZero"})
+        RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
+            if (!isSubset) {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 140, guards = "multiPos")
+        RAbstractVector accessListTwoPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 141, guards = {"multiPos", "emptyValue", "!isVectorList"})
+        RAbstractVector accessListTwoPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 142, guards = {"multiPos", "valueLengthOne", "!isVectorList"})
+        RAbstractVector accessListTwoPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 143, guards = {"multiPos", "valueLongerThanOne", "!isVectorList"})
+        RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 144, guards = "multiPos")
+        RAbstractVector accessListTwoPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        @Specialization(order = 145, guards = {"multiPos", "!isVectorList"})
+        RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
+            if (!isSubset) {
+                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            } else if (positions.getElementClass() == Object.class) {
+                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            } else {
+                return positions;
+            }
+        }
+
+        protected boolean singlePosNegative(Object vector, RNull value, RAbstractIntVector p) {
             return p.getLength() == 1 && p.getDataAt(0) < 0 && !RRuntime.isNA(p.getDataAt(0));
         }
 
-        protected boolean singleOpNegative(Object vector, RAbstractVector value, RAbstractIntVector p) {
+        protected boolean singlePosNegative(Object vector, RAbstractVector value, RAbstractIntVector p) {
             return p.getLength() == 1 && p.getDataAt(0) < 0 && !RRuntime.isNA(p.getDataAt(0));
+        }
+
+        protected boolean firstPosZero(RAbstractVector vector, RNull value, RAbstractIntVector p) {
+            return p.getDataAt(0) == 0;
+        }
+
+        protected boolean firstPosZero(RAbstractVector vector, RAbstractVector value, RAbstractIntVector p) {
+            return p.getDataAt(0) == 0;
         }
 
         protected boolean isVectorList(RAbstractVector vector) {
             return vector.getElementClass() == Object.class;
         }
 
+        protected boolean isPosVectorInt(RAbstractVector vector, RAbstractVector value, RAbstractVector p) {
+            return p.getElementClass() == RInt.class;
+        }
+
+        protected boolean isPosVectorInt(RAbstractVector vector, RNull value, RAbstractVector p) {
+            return p.getElementClass() == RInt.class;
+        }
+
+        protected boolean isPosVectorInt(RNull vector, RNull value, RAbstractVector p) {
+            return p.getElementClass() == RInt.class;
+        }
+
+        protected boolean isPosVectorInt(RNull vector, RAbstractVector value, RAbstractVector p) {
+            return p.getElementClass() == RInt.class;
+        }
+
         // Truffle DSL bug (?) - guards should work with just RAbstractVector as the vector
         // parameter
-        protected boolean onePosition(RList vector, RAbstractVector value, RList p) {
+        protected boolean onePosition(RList vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() == 1;
         }
 
-        protected boolean onePosition(RList vector, RNull value, RList p) {
+        protected boolean onePosition(RList vector, RNull value, RAbstractVector p) {
             return p.getLength() == 1;
         }
 
-        protected boolean noPosition(RList vector, RAbstractVector value, RList p) {
+        protected boolean noPosition(RList vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() == 0;
         }
 
-        protected boolean noPosition(RList vector, RNull value, RList p) {
+        protected boolean noPosition(RList vector, RNull value, RAbstractVector p) {
             return p.getLength() == 0;
         }
 
-        protected boolean multiPos(RList vector, RAbstractVector value, RList p) {
+        protected boolean multiPos(RList vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() > 1;
         }
 
-        protected boolean multiPos(RList vector, RNull value, RList p) {
+        protected boolean multiPos(RList vector, RNull value, RAbstractVector p) {
             return p.getLength() > 1;
         }
 
-        protected boolean onePosition(RAbstractVector vector, RAbstractVector value, RList p) {
+        protected boolean onePosition(RAbstractVector vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() == 1;
         }
 
-        protected boolean onePosition(RAbstractVector vector, RNull value, RList p) {
+        protected boolean onePosition(RAbstractVector vector, RNull value, RAbstractVector p) {
             return p.getLength() == 1;
         }
 
-        protected boolean noPosition(RAbstractVector vector, RAbstractVector value, RList p) {
+        protected boolean noPosition(RAbstractVector vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() == 0;
         }
 
-        protected boolean noPosition(RAbstractVector vector, RNull value, RList p) {
+        protected boolean noPosition(RAbstractVector vector, RNull value, RAbstractVector p) {
             return p.getLength() == 0;
         }
 
-        protected boolean multiPos(RAbstractVector vector, RAbstractVector value, RList p) {
+        protected boolean multiPos(RAbstractVector vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() > 1;
         }
 
-        protected boolean multiPos(RAbstractVector vector, RNull value, RList p) {
+        protected boolean multiPos(RAbstractVector vector, RNull value, RAbstractVector p) {
             return p.getLength() > 1;
         }
 
-        protected boolean multiPos(Object vector, RAbstractVector value, RAbstractIntVector p) {
+        protected boolean multiPos(RNull vector, RNull value, RAbstractVector p) {
             return p.getLength() > 1;
         }
 
-        protected boolean multiPos(Object vector, RNull value, RAbstractIntVector p) {
+        protected boolean multiPos(RNull vector, RAbstractVector value, RAbstractVector p) {
             return p.getLength() > 1;
         }
 
-        protected boolean emptyValue(Object vector, RAbstractVector value) {
+        protected boolean emptyValue(RNull vector, RAbstractVector value) {
             return value.getLength() == 0;
         }
 
