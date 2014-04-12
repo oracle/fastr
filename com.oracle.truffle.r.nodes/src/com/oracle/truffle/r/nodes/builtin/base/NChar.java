@@ -76,7 +76,7 @@ public abstract class NChar extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(i).length();
         }
-        return RDataFactory.createIntVector(result, vector.isComplete());
+        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
     }
 
     @Specialization
@@ -87,6 +87,6 @@ public abstract class NChar extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = coerceContent(frame, vector.getDataAtAsObject(i)).length();
         }
-        return RDataFactory.createIntVector(result, vector.isComplete());
+        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
     }
 }

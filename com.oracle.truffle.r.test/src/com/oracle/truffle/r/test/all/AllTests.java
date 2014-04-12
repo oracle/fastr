@@ -3724,8 +3724,63 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_d0b74ca1e3a968310d26a6eb998b7eed() {
+    public void TestSimpleAttributes_testBuiltinPropagation_d0b74ca1e3a968310d26a6eb998b7eed() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; abs(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_fa36677c6a14355f660b5cf2568af617() {
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; array(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_f841fa185d5ca4d1e5534001f2a940ed() {
+        assertEval("{ x <- \"a\" ; attr(x, \"myatt\") <- 1; toupper(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_2948272b3cd57d3c283b62245eada5c3() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  diag(m) <- c(1,1) ; m }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_f9c5942aae3ff5c8311c10aadbac4c1b() {
+        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1; log10(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_4a561b926c2901d834996e4dcf07b721() {
+        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1; nchar(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_938eacb0f06e2c5a1a15e8a0e3de20c8() {
+        assertEval("{ m <- matrix(rep(1,4), nrow=2) ; attr(m,\"a\") <- 1 ;  upper.tri(m) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_4bb5cb517e5163df0d8f61721691bc5d() {
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; rev(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_568694034662a8b6af55c318d54ad291() {
+        assertEval("{ x <- c(hello=1, hi=9) ; attr(x, \"hi\") <- 2 ;  sqrt(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_889b85feda5669920cfe714405ea72cd() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  t(m) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_294da5e2033cde503cc35cc77c91a8be() {
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_5f3c184dd2fb70f674345e3d0a5ee9ca() {
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(list(x,x)) }");
     }
 
     @Test
@@ -3744,21 +3799,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_fa36677c6a14355f660b5cf2568af617() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; array(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_f841fa185d5ca4d1e5534001f2a940ed() {
-        assertEval("{ x <- \"a\" ; attr(x, \"myatt\") <- 1; toupper(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_2948272b3cd57d3c283b62245eada5c3() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  diag(m) <- c(1,1) ; m }");
-    }
-
-    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_df9b3724960b222fffd20b6a1ef94ed5() {
         assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
     }
@@ -3769,53 +3809,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_f9c5942aae3ff5c8311c10aadbac4c1b() {
-        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1; log10(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_4a561b926c2901d834996e4dcf07b721() {
-        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1; nchar(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_938eacb0f06e2c5a1a15e8a0e3de20c8() {
-        assertEval("{ m <- matrix(rep(1,4), nrow=2) ; attr(m,\"a\") <- 1 ;  upper.tri(m) }");
-    }
-
-    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_dd00df1d23bd40731a3be30ec8fa4cbe() {
         assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
     }
 
     @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_4bb5cb517e5163df0d8f61721691bc5d() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; rev(x) }");
-    }
-
-    @Test
     public void TestSimpleAttributes_testBuiltinPropagationIgnore_1c5a0061ff8753565f24001f9747bc4e() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_568694034662a8b6af55c318d54ad291() {
-        assertEval("{ x <- c(hello=1, hi=9) ; attr(x, \"hi\") <- 2 ;  sqrt(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_889b85feda5669920cfe714405ea72cd() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  t(m) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_294da5e2033cde503cc35cc77c91a8be() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(x) }");
-    }
-
-    @Test
-    public void TestSimpleAttributes_testBuiltinPropagationIgnore_5f3c184dd2fb70f674345e3d0a5ee9ca() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; unlist(list(x,x)) }");
     }
 
     @Test

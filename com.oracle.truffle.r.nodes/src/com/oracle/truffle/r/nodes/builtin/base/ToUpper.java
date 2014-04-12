@@ -44,7 +44,9 @@ public abstract class ToUpper extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             stringVector[i] = toUpper(vector.getDataAt(i));
         }
-        return RDataFactory.createStringVector(stringVector, vector.isComplete());
+        RStringVector res = RDataFactory.createStringVector(stringVector, vector.isComplete());
+        res.copyRegAttributesFrom(vector);
+        return res;
     }
 
     @SuppressWarnings("unused")

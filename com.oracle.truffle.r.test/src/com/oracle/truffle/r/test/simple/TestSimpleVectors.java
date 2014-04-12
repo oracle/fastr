@@ -1867,7 +1867,7 @@ public class TestSimpleVectors extends TestBase {
     @Test
     @Ignore
     public void testListUpdateIgnore() {
-        // unlist is not supported
+        // unlist implementation problem
         assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
 
