@@ -3629,6 +3629,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testArithmeticPropagationIgnore_e8d42dc69308c652b3f34cad5a6d4e16() {
+        assertEval("{ x <- c(1+1i,2+2i);  names(x)<-c(\"a\", \"b\"); attr(x, \"hi\") <- 3 ; y <- 2:3 ; attr(y,\"zz\") <- 2; attributes(x+y) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testArithmeticPropagationIgnore_28d78b701f690207ab98fb46cacf6ef4() {
+        assertEval("{ x <- c(1+1i,2+2i,3+3i,4+4i);  dim(x)<-c(2,2); names(x)<-c(\"a\", \"b\"); attr(x, \"hi\") <- 3 ; y <- 2:5 ; attr(y,\"zz\") <- 2; attributes(x+y) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testArithmeticPropagationIgnore_0152359fb4a6b66eee82170e9358766c() {
+        assertEval("{ x <- c(1+1i,2+2i,3+3i,4+4i);  dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); attr(x, \"hi\") <- 3 ; y <- 2:5 ; attr(y,\"zz\") <- 2; attributes(x+y) }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testArrayPropagation_ff71faa7f9c4a02839d5cb9c6735788f() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; x[c(1,1)] }");
     }

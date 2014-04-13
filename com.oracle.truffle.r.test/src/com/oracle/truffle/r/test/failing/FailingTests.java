@@ -744,61 +744,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_1bda07d542646902be34ad03340e3589() {
-        assertEval("{ x <- c(1+1i,2+2i);  attr(x, \"hi\") <- 3 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_cc69f5992ce92e155a3e58de80622625() {
-        assertEval("{ x <- 1+1i;  attr(x, \"hi\") <- 1+2 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_7d329add63812fd510617aeb1ca08021() {
-        assertEval("{ x <- c(1+1i, 2+2i) ;  attr(x, \"hi\") <- 3 ; attr(x, \"hihi\") <- 10 ; y <- c(2+2i, 3+3i) ; attr(y,\"zz\") <- 2; attr(y,\"hi\") <-3; attr(y,\"bye\") <- 4 ; x+y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_7389f0a3eba8a4f98e70eefb81b427d5() {
-        assertEval("{ x <- 1 ; attr(x, \"my\") <- 2; 2+x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_8b6f5b94450df9d844225e38d17048cb() {
-        assertEval("{ x <- c(a=1) ; y <- c(b=2,c=3) ; x + y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_f7681448c0e12bcaeda34d2fd8a7ca9e() {
-        assertEval("{ x <- c(a=1) ; y <- c(b=2,c=3) ; y + x }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_a4301aa383a7a82db04455b69087bfdd() {
-        assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ;  x+1 }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_48b0478621d37a6014b0cbfa6773292b() {
-        assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ; y <- 2:3 ; attr(y,\"hello\") <- 3; x+y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_9189f1ae9d4f71e60b9b9ef99e6a1fea() {
-        assertEval("{ x <- 1;  attr(x, \"hi\") <- 1+2 ; y <- 2:3 ; attr(y, \"zz\") <- 2; x+y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_de673112886e8ff7e3c0167e9fbe3fc1() {
-        assertEval("{ x <- 1:2 ;  attr(x, \"hi\") <- 3 ; attr(x, \"hihi\") <- 10 ; y <- 2:3 ; attr(y,\"zz\") <- 2; attr(y,\"hi\") <-3; attr(y,\"bye\") <- 4 ; x+y }");
-    }
-
-    @Ignore
-    public void TestSimpleAttributes_testArithmeticPropagationIgnore_26dafe051e5a4eaed76812ecb0c1d215() {
-        assertEval("{ x <- c(a=1,b=2) ;  attr(x, \"hi\") <- 2 ;  -x  }");
-    }
-
-    @Ignore
     public void TestSimpleAttributes_testArrayPropagation_ff71faa7f9c4a02839d5cb9c6735788f() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; x[c(1,1)] }");
     }
