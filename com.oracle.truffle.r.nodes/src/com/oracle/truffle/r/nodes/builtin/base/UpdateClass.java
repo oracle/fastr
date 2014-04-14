@@ -198,49 +198,49 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     private void initCastString() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false));
+            castStringNode = insert(CastStringNodeFactory.create(null, false, false, false, false));
         }
     }
 
     private void initCastComplex() {
         if (castComplexNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplexNode = insert(CastComplexNodeFactory.create(null, false, false));
+            castComplexNode = insert(CastComplexNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastDouble() {
         if (castDoubleNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false));
+            castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastInteger() {
         if (castIntegerNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntegerNode = insert(CastIntegerNodeFactory.create(null, false, false));
+            castIntegerNode = insert(CastIntegerNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastLogical() {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false));
+            castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastRaw() {
         if (castRawNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRawNode = insert(CastRawNodeFactory.create(null, false, false));
+            castRawNode = insert(CastRawNodeFactory.create(null, false, false, false));
         }
     }
 
     private void initCastList() {
         if (castListNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castListNode = insert(CastListNodeFactory.create(null, false, false));
+            castListNode = insert(CastListNodeFactory.create(null, false, false, false));
         }
     }
 

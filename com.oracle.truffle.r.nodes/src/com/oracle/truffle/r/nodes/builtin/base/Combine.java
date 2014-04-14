@@ -64,7 +64,7 @@ public abstract class Combine extends RBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
         }
         RVector resultVector = castVector.executeRAbstractVector(frame, value).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :
@@ -279,7 +279,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeFactory.create(null, true, false));
+            castComplex = insert(CastComplexNodeFactory.create(null, true, false, false));
         }
         return castComplex.executeCast(frame, operand);
     }
@@ -287,7 +287,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, true, false));
+            castDouble = insert(CastDoubleNodeFactory.create(null, true, false, false));
         }
         return castDouble.executeCast(frame, operand);
     }
@@ -295,7 +295,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
+            castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
         }
         return castInteger.executeCast(frame, operand);
     }
@@ -303,7 +303,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castLogical(VirtualFrame frame, Object operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeFactory.create(null, true, false));
+            castLogical = insert(CastLogicalNodeFactory.create(null, true, false, false));
         }
         return castLogical.executeCast(frame, operand);
     }
@@ -311,7 +311,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, false));
+            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
         return castString.executeCast(frame, operand);
     }
@@ -319,7 +319,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeFactory.create(null, true, false));
+            castRaw = insert(CastRawNodeFactory.create(null, true, false, false));
         }
         return castRaw.executeCast(frame, operand);
     }
@@ -327,7 +327,7 @@ public abstract class Combine extends RBuiltinNode {
     private Object castList(VirtualFrame frame, Object operand) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeFactory.create(null, true, false));
+            castList = insert(CastListNodeFactory.create(null, true, false, false));
         }
         return castList.executeCast(frame, operand);
     }

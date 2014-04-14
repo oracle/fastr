@@ -61,7 +61,9 @@ public abstract class Log10 extends RBuiltinNode {
             }
             resultVector[i] = result;
         }
-        return RDataFactory.createDoubleVector(resultVector, vector.isComplete());
+        RDoubleVector res = RDataFactory.createDoubleVector(resultVector, vector.isComplete(), vector.getNames());
+        res.copyRegAttributesFrom(vector);
+        return res;
     }
 
     @Specialization
@@ -75,6 +77,8 @@ public abstract class Log10 extends RBuiltinNode {
             }
             doubleVector[i] = value;
         }
-        return RDataFactory.createDoubleVector(doubleVector, vector.isComplete());
+        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, vector.isComplete(), vector.getNames());
+        res.copyRegAttributesFrom(vector);
+        return res;
     }
 }

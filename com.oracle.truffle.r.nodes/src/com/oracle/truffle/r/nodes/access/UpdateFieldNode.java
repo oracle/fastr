@@ -99,7 +99,7 @@ public abstract class UpdateFieldNode extends RNode {
     public Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeFactory.create(null, true, true));
+            castList = insert(CastListNodeFactory.create(null, true, true, false));
         }
         RError.warning(getEncapsulatingSourceSection(), RError.COERCING_LHS_TO_LIST);
         return updateField(castList.executeList(frame, object), value);

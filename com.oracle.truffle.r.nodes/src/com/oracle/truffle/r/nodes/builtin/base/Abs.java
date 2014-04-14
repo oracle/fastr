@@ -106,7 +106,9 @@ public abstract class Abs extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             intVector[i] = performInt(vector.getDataAt(i));
         }
-        return RDataFactory.createIntVector(intVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RIntVector res = RDataFactory.createIntVector(intVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        res.copyRegAttributesFrom(vector);
+        return res;
     }
 
     @Specialization
@@ -117,7 +119,9 @@ public abstract class Abs extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             doubleVector[i] = performDouble(vector.getDataAt(i));
         }
-        return RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        res.copyRegAttributesFrom(vector);
+        return res;
     }
 
     @Specialization
@@ -128,7 +132,9 @@ public abstract class Abs extends RBuiltinNode {
         for (int i = 0; i < vector.getLength(); i++) {
             doubleVector[i] = performComplex(vector.getDataAt(i));
         }
-        return RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        res.copyRegAttributesFrom(vector);
+        return res;
     }
 
     @SuppressWarnings("unused")

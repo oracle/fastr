@@ -862,19 +862,23 @@ public abstract class PrettyPrinterNode extends RNode {
             return prettyPrint(operand);
         }
 
-        @Specialization(order = 1, guards = "!isLengthOne")
+        @Specialization(order = 1)
         public String prettyPrintVectorElement(RList operand) {
             return prettyPrint(operand);
         }
 
-        @Specialization(order = 2, guards = "!isLengthOne")
+        @Specialization(order = 2, guards = {"!isLengthOne", "!isVectorList"})
         public String prettyPrintVectorElement(RAbstractVector operand) {
             return prettyPrint(operand);
         }
 
-        @Specialization(order = 3, guards = "isLengthOne")
+        @Specialization(order = 3, guards = {"isLengthOne", "!isVectorList"})
         public String prettyPrintVectorElementLengthOne(RAbstractVector operand) {
             return prettyPrintRecursive(operand.getDataAtAsObject(0));
+        }
+
+        protected static boolean isVectorList(RAbstractVector v) {
+            return v.getElementClass() == Object.class;
         }
 
         protected static boolean isLengthOne(RList v) {

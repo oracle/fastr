@@ -77,6 +77,20 @@ public abstract class Rev extends RBuiltinNode {
         return value;
     }
 
+    private static Object revNames(Object names) {
+        if (names == RNull.instance) {
+            return names;
+        } else {
+            RStringVector orgNames = (RStringVector) names;
+            int len = orgNames.getLength();
+            String[] data = new String[len];
+            for (int i = 0; i < data.length; i++) {
+                data[i] = orgNames.getDataAt(len - 1 - i);
+            }
+            return RDataFactory.createStringVector(data, orgNames.isComplete());
+        }
+    }
+
     @Specialization
     public RIntVector rev(RIntVector vector) {
         controlVisibility();
@@ -85,7 +99,7 @@ public abstract class Rev extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(len - 1 - i);
         }
-        return RDataFactory.createIntVector(result, vector.isComplete());
+        return RDataFactory.createIntVector(result, vector.isComplete(), revNames(vector.getNames()));
     }
 
     @Specialization
@@ -96,7 +110,7 @@ public abstract class Rev extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(len - 1 - i);
         }
-        return RDataFactory.createDoubleVector(result, vector.isComplete());
+        return RDataFactory.createDoubleVector(result, vector.isComplete(), revNames(vector.getNames()));
     }
 
     @Specialization
@@ -107,7 +121,7 @@ public abstract class Rev extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(len - 1 - i);
         }
-        return RDataFactory.createStringVector(result, vector.isComplete());
+        return RDataFactory.createStringVector(result, vector.isComplete(), revNames(vector.getNames()));
     }
 
     @Specialization
@@ -118,7 +132,7 @@ public abstract class Rev extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(len - 1 - i);
         }
-        return RDataFactory.createLogicalVector(result, vector.isComplete());
+        return RDataFactory.createLogicalVector(result, vector.isComplete(), revNames(vector.getNames()));
     }
 
     @Specialization
@@ -132,7 +146,7 @@ public abstract class Rev extends RBuiltinNode {
             result[index] = data.getRealPart();
             result[index + 1] = data.getImaginaryPart();
         }
-        return RDataFactory.createComplexVector(result, vector.isComplete());
+        return RDataFactory.createComplexVector(result, vector.isComplete(), revNames(vector.getNames()));
     }
 
     @Specialization
@@ -143,7 +157,7 @@ public abstract class Rev extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(len - 1 - i).getValue();
         }
-        return RDataFactory.createRawVector(result);
+        return RDataFactory.createRawVector(result, revNames(vector.getNames()));
     }
 
     @Specialization

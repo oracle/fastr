@@ -50,7 +50,7 @@ public abstract class CastDoubleNode extends CastNode {
     private Object castDoubleRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastDouble = insert(CastDoubleNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation()));
+            recursiveCastDouble = insert(CastDoubleNodeFactory.create(null, isNamesPreservation(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastDouble.executeDouble(frame, o);
     }
@@ -168,97 +168,161 @@ public abstract class CastDoubleNode extends CastNode {
     @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
     public RDoubleVector doLogicalVectorDims(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
     public RDoubleVector doLogicalVectorNames(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
     public RDoubleVector doLogicalVectorDimsNames(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 104)
+    @Specialization(order = 104, guards = {"!preserveNames", "!preserveDimensions"})
     public RDoubleVector doLogicalVector(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
     public RDoubleVector doStringVectorDims(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
     public RDoubleVector doStringVectorNames(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
     public RDoubleVector doStringVectorDimsNames(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 108)
+    @Specialization(order = 108, guards = {"!preserveNames", "!preserveDimensions"})
     public RDoubleVector doStringVector(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
     public RDoubleVector doComplexVectorDims(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
     public RDoubleVector doComplexVectorNames(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
     public RDoubleVector doComplexVectorDimsNames(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 112)
+    @Specialization(order = 112, guards = {"!preserveNames", "!preserveDimensions"})
     public RDoubleVector doComplexVector(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 113, guards = {"!preserveNames", "preserveDimensions"})
     public RDoubleVector doRawVectorDims(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(vector);
+        }
+        return ret;
     }
 
     @Specialization(order = 114, guards = {"preserveNames", "!preserveDimensions"})
     public RDoubleVector doRawVectorNames(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(vector);
+        }
+        return ret;
     }
 
     @Specialization(order = 115, guards = {"preserveNames", "preserveDimensions"})
     public RDoubleVector doRawVectorDimsNames(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getDimensions(), vector.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(vector);
+        }
+        return ret;
     }
 
-    @Specialization(order = 116)
+    @Specialization(order = 116, guards = {"!preserveNames", "!preserveDimensions"})
     public RDoubleVector doRawVector(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
-        return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(vector);
+        }
+        return ret;
     }
 
     @Specialization
@@ -297,7 +361,11 @@ public abstract class CastDoubleNode extends CastNode {
                 }
             }
         }
-        return RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(list);
+        }
+        return ret;
     }
 
     private RDoubleVector cannotCoerceListError() {
@@ -317,14 +385,19 @@ public abstract class CastDoubleNode extends CastNode {
             int value = operand.getDataAt(i);
             ddata[i] = naCheck.convertIntToDouble(value);
         }
+        RDoubleVector ret;
         if (preserveDimensions() && preserveNames()) {
-            return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+            ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         } else if (preserveDimensions()) {
-            return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+            ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
         } else if (preserveNames()) {
-            return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+            ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
         } else {
-            return RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
+            ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         }
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 }

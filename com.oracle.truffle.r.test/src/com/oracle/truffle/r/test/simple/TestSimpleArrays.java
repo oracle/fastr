@@ -396,7 +396,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testUpdateIgnore() {
 
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");

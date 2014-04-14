@@ -227,7 +227,7 @@ public abstract class Substr extends RBuiltinNode {
     private void ensureCast() {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, false));
+            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
     }
 }
