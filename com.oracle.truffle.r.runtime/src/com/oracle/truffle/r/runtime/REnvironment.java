@@ -448,15 +448,9 @@ public abstract class REnvironment {
     private static class TruffleFrameAccess extends FrameAccessBindingsAdapter {
 
         private MaterializedFrame frame;
-        private final boolean allowPutNew;
 
         TruffleFrameAccess(MaterializedFrame frame) {
-            this(frame, false);
-        }
-
-        TruffleFrameAccess(MaterializedFrame frame, boolean allowPutNew) {
             this.frame = frame;
-            this.allowPutNew = allowPutNew;
         }
 
         @Override
@@ -484,13 +478,8 @@ public abstract class REnvironment {
             if (slot != null) {
                 frame.setObject(slot, value);
             } else {
-                if (allowPutNew) {
-                    slot = fd.addFrameSlot(key, FrameSlotKind.Object);
-                    frame.setObject(slot, value);
-                } else {
-                    // this should never happen as the caller is required to check existence first
-                    throw new PutException("variable '" + key + "' not found");
-                }
+                slot = fd.addFrameSlot(key, FrameSlotKind.Object);
+                frame.setObject(slot, value);
             }
         }
 
@@ -534,7 +523,7 @@ public abstract class REnvironment {
 
     private static class BaseAdapter extends REnvironment {
         protected BaseAdapter(REnvironment parent, MaterializedFrame frame) {
-            super(parent, "base", new TruffleFrameAccess(frame, true));
+            super(parent, "base", new TruffleFrameAccess(frame));
         }
 
         @Override

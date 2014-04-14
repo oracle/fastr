@@ -23,16 +23,18 @@ function(file, envir = baseenv(), chdir = FALSE,
     if(!(is.character(file) && file.exists(file)))
         stop(gettextf("'%s' is not an existing file", file))
     keep.source <- as.logical(keep.source)
-    oop <- options(keep.source = keep.source,
-       topLevelEnvironment = as.environment(envir))
-    on.exit(options(oop))
+    # TODO reinstate when options fixed
+    # oop <- options(keep.source = keep.source,
+    #    topLevelEnvironment = as.environment(envir))
+    # on.exit(options(oop))
     if (keep.source) {
       lines <- readLines(file, warn = FALSE)
       srcfile <- srcfilecopy(file, lines, file.info(file)[1,"mtime"], isFile = TRUE)
       exprs <- parse(text = lines, srcfile = srcfile, keep.source = TRUE)
     } else
-      exprs <- parse(n = -1, file = file, srcfile = NULL, keep.source = FALSE)
-    if (length(exprs) == 0L)
+      # exprs <- parse(n = -1, file = file, srcfile = NULL, keep.source = FALSE)
+      exprs <- parse(file = file, n = -1, text = NULL, prompt = "?", keep.source = FALSE, srcfile = NULL, encoding = "unknown")
+  if (length(exprs) == 0L)
         return(invisible())
     if (chdir && (path <- dirname(file)) != ".") {
         owd <- getwd()

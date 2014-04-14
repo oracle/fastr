@@ -29,10 +29,47 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ConnectionFunctions {
+
+    // TODO remove invisibility when print for RConnection works
+
+    public static class StdinConnection extends RConnection {
+
+        @Override
+        public String[] readLines(int n) throws IOException {
+            ConsoleHandler console = RContext.getInstance().getConsoleHandler();
+            ArrayList<String> lines = new ArrayList<>();
+            String line;
+            while ((line = console.readLine()) != null) {
+                lines.add(line);
+                if (n > 0 && lines.size() == n) {
+                    break;
+                }
+            }
+            String[] result = new String[lines.size()];
+            lines.toArray(result);
+            return result;
+        }
+
+    }
+
+    private static StdinConnection stdin;
+
+    @RBuiltin(".Internal.stdin")
+    public abstract static class Stdin extends RInvisibleBuiltinNode {
+        @Specialization
+        public RConnection stdin() {
+            controlVisibility();
+            if (stdin == null) {
+                stdin = new StdinConnection();
+            }
+            return stdin;
+        }
+    }
 
     public static class FileReadRConnection extends RConnection {
         private final BufferedReader bufferedReader;
