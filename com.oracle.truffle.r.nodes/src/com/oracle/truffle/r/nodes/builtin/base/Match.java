@@ -44,7 +44,7 @@ public abstract class Match extends RBuiltinNode {
     private String castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, false, false));
+            castString = insert(CastStringNodeFactory.create(null, false, false, false, false));
         }
         return (String) castString.executeCast(frame, operand);
     }

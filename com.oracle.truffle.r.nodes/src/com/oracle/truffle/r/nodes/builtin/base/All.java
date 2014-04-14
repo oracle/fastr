@@ -43,7 +43,7 @@ public abstract class All extends RBuiltinNode {
     private byte castLogical(VirtualFrame frame, Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false));
+            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
         }
         return (byte) castLogicalNode.executeByte(frame, o);
     }
@@ -51,7 +51,7 @@ public abstract class All extends RBuiltinNode {
     private RLogicalVector castLogicalVector(VirtualFrame frame, Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false));
+            castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
         }
         return (RLogicalVector) castLogicalNode.executeLogicalVector(frame, o);
     }

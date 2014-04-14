@@ -87,7 +87,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castComplex(VirtualFrame frame, Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeFactory.create(null, true, true));
+            castComplex = insert(CastComplexNodeFactory.create(null, true, true, false));
         }
         return castComplex.executeCast(frame, operand);
     }
@@ -95,7 +95,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castDouble(VirtualFrame frame, Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeFactory.create(null, true, true));
+            castDouble = insert(CastDoubleNodeFactory.create(null, true, true, false));
         }
         return castDouble.executeCast(frame, operand);
     }
@@ -103,7 +103,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, true));
+            castInteger = insert(CastIntegerNodeFactory.create(null, true, true, false));
         }
         return castInteger.executeCast(frame, operand);
     }
@@ -111,7 +111,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private Object castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeFactory.create(null, false, true, true));
+            castString = insert(CastStringNodeFactory.create(null, true, true, false, true));
         }
         return castString.executeCast(frame, operand);
     }
@@ -151,7 +151,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
-        return CastToVectorNodeFactory.create(child, false, false, true);
+        return CastToVectorNodeFactory.create(child, false, false, false, true);
     }
 
     @Specialization(order = 5, guards = "emptyValue")
@@ -3203,7 +3203,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private Object castComplex(VirtualFrame frame, Object vector) {
             if (castComplex == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castComplex = insert(CastComplexNodeFactory.create(null, true, true));
+                castComplex = insert(CastComplexNodeFactory.create(null, true, true, true));
             }
             return castComplex.executeCast(frame, vector);
         }
@@ -3211,7 +3211,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private Object castDouble(VirtualFrame frame, Object vector) {
             if (castDouble == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castDouble = insert(CastDoubleNodeFactory.create(null, true, true));
+                castDouble = insert(CastDoubleNodeFactory.create(null, true, true, true));
             }
             return castDouble.executeCast(frame, vector);
         }
@@ -3219,7 +3219,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private Object castInteger(VirtualFrame frame, Object vector) {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInteger = insert(CastIntegerNodeFactory.create(null, true, true));
+                castInteger = insert(CastIntegerNodeFactory.create(null, true, true, true));
             }
             return castInteger.executeCast(frame, vector);
         }
@@ -3227,7 +3227,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private Object castString(VirtualFrame frame, Object vector) {
             if (castString == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castString = insert(CastStringNodeFactory.create(null, true, true, false));
+                castString = insert(CastStringNodeFactory.create(null, true, true, true, false));
             }
             return castString.executeCast(frame, vector);
         }
@@ -3235,7 +3235,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private Object castList(VirtualFrame frame, Object vector) {
             if (castList == null) {
                 CompilerDirectives.transferToInterpreter();
-                castList = insert(CastListNodeFactory.create(null, true, false));
+                castList = insert(CastListNodeFactory.create(null, true, false, true));
             }
             return castList.executeCast(frame, vector);
         }

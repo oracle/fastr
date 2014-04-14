@@ -141,49 +141,81 @@ public abstract class CastComplexNode extends CastNode {
     @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
     public RComplexVector doLogicalVectorDims(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
     public RComplexVector doLogicalVectorNames(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
     public RComplexVector doLogicalVectorDimsNames(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 104)
+    @Specialization(order = 104, guards = {"!preserveNames", "!preserveDimensions"})
     public RComplexVector doLogicalVector(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
     public RComplexVector doStringVectorDims(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
     public RComplexVector doStringVectorNames(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
     public RComplexVector doStringVectorDimsNames(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 108)
+    @Specialization(order = 108, guards = {"!preserveNames", "!preserveDimensions"})
     public RComplexVector doStringVector(RStringVector operand) {
         double[] ddata = dataFromString(operand);
-        return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -204,25 +236,41 @@ public abstract class CastComplexNode extends CastNode {
     @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
     public RComplexVector doRawVectorDims(RRawVector operand) {
         double[] ddata = dataFromRaw(operand);
-        return RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
     public RComplexVector doRawVectorNames(RRawVector operand) {
         double[] ddata = dataFromRaw(operand);
-        return RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
     public RComplexVector doRawVectorDimsNames(RRawVector operand) {
         double[] ddata = dataFromRaw(operand);
-        return RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions(), operand.getNames());
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 112)
+    @Specialization(order = 112, guards = {"!preserveNames", "!preserveDimensions"})
     public RComplexVector doRawVector(RRawVector operand) {
         double[] ddata = dataFromRaw(operand);
-        return RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR);
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, RDataFactory.COMPLETE_VECTOR);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Generic
@@ -241,15 +289,20 @@ public abstract class CastComplexNode extends CastNode {
             ddata[index] = complexValue.getRealPart();
             ddata[index + 1] = complexValue.getImaginaryPart();
         }
+        RComplexVector ret;
         if (preserveDimensions() && preserveNames()) {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         } else if (preserveDimensions()) {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
         } else if (preserveNames()) {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
         } else {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
         }
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     private RComplexVector performAbstractDoubleVector(RAbstractDoubleVector operand) {
@@ -262,15 +315,20 @@ public abstract class CastComplexNode extends CastNode {
             ddata[index] = complexValue.getRealPart();
             ddata[index + 1] = complexValue.getImaginaryPart();
         }
+        RComplexVector ret;
         if (preserveDimensions() && preserveNames()) {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         } else if (preserveDimensions()) {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
         } else if (preserveNames()) {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA(), operand.getNames());
         } else {
-            return RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
+            ret = RDataFactory.createComplexVector(ddata, naCheck.neverSeenNA());
         }
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
 }

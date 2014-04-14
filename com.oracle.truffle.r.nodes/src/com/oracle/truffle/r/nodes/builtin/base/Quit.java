@@ -48,7 +48,7 @@ public abstract class Quit extends RInvisibleBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // status argument is at index 1
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
         return arguments;
     }
 

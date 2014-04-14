@@ -48,7 +48,7 @@ public abstract class Log extends RBuiltinNode {
     @CreateCast("arguments")
     protected static RNode[] castStatusArgument(RNode[] arguments) {
         // base argument is at index 1, and double
-        arguments[1] = CastDoubleNodeFactory.create(arguments[1], true, false);
+        arguments[1] = CastDoubleNodeFactory.create(arguments[1], true, false, false);
         return arguments;
     }
 

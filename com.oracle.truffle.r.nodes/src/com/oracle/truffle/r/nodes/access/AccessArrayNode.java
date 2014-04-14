@@ -75,7 +75,7 @@ public abstract class AccessArrayNode extends RNode {
     private Object castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, true));
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, true));
         }
         return castVector.executeObject(frame, value);
     }

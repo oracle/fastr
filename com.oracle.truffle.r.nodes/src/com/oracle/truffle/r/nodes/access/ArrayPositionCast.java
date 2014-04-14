@@ -245,7 +245,7 @@ public abstract class ArrayPositionCast extends RNode {
         private void initIntCast() {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
+                castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
             }
         }
 

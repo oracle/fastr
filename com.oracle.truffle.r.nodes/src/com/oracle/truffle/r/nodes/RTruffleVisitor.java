@@ -240,7 +240,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     public RNode visit(AccessVector a) {
         RNode vector = a.getVector().accept(this);
         int argLength = a.getArgs().size();
-        RNode castVector = CastToVectorNodeFactory.create(vector, false, false, true);
+        RNode castVector = CastToVectorNodeFactory.create(vector, false, false, false, true);
         RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), false);
         AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castVector, (PositionsArrayNode) positions);
         access.assignSourceSection(a.getSource());

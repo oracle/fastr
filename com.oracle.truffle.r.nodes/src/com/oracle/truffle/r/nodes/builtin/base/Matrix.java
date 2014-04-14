@@ -60,8 +60,8 @@ public abstract class Matrix extends RBuiltinNode {
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         // nrow and ncol (positions 1, 2) are actually int
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false);
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
+        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
         return arguments;
     }
 

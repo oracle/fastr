@@ -55,8 +55,8 @@ public abstract class Repeat extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castTimesLength(RNode[] arguments) {
         // times is at index 1; length.out, at 2
-        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false);
-        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false);
+        arguments[1] = CastIntegerNodeFactory.create(arguments[1], true, false, false);
+        arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
         return arguments;
     }
 

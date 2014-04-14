@@ -49,7 +49,7 @@ public abstract class Complex extends RBuiltinNode {
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
         // length.out argument is at index 0
-        arguments[0] = CastIntegerNodeFactory.create(arguments[0], true, false);
+        arguments[0] = CastIntegerNodeFactory.create(arguments[0], true, false, false);
         return arguments;
     }
 
