@@ -39,8 +39,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * Environments associated with function invocations are unnamed. The {@code environmentName}
  * builtin returns "" for an unnamed environment. However, unnamed environments print using a unique
  * numeric id in the place where the name would appear for a named environment. This is finessed
- * using the {@link #getPrintNameHelper} method. Finally, environments on the {@code search} path
+ * using the {@link #getPrintNameHelper} method. Further, environments on the {@code search} path
  * return a yet different name in the result of {@code search}, e.g. ".GlobalEnv", "package:base".
+ * Finally, environments can be given names using the {@code attr} function, and (then) they print
+ * differently again. Of the default set of environments, only "Autoloads" has a {@code name}
+ * attribute.
  * <p>
  * Environments can also be locked preventing any bindings from being added or removed. N.B. the
  * empty environment can't be assigned to but is not locked (see GnuR). Further, individual bindings
@@ -250,6 +253,7 @@ public abstract class REnvironment {
     private REnvironment parent;
     private final String name;
     private final FrameAccess frameAccess;
+    private Map<String, Object> attributes;
     private boolean locked;
 
     /**
@@ -355,41 +359,42 @@ public abstract class REnvironment {
 
     // end of static members
 
-    protected REnvironment(REnvironment parent, String name, VirtualFrame frame) {
-        this.parent = parent;
-        this.name = name;
-
-        // establish parent environment's frame as enclosing frame in "frame" before it is
-        // materialised
-        frame.getArguments(RArguments.class).setEnclosingFrame(parent.getFrame());
-
-        this.frameAccess = new TruffleFrameAccess(frame.materialize());
-        if (!name.equals(UNNAMED) && this instanceof InSearchList) {
-            searchListEnvironments.put(name, this);
-        }
-    }
-
-    protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
-        this.parent = parent;
-        this.name = name;
-        this.frameAccess = new TruffleFrameAccess(frame);
-        // this is a Function or Autoload - not added to search list
-    }
-
+    /**
+     * The basic constructor; assigns the fields and possibly puts the environment on
+     * {@link #searchListEnvironments}.
+     */
     protected REnvironment(REnvironment parent, String name, FrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
         this.frameAccess = frameAccess;
+        // Not all named environments are put on the search list, hence the tagging interface
         if (!name.equals(UNNAMED) && this instanceof InSearchList) {
             searchListEnvironments.put(name, this);
         }
     }
 
-    protected REnvironment(REnvironment parent, String name, Base base) {
-        this.parent = parent;
-        this.name = name;
-        this.frameAccess = new TruffleFrameAccess(base.getFrame());
-        // this is a NamespaceBase - not added to search list
+    /**
+     * An environment associated with a {@link VirtualFrame} where is it is important to establish
+     * the parent environment's frame as the enclosing frame in {@code frame} <i>before</i> it is
+     * materialised.
+     */
+    protected REnvironment(REnvironment parent, String name, VirtualFrame frame) {
+        this(parent, name, setEnclosingHelper(parent, frame));
+    }
+
+    /**
+     * Helper method to comply with constructor ordering rules.
+     */
+    private static FrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
+        frame.getArguments(RArguments.class).setEnclosingFrame(parent.getFrame());
+        return new TruffleFrameAccess(frame.materialize());
+    }
+
+    /**
+     * An environment associated with an already materialized frame.
+     */
+    protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
+        this(parent, name, new TruffleFrameAccess(frame));
     }
 
     public REnvironment getParent() {
@@ -464,6 +469,25 @@ public abstract class REnvironment {
 
     public boolean bindingIsLocked(String key) {
         return frameAccess.bindingIsLocked(key);
+    }
+
+    @SlowPath
+    public void setAttr(String attrName, Object value) {
+        if (attributes == null) {
+            attributes = new HashMap<>();
+        }
+        attributes.put(attrName, value);
+    }
+
+    @SlowPath
+    public void removeAttr(String attrName) {
+        if (attributes != null) {
+            attributes.remove(attrName);
+        }
+    }
+
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 
     @SlowPath
@@ -568,13 +592,17 @@ public abstract class REnvironment {
 
     }
 
+    /**
+     * {@link Base} and {@link NamespaceBase} share some characteristics that are implemented in
+     * this adapter.
+     */
     private static class BaseAdapter extends REnvironment {
         protected BaseAdapter(REnvironment parent, VirtualFrame frame) {
             super(parent, "base", frame);
         }
 
         protected BaseAdapter(REnvironment parent, Base base) {
-            super(parent, "base", base);
+            super(parent, "base", new TruffleFrameAccess(base.getFrame()));
         }
 
         @Override
@@ -584,7 +612,7 @@ public abstract class REnvironment {
     }
 
     /**
-     * The environment for the {@code package:base} package.
+     * The environment for the {@code package:base} package, which is in the search list.
      */
     private static class Base extends BaseAdapter implements InSearchList {
 
@@ -594,7 +622,7 @@ public abstract class REnvironment {
     }
 
     /**
-     * The {@code namespace:base} environment.
+     * The {@code namespace:base} environment, which is <i>not</i> in the search list.
      */
     private static final class NamespaceBase extends BaseAdapter {
         private NamespaceBase(Base base) {
@@ -640,7 +668,7 @@ public abstract class REnvironment {
 
         public Function(REnvironment parent, MaterializedFrame frame) {
             // function environments are not named
-            super(parent, "", frame);
+            super(parent, UNNAMED, frame);
         }
 
         /**
@@ -671,7 +699,7 @@ public abstract class REnvironment {
 
         public FunctionDefinition(REnvironment parent) {
             // function environments are not named
-            super(parent, "", noFrameAccess);
+            super(parent, UNNAMED, noFrameAccess);
             this.descriptor = new FrameDescriptor();
         }
 
@@ -764,11 +792,13 @@ public abstract class REnvironment {
     }
 
     /**
-     * A placeholder for the package autload mechanism.
+     * A placeholder for the package autoload mechanism. N.B. Although "unnamed", it is given a name
+     * with {@code attr} in GnuR.
      */
-    private static final class Autoload extends REnvironment implements InSearchList {
+    private static final class Autoload extends REnvironment {
         Autoload() {
-            super(baseEnv(), "", baseEnv().getFrame());
+            super(baseEnv(), UNNAMED, baseEnv().getFrame());
+            setAttr("name", "Autoloads");
         }
 
     }
