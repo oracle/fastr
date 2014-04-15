@@ -43,7 +43,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
-        return castStringNode.executeStringVector(frame, o);
+        return castStringNode.executeString(frame, o);
     }
 
     public abstract Object executeStringVector(VirtualFrame frame, RAbstractVector vector, Object o);

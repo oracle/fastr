@@ -53,7 +53,7 @@ public abstract class All extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
         }
-        return (RLogicalVector) castLogicalNode.executeLogicalVector(frame, o);
+        return (RLogicalVector) castLogicalNode.executeLogical(frame, o);
     }
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"..."};

@@ -246,7 +246,7 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
 
     private RStringVector castStringVector(VirtualFrame frame, RAbstractVector o) {
         initCastString();
-        return (RStringVector) castStringNode.executeStringVector(frame, o);
+        return (RStringVector) castStringNode.executeString(frame, o);
     }
 
 }

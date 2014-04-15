@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -40,36 +43,115 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(".Internal.array")
 public abstract class Array extends RBuiltinNode {
 
-    @Specialization(order = 0, guards = "lengthMatches")
-    public Object doArray(RAbstractVector vec, int dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
-        return vec.copyWithNewDimensions(new int[]{dim});
+    @CreateCast({"arguments"})
+    public RNode[] createCastDimensions(RNode[] children) {
+        RNode dimsVector = CastToVectorNodeFactory.create(children[1], false, false, false, false);
+        return new RNode[]{children[0], CastIntegerNodeFactory.create(dimsVector, false, false, false), children[2]};
     }
 
-    @Specialization(order = 1, guards = "totalLengthMatches")
-    public Object doArray(RAbstractVector vec, RDoubleVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
-        int[] dims = new int[dim.getLength()];
+    private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {
+        int totalLength = 1;
+        int seenNegative = 0;
         for (int i = 0; i < dim.getLength(); i++) {
-            dims[i] = (int) dim.getDataAt(i);
+            dimData[i] = dim.getDataAt(i);
+            if (dimData[i] < 0) {
+                seenNegative++;
+            }
+            totalLength *= dimData[i];
         }
-        return vec.copyWithNewDimensions(dims);
-    }
-
-    public static boolean lengthMatches(RAbstractVector vec, int dim, @SuppressWarnings("unused") RNull dimnames) {
-        return dim == vec.getLength();
-    }
-
-    public static boolean totalLengthMatches(RAbstractVector vec, RDoubleVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        return totalLength(dim) == vec.getLength();
-    }
-
-    private static int totalLength(RDoubleVector dim) {
-        int sum = 0;
-        for (int i = 0; i < dim.getLength(); i++) {
-            int d = (int) dim.getDataAt(i);
-            sum = i == 0 ? d : sum * d;
+        if (seenNegative == dim.getLength() && seenNegative != 0) {
+            throw RError.getDimsContainNegativeValues(getEncapsulatingSourceSection());
+        } else if (seenNegative > 0) {
+            throw RError.getNegativeLengthVectorsNotAllowed(getEncapsulatingSourceSection());
         }
-        return sum;
+        return totalLength;
     }
+
+    @Specialization
+    public RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        int data[] = new int[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            data[i] = vec.getDataAt(i % vec.getLength());
+        }
+        return RDataFactory.createIntVector(data, vec.isComplete(), dimData);
+    }
+
+    @Specialization
+    public RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        double data[] = new double[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            data[i] = vec.getDataAt(i % vec.getLength());
+        }
+        return RDataFactory.createDoubleVector(data, vec.isComplete(), dimData);
+    }
+
+    @Specialization
+    public RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        byte data[] = new byte[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            data[i] = vec.getDataAt(i % vec.getLength());
+        }
+        return RDataFactory.createLogicalVector(data, vec.isComplete(), dimData);
+    }
+
+    @Specialization
+    public RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        String data[] = new String[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            data[i] = vec.getDataAt(i % vec.getLength());
+        }
+        return RDataFactory.createStringVector(data, vec.isComplete(), dimData);
+    }
+
+    @Specialization
+    public RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        double data[] = new double[totalLength << 2];
+        int ind = 0;
+        for (int i = 0; i < totalLength; i++) {
+            RComplex d = vec.getDataAt(i % vec.getLength());
+            data[ind++] = d.getRealPart();
+            data[ind++] = d.getImaginaryPart();
+        }
+        return RDataFactory.createComplexVector(data, vec.isComplete(), dimData);
+    }
+
+    @Specialization
+    public RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        byte data[] = new byte[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            data[i] = vec.getDataAt(i % vec.getLength()).getValue();
+        }
+        return RDataFactory.createRawVector(data, dimData);
+    }
+
+    @Specialization
+    public RList doArray(RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        int[] dimData = new int[dim.getLength()];
+        int totalLength = dimDataHelper(dim, dimData);
+        Object data[] = new Object[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            data[i] = vec.getDataAt(i % vec.getLength());
+        }
+        return RDataFactory.createList(data, dimData);
+    }
+
 }

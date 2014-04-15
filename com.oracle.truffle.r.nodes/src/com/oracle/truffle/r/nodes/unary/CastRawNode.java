@@ -40,8 +40,6 @@ public abstract class CastRawNode extends CastNode {
 
     public abstract Object executeRaw(VirtualFrame frame, Object o);
 
-    public abstract Object executeRawVector(VirtualFrame frame, Object o);
-
     @Specialization
     public RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;

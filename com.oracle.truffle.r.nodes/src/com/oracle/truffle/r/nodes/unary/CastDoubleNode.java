@@ -43,8 +43,6 @@ public abstract class CastDoubleNode extends CastNode {
 
     public abstract Object executeDouble(VirtualFrame frame, Object o);
 
-    public abstract Object executeDoubleVector(VirtualFrame frame, Object o);
-
     @Child CastDoubleNode recursiveCastDouble;
 
     private Object castDoubleRecursive(VirtualFrame frame, Object o) {

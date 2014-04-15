@@ -114,7 +114,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, false, false, false));
         }
-        RDoubleVector resultVector = (RDoubleVector) castDouble.executeDoubleVector(frame, vector);
+        RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(frame, vector);
         resultVector.copyAttributesFrom(vector);
         return updateDiag(resultVector, valueVector);
     }

@@ -2654,6 +2654,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testArrayBuiltin_9e9890dca281ce611bb5bd48143b9b09() {
+        assertEval("{ a = array(); is.null(dimnames(a)); }");
+    }
+
+    @Test
     public void TestSimpleArrays_testArrayBuiltin_3d8969238024eab6bebc08a29ff468e7() {
         assertEval("{ a <- array(); dim(a) }");
     }
@@ -2664,23 +2669,23 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArrays_testArrayBuiltin_da411f3d8d8a722a471e77966e8e1135() {
-        assertEval("{ length(array(dim=c(1,0,2,3))) }");
+    public void TestSimpleArrays_testArrayBuiltin_d0ed6bf6a52a56790dccad57cfecdd08() {
+        assertEval("{ length(array(NA, dim=c(1,0,2,3))) }");
     }
 
     @Test
-    public void TestSimpleArrays_testArrayBuiltin_3cc1186607b6ef41bdbc0c66fc278b3a() {
-        assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
+    public void TestSimpleArrays_testArrayBuiltin_155b552decb85f600b252aa86008ce29() {
+        assertEval("{ dim(array(NA, dim=c(2.1,2.9,3.1,4.7))) }");
     }
 
     @Test
-    public void TestSimpleArrays_testArrayBuiltin_62c7f6f4b6bf06a81284d05487afc849() {
-        assertEvalError("{ array(dim=c(-2,2)); }");
+    public void TestSimpleArrays_testArrayBuiltin_e57eb5be20feb32f2d83ebb6866057c9() {
+        assertEvalError("{ array(NA, dim=c(-2,2)); }");
     }
 
     @Test
-    public void TestSimpleArrays_testArrayBuiltin_6298ff4d222c7787e6c111563ac6a26a() {
-        assertEvalError("{ array(dim=c(-2,-2)); }");
+    public void TestSimpleArrays_testArrayBuiltin_3b72d275119cfc0cbdf526fbd5ecf594() {
+        assertEvalError("{ array(NA, dim=c(-2,-2)); }");
     }
 
     @Test
@@ -2749,8 +2754,38 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testArraySimpleRead_ddfb81111b88b8188ceda0aa75c41a4c() {
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=FALSE, 0, -1]) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArraySimpleRead_db3b466dd83c54ea5aa2ce7f2321bf12() {
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=c(0,2), 0, -1]) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArraySimpleRead_0c5b2be5ef11fdfec2097e442f53b637() {
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=0, 0, -1]) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArraySimpleRead_3867951b74ceb63b3cf702022967100f() {
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=integer(), 0, -1]) }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArraySimpleRead_899066bd33233e98e571e5908e183adb() {
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,drop=FALSE, 1, drop=TRUE, -1]) }");
+    }
+
+    @Test
     public void TestSimpleArrays_testArraySimpleRead_7b74b2887b86d6dbce9cc6dba1cdfac0() {
         assertEvalError("{ a = array(1,c(3,3,3)); a[2,2]; }");
+    }
+
+    @Test
+    public void TestSimpleArrays_testArraySimpleRead_7bfdbb54d9a6446b3cc76cc29dfb78f8() {
+        assertEvalError("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=FALSE, 0, drop=TRUE, -1]) }");
     }
 
     @Test
@@ -2804,8 +2839,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleArrays_testArrayUpdateIgnore_499acebd19ac76555ed92ca7ecc3ec53() {
-        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
+    public void TestSimpleArrays_testArrayUpdateIgnore_fa399785b588c0934381a477dc943405() {
+        assertEval("{ a = array(1,c(3,3,3)); a[1,2,3] = 3; a }");
     }
 
     @Test
@@ -6064,6 +6099,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDefaultArgsIgnore_da411f3d8d8a722a471e77966e8e1135() {
+        assertEval("{ length(array(dim=c(1,0,2,3))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDefaultArgsIgnore_3cc1186607b6ef41bdbc0c66fc278b3a() {
+        assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDefaultArgsIgnore_62c7f6f4b6bf06a81284d05487afc849() {
+        assertEvalError("{ array(dim=c(-2,2)); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDefaultArgsIgnore_6298ff4d222c7787e6c111563ac6a26a() {
+        assertEvalError("{ array(dim=c(-2,-2)); }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDelayedAssign_8ec95e38ecb3a999ffba3e7abc6ffb72() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
     }
@@ -8906,6 +8961,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testOverride_de3b22c9cf36f0c894eb0b6d14a77142() {
         assertEval("{ sub <- function(x,y) { x - y }; sub(10,5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testParen_499acebd19ac76555ed92ca7ecc3ec53() {
+        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }
 
     @Test

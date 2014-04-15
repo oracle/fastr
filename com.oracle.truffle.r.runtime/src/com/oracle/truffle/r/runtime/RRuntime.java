@@ -136,6 +136,8 @@ public class RRuntime {
 
     private static long[] childTimes;
 
+    public static final String DROP_DIM_ARG_NAME = "drop";
+
     /**
      * Perform any runtime initialization necessary before the first R evaluation. TODO Check
      * possible ordering issues. It may be that a simple one-phase initialization is inadequate.

@@ -42,8 +42,6 @@ public abstract class CastStringNode extends CastNode {
 
     public abstract Object executeString(VirtualFrame frame, Object o);
 
-    public abstract Object executeStringVector(VirtualFrame frame, Object o);
-
     public abstract boolean isEmptyVectorConvertedToNull();
 
     public CastStringNode() {
