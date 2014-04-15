@@ -39,8 +39,6 @@ public abstract class CastLogicalNode extends CastNode {
 
     public abstract Object executeLogical(VirtualFrame frame, Object o);
 
-    public abstract Object executeLogicalVector(VirtualFrame frame, Object o);
-
     @Child CastLogicalNode recursiveCastLogical;
 
     private Object castLogicalRecursive(VirtualFrame frame, Object o) {

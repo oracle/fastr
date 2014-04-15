@@ -42,8 +42,6 @@ public abstract class CastIntegerNode extends CastNode {
 
     public abstract Object executeInt(VirtualFrame frame, Object o);
 
-    public abstract Object executeIntVector(VirtualFrame frame, Object o);
-
     @Child CastIntegerNode recursiveCastInteger;
 
     private Object castIntegerRecursive(VirtualFrame frame, Object o) {

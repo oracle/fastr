@@ -69,7 +69,7 @@ public abstract class AsComplex extends RBuiltinNode {
 
     private RComplexVector castComplexVector(VirtualFrame frame, Object o) {
         initCast();
-        return (RComplexVector) castComplexNode.executeComplexVector(frame, o);
+        return (RComplexVector) castComplexNode.executeComplex(frame, o);
     }
 
     @Specialization

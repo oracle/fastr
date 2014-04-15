@@ -54,7 +54,7 @@ public abstract class AsLogical extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, false, false, false));
         }
-        return (RLogicalVector) castLogicalNode.executeLogicalVector(frame, o);
+        return (RLogicalVector) castLogicalNode.executeLogical(frame, o);
     }
 
     @Specialization

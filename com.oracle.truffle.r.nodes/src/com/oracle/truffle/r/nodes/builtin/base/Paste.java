@@ -52,7 +52,7 @@ public abstract class Paste extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castCharacterNode = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
-        Object ret = castCharacterNode.executeStringVector(frame, o);
+        Object ret = castCharacterNode.executeString(frame, o);
         if (ret instanceof String) {
             return RDataFactory.createStringVector((String) ret);
         } else {

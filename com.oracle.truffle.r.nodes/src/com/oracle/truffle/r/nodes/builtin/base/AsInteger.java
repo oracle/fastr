@@ -68,7 +68,7 @@ public abstract class AsInteger extends RBuiltinNode {
 
     private RAbstractIntVector castIntVector(VirtualFrame frame, Object o) {
         initCast();
-        return (RAbstractIntVector) castIntNode.executeIntVector(frame, o);
+        return (RAbstractIntVector) castIntNode.executeInt(frame, o);
     }
 
     @Specialization

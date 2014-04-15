@@ -68,7 +68,7 @@ public abstract class AsDouble extends RBuiltinNode {
 
     private RDoubleVector castDoubleVector(VirtualFrame frame, Object o) {
         initCast();
-        return (RDoubleVector) castDoubleNode.executeDoubleVector(frame, o);
+        return (RDoubleVector) castDoubleNode.executeDouble(frame, o);
     }
 
     @Specialization

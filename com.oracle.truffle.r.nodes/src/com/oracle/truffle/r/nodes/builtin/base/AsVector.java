@@ -51,7 +51,7 @@ public abstract class AsVector extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeFactory.create(null, false, false, false));
         }
-        return (RIntVector) castInteger.executeIntVector(frame, operand);
+        return (RIntVector) castInteger.executeInt(frame, operand);
     }
 
     private RDoubleVector castDouble(VirtualFrame frame, Object operand) {
@@ -59,7 +59,7 @@ public abstract class AsVector extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeFactory.create(null, false, false, false));
         }
-        return (RDoubleVector) castDouble.executeDoubleVector(frame, operand);
+        return (RDoubleVector) castDouble.executeDouble(frame, operand);
     }
 
     private RComplexVector castComplex(VirtualFrame frame, Object operand) {
@@ -67,7 +67,7 @@ public abstract class AsVector extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeFactory.create(null, false, false, false));
         }
-        return (RComplexVector) castComplex.executeComplexVector(frame, operand);
+        return (RComplexVector) castComplex.executeComplex(frame, operand);
     }
 
     private RLogicalVector castLogical(VirtualFrame frame, Object operand) {
@@ -75,7 +75,7 @@ public abstract class AsVector extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeFactory.create(null, false, false, false));
         }
-        return (RLogicalVector) castLogical.executeLogicalVector(frame, operand);
+        return (RLogicalVector) castLogical.executeLogical(frame, operand);
     }
 
     private RStringVector castString(VirtualFrame frame, Object operand) {
@@ -83,7 +83,7 @@ public abstract class AsVector extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeFactory.create(null, false, false, false, false));
         }
-        return (RStringVector) castString.executeStringVector(frame, operand);
+        return (RStringVector) castString.executeString(frame, operand);
     }
 
     private RRawVector castRaw(VirtualFrame frame, Object operand) {
@@ -91,7 +91,7 @@ public abstract class AsVector extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castRaw = insert(CastRawNodeFactory.create(null, false, false, false));
         }
-        return (RRawVector) castRaw.executeRawVector(frame, operand);
+        return (RRawVector) castRaw.executeRaw(frame, operand);
     }
 
     private RList castList(VirtualFrame frame, Object operand) {

@@ -43,8 +43,6 @@ public abstract class CastComplexNode extends CastNode {
 
     public abstract Object executeComplex(VirtualFrame frame, Object o);
 
-    public abstract Object executeComplexVector(VirtualFrame frame, Object o);
-
     @Specialization
     public RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
