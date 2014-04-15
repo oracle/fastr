@@ -143,7 +143,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 res[i] = unary.op(left.getDataAt(i));
             }
         }
-        return RDataFactory.createIntVector(res, leftNACheck.neverSeenNA(), left.getDimensions());
+        RIntVector ret = RDataFactory.createIntVector(res, leftNACheck.neverSeenNA());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     @Specialization(order = 54)
@@ -158,7 +162,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 res[i] = unary.op(left.getDataAt(i));
             }
         }
-        return RDataFactory.createDoubleVector(res, leftNACheck.neverSeenNA(), left.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(res, leftNACheck.neverSeenNA());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     @Specialization(order = 55)
@@ -175,7 +183,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 res[2 * i + 1] = r.getImaginaryPart();
             }
         }
-        return RDataFactory.createComplexVector(res, leftNACheck.neverSeenNA(), left.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(res, leftNACheck.neverSeenNA());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     private void checkUnary() {
@@ -697,7 +709,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             int leftValue = left.getDataAt(i);
             result[i] = performArithmetic(leftValue, right);
         }
-        return RDataFactory.createIntVector(result, isComplete(), left.getDimensions());
+        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     private RDoubleVector performIntVectorOpDouble(RAbstractIntVector left, int right) {
@@ -707,7 +723,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             int leftValue = left.getDataAt(i);
             result[i] = performArithmeticIntIntDouble(leftValue, right);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), left.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     private RIntVector performScalarIntVectorOp(int left, RAbstractIntVector right) {
@@ -717,7 +737,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             int rightValue = right.getDataAt(i);
             result[i] = performArithmetic(left, rightValue);
         }
-        return RDataFactory.createIntVector(result, isComplete(), right.getDimensions());
+        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.setDimensions(right.getDimensions());
+        ret.copyNamesFrom(right);
+        return ret;
     }
 
     private RDoubleVector performScalarIntVectorOpDouble(int left, RAbstractIntVector right) {
@@ -727,7 +751,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             int rightValue = right.getDataAt(i);
             result[i] = performArithmeticIntIntDouble(left, rightValue);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), right.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.setDimensions(right.getDimensions());
+        ret.copyNamesFrom(right);
+        return ret;
     }
 
     private RComplexVector performComplexVectorComplexVectorOp(RAbstractComplexVector left, RAbstractComplexVector right) {
@@ -747,7 +775,17 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        return RDataFactory.createComplexVector(result, isComplete(), largerDim(left, right));
+        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
+        if (leftLength == length) {
+            ret.copyRegAttributesFrom(left);
+            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(left);
+        } else {
+            ret.copyRegAttributesFrom(right);
+            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RDoubleVector performDoubleVectorDoubleVectorOp(RAbstractDoubleVector left, RAbstractDoubleVector right) {
@@ -764,7 +802,17 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), largerDim(left, right));
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        if (leftLength == length) {
+            ret.copyRegAttributesFrom(left);
+            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(left);
+        } else {
+            ret.copyRegAttributesFrom(right);
+            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RIntVector performIntVectorIntVectorOpInt(RAbstractIntVector left, RAbstractIntVector right) {
@@ -781,7 +829,17 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        return RDataFactory.createIntVector(result, isComplete(), largerDim(left, right));
+        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
+        if (leftLength == length) {
+            ret.copyRegAttributesFrom(left);
+            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(left);
+        } else {
+            ret.copyRegAttributesFrom(right);
+            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RDoubleVector performIntVectorIntVectorOpIntDouble(RAbstractIntVector left, RAbstractIntVector right) {
@@ -798,7 +856,17 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), largerDim(left, right));
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        if (leftLength == length) {
+            ret.copyRegAttributesFrom(left);
+            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(left);
+        } else {
+            ret.copyRegAttributesFrom(right);
+            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RComplexVector performComplexVectorComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
@@ -813,7 +881,14 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             result[index] = resultValue.getRealPart();
             result[index + 1] = resultValue.getImaginaryPart();
         }
-        return RDataFactory.createComplexVector(result, isComplete(), left.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
+        if (!ret.copyNamesFrom(left)) {
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RDoubleVector performDoubleVectorDoubleVectorOpSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
@@ -825,7 +900,14 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             double rightValue = right.getDataAt(i);
             result[i] = performArithmeticDouble(leftValue, rightValue);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), left.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
+        if (!ret.copyNamesFrom(left)) {
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RIntVector performIntVectorIntVectorOpSameLengthInt(RAbstractIntVector left, RAbstractIntVector right) {
@@ -837,7 +919,14 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             int rightValue = right.getDataAt(i);
             result[i] = performArithmetic(leftValue, rightValue);
         }
-        return RDataFactory.createIntVector(result, isComplete(), left.getDimensions());
+        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
+        if (!ret.copyNamesFrom(left)) {
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RDoubleVector performIntVectorIntVectorOpSameLengthIntDouble(RAbstractIntVector left, RAbstractIntVector right) {
@@ -849,7 +938,14 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             int rightValue = right.getDataAt(i);
             result[i] = performArithmeticDouble(leftValue, rightValue);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), left.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
+        if (!ret.copyNamesFrom(left)) {
+            ret.copyNamesFrom(right);
+        }
+        return ret;
     }
 
     private RDoubleVector performDoubleVectorOp(RAbstractDoubleVector left, double right) {
@@ -859,7 +955,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             double leftValue = left.getDataAt(i);
             result[i] = performArithmeticDouble(leftValue, right);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), left.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     private RComplexVector performComplexVectorScalarOp(RAbstractComplexVector left, RComplex right) {
@@ -873,7 +973,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             result[index + 1] = complex.getImaginaryPart();
 
         }
-        return RDataFactory.createComplexVector(result, isComplete(), left.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
     }
 
     private RDoubleVector performScalarDoubleWithIntVectorOp(double left, RAbstractIntVector right) {
@@ -884,7 +988,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             double rightValue = rightNACheck.convertIntToDouble(right.getDataAt(i));
             result[i] = performArithmeticDouble(left, rightValue);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), right.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.setDimensions(right.getDimensions());
+        ret.copyNamesFrom(right);
+        return ret;
     }
 
     private RDoubleVector performScalarDoubleVectorOp(double left, RAbstractDoubleVector right) {
@@ -894,7 +1002,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             double rightValue = right.getDataAt(i);
             result[i] = performArithmeticDouble(left, rightValue);
         }
-        return RDataFactory.createDoubleVector(result, isComplete(), right.getDimensions());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.setDimensions(right.getDimensions());
+        ret.copyNamesFrom(right);
+        return ret;
     }
 
     private RComplexVector performScalarComplexVectorOp(RComplex left, RAbstractComplexVector right) {
@@ -908,7 +1020,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             result[index + 1] = complex.getImaginaryPart();
 
         }
-        return RDataFactory.createComplexVector(result, isComplete(), right.getDimensions());
+        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
+        ret.copyRegAttributesFrom(right);
+        ret.setDimensions(right.getDimensions());
+        ret.copyNamesFrom(right);
+        return ret;
     }
 
     private double performArithmeticDouble(double left, double right) {
@@ -984,10 +1100,6 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             return RRuntime.DOUBLE_NA;
         }
         return binary.op(leftNACheck.convertIntToDouble(left), rightNACheck.convertIntToDouble(right));
-    }
-
-    private static int[] largerDim(RAbstractVector left, RAbstractVector right) {
-        return left.getLength() > right.getLength() ? left.getDimensions() : right.getDimensions();
     }
 
     @NodeField(name = "NACheck", type = NACheck.class)

@@ -42,7 +42,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
+            castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
     }

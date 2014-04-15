@@ -53,16 +53,20 @@ public abstract class CastListNode extends CastNode {
         for (int i = 0; i < data.length; ++i) {
             data[i] = operand.getDataAtAsObject(i);
         }
+        RList ret;
         if (preserveDimensions() && preserveNames()) {
-            return RDataFactory.createList(data, operand.getDimensions(), operand.getNames());
+            ret = RDataFactory.createList(data, operand.getDimensions(), operand.getNames());
         } else if (preserveDimensions()) {
-            return RDataFactory.createList(data, operand.getDimensions());
+            ret = RDataFactory.createList(data, operand.getDimensions());
         } else if (preserveNames()) {
-            return RDataFactory.createList(data, operand.getNames());
+            ret = RDataFactory.createList(data, operand.getNames());
         } else {
-            return RDataFactory.createList(data);
+            ret = RDataFactory.createList(data);
         }
-
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
 }

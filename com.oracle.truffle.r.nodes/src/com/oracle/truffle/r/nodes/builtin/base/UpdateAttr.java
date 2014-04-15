@@ -64,7 +64,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
+            castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
         }
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
     }
@@ -72,7 +72,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false));
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
         }
         return castVector.executeRAbstractVector(frame, value);
     }
@@ -80,7 +80,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RList castList(VirtualFrame frame, Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeFactory.create(null, true, false));
+            castList = insert(CastListNodeFactory.create(null, true, false, false));
         }
         return castList.executeList(frame, value);
     }

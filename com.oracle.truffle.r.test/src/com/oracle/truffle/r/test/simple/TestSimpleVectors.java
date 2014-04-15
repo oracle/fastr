@@ -1661,7 +1661,6 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testListDefinitions() {
         assertEval("{ list(1:4) }");
         assertEval("{ list(1,list(2,list(3,4))) }");
@@ -1675,11 +1674,7 @@ public class TestSimpleVectors extends TestBase {
     public void testListAccess() {
         // indexing
         assertEval("{ l<-list(1,2L,TRUE) ; l[[2]] }");
-    }
 
-    @Test
-    @Ignore
-    public void testListAccessIgnore() {
         // indexing
         assertEval("{ l<-list(1,2L,TRUE) ; l[c(FALSE,FALSE,TRUE)] }");
         assertEval("{ l<-list(1,2L,TRUE) ; l[FALSE] }");
@@ -1731,11 +1726,7 @@ public class TestSimpleVectors extends TestBase {
 
         // copying
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,b=list(x=3)),character(),10) }");
-    }
 
-    @Test
-    @Ignore
-    public void testListUpdateIgnore() {
         // scalar update
         assertEval("{ l<-list(1,2L,TRUE) ; l[[2]]<-100 ; l }");
         assertEval("{ l<-list(1,2L,TRUE) ; l[[5]]<-100 ; l }");
@@ -1840,7 +1831,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x <- as.list(1:3) ; x[[integer()]] <- 3 }");
         assertEval("{ x <- list(1,list(2,3),4) ; x[[c(2,3)]] <- 3 ; x }");
         assertEval("{ x <- list(1,list(2,3),4) ; z <- x[[2]] ; x[[c(2,3)]] <- 3 ; z }");
-        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(list(1,2,3), 2L, 3) }");
         assertEvalError("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(list(f,f), c(1,1), 3) }");
         assertEval("{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(list(1,2,3), 2L, NULL) }");
@@ -1875,12 +1865,14 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    public void testStringUpdate() {
+    @Ignore
+    public void testListUpdateIgnore() {
+        // unlist implementation problem
+        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
 
     @Test
-    @Ignore
-    public void testStringUpdateIgnore() {
+    public void testStringUpdate() {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(1:3,\"a\",4) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(NULL,\"a\",4) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(NULL,c(\"a\",\"X\"),4:5) }");
@@ -1921,7 +1913,6 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testGenericUpdate() {
         assertEval("{ a <- TRUE; a[[2]] <- FALSE; a; }");
     }
@@ -1944,28 +1935,16 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ m <- matrix(1:6, nrow=2) ; x<-2 ; m[[1,x]] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[[1,2]] }");
-    }
-
-    @Test
-    @Ignore
-    public void testMatrixIndexIgnore() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; m[1,,drop=FALSE] }");
 
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1:2,2:3] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1:2,-1] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,c(-1,0,0,-1)] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,c(1,NA,1,NA)] }");
-        assertEval("{ m <- matrix(1:6, nrow=2) ; m[,1[2],drop=FALSE] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,c(NA,1,0)] }");
-
-        assertEval("{ m <- matrix(1:16, nrow=8) ; m[c(TRUE,FALSE,FALSE),c(FALSE,NA), drop=FALSE]}");
-        assertEval("{ m <- matrix(1:16, nrow=8) ; m[c(TRUE,FALSE),c(FALSE,TRUE), drop=TRUE]}");
-        assertEval("{ m <- matrix(1:16, nrow=8) ; m[c(TRUE,FALSE,FALSE),c(FALSE,TRUE), drop=TRUE]}");
 
         assertEval("{ m <- matrix(1:6, nrow=3) ; f <- function(i,j) { m[i,j] } ; f(c(TRUE),c(FALSE,TRUE)) }");
 
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] } ; f(1,1:3) }");
-        assertEval("{ m <- matrix(1:4, nrow=2) ; m[[2,1,drop=FALSE]] }");
 
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1:2,0:1] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1:2,0:1] ; m[1:2,1:1] }");
@@ -1978,6 +1957,17 @@ public class TestSimpleVectors extends TestBase {
 
     @Test
     @Ignore
+    public void testMatrixIndexIgnore() {
+        // non-index argument not supported
+        assertEval("{ m <- matrix(1:6, nrow=2) ; m[1,,drop=FALSE] }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; m[,1[2],drop=FALSE] }");
+        assertEval("{ m <- matrix(1:16, nrow=8) ; m[c(TRUE,FALSE,FALSE),c(FALSE,NA), drop=FALSE]}");
+        assertEval("{ m <- matrix(1:16, nrow=8) ; m[c(TRUE,FALSE),c(FALSE,TRUE), drop=TRUE]}");
+        assertEval("{ m <- matrix(1:16, nrow=8) ; m[c(TRUE,FALSE,FALSE),c(FALSE,TRUE), drop=TRUE]}");
+        assertEval("{ m <- matrix(1:4, nrow=2) ; m[[2,1,drop=FALSE]] }");
+    }
+
+    @Test
     public void testIn() {
         assertEval("{ 1:3 %in% 1:10 }");
         assertEval("{ 1 %in% 1:10 }");
@@ -2024,6 +2014,7 @@ public class TestSimpleVectors extends TestBase {
     @Test
     @Ignore
     public void testDynamic() {
+        // quote and eval are not supported yet
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
     }

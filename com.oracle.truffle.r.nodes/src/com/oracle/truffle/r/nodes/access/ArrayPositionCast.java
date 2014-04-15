@@ -245,7 +245,7 @@ public abstract class ArrayPositionCast extends RNode {
         private void initIntCast() {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInteger = insert(CastIntegerNodeFactory.create(null, true, false));
+                castInteger = insert(CastIntegerNodeFactory.create(null, true, false, false));
             }
         }
 
@@ -547,12 +547,18 @@ public abstract class ArrayPositionCast extends RNode {
             return RDataFactory.createIntVector(new int[]{position}, RDataFactory.COMPLETE_VECTOR, resNames);
         }
 
-        @Specialization(order = 49, guards = {"indNA", "!numDimensionsOne"})
+        @Specialization(order = 48, guards = {"indNA", "!numDimensionsOne"})
         public Object doStringNA(RAbstractVector vector, String operand) {
             throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
         }
 
-        @Specialization(order = 50, guards = {"indNA", "numDimensionsOne"})
+        @Specialization(order = 49, guards = {"indNA", "isAssignment", "numDimensionsOne"})
+        public RIntVector doStringNANumDimsOneAssignment(VirtualFrame frame, RAbstractVector vector, String operand) {
+            RStringVector resNames = RDataFactory.createStringVector(new String[]{operand}, RDataFactory.INCOMPLETE_VECTOR);
+            return RDataFactory.createIntVector(new int[]{vector.getLength() + 1}, RDataFactory.COMPLETE_VECTOR, resNames);
+        }
+
+        @Specialization(order = 50, guards = {"indNA", "!isAssignment", "numDimensionsOne"})
         public Object doStringNANumDimsOne(VirtualFrame frame, RAbstractVector vector, String operand) {
             return convertOperatorRecursive(frame, vector, RRuntime.INT_NA);
         }
@@ -844,15 +850,15 @@ public abstract class ArrayPositionCast extends RNode {
         private static int eliminateDuplicate(RAbstractStringVector operand, int[] data, int initialPos, int currentElementPos) {
             int position = initialPos;
             String name = operand.getDataAt(currentElementPos);
-            if (name == RRuntime.STRING_NA) {
-                // duplicate NAs are not eliminated
+            if (name == RRuntime.STRING_NA || name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
+                // duplicate NAs and empty strings are not eliminated
                 data[currentElementPos] = (position++) + 1;
             } else {
                 int j = 0;
                 for (; j < currentElementPos; j++) {
                     String prevName = operand.getDataAt(j);
                     if (name.equals(prevName)) {
-                        data[currentElementPos] = j + 1;
+                        data[currentElementPos] = data[j];
                         break;
                     }
                 }
@@ -882,7 +888,9 @@ public abstract class ArrayPositionCast extends RNode {
                         initialPos = eliminateDuplicate(operand, data, initialPos, i);
                     }
                 } else {
-                    data[i] = (initialPos++) + 1;
+                    // TODO: this is slow - is it important to make it faster?
+                    initialPos = eliminateDuplicate(operand, data, initialPos, i);
+// data[i] = (initialPos++) + 1;
                 }
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, resNames);

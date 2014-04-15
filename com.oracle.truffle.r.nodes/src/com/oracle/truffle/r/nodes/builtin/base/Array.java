@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -55,13 +54,6 @@ public abstract class Array extends RBuiltinNode {
             dims[i] = (int) dim.getDataAt(i);
         }
         return vec.copyWithNewDimensions(dims);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(order = 100)
-    public Object doArray(Object vec, Object dim, Object dimnames) {
-        controlVisibility();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented or invalid argument types to 'array'");
     }
 
     public static boolean lengthMatches(RAbstractVector vec, int dim, @SuppressWarnings("unused") RNull dimnames) {

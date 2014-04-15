@@ -177,73 +177,121 @@ public abstract class CastRawNode extends CastNode {
     @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
     public RRawVector doLogicalVectorDims(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
-        return RDataFactory.createRawVector(bdata, operand.getDimensions());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
     public RRawVector doLogicalVectorNames(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
-        return RDataFactory.createRawVector(bdata, operand.getNames());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
     public RRawVector doLogicalVectorDimsNames(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
-        return RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 104)
+    @Specialization(order = 104, guards = {"!preserveNames", "!preserveDimensions"})
     public RRawVector doLogicalVector(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
-        return RDataFactory.createRawVector(bdata);
+        RRawVector ret = RDataFactory.createRawVector(bdata);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
     public RRawVector doStringVectorDims(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
-        return RDataFactory.createRawVector(bdata, operand.getDimensions());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
     public RRawVector doStringVectorNames(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
-        return RDataFactory.createRawVector(bdata, operand.getNames());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
     public RRawVector doStringVectorDimsNames(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
-        return RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 108)
+    @Specialization(order = 108, guards = {"!preserveNames", "!preserveDimensions"})
     public RRawVector doStringVector(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
-        return RDataFactory.createRawVector(bdata);
+        RRawVector ret = RDataFactory.createRawVector(bdata);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
     public RRawVector doRawVectorDims(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
-        return RDataFactory.createRawVector(bdata, operand.getDimensions());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
     public RRawVector doComplexVectorNames(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
-        return RDataFactory.createRawVector(bdata, operand.getNames());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
     public RRawVector doComplexVectorDimsNames(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
-        return RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+        RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
-    @Specialization(order = 112)
+    @Specialization(order = 112, guards = {"!preserveNames", "!preserveDimensions"})
     public RRawVector doComplexVector(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
-        return RDataFactory.createRawVector(bdata);
+        RRawVector ret = RDataFactory.createRawVector(bdata);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization
@@ -282,15 +330,20 @@ public abstract class CastRawNode extends CastNode {
         if (warning) {
             RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
         }
+        RRawVector ret;
         if (preserveDimensions() && preserveNames()) {
-            return RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
+            ret = RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
         } else if (preserveDimensions()) {
-            return RDataFactory.createRawVector(array, value.getDimensions());
+            ret = RDataFactory.createRawVector(array, value.getDimensions());
         } else if (preserveNames()) {
-            return RDataFactory.createRawVector(array, value.getNames());
+            ret = RDataFactory.createRawVector(array, value.getNames());
         } else {
-            return RDataFactory.createRawVector(array);
+            ret = RDataFactory.createRawVector(array);
         }
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(value);
+        }
+        return ret;
     }
 
     private RRawVector performAbstractDoubleVector(RAbstractDoubleVector value) {
@@ -308,15 +361,19 @@ public abstract class CastRawNode extends CastNode {
         if (warning) {
             RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
         }
+        RRawVector ret;
         if (preserveDimensions() && preserveNames()) {
-            return RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
+            ret = RDataFactory.createRawVector(array, value.getDimensions(), value.getNames());
         } else if (preserveDimensions()) {
-            return RDataFactory.createRawVector(array, value.getDimensions());
+            ret = RDataFactory.createRawVector(array, value.getDimensions());
         } else if (preserveNames()) {
-            return RDataFactory.createRawVector(array, value.getNames());
+            ret = RDataFactory.createRawVector(array, value.getNames());
         } else {
-            return RDataFactory.createRawVector(array);
+            ret = RDataFactory.createRawVector(array);
         }
-
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(value);
+        }
+        return ret;
     }
 }

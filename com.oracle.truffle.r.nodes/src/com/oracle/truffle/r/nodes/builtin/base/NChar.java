@@ -40,7 +40,7 @@ public abstract class NChar extends RBuiltinNode {
     private String coerceContent(VirtualFrame frame, Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeFactory.create(null, false, true, false));
+            convertString = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
         try {
             return (String) convertString.executeCast(frame, content);
@@ -76,7 +76,7 @@ public abstract class NChar extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = vector.getDataAt(i).length();
         }
-        return RDataFactory.createIntVector(result, vector.isComplete());
+        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
     }
 
     @Specialization
@@ -87,6 +87,6 @@ public abstract class NChar extends RBuiltinNode {
         for (int i = 0; i < len; i++) {
             result[i] = coerceContent(frame, vector.getDataAtAsObject(i)).length();
         }
-        return RDataFactory.createIntVector(result, vector.isComplete());
+        return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames());
     }
 }

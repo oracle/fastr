@@ -87,82 +87,162 @@ public abstract class Unlist extends RBuiltinNode {
         if (precedence == PrecedenceNode.RAW_PRECEDENCE) {
             byte[] result = new byte[totalSize];
             int position = 0;
+            RStringVector names = null;
+            String[] namesData = null;
             for (int i = 0; i < list.getLength(); ++i) {
                 Object cur = list.getDataAt(i);
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
+                    RStringVector orgNames = null;
+                    if (rAbstractVector.getNames() != RNull.instance) {
+                        if (namesData == null) {
+                            namesData = new String[totalSize];
+                        }
+                        orgNames = (RStringVector) rAbstractVector.getNames();
+                    }
                     for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        result[position++] = unlistValueRaw(rAbstractVector.getDataAtAsObject(j));
+                        result[position] = unlistValueRaw(rAbstractVector.getDataAtAsObject(j));
+                        if (namesData != null) {
+                            namesData[position] = orgNames.getDataAt(j);
+                        }
+                        position++;
+                    }
+                    if (namesData != null) {
+                        names = RDataFactory.createStringVector(namesData, orgNames.isComplete());
                     }
                 } else if (cur != RNull.instance) {
                     result[position++] = unlistValueRaw(cur);
                 }
             }
-            return RDataFactory.createRawVector(result);
+            return RDataFactory.createRawVector(result, names);
         } else if (precedence == PrecedenceNode.LOGICAL_PRECEDENCE) {
             byte[] result = new byte[totalSize];
             int position = 0;
+            RStringVector names = null;
+            String[] namesData = null;
             for (int i = 0; i < list.getLength(); ++i) {
                 Object cur = list.getDataAt(i);
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
+                    RStringVector orgNames = null;
+                    if (rAbstractVector.getNames() != RNull.instance) {
+                        if (namesData == null) {
+                            namesData = new String[totalSize];
+                        }
+                        orgNames = (RStringVector) rAbstractVector.getNames();
+                    }
                     for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        result[position++] = unlistValueLogical(rAbstractVector.getDataAtAsObject(j));
+                        result[position] = unlistValueLogical(rAbstractVector.getDataAtAsObject(j));
+                        if (namesData != null) {
+                            namesData[position] = orgNames.getDataAt(j);
+                        }
+                        position++;
+                    }
+                    if (namesData != null) {
+                        names = RDataFactory.createStringVector(namesData, orgNames.isComplete());
                     }
                 } else if (cur != RNull.instance) {
                     result[position++] = unlistValueLogical(cur);
                 }
             }
-            return RDataFactory.createLogicalVector(result, false);
+            return RDataFactory.createLogicalVector(result, false, names);
         } else if (precedence == PrecedenceNode.INT_PRECEDENCE) {
             int[] result = new int[totalSize];
             int position = 0;
+            RStringVector names = null;
+            String[] namesData = null;
             for (int i = 0; i < list.getLength(); ++i) {
                 Object cur = list.getDataAt(i);
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
+                    RStringVector orgNames = null;
+                    if (rAbstractVector.getNames() != RNull.instance) {
+                        if (namesData == null) {
+                            namesData = new String[totalSize];
+                        }
+                        orgNames = (RStringVector) rAbstractVector.getNames();
+                    }
                     for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        result[position++] = unlistValueInt(rAbstractVector.getDataAtAsObject(j));
+                        result[position] = unlistValueInt(rAbstractVector.getDataAtAsObject(j));
+                        if (namesData != null) {
+                            namesData[position] = orgNames.getDataAt(j);
+                        }
+                        position++;
+                    }
+                    if (namesData != null) {
+                        names = RDataFactory.createStringVector(namesData, orgNames.isComplete());
                     }
                 } else if (cur != RNull.instance) {
                     result[position++] = unlistValueInt(cur);
                 }
             }
-            return RDataFactory.createIntVector(result, false);
+            return RDataFactory.createIntVector(result, false, names);
 
         } else if (precedence == PrecedenceNode.DOUBLE_PRECEDENCE) {
             double[] result = new double[totalSize];
             int position = 0;
+            RStringVector names = null;
+            String[] namesData = null;
             for (int i = 0; i < list.getLength(); ++i) {
                 Object cur = list.getDataAt(i);
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
+                    RStringVector orgNames = null;
+                    if (rAbstractVector.getNames() != RNull.instance) {
+                        if (namesData == null) {
+                            namesData = new String[totalSize];
+                        }
+                        orgNames = (RStringVector) rAbstractVector.getNames();
+                    }
                     for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        result[position++] = unlistValueDouble(rAbstractVector.getDataAtAsObject(j));
+                        result[position] = unlistValueDouble(rAbstractVector.getDataAtAsObject(j));
+                        if (namesData != null) {
+                            namesData[position] = orgNames.getDataAt(j);
+                        }
+                        position++;
+                    }
+                    if (namesData != null) {
+                        names = RDataFactory.createStringVector(namesData, orgNames.isComplete());
                     }
                 } else if (cur != RNull.instance) {
                     result[position++] = unlistValueDouble(cur);
                 }
             }
-            return RDataFactory.createDoubleVector(result, false);
+            return RDataFactory.createDoubleVector(result, false, names);
 
         } else if (precedence == PrecedenceNode.COMPLEX_PRECEDENCE) {
             throw Utils.nyi();
         } else if (precedence == PrecedenceNode.STRING_PRECEDENCE) {
             String[] result = new String[totalSize];
             int position = 0;
+            RStringVector names = null;
+            String[] namesData = null;
             for (int i = 0; i < list.getLength(); ++i) {
                 Object cur = list.getDataAt(i);
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
+                    RStringVector orgNames = null;
+                    if (rAbstractVector.getNames() != RNull.instance) {
+                        if (namesData == null) {
+                            namesData = new String[totalSize];
+                        }
+                        orgNames = (RStringVector) rAbstractVector.getNames();
+                    }
                     for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        result[position++] = unlistValueString(rAbstractVector.getDataAtAsObject(j));
+                        result[position] = unlistValueString(rAbstractVector.getDataAtAsObject(j));
+                        if (namesData != null) {
+                            namesData[position] = orgNames.getDataAt(j);
+                        }
+                        position++;
+                    }
+                    if (namesData != null) {
+                        names = RDataFactory.createStringVector(namesData, orgNames.isComplete());
                     }
                 } else if (cur != RNull.instance) {
                     result[position++] = unlistValueString(cur);
                 }
             }
-            return RDataFactory.createStringVector(result, false);
+            return RDataFactory.createStringVector(result, false, names);
         } else {
             throw Utils.nyi();
         }

@@ -73,7 +73,9 @@ public abstract class Sqrt extends RBuiltinNode {
             res[i] = Math.sqrt(current);
             current += xs.getStride();
         }
-        return RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames());
+        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames());
+        result.copyRegAttributesFrom(xs);
+        return result;
     }
 
     @Specialization
@@ -84,7 +86,9 @@ public abstract class Sqrt extends RBuiltinNode {
         for (int i = 0; i < xs.getLength(); ++i) {
             res[i] = na.check(xs.getDataAt(i)) ? RRuntime.DOUBLE_NA : Math.sqrt(xs.getDataAt(i));
         }
-        return RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames());
+        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames());
+        result.copyRegAttributesFrom(xs);
+        return result;
     }
 
 }

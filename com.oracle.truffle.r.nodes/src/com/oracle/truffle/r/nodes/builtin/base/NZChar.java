@@ -39,7 +39,7 @@ public abstract class NZChar extends RBuiltinNode {
     private String coerceContent(VirtualFrame frame, Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeFactory.create(null, false, true, false));
+            convertString = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
         try {
             return (String) convertString.executeCast(frame, content);

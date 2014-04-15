@@ -42,7 +42,7 @@ public abstract class Paste extends RBuiltinNode {
     private String castCharacter(VirtualFrame frame, Object o) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castCharacterNode = insert(CastStringNodeFactory.create(null, false, true, false));
+            castCharacterNode = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
         return (String) castCharacterNode.executeString(frame, o);
     }
@@ -50,7 +50,7 @@ public abstract class Paste extends RBuiltinNode {
     private RStringVector castCharacterVector(VirtualFrame frame, Object o) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castCharacterNode = insert(CastStringNodeFactory.create(null, false, true, false));
+            castCharacterNode = insert(CastStringNodeFactory.create(null, false, true, false, false));
         }
         Object ret = castCharacterNode.executeStringVector(frame, o);
         if (ret instanceof String) {

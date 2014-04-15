@@ -42,7 +42,7 @@ public abstract class AsDouble extends RBuiltinNode {
     private void initCast() {
         if (castDoubleNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false));
+            castDoubleNode = insert(CastDoubleNodeFactory.create(null, false, false, false));
         }
     }
 

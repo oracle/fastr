@@ -285,8 +285,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this.dimensions = newDimensions;
     }
 
-    public final RVector copy() {
-        RVector result = internalCopy();
+    private void setAttributes(RVector result) {
         result.names = this.names;
         result.dimNames = this.dimNames;
         result.dimensions = this.dimensions;
@@ -294,7 +293,23 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         if (this.getAttributes() != null) {
             result.setAttributes(copyAttributeHashMap(this));
         }
+    }
+
+    public final RVector copy() {
+        RVector result = internalCopy();
+        setAttributes(result);
         return result;
+    }
+
+    public final RVector deepCopy() {
+        RVector result = internalDeepCopy();
+        setAttributes(result);
+        return result;
+    }
+
+    // to be overridden by recursive structures
+    protected RVector internalDeepCopy() {
+        return internalCopy();
     }
 
     @SlowPath
@@ -375,14 +390,24 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this.setDimNames(vector.getDimNames(), sourceSection);
     }
 
-    public void copyNamesFrom(RAbstractVector vector) {
+    public boolean copyNamesFrom(RAbstractVector vector) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
         assert (this.dimNames == null);
         if (this.dimensions == null) {
-            this.setNames(vector.getNames());
+            if (vector.getNames() != RNull.instance) {
+                this.setNames(vector.getNames());
+                return true;
+            } else {
+                return false;
+            }
         } else {
-            this.setDimNames(vector.getDimNames());
+            if (vector.getDimNames() != null) {
+                this.setDimNames(vector.getDimNames());
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 

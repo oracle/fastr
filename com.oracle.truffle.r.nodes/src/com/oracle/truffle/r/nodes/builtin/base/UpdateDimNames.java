@@ -43,7 +43,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeFactory.create(null, true, true, false));
+            castStringNode = insert(CastStringNodeFactory.create(null, true, true, false, false));
         }
         return castStringNode.executeCast(frame, o);
     }
@@ -51,7 +51,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVectorNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVectorNode = insert(CastToVectorNodeFactory.create(null, false, false, false));
+            castVectorNode = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
         }
         return castVectorNode.executeRAbstractVector(frame, value).materialize();
     }
