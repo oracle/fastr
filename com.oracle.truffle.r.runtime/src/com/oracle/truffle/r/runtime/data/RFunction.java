@@ -26,6 +26,18 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
+/**
+ * An instance of {@link RFunction} represents a function defined in R. The properties of a function
+ * are as follows:
+ * <ul>
+ * <li>The {@link #name} is optional. It is given only for builtins.
+ * <li>The {@link #target} represents the actually callable entry point to the function.
+ * <li>Functions may represent builtins; this is indicated by the {@link #builtin} flag set to
+ * {@code true}.
+ * <li>The lexically enclosing environment of this function's definition is referenced by
+ * {@link #enclosingFrame}.
+ * </ul>
+ */
 public final class RFunction extends RScalar {
 
     private final String name;

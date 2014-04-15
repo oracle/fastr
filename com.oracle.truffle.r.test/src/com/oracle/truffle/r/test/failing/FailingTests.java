@@ -1534,11 +1534,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testGetIgnore_1360e7f9c659eacd7ee24ef5ca6b274c() {
-        assertEval("{ get(\".Platform\")$endian }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testGetIgnore_64afee6cadb778dda13b25a2f3f9ecef() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }
@@ -3531,11 +3526,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleTruffle_test1Ignore_71c46963de35ffad054f0a585f749a4f() {
         assertEvalNoOutput("{ f<-function(i) { if (FALSE) { i } } ; f(2) ; f(1) }");
-    }
-
-    @Ignore
-    public void TestSimpleValues_testDefaultVariables_71c55934e32576774664d7bc1d063085() {
-        assertEval("{ .Platform$endian }");
     }
 
     @Ignore

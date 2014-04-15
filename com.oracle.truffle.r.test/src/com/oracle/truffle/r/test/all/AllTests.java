@@ -7019,6 +7019,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGet_1360e7f9c659eacd7ee24ef5ca6b274c() {
+        assertEval("{ get(\".Platform\")$endian }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGetClass_50e9635bfb1e3eeed4dd1a14ca0c6d4f() {
         assertEval("{x<-1L;class(x)}");
     }
@@ -7051,11 +7056,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGetClassIgnore_04e1bbb35c3306f6feb801b5cce80b88() {
         assertEval("{x<-seq(1,10);class(x)}");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testGetIgnore_1360e7f9c659eacd7ee24ef5ca6b274c() {
-        assertEval("{ get(\".Platform\")$endian }");
     }
 
     @Test
@@ -8231,6 +8231,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLookup_f5b6d5670ee3679c2214a7720ed4f5e9() {
         assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_3f6070106221293533a2b2c1eab24f36() {
+        assertEvalAlt("{ fu <- function() { uu <<- 23 } ; fu() ; ls(globalenv()) }");
     }
 
     @Test
