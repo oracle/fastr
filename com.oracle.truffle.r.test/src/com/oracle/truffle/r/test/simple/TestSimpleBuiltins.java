@@ -2613,4 +2613,19 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
     }
 
+    @Test
+    @Ignore
+    public void testDefaultArgsIgnore() {
+        assertEvalError("{ array(dim=c(-2,2)); }");
+        assertEvalError("{ array(dim=c(-2,-2)); }");
+        assertEval("{ length(array(dim=c(1,0,2,3))) }");
+        assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
+    }
+
+    @Test
+    @Ignore
+    public void testParen() {
+        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
+    }
+
 }

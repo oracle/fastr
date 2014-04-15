@@ -63,17 +63,15 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testArrayBuiltin() {
         // array with no arguments produces array of length 1
         assertEval("{ a = array(); length(a) }");
 
-        // empty arg has first element NA
+        // empty array has first element NA
         assertEval("{ a = array(); is.na(a[1]) }");
 
-        // dimnames not implemented yet
         // dimension names of empty array are null
-        // assertTrue("{ a = array(); is.null(dimnames(a)); }");
+        assertEval("{ a = array(); is.null(dimnames(a)); }");
 
         // empty array has single dimension that is 1
         assertEval("{ a <- array(); dim(a) }");
@@ -83,16 +81,16 @@ public class TestSimpleArrays extends TestBase {
 
         // negative length vectors are not allowed is the error reported by gnu-r
         // negative dims not allowed by R, special GNU message
-        assertEvalError("{ array(dim=c(-2,2)); }");
+        assertEvalError("{ array(NA, dim=c(-2,2)); }");
 
         // negative dims not allowed
-        assertEvalError("{ array(dim=c(-2,-2)); }");
+        assertEvalError("{ array(NA, dim=c(-2,-2)); }");
 
         // zero dimension array has length 0
-        assertEval("{ length(array(dim=c(1,0,2,3))) }");
+        assertEval("{ length(array(NA, dim=c(1,0,2,3))) }");
 
         // double dimensions work and are rounded down always
-        assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
+        assertEval("{ dim(array(NA, dim=c(2.1,2.9,3.1,4.7))) }");
     }
 
     @Test
@@ -102,7 +100,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testArraySimpleRead() {
         // simple read
         assertEval("{ a = array(1:27,c(3,3,3)); c(a[1,1,1],a[3,3,3],a[1,2,3],a[3,2,1]) }");
@@ -137,10 +134,22 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- array(c(1,2,3), dim=c(3,1,1)) ; x <- dim(m[1:2,1,1,drop=FALSE]) ; c(x[1],x[2],x[3]) }");
         assertEval("{ m <- array(c(1,2,3), dim=c(3,1,1)) ; x <- m[1:2,1,integer()] ; d <- dim(x) ; length(x) }");
         assertEval("{ m <- array(c(1,2,3), dim=c(3,1,1)) ; x <- m[1:2,1,integer()] ; d <- dim(x) ; c(d[1],d[2]) }");
+
+        // "drop" argument does not have to be last on the list
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=FALSE, 0, -1]) }");
+        // "drop" argument is converted to boolean vector whose first elemen is taken
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=c(0,2), 0, -1]) }");
+        // "drop" argument is converted to boolean
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=0, 0, -1]) }");
+        // "drop" argument is the same as TRUE if it's an empty vector
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=integer(), 0, -1]) }");
+        // second "drop" argument is considered an index
+        assertEval("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,drop=FALSE, 1, drop=TRUE, -1]) }");
+        // cannot specify multiple drop arguments if overall exceeding number of dimensions
+        assertEvalError("{ x<-1:64; dim(x)<-c(4,4,2,2); dim(x[1,1, drop=FALSE, 0, drop=TRUE, -1]) }");
     }
 
     @Test
-    @Ignore
     public void testArraySubsetAndSelection() {
         // subset operator works for arrays
         assertEval("{ array(1,c(3,3,3))[1,1,1] }");
@@ -171,7 +180,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMatrixSubsetAndSelectionIgnore() {
         // selection on multiple elements fails in matrices with empty selector
         assertEvalError("{ matrix(1,3,3)[[,]]; }");
@@ -189,13 +197,12 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testArrayUpdateIgnore() {
         // update to an array works
         assertEval("{ a = array(1,c(3,3,3)); c(a[1,2,3],a[1,2,3]) }");
 
         // update returns the rhs
-        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
+        assertEval("{ a = array(1,c(3,3,3)); a[1,2,3] = 3; a }");
 
         // update of shared object does the copy
         assertEval("{ a = array(1,c(3,3,3)); b = a; b[1,2,3] = 3; c(a[1,2,3],b[1,2,3]) }");
@@ -205,7 +212,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testLhsCopy() {
         // lhs gets upgraded to int
         assertEval("{ a = array(TRUE,c(3,3,3)); a[1,2,3] = 8L; typeof(a[1,2,3]) }");
@@ -236,7 +242,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRhsCopy() {
         // rhs logical gets upgraded to int
         assertEval("{ a = array(7L,c(3,3,3)); b = TRUE; a[1,2,3] = b; c(typeof(a[1,2,3]),typeof(a[1,1,1])) }");
@@ -277,7 +282,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMultiDimensionalUpdateIgnore() {
         // update array by vector, dim 3
         assertEval("{ a = array(1,c(3,3,3)); a[1,1,] = c(3,4,5); c(a[1,1,1],a[1,1,2],a[1,1,3]) }");
@@ -294,7 +298,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testBugIfiniteLoopInGeneralizedRewriting() {
         assertEval("{ m <- array(1:3, dim=c(3,1,1)) ; f <- function(x,v) { x[1:2,1,1] <- v ; x } ; f(m,10L) ; f(m,10) ; f(m,c(11L,12L)); c(m[1,1,1],m[2,1,1],m[3,1,1]) }");
     }
@@ -310,7 +313,6 @@ public class TestSimpleArrays extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDefinitionsIgnore() {
         assertEval("{ matrix( as.raw(101:106), nrow=2 ) }");
         assertEval("{ m <- matrix(1:6, ncol=3, byrow=TRUE) ; m }");

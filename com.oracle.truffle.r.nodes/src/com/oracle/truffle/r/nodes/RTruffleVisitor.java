@@ -239,10 +239,34 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(AccessVector a) {
         RNode vector = a.getVector().accept(this);
-        int argLength = a.getArgs().size();
+        RNode dropDim = ConstantNode.create(true);
+        ArgumentList args = a.getArgs();
+        int argLength = args.size();
+        if (argLength > 0) {
+            for (ArgumentList.Entry e : args) {
+                if (e.getName() != null && e.getName().toString().equals(RRuntime.DROP_DIM_ARG_NAME)) {
+                    argLength--;
+                    break;
+                }
+            }
+            if (argLength < args.size()) {
+                dropDim = null;
+                ArgumentList newArgs = new ArgumentList.Default();
+                for (ArgumentList.Entry e : args) {
+                    if (e.getName() != null && e.getName().toString().equals(RRuntime.DROP_DIM_ARG_NAME) && dropDim == null) {
+                        // first occurence of "drop" argument counts - the others are treated as
+                        // indexes
+                        dropDim = e.getValue().accept(this);
+                    } else {
+                        newArgs.add(e);
+                    }
+                }
+                args = newArgs;
+            }
+        }
         RNode castVector = CastToVectorNodeFactory.create(vector, false, false, false, true);
-        RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), false);
-        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castVector, (PositionsArrayNode) positions);
+        RNode positions = createPositions(args, argLength, a.isSubset(), false);
+        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castVector, (PositionsArrayNode) positions, CastLogicalNodeFactory.create(dropDim, false, false, false));
         access.assignSourceSection(a.getSource());
         return access;
     }
