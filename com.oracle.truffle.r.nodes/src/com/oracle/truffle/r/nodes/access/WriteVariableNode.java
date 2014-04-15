@@ -286,7 +286,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final AbstractWriteSuperVariableNode writeNode;
-            if (RArguments.get(enclosingFrame).getEnclosingFrame() == null) {
+            if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
                 // we've reached the global scope, do unconditional write
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.get(frame).getEnclosingFrame() == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
