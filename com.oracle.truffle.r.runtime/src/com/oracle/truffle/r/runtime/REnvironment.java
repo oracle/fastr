@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+import java.util.stream.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
@@ -267,6 +268,21 @@ public abstract class REnvironment {
     }
 
     /**
+     * Check whether the given frame is indeed the frame stored in the global environment.
+     */
+    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
+        FrameSlot idSlot = frame.getFrameDescriptor().findFrameSlot(Global.GLOBAL_ENV_ID);
+        if (idSlot == null) {
+            return false;
+        }
+        try {
+            return frame.getObject(idSlot) == Global.GLOBAL_ENV_ID;
+        } catch (FrameSlotTypeException fste) {
+            return false;
+        }
+    }
+
+    /**
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
     public static Base baseEnv() {
@@ -297,18 +313,17 @@ public abstract class REnvironment {
      *
      */
     public static void initialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
-        MaterializedFrame materializedBaseFrame = baseFrame.materialize();
-        basePackageEnv = new Base(materializedBaseFrame);
+        basePackageEnv = new Base(baseFrame);
         autoloadEnv = new Autoload();
         // The following is only true if there are no other default packages loaded.
-        globalEnv = new Global(autoloadEnv, globalFrame.materialize());
-        baseNamespaceEnv = new NamespaceBase(materializedBaseFrame);
+        globalEnv = new Global(autoloadEnv, globalFrame);
+        baseNamespaceEnv = new NamespaceBase(basePackageEnv);
     }
 
     /**
      * Intended for use by unit test environment to reset the global environment to a clean state.
      */
-    public static void resetGlobalEnv(MaterializedFrame globalFrame) {
+    public static void resetGlobalEnv(VirtualFrame globalFrame) {
         globalEnv = new Global(globalEnv.getParent(), globalFrame);
     }
 
@@ -340,6 +355,27 @@ public abstract class REnvironment {
 
     // end of static members
 
+    protected REnvironment(REnvironment parent, String name, VirtualFrame frame, boolean allowPutNew) {
+        this.parent = parent;
+        this.name = name;
+
+        // establish parent environment's frame as enclosing frame in "frame" before it is
+        // materialised
+        frame.getArguments(RArguments.class).setEnclosingFrame(parent.getFrame());
+
+        this.frameAccess = new TruffleFrameAccess(frame.materialize(), allowPutNew);
+        if (!name.equals(UNNAMED) && this instanceof InSearchList) {
+            searchListEnvironments.put(name, this);
+        }
+    }
+
+    protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
+        this.parent = parent;
+        this.name = name;
+        this.frameAccess = new TruffleFrameAccess(frame, false);
+        // this is a Function or Autoload - not added to search list
+    }
+
     protected REnvironment(REnvironment parent, String name, FrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
@@ -347,6 +383,13 @@ public abstract class REnvironment {
         if (!name.equals(UNNAMED) && this instanceof InSearchList) {
             searchListEnvironments.put(name, this);
         }
+    }
+
+    protected REnvironment(REnvironment parent, String name, Base base) {
+        this.parent = parent;
+        this.name = name;
+        this.frameAccess = new TruffleFrameAccess(base.getFrame(), true);
+        // this is a NamespaceBase - not added to search list
     }
 
     public REnvironment getParent() {
@@ -450,10 +493,6 @@ public abstract class REnvironment {
         private MaterializedFrame frame;
         private final boolean allowPutNew;
 
-        TruffleFrameAccess(MaterializedFrame frame) {
-            this(frame, false);
-        }
-
         TruffleFrameAccess(MaterializedFrame frame, boolean allowPutNew) {
             this.frame = frame;
             this.allowPutNew = allowPutNew;
@@ -503,7 +542,7 @@ public abstract class REnvironment {
         RStringVector ls(boolean allNames, String pattern) {
             // TODO support pattern
             FrameDescriptor fd = frame.getFrameDescriptor();
-            String[] names = fd.getIdentifiers().toArray(RRuntime.STRING_ARRAY_SENTINEL);
+            String[] names = getStringIdentifiers(fd);
             int undefinedIdentifiers = 0;
             for (int i = 0; i < names.length; ++i) {
                 if (frame.getValue(fd.findFrameSlot(names[i])) == null) {
@@ -530,11 +569,19 @@ public abstract class REnvironment {
             return null;
         }
 
+        private static String[] getStringIdentifiers(FrameDescriptor fd) {
+            return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).collect(Collectors.toSet()).toArray(RRuntime.STRING_ARRAY_SENTINEL);
+        }
+
     }
 
     private static class BaseAdapter extends REnvironment {
-        protected BaseAdapter(REnvironment parent, MaterializedFrame frame) {
-            super(parent, "base", new TruffleFrameAccess(frame, true));
+        protected BaseAdapter(REnvironment parent, VirtualFrame frame) {
+            super(parent, "base", frame, true);
+        }
+
+        protected BaseAdapter(REnvironment parent, Base base) {
+            super(parent, "base", base);
         }
 
         @Override
@@ -548,7 +595,7 @@ public abstract class REnvironment {
      */
     private static class Base extends BaseAdapter implements InSearchList {
 
-        Base(MaterializedFrame frame) {
+        Base(VirtualFrame frame) {
             super(emptyEnv, frame);
         }
     }
@@ -557,8 +604,8 @@ public abstract class REnvironment {
      * The {@code namespace:base} environment.
      */
     private static final class NamespaceBase extends BaseAdapter {
-        private NamespaceBase(MaterializedFrame frame) {
-            super(globalEnv, frame);
+        private NamespaceBase(Base base) {
+            super(globalEnv, base);
         }
 
         @Override
@@ -573,8 +620,21 @@ public abstract class REnvironment {
      */
     public static final class Global extends REnvironment implements InSearchList {
 
-        private Global(REnvironment parent, MaterializedFrame frame) {
-            super(parent, "R_GlobalEnv", new TruffleFrameAccess(frame));
+        public static final Object GLOBAL_ENV_ID = new Object();
+
+        private Global(REnvironment parent, VirtualFrame frame) {
+            super(parent, "R_GlobalEnv", storeGlobalEnvID(frame), false);
+        }
+
+        /**
+         * The global environment ID is an object that is stored in the global environment frame and
+         * is its own name.
+         */
+        private static VirtualFrame storeGlobalEnvID(VirtualFrame frame) {
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            FrameSlot idSlot = fd.addFrameSlot(GLOBAL_ENV_ID);
+            frame.setObject(idSlot, GLOBAL_ENV_ID);
+            return frame;
         }
 
     }
@@ -585,21 +645,21 @@ public abstract class REnvironment {
      */
     public static final class Function extends REnvironment {
 
-        public Function(REnvironment parent, FrameAccess frameAccess) {
+        public Function(REnvironment parent, MaterializedFrame frame) {
             // function environments are not named
-            super(parent, "", frameAccess);
+            super(parent, "", frame);
         }
 
         /**
          * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
          */
         public static Function createLsCurrent(MaterializedFrame frame) {
-            Function result = new Function(null, new TruffleFrameAccess(frame));
+            Function result = new Function(null, frame);
             return result;
         }
 
         public static Function create(REnvironment parent, MaterializedFrame frame) {
-            Function result = new Function(parent, new TruffleFrameAccess(frame));
+            Function result = new Function(parent, frame);
             return result;
         }
 
@@ -715,7 +775,7 @@ public abstract class REnvironment {
      */
     private static final class Autoload extends REnvironment implements InSearchList {
         Autoload() {
-            super(baseEnv(), "", defaultFrameAccess);
+            super(baseEnv(), "", baseEnv().getFrame());
         }
 
     }

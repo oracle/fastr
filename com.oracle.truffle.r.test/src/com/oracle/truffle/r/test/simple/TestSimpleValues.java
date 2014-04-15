@@ -170,9 +170,7 @@ public class TestSimpleValues extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDefaultVariables() {
-        // fails because there is no connection of frames to the environment-based lookup chain
         assertEval("{ .Platform$endian }");
     }
 

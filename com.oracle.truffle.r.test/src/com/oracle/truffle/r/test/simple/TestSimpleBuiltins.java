@@ -1425,6 +1425,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }");
 
         // lookup with super assignment
+        assertEvalAlt("{ fu <- function() { uu <<- 23 } ; fu() ; ls(globalenv()) }", "[1] \"fu\" \"uu\"\n", "[1] \"uu\" \"fu\"\n");
         assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }");
         assertEval("{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }");
         assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; g() ; x }");
@@ -2578,13 +2579,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 33 ; f <- function() { if (FALSE) { x <- 22  } ; get(\"x\", inherits = FALSE) } ; f() }");
         assertEval("{ x <- 33 ; f <- function() { get(\"x\", inherits = FALSE) } ; f() }");
         assertEval("{ get(\".Platform\", globalenv())$endian }");
+        assertEval("{ get(\".Platform\")$endian }");
     }
 
     @Test
     @Ignore
     public void testGetIgnore() {
-        // fails because there is no connection of frames to the environment-based lookup chain
-        assertEval("{ get(\".Platform\")$endian }");
         // Fails because of error message mismatch.
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
     }

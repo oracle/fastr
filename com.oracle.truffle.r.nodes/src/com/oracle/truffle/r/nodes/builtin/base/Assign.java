@@ -41,7 +41,6 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     @Child private WriteVariableNode writeVariableNode;
 
     @CompilationFinal private String lastName;
-    @CompilationFinal private boolean lastInherits;
 
     // FIXME deal with omitted parameters: pos, imemdiate
 
@@ -58,20 +57,44 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
-    @Specialization(order = 1, guards = "noEnv")
-    @SuppressWarnings("unused")
-    public Object assign(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
-        controlVisibility();
+    private void ensureWrite(String x) {
         if (writeVariableNode == null || !x.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastName = x;
-            lastInherits = inherits == RRuntime.LOGICAL_TRUE;
-            WriteVariableNode wvn = WriteVariableNode.create(lastName, null, false, lastInherits);
+            WriteVariableNode wvn = WriteVariableNode.create(lastName, null, false, false);
             writeVariableNode = writeVariableNode == null ? insert(wvn) : writeVariableNode.replace(wvn);
         }
-        if (lastName.equals(x) && (lastInherits == (inherits == RRuntime.LOGICAL_TRUE))) {
-            writeVariableNode.execute(frame, value);
+    }
+
+    @Specialization(order = 1, guards = {"noEnv", "!doesInheritS"})
+    @SuppressWarnings("unused")
+    public Object assignNoInherit(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
+        ensureWrite(x);
+        writeVariableNode.execute(frame, value);
+        return value;
+    }
+
+    @Specialization(order = 2, guards = {"noEnv", "doesInheritS"})
+    @SuppressWarnings("unused")
+    public Object assignInherit(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
+        controlVisibility();
+
+        MaterializedFrame frm = frame.materialize();
+
+        // find the frame to write to
+        FrameSlot slot = frm.getFrameDescriptor().findFrameSlot(x);
+        MaterializedFrame encl = frm;
+        while (slot == null && !REnvironment.isGlobalEnvFrame(frm)) {
+            frm = encl;
+            slot = frm.getFrameDescriptor().findFrameSlot(x);
+            encl = frm.getArguments(RArguments.class).getEnclosingFrame();
         }
+
+        if (slot == null) {
+            slot = frm.getFrameDescriptor().addFrameSlot(x);
+        }
+        frm.setObject(slot, value);
         return value;
     }
 
@@ -144,6 +167,11 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     protected static boolean doesInheritX(Object x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
+        return inherits == RRuntime.LOGICAL_TRUE;
+    }
+
+    @SuppressWarnings("unused")
+    protected static boolean doesInheritS(String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
         return inherits == RRuntime.LOGICAL_TRUE;
     }
 
