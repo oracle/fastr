@@ -395,10 +395,6 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(1,-1) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(-1,2) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(2,1:3) ; m <- f(1,-2) ; m }");
-    }
-
-    @Test
-    public void testUpdateIgnore() {
 
         assertEvalError("{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");
 
@@ -428,11 +424,5 @@ public class TestSimpleArrays extends TestBase {
 
         assertEval("{ z<-1:4; y<-((z[1]<-42) >  1) }");
         assertEval("{ z<-1:4; y<-((names(z)<-101:104) >  1) }");
-    }
-
-    @Test
-    @Ignore
-    public void testDynamic() {
-        assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
     }
 }

@@ -157,12 +157,12 @@ public class TestSimpleMatrix extends TestBase {
         assertEval("{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[c(1), ] }");
         assertEval("{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[, c(1,2)] }");
         assertEval("{ x<-c(1.1, 2.2, 3.3, 4.4); dim(x)<-c(2,2); x[c(1,2), ] }");
-    }
 
-    @Test
-    @Ignore
-    public void testUpdateScalarIndexIgnore() {
         assertEval("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[,][1]<-42; x }");
+        assertEval("{  x<-c(1,2,3,4); dim(x)<-c(2,2); x[3][1]<-42; x }");
+        assertEval("{  x<-c(1,2,3,4); dim(x)<-c(2,2); x[3][1][1]<-42; x }");
+        assertEval("{ x<-c(1L,2L,3L,4L); dim(x)<-c(2,2); f<-function() { x[3][1]<-42; x }; f() }");
+        assertEval("{ x<-c(1L,2L,3L,4L); dim(x)<-c(2,2); f<-function() { x[3][1]<-42; }; f(); x }");
     }
 
     @Test

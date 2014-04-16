@@ -305,27 +305,76 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         return replacement;
     }
 
-    @Override
-    public RNode visit(UpdateVector u) {
-        AccessVector a = u.getVector();
-        RNode rhs = u.getRHS().accept(this);
-        SimpleAccessVariable vAST = null;
-        if (a.getVector() instanceof SimpleAccessVariable) {
-            vAST = (SimpleAccessVariable) a.getVector();
+    private RNode constructRecursiveUpdateSuffix(RNode[] seq, RNode updateOp, AccessVector vecAST, SourceSection source, boolean isSuper) {
+        seq[2] = updateOp;
+
+        SequenceNode vecUpdate = new SequenceNode(seq);
+        vecUpdate.assignSourceSection(source);
+
+        return visitUpdateVector(vecAST, vecUpdate, isSuper, source, true);
+    }
+
+    private static SimpleAccessVariable getVectorVariable(AccessVector v) {
+        if (v.getVector() instanceof SimpleAccessVariable) {
+            return (SimpleAccessVariable) v.getVector();
+        } else if (v.getVector() instanceof AccessVector) {
+            return getVectorVariable((AccessVector) v.getVector());
         } else {
             Utils.nyi();
+            return null;
         }
-        String vSymbol = RRuntime.toString(vAST.getSymbol());
+    }
 
-        RNode[] seq = new RNode[4];
-        final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, u.isSuper());
-        RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-        RNode varAccess = AccessVariable.create(null, varSymbol).accept(this);
-        int argLength = a.getArgs().size() - 1; // last argument == RHS
-        RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), true);
-        CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
-        UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), varAccess, rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions, coerceVector);
-        return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
+    private RNode visitUpdateVector(AccessVector a, RNode rhs, boolean isSuper, SourceSection source, boolean recursive) {
+        if (a.getVector() instanceof SimpleAccessVariable) {
+            SimpleAccessVariable varAST = (SimpleAccessVariable) a.getVector();
+            String vSymbol = RRuntime.toString(varAST.getSymbol());
+
+            RNode[] seq = new RNode[4];
+            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, varAST, isSuper);
+            RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
+            RNode tmpVarAccess = AccessVariable.create(null, varSymbol).accept(this);
+            int argLength = a.getArgs().size();
+            if (!recursive) {
+                argLength--; // last argument == RHS
+            }
+            RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), true);
+            CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
+            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), tmpVarAccess, rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions, coerceVector);
+            return constructReplacementSuffix(seq, updateOp, vSymbol, rhsSymbol, source, isSuper);
+        } else if (a.getVector() instanceof AccessVector) {
+            // assign value to the outermost dimension and then the result (resursively) to
+            // appropriate position in the lower dimension
+            // TODO: it works but perhaps should be revisited
+
+            AccessVector vecAST = (AccessVector) a.getVector();
+            SimpleAccessVariable varAST = getVectorVariable(vecAST);
+            String vSymbol = RRuntime.toString(varAST.getSymbol());
+            RNode[] seq = new RNode[3];
+
+            final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, varAST, isSuper);
+
+            RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
+            int argLength = a.getArgs().size();
+            if (!recursive) {
+                argLength--; // last argument == RHS
+            }
+
+            RNode positions = createPositions(a.getArgs(), argLength, a.isSubset(), true);
+            CoerceVector coerceVector = CoerceVectorFactory.create(null, null, null);
+            UpdateArrayHelperNode updateOp = UpdateArrayHelperNodeFactory.create(a.isSubset(), vecAST.accept(this), rhsAccess, ConstantNode.create(0), (PositionsArrayNodeValue) positions,
+                            coerceVector);
+            return constructRecursiveUpdateSuffix(seq, updateOp, vecAST, source, isSuper);
+
+        } else {
+            Utils.nyi();
+            return null;
+        }
+    }
+
+    @Override
+    public RNode visit(UpdateVector u) {
+        return visitUpdateVector(u.getVector(), u.getRHS().accept(this), u.isSuper(), u.getSource(), false);
     }
 
     @Override

@@ -512,10 +512,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[NA]]<-c(7, 42); x }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[NA]<-c(7, 42, 1); x }");
         assertEvalError("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[NA]]<-c(7, 42, 1); x }");
-    }
-
-    @Test
-    public void testNAIndexIgnore() {
 
         assertEval("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[NA, NA]<-7; x }");
         assertEval("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1, NA]<-7; x }");
@@ -1276,10 +1272,6 @@ public class TestSimpleVectors extends TestBase {
     @Test
     @Ignore
     public void testScalarUpdateIgnore() {
-        // quote and eval are not supported yet
-        assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
-        assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
-
         // weird problems with fluctuating error messages in GNU R
         assertEvalError("{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
         assertEvalError("{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
@@ -1649,15 +1641,6 @@ public class TestSimpleVectors extends TestBase {
         // lazy evaluation...
         assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
         assertEval("{ x<-5:1 ; x[x[2]<-2] }");
-
-        // seq does not work properly (added tests that paste correct seq's result)
-        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,3,10), seq(2L,4L,2L),c(TRUE,FALSE)) }");
-        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.double(1:5), seq(7L,1L,-3L),c(TRUE,FALSE,NA)) }");
-        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.logical(-3:3),seq(1L,7L,3L),c(TRUE,NA,FALSE)) }");
-        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.character(-3:3),seq(1L,7L,3L),c(\"A\",\"a\",\"XX\")) }");
-        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; f(1:8, seq(1L,7L,3L), c(10,100,1000)) }");
-        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; z <- f(1:8, seq(1L,7L,3L), list(10,100,1000)) ; sum(as.double(z)) }");
-
     }
 
     @Test
@@ -1865,13 +1848,6 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testListUpdateIgnore() {
-        // unlist implementation problem
-        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
-    }
-
-    @Test
     public void testStringUpdate() {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(1:3,\"a\",4) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(NULL,\"a\",4) }");
@@ -1953,11 +1929,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,-1] }");
 
-    }
-
-    @Test
-    @Ignore
-    public void testMatrixIndexIgnore() {
         // non-index argument not supported
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1,,drop=FALSE] }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[,1[2],drop=FALSE] }");
@@ -2009,14 +1980,6 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ a <- c(a=1,b=2); a$a; }");
         // make sure that coercion returns warning
         assertEvalWarning("{ a <- c(1,2); a$a = 3; a; }");
-    }
-
-    @Test
-    @Ignore
-    public void testDynamic() {
-        // quote and eval are not supported yet
-        assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
-        assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
     }
 
     @Test

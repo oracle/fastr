@@ -40,6 +40,21 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(10L,1L) }");
         assertEval("{ seq(1L,4L,2L) }");
         assertEval("{ seq(1,-4,-2) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testSequenceStatementIgnore() {
+        // seq does not work properly (added tests for vector accesses that paste correct seq's
+        // result in TestSimpleVectors)
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,3,10), seq(2L,4L,2L),c(TRUE,FALSE)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.double(1:5), seq(7L,1L,-3L),c(TRUE,FALSE,NA)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.logical(-3:3),seq(1L,7L,3L),c(TRUE,NA,FALSE)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.character(-3:3),seq(1L,7L,3L),c(\"A\",\"a\",\"XX\")) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; f(1:8, seq(1L,7L,3L), c(10,100,1000)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; z <- f(1:8, seq(1L,7L,3L), list(10,100,1000)) ; sum(as.double(z)) }");
+
     }
 
     @Test
@@ -1700,6 +1715,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
         assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
         assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+
+        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
 
     @Test
@@ -2087,6 +2104,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ typeof(quote(x + y)) }");
         assertEval("{ quote(x <- x + 1) }"); // specific to fastr output format
         assertEval("{ typeof(quote(x)) }");
+
+        assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
+        assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
+        assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
+        assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
+        assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
     }
 
     @Test
