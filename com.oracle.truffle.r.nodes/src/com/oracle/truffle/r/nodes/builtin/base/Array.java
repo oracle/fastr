@@ -72,7 +72,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        int data[] = new int[totalLength];
+        int[] data = new int[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
         }
@@ -84,7 +84,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        double data[] = new double[totalLength];
+        double[] data = new double[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
         }
@@ -96,7 +96,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        byte data[] = new byte[totalLength];
+        byte[] data = new byte[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
         }
@@ -108,7 +108,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        String data[] = new String[totalLength];
+        String[] data = new String[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
         }
@@ -120,7 +120,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        double data[] = new double[totalLength << 2];
+        double[] data = new double[totalLength << 2];
         int ind = 0;
         for (int i = 0; i < totalLength; i++) {
             RComplex d = vec.getDataAt(i % vec.getLength());
@@ -135,7 +135,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        byte data[] = new byte[totalLength];
+        byte[] data = new byte[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength()).getValue();
         }
@@ -147,7 +147,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        Object data[] = new Object[totalLength];
+        Object[] data = new Object[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
         }
