@@ -22,50 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
-
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.REngine.ParseException;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * Internal component of the {@code parse} base package function.
- *
- * <pre>
- * parse(file, n, text, prompt, srcfile, encoding)
- * </pre>
- */
-@RBuiltin(".Internal.parse")
-public abstract class Parse extends RInvisibleBuiltinNode {
+@RBuiltin(".Internal.eval")
+public abstract class Eval extends RBuiltinNode {
+
+    @Specialization
+    public Object doEval(RExpression expr, REnvironment envir, REnvironment enclos) {
+        controlVisibility();
+        try {
+            return REngine.eval(expr, envir, enclos);
+        } catch (PutException x) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), x.getMessage());
+        }
+    }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object parse(RConnection file, double n, RNull text, String prompt, RNull srcFile, String encoding) {
-        controlVisibility();
-        try {
-            String[] lines = file.readLines(0);
-            Object[] exprs = REngine.parse(coalesce(lines));
-            return RDataFactory.createList(exprs);
-        } catch (IOException | ParseException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");
-        }
-    }
-
-    private static String coalesce(String[] lines) {
-        StringBuffer sb = new StringBuffer();
-        for (String line : lines) {
-            sb.append(line);
-            sb.append('\n');
-        }
-        return sb.toString();
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(order = 100)
-    public Object parseGeneric(Object file, Object n, Object text, Object prompt, Object srcFile, Object encoding) {
+    public Object doEval(Object expr, Object envr, Object enclos) {
         controlVisibility();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
     }
+
 }

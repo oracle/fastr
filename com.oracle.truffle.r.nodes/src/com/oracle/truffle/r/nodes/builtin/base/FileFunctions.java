@@ -33,6 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class FileFunctions {
+    private static final String INVALID_FILE_ARGUMENT = "invalid 'file' argument";
+
     @RBuiltin(".Internal.file.create")
     public abstract static class FileCreate extends RBuiltinNode {
 
@@ -54,7 +56,7 @@ public class FileFunctions {
                             RContext.getInstance().setEvalWarning("cannot create file '" + path + "'");
                         }
                     }
-                    status[i] = ok ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+                    status[i] = RRuntime.asLogical(ok);
                 }
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
@@ -63,7 +65,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
+            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
 
@@ -116,7 +118,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
+            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
 
@@ -128,6 +130,11 @@ public class FileFunctions {
             return doFileLink(vecFrom, vecTo, true);
         }
 
+        @Specialization(order = 100)
+        public Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+        }
     }
 
     @RBuiltin(".Internal.file.remove")
@@ -144,7 +151,7 @@ public class FileFunctions {
                 } else {
                     File f = new File(Utils.tildeExpand(path));
                     boolean ok = f.delete();
-                    status[i] = ok ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+                    status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
                         RContext.getInstance().setEvalWarning("  cannot remove file '" + path + "'");
                     }
@@ -156,14 +163,14 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
+            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
 
     @RBuiltin(".Internal.file.rename")
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
-        public Object doFileRemove(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+        public Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
@@ -179,7 +186,7 @@ public class FileFunctions {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
-                    status[i] = ok ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+                    status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
                         RContext.getInstance().setEvalWarning("  cannot rename file '" + from + "' to '" + to + "'");
                     }
@@ -191,8 +198,35 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid filename");
+            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
 
+    @RBuiltin(".Internal.file.exists")
+    public abstract static class FileExists extends RBuiltinNode {
+
+        @Specialization
+        public Object doFileExists(RAbstractStringVector vec) {
+            controlVisibility();
+            byte[] status = new byte[vec.getLength()];
+            for (int i = 0; i < status.length; i++) {
+                String path = vec.getDataAt(i);
+                if (path == RRuntime.STRING_NA) {
+                    status[i] = RRuntime.LOGICAL_FALSE;
+                } else {
+                    File f = new File(Utils.tildeExpand(path));
+                    // TODO R's notion of exists may not match Java - check
+                    status[i] = f.exists() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+                }
+            }
+            return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
+
+        }
+
+        @Specialization(order = 100)
+        public Object doFileExists(@SuppressWarnings("unused") Object vec) {
+            controlVisibility();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+        }
+    }
 }

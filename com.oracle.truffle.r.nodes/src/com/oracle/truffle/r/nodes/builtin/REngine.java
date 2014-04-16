@@ -34,7 +34,9 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
+import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -116,12 +118,31 @@ public final class REngine implements RBuiltinLookupProvider {
         }
     }
 
-    public static Object parse(String rscript) throws ParseException {
+    public static Object[] parse(String rscript) throws ParseException {
         try {
-            return ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript));
+            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<parse_input>", rscript));
+            ASTNode[] exprs = seq.getExprs();
+            RExpression[] result = new RExpression[exprs.length];
+            for (int i = 0; i < exprs.length; i++) {
+                result[i] = new RExpression(exprs[i]);
+            }
+            return result;
         } catch (RecognitionException ex) {
             throw new ParseException(ex.getMessage());
         }
+    }
+
+    public static Object eval(RExpression expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
+        CallTarget callTarget = transformToCallTarget((ASTNode) expr.getASTNode(), envir);
+        // to evaluate this we must create a new VirtualFrame
+        VirtualFrame frame = createVirtualFrame();
+        Object result = runGlobal(callTarget, frame, false);
+        // now copy the values into the environment we were supposed to evaluate this in.
+        FrameDescriptor fd = frame.getFrameDescriptor();
+        for (FrameSlot slot : fd.getSlots()) {
+            envir.put(slot.getIdentifier().toString(), frame.getValue(slot));
+        }
+        return result;
     }
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame globalFrame, boolean printResult) {
@@ -135,8 +156,12 @@ public final class REngine implements RBuiltinLookupProvider {
     }
 
     private static CallTarget parseToCallTarget(ANTLRStringStream stream, Source source) throws RecognitionException {
-        RTruffleVisitor transform = new RTruffleVisitor(REnvironment.globalEnv());
-        RNode node = transform.transform(ParseUtil.parseAST(stream, source));
+        return transformToCallTarget(ParseUtil.parseAST(stream, source), REnvironment.globalEnv());
+    }
+
+    private static CallTarget transformToCallTarget(ASTNode astNode, REnvironment environment) {
+        RTruffleVisitor transform = new RTruffleVisitor(environment);
+        RNode node = transform.transform(astNode);
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.globalEnv());
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
         CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);

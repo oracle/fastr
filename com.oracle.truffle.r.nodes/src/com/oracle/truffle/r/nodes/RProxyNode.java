@@ -222,6 +222,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    protected RExpression wrap(RExpression x) {
+        return proxy(x);
+    }
+
+    protected RExpression proxy(RExpression x) {
+        return (RExpression) proxyScalar(x);
+    }
+
+    @Specialization
     protected Object[] wrap(Object[] x) {
         return proxy(x);
     }

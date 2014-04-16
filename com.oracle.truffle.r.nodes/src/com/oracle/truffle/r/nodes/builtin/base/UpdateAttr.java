@@ -85,7 +85,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return castList.executeList(frame, value);
     }
 
-    @Specialization(guards = "nullValue")
+    @Specialization(order = 0, guards = "nullValue")
     public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, String name, RNull value) {
         controlVisibility();
         RVector resultVector = vector.materialize();
@@ -104,7 +104,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(guards = "!nullValue")
+    @Specialization(order = 1, guards = "!nullValue")
     public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, String name, Object value) {
         controlVisibility();
         RVector resultVector = vector.materialize();
@@ -145,7 +145,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(guards = "!nullValue")
+    @Specialization(order = 2, guards = "!nullValue")
     public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
         controlVisibility();
         return updateAttr(frame, vector, name.getDataAt(0), value);
@@ -154,6 +154,24 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     // the guard is necessary as RNull and Object cannot be distinguished in case of multiple
     // specializations, such as in: x<-1; attr(x, "dim")<-1; attr(x, "dim")<-NULL
     public boolean nullValue(RAbstractVector vector, Object name, Object value) {
+        return value == RNull.instance;
+    }
+
+    @Specialization(order = 10, guards = "!nullValueforEnv")
+    public REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, Object value) {
+        controlVisibility();
+        env.setAttr(name, value);
+        return env;
+    }
+
+    @Specialization(order = 11, guards = "nullValueforEnv")
+    public REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, RNull value) {
+        controlVisibility();
+        env.removeAttr(name);
+        return env;
+    }
+
+    public boolean nullValueforEnv(REnvironment env, String name, Object value) {
         return value == RNull.instance;
     }
 }

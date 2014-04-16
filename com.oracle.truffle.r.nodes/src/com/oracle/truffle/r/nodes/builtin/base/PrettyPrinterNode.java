@@ -177,8 +177,17 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @Specialization
-    public String prettyPrint(REnvironment operand, Object listElementName) {
-        return operand.toString();
+    public String prettyPrint(VirtualFrame frame, REnvironment operand, Object listElementName) {
+        Map<String, Object> attributes = operand.getAttributes();
+        if (attributes == null) {
+            return operand.toString();
+        } else {
+            StringBuilder builder = new StringBuilder(operand.toString());
+            for (Map.Entry<String, Object> attr : attributes.entrySet()) {
+                printAttribute(builder, frame, attr);
+            }
+            return builderToString(builder);
+        }
     }
 
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, Map<String, Object> attributes) {
@@ -192,11 +201,15 @@ public abstract class PrettyPrinterNode extends RNode {
                 // dim and dimnames attributes never gets printed
                 continue;
             }
-            builder.append("\n");
-            builder.append(concat("attr(,\"", attr.getKey(), "\")\n"));
-            builder.append(prettyPrintAttributes(frame, attr.getValue()));
+            printAttribute(builder, frame, attr);
         }
         return builderToString(builder);
+    }
+
+    private void printAttribute(StringBuilder builder, VirtualFrame frame, Map.Entry<String, Object> attr) {
+        builder.append("\n");
+        builder.append(concat("attr(,\"", attr.getKey(), "\")\n"));
+        builder.append(prettyPrintAttributes(frame, attr.getValue()));
     }
 
     private String printVector(VirtualFrame frame, RAbstractVector vector, String[] values, boolean isStringVector, boolean isRawVector) {

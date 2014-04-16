@@ -18,6 +18,10 @@
 
 # Partial copy of GnuR equivalent
 
+stdin <- function() .Internal(stdin())
+stdout <- function() .Internal(stdout())
+stderr <- function() .Internal(stderr())
+
 file <- function(description = "", open = "", blocking = TRUE,
                  encoding = getOption("encoding"), raw = FALSE)
     .Internal(file(description, open, blocking, encoding, raw))

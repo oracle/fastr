@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
     private static final String[] VARS = new String[]{
-        ".BaseNamespaceEnv", ".GlobalEnv", ".Platform", ".Library", ".LibrarySite"
+        ".AutoloadEnv", ".BaseNamespaceEnv", ".GlobalEnv", ".Platform", ".Library", ".LibrarySite"
     };
     // @formatter:on
 
@@ -63,6 +63,9 @@ public class BaseVariables implements RPackageVariables.Handler {
                     break;
                 case ".BaseNamespaceEnv":
                     value = REnvironment.baseNamespaceEnv();
+                    break;
+                case ".AutoloadEnv":
+                    value = REnvironment.autoloadEnv();
                     break;
                 case ".Platform":
                     // .Platform TODO be more accurate
