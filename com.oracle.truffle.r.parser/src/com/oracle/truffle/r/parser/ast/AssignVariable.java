@@ -64,21 +64,27 @@ public abstract class AssignVariable extends ASTNode {
 
     public static ASTNode writeVector(@SuppressWarnings("unused") SourceSection src, boolean isSuper, AccessVector lhs, ASTNode rhs) {
         ASTNode first = lhs.getVector();
-        if (!(first instanceof SimpleAccessVariable)) {
+        if (first instanceof SimpleAccessVariable) {
+            SimpleAccessVariable simpleAccessVariable = (SimpleAccessVariable) first;
+            AccessVector newLhs = lhs;
+            if (!isSuper) {
+                // ensure the vector is copied from an enclosing frame if it is not found in the
+                // current frame
+                SimpleAccessVariable newAccessVector = new SimpleAccessVariable(simpleAccessVariable.getSource(), simpleAccessVariable.getSymbol(), true);
+                newLhs = new AccessVector(lhs.getSource(), newAccessVector, lhs.getArgs(), lhs.isSubset());
+                newLhs.setParent(lhs.getParent());
+            }
+            UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
+            lhs.args.add("value", rhs);
+            return update;
+        } else if (first instanceof AccessVector) {
+            UpdateVector update = new UpdateVector(isSuper, lhs, rhs);
+            lhs.args.add("value", rhs);
+            return update;
+        } else {
             Utils.nyi(); // TODO here we need to flatten complex assignments
+            return null;
         }
-        SimpleAccessVariable simpleAccessVariable = (SimpleAccessVariable) first;
-        AccessVector newLhs = lhs;
-        if (!isSuper) {
-            // ensure the vector is copied from an enclosing frame if it is not found in the current
-            // frame
-            SimpleAccessVariable newAccessVector = new SimpleAccessVariable(simpleAccessVariable.getSource(), simpleAccessVariable.getSymbol(), true);
-            newLhs = new AccessVector(lhs.getSource(), newAccessVector, lhs.getArgs(), lhs.isSubset());
-            newLhs.setParent(lhs.getParent());
-        }
-        UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
-        lhs.args.add("value", rhs);
-        return update;
     }
 
     public static ASTNode writeField(SourceSection src, boolean isSuper, FieldAccess lhs, ASTNode rhs) {
