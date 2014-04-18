@@ -157,7 +157,12 @@ public final class Utils {
     public static void fail(String msg) {
         // CheckStyle: stop system..print check
         System.err.println("FastR internal error: " + msg);
-        System.exit(1);
+        System.exit(2);
+    }
+
+    public static void fatalError(String msg) {
+        System.err.println("Fatal error: " + msg);
+        System.exit(2);
     }
 
     private static String userHome;

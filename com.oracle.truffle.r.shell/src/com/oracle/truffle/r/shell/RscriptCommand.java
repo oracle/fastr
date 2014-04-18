@@ -22,82 +22,77 @@
  */
 package com.oracle.truffle.r.shell;
 
-import java.io.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import java.util.*;
+
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Emulates the (Gnu)Rscript command as precisely as possible.
+ * Emulates the (Gnu)Rscript command as precisely as possible. in GnuR, Rscript is a genuine wrapper
+ * to R, as evidenced by the script {@code print(commandArgs())}. We don't implement it quite that
+ * way but the effect is similar.
+ *
+ * TODO support {@code --default-packages} option.
  */
 public class RscriptCommand {
     // CheckStyle: stop system..print check
     public static void main(String[] args) {
-        evalFileInput(args[0], new String[0]);
+        // Since many of the options are shared parse them from an RSCRIPT perspective.
+        // Handle --help and --version specially, as they exit.
+        RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.RSCRIPT, args);
+        int resultArgsLength = result.args.length;
+        int firstNonOptionArgIndex = result.firstNonOptionArgIndex;
+        if (HELP.getValue()) {
+            RCmdOptionsParser.printHelp(RCmdOptions.Client.RSCRIPT, 0);
+            System.exit(0);
+        } else if (VERSION.getValue()) {
+            printVersionAndExit();
+        }
+        // Now reformat the args, setting --slave and --no-restore as per the spec
+        // and invoke RCommand.subMain
+        ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
+        adjArgs.add(result.args[0]);
+        adjArgs.add("--slave");
+        SLAVE.setValue(true);
+        adjArgs.add("--no-restore");
+        NO_RESTORE.setValue(true);
+        // Either -e options are set or first non-option arg is a file
+        if (EXPR.getValue() == null) {
+            if (firstNonOptionArgIndex == resultArgsLength) {
+                System.err.println("filename is missing");
+                System.exit(2);
+            } else {
+                FILE.setValue(result.args[firstNonOptionArgIndex]);
+            }
+        }
+        // copy up to non-option args
+        int rx = 1;
+        while (rx < firstNonOptionArgIndex) {
+            adjArgs.add(result.args[rx]);
+            rx++;
+        }
+        if (FILE.getValue() != null) {
+            adjArgs.add("--file=" + FILE.getValue());
+            rx++; // skip over file arg
+            firstNonOptionArgIndex++;
+        }
+
+        if (firstNonOptionArgIndex < resultArgsLength) {
+            adjArgs.add("--args");
+            while (rx < resultArgsLength) {
+                adjArgs.add(result.args[rx++]);
+            }
+        }
+        String[] adjArgsArray = new String[adjArgs.size()];
+        adjArgs.toArray(adjArgsArray);
+        RCommand.subMain(adjArgsArray);
     }
 
-    private static void evalFileInput(String filePath, String[] commandArgs) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            fail("Fatal error: cannot open file '" + filePath + "': No such file or directory");
-        }
-        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
-            byte[] bytes = new byte[(int) file.length()];
-            is.read(bytes);
-            String content = new String(bytes);
-            VirtualFrame frame = REngine.initialize(commandArgs, new SysoutConsoleHandler(), true, true);
-            REngine.parseAndEval(content, frame, true);
-        } catch (IOException ex) {
-            fail("unexpected error reading file input");
-        }
-
-    }
-
-    static void fail(String msg) {
-        System.err.println(msg);
-        System.exit(1);
-    }
-
-    private static class SysoutConsoleHandler implements RContext.ConsoleHandler {
-        private PrintStream err = System.err;
-
-        public void println(String s) {
-            System.out.println(s);
-        }
-
-        public void print(String s) {
-            System.out.print(s);
-        }
-
-        public void printErrorln(String s) {
-            err.println(s);
-        }
-
-        public void printError(String s) {
-            err.print(s);
-        }
-
-        public String readLine() {
-            fail("input not possible");
-            return null;
-        }
-
-        public boolean isInteractive() {
-            return false;
-        }
-
-        public void redirectError() {
-            err = System.out;
-        }
-
-        public void setPrompt(String prompt) {
-        }
-
-        public int getWidth() {
-            return RContext.CONSOLE_WIDTH;
-        }
-
+    private static void printVersionAndExit() {
+        System.out.print("R scripting front-end version ");
+        System.out.println(RVersionNumber.FULL);
+        System.exit(0);
     }
 
 }

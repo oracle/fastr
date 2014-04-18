@@ -29,6 +29,34 @@ import java.util.*;
  * environment is handled in some other class.
  */
 public class RCmdOptions {
+    public enum Client {
+        R {
+            @Override
+            public String usage() {
+                return "\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n"
+                                + "specified options, or invoke an R tool via the 'R CMD' interface.\n";
+            }
+        },
+
+        RSCRIPT {
+            @Override
+            public String usage() {
+                return "\nUsage: [--options] [-e expr [-e expr2 ...] | file] [args]\n";
+            }
+
+        },
+
+        EITHER {
+            @Override
+            public String usage() {
+                Utils.fail("can't call usage() on Client.EITHER");
+                return null;
+            }
+        };
+
+        public abstract String usage();
+    }
+
     private static List<Option<?>> optionList = new ArrayList<>();
     public static final Option<Boolean> HELP = newBooleanOption(true, "h", "help", false, "Print short help message and exit");
     public static final Option<Boolean> VERSION = newBooleanOption(true, "version", false, "Print version info and exit");
@@ -47,9 +75,9 @@ public class RCmdOptions {
                     + "                          --no-init-file and --no-environ");
     public static final Option<Boolean> NO_READLINE = newBooleanOption(false, null, "no-readline", false, "Don't use readline for command-line editing");
     public static final Option<String> MAX_PPSIZE = newStringOption(false, null, "max-ppsize", null, "Set max size of protect stack to N");
-    public static final Option<Boolean> QUIET = newBooleanOption(false, "q", "quiet", false, "Don't print startup message");
-    public static final Option<Boolean> SILENT = newBooleanOption(false, "silent", false, "Same as --quiet");
-    public static final Option<Boolean> SLAVE = newBooleanOption(false, "slave", false, "Make R run as quietly as possible");
+    public static final Option<Boolean> QUIET = newBooleanOption(true, "q", "quiet", false, "Don't print startup message");
+    public static final Option<Boolean> SILENT = newBooleanOption(true, "silent", false, "Same as --quiet");
+    public static final Option<Boolean> SLAVE = newBooleanOption(true, "slave", false, "Make R run as quietly as possible");
     public static final Option<Boolean> INTERACTIVE = newBooleanOption(false, "interactive", false, "Force an interactive session");
     public static final Option<Boolean> VERBOSE = newBooleanOption(false, "verbose", false, "Print more information about progress");
     public static final Option<String> DEBUGGER = newStringOption(false, "d", "debugger=NAME", null, "Run R through debugger NAME");
@@ -58,7 +86,9 @@ public class RCmdOptions {
     public static final Option<String> ARCH = newStringOption(false, null, "arch=NAME", null, "Specify a sub-architecture");
     public static final Option<Boolean> ARGS = newBooleanOption(true, "args", false, "Skip the rest of the command line");
     public static final Option<String> FILE = newStringOption(true, "f FILE", "file=FILE", null, "Take input from 'FILE'");
-    public static final Option<String> EXPR = newStringOption(true, "e EXPR", null, null, "Execute 'EXPR' and exit");
+    public static final Option<List<String>> EXPR = newStringListOption(true, "e EXPR", null, null, "Execute 'EXPR' and exit");
+    public static final Option<String> DEFAULT_PACKAGES = newStringOption(Client.RSCRIPT, false, null, "default-packages=list", null, "Where 'list' is a comma-separated set\n"
+                    + "                          of package names, or 'NULL'");
 
     public static Option<Boolean> newBooleanOption(boolean implemented, String name, boolean defaultValue, String help) {
         return newBooleanOption(implemented, null, name, defaultValue, help);
@@ -71,7 +101,17 @@ public class RCmdOptions {
     }
 
     public static Option<String> newStringOption(boolean implemented, String shortName, String name, String defaultValue, String help) {
-        Option<String> option = new Option<>(implemented, OptionType.STRING, shortName, name, help, defaultValue);
+        return newStringOption(Client.EITHER, implemented, shortName, name, defaultValue, help);
+    }
+
+    public static Option<String> newStringOption(Client client, boolean implemented, String shortName, String name, String defaultValue, String help) {
+        Option<String> option = new Option<>(client, implemented, OptionType.STRING, shortName, name, help, defaultValue);
+        optionList.add(option);
+        return option;
+    }
+
+    public static Option<List<String>> newStringListOption(boolean implemented, String shortName, String name, List<String> defaultValue, String help) {
+        Option<List<String>> option = new Option<>(Client.EITHER, implemented, OptionType.REPEATED_STRING, shortName, name, help, defaultValue);
         optionList.add(option);
         return option;
     }
@@ -81,7 +121,7 @@ public class RCmdOptions {
     }
 
     public static enum OptionType {
-        BOOLEAN, STRING
+        BOOLEAN, STRING, REPEATED_STRING
     }
 
     public static class Option<T> {
@@ -119,13 +159,23 @@ public class RCmdOptions {
          */
         public final boolean implemented;
 
-        Option(boolean implemented, OptionType type, String shortName, String name, String help, T defaultValue) {
+        /**
+         * Option specificity.
+         */
+        public final Client client;
+
+        Option(Client client, boolean implemented, OptionType type, String shortName, String name, String help, T defaultValue) {
+            this.client = client;
             this.implemented = implemented;
             this.type = type;
             this.shortName = shortName == null ? null : shortKey(shortName);
             this.name = name == null ? null : key(name);
             this.help = help;
             this.value = defaultValue;
+        }
+
+        Option(boolean implemented, OptionType type, String shortName, String name, String help, T defaultValue) {
+            this(Client.EITHER, implemented, type, shortName, name, help, defaultValue);
         }
 
         private static boolean noPrefix(String arg) {
@@ -176,7 +226,14 @@ public class RCmdOptions {
 
         @SuppressWarnings("unchecked")
         public void setValue(String value) {
-            this.value = (T) value;
+            if (type == OptionType.REPEATED_STRING) {
+                if (this.value == null) {
+                    this.value = (T) new ArrayList<String>();
+                }
+                ((List<String>) this.value).add(value);
+            } else {
+                this.value = (T) value;
+            }
         }
 
         public String getHelpName() {
@@ -211,7 +268,7 @@ public class RCmdOptions {
                 if (option.matches(arg)) {
                     return option;
                 }
-            } else if (option.type == OptionType.STRING) {
+            } else if (option.type == OptionType.STRING || option.type == OptionType.REPEATED_STRING) {
                 // short forms must match exactly (and consume next argument)
                 if (option.shortName != null && option.shortName.equals(arg)) {
                     option.matchedShort = true;

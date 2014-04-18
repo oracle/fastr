@@ -25,6 +25,7 @@ package com.oracle.truffle.r.shell;
 import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -38,15 +39,27 @@ import jline.console.*;
 public class RCommand {
     // CheckStyle: stop system..print check
 
-    @SuppressWarnings("deprecation")
     public static void main(String[] args) {
-        String[] commandArgs = RCmdOptionsParser.parseArguments(args);
+        RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
         if (HELP.getValue()) {
-            RCmdOptionsParser.printHelp(0);
+            RCmdOptionsParser.printHelp(RCmdOptions.Client.R, 0);
         } else if (VERSION.getValue()) {
             printVersionAndExit();
         } else if (RHOME.getValue()) {
             printRHomeAndExit();
+        }
+        subMain(result.args);
+    }
+
+    /**
+     * Entry point for {@link RscriptCommand} avoiding re-parsing.
+     */
+    @SuppressWarnings("deprecation")
+    public static void subMain(String[] args) {
+
+        if (SLAVE.getValue()) {
+            QUIET.setValue(true);
+            NO_SAVE.setValue(true);
         }
 
         if (VANILLA.getValue()) {
@@ -58,6 +71,9 @@ public class RCommand {
 
         String fileArg = FILE.getValue();
         if (fileArg != null) {
+            if (EXPR.getValue() != null) {
+                Utils.fatalError("cannot use -e with -f or --file");
+            }
             if (!SAVE.getValue()) {
                 NO_SAVE.setValue(true);
             }
@@ -71,20 +87,34 @@ public class RCommand {
         // it goes through the console. However, we cannot (yet) do incremental parsing, so file
         // input has to be treated specially.
         if (fileArg != null) {
-            evalFileInput(fileArg, commandArgs);
+            evalFileInput(fileArg, args);
         } else {
             InputStream consoleInput = System.in;
             OutputStream consoleOutput = System.out;
-            if (EXPR.getValue() != null) {
-                consoleInput = new StringBufferInputStream(EXPR.getValue());
+            List<String> exprs = EXPR.getValue();
+            if (exprs != null) {
+                if (!SAVE.getValue()) {
+                    NO_SAVE.setValue(true);
+                }
+                StringBuffer sb = new StringBuffer(exprs.get(0));
+                if (exprs.size() > 1) {
+                    for (int i = 1; i < exprs.size(); i++) {
+                        sb.append('\n');
+                        sb.append(exprs.get(i));
+                    }
+                }
+                consoleInput = new StringBufferInputStream(sb.toString());
             }
             ConsoleReader console = null;
             try {
                 console = new RJLineConsoleReader(consoleInput, consoleOutput);
+                if (SLAVE.getValue()) {
+                    console.setPrompt("");
+                }
             } catch (IOException ex) {
                 Utils.fail("unexpected error opening console reader");
             }
-            readEvalPrint(consoleInput == System.in, console, commandArgs);
+            readEvalPrint(consoleInput == System.in, console, args);
         }
         // TODO exit code
     }
@@ -104,7 +134,7 @@ public class RCommand {
     private static void evalFileInput(String filePath, String[] commandArgs) {
         File file = new File(filePath);
         if (!file.exists()) {
-            Utils.fail("Fatal error: cannot open file '" + filePath + "': No such file or directory");
+            Utils.fatalError("cannot open file '" + filePath + "': No such file or directory");
         }
         try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
             byte[] bytes = new byte[(int) file.length()];
@@ -120,7 +150,9 @@ public class RCommand {
     }
 
     private static void readEvalPrint(boolean isInteractive, ConsoleReader console, String[] commandArgs) {
-        System.out.println(RRuntime.WELCOME_MESSAGE);
+        if (!(QUIET.getValue() || SILENT.getValue())) {
+            System.out.println(RRuntime.WELCOME_MESSAGE);
+        }
         try {
             VirtualFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
             for (;;) {

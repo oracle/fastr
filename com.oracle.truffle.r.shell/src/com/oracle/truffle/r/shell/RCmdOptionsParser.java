@@ -23,14 +23,15 @@
 package com.oracle.truffle.r.shell;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RCmdOptions.Option;
 import com.oracle.truffle.r.runtime.RCmdOptions.OptionType;
 
 /**
- * Implements the standard R command line syntax.
- * 
+ * Implements the standard R/Rscript command line syntax.
+ *
  * R supports {@code --arg=value} or {@code -arg value} for string-valued options.
- * 
+ *
  * The spec for {@code commandArgs()} states that it returns the executable by which R was invoked
  * in element 0, which is consistent with the C {@code main} function, but defines the exact form to
  * be platform independent. Java does not provide the executable (for obvious reasons) so we use
@@ -38,25 +39,44 @@ import com.oracle.truffle.r.runtime.RCmdOptions.OptionType;
  */
 public class RCmdOptionsParser {
     // CheckStyle: stop system..print check
+    public static class Result {
+        /**
+         * The original {@code args} array, with element zero set to "FastR".
+         */
+        public final String[] args;
+        /**
+         * Index in {@code args} of the first non-option argument or {@code args.length} if none.
+         */
+        public final int firstNonOptionArgIndex;
+
+        Result(String[] args, int firstNonOptionArgIndex) {
+            this.args = args;
+            this.firstNonOptionArgIndex = firstNonOptionArgIndex;
+        }
+    }
 
     /**
      * Parse the arguments, setting the corresponding {@code Option values}.
-     * 
-     * @return an array with element zero set to "FastR", followed by {@code args}.
      */
-    public static String[] parseArguments(String[] args) {
+    public static Result parseArguments(Client client, String[] args) {
         int i = 0;
+        int firstNonOptionArgIndex = -1;
         while (i < args.length) {
             final String arg = args[i];
             Option<?> option = RCmdOptions.matchOption(arg);
             if (option == null) {
+                // for Rscript, this means we are done
+                if (client == Client.RSCRIPT) {
+                    firstNonOptionArgIndex = i;
+                    break;
+                }
                 // GnuR does not abort, simply issues a warning
-                System.out.printf("ARGUMENT '%s' __ignored__%n", arg);
+                System.out.printf("WARNING: unknown option '%s'%n", arg);
                 i++;
                 continue;
             } else if (option.matchedShort() && i == args.length - 1) {
                 System.out.println("usage:");
-                printHelp(1);
+                printHelp(client, 1);
             }
             // check implemented
             if (!option.implemented) {
@@ -76,18 +96,19 @@ public class RCmdOptionsParser {
             i++;
             // check for --args, in which case stop parsing
             if (option == RCmdOptions.ARGS) {
+                firstNonOptionArgIndex = i;
                 break;
             }
         }
-        String[] result = new String[args.length + 1];
-        result[0] = "FastR";
-        System.arraycopy(args, 0, result, 1, args.length);
-        return result;
+        String[] xargs = new String[args.length + 1];
+        xargs[0] = "FastR";
+        System.arraycopy(args, 0, xargs, 1, args.length);
+        return new Result(xargs, firstNonOptionArgIndex < 0 ? xargs.length : firstNonOptionArgIndex + 1); // adj
+// for zeroth arg insert
     }
 
-    public static void printHelp(int exitCode) {
-        System.out.println("\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n"
-                        + "specified options, or invoke an R tool via the 'R CMD' interface.\n");
+    public static void printHelp(Client client, int exitCode) {
+        System.out.println(client.usage());
         System.out.println("Options:");
         for (Option<?> option : RCmdOptions.optionList()) {
             System.out.printf("  %-22s  %s%n", option.getHelpName(), option.help);

@@ -36,10 +36,22 @@ public class REnvVars {
 
     private static Map<String, String> envVars;
 
-    public static void initialize() {
+    private static Map<String, String> getEnvVars() {
         if (envVars == null) {
             envVars = new HashMap<>(System.getenv());
         }
+        return envVars;
+    }
+
+    private static Map<String, String> checkEnvVars() {
+        if (envVars == null) {
+            Utils.fail("envVars not initialized");
+        }
+        return envVars;
+    }
+
+    public static void initialize() {
+        getEnvVars();
         // set the standard vars defined by R
         String rHome = rHome();
         FileSystem fileSystem = FileSystems.getDefault();
@@ -70,7 +82,8 @@ public class REnvVars {
     }
 
     public static String rHome() {
-        String rHome = envVars.get("R_HOME");
+        // This can be called before initialize, "R RHOME"
+        String rHome = getEnvVars().get("R_HOME");
         if (rHome == null) {
             // Should only happen in a unit test run
             rHome = System.getProperty("user.dir");
@@ -79,19 +92,20 @@ public class REnvVars {
     }
 
     public static String put(String key, String value) {
-        return envVars.put(key, value);
+        return checkEnvVars().put(key, value);
     }
 
     public static String get(String key) {
-        return envVars.get(key);
+        return checkEnvVars().get(key);
     }
 
     public static Map<String, String> getMap() {
-        return envVars;
+        return checkEnvVars();
     }
 
     public static void readEnvironFile(String path) throws IOException {
         try (BufferedReader r = new BufferedReader(new FileReader(path))) {
+            checkEnvVars();
             String line = null;
             while ((line = r.readLine()) != null) {
                 if (line.startsWith("#") || line.length() == 0) {
@@ -114,6 +128,7 @@ public class REnvVars {
         StringBuffer result = new StringBuffer();
         int x = 0;
         int paramStart = value.indexOf("${", x);
+        checkEnvVars();
         while (paramStart >= 0) {
             result.append(value.substring(x, paramStart));
             int paramEnd = value.indexOf('}', paramStart);
