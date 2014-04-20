@@ -2397,7 +2397,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @NodeChildren({@NodeChild(value = "val", type = RNode.class), @NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class),
                     @NodeChild(value = "currDimLevel", type = RNode.class), @NodeChild(value = "srcArrayBase", type = RNode.class), @NodeChild(value = "dstArrayBase", type = RNode.class),
                     @NodeChild(value = "accSrcDimensions", type = RNode.class), @NodeChild(value = "accDstDimensions", type = RNode.class)})
-    public abstract static class SetMultiDimDataNode extends RNode {
+    protected abstract static class SetMultiDimDataNode extends RNode {
 
         public abstract Object executeMultiDimDataSet(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
                         int accSrcDimensions, int accDstDimensions);
@@ -2409,10 +2409,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Child private SetMultiDimDataNode setMultiDimDataRecursive;
 
         private Object setMultiDimData(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                        int accSrcDimensions, int accDstDimensions, NACheck posNACheck, NACheck elementNACheck) {
+                        int accSrcDimensions, int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
             if (setMultiDimDataRecursive == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                setMultiDimDataRecursive = insert(SetMultiDimDataNodeFactory.create(posNACheck, elementNACheck, this.isSubset, null, null, null, null, null, null, null, null));
+                setMultiDimDataRecursive = insert(SetMultiDimDataNodeFactory.create(posCheck, elementCheck, this.isSubset, null, null, null, null, null, null, null, null));
             }
             return setMultiDimDataRecursive.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
         }
