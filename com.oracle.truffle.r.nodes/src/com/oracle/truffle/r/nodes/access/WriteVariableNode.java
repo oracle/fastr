@@ -36,9 +36,9 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeField(name = "argWrite", type = boolean.class)
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
-    public final static int REGULAR = 1;
-    public final static int COPY = 2;
-    public final static int TEMP = 3;
+    public static final int REGULAR = 1;
+    public static final int COPY = 2;
+    public static final int TEMP = 3;
 
     public abstract boolean isArgWrite();
 
