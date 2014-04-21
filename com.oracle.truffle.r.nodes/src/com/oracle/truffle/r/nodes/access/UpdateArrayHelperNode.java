@@ -559,6 +559,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RList) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -583,6 +584,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RList resultVector = vector;
         if (resultVector.isShared()) {
             resultVector = (RList) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             int orgLength = resultVector.getLength();
@@ -799,6 +801,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RList list = vector;
         if (list.isShared()) {
             list = (RList) vector.copy();
+            list.markNonTemporary();
         }
         int highestPos = getHighestPos(positions);
         if (list.getLength() < highestPos) {
@@ -987,6 +990,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (resultVector.isShared()) {
             resultVector = (RIntVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1012,6 +1016,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RIntVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = (RIntVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1185,6 +1190,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (resultVector.isShared()) {
             resultVector = (RDoubleVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1210,6 +1216,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RDoubleVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = (RDoubleVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1369,6 +1376,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RLogicalVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1394,6 +1402,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RLogicalVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RLogicalVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1478,6 +1487,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RStringVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1503,6 +1513,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RStringVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RStringVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1623,6 +1634,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RComplexVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1648,6 +1660,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RComplexVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RComplexVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1840,6 +1853,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RRawVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1864,6 +1878,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RRawVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RRawVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
