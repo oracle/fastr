@@ -134,7 +134,11 @@ def _junit_r_harness(args, vmArgs, junitArgs):
         runlistener += ':' + runlistener_arg
 
     junitArgs += ['--runlistener', runlistener]
-    return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False)
+
+    # suppress Truffle compilation by using a high threshold
+    vmArgs += ['-G:TruffleCompilationThreshold=100000']
+
+    return mx_graal.vm(vmArgs + junitArgs, nonZeroIsFatal=False)
 
 def junit(args):
     '''run R Junit tests'''
