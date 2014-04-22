@@ -20369,6 +20369,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testUpdateOther_eea525ae4479446e708a52622475cd5b() {
+        assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testUpdateOther_7994f543433d0239668974a5699941da() {
+        assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testUpdateOther_8f47617a6b12ce7fa5b41d5ce455b89e() {
+        assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testUpdateOtherIgnore_f6ccb4168af3fd4313e35696afc3f2f5() {
+        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testUpdateOtherIgnore_2a527d7409757c6f8ae809606cf60294() {
+        assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
+    }
+
+    @Test
     public void TestSimpleVectors_testVectorIndex_1d6d1e8273a075727e7f7ee39bf9060e() {
         assertEval(" { f <- function(b,i) { b[i] } ; f(c(a=1,b=2,c=3), c(TRUE,NA)) }");
     }

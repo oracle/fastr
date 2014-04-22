@@ -3324,6 +3324,16 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleVectors_testUpdateOtherIgnore_f6ccb4168af3fd4313e35696afc3f2f5() {
+        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
+    }
+
+    @Ignore
+    public void TestSimpleVectors_testUpdateOtherIgnore_2a527d7409757c6f8ae809606cf60294() {
+        assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
+    }
+
+    @Ignore
     public void TestSimpleVectors_testVectorUpdateIgnore_4bb6389721e2adbd8f6b69aa42e80569() {
         assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
     }

@@ -296,24 +296,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    private int getNewArrayBase(int srcArrayBase, int pos, int newAccSrcDimensions) {
-        int newSrcArrayBase;
-        if (posNACheck.check(pos)) {
-            throw RError.getNASubscripted(getEncapsulatingSourceSection());
-        } else {
-            newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
-        }
-        return newSrcArrayBase;
-    }
-
-    private int getSrcIndex(int srcArrayBase, int pos, int newAccSrcDimensions) {
-        if (posNACheck.check(pos)) {
-            throw RError.getNASubscripted(getEncapsulatingSourceSection());
-        } else {
-            return srcArrayBase + newAccSrcDimensions * (pos - 1);
-        }
-    }
-
     private int getSrcArrayBase(int pos, int accSrcDimensions) {
         if (posNACheck.check(pos)) {
             throw RError.getNASubscripted(getEncapsulatingSourceSection());
@@ -337,7 +319,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     allZeros = false;
                     if (posNACheck.check(pos)) {
                         if (len == 1) {
-                            seenNAMultiDim(true, value, isList);
+                            seenNAMultiDim(true, value, isList, isSubset, getEncapsulatingSourceSection());
                         } else {
                             seenNA = true;
                         }
@@ -353,7 +335,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (valueLength != 0 && length != 0 && length % valueLength != 0) {
             throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
         } else if (seenNA) {
-            seenNAMultiDim(true, value, isList);
+            seenNAMultiDim(true, value, isList, isSubset, getEncapsulatingSourceSection());
         }
         return length;
     }
@@ -577,6 +559,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RList) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -588,7 +571,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, true)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -601,6 +584,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RList resultVector = vector;
         if (resultVector.isShared()) {
             resultVector = (RList) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             int orgLength = resultVector.getLength();
@@ -817,6 +801,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RList list = vector;
         if (list.isShared()) {
             list = (RList) vector.copy();
+            list.markNonTemporary();
         }
         int highestPos = getHighestPos(positions);
         if (list.getLength() < highestPos) {
@@ -1005,6 +990,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (resultVector.isShared()) {
             resultVector = (RIntVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1017,7 +1003,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1030,6 +1016,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RIntVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = (RIntVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1055,23 +1042,23 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    private boolean seenNAMultiDim(boolean isPosNA, RAbstractVector value, boolean isList) {
+    protected static boolean seenNAMultiDim(boolean isPosNA, RAbstractVector value, boolean isList, boolean isSubset, SourceSection sourceSection) {
         if (isPosNA) {
             if (value.getLength() == 1) {
                 if (!isSubset) {
-                    throw RError.getSubscriptBoundsSub(getEncapsulatingSourceSection());
+                    throw RError.getSubscriptBoundsSub(sourceSection);
                 } else {
                     return true;
                 }
             } else {
                 if (!isSubset) {
                     if (isList) {
-                        throw RError.getSubscriptBoundsSub(getEncapsulatingSourceSection());
+                        throw RError.getSubscriptBoundsSub(sourceSection);
                     } else {
-                        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                        throw RError.getMoreElementsSupplied(sourceSection);
                     }
                 } else {
-                    throw RError.getNASubscripted(getEncapsulatingSourceSection());
+                    throw RError.getNASubscripted(sourceSection);
                 }
             }
         } else {
@@ -1203,6 +1190,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (resultVector.isShared()) {
             resultVector = (RDoubleVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1215,7 +1203,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1228,6 +1216,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RDoubleVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = (RDoubleVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1387,6 +1376,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RLogicalVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1399,7 +1389,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1412,6 +1402,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RLogicalVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RLogicalVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1496,6 +1487,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RStringVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1508,7 +1500,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1521,6 +1513,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RStringVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RStringVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1641,6 +1634,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RComplexVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1653,7 +1647,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1666,6 +1660,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RComplexVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RComplexVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -1858,6 +1853,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
         if (vector.isShared()) {
             resultVector = (RRawVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1869,7 +1865,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         for (int i = 0; i < p.getLength(); i++) {
             int dstArrayBase = accDstDimensions * i;
             int pos = p.getDataAt(i);
-            if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+            if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                 continue;
             }
             int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
@@ -1882,6 +1878,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         RRawVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RRawVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         if (resultVector.getLength() < highestPos) {
             resultVector.resizeWithNames(highestPos);
@@ -2415,7 +2412,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @NodeChildren({@NodeChild(value = "val", type = RNode.class), @NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class),
                     @NodeChild(value = "currDimLevel", type = RNode.class), @NodeChild(value = "srcArrayBase", type = RNode.class), @NodeChild(value = "dstArrayBase", type = RNode.class),
                     @NodeChild(value = "accSrcDimensions", type = RNode.class), @NodeChild(value = "accDstDimensions", type = RNode.class)})
-    public abstract static class SetMultiDimDataNode extends RNode {
+    protected abstract static class SetMultiDimDataNode extends RNode {
 
         public abstract Object executeMultiDimDataSet(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
                         int accSrcDimensions, int accDstDimensions);
@@ -2427,10 +2424,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Child private SetMultiDimDataNode setMultiDimDataRecursive;
 
         private Object setMultiDimData(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                        int accSrcDimensions, int accDstDimensions, NACheck posNACheck, NACheck elementNACheck) {
+                        int accSrcDimensions, int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
             if (setMultiDimDataRecursive == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                setMultiDimDataRecursive = insert(SetMultiDimDataNodeFactory.create(posNACheck, elementNACheck, this.isSubset, null, null, null, null, null, null, null, null));
+                setMultiDimDataRecursive = insert(SetMultiDimDataNodeFactory.create(posCheck, elementCheck, this.isSubset, null, null, null, null, null, null, null, null));
             }
             return setMultiDimDataRecursive.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
         }
@@ -2458,7 +2455,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, true)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2468,7 +2465,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, true)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2491,7 +2488,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2501,7 +2498,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2524,7 +2521,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2534,7 +2531,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2557,7 +2554,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2567,7 +2564,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2590,7 +2587,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2600,7 +2597,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2623,7 +2620,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2633,7 +2630,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2656,7 +2653,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (currentDimLevel == 1) {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -2666,7 +2663,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 for (int i = 0; i < p.getLength(); i++) {
                     int pos = p.getDataAt(i);
-                    if (seenNAMultiDim(posNACheck.check(pos), value, false)) {
+                    if (seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                         continue;
                     }
                     int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
@@ -2693,31 +2690,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
             } else {
                 return srcArrayBase + newAccSrcDimensions * (pos - 1);
             }
-        }
-
-        private boolean seenNAMultiDim(boolean isPosNA, RAbstractVector value, boolean isList) {
-            if (isPosNA) {
-                if (value.getLength() == 1) {
-                    if (!isSubset) {
-                        throw RError.getSubscriptBoundsSub(getEncapsulatingSourceSection());
-                    } else {
-                        return true;
-                    }
-                } else {
-                    if (!isSubset) {
-                        if (isList) {
-                            throw RError.getSubscriptBoundsSub(getEncapsulatingSourceSection());
-                        } else {
-                            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
-                        }
-                    } else {
-                        throw RError.getNASubscripted(getEncapsulatingSourceSection());
-                    }
-                }
-            } else {
-                return false;
-            }
-
         }
 
     }

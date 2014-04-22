@@ -36,6 +36,10 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeField(name = "argWrite", type = boolean.class)
 public abstract class WriteVariableNode extends RNode implements VisibilityController {
 
+    public static final int REGULAR = 1;
+    public static final int COPY = 2;
+    public static final int TEMP = 3;
+
     public abstract boolean isArgWrite();
 
     public abstract RNode getRhs();
@@ -52,11 +56,17 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         return false;
     }
 
-    // the toBeCopied parameter is meant to prevent creation of the shared/non-temp vector; this
-    // needed for the implementation of the replacement forms of builtin functions as their last
-    // argument can be mutated; for example, in "dimnames(x)<-list(1)", the assigned value list(1)
-    // must become list("1"), with the latter value returned as a result of the call
-    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, boolean toBeCopied) {
+    // setting value of the mode parameter to COPY is meant to prevent creation of the
+    // shared/non-temp vector; this needed for the implementation of the replacement forms of
+    // builtin functions as their last argument can be mutated; for example, in
+    // "dimnames(x)<-list(1)", the assigned value list(1) must become list("1"), with the latter
+    // value returned as a result of the call;
+
+    // setting value of the mode parameter to TEMP is meant to prevent changing state; this is
+    // needed for the replacement forms of vector updates where a vector is assigned to a temporary
+    // variable and then, again, to the original variable (which would cause the vector to be copied
+    // each time)
+    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, int mode) {
         Object newValue = value;
         if (!isArgWrite()) {
             Object frameValue;
@@ -81,7 +91,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenTemporary = true;
                         }
-                        if (toBeCopied) {
+                        if (mode == COPY) {
                             RVector vectorCopy = rVector.copy();
                             newValue = vectorCopy;
                         } else {
@@ -93,7 +103,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                             everSeenShared = true;
                         }
                         RVector vectorCopy = rVector.copy();
-                        if (!toBeCopied) {
+                        if (mode != COPY) {
                             vectorCopy.markNonTemporary();
                         }
                         newValue = vectorCopy;
@@ -102,10 +112,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenNonShared = true;
                         }
-                        if (toBeCopied) {
+                        if (mode == COPY) {
                             RVector vectorCopy = rVector.copy();
                             newValue = vectorCopy;
-                        } else {
+                        } else if (mode != TEMP) {
                             rVector.makeShared();
                         }
                     }
@@ -116,33 +126,33 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         frame.setObject(frameSlot, newValue);
     }
 
-    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, boolean toBeCopied) {
+    public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper, int mode) {
         if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(symbol), toBeCopied);
+            return UnresolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, RRuntime.toString(symbol), mode);
         } else {
             assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(symbol), toBeCopied);
+            return new UnresolvedWriteSuperVariableNode(rhs, RRuntime.toString(symbol), mode);
         }
     }
 
     public static WriteVariableNode create(Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        return create(symbol, rhs, isArgWrite, isSuper, false);
+        return create(symbol, rhs, isArgWrite, isSuper, REGULAR);
     }
 
     public static WriteVariableNode create(SourceSection src, Object symbol, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        WriteVariableNode wvn = create(symbol, rhs, isArgWrite, isSuper, false);
+        WriteVariableNode wvn = create(symbol, rhs, isArgWrite, isSuper, REGULAR);
         wvn.assignSourceSection(src);
         return wvn;
     }
 
     public abstract void execute(VirtualFrame frame, Object value);
 
-    @NodeFields({@NodeField(name = "symbol", type = Object.class), @NodeField(name = "toBeCopied", type = boolean.class)})
+    @NodeFields({@NodeField(name = "symbol", type = Object.class), @NodeField(name = "mode", type = int.class)})
     public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
         public abstract Object getSymbol();
 
-        public abstract boolean isToBeCopied();
+        public abstract int getMode();
 
         @Specialization
         public byte doLogical(VirtualFrame frame, byte value) {
@@ -171,17 +181,17 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerAsserts.neverPartOfCompilation();
             FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getSymbol(), initialKind);
-            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, isToBeCopied())).execute(frame, value);
+            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, getMode())).execute(frame, value);
         }
     }
 
-    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "toBeCopied", type = boolean.class)})
+    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = int.class)})
     public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
 
-        public abstract boolean isToBeCopied();
+        public abstract int getMode();
 
-        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, FrameSlot frameSlot, boolean toBeCopied) {
-            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, frameSlot, toBeCopied);
+        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, FrameSlot frameSlot, int mode) {
+            return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, frameSlot, mode);
         }
 
         @Specialization(guards = "isBooleanKind")
@@ -208,7 +218,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
-            super.writeObjectValue(frame, frame, frameSlot, value, isToBeCopied());
+            super.writeObjectValue(frame, frame, frameSlot, value, getMode());
             return value;
         }
     }
@@ -269,12 +279,12 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         @Child private RNode rhs;
         private final Object symbol;
-        private final boolean toBeCopied;
+        private final int mode;
 
-        public UnresolvedWriteSuperVariableNode(RNode rhs, Object symbol, boolean toBeCopied) {
+        public UnresolvedWriteSuperVariableNode(RNode rhs, Object symbol, int mode) {
             this.rhs = rhs;
             this.symbol = symbol;
-            this.toBeCopied = toBeCopied;
+            this.mode = mode;
         }
 
         @Override
@@ -291,10 +301,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
                 writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, new FrameSlotNode.PresentFrameSlotNode(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)),
-                                this.isArgWrite(), toBeCopied);
+                                this.isArgWrite(), mode);
             } else {
-                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), this.isArgWrite(), toBeCopied);
-                writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, toBeCopied), getRhs());
+                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), this.isArgWrite(), mode);
+                writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
         }
@@ -307,7 +317,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 execute(frame, value, enclosingFrame);
             } else {
                 // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), RRuntime.toString(symbol), toBeCopied)).execute(frame, value);
+                replace(UnresolvedWriteLocalVariableNodeFactory.create(getRhs(), this.isArgWrite(), RRuntime.toString(symbol), mode)).execute(frame, value);
             }
         }
 
@@ -319,12 +329,12 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     @SuppressWarnings("unused")
     @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
-    @NodeField(name = "toBeCopied", type = boolean.class)
+    @NodeField(name = "mode", type = int.class)
     public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
         protected abstract FrameSlotNode getFrameSlotNode();
 
-        public abstract boolean isToBeCopied();
+        public abstract int getMode();
 
         @Specialization(guards = "isBooleanKind")
         public byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
@@ -350,7 +360,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            super.writeObjectValue(frame, enclosingFrame, frameSlot, value, isToBeCopied());
+            super.writeObjectValue(frame, enclosingFrame, frameSlot, value, getMode());
             return value;
         }
 
