@@ -248,15 +248,15 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             if (writeNode.getFrameSlotNode().hasValue(frame, enclosingFrame)) {
                 writeNode.execute(frame, value, enclosingFrame);
             } else {
-                nextNode.execute(frame, value, RArguments.get(enclosingFrame).getEnclosingFrame());
+                nextNode.execute(frame, value, RArguments.getEnclosingFrame(enclosingFrame));
             }
         }
 
         @Override
         public void execute(VirtualFrame frame, Object value) {
             controlVisibility();
-            assert RArguments.get(frame).getEnclosingFrame() != null;
-            execute(frame, value, RArguments.get(frame).getEnclosingFrame());
+            assert RArguments.getEnclosingFrame(frame) != null;
+            execute(frame, value, RArguments.getEnclosingFrame(frame));
         }
 
         @Override
@@ -289,7 +289,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
                 // we've reached the global scope, do unconditional write
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
-                AccessEnclosingFrameNode enclosingFrameNode = RArguments.get(frame).getEnclosingFrame() == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
+                AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
                 writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, new FrameSlotNode.PresentFrameSlotNode(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)),
                                 this.isArgWrite(), toBeCopied);
             } else {
@@ -302,7 +302,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Override
         public void execute(VirtualFrame frame, Object value) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            MaterializedFrame enclosingFrame = RArguments.get(frame).getEnclosingFrame();
+            MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(frame);
             if (enclosingFrame != null) {
                 execute(frame, value, enclosingFrame);
             } else {

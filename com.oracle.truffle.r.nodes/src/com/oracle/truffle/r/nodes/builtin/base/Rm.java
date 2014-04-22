@@ -108,7 +108,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         Frame frm = frame;
         FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(x);
         while (fs == null && frm != null) {
-            frm = RArguments.get(frm).getEnclosingFrame();
+            frm = RArguments.getEnclosingFrame(frm);
             if (frm != null) {
                 fs = frm.getFrameDescriptor().findFrameSlot(x);
             }

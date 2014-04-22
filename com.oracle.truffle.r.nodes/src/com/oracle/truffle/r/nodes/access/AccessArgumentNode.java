@@ -44,9 +44,8 @@ public class AccessArgumentNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RArguments arguments = frame.getArguments(RArguments.class);
-        if (index < arguments.getLength()) {
-            Object argument = arguments.getArgument(index);
+        if (index < RArguments.getArgumentsLength(frame)) {
+            Object argument = RArguments.getArgument(frame, index);
             if (defaultValueIsMissing || argument != RMissing.instance) {
                 return argument;
             } else if (neverSeenMissing) {

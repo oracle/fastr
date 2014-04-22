@@ -84,7 +84,7 @@ public final class REngine implements RBuiltinLookupProvider {
      * object field, so must be passed as an argument.
      */
     private static VirtualFrame createVirtualFrame() {
-        return Truffle.getRuntime().createVirtualFrame(null, RArguments.create(), new FrameDescriptor());
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
     }
 
     public static RContext getContext() {
@@ -177,7 +177,7 @@ public final class REngine implements RBuiltinLookupProvider {
                 throw RError.getNoLoopForBreakNext(null);
             }
             if (printResult) {
-                printResult(result);
+                printResult(globalFrame, result);
             }
             reportWarnings(false);
         } catch (RError e) {
@@ -188,10 +188,10 @@ public final class REngine implements RBuiltinLookupProvider {
         return result;
     }
 
-    private static void printResult(Object result) {
+    private static void printResult(VirtualFrame frame, Object result) {
         if (RContext.isVisible()) {
             RFunction function = RContext.getLookup().lookup("print");
-            RRuntime.toString(function.call(null, RArguments.create(function, new Object[]{result})));
+            RRuntime.toString(function.call(frame, RArguments.create(function, new Object[]{result})));
         }
     }
 

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,16 +40,16 @@ public class FrameFunctions {
     @RBuiltin(".Internal.parent.frame")
     public abstract static class ParentFrame extends RBuiltinNode {
         @Specialization(guards = "isOne")
-        public REnvironment parentFrame(VirtualFrame frame, @SuppressWarnings("unused") double n) {
+        public REnvironment parentFrame(@SuppressWarnings("unused") double n) {
             controlVisibility();
-            VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
+            Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
             RFunction func = EnvFunctions.frameToFunction(callerFrame);
             if (func == null) {
                 // called from shell
                 return REnvironment.globalEnv();
             } else {
                 // need the caller of func
-                VirtualFrame funcCallerFrame = (VirtualFrame) callerFrame.getCaller().unpack();
+                Frame funcCallerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY, 1);
                 return EnvFunctions.callerEnvironment(funcCallerFrame);
             }
         }

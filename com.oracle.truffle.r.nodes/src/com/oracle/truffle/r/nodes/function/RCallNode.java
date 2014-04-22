@@ -269,8 +269,8 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            RArguments argsObject = RArguments.create(function, arguments.executeArray(frame));
-            return function.call(frame.pack(), argsObject);
+            Object[] argsObject = RArguments.create(function, arguments.executeArray(frame));
+            return function.call(frame, argsObject);
         }
 
     }
@@ -286,8 +286,8 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
-            RArguments argsObject = RArguments.create(function, permuteArguments(function, arguments.executeArray(frame), arguments.getNames()));
-            return function.call(frame.pack(), argsObject);
+            Object[] argsObject = RArguments.create(function, permuteArguments(function, arguments.executeArray(frame), arguments.getNames()));
+            return function.call(frame, argsObject);
         }
 
         private Object[] permuteArguments(RFunction function, Object[] evaluatedArgs, Object[] actualNames) {

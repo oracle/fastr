@@ -36,9 +36,9 @@ public abstract class AccessEnclosingFrameNode extends RNode {
     @Specialization
     @ExplodeLoop
     public MaterializedFrame doMaterializedFrame(VirtualFrame frame, int level) {
-        MaterializedFrame enclosingFrame = RArguments.get(frame).getFunction().getEnclosingFrame();
+        MaterializedFrame enclosingFrame = RArguments.getFunction(frame).getEnclosingFrame();
         for (int i = 1; i < level; i++) {
-            enclosingFrame = RArguments.get(enclosingFrame).getFunction().getEnclosingFrame();
+            enclosingFrame = RArguments.getFunction(enclosingFrame).getEnclosingFrame();
         }
         return enclosingFrame;
     }

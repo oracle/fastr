@@ -54,11 +54,10 @@ public abstract class UseMethod extends RBuiltinNode {
     @Specialization
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RMissing arg) {
         controlVisibility();
-        RArguments args = frame.getArguments(RArguments.class);
-        if (args == null || args.getLength() == 0 || args.getArgument(0) == null) {
+        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
             throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
         }
-        Object enclosingArg = args.getArgument(0);
+        Object enclosingArg = RArguments.getArgument(frame, 0);
         if (enclosingArg instanceof Byte) {
             return useMethod(frame, generic, (byte) enclosingArg);
         }

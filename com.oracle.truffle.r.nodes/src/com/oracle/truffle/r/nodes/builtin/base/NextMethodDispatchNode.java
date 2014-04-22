@@ -62,7 +62,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
 
     @Override
     protected void unsetEnvironment(VirtualFrame frame) {
-        targetFunction.setEnclosingFrame(targetFunction.getEnclosingFrame().getArguments(RArguments.class).getEnclosingFrame());
+        targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(targetFunction.getEnclosingFrame()));
     }
 
     private boolean isSame() {
@@ -78,7 +78,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
 
     private void findTargetFunction(VirtualFrame frame) {
         int nextClassIndex = 0;
-        String currentFunctionName = storedFunctionName == null ? frame.getArguments(RArguments.class).getFunction().getName() : storedFunctionName;
+        String currentFunctionName = storedFunctionName == null ? RArguments.getFunction(frame).getName() : storedFunctionName;
         for (int i = 0; i < type.getLength(); ++i) {
             if (RRuntime.toString(new StringBuffer(baseName).append(RRuntime.RDOT).append(type.getDataAt(i))).equals(currentFunctionName)) {
                 nextClassIndex = i + 1;
@@ -122,10 +122,9 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (argNodes != null) {
             return;
         }
-        final RArguments currentArguments = frame.getArguments(RArguments.class);
         // Merge arguments passed to current function with arguments passed to NextMethod call.
-        final Object[] mergedArgs = Arrays.copyOf(currentArguments.getArgumentsArray(), currentArguments.getLength() + args.length);
-        System.arraycopy(args, 0, mergedArgs, currentArguments.getLength(), args.length);
+        final Object[] mergedArgs = Arrays.copyOf(RArguments.getArgumentsArray(frame), RArguments.getArgumentsLength(frame) + args.length);
+        System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
         argNodes = new RNode[mergedArgs.length];
         for (int i = 0; i < mergedArgs.length; ++i) {
             argNodes[i] = ConstantNode.create(mergedArgs[i]);
@@ -133,9 +132,8 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     }
 
     private void setEnvironment() {
-        final RArguments arguments = RArguments.create();
-        arguments.setEnclosingFrame(targetFunction.getEnclosingFrame());
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(null, arguments, new FrameDescriptor());
+        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
+        RArguments.setEnclosingFrame(newFrame, targetFunction.getEnclosingFrame());
         wvnMethod = initWvn(wvnMethod, RRuntime.RDotMethod);
         if (storedFunctionName != null) {
             wvnMethod.execute(newFrame, storedFunctionName);

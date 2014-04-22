@@ -88,7 +88,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         while (slot == null && !REnvironment.isGlobalEnvFrame(frm)) {
             frm = encl;
             slot = frm.getFrameDescriptor().findFrameSlot(x);
-            encl = frm.getArguments(RArguments.class).getEnclosingFrame();
+            encl = RArguments.getEnclosingFrame(frm);
         }
 
         if (slot == null) {

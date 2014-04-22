@@ -72,11 +72,10 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
-        RArguments enclArgs = frame.getArguments(RArguments.class);
-        if (enclArgs == null || enclArgs.getLength() == 0 || enclArgs.getArgument(0) == null || !(enclArgs.getArgument(0) instanceof RAbstractVector)) {
+        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
             throw RError.getObjectNotSpecified(getEncapsulatingSourceSection());
         }
-        RAbstractVector enclosingArg = (RAbstractVector) enclArgs.getArgument(0);
+        RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
             throw RError.getObjectNotSpecified(getEncapsulatingSourceSection());
         }

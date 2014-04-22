@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -49,20 +50,19 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public REnvironment asEnvironment(VirtualFrame frame, double dpos) {
+        public REnvironment asEnvironment(double dpos) {
             controlVisibility();
-            return asEnvironment(frame, (int) dpos);
+            return asEnvironment((int) dpos);
         }
 
         @Specialization
-        public REnvironment asEnvironment(VirtualFrame frame, int pos) {
+        public REnvironment asEnvironment(int pos) {
             controlVisibility();
             if (pos == -1) {
-                PackedFrame caller = frame.getCaller();
-                if (caller == null) {
+                Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+                if (callerFrame == null) {
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
                 } else {
-                    VirtualFrame callerFrame = (VirtualFrame) caller.unpack();
                     return callerEnvironment(callerFrame);
                 }
 
@@ -184,11 +184,11 @@ public class EnvFunctions {
     public abstract static class Environment extends RBuiltinNode {
 
         @Specialization(order = 0)
-        public Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
+        public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
             // Owing to the .Internal, the caller is environment(),
             // so we need to find the caller of that
-            VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
+            Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
             return callerEnvironment(callerFrame);
         }
 
@@ -381,15 +381,15 @@ public class EnvFunctions {
         }
     }
 
-    static RFunction frameToFunction(VirtualFrame frame) {
-        return frame.getArguments(RArguments.class).getFunction();
+    static RFunction frameToFunction(Frame frame) {
+        return RArguments.getFunction(frame);
     }
 
     /**
      * Handles the common case where the caller is the global environment and is therefore not an
      * {@link com.oracle.truffle.r.runtime.REnvironment.Function} function environment.
      */
-    static REnvironment callerEnvironment(VirtualFrame callerFrame) {
+    static REnvironment callerEnvironment(Frame callerFrame) {
         RFunction callerFunc = frameToFunction(callerFrame);
         if (callerFunc == null) {
             return REnvironment.globalEnv();
@@ -414,8 +414,7 @@ public class EnvFunctions {
             return REnvironment.globalEnv();
         } else {
             // How do we get the RFunction associated with enclosingFrame?
-            RArguments args = enclosingFrame.getArguments(RArguments.class);
-            return REnvironment.Function.create(lexicalChain(args.getFunction()), enclosingFrame);
+            return REnvironment.Function.create(lexicalChain(RArguments.getFunction(enclosingFrame)), enclosingFrame);
         }
     }
 

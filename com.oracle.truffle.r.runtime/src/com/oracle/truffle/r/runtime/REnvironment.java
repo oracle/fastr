@@ -386,7 +386,7 @@ public abstract class REnvironment {
      * Helper method to comply with constructor ordering rules.
      */
     private static FrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
-        frame.getArguments(RArguments.class).setEnclosingFrame(parent.getFrame());
+        RArguments.setEnclosingFrame(frame, parent.getFrame());
         return new TruffleFrameAccess(frame.materialize());
     }
 

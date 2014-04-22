@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -31,29 +32,29 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     @Override
     public DispatchNode.FunctionCall execute(VirtualFrame frame) {
-        VirtualFrame callerFrame = (VirtualFrame) frame.getCaller().unpack();
+        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         if (targetFunction != null && isFirst && findFunction(targetFunctionName, callerFrame)) {
             assert (funCall != null);
         } else {
             findTargetFunction(callerFrame);
-            initArgNodes(frame.getArguments(RArguments.class));
+            initArgNodes(frame);
             funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
         }
         setEnvironment(frame);
         return funCall;
     }
 
-    private void initArgNodes(RArguments arguments) {
+    private void initArgNodes(VirtualFrame frame) {
         if (argNodes != null) {
             return;
         }
-        argNodes = new RNode[arguments.getLength()];
-        for (int i = 0; i < arguments.getLength(); ++i) {
-            argNodes[i] = ConstantNode.create(arguments.getArgument(i));
+        argNodes = new RNode[RArguments.getArgumentsLength(frame)];
+        for (int i = 0; i < RArguments.getArgumentsLength(frame); ++i) {
+            argNodes[i] = ConstantNode.create(RArguments.getArgument(frame, i));
         }
     }
 
-    private void findTargetFunction(VirtualFrame callerFrame) {
+    private void findTargetFunction(Frame callerFrame) {
         for (int i = 0; i < this.type.getLength(); ++i) {
             findFunction(this.genericName, this.type.getDataAt(i), callerFrame);
             if (targetFunction != null) {
@@ -81,12 +82,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private void setEnvironment(VirtualFrame frame) {
-        genCallEnv = frame.getCaller().unpack().materialize();
+        genCallEnv = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         wvnMethod = initWvn(wvnMethod, RRuntime.RDotMethod);
         wvnMethod.execute(frame, targetFunctionName);
         defineVars(frame);
-        storedEnclosingFrame = frame.getArguments(RArguments.class).getEnclosingFrame();
-        frame.getArguments(RArguments.class).setEnclosingFrame(targetFunction.getEnclosingFrame());
+        storedEnclosingFrame = RArguments.getEnclosingFrame(frame);
+        RArguments.setEnclosingFrame(frame, targetFunction.getEnclosingFrame());
         targetFunction.setEnclosingFrame(frame.materialize());
     }
 
@@ -94,7 +95,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     protected void unsetEnvironment(VirtualFrame frame) {
         // Remove all generic variables added by defineVars
         removeVars(frame);
-        targetFunction.setEnclosingFrame(frame.getArguments(RArguments.class).getEnclosingFrame());
-        frame.getArguments(RArguments.class).setEnclosingFrame(storedEnclosingFrame);
+        targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(frame));
+        RArguments.setEnclosingFrame(frame, storedEnclosingFrame);
     }
 }

@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -72,15 +74,24 @@ public final class RFunction extends RScalar {
         return enclosingFrame;
     }
 
-    public Object call() {
-        return target.call(null, RArguments.create());
-    }
-
-    public Object call(PackedFrame pack, RArguments argsObject) {
-        return target.call(pack, argsObject);
+    public Object call(VirtualFrame frame, Object[] argsObject) {
+        return DefaultCallNode.callProxy(MATERIALIZED_FRAME_NOTIFY, target, frame, argsObject);
     }
 
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
     }
+
+    private static final MaterializedFrameNotify MATERIALIZED_FRAME_NOTIFY = new MaterializedFrameNotify() {
+
+        public FrameAccess getOutsideFrameAccess() {
+            return FrameAccess.MATERIALIZE;
+        }
+
+        public void setOutsideFrameAccess(FrameAccess outsideFrameAccess) {
+            Utils.fatalError("should not be called");
+        }
+
+    };
+
 }

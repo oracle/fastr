@@ -55,14 +55,13 @@ public abstract class Apply extends RBuiltinNode {
         final int rows = xdim == null ? x.getLength() : xdim[0];
         final int cols = xdim == null ? 1 : xdim[1];
         double[] result = new double[rows];
-        PackedFrame pFrame = frame.pack();
         for (int row = 0; row < rows; ++row) {
             double[] rowData = new double[cols];
             for (int i = 0; i < cols; ++i) {
                 rowData[i] = x.getDataAt(i * rows + row);
             }
             RDoubleVector rowVec = RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR);
-            result[row] = (double) executeFunction(pFrame, fun, rowVec);
+            result[row] = (double) executeFunction(frame, fun, rowVec);
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
@@ -75,14 +74,13 @@ public abstract class Apply extends RBuiltinNode {
         final int rows = xdim == null ? x.getLength() : xdim[0];
         final int cols = xdim == null ? 1 : xdim[1];
         double[] result = new double[cols];
-        PackedFrame pFrame = frame.pack();
         for (int col = 0; col < cols; ++col) {
             double[] colData = new double[rows];
             for (int i = 0; i < rows; ++i) {
                 colData[i] = x.getDataAt(col * rows + i);
             }
             RDoubleVector colVec = RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR);
-            result[col] = (double) executeFunction(pFrame, fun, colVec);
+            result[col] = (double) executeFunction(frame, fun, colVec);
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
@@ -97,9 +95,9 @@ public abstract class Apply extends RBuiltinNode {
         return margin == 2.0;
     }
 
-    private static Object executeFunction(PackedFrame pFrame, RFunction fun, Object input) {
-        RArguments args = RArguments.create(fun, new Object[]{input});
-        return fun.call(pFrame, args);
+    private static Object executeFunction(VirtualFrame frame, RFunction fun, Object input) {
+        Object[] args = RArguments.create(fun, new Object[]{input});
+        return fun.call(frame, args);
     }
 
 }

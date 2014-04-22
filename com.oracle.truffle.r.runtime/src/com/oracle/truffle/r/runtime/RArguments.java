@@ -22,77 +22,75 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public final class RArguments extends Arguments {
+/**
+ * Provide access to arguments contained in frames. This is a purely static class. It defines, by
+ * means of slot offsets, where in a frame certain information is stored, such as the function
+ * executed in the frame.
+ */
+public final class RArguments {
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    private final RFunction function;
-    private MaterializedFrame enclosingFrame;
-    private final Object[] arguments;
-    private final Object[] names;
 
-    private RArguments(RFunction function, MaterializedFrame enclosingFrame, Object[] arguments, Object[] names) {
-        this.function = function;
-        this.enclosingFrame = enclosingFrame;
-        this.arguments = arguments;
-        this.names = names;
+    private static final int INDEX_FUNCTION = 0;
+    private static final int INDEX_ENCLOSING_FRAME = 1;
+    private static final int INDEX_ARGUMENTS = 2;
+    private static final int INDEX_NAMES = 3;
+
+    private RArguments() {
     }
 
-    public RFunction getFunction() {
-        return function;
+    public static RFunction getFunction(Frame frame) {
+        return (RFunction) frame.getArguments()[INDEX_FUNCTION];
     }
 
-    public Object[] getArgumentsArray() {
-        return arguments;
-    }
-
-    public static RArguments get(Frame frame) {
-        return frame.getArguments(RArguments.class);
-    }
-
-    public static RArguments create() {
+    public static Object[] create() {
         return create(null, null, EMPTY_OBJECT_ARRAY);
     }
 
-    public static RArguments create(RFunction functionObj) {
+    public static Object[] create(RFunction functionObj) {
         return create(functionObj, EMPTY_OBJECT_ARRAY);
     }
 
-    public static RArguments create(RFunction functionObj, Object[] evaluatedArgs) {
+    public static Object[] create(RFunction functionObj, Object[] evaluatedArgs) {
         return create(functionObj, functionObj.getEnclosingFrame(), evaluatedArgs);
     }
 
-    public static RArguments create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
+    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
         return create(functionObj, enclosingFrame, evaluatedArgs, EMPTY_OBJECT_ARRAY);
     }
 
-    public static RArguments create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, Object[] names) {
-        return new RArguments(functionObj, enclosingFrame, evaluatedArgs, names);
+    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, Object[] names) {
+        return new Object[]{functionObj, enclosingFrame, evaluatedArgs, names};
     }
 
-    public Object getArgument(int argIndex) {
-        return arguments[argIndex];
+    public static Object[] getArgumentsArray(Frame frame) {
+        return (Object[]) frame.getArguments()[INDEX_ARGUMENTS];
     }
 
-    public int getLength() {
-        return arguments.length;
+    public static Object getArgument(Frame frame, int argIndex) {
+        return getArgumentsArray(frame)[argIndex];
     }
 
-    public MaterializedFrame getEnclosingFrame() {
-        return enclosingFrame;
+    public static int getArgumentsLength(Frame frame) {
+        return getArgumentsArray(frame).length;
     }
 
-    public Object[] getNames() {
-        return names;
+    public static MaterializedFrame getEnclosingFrame(Frame frame) {
+        return (MaterializedFrame) frame.getArguments()[INDEX_ENCLOSING_FRAME];
     }
 
-    public void setEnclosingFrame(MaterializedFrame frame) {
-        this.enclosingFrame = frame;
-        if (this.function != null) {
-            this.function.setEnclosingFrame(frame);
+    public static Object[] getNames(Frame frame) {
+        return (Object[]) frame.getArguments()[INDEX_NAMES];
+    }
+
+    public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
+        Object[] arguments = frame.getArguments();
+        arguments[INDEX_ENCLOSING_FRAME] = encl;
+        if (arguments[INDEX_FUNCTION] != null) {
+            ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
         }
     }
 }

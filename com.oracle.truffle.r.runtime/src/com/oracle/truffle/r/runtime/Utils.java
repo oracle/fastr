@@ -24,8 +24,11 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.nio.charset.*;
+import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -189,6 +192,32 @@ public final class Utils {
             UTF8 = Charset.forName("UTF-8");
         }
         return UTF8;
+    }
+
+    /**
+     * Retrieve a caller frame from the call stack. The level indicates how many frames have to be
+     * skipped; 1 means the caller of the current frame.
+     */
+    public static Frame getCallerFrame(FrameAccess fa, int level) {
+        Iterator<FrameInstance> it = Truffle.getRuntime().getStackTrace().iterator();
+        if (!it.hasNext()) {
+            return null;
+        }
+        FrameInstance fi = it.next(); // current frame: discard
+        for (int i = 0; i < level; ++i) {
+            if (!it.hasNext()) {
+                return null;
+            }
+            fi = it.next();
+        }
+        return fi.getFrame(fa, false);
+    }
+
+    /**
+     * Retrieve the caller frame of the current frame.
+     */
+    public static Frame getCallerFrame(FrameAccess fa) {
+        return getCallerFrame(fa, 0);
     }
 
 }

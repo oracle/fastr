@@ -172,7 +172,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     break;
                 }
                 assumptions.add(FrameSlotNode.getAssumption(currentFrame, symbol));
-                currentFrame = RArguments.get(currentFrame).getEnclosingFrame();
+                currentFrame = RArguments.getEnclosingFrame(currentFrame);
             } while (currentFrame != null);
             return assumptions;
         }
@@ -242,7 +242,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     return result;
                 }
             }
-            return nextNode.execute(frame, RArguments.get(frame).getEnclosingFrame());
+            return nextNode.execute(frame, RArguments.getEnclosingFrame(frame));
         }
 
         @Override
@@ -312,7 +312,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     return result;
                 }
             }
-            return nextNode.execute(frame, RArguments.get(enclosingFrame).getEnclosingFrame());
+            return nextNode.execute(frame, RArguments.getEnclosingFrame(enclosingFrame));
         }
     }
 

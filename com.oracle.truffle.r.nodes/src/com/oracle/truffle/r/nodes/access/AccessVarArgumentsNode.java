@@ -66,7 +66,7 @@ public abstract class AccessVarArgumentsNode extends RNode {
 
         @Override
         public Object[] executeArray(VirtualFrame frame) {
-            return frame.getArguments(RArguments.class).getArgumentsArray();
+            return RArguments.getArgumentsArray(frame);
         }
 
     }
@@ -84,7 +84,7 @@ public abstract class AccessVarArgumentsNode extends RNode {
 
         @Override
         public Object[] executeArray(VirtualFrame frame) {
-            Object[] args = frame.getArguments(RArguments.class).getArgumentsArray();
+            Object[] args = RArguments.getArgumentsArray(frame);
             int length = args.length - index;
             if (length < 1) {
                 return EMPTY_OBJECT_ARRAY;
@@ -106,17 +106,17 @@ public abstract class AccessVarArgumentsNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            RArguments arguments = frame.getArguments(RArguments.class);
-            if (index >= arguments.getLength()) {
+            final int argLength = RArguments.getArgumentsLength(frame);
+            if (index >= argLength) {
                 return RMissing.instance;
             } else {
-                int length = arguments.getLength() - index;
+                int length = argLength - index;
                 if (length == 1) {
-                    return arguments.getArgument(index);
+                    return RArguments.getArgument(frame, index);
                 } else {
                     Object[] varArgs = new Object[length];
                     for (int i = 0; i < length; i++) {
-                        varArgs[i] = arguments.getArgument(i + index);
+                        varArgs[i] = RArguments.getArgument(frame, i + index);
                     }
                     return varArgs;
                 }
