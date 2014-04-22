@@ -333,8 +333,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
             RNode[] seq = new RNode[4];
             final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, varAST, isSuper);
-            RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-            RNode tmpVarAccess = AccessVariable.create(null, varSymbol).accept(this);
+            RNode rhsAccess = ReadVariableNode.create(null, rhsSymbol, RRuntime.TYPE_ANY, false);
+            RNode tmpVarAccess = ReadVariableNode.create(null, varSymbol, RRuntime.TYPE_ANY, false);
             int argLength = a.getArgs().size();
             if (!recursive) {
                 argLength--; // last argument == RHS
@@ -507,9 +507,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         RNode[] seq = new RNode[4];
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, u.isSuper());
-        RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-        RNode varAccess = AccessVariable.create(null, varSymbol).accept(this);
-        UpdateFieldNode ufn = UpdateFieldNodeFactory.create(varAccess, rhsAccess, RRuntime.toString(a.getFieldName()));
+        RNode rhsAccess = ReadVariableNode.create(null, rhsSymbol, RRuntime.TYPE_ANY, false);
+        RNode tmpVarAccess = ReadVariableNode.create(null, varSymbol, RRuntime.TYPE_ANY, false);
+        UpdateFieldNode ufn = UpdateFieldNodeFactory.create(tmpVarAccess, rhsAccess, RRuntime.toString(a.getFieldName()));
         return constructReplacementSuffix(seq, ufn, vSymbol, rhsSymbol, u.getSource(), u.isSuper());
     }
 
