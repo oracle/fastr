@@ -295,7 +295,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
-            return readNode.execute(frame, RArguments.get(frame).getEnclosingFrame());
+            return readNode.execute(frame, RArguments.getEnclosingFrame(frame));
         }
 
         @Override
