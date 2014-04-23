@@ -20,7 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import subprocess, tempfile, shutil, filecmp
+import subprocess, tempfile, shutil, filecmp, platform
 from os.path import join, sep
 from argparse import ArgumentParser, REMAINDER
 import mx
@@ -43,6 +43,16 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
 
 def _truffle_r_gate_body(args, tasks):
     _check_autogen_tests(False)
+
+    # workaround for Hotspot Mac OS X build problem
+    osname = platform.system()
+    if osname == 'Darwin':
+        os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
+        os.environ['USE_CLANG'] = 'true'
+        os.environ['LFLAGS'] = '-Xlinker -lstdc++'
+    t = mx_graal.Task('BuildHotSpotGraalServer: product')
+    mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
+    tasks.append(t.stop())
 
     # check that the expected test output file is up to date
     t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
@@ -134,7 +144,11 @@ def _junit_r_harness(args, vmArgs, junitArgs):
         runlistener += ':' + runlistener_arg
 
     junitArgs += ['--runlistener', runlistener]
-    return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False)
+
+    # suppress Truffle compilation by using a high threshold
+    vmArgs += ['-G:TruffleCompilationThreshold=100000']
+
+    return mx_graal.vm(vmArgs + junitArgs, vm="server", nonZeroIsFatal=False)
 
 def junit(args):
     '''run R Junit tests'''
@@ -258,4 +272,3 @@ def mx_init(suite):
         'unittest' : [unittest, ['options']],
     }
     mx.update_commands(suite, commands)
-
