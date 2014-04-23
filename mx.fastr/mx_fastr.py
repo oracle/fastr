@@ -142,7 +142,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    return mx_graal.vm(vmArgs + junitArgs, nonZeroIsFatal=False)
+    return mx_graal.vm(vmArgs + junitArgs, vm="server", nonZeroIsFatal=False)
 
 def junit(args):
     '''run R Junit tests'''
