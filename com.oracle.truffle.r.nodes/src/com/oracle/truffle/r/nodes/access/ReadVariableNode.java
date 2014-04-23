@@ -285,6 +285,31 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
+    public static final class ReadVariableSuperMaterializedNode extends ReadVariableNode {
+        @Child private ReadVariableNode readNode;
+
+        public ReadVariableSuperMaterializedNode(ReadVariableNode readNode) {
+            this.readNode = readNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return readNode.execute(frame, RArguments.get(frame).getEnclosingFrame());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            controlVisibility();
+            throw new UnsupportedOperationException();
+        }
+
+        public static ReadVariableNode create(SourceSection src, Object symbol, String mode) {
+            return new ReadVariableSuperMaterializedNode(ReadVariableNode.create(src, symbol, mode, false));
+        }
+
+    }
+
     public static final class ReadVariableMaterializedNode extends ReadVariableNode {
 
         @Child private ReadSuperVariableNode readNode;

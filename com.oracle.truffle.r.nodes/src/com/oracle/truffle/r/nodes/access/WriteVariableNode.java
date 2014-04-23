@@ -66,7 +66,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     // needed for the replacement forms of vector updates where a vector is assigned to a temporary
     // variable and then, again, to the original variable (which would cause the vector to be copied
     // each time)
-    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, int mode) {
+    protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, int mode, boolean isSuper) {
         Object newValue = value;
         if (!isArgWrite()) {
             Object frameValue;
@@ -115,7 +115,13 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                         if (mode == COPY) {
                             RVector vectorCopy = rVector.copy();
                             newValue = vectorCopy;
-                        } else if (mode != TEMP) {
+                        } else if (mode != TEMP || isSuper) {
+                            // mark shared when assigning to the enclosing frame as there must be a
+                            // distinction between variables with the same name defined in different
+                            // scopes, for example to correctly support:
+
+                            // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 } ; f()
+
                             rVector.makeShared();
                         }
                     }
@@ -218,7 +224,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
-            super.writeObjectValue(frame, frame, frameSlot, value, getMode());
+            super.writeObjectValue(frame, frame, frameSlot, value, getMode(), false);
             return value;
         }
     }
@@ -360,7 +366,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Specialization(guards = "isObjectKind")
         public Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
-            super.writeObjectValue(frame, enclosingFrame, frameSlot, value, getMode());
+            super.writeObjectValue(frame, enclosingFrame, frameSlot, value, getMode(), true);
             return value;
         }
 

@@ -20384,12 +20384,12 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleVectors_testUpdateOtherIgnore_f6ccb4168af3fd4313e35696afc3f2f5() {
+    public void TestSimpleVectors_testUpdateOther_f6ccb4168af3fd4313e35696afc3f2f5() {
         assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
     }
 
     @Test
-    public void TestSimpleVectors_testUpdateOtherIgnore_2a527d7409757c6f8ae809606cf60294() {
+    public void TestSimpleVectors_testUpdateOther_2a527d7409757c6f8ae809606cf60294() {
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
     }
 

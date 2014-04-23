@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadSuperVariableNode;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadVariableSuperMaterializedNode;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceVector;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceVectorFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
@@ -283,9 +283,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         WriteVariableNode rhsAssign = WriteVariableNode.create(rhsSymbol, rhs, false, false, WriteVariableNode.COPY);
 
-        ReadVariableNode v = isSuper ? ReadSuperVariableNode.create(vAST.getSource(), vSymbol, RRuntime.TYPE_ANY, false) : ReadVariableNode.create(vAST.getSource(), vSymbol, RRuntime.TYPE_ANY,
+        ReadVariableNode v = isSuper ? ReadVariableSuperMaterializedNode.create(vAST.getSource(), vSymbol, RRuntime.TYPE_ANY) : ReadVariableNode.create(vAST.getSource(), vSymbol, RRuntime.TYPE_ANY,
                         vAST.shouldCopyValue());
-        WriteVariableNode varAssign = WriteVariableNode.create(varSymbol, v, false, isSuper, WriteVariableNode.TEMP);
+        WriteVariableNode varAssign = WriteVariableNode.create(varSymbol, v, false, false, WriteVariableNode.TEMP);
 
         seq[0] = rhsAssign;
         seq[1] = varAssign;
@@ -296,11 +296,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     private static SequenceNode constructReplacementSuffix(RNode[] seq, RNode op, String vSymbol, Object rhsSymbol, SourceSection source, boolean isSuper) {
         // assign var, read rhs
         WriteVariableNode vAssign = WriteVariableNode.create(vSymbol, op, false, isSuper, WriteVariableNode.TEMP);
+        WriteVariableNode varReset = WriteVariableNode.create(varSymbol, ConstantNode.create(RNull.instance), false, false);
         ReadVariableNode rhsRead = ReadVariableNode.create(rhsSymbol, false);
 
         // assemble
         seq[2] = vAssign;
-        seq[3] = Invisible.create(rhsRead);
+        seq[3] = varReset;
+        seq[4] = Invisible.create(rhsRead);
         SequenceNode replacement = new SequenceNode(seq);
         replacement.assignSourceSection(source);
         return replacement;
@@ -331,7 +333,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             SimpleAccessVariable varAST = (SimpleAccessVariable) a.getVector();
             String vSymbol = RRuntime.toString(varAST.getSymbol());
 
-            RNode[] seq = new RNode[4];
+            RNode[] seq = new RNode[5];
             final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, varAST, isSuper);
             RNode rhsAccess = ReadVariableNode.create(null, rhsSymbol, RRuntime.TYPE_ANY, false);
             RNode tmpVarAccess = ReadVariableNode.create(null, varSymbol, RRuntime.TYPE_ANY, false);
@@ -417,7 +419,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         SimpleAccessVariable vAST = (SimpleAccessVariable) args.first().getValue();
         String vSymbol = RRuntime.toString(vAST.getSymbol());
 
-        RNode[] seq = new RNode[4];
+        RNode[] seq = new RNode[5];
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, n.isSuper());
 
         // massage arguments to replacement function call (replace v with tmp, append a)
@@ -505,7 +507,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
         String vSymbol = RRuntime.toString(vAST.getSymbol());
 
-        RNode[] seq = new RNode[4];
+        RNode[] seq = new RNode[5];
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, u.isSuper());
         RNode rhsAccess = ReadVariableNode.create(null, rhsSymbol, RRuntime.TYPE_ANY, false);
         RNode tmpVarAccess = ReadVariableNode.create(null, varSymbol, RRuntime.TYPE_ANY, false);
