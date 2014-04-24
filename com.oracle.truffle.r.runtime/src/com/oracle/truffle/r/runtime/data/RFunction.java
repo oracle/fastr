@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.runtime.*;
 
