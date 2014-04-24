@@ -457,19 +457,18 @@ expr_subset [ASTNode i] returns [ASTNode v]
     ;
 
 simple_expr returns [ASTNode v]
-    : i=id                              { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText(), false); }
-    | b=bool                            { $v = b; }
-    | d=DD                              { $v = AccessVariable.create(sourceSection("simple_expr/DD", d), d.getText(), false); }
-    | t=NULL                            { $v = Constant.getNull(sourceSection("simple_expr/NULL", t)); }
-    | t=INF                             { $v = Constant.createDoubleConstant(sourceSection("simple_expr/INF", t), "Inf"); }
-    | t=NAN                             { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
-    | num=number                        { $v = num; }
-    | cstr=conststring                  { $v = cstr; }
-    | id NS_GET n_ id
-    | id NS_GET_INT n_ id
-    | LPAR n_ ea=expr_or_assign n_ RPAR { $v = $ea.v; $v.setSource(sourceSection("simple_expr/OMIT_PAR", $ea.start, $ea.stop)); }
-    | s=sequence                        { $v = $s.v; }
-    | e=expr_wo_assign                  { $v = e; }
+    : i=id                                      { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText(), false); }
+    | b=bool                                    { $v = b; }
+    | d=DD                                      { $v = AccessVariable.create(sourceSection("simple_expr/DD", d), d.getText(), false); }
+    | t=NULL                                    { $v = Constant.getNull(sourceSection("simple_expr/NULL", t)); }
+    | t=INF                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/INF", t), "Inf"); }
+    | t=NAN                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
+    | num=number                                { $v = num; }
+    | cstr=conststring                          { $v = cstr; }
+    | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id { $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), Symbol.getSymbol(nsg.getText()), ArgumentList.Default.create(Constant.createStringConstant(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText()), Constant.createStringConstant(sourceSection("simple_expr/NSG/comp", comp), comp.getText()))); }
+    | LPAR n_ ea=expr_or_assign n_ RPAR         { $v = $ea.v; $v.setSource(sourceSection("simple_expr/OMIT_PAR", $ea.start, $ea.stop)); }
+    | s=sequence                                { $v = $s.v; }
+    | e=expr_wo_assign                          { $v = e; }
     ;
 
 number returns [ASTNode n]

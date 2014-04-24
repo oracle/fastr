@@ -27,10 +27,10 @@ import com.oracle.truffle.r.parser.processor.*;
 /**
  * This class exists simply to cause the annotation processor that creates the R parser/lexer files
  * to execute.
- * 
+ *
  * Note that simply changing the grammar file, R.g, will not cause regeneration, but editing this
  * file will. The suggestion is to add a line to {@link #CHANGE_HISTORY}.
- * 
+ *
  */
 @GenerateRParser
 @SuppressWarnings("unused")
@@ -46,7 +46,8 @@ public class ParserGeneration {
         "remove unused handling of --EOF--",
         "source attribution in parser AST",
         "avoid inclusion of brackets around expressions when generating source attribution",
-        "source attribution for while loops includes opening curly brace or body expression"
+        "source attribution for while loops includes opening curly brace or body expression",
+        "support :: and ::: at parser level"
     };
 
 }

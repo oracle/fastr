@@ -35,6 +35,14 @@ public interface ArgumentList extends Collection<ArgumentList.Entry> {
 
         private static final long serialVersionUID = 1L;
 
+        public static ArgumentList create(ASTNode... args) {
+            ArgumentList al = new Default();
+            for (ASTNode n : args) {
+                al.add(n);
+            }
+            return al;
+        }
+
         @Override
         public void add(ASTNode e) {
             super.add(new DefaultEntry(null, e));
