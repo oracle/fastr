@@ -25,11 +25,30 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+// @formatter:off
 /**
  * Provide access to arguments contained in frames. This is a purely static class. It defines, by
  * means of slot offsets, where in a frame certain information is stored, such as the function
  * executed in the frame.
+ *
+ * The frame layout, depicted, is as follows:
+ * <pre>
+ *                          +-------------------+
+ * INDEX_FUNCTION        -> | RFunction         |
+ *                          +-------------------+
+ * INDEX_ENCLOSING_FRAME -> | MaterializedFrame |
+ *                          +-------------------+
+ * INDEX_ARGUMENTS       -> | Object[]          |
+ *                          +-------------------+
+ * INDEX_NAMES           -> | Object[]          |
+ *                          +-------------------+
+ * </pre>
+ *
+ * All frame elements should <b>always</b> be accessed through the getter and setter functions
+ * defined in this class, as they provide a means of accessing the frame contents that is
+ * transparent to layout changes.
  */
+// @formatter:on
 public final class RArguments {
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -40,10 +59,6 @@ public final class RArguments {
     private static final int INDEX_NAMES = 3;
 
     private RArguments() {
-    }
-
-    public static RFunction getFunction(Frame frame) {
-        return (RFunction) frame.getArguments()[INDEX_FUNCTION];
     }
 
     public static Object[] create() {
@@ -64,6 +79,10 @@ public final class RArguments {
 
     public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, Object[] names) {
         return new Object[]{functionObj, enclosingFrame, evaluatedArgs, names};
+    }
+
+    public static RFunction getFunction(Frame frame) {
+        return (RFunction) frame.getArguments()[INDEX_FUNCTION];
     }
 
     public static Object[] getArgumentsArray(Frame frame) {
