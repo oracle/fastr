@@ -52,7 +52,7 @@ public abstract class RBuiltinPackage {
     private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
     private static boolean initialized;
 
-    private static void putBuiltin(String name, RBuiltinFactory factory) {
+    private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
     }
 
@@ -102,17 +102,19 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
+    private static void doLoad(Map.Entry<String, List<RLibraryLoader.Component>> entry) {
+        RLibraryLoader loader = new RLibraryLoader(entry.getKey(), entry.getValue());
+        Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
+        for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
+            NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
+            RBuiltinFactory builtinFactory = new RBuiltinFactory(new String[]{def.getKey()}, LastParameterKind.VALUE, nodeFactory, new Object[0]);
+            putBuiltin(def.getKey(), builtinFactory);
+        }
+    }
+
     public static void initialize() {
         if (!initialized) {
-            for (Map.Entry<String, List<RLibraryLoader.Component>> entry : snippetResources.entrySet()) {
-                RLibraryLoader loader = new RLibraryLoader(entry.getKey(), entry.getValue());
-                Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
-                for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
-                    NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
-                    RBuiltinFactory builtinFactory = new RBuiltinFactory(new String[]{def.getKey()}, LastParameterKind.VALUE, nodeFactory, new Object[0]);
-                    putBuiltin(def.getKey(), builtinFactory);
-                }
-            }
+            snippetResources.entrySet().stream().parallel().forEach(entry -> doLoad(entry));
             initialized = true;
         }
     }
