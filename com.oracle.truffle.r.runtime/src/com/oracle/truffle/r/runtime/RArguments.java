@@ -33,15 +33,25 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  * The frame layout, depicted, is as follows:
  * <pre>
- *                          +-------------------+
- * INDEX_FUNCTION        -> | RFunction         |
- *                          +-------------------+
- * INDEX_ENCLOSING_FRAME -> | MaterializedFrame |
- *                          +-------------------+
- * INDEX_ARGUMENTS       -> | Object[]          |
- *                          +-------------------+
- * INDEX_NAMES           -> | Object[]          |
- *                          +-------------------+
+ *                            +-------------------+
+ * INDEX_FUNCTION          -> | RFunction         |
+ *                            +-------------------+
+ * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame |
+ *                            +-------------------+
+ * INDEX_N_ARGS            -> | nArgs             |
+ *                            +-------------------+
+ * INDEX_N_NAMES           -> | nNames            |
+ *                            +-------------------+
+ * INDEX_ARGUMENTS         -> | arg_0             |
+ *                            | arg_1             |
+ *                            | ...               |
+ *                            | arg_(nArgs-1)     |
+ *                            +-------------------+
+ * INDEX_ARGUMENTS + nArgs -> | name_0            |
+ *                            | name_1            |
+ *                            | ...               |
+ *                            | name_(nNames-1)   |
+ *                            +-------------------+
  * </pre>
  *
  * All frame elements should <b>always</b> be accessed through the getter and setter functions
@@ -55,10 +65,25 @@ public final class RArguments {
 
     private static final int INDEX_FUNCTION = 0;
     private static final int INDEX_ENCLOSING_FRAME = 1;
-    private static final int INDEX_ARGUMENTS = 2;
-    private static final int INDEX_NAMES = 3;
+    private static final int INDEX_N_ARGS = 2;
+    private static final int INDEX_N_NAMES = 3;
+    private static final int INDEX_ARGUMENTS = 4;
+
+    /**
+     * At the least, the array contains the function, enclosing frame, and numbers of arguments and
+     * names.
+     */
+    private static final int MINIMAL_ARRAY_LENGTH = 4;
 
     private RArguments() {
+    }
+
+    private static int getNArgs(Frame frame) {
+        return (int) frame.getArguments()[INDEX_N_ARGS];
+    }
+
+    private static int getNNames(Frame frame) {
+        return (int) frame.getArguments()[INDEX_N_NAMES];
     }
 
     public static Object[] create() {
@@ -78,31 +103,42 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, Object[] names) {
-        return new Object[]{functionObj, enclosingFrame, evaluatedArgs, names};
+        Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + names.length];
+        a[INDEX_FUNCTION] = functionObj;
+        a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
+        a[INDEX_N_ARGS] = evaluatedArgs.length;
+        a[INDEX_N_NAMES] = names.length;
+        System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
+        System.arraycopy(names, 0, a, INDEX_ARGUMENTS + evaluatedArgs.length, names.length);
+        return a;
     }
 
     public static RFunction getFunction(Frame frame) {
         return (RFunction) frame.getArguments()[INDEX_FUNCTION];
     }
 
-    public static Object[] getArgumentsArray(Frame frame) {
-        return (Object[]) frame.getArguments()[INDEX_ARGUMENTS];
+    public static void copyArgumentsInto(Frame frame, Object[] target) {
+        System.arraycopy(frame.getArguments(), INDEX_ARGUMENTS, target, 0, getNArgs(frame));
     }
 
     public static Object getArgument(Frame frame, int argIndex) {
-        return getArgumentsArray(frame)[argIndex];
+        return frame.getArguments()[INDEX_ARGUMENTS + argIndex];
     }
 
     public static int getArgumentsLength(Frame frame) {
-        return getArgumentsArray(frame).length;
+        return getNArgs(frame);
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
         return (MaterializedFrame) frame.getArguments()[INDEX_ENCLOSING_FRAME];
     }
 
-    public static Object[] getNames(Frame frame) {
-        return (Object[]) frame.getArguments()[INDEX_NAMES];
+    public static Object getName(Frame frame, int nameIndex) {
+        return frame.getArguments()[INDEX_ARGUMENTS + getNArgs(frame) + nameIndex];
+    }
+
+    public static int getNamesLength(Frame frame) {
+        return getNNames(frame);
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {

@@ -66,7 +66,9 @@ public abstract class AccessVarArgumentsNode extends RNode {
 
         @Override
         public Object[] executeArray(VirtualFrame frame) {
-            return RArguments.getArgumentsArray(frame);
+            Object[] r = new Object[RArguments.getArgumentsLength(frame)];
+            RArguments.copyArgumentsInto(frame, r);
+            return r;
         }
 
     }
@@ -84,14 +86,13 @@ public abstract class AccessVarArgumentsNode extends RNode {
 
         @Override
         public Object[] executeArray(VirtualFrame frame) {
-            Object[] args = RArguments.getArgumentsArray(frame);
-            int length = args.length - index;
+            int length = RArguments.getArgumentsLength(frame) - index;
             if (length < 1) {
                 return EMPTY_OBJECT_ARRAY;
             } else {
                 Object[] varArgs = new Object[length];
                 for (int i = 0; i < length; i++) {
-                    varArgs[i] = args[i];
+                    varArgs[i] = RArguments.getArgument(frame, i);
                 }
                 return varArgs;
             }

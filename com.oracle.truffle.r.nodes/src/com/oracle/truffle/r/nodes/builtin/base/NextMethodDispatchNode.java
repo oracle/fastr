@@ -123,7 +123,8 @@ public class NextMethodDispatchNode extends S3DispatchNode {
             return;
         }
         // Merge arguments passed to current function with arguments passed to NextMethod call.
-        final Object[] mergedArgs = Arrays.copyOf(RArguments.getArgumentsArray(frame), RArguments.getArgumentsLength(frame) + args.length);
+        final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
+        RArguments.copyArgumentsInto(frame, mergedArgs);
         System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
         argNodes = new RNode[mergedArgs.length];
         for (int i = 0; i < mergedArgs.length; ++i) {
