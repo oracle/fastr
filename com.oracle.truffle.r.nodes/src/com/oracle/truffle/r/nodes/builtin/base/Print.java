@@ -49,11 +49,11 @@ public abstract class Print extends RInvisibleBuiltinNode {
 
     @Specialization
     public Object print(VirtualFrame frame, Object o) {
-        controlVisibility();
         String s = (String) prettyPrinter.executeString(frame, o, null);
         if (s != null && !s.isEmpty()) {
             printHelper(s);
         }
+        controlVisibility();
         return o;
     }
 
