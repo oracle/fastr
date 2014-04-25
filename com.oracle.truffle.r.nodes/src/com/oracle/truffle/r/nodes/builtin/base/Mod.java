@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin("Mod")
@@ -36,10 +37,15 @@ public abstract class Mod extends RBuiltinNode {
     @Child protected BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
     @Child protected Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin());
 
-    @Specialization
-    public double mod(RComplex x) {
+    @Specialization()
+    public RDoubleVector mod(RAbstractComplexVector vec) {
         controlVisibility();
-        return sqrt.sqrt(add.doDoubleDouble(pow.doDoubleInt(x.getRealPart(), 2), pow.doDoubleInt(x.getImaginaryPart(), 2)));
+        double[] data = new double[vec.getLength()];
+        for (int i = 0; i < vec.getLength(); i++) {
+            RComplex x = vec.getDataAt(i);
+            data[i] = sqrt.sqrt(add.doDoubleDouble(pow.doDoubleInt(x.getRealPart(), 2), pow.doDoubleInt(x.getImaginaryPart(), 2)));
+        }
+        return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
 }

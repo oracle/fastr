@@ -28,8 +28,9 @@ import java.nio.file.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * Handles the loading of site and user profile code. TODO implement the actual sourceing of the
- * file content.
+ * Handles the loading of site and user profile code. For the time being, owing to issues regarding
+ * environments/frames, this code only reads the files and leaves the evaluation to the caller,
+ * using {@link #siteProfile()} and {@link #userProfile()}.
  */
 public class RProfile {
     public static void initialize() {
@@ -37,32 +38,59 @@ public class RProfile {
         FileSystem fileSystem = FileSystems.getDefault();
 
         if (!RCmdOptions.NO_SITE_FILE.getValue()) {
-            String siteProfile = REnvVars.get("R_PROFILE");
-            if (siteProfile == null) {
-                siteProfile = fileSystem.getPath(rHome, "etc", "Rprofile.site").toString();
+            String siteProfilePath = REnvVars.get("R_PROFILE");
+            if (siteProfilePath == null) {
+                siteProfilePath = fileSystem.getPath(rHome, "etc", "Rprofile.site").toString();
             } else {
-                siteProfile = Utils.tildeExpand(siteProfile);
+                siteProfilePath = Utils.tildeExpand(siteProfilePath);
             }
-            if (new File(siteProfile).exists()) {
-                // TODO source the content
+            File siteProfileFile = new File(siteProfilePath);
+            if (siteProfileFile.exists()) {
+                siteProfile = source(siteProfileFile);
             }
         }
 
         if (!RCmdOptions.NO_INIT_FILE.getValue()) {
-            String userProfile = REnvVars.get("R_PROFILE_USER");
-            if (userProfile == null) {
+            String userProfilePath = REnvVars.get("R_PROFILE_USER");
+            if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";
-                userProfile = fileSystem.getPath(BaseRFFIFactory.getRFFI().getwd(), dotRenviron).toString();
-                if (!new File(userProfile).exists()) {
-                    userProfile = fileSystem.getPath(System.getProperty("user.home"), dotRenviron).toString();
+                userProfilePath = fileSystem.getPath(RFFIFactory.getRFFI().getBaseRFFI().getwd(), dotRenviron).toString();
+                if (!new File(userProfilePath).exists()) {
+                    userProfilePath = fileSystem.getPath(System.getProperty("user.home"), dotRenviron).toString();
                 }
             } else {
-                userProfile = Utils.tildeExpand(userProfile);
+                userProfilePath = Utils.tildeExpand(userProfilePath);
             }
-            if (userProfile != null && new File(userProfile).exists()) {
-                // TODO source the content
+            if (userProfilePath != null) {
+                File userProfileFile = new File(userProfilePath);
+                if (userProfileFile.exists()) {
+                    userProfile = source(userProfileFile);
+                }
             }
 
         }
+    }
+
+    private static String siteProfile;
+    private static String userProfile;
+
+    public static String siteProfile() {
+        return siteProfile;
+    }
+
+    public static String userProfile() {
+        return userProfile;
+    }
+
+    private static String source(File file) {
+        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(file))) {
+            byte[] bytes = new byte[(int) file.length()];
+            is.read(bytes);
+            return new String(bytes);
+        } catch (IOException ex) {
+            Utils.fail("unexpected error reading profile file: " + file);
+            return null;
+        }
+
     }
 }

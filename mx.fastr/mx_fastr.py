@@ -31,6 +31,16 @@ _fastr_suite = None
 
 def _runR(args, className, nonZeroIsFatal=True):
     os.environ['R_HOME'] = _fastr_suite.dir
+    # Set up path for Lapack libraries
+    osname = platform.system()
+    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'lib', osname.lower())
+    lib_value = lib_base
+    if osname == 'Darwin':
+        lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'
+        lib_value = lib_value + os.pathsep + '/usr/lib'
+    else:
+        lib_env = 'LD_LIBRARY_PATH'
+    os.environ[lib_env] = lib_value
     return mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
 def runRCommand(args, nonZeroIsFatal=True):
@@ -183,6 +193,7 @@ def rbench(args):
     parser = ArgumentParser(prog='mx rbench')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
     parser.add_argument('--gnur', action='store_true', help='run under GnuR')
+    parser.add_argument('--gnur-path', action='store', metavar='<path>', help='specify path to GnuR', default='R')
     parser.add_argument('--fail-fast', action='store_true', help='abort on first failure')
     parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
     parser.add_argument('benchmarks', nargs=REMAINDER, metavar='benchmarkgroup.name', help='list of benchmarks to run')
@@ -212,7 +223,7 @@ def rbench(args):
                     env = os.environ
                     if args.gnur_jit:
                         env['R_ENABLE_JIT'] = '3'
-                    rc = subprocess.call(['R', '--slave'] + command, env=env)
+                    rc = subprocess.call([args.gnur_path, '--slave'] + command, env=env)
                 else:
                     rc = runRCommand(command, nonZeroIsFatal=False)
                 if rc != 0:

@@ -70,7 +70,7 @@ public class REnvVars {
             String userFile = envVars.get("R_ENVIRON_USER");
             if (userFile == null) {
                 String dotRenviron = ".Renviron";
-                userFile = fileSystem.getPath(BaseRFFIFactory.getRFFI().getwd(), dotRenviron).toString();
+                userFile = fileSystem.getPath(RFFIFactory.getRFFI().getBaseRFFI().getwd(), dotRenviron).toString();
                 if (!new File(userFile).exists()) {
                     userFile = fileSystem.getPath(System.getProperty("user.home"), dotRenviron).toString();
                 }

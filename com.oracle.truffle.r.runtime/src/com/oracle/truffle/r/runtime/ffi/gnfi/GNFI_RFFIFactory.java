@@ -36,11 +36,11 @@ import com.oracle.truffle.r.runtime.ffi.*;
 /**
  * BaseRFFI using the Graal Native Function Interface (GNFI). N.B. Pointers, e.g. {@code char*} are
  * denoted as {@code long} in argument signatures.
- * 
+ *
  * N.B. This code is very unsafe!
- * 
+ *
  */
-public class GNFI_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
+public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
 
     private static NativeFunctionInterface nfi;
     private static NativeFunctionHandle malloc;
@@ -110,15 +110,6 @@ public class GNFI_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         }
     }
 
-    public Object invoke(Object handle, Object[] args) throws RFFIException {
-        Utils.fail("reflective invoke not implemented");
-        return null;
-    }
-
-    public Object getHandle(String name) {
-        return name;
-    }
-
     public int getpid() {
         NativeFunctionHandle getpid = nfi.getFunctionHandle("getpid", int.class);
         return (int) getpid.call();
@@ -168,6 +159,11 @@ public class GNFI_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
                 return CString.create(cString.address, template.length(), true);
             }
         }
+    }
+
+    public BaseRFFI getBaseRFFI() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

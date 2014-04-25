@@ -20,24 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+/**
+ * Collection of statically typed Lapack methods that are used in the {@code base} package.
+ */
+public interface LapackRFFI extends RFFI {
+    /**
+     * Return version info, mjor, minor, patch, in {@code version}.
+     */
+    void ilaver(int[] version);
 
-@RBuiltin({".Internal.setwd"})
-public abstract class Setwd extends RInvisibleBuiltinNode {
-
-    @Specialization
-    public Object setwd(String dir) {
-        controlVisibility();
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);
-        if (rc != 0) {
-            throw RError.getCannotChangeDirectory(getEncapsulatingSourceSection());
-        } else {
-            return RFFIFactory.getRFFI().getBaseRFFI().getwd();
-        }
-    }
+    /**
+     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeev.f">spec</a>. The {@code info}
+     * arg in the Fortran spec is returned as result.
+     */
+    // @formatter:off
+    int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl,
+                    double[] vr, int ldvr, double[] work, int lwork);
 }

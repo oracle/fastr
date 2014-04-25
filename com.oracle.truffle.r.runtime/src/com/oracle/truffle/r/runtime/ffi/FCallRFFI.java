@@ -20,24 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+/**
+ * Placeholder for the Fortran call FFI.
+ */
+public interface FCallRFFI {
 
-@RBuiltin({".Internal.setwd"})
-public abstract class Setwd extends RInvisibleBuiltinNode {
-
-    @Specialization
-    public Object setwd(String dir) {
-        controlVisibility();
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);
-        if (rc != 0) {
-            throw RError.getCannotChangeDirectory(getEncapsulatingSourceSection());
-        } else {
-            return RFFIFactory.getRFFI().getBaseRFFI().getwd();
-        }
-    }
 }

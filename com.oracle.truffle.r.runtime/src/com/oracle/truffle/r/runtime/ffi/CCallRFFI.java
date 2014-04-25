@@ -23,14 +23,8 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * {@link RFFIFactory} known to implement the {@link BaseRFFI} interface.
+ * Placeholder for the C call FFI.
  */
-public abstract class BaseRFFIFactory extends RFFIFactory {
-
-    protected static final BaseRFFI baseRFFI = (BaseRFFI) theRFFI;
-
-    public static BaseRFFI getRFFI() {
-        return baseRFFI;
-    }
+public interface CCallRFFI {
 
 }

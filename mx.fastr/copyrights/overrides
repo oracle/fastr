@@ -5,6 +5,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Dispatche
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Inherits.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/IsArray.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/LaFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethodDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Rnorm.java,gnu_r.copyright
@@ -79,6 +80,7 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/TreeViewer.jav
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RRandomNumberGenerator.java,hiroshima.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RRuntime.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RAccuracyInfo.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ops/BinaryArithmetic.java,gnu_r_purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ops/UnaryArithmetic.java,gnu_r_unary.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/TestBase.java,purdue.copyright

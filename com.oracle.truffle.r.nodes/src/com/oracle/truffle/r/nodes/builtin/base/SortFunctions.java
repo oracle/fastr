@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin({".Internal.setwd"})
-public abstract class Setwd extends RInvisibleBuiltinNode {
+/**
+ * Temporary minimal implementation for eigen/b25. Eventually this should be combined with
+ * {@link Order} and made consistent with {@code sort.R}.
+ *
+ */
+public class SortFunctions {
 
-    @Specialization
-    public Object setwd(String dir) {
-        controlVisibility();
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);
-        if (rc != 0) {
-            throw RError.getCannotChangeDirectory(getEncapsulatingSourceSection());
-        } else {
-            return RFFIFactory.getRFFI().getBaseRFFI().getwd();
+    @RBuiltin("sort.list")
+    public abstract static class SortList extends RBuiltinNode {
+        @Specialization
+        public RDoubleVector sortList(RDoubleVector vec, byte decreasing) {
+            controlVisibility();
+            double[] data = vec.getDataCopy();
+            Arrays.sort(data);
+            if (decreasing == RRuntime.LOGICAL_TRUE) {
+                double[] rdata = new double[data.length];
+                for (int i = 0; i < data.length; i++) {
+                    rdata[i] = data[data.length - (i + 1)];
+                }
+                data = rdata;
+            }
+            return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
         }
     }
 }

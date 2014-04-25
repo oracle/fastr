@@ -145,13 +145,14 @@ public class RRuntime {
     public static void initialize() {
         startTime = System.nanoTime();
         childTimes = new long[]{0, 0};
+        RAccuracyInfo.initialize();
         RVersionInfo.initialize();
         REnvVars.initialize();
         LibPaths.initialize();
         ROptions.initialize();
         RPackageVariables.initialize();
-        RProfile.initialize();
         TempDirPath.initialize();
+        RProfile.initialize();
     }
 
     /**

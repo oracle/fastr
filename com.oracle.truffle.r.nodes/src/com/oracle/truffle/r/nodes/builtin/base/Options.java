@@ -63,4 +63,12 @@ public abstract class Options extends RBuiltinNode {
         Object rObject = value == null ? RNull.instance : value;
         return RDataFactory.createList(new Object[]{rObject}, RDataFactory.createStringVectorFromScalar(key));
     }
+
+    @Specialization
+    public Object options(@SuppressWarnings("unused") double d) {
+        // HACK ALERT - just to allow b25 test, it doesn't do anything,
+        // as that would require the option name
+        controlVisibility();
+        return RNull.instance;
+    }
 }

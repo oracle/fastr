@@ -24,20 +24,24 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.io.*;
 import java.nio.*;
-
 import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
 import jnr.constants.platform.Errno;
 
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * A simple JNR-based factory that supports access to POSIX functions only. Access to the base
- * functions is as efficient as it can be with JNR.
+ * JNR-based factory Implements {@link BaseRFFI} and {@link LapackRFFI} directly.
  */
-public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, LapackRFFI {
+
+    // Base
+
+    @Override
+    public BaseRFFI getBaseRFFI() {
+        return this;
+    }
 
     /**
      * Functions missing from JNR POSIX.
@@ -70,11 +74,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         return this;
     }
 
-    public Object invoke(Object handle, Object[] args) throws RFFIException {
-        Utils.fail("reflective invoke not implemented");
-        return null;
-    }
-
     protected POSIX posix() {
         if (posix == null) {
             posix = POSIXFactory.getPOSIX();
@@ -104,10 +103,6 @@ public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         }
     }
 
-    public Object getHandle(String name) {
-        return name;
-    }
-
     public String readlink(String path) throws IOException {
         String s = posix().readlink(path);
         if (s == null) {
@@ -130,6 +125,84 @@ public class JNR_RFFIFactory extends BaseRFFIFactory implements BaseRFFI {
         } else {
             return new String(bb.array());
         }
+    }
+
+    // Lapack
+
+    @Override
+    public LapackRFFI getLapackRFFI() {
+        return this;
+    }
+
+    /**
+     * Fortran does call by reference for everything, which we handle with arrays. Evidently, this
+     * is not as efficient as it could be.
+     */
+    public interface Lapack {
+        // Checkstyle: stop method name
+        void ilaver_(@Out int[] major, @Out int[] minor, @Out int[] patch);
+
+        // @formatter:off
+        // Checkstyle: stop method name
+        void dgeev_(byte[] jobVL, byte[] jobVR, @In int[] n, @In double[] a, @In int[] lda, @Out double[] wr, @Out double[] wi,
+                        @Out double[] vl, @In int[] ldvl, @Out double[] vr, @In int[] ldvr,
+                        @In @Out double[] work, @In int[] lwork, @Out int[] info);
+    }
+
+    private static class LapackProvider {
+        private static Lapack lapack;
+
+        static Lapack lapack() {
+            if (lapack == null) {
+                lapack = LibraryLoader.create(Lapack.class).load("Rlapack");
+            }
+            return lapack;
+        }
+    }
+
+    private static Lapack lapack() {
+        return LapackProvider.lapack();
+    }
+
+    private static class RefScalars_ilaver {
+        static int[] major = new int[1];
+        static int[] minor = new int[1];
+        static int[] patch = new int[1];
+    }
+    public void ilaver(int[] version) {
+        lapack().ilaver_(RefScalars_ilaver.major, RefScalars_ilaver.minor, RefScalars_ilaver.patch);
+        version[0] = RefScalars_ilaver.major[0];
+        version[1] = RefScalars_ilaver.minor[0];
+        version[2] = RefScalars_ilaver.patch[0];
+    }
+
+    private static class RefScalars_dgeev {
+        static byte[] jobVL = new byte[1];
+        static byte[] jobVR = new byte[1];
+        static int[] n = new int[1];
+        static int[] lda = new int[1];
+        static int[] ldvl = new int[1];
+        static int[] ldvr = new int[1];
+        static int[] lwork = new int[1];
+        static int[] info = new int[1];
+    }
+
+    // @formatter:off
+    public int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi,
+                    double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
+        // assume single threaded calls here
+        RefScalars_dgeev.jobVL[0] = (byte) jobVL;
+        RefScalars_dgeev.jobVR[0] = (byte) jobVR;
+        RefScalars_dgeev.n[0] = n;
+        RefScalars_dgeev.lda[0] = lda;
+        RefScalars_dgeev.ldvl[0] = ldvl;
+        RefScalars_dgeev.ldvr[0] = ldvr;
+        RefScalars_dgeev.lwork[0] = lwork;
+        // @formatter:off
+        lapack().dgeev_(RefScalars_dgeev.jobVL, RefScalars_dgeev.jobVR, RefScalars_dgeev.n, a, RefScalars_dgeev.lda, wr, wi, vl,
+                        RefScalars_dgeev.ldvl, vr, RefScalars_dgeev.ldvr, work,
+                        RefScalars_dgeev.lwork, RefScalars_dgeev.info);
+        return RefScalars_dgeev.info[0];
     }
 
 }

@@ -25,18 +25,11 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Factory class for the different possible implementations of the {@loink RFFI} interface.
+ * Factory class for the different possible implementations of the {@link RFFI} interface.
  * Specification is based on system property {@value #FACTORY_CLASS_PROPERTY}. Current default is a
- * (naive) JNR-based implementation.
+ * JNR-based implementation.
  */
 public abstract class RFFIFactory {
-    public class RFFIException extends Exception {
-        private static final long serialVersionUID = -5689472664825730485L;
-
-        public RFFIException(String msg, Throwable ex) {
-            super(msg, ex);
-        }
-    }
 
     private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
     private static final String DEFAULT_FACTORY_CLASS = "com.oracle.truffle.r.runtime.ffi.jnr.JNR_RFFIFactory";
@@ -65,5 +58,20 @@ public abstract class RFFIFactory {
      * Subclass implements this method to actually create the concrete {@link RFFI} instance.
      */
     protected abstract RFFI createRFFI();
+
+    public LapackRFFI getLapackRFFI() {
+        Utils.fail("getLapackRFFI not implemented");
+        return null;
+    }
+
+    public FCallRFFI getFCallRFFI() {
+        Utils.fail("getFCallRFFI not implemented");
+        return null;
+    }
+
+    public CCallRFFI getCCallRFFI() {
+        Utils.fail("getCCallRFFI not implemented");
+        return null;
+    }
 
 }

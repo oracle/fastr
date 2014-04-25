@@ -27,9 +27,9 @@ import java.io.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * 
+ *
  * As per the GnuR spec, the tempdir() directory is identified on startup.
- * 
+ *
  */
 public class TempDirPath {
 
@@ -52,7 +52,7 @@ public class TempDirPath {
             if (!startingTempDirPath.endsWith(File.separator)) {
                 startingTempDirPath += startingTempDirPath;
             }
-            String t = BaseRFFIFactory.getRFFI().mkdtemp(startingTempDirPath + "Rtmp" + "XXXXXX");
+            String t = RFFIFactory.getRFFI().getBaseRFFI().mkdtemp(startingTempDirPath + "Rtmp" + "XXXXXX");
             if (t != null) {
                 tempDirPath = t;
             } else {

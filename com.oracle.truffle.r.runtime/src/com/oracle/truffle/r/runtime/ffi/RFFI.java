@@ -22,20 +22,28 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory.*;
-
+/**
+ * FastR foreign function interface. There are separate interfaces for the various kinds of foreign
+ * functions that are possible in R:
+ * <ul>
+ * <li>{@link BaseRFFI}: the specific, typed, foreign functions required the built-in {@code base}
+ * package.</li>
+ * <li>{@link LapackRFFI}: the specific, typed, foreign functions required by the built-in
+ * {@code Lapack} functions.</li>
+ * <li>{@link FCallRFFI}: generic Fortran function interface</li>
+ * <li>{@link CCallRFFI}: generic C call interface.
+ * </ul>
+ *
+ * These interfaces may be implemented by one or more providers, specified either when the FastR
+ * system is built or run.
+ */
 public interface RFFI {
-    /**
-     * Strawman, highly generic, function invocation mechanism.
-     * 
-     * @param handle handle to native function, type dependent on implementation
-     * @param args arguments
-     * @return the result, if any
-     */
-    Object invoke(Object handle, Object[] args) throws RFFIException;
+    BaseRFFI getBaseRFFI();
 
-    /**
-     * Return a handle for invoking function {@code name} in this {@link RFFI}.
-     */
-    Object getHandle(String name);
+    LapackRFFI getLapackRFFI();
+
+    FCallRFFI getFCallRFFI();
+
+    CCallRFFI getCCallRFFI();
+
 }

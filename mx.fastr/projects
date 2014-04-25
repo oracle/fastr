@@ -104,3 +104,9 @@ project@com.oracle.truffle.r.runtime@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime@javaCompliance=1.8
 project@com.oracle.truffle.r.runtime@workingSets=Truffle,FastR
 
+# com.oracle.truffle.r.native
+project@com.oracle.truffle.r.native@sourceDirs=
+project@com.oracle.truffle.r.native@native=true
+project@com.oracle.truffle.r.native@workingSets=FastR
+
+

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
@@ -121,6 +122,16 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         for (int i = 0; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
+        }
+        return result;
+    }
+
+    @Specialization(order = 12)
+    public RComplex doComplexVector(RComplexVector operand) {
+        RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
+        for (int i = 0; i < operand.getLength(); ++i) {
+            RComplex current = operand.getDataAt(i);
+            result = arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());
         }
         return result;
     }

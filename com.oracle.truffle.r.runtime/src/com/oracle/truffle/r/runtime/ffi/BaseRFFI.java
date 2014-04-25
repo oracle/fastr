@@ -25,11 +25,11 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.io.*;
 
 /**
- * A statically typed interface to exactly those native functions required by the base package,
- * because the functionality is not provided by the JDK. These methods do not necessarily map 1-1 to
- * a native function, they may involve the invocation of several native functions.
+ * A statically typed interface to exactly those native functions required by the R {@code base}
+ * package, because the functionality is not provided by the JDK. These methods do not necessarily
+ * map 1-1 to a native function, they may involve the invocation of several native functions.
  */
-public interface BaseRFFI extends RFFI {
+public interface BaseRFFI {
     int getpid();
 
     /**
@@ -39,14 +39,14 @@ public interface BaseRFFI extends RFFI {
 
     /**
      * Sets the current working directory to {@code dir}. (cf. Unix {@code chdir}).
-     * 
+     *
      * @return 0 if successful.
      */
     int setwd(String dir);
 
     /**
      * Try to convert a symbolic link to it's target.
-     * 
+     *
      * @param path the link path
      * @return the target if {@code path} is a link else {@code null}
      * @throws IOException for any other error except "not a link"

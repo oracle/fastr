@@ -64,7 +64,7 @@ public abstract class SysReadlink extends RBuiltinNode {
     private static String doSysReadLink(String path) {
         String s;
         try {
-            s = BaseRFFIFactory.getRFFI().readlink(path);
+            s = RFFIFactory.getRFFI().getBaseRFFI().readlink(path);
             if (s == null) {
                 s = "";
             }
