@@ -10,8 +10,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -24,7 +22,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(value = "class<-")
 public abstract class UpdateClass extends RInvisibleBuiltinNode {
 
-    private RVector resultVector;
     @Child private CastStringNode castStringNode;
     @Child private CastComplexNode castComplexNode;
     @Child private CastDoubleNode castDoubleNode;
@@ -47,18 +44,16 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     @Specialization
     public Object setClass(RAbstractVector arg, RStringVector className) {
         controlVisibility();
-        Map<String, Object> attrb = getAttributes(arg);
-        attrb.put(RRuntime.CLASS_ATTR_KEY, className);
+        RVector resultVector = getResultVector(arg);
+        resultVector.setClassAttr(className);
         return resultVector;
     }
 
     @Specialization
     public Object setClass(RAbstractVector arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        Map<String, Object> attrb = getAttributes(arg);
-        if (attrb != null) {
-            attrb.remove(RRuntime.CLASS_ATTR_KEY);
-        }
+        RVector resultVector = getResultVector(arg);
+        resultVector.setClassAttr(null);
         return resultVector;
     }
 
@@ -177,22 +172,18 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             }
             throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
         }
-        Map<String, Object> attrb = getAttributes(arg);
-        attrb.put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(className));
+
+        RVector resultVector = getResultVector(arg);
+        resultVector.setClassAttr(RDataFactory.createStringVector(className));
         return resultVector;
     }
 
-    private Map<String, Object> getAttributes(RAbstractVector arg) {
-        resultVector = arg.materialize();
+    private static RVector getResultVector(RAbstractVector arg) {
+        RVector resultVector = arg.materialize();
         if (resultVector.isShared()) {
             resultVector = resultVector.copy();
         }
-        Map<String, Object> attrb = resultVector.getAttributes();
-        if (attrb == null) {
-            attrb = new LinkedHashMap<>();
-            resultVector.setAttributes((LinkedHashMap<String, Object>) attrb);
-        }
-        return attrb;
+        return resultVector;
     }
 
     private void initCastString() {

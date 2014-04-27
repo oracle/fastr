@@ -2651,4 +2651,19 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }
 
+    @Test
+    public void testIsVector() {
+        assertEval("{ is.vector(1) }");
+        assertEval("{ is.vector(1:3) }");
+        assertEval("{ is.vector(NULL) }");
+        assertEval("{ x<-c(1,3); is.vector(x, \"double\"); }");
+        assertEval("{ x<-c(1,3); is.vector(x, \"integer\"); }");
+        assertEval("{ x<-c(1:3); is.vector(x, \"double\"); }");
+        assertEval("{ x<-c(1:3); is.vector(x, \"integer\"); }");
+        assertEval("{ x<-c(1,3); is.vector(x, \"d\"); }");
+        assertEval("{ x<-list(1,3); }");
+        assertEval("{ x<-c(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+        assertEval("{ x<-list(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+    }
+
 }

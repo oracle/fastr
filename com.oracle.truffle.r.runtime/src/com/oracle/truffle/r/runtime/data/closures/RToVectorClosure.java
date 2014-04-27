@@ -36,6 +36,10 @@ public abstract class RToVectorClosure implements RAbstractVector {
         this.vector = vector;
     }
 
+    public boolean isDataFrame() {
+        return vector.isDataFrame();
+    }
+
     public int getLength() {
         return vector.getLength();
     }

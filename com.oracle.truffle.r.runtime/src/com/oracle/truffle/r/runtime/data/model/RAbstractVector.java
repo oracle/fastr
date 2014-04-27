@@ -29,6 +29,8 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractVector {
 
+    boolean isDataFrame();
+
     int getLength();
 
     boolean isComplete();

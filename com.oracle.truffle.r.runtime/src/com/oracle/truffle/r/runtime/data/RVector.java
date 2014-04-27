@@ -53,6 +53,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
     private HashMap<String, Object> attributes;
     private boolean shared;
     private boolean temporary = true;
+    private boolean isDataFrame;
 
     protected RVector(boolean complete, int length, int[] dimensions, Object names) {
         this.complete = complete;
@@ -79,6 +80,10 @@ public abstract class RVector extends RBounded implements RAbstractVector {
 
     protected RVector(boolean complete, int length, int[] dimensions) {
         this(complete, length, dimensions, null);
+    }
+
+    public boolean isDataFrame() {
+        return isDataFrame;
     }
 
     private void setMatrixDimensions(int[] newDimensions, int vectorLength) {
@@ -283,6 +288,31 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, true));
         }
         this.dimensions = newDimensions;
+    }
+
+    public final RStringVector getClassAttr() {
+        if (attributes == null) {
+            return null;
+        } else {
+            return (RStringVector) attributes.get(RRuntime.CLASS_ATTR_KEY);
+        }
+    }
+
+    public final void setClassAttr(RStringVector classAttr) {
+        if (attributes == null && classAttr != null && classAttr.getLength() != 0) {
+            attributes = new LinkedHashMap<>();
+        }
+        if (attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
+            attributes.remove(RRuntime.CLASS_ATTR_KEY);
+        } else if (classAttr != null && classAttr.getLength() != 0) {
+            for (int i = 0; i < classAttr.getLength(); i++) {
+                if (classAttr.getDataAt(i).equals(RRuntime.TYPE_DATA_FRAME)) {
+                    this.isDataFrame = true;
+                    break;
+                }
+            }
+            putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
+        }
     }
 
     private void setAttributes(RVector result) {

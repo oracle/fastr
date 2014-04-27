@@ -98,10 +98,24 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return updateNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
+        } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+            resultVector.setClassAttr(null);
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
         return resultVector;
+    }
+
+    public static RVector setClassAttrFromObject(RVector resultVector, Object value, SourceSection sourceSection) {
+        if (value instanceof RStringVector) {
+            resultVector.setClassAttr((RStringVector) value);
+            return resultVector;
+        }
+        if (value instanceof String) {
+            resultVector.setClassAttr(RDataFactory.createStringVector((String) value));
+            return resultVector;
+        }
+        throw RError.getInvalidClassAttr(sourceSection);
     }
 
     @Specialization(order = 1, guards = "!nullValue")
@@ -121,24 +135,11 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return updateNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
+        } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+            return setClassAttrFromObject(resultVector, value, getEncapsulatingSourceSection());
         } else {
             if (resultVector.getAttributes() == null) {
                 resultVector.setAttributes(new LinkedHashMap<String, Object>());
-            }
-            if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                if (value instanceof RString) {
-                    resultVector.getAttributes().put(name, RDataFactory.createStringVector(((RString) value).getValue()));
-                    return resultVector;
-                }
-                if (value instanceof RStringVector) {
-                    resultVector.getAttributes().put(name, value);
-                    return resultVector;
-                }
-                if (value instanceof String) {
-                    resultVector.getAttributes().put(name, RDataFactory.createStringVector((String) value));
-                    return resultVector;
-                }
-                throw RError.getInvalidClassAttr(getEncapsulatingSourceSection());
             }
             resultVector.getAttributes().put(name, value);
         }

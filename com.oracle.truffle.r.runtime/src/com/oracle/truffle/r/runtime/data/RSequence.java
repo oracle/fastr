@@ -34,6 +34,10 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         this.length = length;
     }
 
+    public boolean isDataFrame() {
+        return false;
+    }
+
     @Override
     protected final int internalGetLength() {
         return length;

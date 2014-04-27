@@ -7504,6 +7504,61 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsVector_cb0db6a67f760c6ddb916a5329044870() {
+        assertEval("{ is.vector(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_46dc006dec26cdddf0cd6237d43429b8() {
+        assertEval("{ is.vector(1:3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_aba850b02b8647e42263281fed544a73() {
+        assertEval("{ is.vector(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_3c5878f346be3c8fbae71bdaae429e50() {
+        assertEval("{ x<-c(1,3); is.vector(x, \"double\"); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_f12b9a0268148c25d52aca64e8029b52() {
+        assertEval("{ x<-c(1,3); is.vector(x, \"integer\"); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_fd5ab9b0c0bd8a424837feb3ddab3875() {
+        assertEval("{ x<-c(1:3); is.vector(x, \"double\"); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_2b8ccc6bb6fec846f427ab5122886e81() {
+        assertEval("{ x<-c(1:3); is.vector(x, \"integer\"); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_4af94b914d916000a03419dbbfcfddd5() {
+        assertEval("{ x<-c(1,3); is.vector(x, \"d\"); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_5670028b1b0a31ebc36efa57826ba934() {
+        assertEval("{ x<-list(1,3); }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_29131c8f041a5fe50296f44a05a8632a() {
+        assertEval("{ x<-c(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsVector_ad663eb70f3fac562e069578c81f4835() {
+        assertEval("{ x<-list(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testLength_31389093e21d303bed26828ab536576b() {
         assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
     }
@@ -12366,6 +12421,66 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleComparison_testVectorsIgnore_9ad8bb825e6c5d11db011ae03b0c67c1() {
         assertEvalError("{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_d6c0af441e754a72f4efaea8bfe20102() {
+        assertEval("{ is.data.frame(1) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_82fc13405212968cd9531f9e5ced03fe() {
+        assertEval("{ is.data.frame(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_a8f60bccd30980e73df06d83a450851a() {
+        assertEval("{ x<-c(1,2); is.data.frame(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_6944cabe4ceeba8bcabe0c187bb9b820() {
+        assertEval("{ x<-list(1,2); is.data.frame(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_142ebfa4f64e1520a17e3a114cea8669() {
+        assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-\"data.frame\"; is.data.frame(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_402b4679d94a6d9082df746260ec79b2() {
+        assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-\"data.frame\"; is.vector(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_b486f776086a50f4da7b9043a8326c58() {
+        assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-\"data.frame\"; is.list(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_077329d9b6cf5c363274db4a0dd8998d() {
+        assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-c(\"foo\", \"data.frame\", \"bar\"); is.data.frame(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_76c81a9e8e155cd8e038f55164e2d5b2() {
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; is.data.frame(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_172058a41cbbf0e450dd69171a0a3c9e() {
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; is.vector(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_33e3d083499f9e7147f564efd22b35e0() {
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; is.list(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_cc6d76d2bfca7352726f45d78aea9dea() {
+        assertEval("{ x<-c(7,42); class(x)<-c(\"foo\", \"data.frame\", \"bar\"); is.data.frame(x) }");
     }
 
     @Test

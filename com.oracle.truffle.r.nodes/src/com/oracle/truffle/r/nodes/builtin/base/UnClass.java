@@ -13,7 +13,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -28,7 +27,7 @@ public abstract class UnClass extends RBuiltinNode {
             if (resultVector.isShared()) {
                 resultVector = resultVector.copy();
             }
-            resultVector.getAttributes().remove(RRuntime.CLASS_ATTR_KEY);
+            resultVector.setClassAttr(null);
             return resultVector;
         }
         return arg;

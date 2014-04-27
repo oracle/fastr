@@ -83,6 +83,7 @@ public class RRuntime {
     public static final String TYPE_CLOSURE = new String("closure");
     public static final String TYPE_BUILTIN = new String("builtin");
     public static final String TYPE_SPECIAL = new String("special");
+    public static final String TYPE_DATA_FRAME = new String("data.frame");
 
     public static final String TYPE_NUMERIC_CAP = new String("Numeric");
     public static final String TYPE_INTEGER_CAP = new String("Integer");

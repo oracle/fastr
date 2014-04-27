@@ -205,8 +205,8 @@ public abstract class AsVector extends RBuiltinNode {
         return x.getElementClass() != RRaw.class && RRuntime.TYPE_RAW.equals(mode);
     }
 
-    protected boolean castToList(@SuppressWarnings("unused") RAbstractVector x, String mode) {
-        return mode.equals("list");
+    protected boolean castToList(RAbstractVector x, String mode) {
+        return x.getElementClass() != Object.class && mode.equals("list");
     }
 
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
