@@ -24,19 +24,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.rng.*;
 
+/**
+ * TODO GnuR checks/updates {@code .Random.seed} across this call.
+ */
 @RBuiltin("runif")
 public abstract class Runif extends RBuiltinNode {
 
     @Specialization
     public RDoubleVector runif(int n) {
         controlVisibility();
-        RRandomNumberGenerator rng = RContext.getInstance().getRandomNumberGenerator();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
-            result[i] = rng.genrandDouble();
+            result[i] = RRNG.get().genrandDouble();
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }

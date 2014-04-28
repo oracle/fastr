@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.simple;
 import org.junit.*;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.test.*;
 
 public class TestRNG extends TestBase {
@@ -41,8 +42,8 @@ public class TestRNG extends TestBase {
     }
 
     private static double[] runifWithSeed(int n, int seed) {
-        RRandomNumberGenerator rng = new RRandomNumberGenerator();
-        rng.setSeed(seed);
+        RRNG.Generator rng = RRNG.get();
+        // FIXME rng.setSeed(seed);
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
             result[i] = rng.genrandDouble();
@@ -61,7 +62,7 @@ public class TestRNG extends TestBase {
     @Test
     public void testDefault() {
         // .Random.seed[2] = 625L; runif(10)
-        RRandomNumberGenerator rng = new RRandomNumberGenerator();
+        RRNG.Generator rng = RRNG.get();
         int n = 10;
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {

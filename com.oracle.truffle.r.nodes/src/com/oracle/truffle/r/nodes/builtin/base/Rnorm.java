@@ -17,6 +17,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.rng.*;
 
 /*
  * Logic derived from GNU-R, see inline comments.
@@ -39,7 +40,7 @@ public abstract class Rnorm extends RBuiltinNode {
     @Specialization
     public RDoubleVector rnorm(int n, double mean, double standardd) {
         controlVisibility();
-        RRandomNumberGenerator rng = RContext.getInstance().getRandomNumberGenerator();
+        RRNG.Generator rng = RRNG.get();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
             result[i] = generateNorm(mean, standardd, rng);
@@ -60,12 +61,12 @@ public abstract class Rnorm extends RBuiltinNode {
     }
 
     // from GNUR: rnorm.c
-    private static double generateNorm(double mean, double standardd, RRandomNumberGenerator rng) {
+    private static double generateNorm(double mean, double standardd, RRNG.Generator rng) {
         return mean + standardd * normRand(rng);
     }
 
     // from GNUR: snorm.c
-    private static double normRand(RRandomNumberGenerator rng) {
+    private static double normRand(RRNG.Generator rng) {
         double u1;
 
         // case INVERSION:

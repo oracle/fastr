@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("set.seed")
-public abstract class SetSeed extends RInvisibleBuiltinNode {
-
-    @Specialization
-    public RNull setseed(int n) {
-        controlVisibility();
-        RContext.getInstance().getRandomNumberGenerator().setSeed(n);
-        return RNull.instance;
-    }
+/**
+ * TODO Implement completely. Currently just what is needed for {@code set.seed}.
+ */
+@RBuiltin(".Internal.pmatch")
+public abstract class PMatch extends RBuiltinNode {
 
     @Specialization
-    public RNull setseed(double d) {
-        controlVisibility();
-        return setseed((int) d);
+    public RIntVector doPMatch(String x, RAbstractStringVector table) {
+        ArrayList<Integer> matches = new ArrayList<>(table.getLength());
+        for (int i = 0; i < table.getLength(); i++) {
+            if (x.equals(table.getDataAt(i))) {
+                matches.add(i + 1);
+            }
+        }
+        int size = matches.size();
+        if (size == 0) {
+            return RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA);
+        } else if (size == 1) {
+            return RDataFactory.createIntVectorFromScalar(matches.get(0));
+        } else {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "not implemented");
+        }
     }
 }
