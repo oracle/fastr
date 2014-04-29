@@ -12,12 +12,12 @@
 package com.oracle.truffle.r.runtime.rng.mm;
 
 import com.oracle.truffle.r.runtime.rng.*;
-import com.oracle.truffle.r.runtime.rng.RRNG.Generator;
+import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
 
 /**
  * "Marsaglia-Multicarry" RNG. Transcribed from GnuR RNG.c.
  */
-public class MarsagliaMulticarry extends InitAdapter implements Generator {
+public class MarsagliaMulticarry extends RNGInitAdapter implements GeneratorPrivate {
 
     private int[] state = new int[2];
 
@@ -39,9 +39,11 @@ public class MarsagliaMulticarry extends InitAdapter implements Generator {
     }
 
     public double genrandDouble() {
-        state[0] = 36969 * (state[0] & 0177777) + (state[0] >> 16);
-        state[1] = 18000 * (state[1] & 0177777) + (state[1] >> 16);
-        return RRNG.fixup(((state[0] << 16) ^ (state[1] & 0177777)) * RRNG.I2_32M1); /* in [0,1) */
+        state[0] = 36969 * (state[0] & 0177777) + (state[0] >>> 16);
+        state[1] = 18000 * (state[1] & 0177777) + (state[1] >>> 16);
+        int x = (state[0] << 16) ^ (state[1] & 0177777);
+        double d = (x & 0xffffffffL) * RRNG.I2_32M1;
+        return RRNG.fixup(d); /* in [0,1) */
     }
 
 }

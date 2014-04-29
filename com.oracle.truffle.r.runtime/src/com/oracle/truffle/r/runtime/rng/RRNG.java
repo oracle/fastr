@@ -20,49 +20,58 @@ import com.oracle.truffle.r.runtime.rng.mt.*;
 
 /**
  * Facade class to the R random number generators, (see src/main/RNG.c in GnuR). The individual
- * generators are implemented in their own class. Currently there is only one implemented,
- * {@link MersenneTwister}.
+ * generators are implemented in their own class. Currently there are only two implemented, the
+ * default, {@link MersenneTwister} and {@link MarsagliaMulticarry}.
  *
  * The fact that the R programmer can set {@code .Random.seed} explicitly, as opposed to the
  * recommended approach of calling {@code set.seed}, is something of a pain as it changes the
  * {@link Kind}, the {@link NormKind} and the actual seeds all in one go and in a totally
  * uncontrolled way, which then has to be checked. Currently we do not support reading it, although
- * we do create/update it, primarily as a debugging aid.
+ * we do create/update it when the seed/kind is changed, primarily as a debugging aid. N.B. GnuR
+ * updates it on <i>every</i> random number generation!
  */
 public class RRNG {
     /**
      * The standard kinds provided by GnuR, where the ordinal value corresponds to the argument to
-     * {@link RRNG#setSeed}.
+     * {@link RRNG#doSetSeed}.
      */
     public enum Kind {
-        WICHMANN_HILL,
-        MARSAGLIA_MULTICARRY {
+        WICHMANN_HILL(false),
+        MARSAGLIA_MULTICARRY(true) {
             @Override
             Kind setGenerator() {
                 generator = new MarsagliaMulticarry();
                 return this;
             }
         },
-        SUPER_DUPER,
-        MERSENNE_TWISTER {
+        SUPER_DUPER(false),
+        MERSENNE_TWISTER(true) {
             @Override
             Kind setGenerator() {
                 generator = new MersenneTwister();
                 return this;
             }
         },
-        KNUTH_TAOCP,
-        USER_UNIF,
-        KNUTH_TAOCP2,
-        LECUYER_CMRG;
+        KNUTH_TAOCP(false),
+        USER_UNIF(false),
+        KNUTH_TAOCP2(false),
+        LECUYER_CMRG(false);
 
         static final Kind[] VALUES = values();
 
-        Generator generator;
+        final boolean available;
+        GeneratorPrivate generator;
 
+        /**
+         * Lazy setting of the actual generator.
+         */
         Kind setGenerator() {
             assert false;
             return this;
+        }
+
+        Kind(boolean available) {
+            this.available = available;
         }
 
     }
@@ -79,17 +88,19 @@ public class RRNG {
 
     }
 
-    public static final int NO_KIND_CHANGE = -1;
-    public static final Integer RESET = null;
+    public static final int NO_KIND_CHANGE = -2; // internal value
+    public static final int RESET_KIND = -1; // comes from RNG.R
+    public static final Integer RESET_SEED = null;
     private static final Kind DEFAULT_KIND = Kind.MERSENNE_TWISTER;
     private static final NormKind DEFAULT_NORM_KIND = NormKind.INVERSION;
     private static final String RANDOM_SEED = ".Random.seed";
     public static final double I2_32M1 = 2.3283064365386963e-10;
+    private static final double UINT_MAX = (double) Integer.MAX_VALUE * 2;
 
     /**
-     * The interface that a random number generator must implement.
+     * The (logically private) interface that a random number generator must implement.
      */
-    public interface Generator {
+    public interface GeneratorPrivate {
         void init(int seed);
 
         void fixupSeeds(boolean initial);
@@ -100,7 +111,7 @@ public class RRNG {
     }
 
     /**
-     * R Errors and warnings are possible during operations like {@link #setSeed}, which are all
+     * R Errors and warnings are possible during operations like {@link #doSetSeed}, which are all
      * passed back to the associated builtin.
      */
     public static class RNGException extends Exception {
@@ -118,7 +129,7 @@ public class RRNG {
     }
 
     /**
-     * The current {@link Generator}.
+     * The current {@link GeneratorPrivate}.
      */
     private static Kind currentKind;
     private static NormKind currentNormKind;
@@ -129,30 +140,67 @@ public class RRNG {
         initGenerator(DEFAULT_KIND.setGenerator(), seed);
     }
 
-    public static Generator get() {
-        return currentKind.generator;
+    public static int currentKindAsInt() {
+        return currentKind.ordinal();
+    }
+
+    public static int currentNormKindAsInt() {
+        return currentNormKind.ordinal();
     }
 
     /**
+     * Ask the current generator for a random double. (cf. {@code unif_rand} in RNG.c.
+     */
+    public static double unifRand() {
+        return currentKind.generator.genrandDouble();
+    }
+
+    /**
+     * Set the seed and optionally the RNG kind and norm kind.
      *
      * @param frame frame associated with {@code set.seed} function (our caller)
-     * @param seed {@link #RESET} to reset, else new seed
+     * @param seed {@link #RESET_SEED} to reset, else new seed
      * @param kindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link Kind}.
      * @param normKindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link NormKind}.
      */
-    public static void setSeed(VirtualFrame frame, Integer seed, int kindAsInt, int normKindAsInt) throws RNGException {
-        int newSeed = seed == RESET ? timeToSeed() : seed;
-        Kind kind = currentKind;
+    public static void doSetSeed(VirtualFrame frame, Integer seed, int kindAsInt, int normKindAsInt) throws RNGException {
+        int newSeed = seed == RESET_SEED ? timeToSeed() : seed;
+        Kind kind = changeKinds(kindAsInt, normKindAsInt);
+        initGenerator(kind, newSeed);
+        updateDotRandomSeed(frame);
+    }
+
+    /**
+     * Set the kind and optionally the norm kind, called from R builtin {@code RNGkind}. GnuR
+     * chooses the new seed from the previous RNG.
+     */
+    public static void doRNGKind(VirtualFrame frame, int kindAsInt, int normKindAsInt) throws RNGException {
+        int newSeed = (int) (unifRand() * UINT_MAX);
+        Kind kind = changeKinds(kindAsInt, normKindAsInt);
+        initGenerator(kind, newSeed);
+        updateDotRandomSeed(frame);
+    }
+
+    private static Kind changeKinds(int kindAsInt, int normKindAsInt) throws RNGException {
+        Kind kind;
         if (kindAsInt != NO_KIND_CHANGE) {
-            kind = setKind(kindAsInt);
+            if (kindAsInt == RESET_KIND) {
+                kind = DEFAULT_KIND;
+            } else {
+                kind = setKind(kindAsInt);
+                if (!kind.available) {
+                    throw new RNGException("RNG kind " + kind + " is not available", true);
+                }
+            }
+        } else {
+            kind = currentKind;
         }
         if (normKindAsInt != NO_KIND_CHANGE) {
             setNormKind(normKindAsInt);
         }
-        initGenerator(kind, newSeed);
-        updateDotRandomSeed(frame);
+        return kind;
     }
 
     public static double fixup(double x) {

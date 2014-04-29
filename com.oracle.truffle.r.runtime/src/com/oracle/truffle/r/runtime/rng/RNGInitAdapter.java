@@ -11,9 +11,9 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.r.runtime.rng.RRNG.Generator;
+import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
 
-public abstract class InitAdapter implements Generator {
+public abstract class RNGInitAdapter implements GeneratorPrivate {
 
     /**
      * This function is derived from GNU R, RNG.c (RNG_Init).

@@ -56,7 +56,7 @@ public class RNGFunctions {
         @Specialization(order = 2)
         public RNull setSeed(VirtualFrame frame, RNull seed, RNull kind, RNull normKind) {
             controlVisibility();
-            doSetSeed(frame, RRNG.RESET, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
+            doSetSeed(frame, RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
 
@@ -70,7 +70,7 @@ public class RNGFunctions {
         @SlowPath
         private void doSetSeed(VirtualFrame frame, Integer newSeed, int kind, int normKind) {
             try {
-                RRNG.setSeed(frame, newSeed, kind, normKind);
+                RRNG.doSetSeed(frame, newSeed, kind, normKind);
             } catch (RNGException ex) {
                 if (ex.isError()) {
                     throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
@@ -82,4 +82,34 @@ public class RNGFunctions {
 
     }
 
+    @RBuiltin(".Internal.RNGkind")
+    public abstract static class RNGkind extends RBuiltinNode {
+
+        @Specialization(order = 0)
+        @SuppressWarnings("unused")
+        public RIntVector doRNGkind(VirtualFrame frame, RNull x, RNull y) {
+            controlVisibility();
+            return getCurrent();
+        }
+
+        @Specialization(order = 1)
+        public RIntVector doRNGkind(VirtualFrame frame, int kind, @SuppressWarnings("unused") RNull normKind) {
+            controlVisibility();
+            RIntVector result = getCurrent();
+            try {
+                RRNG.doRNGKind(frame, kind, RRNG.NO_KIND_CHANGE);
+            } catch (RNGException ex) {
+                if (ex.isError()) {
+                    throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+                } else {
+                    RContext.getInstance().setEvalWarning(ex.getMessage());
+                }
+            }
+            return result;
+        }
+
+        private static RIntVector getCurrent() {
+            return RDataFactory.createIntVector(new int[]{RRNG.currentKindAsInt(), RRNG.currentNormKindAsInt()}, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
 }

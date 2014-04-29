@@ -7453,6 +7453,22 @@ a b
    1    2    3    4    5
   11    7 2222    7   33
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(4336, "default"); sum(runif(10000)) }
+[1] 4997.493
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(4357, "default"); round( rnorm(3), digits = 5 ) }
+[1] -0.13102  0.98938 -0.30562
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(4357, "default"); sum(runif(10)) }
+[1] 6.631059
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(9567, "Marsaglia-Multicarry"); sum(runif(100)) }
+[1] 52.92218
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
 #{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }
      [,1] [,2]

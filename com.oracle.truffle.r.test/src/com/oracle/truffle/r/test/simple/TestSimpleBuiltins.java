@@ -2032,10 +2032,17 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRandom() {
-        assertEval("{ round( rnorm(3), digits = 5 ) }");
-        assertEval("{ round( rnorm(3,1000,10), digits = 5 ) }");
+        assertEval("{ set.seed(4357, \"default\"); sum(runif(10)) }");
+        assertEval("{ set.seed(4336, \"default\"); sum(runif(10000)) }");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); sum(runif(100)) }");
+        assertEval("{ set.seed(4357, \"default\"); round( rnorm(3), digits = 5 ) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRandomIgnore() {
+        assertEval("{ set.seed(4357, \"default\"); round( rnorm(3,1000,10), digits = 5 ) }");
         assertEval("{ round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
 
         assertEval("{ round( runif(3), digits = 5 ) }");

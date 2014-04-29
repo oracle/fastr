@@ -40,10 +40,9 @@ public abstract class Rnorm extends RBuiltinNode {
     @Specialization
     public RDoubleVector rnorm(int n, double mean, double standardd) {
         controlVisibility();
-        RRNG.Generator rng = RRNG.get();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
-            result[i] = generateNorm(mean, standardd, rng);
+            result[i] = generateNorm(mean, standardd);
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
@@ -61,19 +60,19 @@ public abstract class Rnorm extends RBuiltinNode {
     }
 
     // from GNUR: rnorm.c
-    private static double generateNorm(double mean, double standardd, RRNG.Generator rng) {
-        return mean + standardd * normRand(rng);
+    private static double generateNorm(double mean, double standardd) {
+        return mean + standardd * normRand();
     }
 
     // from GNUR: snorm.c
-    private static double normRand(RRNG.Generator rng) {
+    private static double normRand() {
         double u1;
 
         // case INVERSION:
         double big = 134217728; /* 2^27 */
         /* unif_rand() alone is not of high enough precision */
-        u1 = rng.genrandDouble();
-        u1 = (int) (big * u1) + rng.genrandDouble();
+        u1 = RRNG.unifRand();
+        u1 = (int) (big * u1) + RRNG.unifRand();
         return qnorm5(u1 / big, 0.0, 1.0, 1, 0);
     }
 

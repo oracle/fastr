@@ -65,7 +65,7 @@ package com.oracle.truffle.r.runtime.rng.mt;
 
 import com.oracle.truffle.r.runtime.rng.*;
 
-public final class MersenneTwister extends InitAdapter implements RRNG.Generator {
+public final class MersenneTwister extends RNGInitAdapter implements RRNG.GeneratorPrivate {
 
     public MersenneTwister() {
     }
