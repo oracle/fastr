@@ -79,7 +79,7 @@ com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/PrettyPrinter.
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/tools/TreeViewer.java,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RRNG.java,gnu_r.copyright
-com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/InitAdapter.java,gnu_r.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RNGInitAdapter.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mt/MersenneTwister.java,hiroshima.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mm/MarsagliaMulticarry.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RRuntime.java,gnu_r.copyright
