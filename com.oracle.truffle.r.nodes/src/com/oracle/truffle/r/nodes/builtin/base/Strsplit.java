@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
@@ -54,24 +52,24 @@ public abstract class Strsplit extends RBuiltinNode {
     @Specialization
     public RList split(RAbstractStringVector x, String split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
-        List<RStringVector> result = new ArrayList<>(x.getLength());
+        RStringVector[] result = new RStringVector[x.getLength()];
         na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
-            result.add(splitIntl(x.getDataAt(i), split, na));
+            result[i] = splitIntl(x.getDataAt(i), split, na);
         }
-        return RDataFactory.createList(result.toArray(new Object[0]));
+        return RDataFactory.createList(result);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public RList split(RAbstractStringVector x, RAbstractStringVector split, byte fixed, byte perl, byte useBytes) {
         controlVisibility();
-        List<RStringVector> result = new ArrayList<>(x.getLength());
+        RStringVector[] result = new RStringVector[x.getLength()];
         na.enable(x);
         for (int i = 0; i < x.getLength(); ++i) {
-            result.add(splitIntl(x.getDataAt(i), getSplit(split, i), na));
+            result[i] = splitIntl(x.getDataAt(i), getSplit(split, i), na);
         }
-        return RDataFactory.createList(result.toArray(new Object[0]));
+        return RDataFactory.createList(result);
     }
 
     private static String getSplit(RAbstractStringVector split, int i) {
