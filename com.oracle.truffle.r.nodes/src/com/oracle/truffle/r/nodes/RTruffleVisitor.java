@@ -117,7 +117,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
             index++;
         }
-        return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), CallArgumentsNode.create(nodes, argumentNames));
+        if (RRuntime.getGroup(RRuntime.toString(callName)) == null) {
+            return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), CallArgumentsNode.create(nodes, argumentNames));
+        }
+        return DispatchedCallNode.create(RRuntime.toString(callName), RRuntime.RDotGroup, nodes);
     }
 
     @Override

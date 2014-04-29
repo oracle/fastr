@@ -7114,6 +7114,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGroupDispatch_fa5ada787778986401f8455c405ff4b0() {
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};max(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGroupDispatch_532d6e513e93379a9b51e999f9c6ed5a() {
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};min(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGroupDispatch_1add1e53036028f45221fe54086344be() {
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";min.foo<-function(x,...){\"summary\"};min(x)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIdentical_c46eaf60fda944bdf1391b5fe9af0427() {
         assertEval("{ identical(1,1) }");
     }

@@ -2625,6 +2625,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testGroupDispatch() {
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};max(x)}");
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};min(x)}");
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";min.foo<-function(x,...){\"summary\"};min(x)}");
+    }
+
+    @Test
     @Ignore
     public void testBuiltinPropagationIgnore() {
         // aperm not implemented

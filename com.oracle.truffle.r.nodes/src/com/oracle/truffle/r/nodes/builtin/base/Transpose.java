@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("t")
+@RBuiltin("t.default")
 @SuppressWarnings("unused")
 public abstract class Transpose extends RBuiltinNode {
 

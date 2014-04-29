@@ -6008,6 +6008,18 @@ function(){y<-2;get("y",mode="closure")}
 #{x<-seq(1L,10L);class(x)}
 [1] "integer"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGroupDispatch
+#{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};max(x)}
+[1] "summary"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGroupDispatch
+#{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};min(x)}
+[1] "summary"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGroupDispatch
+#{x<-c(1,2,3);class(x)<-"foo";min.foo<-function(x,...){"summary"};min(x)}
+[1] "summary"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIfelse
 #{ ifelse(FALSE,1,0) }
 [1] 0

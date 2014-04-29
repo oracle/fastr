@@ -136,9 +136,41 @@ public class RRuntime {
 
     private static long startTime;
 
-    private static long[] childTimes;
+    public static final String GROUP_MATH = "Math";
+
+    public static final String GROUP_OPS = "Ops";
+
+    public static final String GROUP_SUMMARY = "Summary";
+
+    public static final String GROUP_COMPLEX = "Complex";
 
     public static final String DROP_DIM_ARG_NAME = "drop";
+
+    private static long[] childTimes;
+
+    private static Map<String, String> methodToGroup;
+
+    /*
+     * Returns the group to which a given S-3 group generic method belongs to.
+     */
+    public static String getGroup(final String methodName) {
+        assert (methodName != null);
+        if (methodToGroup == null) {
+            initializeMethodToGroup();
+        }
+        return methodToGroup.get(methodName);
+    }
+
+    /*
+     * S3 methods can be written for four groups:"Math", "Ops", "Summary" and "Complex". The
+     * following method maps each method to its associated group.
+     */
+    private static void initializeMethodToGroup() {
+        assert (methodToGroup == null);
+        methodToGroup = new HashMap<>();
+        methodToGroup.put("max", GROUP_SUMMARY);
+        methodToGroup.put("min", GROUP_SUMMARY);
+    }
 
     /**
      * Perform any runtime initialization necessary before the first R evaluation. TODO Check
