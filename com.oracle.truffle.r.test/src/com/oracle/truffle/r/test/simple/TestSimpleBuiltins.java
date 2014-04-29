@@ -650,16 +650,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testApplyIgnore() {
-        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
-        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
-
-        // names
-        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
-    }
-
-    @Test
     public void testApply() {
         assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,1,sum) }");
         assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,2,sum) }");
@@ -2680,4 +2670,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-list(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
     }
 
+    @Test
+    public void testLapply() {
+        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
+        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+        assertEval("{ x<-c(1,3,4);attr(x,\"names\")<-c(\"a\",\"b\",\"c\");lapply(x, function(x,y) { as.character(x*y) }, 2) }");
+        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
+    }
 }

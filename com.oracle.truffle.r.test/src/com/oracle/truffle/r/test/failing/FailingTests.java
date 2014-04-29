@@ -529,21 +529,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_797cd316f3f859174c906d613c777e40() {
-        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_5ed0951d3e7363f21bc554e405102229() {
-        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_aad1bc65130fb0c42e2e3d991f1b3391() {
-        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testAsCharacterIgnore_c803fc23a52fdc9950e5603f439b132f() {
         assertEval("{ as.character(list(1,2,3)) }");
     }

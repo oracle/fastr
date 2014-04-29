@@ -6286,6 +6286,65 @@ Error in rnorm(s = 1, s = 1) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsVector
 #{ x<-list(1,3); }
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ f <- function() { lapply(c(X="a",Y="b"), function(x) { c(a=x) })  } ; f() }
+$X
+  a
+"a"
+
+$Y
+  a
+"b"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, function(x) { 2*x }) }
+[[1]]
+[1] 2
+
+[[2]]
+[1] 4
+
+[[3]]
+[1] 6
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, function(x,y) { x*y }, 2) }
+[[1]]
+[1] 2
+
+[[2]]
+[1] 4
+
+[[3]]
+[1] 6
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }
+[[1]]
+[1] "9"
+
+[[2]]
+[1] "11"
+
+[[3]]
+[1] "13"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
+#{ x<-c(1,3,4);attr(x,"names")<-c("a","b","c");lapply(x, function(x,y) { as.character(x*y) }, 2) }
+$a
+[1] "2"
+
+$b
+[1] "6"
+
+$c
+[1] "8"
+
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLength
 #{ length(1) }
 [1] 1

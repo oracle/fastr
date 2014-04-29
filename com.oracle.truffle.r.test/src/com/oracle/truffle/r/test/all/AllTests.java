@@ -4274,21 +4274,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testApplyIgnore_797cd316f3f859174c906d613c777e40() {
-        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testApplyIgnore_5ed0951d3e7363f21bc554e405102229() {
-        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testApplyIgnore_aad1bc65130fb0c42e2e3d991f1b3391() {
-        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testArrayConstructors_a1f8649b7e81e6553a6460a323f03e01() {
         assertEval("{ integer() }");
     }
@@ -7571,6 +7556,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testIsVector_ad663eb70f3fac562e069578c81f4835() {
         assertEval("{ x<-list(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_797cd316f3f859174c906d613c777e40() {
+        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_5ed0951d3e7363f21bc554e405102229() {
+        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_bb1b1b8299159a83c87fe6dc760e5b8b() {
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_a1d2abd1c5cc46d6da1661aca2a1ae1f() {
+        assertEval("{ x<-c(1,3,4);attr(x,\"names\")<-c(\"a\",\"b\",\"c\");lapply(x, function(x,y) { as.character(x*y) }, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLapply_aad1bc65130fb0c42e2e3d991f1b3391() {
+        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
     }
 
     @Test
