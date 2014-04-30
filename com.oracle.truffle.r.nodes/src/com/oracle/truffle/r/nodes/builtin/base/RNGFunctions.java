@@ -93,11 +93,11 @@ public class RNGFunctions {
         }
 
         @Specialization(order = 1)
-        public RIntVector doRNGkind(VirtualFrame frame, int kind, @SuppressWarnings("unused") RNull normKind) {
+        public RIntVector doRNGkind(VirtualFrame frame, RAbstractIntVector kind, @SuppressWarnings("unused") RNull normKind) {
             controlVisibility();
             RIntVector result = getCurrent();
             try {
-                RRNG.doRNGKind(frame, kind, RRNG.NO_KIND_CHANGE);
+                RRNG.doRNGKind(frame, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             } catch (RNGException ex) {
                 if (ex.isError()) {
                     throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());

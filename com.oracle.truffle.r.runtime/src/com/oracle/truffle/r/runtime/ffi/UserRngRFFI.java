@@ -23,11 +23,19 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Placeholder for the C call FFI.
+ * Explicit statically typed interface to user-supplied random number generators. TODO This could
+ * eventually be subsumed by {@link CCallRFFI}.
  */
-public interface CCallRFFI {
-    void invoke(long address);
+public interface UserRngRFFI {
 
-    void invoke(long address, Object arg);
+    void setLibrary(String path);
+
+    void init(int seed);
+
+    double rand();
+
+    int nSeed();
+
+    void seeds(int[] n);
 
 }

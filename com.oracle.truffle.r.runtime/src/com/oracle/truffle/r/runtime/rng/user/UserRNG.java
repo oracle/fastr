@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.runtime.rng.user;
+
+import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
+import com.oracle.truffle.r.runtime.rng.*;
+import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
+import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
+
+/**
+ * Interface to a user-supplied RNG.
+ */
+public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
+
+    private static final String USER_UNIF_RAND = "user_unif_rand";
+    private static final String USER_UNIF_INIT = "user_unif_init";
+    private static final boolean OPTIONAL = true;
+
+    @SuppressWarnings("unused") private long userUnifRand;
+    @SuppressWarnings("unused") private long userUnifInit;
+    private long userUnifNSeed;
+    private long userUnifSeedloc;
+    private UserRngRFFI userRngRFFI;
+    private int nSeeds;
+
+    public void init(int seed) throws RNGException {
+        userUnifRand = findSymbol(USER_UNIF_RAND, !OPTIONAL);
+        userUnifInit = findSymbol(USER_UNIF_INIT, OPTIONAL);
+        userUnifNSeed = findSymbol(USER_UNIF_INIT, OPTIONAL);
+        userUnifSeedloc = findSymbol(USER_UNIF_INIT, OPTIONAL);
+        String libPath = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
+        userRngRFFI = RFFIFactory.getRFFI().getUserRngRFFI();
+        userRngRFFI.setLibrary(libPath);
+        userRngRFFI.init(seed);
+        if (userUnifSeedloc != 0 && userUnifNSeed == 0) {
+            throw new RNGException("cannot read seeds unless 'user_unif_nseed' is supplied", false);
+        }
+        nSeeds = userRngRFFI.nSeed();
+    }
+
+    private static long findSymbol(String symbol, boolean optional) throws RNGException {
+        try {
+            return DLL.findSymbol(symbol);
+        } catch (DLLException ex) {
+            if (!optional) {
+                throw new RNGException(ex.getMessage(), true);
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    public void fixupSeeds(boolean initial) {
+        // no fixup
+    }
+
+    public int[] getSeeds() {
+        if (userUnifSeedloc == 0) {
+            return null;
+        }
+        int[] result = new int[nSeeds];
+        userRngRFFI.seeds(result);
+        return result;
+    }
+
+    public double genrandDouble() {
+        return userRngRFFI.rand();
+    }
+
+}

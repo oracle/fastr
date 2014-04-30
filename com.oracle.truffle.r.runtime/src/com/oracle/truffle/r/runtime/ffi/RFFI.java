@@ -32,6 +32,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * {@code Lapack} functions.</li>
  * <li>{@link FCallRFFI}: generic Fortran function interface</li>
  * <li>{@link CCallRFFI}: generic C call interface.
+ * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR
@@ -45,5 +46,7 @@ public interface RFFI {
     FCallRFFI getFCallRFFI();
 
     CCallRFFI getCCallRFFI();
+
+    UserRngRFFI getUserRngRFFI();
 
 }

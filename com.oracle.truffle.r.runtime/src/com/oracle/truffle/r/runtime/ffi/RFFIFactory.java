@@ -32,10 +32,21 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class RFFIFactory {
 
     private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
-    private static final String DEFAULT_FACTORY_CLASS = "com.oracle.truffle.r.runtime.ffi.jnr.JNR_RFFIFactory";
+    private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.runtime.ffi.";
+    private static final String SUFFIX = "_RFFIFactory";
+    private static final String DEFAULT_FACTORY = "jnr";
+    private static final String DEFAULT_FACTORY_CLASS = mapSimpleName(DEFAULT_FACTORY);
 
     static {
-        final String prop = System.getProperty(FACTORY_CLASS_PROPERTY, DEFAULT_FACTORY_CLASS);
+        String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
+        if (prop != null) {
+            if (!prop.contains(".")) {
+                // simple name
+                prop = mapSimpleName(prop);
+            }
+        } else {
+            prop = DEFAULT_FACTORY_CLASS;
+        }
         try {
             theFactory = (RFFIFactory) Class.forName(prop).newInstance();
         } catch (Exception ex) {
@@ -45,6 +56,10 @@ public abstract class RFFIFactory {
 
     protected static RFFIFactory theFactory;
     protected static final RFFI theRFFI = theFactory.createRFFI();
+
+    private static String mapSimpleName(String simpleName) {
+        return PACKAGE_PREFIX + simpleName + "." + simpleName.toUpperCase() + SUFFIX;
+    }
 
     protected static RFFIFactory getFactory() {
         return theFactory;
@@ -71,6 +86,11 @@ public abstract class RFFIFactory {
 
     public CCallRFFI getCCallRFFI() {
         Utils.fail("getCCallRFFI not implemented");
+        return null;
+    }
+
+    public UserRngRFFI getUserRngRFFI() {
+        Utils.fail("getUserRngRFFI not implemented");
         return null;
     }
 
