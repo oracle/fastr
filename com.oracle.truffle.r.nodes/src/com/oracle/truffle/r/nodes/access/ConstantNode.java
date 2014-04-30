@@ -57,6 +57,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantComplexNode((RComplex) value);
         } else if (value instanceof RAbstractVector) {
             return new ConstantVectorNode((RAbstractVector) value);
+        } else if (value instanceof Object[]) {
+            return new ConstantObjectArrayNode((Object[]) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -253,6 +255,27 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             return EMPTY_OBJECT_ARRAY;
+        }
+    }
+
+    private static final class ConstantObjectArrayNode extends ConstantNode {
+
+        private final Object[] array;
+
+        public ConstantObjectArrayNode(Object[] array) {
+            this.array = array;
+        }
+
+        @Override
+        public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
+            controlVisibility();
+            return array;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return array;
         }
     }
 

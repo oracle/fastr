@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -27,23 +28,25 @@ public class GroupDispatchNode extends S3DispatchNode {
 
     @Child protected WriteVariableNode wvnGroup;
     @Child protected CallArgumentsNode callArgNodes;
-    private final String groupName;
+    @Child protected ReadVariableNode builtInNode;
+    @CompilationFinal private final String groupName;
     protected boolean writeGroup;
     private boolean isEnvSet;
     protected RStringVector typeLast;
+    protected Object[] evaluatedArgs;
 
-    protected GroupDispatchNode(final String aGenericName, final String groupName, final RNode[] args) {
+    protected GroupDispatchNode(final String aGenericName, final String groupName, final CallArgumentsNode callArgNode) {
         this.genericName = aGenericName;
         this.groupName = groupName;
-        this.argNodes = insert(args);
+        this.callArgNodes = callArgNode;
     }
 
-    public static GroupDispatchNode create(final String aGenericName, final RNode[] args) {
+    public static GroupDispatchNode create(final String aGenericName, final CallArgumentsNode callArgNode) {
         final String grpName = RRuntime.getGroup(aGenericName);
         if (grpName == RRuntime.GROUP_OPS) {
-            return new OpsGroupDispatchNode(aGenericName, grpName, args);
+            return new OpsGroupDispatchNode(aGenericName, grpName, callArgNode);
         }
-        return new GroupDispatchNode(aGenericName, grpName, args);
+        return new GroupDispatchNode(aGenericName, grpName, callArgNode);
     }
 
     protected void findTargetFunction(VirtualFrame frame) {
@@ -95,11 +98,12 @@ public class GroupDispatchNode extends S3DispatchNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        if (callArgNodes == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callArgNodes = insert(CallArgumentsNode.create(argNodes, null));
+        RNode[] args = callArgNodes.getArguments();
+        if (args == null || args.length < 1) {
+            return callBuiltin(frame);
         }
-        if ((this.type = getArgClass(frame, 0)) != null) {
+        evaluatedArgs = new Object[]{args[0].execute(frame)};
+        if ((this.type = getArgClass(evaluatedArgs[0])) != null) {
             if (targetFunction != null && isEqualType(this.type, this.typeLast) && findFunction(targetFunctionName, frame) && isFirst) {
                 return executeHelper();
             }
@@ -109,7 +113,7 @@ public class GroupDispatchNode extends S3DispatchNode {
                 return executeHelper();
             }
         }
-        return callBuiltin();
+        return callBuiltin(frame);
     }
 
     protected static boolean isEqualType(final RStringVector currentType, final RStringVector lastType) {
@@ -130,30 +134,52 @@ public class GroupDispatchNode extends S3DispatchNode {
         return true;
     }
 
-    protected Object callBuiltin() {
+    protected Object callBuiltin(VirtualFrame frame) {
         this.typeLast = null;
-        return new DispatchNode.FunctionCall(RContext.getLookup().lookup(this.genericName), callArgNodes);
+        if (builtInNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            builtInNode = insert(ReadVariableNode.create(this.genericName, RRuntime.TYPE_FUNCTION, false));
+        }
+        RFunction builtinFunc = null;
+        try {
+            builtinFunc = builtInNode.executeFunction(frame);
+        } catch (UnexpectedResultException e) {
+            throw new UnsupportedOperationException();
+        }
+        initFunCall(builtinFunc);
+        return this.funCall;
     }
 
     protected Object executeHelper() {
         setEnvironment();
         this.typeLast = this.type;
-        return new DispatchNode.FunctionCall(targetFunction, callArgNodes);
+        initFunCall(targetFunction);
+        return this.funCall;
     }
 
-    protected RStringVector getArgClass(VirtualFrame frame, int index) {
-        RAbstractVector arg1;
-        if (index >= argNodes.length) {
-            return null;
+    protected RStringVector getArgClass(Object arg) {
+        if (arg instanceof RAbstractVector && ((RAbstractVector) arg).isObject()) {
+            return ((RAbstractVector) arg).getClassHierarchy();
         }
-        try {
-            arg1 = argNodes[index].executeRAbstractVector(frame);
-        } catch (UnexpectedResultException e) {
-            return null;
+        return null;
+    }
+
+    private void initFunCall(RFunction func) {
+        // avoid re-evaluating arguments.
+        if (evaluatedArgs != null) {
+            RNode[] argArray = new RNode[callArgNodes.getArguments().length];
+            System.arraycopy(callArgNodes.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
+            for (int i = 0; i < evaluatedArgs.length; ++i) {
+                if (evaluatedArgs[i] != null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    argArray[i] = ConstantNode.create(evaluatedArgs[i]);
+                }
+            }
+            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(argArray, callArgNodes.getNames()));
         }
-        if (!arg1.isObject()) {
-            return null;
+        if (this.funCall == null) {
+            this.funCall = new DispatchNode.FunctionCall(func, callArgNodes);
         }
-        return arg1.getClassHierarchy();
+        this.funCall.function = func;
     }
 }

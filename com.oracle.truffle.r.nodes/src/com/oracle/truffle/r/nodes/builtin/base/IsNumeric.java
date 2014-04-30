@@ -23,12 +23,15 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("is.numeric")
 public abstract class IsNumeric extends IsTypeNode {
+
+    public abstract byte execute(VirtualFrame frame, Object value);
 
     @Specialization
     @Override

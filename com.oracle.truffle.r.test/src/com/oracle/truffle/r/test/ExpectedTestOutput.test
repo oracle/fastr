@@ -5185,6 +5185,10 @@ a1 a2
 #{ complex(real=1,imaginary=2) }
 [1] 1+2i
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testComplexGroupDispatch
+#{x<--7+2i;class(x)<-"foo";Complex.foo<-function(z){1;};Im(x);}
+[1] 1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCor
 #{ as.integer(cor(c(1,2,3),c(1,2,5))*10000000) }
 [1] 9607689
@@ -6008,18 +6012,6 @@ function(){y<-2;get("y",mode="closure")}
 #{x<-seq(1L,10L);class(x)}
 [1] "integer"
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGroupDispatch
-#{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};max(x)}
-[1] "summary"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGroupDispatch
-#{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};min(x)}
-[1] "summary"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGroupDispatch
-#{x<-c(1,2,3);class(x)<-"foo";min.foo<-function(x,...){"summary"};min(x)}
-[1] "summary"
-
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIfelse
 #{ ifelse(FALSE,1,0) }
 [1] 0
@@ -6286,6 +6278,22 @@ Error in rnorm(s = 1, s = 1) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsVector
 #{ x<-list(1,3); }
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsVector
+#{is.vector(c(TRUE,FALSE),"logical");}
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsVector
+#{is.vector(c(TRUE,FALSE),"numeric");}
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsVector
+#{x<-1;class(x)<-"a";is.vector(x);}
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsVector
+#{x<-1;names(x)<-"a";is.vector(x);}
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
 #{ f <- function() { lapply(c(X="a",Y="b"), function(x) { c(a=x) })  } ; f() }
 $X
@@ -6319,18 +6327,6 @@ $Y
 
 [[3]]
 [1] 6
-
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
-#{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }
-[[1]]
-[1] "9"
-
-[[2]]
-[1] "11"
-
-[[3]]
-[1] "13"
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLapply
@@ -7085,6 +7081,18 @@ Error in get("x") : object 'x' not found
 #{ f <- match.fun(length) ; f(c(1,2,3)) }
 [1] 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMathGroupDispatch
+#{x<--7;class(x)<-"foo";Math.foo<-function(z){-z;};log(x);}
+[1] 7
+attr(,"class")
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMathGroupDispatch
+#{x<--7;class(x)<-"foo";Math.foo<-function(z){x};abs(x);}
+[1] -7
+attr(,"class")
+[1] "foo"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatrix
 #{ matrix("a",10,10) }
       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
@@ -7350,6 +7358,36 @@ ab
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOperators
 #{ x <- `+` ; x(2,3) }
 [1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatch
+#{x<-1;class(x)<-"foo";"!.foo"<-function(e1,e2){x};!x}
+[1] 1
+attr(,"class")
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatch
+#{x<-1;y<-7;class(x)<-"foo";class(y)<-"foo";"*.foo"<-function(e1,e2){min(e1,e2)};x*y}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatch
+#{x<-1;y<-7;class(x)<-"foo";class(y)<-"foo";"^.foo"<-function(e1,e2){e1+e2};x^y}
+[1] 8
+attr(,"class")
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatch
+#{x<-1;y<-7;class(x)<-"foo";class(y)<-"fooX";"*.foo"<-function(e1,e2){min(e1,e2)};x*y}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatch
+#{x<-1;y<-7;class(x)<-"fooX";class(y)<-"foo";"*.foo"<-function(e1,e2){min(e1,e2)};x*y}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatch
+#{x<-1;y<-7;class(x)<-"fooX";class(y)<-"fooX";"*.foo"<-function(e1,e2){min(e1,e2)};x*y}
+[1] 7
+attr(,"class")
+[1] "fooX"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOrder
 #{ order(c("a","c","b","d","e","f")) }
@@ -8134,6 +8172,33 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum(c(0, 1, 2, 3), 4) }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSummaryGroupDispatch
+#{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};max(x)}
+[1] "summary"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSummaryGroupDispatch
+#{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};min(x)}
+[1] "summary"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSummaryGroupDispatch
+#{x<-c(1,2,3);class(x)<-"foo";min.foo<-function(x,...){"summary"};min(x)}
+[1] "summary"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ test1 <- function(type) { switch(type, mean = 1, median = 2, trimmed = 3) };test1("median")}
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{ test1 <- function(type) { switch(type, mean = mean(c(1,2,3,4)), median = 2, trimmed = 3) };test1("mean")}
+[1] 2.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{switch(3,1,2,3)}
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
+#{switch(4,1,2,3)}
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTranspose
 #{ m <- double() ; dim(m) <- c(0,4) ; t(m) }

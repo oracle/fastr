@@ -1319,6 +1319,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testLapplyIgnore_bb1b1b8299159a83c87fe6dc760e5b8b() {
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testLogIgnore_052ed04e88403025c80c488866a0f346() {
         assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
     }
@@ -2581,6 +2586,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSumIgnore_79d5da5603083c8a7cd4e867a99de305() {
         assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
+        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
     }
 
     @Ignore

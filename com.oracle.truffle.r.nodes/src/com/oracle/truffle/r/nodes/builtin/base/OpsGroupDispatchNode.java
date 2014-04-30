@@ -1,7 +1,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class OpsGroupDispatchNode extends GroupDispatchNode {
@@ -13,49 +13,71 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     private RStringVector typeR;
     private boolean writeGroupR;
 
-    public OpsGroupDispatchNode(final String genericName, final String grpName, RNode[] args) {
-        super(genericName, grpName, args);
+    public OpsGroupDispatchNode(final String genericName, final String grpName, CallArgumentsNode callArgNode) {
+        super(genericName, grpName, callArgNode);
+    }
+
+    private void initDispatchTypes(VirtualFrame frame) {
+        evaluatedArgs = callArgNodes.executeArray(frame);
+        if (evaluatedArgs.length > 0) {
+            this.typeL = getArgClass(evaluatedArgs[0]);
+        }
+        if (evaluatedArgs.length > 1) {
+            this.typeR = getArgClass(evaluatedArgs[1]);
+        }
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        this.typeL = getArgClass(frame, 0);
-        this.typeR = getArgClass(frame, 1);
+        initDispatchTypes(frame);
         if (this.typeL == null && this.typeR == null) {
-            return callBuiltin();
+            return callBuiltin(frame);
         }
-        this.type = this.typeR;
-        findTargetFunction(frame);
-        targetFunctionNameR = targetFunctionName;
-        targetFunctionR = targetFunction;
-        klassR = klass;
-        writeGroupR = writeGroup;
-        this.type = this.typeL;
-        findTargetFunction(frame);
+        if (this.typeR != null) {
+            this.type = this.typeR;
+            findTargetFunction(frame);
+            targetFunctionNameR = targetFunctionName;
+            targetFunctionR = targetFunction;
+            klassR = klass;
+            writeGroupR = writeGroup;
+        } else {
+            targetFunctionR = null;
+        }
+        if (this.typeL != null) {
+            this.type = this.typeL;
+            findTargetFunction(frame);
+        } else {
+            targetFunction = null;
+        }
         if (targetFunctionR == null && targetFunction == null) {
-            return callBuiltin();
+            return callBuiltin(frame);
         }
-        if (targetFunctionR != null && targetFunction != null) {
-            if (targetFunctionName.equals("Ops.difftime") && targetFunctionNameR.equals("+.POSIXt") && targetFunctionNameR.equals("+.Date")) {
-                targetFunction = null;
-            } else if (!(targetFunctionNameR.equals("Ops.difftime") && targetFunctionName.equals("+.POSIXt") && targetFunctionName.equals("-.POSIXt") && targetFunctionNameR.equals("+.Date") && targetFunctionNameR.equals("-.Date"))) {
-                /*
-                 * TODO: throw warning
-                 * "Incompatible methods (\"%s\", \"%s\") for \"%s\""),lname,rname, generic
-                 */
-                return callBuiltin();
+        if (targetFunctionR != targetFunction) {
+            if (targetFunctionR != null && targetFunction != null) {
+                if (targetFunctionName.equals("Ops.difftime") && targetFunctionNameR.equals("+.POSIXt") && targetFunctionNameR.equals("+.Date")) {
+                    targetFunction = null;
+                } else if (!(targetFunctionNameR.equals("Ops.difftime") && targetFunctionName.equals("+.POSIXt") && targetFunctionName.equals("-.POSIXt") && targetFunctionNameR.equals("+.Date") && targetFunctionNameR.equals("-.Date"))) {
+                    /*
+                     * TODO: throw warning
+                     * "Incompatible methods (\"%s\", \"%s\") for \"%s\""),lname,rname, generic
+                     */
+                    return callBuiltin(frame);
+                }
+            }
+            if (targetFunction == null) {
+                targetFunction = targetFunctionR;
+                targetFunctionName = targetFunctionNameR;
+                klass = klassR;
+                writeGroup = writeGroupR;
+                this.type = this.typeR;
             }
         }
-        if (targetFunction == null) {
-            targetFunction = targetFunctionR;
-            targetFunctionName = targetFunctionNameR;
-            klass = klassR;
-            writeGroup = writeGroupR;
-            this.type = this.typeR;
-        }
-        String methods[] = new String[this.argNodes.length];
+        String methods[] = new String[this.evaluatedArgs.length];
         for (int i = 0; i < methods.length; ++i) {
-            RStringVector classHr = this.getArgClass(frame, i);
+            RStringVector classHr = getArgClass(this.evaluatedArgs[i]);
+            if (classHr == null) {
+                continue;
+            }
             for (int j = 0; j < classHr.getLength(); ++j) {
                 if (classHr.equals(klass.getDataAt(0))) {
                     methods[i] = targetFunctionName;

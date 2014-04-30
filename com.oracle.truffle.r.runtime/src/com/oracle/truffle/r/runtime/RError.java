@@ -223,6 +223,8 @@ public abstract class RError extends RuntimeException {
     private static final String OBJECT_NOT_SPECIFIED = "object not specified";
     private static final String NO_METHOD_FOUND = "no method to invoke";
     private static final String GEN_FUNCTION_NOT_SPECIFIED = "generic function not specified";
+    private static final String DUPLICATE_SWITCH_DEFAULT = "duplicate 'switch' defaults: '%s' and '%s'";
+    private static final String NO_ALTERNATIVE_IN_SWITCH = "empty alternative in numeric switch";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -2065,5 +2067,13 @@ public abstract class RError extends RuntimeException {
 
     public static RError getCannotMakeVectorOfMode(SourceSection encapsulatingSourceSection, String mode) {
         return getGenericError(encapsulatingSourceSection, String.format(CANNOT_MAKE_VECTOR_OF_MODE, mode));
+    }
+
+    public static RError getDuplicateSwitchDefaults(SourceSection enSourceSection, String defaultValue1, String defaultValue2) {
+        return getGenericError(enSourceSection, String.format(DUPLICATE_SWITCH_DEFAULT, defaultValue1, defaultValue2));
+    }
+
+    public static RError getNoAlertnativeInSwitch(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NO_ALTERNATIVE_IN_SWITCH);
     }
 }

@@ -33,9 +33,9 @@ public abstract class DispatchedCallNode extends RNode {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
     }
 
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, final RNode[] args) {
+    public static DispatchedCallNode create(final String genericName, final String dispatchType, final CallArgumentsNode callArgsNode) {
         if (dispatchType == RRuntime.RDotGroup) {
-            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, args));
+            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callArgsNode));
         }
         throw new AssertionError();
     }

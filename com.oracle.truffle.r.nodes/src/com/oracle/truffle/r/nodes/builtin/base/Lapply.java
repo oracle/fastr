@@ -21,7 +21,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(value = "lapply", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(value = ".Internal.lapply", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public abstract class Lapply extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"X", "FUN", "..."};
