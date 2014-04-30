@@ -40,10 +40,10 @@ import com.oracle.truffle.r.runtime.data.*;
  * builtin returns "" for an unnamed environment. However, unnamed environments print using a unique
  * numeric id in the place where the name would appear for a named environment. This is finessed
  * using the {@link #getPrintNameHelper} method. Further, environments on the {@code search} path
- * return a yet different name in the result of {@code search}, e.g. ".GlobalEnv", "package:base".
- * Finally, environments can be given names using the {@code attr} function, and (then) they print
- * differently again. Of the default set of environments, only "Autoloads" has a {@code name}
- * attribute.
+ * return a yet different name in the result of {@code search}, e.g. ".GlobalEnv", "package:base",
+ * which is handled via {@link #getSearchName()}. Finally, environments can be given names using the
+ * {@code attr} function, and (then) they print differently again. Of the default set of
+ * environments, only "Autoloads" has a {@code name} attribute.
  * <p>
  * Environments can also be locked preventing any bindings from being added or removed. N.B. the
  * empty environment can't be assigned to but is not locked (see GnuR). Further, individual bindings
@@ -65,12 +65,17 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  */
 public abstract class REnvironment {
+    public enum PackageKind {
+        PACKAGE,
+        IMPORTS,
+        NAMESPACE
+    }
 
     /**
-     * Tagging interface indicating that the environment class is a component of
-     * {@link #searchListEnvironments}.
+     * Tagging interface that indicates this is a "package" environment.
      */
-    private interface InSearchList {
+    private interface IsPackage {
+
     }
 
     public static class PutException extends Exception {
@@ -235,20 +240,17 @@ public abstract class REnvironment {
     private static final FrameAccess defaultFrameAccess = new FrameAccessBindingsAdapter();
     private static final FrameAccess noFrameAccess = new FrameAccess();
 
-    /**
-     * Map is keyed by the simple name and, for packages, currently only contains the "package:xxx"
-     * environment.
-     */
-    private static final Map<String, REnvironment> searchListEnvironments = new HashMap<>();
-
     public static final String UNNAMED = "";
 
     private static final Empty emptyEnv = new Empty();
     private static Global globalEnv;
-    private static Base basePackageEnv;
+    private static PackageBase basePackageEnv;
     private static NamespaceBase baseNamespaceEnv;
     private static Autoload autoloadEnv;
-    private static String[] searchPath;
+    /**
+     * The environments returned by the R {@code search} function.
+     */
+    private static ArrayList<REnvironment> searchPath;
 
     private REnvironment parent;
     private final String name;
@@ -289,7 +291,7 @@ public abstract class REnvironment {
     /**
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
-    public static Base baseEnv() {
+    public static PackageBase baseEnv() {
         assert basePackageEnv != null;
         return basePackageEnv;
     }
@@ -312,16 +314,20 @@ public abstract class REnvironment {
 
     /**
      * Invoked on startup to setup the global values.
-     *
-     * @param baseFrame TODO
-     *
      */
     public static void initialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
-        basePackageEnv = new Base(baseFrame);
+        basePackageEnv = new PackageBase(baseFrame);
         autoloadEnv = new Autoload();
         // The following is only true if there are no other default packages loaded.
         globalEnv = new Global(autoloadEnv, globalFrame);
         baseNamespaceEnv = new NamespaceBase(basePackageEnv);
+        // set up the initial search path
+        searchPath = new ArrayList<>();
+        REnvironment env = globalEnv;
+        do {
+            searchPath.add(env);
+            env = env.parent;
+        } while (env != emptyEnv);
     }
 
     /**
@@ -335,42 +341,42 @@ public abstract class REnvironment {
      * Data for the {@code search} function.
      */
     public static String[] searchPath() {
-        if (searchPath == null) {
-            searchPath = new String[]{".GlobalEnv", "Autoloads", "package:base"};
+        String[] result = new String[searchPath.size()];
+        for (int i = 0; i < searchPath.size(); i++) {
+            REnvironment env = searchPath.get(i);
+            result[i] = env.getSearchName();
         }
-        return searchPath;
+        return result;
     }
 
-    public static REnvironment lookupByName(String name) {
-        return searchListEnvironments.get(name);
+    public static REnvironment lookupOnSearchPath(String name) {
+        for (REnvironment env : searchPath) {
+            String searchName = env.getSearchName();
+            if (searchName.equals(name)) {
+                return env;
+            }
+        }
+        return null;
     }
 
-    public static REnvironment lookupBySearchName(String name) {
-        if (name.equals(".GlobalEnv")) {
-            return globalEnv();
-        } else if (name.equals("Autoloads")) {
-            return autoloadEnv();
-        } else if (name.startsWith("package:")) {
-            return lookupByName(name.replace("package:", ""));
-        } else {
-            return null;
-        }
+    @SlowPath
+    public static String packageQualName(PackageKind packageKind, String packageName) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(packageKind.name().toLowerCase());
+        sb.append(':');
+        sb.append(packageName);
+        return sb.toString();
     }
 
     // end of static members
 
     /**
-     * The basic constructor; assigns the fields and possibly puts the environment on
-     * {@link #searchListEnvironments}.
+     * The basic constructor; just assigns the essential fields.
      */
     protected REnvironment(REnvironment parent, String name, FrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
         this.frameAccess = frameAccess;
-        // Not all named environments are put on the search list, hence the tagging interface
-        if (!name.equals(UNNAMED) && this instanceof InSearchList) {
-            searchListEnvironments.put(name, this);
-        }
     }
 
     /**
@@ -406,11 +412,41 @@ public abstract class REnvironment {
     }
 
     /**
-     * The "simple" name of the environment. E.g. "namespace:xxx" return "xxx". TODO Evidently this
-     * can be changed using attributes, which is not yet supported..
+     * The "simple" name of the environment. For "package:xxx", "namespace:xxx", "imports:xxx", this
+     * is "xxx". If the environment has been given a "name" attribute, then it is that value. This
+     * is the value returned by the R {@code environmentName} function.
      */
     public String getName() {
-        return name;
+        String attrName = attributes == null ? null : (String) attributes.get(RRuntime.NAMES_ATTR_KEY);
+        return attrName != null ? attrName : name;
+    }
+
+    /**
+     * The "print" name of an environment, i.e. what is output for {@code print(env)}.
+     */
+    @SlowPath
+    public String getPrintName() {
+        return new StringBuilder("<environment: ").append(getPrintNameHelper()).append('>').toString();
+    }
+
+    protected String getPrintNameHelper() {
+        if (name.equals(UNNAMED)) {
+            return String.format("%#x", hashCode());
+        } else {
+            return getName();
+        }
+    }
+
+    /**
+     * Name returned by the {@code search()} function. The default is just the simple name, but some
+     * environments
+     */
+    protected String getSearchName() {
+        String result = getName();
+        if (this instanceof IsPackage) {
+            result = "package:" + result;
+        }
+        return result;
     }
 
     /**
@@ -488,19 +524,6 @@ public abstract class REnvironment {
 
     public Map<String, Object> getAttributes() {
         return attributes;
-    }
-
-    @SlowPath
-    public String getPrintName() {
-        return new StringBuilder("<environment: ").append(getPrintNameHelper()).append('>').toString();
-    }
-
-    protected String getPrintNameHelper() {
-        if (name.equals(UNNAMED)) {
-            return String.format("%#x", hashCode());
-        } else {
-            return getName();
-        }
     }
 
     @Override
@@ -593,15 +616,15 @@ public abstract class REnvironment {
     }
 
     /**
-     * {@link Base} and {@link NamespaceBase} share some characteristics that are implemented in
-     * this adapter.
+     * {@link PackageBase} and {@link NamespaceBase} share some characteristics that are implemented
+     * in this adapter.
      */
     private static class BaseAdapter extends REnvironment {
         protected BaseAdapter(REnvironment parent, VirtualFrame frame) {
             super(parent, "base", frame);
         }
 
-        protected BaseAdapter(REnvironment parent, Base base) {
+        protected BaseAdapter(REnvironment parent, PackageBase base) {
             super(parent, "base", new TruffleFrameAccess(base.getFrame()));
         }
 
@@ -614,9 +637,9 @@ public abstract class REnvironment {
     /**
      * The environment for the {@code package:base} package, which is in the search list.
      */
-    private static class Base extends BaseAdapter implements InSearchList {
+    private static class PackageBase extends BaseAdapter implements IsPackage {
 
-        Base(VirtualFrame frame) {
+        PackageBase(VirtualFrame frame) {
             super(emptyEnv, frame);
         }
     }
@@ -625,7 +648,7 @@ public abstract class REnvironment {
      * The {@code namespace:base} environment, which is <i>not</i> in the search list.
      */
     private static final class NamespaceBase extends BaseAdapter {
-        private NamespaceBase(Base base) {
+        private NamespaceBase(PackageBase base) {
             super(globalEnv, base);
         }
 
@@ -639,12 +662,17 @@ public abstract class REnvironment {
      * The users workspace environment (so called global). The parent depends on the set of default
      * packages loaded.
      */
-    public static final class Global extends REnvironment implements InSearchList {
+    public static final class Global extends REnvironment {
 
         public static final Object GLOBAL_ENV_ID = new Object();
 
         private Global(REnvironment parent, VirtualFrame frame) {
             super(parent, "R_GlobalEnv", storeGlobalEnvID(frame));
+        }
+
+        @Override
+        protected String getSearchName() {
+            return ".GlobalEnv";
         }
 
         /**
@@ -798,7 +826,7 @@ public abstract class REnvironment {
     private static final class Autoload extends REnvironment {
         Autoload() {
             super(baseEnv(), UNNAMED, baseEnv().getFrame());
-            setAttr("name", "Autoloads");
+            setAttr(RRuntime.NAMES_ATTR_KEY, "Autoloads");
         }
 
     }
@@ -807,7 +835,7 @@ public abstract class REnvironment {
      * The empty environment has no runtime state and so can be allocated statically. TODO Attempts
      * to assign should cause an R error, if not prevented in caller. TODO check.
      */
-    private static final class Empty extends REnvironment implements InSearchList {
+    private static final class Empty extends REnvironment {
 
         private Empty() {
             super(null, "R_EmptyEnv", defaultFrameAccess);

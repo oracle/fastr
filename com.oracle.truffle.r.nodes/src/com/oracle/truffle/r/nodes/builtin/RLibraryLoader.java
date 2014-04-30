@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class RLibraryLoader {
@@ -104,7 +105,7 @@ public class RLibraryLoader {
                     }
                 };
                 source = sourceManager.getFakeFile(component.libName, component.libContents);
-                RTruffleVisitor transform = new RTruffleVisitor(REnvironment.lookupByName(packageName));
+                RTruffleVisitor transform = new RTruffleVisitor(REnvironment.lookupOnSearchPath(REnvironment.packageQualName(PackageKind.PACKAGE, packageName)));
                 RNode node = transform.transform(ParseUtil.parseAST(stream, source));
                 rNodes.add(node);
             } catch (RecognitionException e) {
