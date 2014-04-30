@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -177,6 +178,7 @@ public class RRNG {
      * @param normKindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link NormKind}.
      */
+    @SlowPath
     public static void doSetSeed(VirtualFrame frame, Integer seed, int kindAsInt, int normKindAsInt) throws RNGException {
         int newSeed = seed == RESET_SEED ? timeToSeed() : seed;
         Kind kind = changeKinds(kindAsInt, normKindAsInt);
@@ -188,6 +190,7 @@ public class RRNG {
      * Set the kind and optionally the norm kind, called from R builtin {@code RNGkind}. GnuR
      * chooses the new seed from the previous RNG.
      */
+    @SlowPath
     public static void doRNGKind(VirtualFrame frame, int kindAsInt, int normKindAsInt) throws RNGException {
         int newSeed = (int) (unifRand() * UINT_MAX);
         Kind kind = changeKinds(kindAsInt, normKindAsInt);
@@ -276,6 +279,7 @@ public class RRNG {
             REnvironment.globalEnv().put(RANDOM_SEED, vector);
         } catch (REnvironment.PutException ex) {
             // should never happen
+            Utils.fail("error updating " + RANDOM_SEED);
         }
     }
 
