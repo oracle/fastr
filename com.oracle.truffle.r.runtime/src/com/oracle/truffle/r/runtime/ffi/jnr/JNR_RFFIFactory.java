@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.io.*;
 import java.nio.*;
+
 import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 /**
  * JNR-based factory Implements {@link BaseRFFI} and {@link LapackRFFI} directly.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, LapackRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, BaseRFFI, LapackRFFI, UserRngRFFI {
 
     // Base
 
@@ -127,7 +128,41 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Lapa
         }
     }
 
-    // Lapack
+    public Object dlopen(String path, boolean local, boolean now) {
+        int flags = (local ? com.kenai.jffi.Library.LOCAL : com.kenai.jffi.Library.GLOBAL) | (now ? com.kenai.jffi.Library.NOW : com.kenai.jffi.Library.LAZY);
+        return com.kenai.jffi.Library.getCachedInstance(path, flags);
+    }
+
+    public long dlsym(Object handle, String symbol) {
+        return ((com.kenai.jffi.Library) handle).getSymbolAddress(symbol);
+    }
+
+    public int dlclose(Object handle) {
+        // TODO JNR provides no (public) way to close a library
+        return 1;
+    }
+
+    public String dlerror() {
+        return com.kenai.jffi.Library.getLastError();
+    }
+
+    /*
+     * CCall methods
+     */
+
+    public void invoke(long address) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void invoke(long address, Object arg) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * Lapack methods.
+     */
 
     @Override
     public LapackRFFI getLapackRFFI() {
@@ -204,5 +239,69 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Lapa
                         RefScalars_dgeev.lwork, RefScalars_dgeev.info);
         return RefScalars_dgeev.info[0];
     }
+
+    /*
+     * UserRng
+     */
+
+
+    @Override
+    public UserRngRFFI getUserRngRFFI() {
+        return this;
+    }
+
+    public interface UserRng {
+        void user_unif_init(@In int seed);
+        Pointer user_unif_rand();
+        Pointer user_unif_nseed();
+        Pointer user_unif_seedloc();
+    }
+
+    private static class UserRngProvider {
+        private static String libPath;
+        private static UserRng userRng;
+
+        UserRngProvider(String libPath) {
+            UserRngProvider.libPath = libPath;
+        }
+
+        static UserRng userRng() {
+            if (userRng == null) {
+                userRng = LibraryLoader.create(UserRng.class).load(libPath);
+            }
+            return userRng;
+        }
+    }
+
+    private static UserRng userRng() {
+        return UserRngProvider.userRng();
+    }
+
+    @SuppressWarnings("unused")
+    public void setLibrary(String path) {
+        new UserRngProvider(path);
+
+    }
+
+    public void init(int seed) {
+        userRng().user_unif_init(seed);
+    }
+
+    public double rand() {
+        Pointer pDouble = userRng().user_unif_rand();
+        return pDouble.getDouble(0);
+    }
+
+    public int nSeed() {
+        return userRng().user_unif_nseed().getInt(0);
+    }
+
+    public void seeds(int[] n) {
+        Pointer pInt = userRng().user_unif_seedloc();
+        for (int i = 0; i < n.length; i++) {
+            n[i] = pInt.getInt(i);
+        }
+    }
+
 
 }

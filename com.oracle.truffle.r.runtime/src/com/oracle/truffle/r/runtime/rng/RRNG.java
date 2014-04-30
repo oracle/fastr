@@ -17,6 +17,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.mm.*;
 import com.oracle.truffle.r.runtime.rng.mt.*;
+import com.oracle.truffle.r.runtime.rng.user.*;
 
 /**
  * Facade class to the R random number generators, (see src/main/RNG.c in GnuR). The individual
@@ -53,7 +54,13 @@ public class RRNG {
             }
         },
         KNUTH_TAOCP(false),
-        USER_UNIF(false),
+        USER_UNIF(true) {
+            @Override
+            Kind setGenerator() {
+                generator = new UserRNG();
+                return this;
+            }
+        },
         KNUTH_TAOCP2(false),
         LECUYER_CMRG(false);
 
@@ -96,12 +103,13 @@ public class RRNG {
     private static final String RANDOM_SEED = ".Random.seed";
     public static final double I2_32M1 = 2.3283064365386963e-10;
     private static final double UINT_MAX = (double) Integer.MAX_VALUE * 2;
+    private static final int[] NO_SEEDS = new int[0];
 
     /**
      * The (logically private) interface that a random number generator must implement.
      */
     public interface GeneratorPrivate {
-        void init(int seed);
+        void init(int seed) throws RNGException;
 
         void fixupSeeds(boolean initial);
 
@@ -118,7 +126,7 @@ public class RRNG {
         private static final long serialVersionUID = 1L;
         private boolean isError;
 
-        RNGException(String msg, boolean isError) {
+        public RNGException(String msg, boolean isError) {
             super(msg);
             this.isError = isError;
         }
@@ -137,7 +145,11 @@ public class RRNG {
     public static void initialize() {
         int seed = timeToSeed();
         currentNormKind = DEFAULT_NORM_KIND;
-        initGenerator(DEFAULT_KIND.setGenerator(), seed);
+        try {
+            initGenerator(DEFAULT_KIND.setGenerator(), seed);
+        } catch (RNGException ex) {
+            Utils.fail("failed to initialize default random number generator");
+        }
     }
 
     public static int currentKindAsInt() {
@@ -229,7 +241,7 @@ public class RRNG {
         return null;
     }
 
-    private static void initGenerator(Kind kind, int aSeed) {
+    private static void initGenerator(Kind kind, int aSeed) throws RNGException {
         // Initial scrambling, common to all, from RNG_Init in src/main/RNG.c
         int seed = aSeed;
         for (int i = 0; i < 50; i++) {
@@ -250,6 +262,9 @@ public class RRNG {
 
     private static void updateDotRandomSeed(@SuppressWarnings("unused") VirtualFrame frame) {
         int[] seeds = currentKind.generator.getSeeds();
+        if (seeds == null) {
+            seeds = NO_SEEDS;
+        }
         int[] data = new int[seeds.length + 1];
         data[0] = currentKind.ordinal() + 100 * currentNormKind.ordinal();
         for (int i = 0; i < seeds.length; i++) {
