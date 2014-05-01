@@ -26,7 +26,7 @@ public abstract class Lapply extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"X", "FUN", "..."};
 
-    Object[] combinedArgs;
+    private Object[] combinedArgs;
 
     @Override
     public Object[] getParameterNames() {

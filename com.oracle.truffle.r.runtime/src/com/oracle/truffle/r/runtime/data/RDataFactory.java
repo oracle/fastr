@@ -286,4 +286,18 @@ public final class RDataFactory {
     public static RList createList(Object[] data, int[] newDimensions, Object names) {
         return traceDataCreated(new RList(data, false, newDimensions, names));
     }
+
+    public static RVector createObjectVector(Object[] data, boolean completeVector) {
+        if (data.length < 1) {
+            return null;
+        }
+        if (data[0] instanceof Double) {
+            double[] result = new double[data.length];
+            for (int i = 0; i < data.length; ++i) {
+                result[i] = (double) data[i];
+            }
+            return RDataFactory.createDoubleVector(result, completeVector);
+        }
+        return null;
+    }
 }

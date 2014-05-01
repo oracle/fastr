@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
 
-    public abstract RStringVector execute(VirtualFrame frame, RAbstractVector x);
+    public abstract RStringVector execute(VirtualFrame frame, Object x);
 
     @Specialization
     public RStringVector typeof(RNull vector) {

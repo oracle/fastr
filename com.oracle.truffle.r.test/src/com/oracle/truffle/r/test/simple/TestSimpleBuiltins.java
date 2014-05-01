@@ -2687,6 +2687,29 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testStorageMode() {
+        assertEval("{storage.mode(1)}");
+        assertEval("{storage.mode(c)}");
+        assertEval("{storage.mode(f<-function(){1})}");
+        assertEval("{storage.mode(c(1,2,3))}");
+        assertEval("{x<-1;storage.mode(x)<-\"character\"}");
+        assertEval("{x<-1;storage.mode(x)<-\"logical\";x}");
+    }
+
+    @Test
+    public void testIsFactor() {
+        assertEval("{x<-1;class(x)<-\"foo\";is.factor(x)}");
+    }
+
+    @Test
+    @Ignore
+    public void testIsFactorIgnore() {
+        assertEval("{is.factor(1)}");
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
+        assertEval("{is.factor(c)}");
+    }
+
+    @Test
     @Ignore
     public void testParen() {
         assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");

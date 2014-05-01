@@ -49,40 +49,40 @@ public abstract class Apply extends RBuiltinNode {
 
     @Specialization(order = 1, guards = "rowMargin")
     @SuppressWarnings("unused")
-    public RDoubleVector applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
+    public Object applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
         controlVisibility();
         int[] xdim = x.getDimensions();
         final int rows = xdim == null ? x.getLength() : xdim[0];
         final int cols = xdim == null ? 1 : xdim[1];
-        double[] result = new double[rows];
+        Object[] result = new Object[rows];
         for (int row = 0; row < rows; ++row) {
             double[] rowData = new double[cols];
             for (int i = 0; i < cols; ++i) {
                 rowData[i] = x.getDataAt(i * rows + row);
             }
             RDoubleVector rowVec = RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR);
-            result[row] = (double) executeFunction(frame, fun, rowVec);
+            result[row] = executeFunction(frame, fun, RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR));
         }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(order = 2, guards = "colMargin")
     @SuppressWarnings("unused")
-    public RDoubleVector applyCols(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
+    public Object applyCols(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
         controlVisibility();
         int[] xdim = x.getDimensions();
         final int rows = xdim == null ? x.getLength() : xdim[0];
         final int cols = xdim == null ? 1 : xdim[1];
-        double[] result = new double[cols];
+        Object[] result = new Object[cols];
         for (int col = 0; col < cols; ++col) {
             double[] colData = new double[rows];
             for (int i = 0; i < rows; ++i) {
                 colData[i] = x.getDataAt(col * rows + i);
             }
             RDoubleVector colVec = RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR);
-            result[col] = (double) executeFunction(frame, fun, colVec);
+            result[col] = executeFunction(frame, fun, RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR));
         }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @SuppressWarnings("unused")

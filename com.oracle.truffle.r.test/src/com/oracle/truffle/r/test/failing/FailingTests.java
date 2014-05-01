@@ -1319,6 +1319,21 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testIsFactorIgnore_e43e62dca9f8a682efdd7d472154123e() {
+        assertEval("{is.factor(1)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testIsFactorIgnore_9b6189d7740f2b58ed5ac90834facc44() {
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testIsFactorIgnore_f50a4cd1b0417c209953249fed637957() {
+        assertEval("{is.factor(c)}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testLapplyIgnore_bb1b1b8299159a83c87fe6dc760e5b8b() {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
     }

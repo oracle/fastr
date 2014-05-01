@@ -31,8 +31,6 @@ public abstract class Switch extends RBuiltinNode {
 
     public abstract String[] getArgNames();
 
-    private Object currentDefaultValue;
-
     private boolean isVisible = true;
 
     @Override
@@ -49,9 +47,10 @@ public abstract class Switch extends RBuiltinNode {
         return this.isVisible;
     }
 
-    @Specialization
+    @Specialization(order = 1)
     public Object doSwitch(String x, Object[] optionalArgs) {
         controlVisibility();
+        Object currentDefaultValue = null;
         final String[] argNames = this.getArgNames();
         for (int i = 1; i < argNames.length; ++i) {
             final String argName = argNames[i];
@@ -62,27 +61,47 @@ public abstract class Switch extends RBuiltinNode {
                 }
             }
             if (argName == null) {
-                setDefault(value);
+                if (currentDefaultValue != null) {
+                    throw RError.getDuplicateSwitchDefaults(getEncapsulatingSourceSection(), currentDefaultValue.toString(), value.toString());
+                }
+                currentDefaultValue = value;
             }
         }
-        if (this.currentDefaultValue != null) {
-            return returnNonNull(this.currentDefaultValue);
+        if (currentDefaultValue != null) {
+            return returnNonNull(currentDefaultValue);
         } else {
             return returnNull();
         }
     }
 
-    @Specialization
+    @Specialization(order = 0)
+    public Object doSwitch(RStringVector x, Object[] optionalArgs) {
+        if (x.getLength() != 1) {
+            throw RError.getExprNotLengthOne(getEncapsulatingSourceSection());
+        }
+        return doSwitch(x.getDataAt(0), optionalArgs);
+    }
+
+    @Specialization(order = 2)
+    public Object doSwitch(int x, Object[] optionalArgs) {
+        return doSwitchInt(x, optionalArgs);
+    }
+
+    @Specialization(order = 3)
     public Object doSwitch(VirtualFrame frame, Object x, Object[] optionalArgs) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntNode = insert(CastIntegerNodeFactory.create(null, false, false, false));
         }
-        Object objIndex = castIntNode.executeInt(frame, x);
+        Object objIndex = castIntNode.executeCast(frame, x);
         if (!(objIndex instanceof Integer)) {
             return returnNull();
         }
         int index = (Integer) objIndex;
+        return doSwitchInt(index, optionalArgs);
+    }
+
+    private Object doSwitchInt(int index, Object[] optionalArgs) {
         if (index >= 1 && index <= optionalArgs.length) {
             Object value = optionalArgs[index - 1];
             if (value != null) {
@@ -93,11 +112,10 @@ public abstract class Switch extends RBuiltinNode {
         return returnNull();
     }
 
-    private void setDefault(Object defaultValue) {
-        if (this.currentDefaultValue != null) {
-            throw RError.getDuplicateSwitchDefaults(getEncapsulatingSourceSection(), this.currentDefaultValue.toString(), defaultValue.toString());
-        }
-        this.currentDefaultValue = defaultValue;
+    @SuppressWarnings("unused")
+    @Specialization(order = 5)
+    public Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
+        throw RError.getExprMissing(getEncapsulatingSourceSection());
     }
 
     private Object returnNull() {

@@ -6147,6 +6147,10 @@ Error in rnorm(s = 1, s = 1) :
 #{ is.atomic(c(1,2,3)) }
 [1] TRUE
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsFactor
+#{x<-1;class(x)<-"foo";is.factor(x)}
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsNA
 #{ is.na(1[10]) }
 [1] TRUE
@@ -8032,6 +8036,29 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSqrt
 #{ sqrt(c(1,4,NA,16)) }
 [1]  1  2 NA  4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStorageMode
+#{storage.mode(1)}
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStorageMode
+#{storage.mode(c(1,2,3))}
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStorageMode
+#{storage.mode(c)}
+[1] "function"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStorageMode
+#{storage.mode(f<-function(){1})}
+[1] "function"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStorageMode
+#{x<-1;storage.mode(x)<-"character"}
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStorageMode
+#{x<-1;storage.mode(x)<-"logical";x}
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStrSplit
 #{ strsplit( c("helloh", "hi"), c("h","")) }

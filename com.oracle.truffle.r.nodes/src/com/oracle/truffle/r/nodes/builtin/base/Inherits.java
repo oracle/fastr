@@ -14,6 +14,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -22,7 +25,21 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(value = "inherits")
 public abstract class Inherits extends RBuiltinNode {
 
-    @Specialization
+    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "what", "which"};
+
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+    }
+
+    public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what);
+
+    @Specialization(order = 0)
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
         controlVisibility();
         boolean isWhich = which == RRuntime.LOGICAL_TRUE;
@@ -55,21 +72,24 @@ public abstract class Inherits extends RBuiltinNode {
         }
     }
 
-    @Specialization
-    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") RMissing which) {
-        controlVisibility();
-        return doesInherit(x, what, RRuntime.LOGICAL_FALSE);
-    }
-
-    @Specialization
-    public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") RAbstractStringVector what, @SuppressWarnings("unused") Object which) {
+    @Specialization(order = 3)
+    @SuppressWarnings("unused")
+    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, Object which) {
         controlVisibility();
         throw RError.getNotLengthOneLogicalVector(getEncapsulatingSourceSection(), RRuntime.WHICH);
     }
 
-    @Specialization
-    public Object doesInherit(@SuppressWarnings("unused") RAbstractVector x, @SuppressWarnings("unused") Object what, @SuppressWarnings("unused") Object which) {
+    @Specialization(order = 4)
+    @SuppressWarnings("unused")
+    public Object doesInherit(RAbstractVector x, Object what, Object which) {
         controlVisibility();
         throw RError.getNotCharacterVector(getEncapsulatingSourceSection(), RRuntime.WHAT);
+    }
+
+    @Specialization(order = 6)
+    @SuppressWarnings("unused")
+    public Object doesInherit(Object x, Object what, Object which) {
+        controlVisibility();
+        throw new UnsupportedOperationException();
     }
 }

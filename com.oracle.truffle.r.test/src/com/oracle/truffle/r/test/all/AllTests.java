@@ -7384,6 +7384,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testIsFactor_35274bed495a47f012fd2924c121bc8c() {
+        assertEval("{x<-1;class(x)<-\"foo\";is.factor(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsFactorIgnore_e43e62dca9f8a682efdd7d472154123e() {
+        assertEval("{is.factor(1)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsFactorIgnore_9b6189d7740f2b58ed5ac90834facc44() {
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testIsFactorIgnore_f50a4cd1b0417c209953249fed637957() {
+        assertEval("{is.factor(c)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIsNA_b8cf60154d61f3d4fb5896e670ddc520() {
         assertEval("{ is.na(NA) }");
     }
@@ -10436,6 +10456,36 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSqrtBroken_d1949f3b9fbc81f7fe02ad4b8719bcaa() {
         assertEval("{ sqrt(-1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStorageMode_5aba5dbdf7b172ee81df983c9ad3f4c9() {
+        assertEval("{storage.mode(1)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStorageMode_d9601d4d4c30c0c176f40f768b85b0b2() {
+        assertEval("{storage.mode(c)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStorageMode_11622ef118df18dc5aea3f73fe48dea6() {
+        assertEval("{storage.mode(f<-function(){1})}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStorageMode_8304399d60482172632702b36d661e69() {
+        assertEval("{storage.mode(c(1,2,3))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStorageMode_54a9c734e1f1ff35da1a5a8ece212353() {
+        assertEval("{x<-1;storage.mode(x)<-\"character\"}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testStorageMode_86010dce9517f70282cf376104fbe12e() {
+        assertEval("{x<-1;storage.mode(x)<-\"logical\";x}");
     }
 
     @Test
