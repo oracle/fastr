@@ -23,12 +23,10 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
-import java.util.stream.*;
-
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.envframe.*;
 
 /**
  * Denotes an R {@code environment}.
@@ -57,13 +55,13 @@ import com.oracle.truffle.r.runtime.data.*;
  * implicitly created by the virtual machine, for example, on function call.
  * <p>
  * The different kinds of environments are implemented as subclasses. The variation in behavior
- * regarding access to the "frame" is handled by delegation to an instance of {@link FrameAccess}.
- * Conceptually, variables are searched for by starting in a given environment and searching
- * backwards through the "parent" chain. In practice, variables are accessed in the Truffle
- * environment using {@link Frame} instances which may, in some cases such as compiled code, not
- * even exist as actual objects. Therefore, we have to keep the name lookup in the two worlds in
- * sync. This is an issue during initialization, and when a new environment is attached, cf.
- * {@link #attach}.
+ * regarding access to the "frame" is handled by delegation to an instance of
+ * {@link REnvFrameAccess}. Conceptually, variables are searched for by starting in a given
+ * environment and searching backwards through the "parent" chain. In practice, variables are
+ * accessed in the Truffle environment using {@link Frame} instances which may, in some cases such
+ * as compiled code, not even exist as actual objects. Therefore, we have to keep the name lookup in
+ * the two worlds in sync. This is an issue during initialization, and when a new environment is
+ * attached, cf. {@link #attach}.
  * <p>
  * Packages have three associated environments, "package:xxx", "imports:xxx" and "namespace:xxx",
  * for package "xxx". The {@code base} package is a special case in that it does not have an
@@ -88,164 +86,13 @@ public abstract class REnvironment {
     public static class PutException extends Exception {
         private static final long serialVersionUID = 1L;
 
-        PutException(String message) {
+        public PutException(String message) {
             super(message);
         }
     }
 
-    /**
-     * Access to the frame component, handled by delegation in {@link REnvironment}. The default
-     * implementation throws an exception for all calls and is used in the FunctionDefinition
-     * environment which has no associated frame.
-     */
-    private static class FrameAccess {
-        /**
-         * Return the value of object named {@code name} or {@code null} if not found.
-         */
-        Object get(@SuppressWarnings("unused") String key) {
-            throw notImplemented("get");
-        }
-
-        /**
-         * Set the value of object named {@code name} to {@code value}. if {@code value == null},
-         * effectively removes the name.
-         *
-         * @throws PutException if the binding is locked
-         */
-        @SuppressWarnings("unused")
-        void put(String key, Object value) throws REnvironment.PutException {
-            throw notImplemented("put");
-        }
-
-        /**
-         * Remove binding.
-         */
-        void rm(@SuppressWarnings("unused") String key) {
-            throw notImplemented("rm");
-        }
-
-        @SuppressWarnings("unused")
-        RStringVector ls(boolean allNames, String pattern) {
-            throw notImplemented("ls");
-        }
-
-        void lockBindings() {
-            throw notImplemented("lockBindings");
-        }
-
-        /**
-         * Disallow updates to {@code key}.
-         */
-        void lockBinding(@SuppressWarnings("unused") String key) {
-            throw notImplemented("lockBinding");
-        }
-
-        /**
-         * Allow updates to (previously locked) {@code key}.
-         */
-        void unlockBinding(@SuppressWarnings("unused") String key) {
-            throw notImplemented("unlockBinding");
-        }
-
-        boolean bindingIsLocked(@SuppressWarnings("unused") String key) {
-            throw notImplemented("bindingIsLocked");
-        }
-
-        MaterializedFrame getFrame() {
-            throw notImplemented("getFrame");
-        }
-
-        private static RuntimeException notImplemented(String methodName) {
-            return new RuntimeException("FrameAccess method '" + methodName + "' not implemented");
-        }
-
-    }
-
-    /**
-     * This adapter class handles the locking of bindings, but has null implementations of the basic
-     * methods, which must be overridden by a subclass, while calling {@code super.method}
-     * appropriately to invoke the locking logic.
-     */
-    private static class FrameAccessBindingsAdapter extends FrameAccess {
-        /**
-         * Records which bindings are locked. In normal use we don't expect any bindings to be
-         * locked so this set is allocated lazily.
-         */
-        protected Set<String> lockedBindings;
-
-        @Override
-        Object get(String key) {
-            return null;
-        }
-
-        @Override
-        void put(String key, Object value) throws REnvironment.PutException {
-            if (lockedBindings != null && lockedBindings.contains(key)) {
-                throw createPutException(key);
-            }
-        }
-
-        @Override
-        void rm(String key) {
-            if (lockedBindings != null) {
-                lockedBindings.remove(key);
-            }
-        }
-
-        @Override
-        RStringVector ls(boolean allNames, String pattern) {
-            return RDataFactory.createEmptyStringVector();
-        }
-
-        @Override
-        @SlowPath
-        void lockBindings() {
-            Set<String> bindings = getBindingsForLock();
-            if (bindings != null) {
-                for (String binding : bindings) {
-                    lockBinding(binding);
-                }
-            }
-        }
-
-        protected Set<String> getBindingsForLock() {
-            return null;
-        }
-
-        @Override
-        @SlowPath
-        void lockBinding(String key) {
-            if (lockedBindings == null) {
-                lockedBindings = new HashSet<>();
-            }
-            lockedBindings.add(key);
-        }
-
-        @SlowPath
-        PutException createPutException(String key) {
-            return new PutException("cannot change value of locked binding for '" + key + "'");
-        }
-
-        @Override
-        void unlockBinding(String key) {
-            if (lockedBindings != null) {
-                lockedBindings.remove(key);
-            }
-        }
-
-        @Override
-        boolean bindingIsLocked(String key) {
-            return lockedBindings != null && lockedBindings.contains(key);
-        }
-
-        @Override
-        MaterializedFrame getFrame() {
-            return null;
-        }
-    }
-
-    private static final FrameAccess defaultFrameAccess = new FrameAccessBindingsAdapter();
-    private static final FrameAccess noFrameAccess = new FrameAccess();
+    private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
+    private static final REnvFrameAccess noFrameAccess = new REnvFrameAccess();
 
     public static final String UNNAMED = "";
     private static final String NAME_ATTR_KEY = "name";
@@ -262,7 +109,7 @@ public abstract class REnvironment {
 
     private REnvironment parent;
     private final String name;
-    private final FrameAccess frameAccess;
+    final REnvFrameAccess frameAccess;
     private Map<String, Object> attributes;
     private boolean locked;
 
@@ -410,7 +257,7 @@ public abstract class REnvironment {
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
         MaterializedFrame envFrame = env.frameAccess.getFrame();
         if (envFrame == null) {
-            envFrame = new EnvMaterializedFrame(env);
+            envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
         }
         RArguments.attachFrame(aboveFrame, envFrame);
     }
@@ -446,8 +293,8 @@ public abstract class REnvironment {
         searchPath.remove(bpos);
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
         RArguments.detachFrame(aboveFrame);
-        if (envToRemove.frameAccess instanceof MapFrameAccess) {
-            ((MapFrameAccess) envToRemove.frameAccess).detach();
+        if (envToRemove.frameAccess instanceof REnvMapFrameAccess) {
+            ((REnvMapFrameAccess) envToRemove.frameAccess).detach();
         }
         return envToRemove;
     }
@@ -466,7 +313,7 @@ public abstract class REnvironment {
     /**
      * The basic constructor; just assigns the essential fields.
      */
-    protected REnvironment(REnvironment parent, String name, FrameAccess frameAccess) {
+    protected REnvironment(REnvironment parent, String name, REnvFrameAccess frameAccess) {
         this.parent = parent;
         this.name = name;
         this.frameAccess = frameAccess;
@@ -484,16 +331,16 @@ public abstract class REnvironment {
     /**
      * Helper method to comply with constructor ordering rules.
      */
-    private static FrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
+    private static REnvFrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
         RArguments.setEnclosingFrame(frame, parent.getFrame());
-        return new TruffleFrameAccess(frame.materialize());
+        return new REnvTruffleFrameAccess(frame.materialize());
     }
 
     /**
      * An environment associated with an already materialized frame.
      */
     protected REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
-        this(parent, name, new TruffleFrameAccess(frame));
+        this(parent, name, new REnvTruffleFrameAccess(frame));
     }
 
     public REnvironment getParent() {
@@ -633,89 +480,6 @@ public abstract class REnvironment {
     }
 
     /**
-     * Variant of {@link FrameAccess} that provides access to an actual Truffle execution frame.
-     */
-    private static class TruffleFrameAccess extends FrameAccessBindingsAdapter {
-
-        private MaterializedFrame frame;
-
-        TruffleFrameAccess(MaterializedFrame frame) {
-            this.frame = frame;
-        }
-
-        @Override
-        MaterializedFrame getFrame() {
-            return frame;
-        }
-
-        @Override
-        Object get(String key) {
-            FrameDescriptor fd = frame.getFrameDescriptor();
-            FrameSlot slot = fd.findFrameSlot(key);
-            if (slot == null) {
-                return null;
-            } else {
-                return frame.getValue(slot);
-            }
-        }
-
-        @Override
-        void put(String key, Object value) throws PutException {
-            // check locking
-            super.put(key, value);
-            FrameDescriptor fd = frame.getFrameDescriptor();
-            FrameSlot slot = fd.findFrameSlot(key);
-            if (slot != null) {
-                frame.setObject(slot, value);
-            } else {
-                slot = fd.addFrameSlot(key, FrameSlotKind.Object);
-                frame.setObject(slot, value);
-            }
-        }
-
-        @Override
-        void rm(String key) {
-            super.rm(key);
-        }
-
-        @Override
-        RStringVector ls(boolean allNames, String pattern) {
-            // TODO support pattern
-            FrameDescriptor fd = frame.getFrameDescriptor();
-            String[] names = getStringIdentifiers(fd);
-            int undefinedIdentifiers = 0;
-            for (int i = 0; i < names.length; ++i) {
-                if (frame.getValue(fd.findFrameSlot(names[i])) == null) {
-                    names[i] = null;
-                    ++undefinedIdentifiers;
-                }
-            }
-            String[] definedNames = new String[names.length - undefinedIdentifiers];
-            int j = 0;
-            for (int i = 0; i < names.length; ++i) {
-                if (names[i] != null) {
-                    definedNames[j++] = names[i];
-                }
-            }
-            if (!allNames) {
-                definedNames = removeHiddenNames(definedNames);
-            }
-            return RDataFactory.createStringVector(definedNames, RDataFactory.COMPLETE_VECTOR);
-        }
-
-        @Override
-        protected Set<String> getBindingsForLock() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        private static String[] getStringIdentifiers(FrameDescriptor fd) {
-            return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).collect(Collectors.toSet()).toArray(RRuntime.STRING_ARRAY_SENTINEL);
-        }
-
-    }
-
-    /**
      * {@link PackageBase} and {@link NamespaceBase} share some characteristics that are implemented
      * in this adapter.
      */
@@ -725,7 +489,7 @@ public abstract class REnvironment {
         }
 
         protected BaseAdapter(REnvironment parent, PackageBase base) {
-            super(parent, "base", new TruffleFrameAccess(base.getFrame()));
+            super(parent, "base", new REnvTruffleFrameAccess(base.getFrame()));
         }
 
         @Override
@@ -838,78 +602,6 @@ public abstract class REnvironment {
     }
 
     /**
-     * Variant of {@link FrameAccess} environments where the "frame" is a {@link LinkedHashMap},
-     * e.g, for {link NewEnv}. By default there is no Truffle connection, i.e. {@link #getFrame()}
-     * returns null. However, if the owning environment is "attach"ed, then an
-     * {@link EnvMaterializedFrame} is created.
-     */
-    private static class MapFrameAccess extends FrameAccessBindingsAdapter {
-        private final Map<String, Object> map;
-        private EnvMaterializedFrame frame;
-
-        MapFrameAccess(int size) {
-            this.map = newHashMap(size);
-        }
-
-        void setMaterializedFrame(EnvMaterializedFrame frame) {
-            this.frame = frame;
-        }
-
-        @SlowPath
-        private static LinkedHashMap<String, Object> newHashMap(int size) {
-            return size == 0 ? new LinkedHashMap<>() : new LinkedHashMap<>(size);
-        }
-
-        @Override
-        public Object get(String key) {
-            return map.get(key);
-        }
-
-        @Override
-        public void rm(String key) {
-            super.rm(key);
-            map.remove(key);
-            if (frame != null) {
-                frame.rm(key);
-            }
-        }
-
-        @SlowPath
-        @Override
-        public void put(String key, Object value) throws PutException {
-            super.put(key, value);
-            map.put(key, value);
-            if (frame != null) {
-                frame.put(key, value);
-            }
-        }
-
-        @Override
-        public RStringVector ls(boolean allNames, String pattern) {
-            String[] names = map.keySet().toArray(RRuntime.STRING_ARRAY_SENTINEL);
-            if (!allNames) {
-                names = removeHiddenNames(names);
-            }
-            return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
-        }
-
-        @Override
-        protected Set<String> getBindingsForLock() {
-            return map.keySet();
-        }
-
-        @Override
-        public MaterializedFrame getFrame() {
-            return frame;
-        }
-
-        void detach() {
-            frame = null;
-        }
-
-    }
-
-    /**
      * An environment explicitly created with, typically, {@code new.env}. Such environments are
      * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
      */
@@ -919,7 +611,7 @@ public abstract class REnvironment {
          * Constructor for the {@code new.env} function.
          */
         public NewEnv(REnvironment parent, int size) {
-            super(parent, UNNAMED, new MapFrameAccess(size));
+            super(parent, UNNAMED, new REnvMapFrameAccess(size));
         }
 
         /**
@@ -932,257 +624,7 @@ public abstract class REnvironment {
 
     }
 
-    /**
-     * Allows an {@link REnvironment} without a Truffle {@link Frame}, e.g. one created by
-     * {@code attach} to appear to be a {@link MaterializedFrame} and therefore be inserted in the
-     * enclosing frame hierarchy used for unquoted variable lookup. It ought to be possible to share
-     * code from Truffle, but the relevant classes are final. Life would be easier if the
-     * environment was immutable. No attempt is currently being made to make variable access
-     * efficient.
-     */
-    private static class EnvMaterializedFrame implements MaterializedFrame {
-        private final Map<String, Object> map;
-        private final FrameDescriptor descriptor;
-        private final Object[] arguments;
-        private byte[] tags;
-
-        EnvMaterializedFrame(REnvironment env) {
-            descriptor = new FrameDescriptor();
-            MapFrameAccess frameAccess = (MapFrameAccess) env.frameAccess;
-            map = frameAccess.map;
-            tags = new byte[map.size()];
-            int i = 0;
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                FrameSlotKind kind = getFrameSlotKindForValue(entry.getValue());
-                descriptor.addFrameSlot(entry.getKey(), kind);
-                tags[i++] = (byte) kind.ordinal();
-            }
-            frameAccess.setMaterializedFrame(this);
-            // really only need the enclosing frame slot
-            arguments = new Object[RArguments.MINIMAL_ARRAY_LENGTH];
-        }
-
-        /**
-         * Assignment to the frame, need to keep the Truffle view in sync.
-         */
-        void put(String name, Object value) {
-            // If this variable exists already, then there is nothing to do (currently)
-            // as the Truffle read/write methods use the backing map, which will
-            // have been updated by our caller. However, if it is a new variable
-            // we have to add a slot for it.
-            FrameSlot slot = descriptor.findFrameSlot(name);
-            if (slot == null) {
-                FrameSlotKind kind = getFrameSlotKindForValue(value);
-                slot = descriptor.addFrameSlot(name, kind);
-                resize();
-                tags[slot.getIndex()] = (byte) kind.ordinal();
-            }
-        }
-
-        /**
-         * Removal of variable from frame.
-         */
-        void rm(String name) {
-            descriptor.removeFrameSlot(name);
-        }
-
-        private static FrameSlotKind getFrameSlotKindForValue(Object value) {
-            if (value instanceof Double) {
-                return FrameSlotKind.Double;
-            } else if (value instanceof Byte) {
-                return FrameSlotKind.Byte;
-            } else if (value instanceof Integer) {
-                return FrameSlotKind.Int;
-            } else {
-                return FrameSlotKind.Object;
-            }
-        }
-
-        public FrameDescriptor getFrameDescriptor() {
-            return descriptor;
-        }
-
-        public Object[] getArguments() {
-            return arguments;
-        }
-
-        public Object getObject(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Object);
-            return map.get(slot.getIdentifier());
-        }
-
-        public void setObject(FrameSlot slot, Object value) {
-            verifySet(slot, FrameSlotKind.Object);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Byte);
-            return (byte) map.get(slot.getIdentifier());
-        }
-
-        public void setByte(FrameSlot slot, byte value) {
-            verifySet(slot, FrameSlotKind.Byte);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Boolean);
-            return (boolean) map.get(slot.getIdentifier());
-        }
-
-        public void setBoolean(FrameSlot slot, boolean value) {
-            verifySet(slot, FrameSlotKind.Boolean);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        public int getInt(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Int);
-            return (int) map.get(slot.getIdentifier());
-        }
-
-        public void setInt(FrameSlot slot, int value) {
-            verifySet(slot, FrameSlotKind.Int);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        public long getLong(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Long);
-            return (long) map.get(slot.getIdentifier());
-        }
-
-        public void setLong(FrameSlot slot, long value) {
-            verifySet(slot, FrameSlotKind.Long);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Float);
-            return (float) map.get(slot.getIdentifier());
-        }
-
-        public void setFloat(FrameSlot slot, float value) {
-            verifySet(slot, FrameSlotKind.Float);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
-            verifyGet(slot, FrameSlotKind.Double);
-            return (double) map.get(slot.getIdentifier());
-        }
-
-        public void setDouble(FrameSlot slot, double value) {
-            verifySet(slot, FrameSlotKind.Double);
-            map.put((String) slot.getIdentifier(), value);
-        }
-
-        @Override
-        public Object getValue(FrameSlot slot) {
-            int slotIndex = slot.getIndex();
-            if (slotIndex >= getTags().length) {
-                CompilerDirectives.transferToInterpreter();
-                resize();
-            }
-            return map.get(slot.getIdentifier());
-        }
-
-        public MaterializedFrame materialize() {
-            return this;
-        }
-
-        private byte[] getTags() {
-            return tags;
-        }
-
-        private boolean resize() {
-            int oldSize = tags.length;
-            int newSize = descriptor.getSize();
-            if (newSize > oldSize) {
-                tags = Arrays.copyOf(tags, newSize);
-                return true;
-            }
-            return false;
-        }
-
-        private byte getTag(FrameSlot slot) {
-            int slotIndex = slot.getIndex();
-            if (slotIndex >= getTags().length) {
-                CompilerDirectives.transferToInterpreter();
-                resize();
-            }
-            return getTags()[slotIndex];
-        }
-
-        @Override
-        public boolean isObject(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Object.ordinal();
-        }
-
-        @Override
-        public boolean isByte(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Byte.ordinal();
-        }
-
-        @Override
-        public boolean isBoolean(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Boolean.ordinal();
-        }
-
-        @Override
-        public boolean isInt(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Int.ordinal();
-        }
-
-        @Override
-        public boolean isLong(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Long.ordinal();
-        }
-
-        @Override
-        public boolean isFloat(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Float.ordinal();
-        }
-
-        @Override
-        public boolean isDouble(FrameSlot slot) {
-            return getTag(slot) == FrameSlotKind.Double.ordinal();
-        }
-
-        private void verifySet(FrameSlot slot, FrameSlotKind accessKind) {
-            int slotIndex = slot.getIndex();
-            if (slotIndex >= getTags().length) {
-                CompilerDirectives.transferToInterpreter();
-                if (!resize()) {
-                    throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
-                }
-            }
-            getTags()[slotIndex] = (byte) accessKind.ordinal();
-        }
-
-        private void verifyGet(FrameSlot slot, FrameSlotKind accessKind) throws FrameSlotTypeException {
-            int slotIndex = slot.getIndex();
-            if (slotIndex >= getTags().length) {
-                CompilerDirectives.transferToInterpreter();
-                if (!resize()) {
-                    throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
-                }
-            }
-            byte tag = this.getTags()[slotIndex];
-            if (tag != accessKind.ordinal()) {
-                CompilerDirectives.transferToInterpreter();
-                if (slot.getKind() == accessKind || tag == 0) {
-                    descriptor.getTypeConversion().updateFrameSlot(this, slot, getValue(slot));
-                    if (getTags()[slotIndex] == accessKind.ordinal()) {
-                        return;
-                    }
-                }
-                throw new FrameSlotTypeException();
-            }
-        }
-
-    }
-
-    private static String[] removeHiddenNames(String[] names) {
+    public static String[] removeHiddenNames(String[] names) {
         int hiddenCount = 0;
         for (String name : names) {
             if (name.charAt(0) == '.') {
