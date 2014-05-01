@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 import java.util.stream.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -57,6 +58,12 @@ import com.oracle.truffle.r.runtime.data.*;
  * <p>
  * The different kinds of environments are implemented as subclasses. The variation in behavior
  * regarding access to the "frame" is handled by delegation to an instance of {@link FrameAccess}.
+ * Conceptually, variables are searched for by starting in a given environment and searching
+ * backwards through the "parent" chain. In practice, variables are accessed in the Truffle
+ * environment using {@link Frame} instances which may, in some cases such as compiled code, not
+ * even exist as actual objects. Therefore, we have to keep the name lookup in the two worlds in
+ * sync. This is an issue during initialization, and when a new environment is attached, cf.
+ * {@link #attach}.
  * <p>
  * Packages have three associated environments, "package:xxx", "imports:xxx" and "namespace:xxx",
  * for package "xxx". The {@code base} package is a special case in that it does not have an
@@ -241,6 +248,7 @@ public abstract class REnvironment {
     private static final FrameAccess noFrameAccess = new FrameAccess();
 
     public static final String UNNAMED = "";
+    private static final String NAME_ATTR_KEY = "name";
 
     private static final Empty emptyEnv = new Empty();
     private static Global globalEnv;
@@ -349,14 +357,99 @@ public abstract class REnvironment {
         return result;
     }
 
+    /**
+     * Lookup an environment by name on the search path.
+     *
+     * @param name the name as it would appear in R the {@code search} function.
+     * @return the environment or {@code null} if not found.
+     */
     public static REnvironment lookupOnSearchPath(String name) {
-        for (REnvironment env : searchPath) {
+        int i = lookupIndexOnSearchPath(name);
+        return i <= 0 ? null : searchPath.get(i - 1);
+    }
+
+    /**
+     * Lookup the index of an environment by name on the search path.
+     *
+     * @param name the name as it would appear in R the {@code search} function.
+     * @return the index (1-based) or {@code 0} if not found.
+     */
+    public static int lookupIndexOnSearchPath(String name) {
+        for (int i = 0; i < searchPath.size(); i++) {
+            REnvironment env = searchPath.get(i);
             String searchName = env.getSearchName();
             if (searchName.equals(name)) {
-                return env;
+                return i + 1;
             }
         }
-        return null;
+        return 0;
+    }
+
+    /**
+     * Attach (insert) an environment as position {@code pos} in the search path. TODO handle
+     * packages
+     *
+     * @param pos position for insert, {@code pos >= 2}. As per GnuR, values beyond the index of
+     *            "base" are truncated to the index before "base".
+     */
+    public static void attach(int pos, REnvironment env) {
+        assert pos >= 2;
+        // N.B. pos is 1-based
+        int bpos = pos - 1;
+        if (bpos > searchPath.size() - 1) {
+            bpos = searchPath.size() - 1;
+        }
+        // Insert in the REnvironment search path, adjusting the parent fields appropriately
+        // In the default case (pos == 2), envAbove is the Global env
+        REnvironment envAbove = searchPath.get(bpos - 1);
+        REnvironment envBelow = searchPath.get(bpos);
+        env.parent = envBelow;
+        envAbove.parent = env;
+        searchPath.add(bpos, env);
+        // Now must adjust the Frame world so that unquoted variable lookup works
+        MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
+        MaterializedFrame envFrame = env.frameAccess.getFrame();
+        if (envFrame == null) {
+            envFrame = new EnvMaterializedFrame(env);
+        }
+        RArguments.attachFrame(aboveFrame, envFrame);
+    }
+
+    public static class DetachException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        DetachException(String msg) {
+            super(msg);
+        }
+    }
+
+    /**
+     * Detach the environment at search position {@code pos}. TODO handle packages
+     *
+     * @param unload if {@code true} and env is a package, unload associated namespace
+     * @param force the detach even if there are dependent packages
+     * @return the {@link REnvironment} that was detached.
+     */
+    public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
+        if (pos == searchPath.size()) {
+            throw new DetachException("detaching \"package:base\" is not allowed");
+        }
+        if (pos <= 0 || pos >= searchPath.size()) {
+            throw new DetachException("subscript out of range");
+        }
+        assert pos != 1; // explicitly checked in caller
+        // N.B. pos is 1-based
+        int bpos = pos - 1;
+        REnvironment envAbove = searchPath.get(bpos - 1);
+        REnvironment envToRemove = searchPath.get(bpos);
+        envAbove.parent = envToRemove.parent;
+        searchPath.remove(bpos);
+        MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
+        RArguments.detachFrame(aboveFrame);
+        if (envToRemove.frameAccess instanceof MapFrameAccess) {
+            ((MapFrameAccess) envToRemove.frameAccess).detach();
+        }
+        return envToRemove;
     }
 
     @SlowPath
@@ -417,7 +510,7 @@ public abstract class REnvironment {
      * is the value returned by the R {@code environmentName} function.
      */
     public String getName() {
-        String attrName = attributes == null ? null : (String) attributes.get(RRuntime.NAMES_ATTR_KEY);
+        String attrName = attributes == null ? null : (String) attributes.get(NAME_ATTR_KEY);
         return attrName != null ? attrName : name;
     }
 
@@ -482,6 +575,14 @@ public abstract class REnvironment {
         frameAccess.put(key, value);
     }
 
+    public void safePut(String key, Object value) {
+        try {
+            put(key, value);
+        } catch (PutException ex) {
+            Utils.fail("exception in safePut");
+        }
+    }
+
     public void rm(String key) throws PutException {
         if (locked) {
             throw new PutException("cannot remove bindings from a locked environment");
@@ -495,7 +596,6 @@ public abstract class REnvironment {
 
     public void lockBinding(String key) {
         frameAccess.lockBinding(key);
-
     }
 
     public void unlockBinding(String key) {
@@ -738,14 +838,21 @@ public abstract class REnvironment {
     }
 
     /**
-     * Variant of {@link FrameAccess} for {@link NewEnv} environments where the "frame" is a
-     * {@link LinkedHashMap}.
+     * Variant of {@link FrameAccess} environments where the "frame" is a {@link LinkedHashMap},
+     * e.g, for {link NewEnv}. By default there is no Truffle connection, i.e. {@link #getFrame()}
+     * returns null. However, if the owning environment is "attach"ed, then an
+     * {@link EnvMaterializedFrame} is created.
      */
-    private static class NewEnvFrameAccess extends FrameAccessBindingsAdapter {
+    private static class MapFrameAccess extends FrameAccessBindingsAdapter {
         private final Map<String, Object> map;
+        private EnvMaterializedFrame frame;
 
-        NewEnvFrameAccess(int size) {
+        MapFrameAccess(int size) {
             this.map = newHashMap(size);
+        }
+
+        void setMaterializedFrame(EnvMaterializedFrame frame) {
+            this.frame = frame;
         }
 
         @SlowPath
@@ -762,6 +869,9 @@ public abstract class REnvironment {
         public void rm(String key) {
             super.rm(key);
             map.remove(key);
+            if (frame != null) {
+                frame.rm(key);
+            }
         }
 
         @SlowPath
@@ -769,6 +879,9 @@ public abstract class REnvironment {
         public void put(String key, Object value) throws PutException {
             super.put(key, value);
             map.put(key, value);
+            if (frame != null) {
+                frame.put(key, value);
+            }
         }
 
         @Override
@@ -785,16 +898,288 @@ public abstract class REnvironment {
             return map.keySet();
         }
 
+        @Override
+        public MaterializedFrame getFrame() {
+            return frame;
+        }
+
+        void detach() {
+            frame = null;
+        }
+
     }
 
     /**
-     * A named environment explicitly created with {@code new.env}.
+     * An environment explicitly created with, typically, {@code new.env}. Such environments are
+     * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
      */
     public static final class NewEnv extends REnvironment {
 
-        public NewEnv(REnvironment parent, String name, int size) {
-            super(parent, name, new NewEnvFrameAccess(size));
+        /**
+         * Constructor for the {@code new.env} function.
+         */
+        public NewEnv(REnvironment parent, int size) {
+            super(parent, UNNAMED, new MapFrameAccess(size));
         }
+
+        /**
+         * Constructor for environment without a parent, e.g., for use by {@link #attach}.
+         */
+        public NewEnv(String name) {
+            this(null, 0);
+            setAttr(NAME_ATTR_KEY, name);
+        }
+
+    }
+
+    /**
+     * Allows an {@link REnvironment} without a Truffle {@link Frame}, e.g. one created by
+     * {@code attach} to appear to be a {@link MaterializedFrame} and therefore be inserted in the
+     * enclosing frame hierarchy used for unquoted variable lookup. It ought to be possible to share
+     * code from Truffle, but the relevant classes are final. Life would be easier if the
+     * environment was immutable. No attempt is currently being made to make variable access
+     * efficient.
+     */
+    private static class EnvMaterializedFrame implements MaterializedFrame {
+        private final Map<String, Object> map;
+        private final FrameDescriptor descriptor;
+        private final Object[] arguments;
+        private byte[] tags;
+
+        EnvMaterializedFrame(REnvironment env) {
+            descriptor = new FrameDescriptor();
+            MapFrameAccess frameAccess = (MapFrameAccess) env.frameAccess;
+            map = frameAccess.map;
+            tags = new byte[map.size()];
+            int i = 0;
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                FrameSlotKind kind = getFrameSlotKindForValue(entry.getValue());
+                descriptor.addFrameSlot(entry.getKey(), kind);
+                tags[i++] = (byte) kind.ordinal();
+            }
+            frameAccess.setMaterializedFrame(this);
+            // really only need the enclosing frame slot
+            arguments = new Object[RArguments.MINIMAL_ARRAY_LENGTH];
+        }
+
+        /**
+         * Assignment to the frame, need to keep the Truffle view in sync.
+         */
+        void put(String name, Object value) {
+            // If this variable exists already, then there is nothing to do (currently)
+            // as the Truffle read/write methods use the backing map, which will
+            // have been updated by our caller. However, if it is a new variable
+            // we have to add a slot for it.
+            FrameSlot slot = descriptor.findFrameSlot(name);
+            if (slot == null) {
+                FrameSlotKind kind = getFrameSlotKindForValue(value);
+                slot = descriptor.addFrameSlot(name, kind);
+                resize();
+                tags[slot.getIndex()] = (byte) kind.ordinal();
+            }
+        }
+
+        /**
+         * Removal of variable from frame.
+         */
+        void rm(String name) {
+            descriptor.removeFrameSlot(name);
+        }
+
+        private static FrameSlotKind getFrameSlotKindForValue(Object value) {
+            if (value instanceof Double) {
+                return FrameSlotKind.Double;
+            } else if (value instanceof Byte) {
+                return FrameSlotKind.Byte;
+            } else if (value instanceof Integer) {
+                return FrameSlotKind.Int;
+            } else {
+                return FrameSlotKind.Object;
+            }
+        }
+
+        public FrameDescriptor getFrameDescriptor() {
+            return descriptor;
+        }
+
+        public Object[] getArguments() {
+            return arguments;
+        }
+
+        public Object getObject(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Object);
+            return map.get(slot.getIdentifier());
+        }
+
+        public void setObject(FrameSlot slot, Object value) {
+            verifySet(slot, FrameSlotKind.Object);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        public byte getByte(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Byte);
+            return (byte) map.get(slot.getIdentifier());
+        }
+
+        public void setByte(FrameSlot slot, byte value) {
+            verifySet(slot, FrameSlotKind.Byte);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        public boolean getBoolean(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Boolean);
+            return (boolean) map.get(slot.getIdentifier());
+        }
+
+        public void setBoolean(FrameSlot slot, boolean value) {
+            verifySet(slot, FrameSlotKind.Boolean);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        public int getInt(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Int);
+            return (int) map.get(slot.getIdentifier());
+        }
+
+        public void setInt(FrameSlot slot, int value) {
+            verifySet(slot, FrameSlotKind.Int);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        public long getLong(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Long);
+            return (long) map.get(slot.getIdentifier());
+        }
+
+        public void setLong(FrameSlot slot, long value) {
+            verifySet(slot, FrameSlotKind.Long);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        public float getFloat(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Float);
+            return (float) map.get(slot.getIdentifier());
+        }
+
+        public void setFloat(FrameSlot slot, float value) {
+            verifySet(slot, FrameSlotKind.Float);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        public double getDouble(FrameSlot slot) throws FrameSlotTypeException {
+            verifyGet(slot, FrameSlotKind.Double);
+            return (double) map.get(slot.getIdentifier());
+        }
+
+        public void setDouble(FrameSlot slot, double value) {
+            verifySet(slot, FrameSlotKind.Double);
+            map.put((String) slot.getIdentifier(), value);
+        }
+
+        @Override
+        public Object getValue(FrameSlot slot) {
+            int slotIndex = slot.getIndex();
+            if (slotIndex >= getTags().length) {
+                CompilerDirectives.transferToInterpreter();
+                resize();
+            }
+            return map.get(slot.getIdentifier());
+        }
+
+        public MaterializedFrame materialize() {
+            return this;
+        }
+
+        private byte[] getTags() {
+            return tags;
+        }
+
+        private boolean resize() {
+            int oldSize = tags.length;
+            int newSize = descriptor.getSize();
+            if (newSize > oldSize) {
+                tags = Arrays.copyOf(tags, newSize);
+                return true;
+            }
+            return false;
+        }
+
+        private byte getTag(FrameSlot slot) {
+            int slotIndex = slot.getIndex();
+            if (slotIndex >= getTags().length) {
+                CompilerDirectives.transferToInterpreter();
+                resize();
+            }
+            return getTags()[slotIndex];
+        }
+
+        @Override
+        public boolean isObject(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Object.ordinal();
+        }
+
+        @Override
+        public boolean isByte(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Byte.ordinal();
+        }
+
+        @Override
+        public boolean isBoolean(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Boolean.ordinal();
+        }
+
+        @Override
+        public boolean isInt(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Int.ordinal();
+        }
+
+        @Override
+        public boolean isLong(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Long.ordinal();
+        }
+
+        @Override
+        public boolean isFloat(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Float.ordinal();
+        }
+
+        @Override
+        public boolean isDouble(FrameSlot slot) {
+            return getTag(slot) == FrameSlotKind.Double.ordinal();
+        }
+
+        private void verifySet(FrameSlot slot, FrameSlotKind accessKind) {
+            int slotIndex = slot.getIndex();
+            if (slotIndex >= getTags().length) {
+                CompilerDirectives.transferToInterpreter();
+                if (!resize()) {
+                    throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
+                }
+            }
+            getTags()[slotIndex] = (byte) accessKind.ordinal();
+        }
+
+        private void verifyGet(FrameSlot slot, FrameSlotKind accessKind) throws FrameSlotTypeException {
+            int slotIndex = slot.getIndex();
+            if (slotIndex >= getTags().length) {
+                CompilerDirectives.transferToInterpreter();
+                if (!resize()) {
+                    throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
+                }
+            }
+            byte tag = this.getTags()[slotIndex];
+            if (tag != accessKind.ordinal()) {
+                CompilerDirectives.transferToInterpreter();
+                if (slot.getKind() == accessKind || tag == 0) {
+                    descriptor.getTypeConversion().updateFrameSlot(this, slot, getValue(slot));
+                    if (getTags()[slotIndex] == accessKind.ordinal()) {
+                        return;
+                    }
+                }
+                throw new FrameSlotTypeException();
+            }
+        }
+
     }
 
     private static String[] removeHiddenNames(String[] names) {
@@ -826,7 +1211,7 @@ public abstract class REnvironment {
     private static final class Autoload extends REnvironment {
         Autoload() {
             super(baseEnv(), UNNAMED, baseEnv().getFrame());
-            setAttr(RRuntime.NAMES_ATTR_KEY, "Autoloads");
+            setAttr(NAME_ATTR_KEY, "Autoloads");
         }
 
     }

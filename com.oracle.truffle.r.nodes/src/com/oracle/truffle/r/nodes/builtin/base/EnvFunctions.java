@@ -258,14 +258,14 @@ public class EnvFunctions {
         public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.NewEnv(callerEnvironment(frame), REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(callerEnvironment(frame), size);
         }
 
         @Specialization
         public REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.NewEnv(parent, REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(parent, size);
         }
     }
 

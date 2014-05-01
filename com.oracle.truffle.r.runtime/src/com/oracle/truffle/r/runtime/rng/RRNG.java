@@ -275,12 +275,7 @@ public class RRNG {
         }
         RIntVector vector = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         // TODO set this properly using "frame"
-        try {
-            REnvironment.globalEnv().put(RANDOM_SEED, vector);
-        } catch (REnvironment.PutException ex) {
-            // should never happen
-            Utils.fail("error updating " + RANDOM_SEED);
-        }
+        REnvironment.globalEnv().safePut(RANDOM_SEED, vector);
     }
 
     /**

@@ -1577,6 +1577,14 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     @Ignore
+    public void testAttach() {
+        // This works in the shell
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
+    }
+
+    @Test
+    @Ignore
     public void testEnvironmentIgnore() {
         // misc
 
