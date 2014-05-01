@@ -63,6 +63,20 @@ public abstract class IsNumeric extends IsTypeNode {
 
     @Specialization
     @Override
+    public byte isType(RIntSequence value) {
+        controlVisibility();
+        return RRuntime.LOGICAL_TRUE;
+    }
+
+    @Specialization
+    @Override
+    public byte isType(RDoubleSequence value) {
+        controlVisibility();
+        return RRuntime.LOGICAL_TRUE;
+    }
+
+    @Specialization
+    @Override
     public byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof Integer || value instanceof RIntVector || value instanceof Double || value instanceof RDoubleVector);

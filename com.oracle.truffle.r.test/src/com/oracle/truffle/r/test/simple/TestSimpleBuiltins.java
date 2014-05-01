@@ -498,6 +498,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ matrix(c(1i,NA),10,10) }");
         assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
         assertEval("{ matrix(c(1i,100i),10,10) }");
+        assertEval("{ matrix(1:6, nrow=3,byrow=TRUE)}");
+        assertEval("{ matrix(1:6, nrow=3,byrow=1)}");
+        assertEval("{ matrix(1:6, nrow=c(3,4,5),byrow=TRUE)}");
+        assertEval("{ matrix(1:6)}");
+        assertEval("{ matrix(1:6, ncol=3:5,byrow=TRUE)}");
+
     }
 
     @Test

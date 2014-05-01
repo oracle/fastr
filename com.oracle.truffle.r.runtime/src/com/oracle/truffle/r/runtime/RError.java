@@ -230,6 +230,8 @@ public abstract class RError extends RuntimeException {
     private static final String INVALID_STORAGE_MODE_UPDATE = "invalid to change the storage mode of a factor";
     private static final String NULL_VALUE = "'value' must be non-null character string";
     private static final String USE_DEFUNCT = "use of '%s' is defunct: use %s instead";
+    private static final String NCOL_ZERO = "nc = 0 for non-null data";
+    private static final String NROW_ZERO = "nr = 0 for non-null data";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -2100,5 +2102,13 @@ public abstract class RError extends RuntimeException {
 
     public static RError getDefunct(SourceSection encapsulatingSourceSection, String value, String alternate) {
         return getGenericError(encapsulatingSourceSection, String.format(USE_DEFUNCT, value, alternate));
+    }
+
+    public static RError getNcolZero(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NCOL_ZERO);
+    }
+
+    public static RError getNrowZero(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NROW_ZERO);
     }
 }

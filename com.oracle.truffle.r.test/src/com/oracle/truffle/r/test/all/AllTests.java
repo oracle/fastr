@@ -8624,6 +8624,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatrix_402033894bb2a2ce218b8a207b844de6() {
+        assertEval("{ matrix(1:6, nrow=3,byrow=TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_9eb828b99a97c6eb2b7d11e197d6fff9() {
+        assertEval("{ matrix(1:6, nrow=3,byrow=1)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_a93589446f5db7ac853a8e5bf7ea0c70() {
+        assertEval("{ matrix(1:6, nrow=c(3,4,5),byrow=TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_26e45f663226ee97b00808f83f64d614() {
+        assertEval("{ matrix(1:6)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatrix_be6dc40411a553fedf564db70f76d78c() {
+        assertEval("{ matrix(1:6, ncol=3:5,byrow=TRUE)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
     }
