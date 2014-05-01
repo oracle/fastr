@@ -4834,6 +4834,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAttach_000b04e3d397888dde95e4ec96036dd7() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAttach_4141d168d111ce4878b9ccd7cc4529f9() {
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAttributes_7a7da0b52cfc6f6dbfdd195db4c141e9() {
         assertEval("{ x <- 1; attributes(x) }");
     }
