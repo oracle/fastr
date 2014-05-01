@@ -67,7 +67,6 @@ public class RNGFunctions {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "supplied seed is not a valid integer");
         }
 
-        @SlowPath
         private void doSetSeed(VirtualFrame frame, Integer newSeed, int kind, int normKind) {
             try {
                 RRNG.doSetSeed(frame, newSeed, kind, normKind);
