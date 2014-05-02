@@ -1572,35 +1572,25 @@ public class TestSimpleBuiltins extends TestBase {
 
         // misc
         assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
-
-    }
-
-    @Test
-    @Ignore
-    public void testAttach() {
-        // This works in the shell
-        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
-        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
-    }
-
-    @Test
-    @Ignore
-    public void testEnvironmentIgnore() {
-        // misc
-
+        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+        assertEval("{ ls(.GlobalEnv) }");
+        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
         assertEvalError("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
-        // This works in the shell, fails in the test related to different MaterializedFrame
-// behavior
-        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+    }
 
-        // requires .GlobalEnv to be defined in base
-        assertEval("{ ls(.GlobalEnv) }");
-        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-
+    @Test
+    public void testAttach() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
+        assertEval("{ attach(.Platform, 2); file.sep }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2) }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x; detach(\"mine\") }");
+        assertEvalError("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
+        assertEvalError("{ detach(\"missing\"); x }");
     }
 
     @Test

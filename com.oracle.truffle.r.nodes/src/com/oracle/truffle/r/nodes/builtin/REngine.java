@@ -116,9 +116,9 @@ public final class REngine implements RBuiltinLookupProvider {
      * This is intended for use by the unit test environment, where a fresh global environment is
      * desired for each evaluation.
      */
-    public static Object parseAndEval(String rscript, boolean printResult) {
+    public static Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = createVirtualFrame();
-        REnvironment.resetGlobalEnv(frame);
+        REnvironment.resetForTest(frame);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), frame, printResult);
     }
 

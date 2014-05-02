@@ -4844,6 +4844,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAttach_8c0f918123c720fbaca40263dcd8dd31() {
+        assertEval("{ attach(.Platform, 2); file.sep }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAttach_d5f345b8b41bb68b2e11ee167faea459() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAttach_8518409cc7fc8955539226dded7e9a52() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x; detach(\"mine\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAttach_afb107e170beb063d3c1dc93f069993d() {
+        assertEvalError("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAttach_701f9b8805800a510479dcee8df5fade() {
+        assertEvalError("{ detach(\"missing\"); x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAttributes_7a7da0b52cfc6f6dbfdd195db4c141e9() {
         assertEval("{ x <- 1; attributes(x) }");
     }
@@ -6849,6 +6874,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_f9bf2bff62b5ca445def1eed9808f98c() {
+        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_0902b89753b80fe43a8612bd6c00d063() {
+        assertEval("{ ls(.GlobalEnv) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_5482bc17285fec304815fd90301c9e13() {
+        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_c29f313075292391e27de42119da385a() {
+        assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironment_ce30ddfe4bd336aa1ca03e769de77455() {
+        assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_9da65acccab58ab951f83fcc62eb2a9d() {
         assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }");
     }
@@ -6919,37 +6969,12 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_c29f313075292391e27de42119da385a() {
-        assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_ce30ddfe4bd336aa1ca03e769de77455() {
-        assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_f9bf2bff62b5ca445def1eed9808f98c() {
-        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_0902b89753b80fe43a8612bd6c00d063() {
-        assertEval("{ ls(.GlobalEnv) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_5482bc17285fec304815fd90301c9e13() {
-        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_067a1395bae2eadd465e38a5799ca76a() {
+    public void TestSimpleBuiltins_testEnvironment_067a1395bae2eadd465e38a5799ca76a() {
         assertEvalError("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironmentIgnore_60bf41382750ac0f4de965f761a2fcf7() {
+    public void TestSimpleBuiltins_testEnvironment_60bf41382750ac0f4de965f761a2fcf7() {
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
     }
 

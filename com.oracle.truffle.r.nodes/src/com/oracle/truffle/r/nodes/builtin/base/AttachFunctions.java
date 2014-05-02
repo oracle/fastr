@@ -42,7 +42,7 @@ public class AttachFunctions {
         public REnvironment doAttach(@SuppressWarnings("unused") RNull what, double pos, String name) {
             controlVisibility();
             REnvironment env = new REnvironment.NewEnv(name);
-            doAttach(pos, env);
+            doAttachEnv(pos, env);
             return env;
         }
 
@@ -67,7 +67,7 @@ public class AttachFunctions {
                 // TODO copy?
                 env.safePut(key, value);
             }
-            doAttach(pos, env);
+            doAttachEnv(pos, env);
             return env;
 
         }
@@ -90,14 +90,19 @@ public class AttachFunctions {
             for (int i = 0; i < names.getLength(); i++) {
                 env.safePut(names.getDataAt(i), what.getDataAt(i));
             }
-            doAttach(pos, env);
+            doAttachEnv(pos, env);
             return env;
         }
 
-        void doAttach(double pos, REnvironment env) {
+        void doAttachEnv(double pos, REnvironment env) {
+            // GnuR appears to allow any value of pos except 1.
+            // Values < 1 are intepreted as 2
             int ipos = (int) pos;
             if (ipos == 1) {
                 RContext.getInstance().setEvalWarning(POS_WARNING);
+                ipos = 2;
+            }
+            if (ipos < 1) {
                 ipos = 2;
             }
             REnvironment.attach(ipos, env);

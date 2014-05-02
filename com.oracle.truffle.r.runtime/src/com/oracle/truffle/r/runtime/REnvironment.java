@@ -177,6 +177,10 @@ public abstract class REnvironment {
         globalEnv = new Global(autoloadEnv, globalFrame);
         baseNamespaceEnv = new NamespaceBase(basePackageEnv);
         // set up the initial search path
+        initSearchList();
+    }
+
+    private static void initSearchList() {
         searchPath = new ArrayList<>();
         REnvironment env = globalEnv;
         do {
@@ -186,10 +190,23 @@ public abstract class REnvironment {
     }
 
     /**
-     * Intended for use by unit test environment to reset the global environment to a clean state.
+     * Intended for use by unit test environment to reset the environment to a clean state. We want
+     * to reset the {@link #globalEnv}, and by extension {@link #searchPath} but not everything
+     * else. This evidently depends on there not being destructive tests.
+     *
      */
-    public static void resetGlobalEnv(VirtualFrame globalFrame) {
-        globalEnv = new Global(globalEnv.getParent(), globalFrame);
+    public static void resetForTest(VirtualFrame globalFrame) {
+        // The following is only true if there are no other default packages loaded.
+        globalEnv = new Global(autoloadEnv, globalFrame);
+        // update .GlobalEnv
+        try {
+            basePackageEnv.put(".GlobalEnv", globalEnv);
+        } catch (PutException ex) {
+            Utils.fail("could not update .GlobalEnv");
+        }
+        initSearchList();
+        // one more thing, baseNamespaceEnv has globalEnv as it's parent, so change that
+        baseNamespaceEnv.setParent(globalEnv);
     }
 
     /**
