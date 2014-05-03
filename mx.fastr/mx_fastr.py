@@ -265,6 +265,44 @@ def bench(args):
 def unittest(args):
     print "use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests"
 
+def rbcheck(args):
+    '''check FastR builtins against GnuR'''
+    parser = ArgumentParser(prog='mx rbcheck')
+    parser.add_argument('--check-internal', action='store_const', const='--check-internal', help='check .Internal functions')
+    parser.add_argument('--unknown-to-gnur', action='store_const', const='--unknown-to-gnur', help='list builtins not in GnuR FUNCTAB')
+    parser.add_argument('--todo', action='store_const', const='--todo', help='show unimplemented')
+    parser.add_argument('--no-eval-args', action='store_const', const='--no-eval-args', help='list functions that do not evaluate their args')
+    parser.add_argument('--visibility', action='store_const', const='--visibility', help='list visibility specification')
+    args = parser.parse_args(args)
+
+    class_map = mx.project('com.oracle.truffle.r.nodes').find_classes_with_matching_source_line(None, lambda line: "@RBuiltin" in line, True)
+    classes = []
+    for className, path in class_map.iteritems():
+        classNameX = className.split("$")[0] if '$' in className else className
+
+        if not classNameX.endswith('Factory'):
+            classes.append([className, path])
+
+    (_, testfile) = tempfile.mkstemp(".classes", "mx")
+    os.close(_)
+    with open(testfile, 'w') as f:
+        for c in classes:
+            f.write(c[0] + ',' + c[1] + '\n')
+    analyzeArgs = []
+    if args.check_internal:
+        analyzeArgs.append(args.check_internal)
+    if args.unknown_to_gnur:
+        analyzeArgs.append(args.unknown_to_gnur)
+    if args.todo:
+        analyzeArgs.append(args.todo)
+    if args.no_eval_args:
+        analyzeArgs.append(args.no_eval_args)
+    if args.visibility:
+        analyzeArgs.append(args.visibility)
+    analyzeArgs.append(testfile)
+    cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
+    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)
+
 def mx_init(suite):
     global _fastr_suite
     _fastr_suite = suite
@@ -282,5 +320,6 @@ def mx_init(suite):
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
         'unittest' : [unittest, ['options']],
+        'rbcheck' : [rbcheck, ['options']],
     }
     mx.update_commands(suite, commands)
