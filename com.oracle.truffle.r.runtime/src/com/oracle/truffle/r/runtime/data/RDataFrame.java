@@ -20,40 +20,53 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.r.runtime.data.*;
+import java.util.*;
 
-public interface RAbstractVector extends RAbstractContainer {
+import com.oracle.truffle.r.runtime.data.model.*;
 
-    int getLength();
+public final class RDataFrame implements RAbstractContainer {
 
-    boolean isComplete();
+    private RVector vector;
 
-    boolean hasDimensions();
+    public RDataFrame(RVector vector) {
+        this.vector = vector;
+    }
 
-    int[] getDimensions();
+    public RVector getVector() {
+        return vector;
+    }
 
-    RAbstractVector copy();
+    public boolean isShared() {
+        return vector.isShared();
+    }
 
-    RAbstractVector copyWithNewDimensions(int[] newDimensions);
+    public RDataFrame copy() {
+        return RDataFactory.createDataFrame(vector.copy());
+    }
 
-    void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
+    @Override
+    public Map<String, Object> getAttributes() {
+        return vector.getAttributes();
+    }
 
-    RVector materialize();
+    @Override
+    public Class<?> getElementClass() {
+        return RVector.class;
+    }
 
-    Object getDataAtAsObject(int index);
+    @Override
+    public RVector materializeNonSharedVector() {
+        if (isShared()) {
+            vector = vector.copy();
+        }
+        return vector;
+    }
 
-    Object getNames();
+    @Override
+    public Object getRowNames() {
+        return vector.getRowNames();
+    }
 
-    RList getDimNames();
-
-    boolean isMatrix();
-
-    boolean isArray();
-
-    boolean isObject();
-
-    RStringVector getClassHierarchy();
 }

@@ -56,7 +56,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return castVectorNode.executeRAbstractVector(frame, value).materialize();
     }
 
-    public abstract Object executeList(VirtualFrame frame, RAbstractVector vector, Object o);
+    public abstract RAbstractVector executeList(VirtualFrame frame, RAbstractVector vector, Object o);
 
     public RList convertToListOfStrings(VirtualFrame frame, RList list) {
         assert (!list.isShared());
@@ -95,7 +95,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
+    public RAbstractVector updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
         controlVisibility();
         throw RError.getDimnamesList(getEncapsulatingSourceSection());
     }

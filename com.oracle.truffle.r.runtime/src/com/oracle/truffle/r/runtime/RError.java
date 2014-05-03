@@ -156,6 +156,7 @@ public abstract class RError extends RuntimeException {
     public static final String MISSING_SUBSCRIPT = "[[ ]] with missing subscript";
     public static final String IMPROPER_SUBSCRIPT = "[[ ]] improper number of subscripts";
 
+    public static final String ROWNAMES_STRING_OR_INT = "row names must be 'character' or 'integer', not '%s'";
     public static final String ONLY_FIRST_USED = "numerical expression has %d elements: only the first used";
     public static final String NO_SUCH_INDEX = "no such index at level %d";
     public static final String LIST_COERCION = "(list) object cannot be coerced to type '%s'";
@@ -248,6 +249,7 @@ public abstract class RError extends RuntimeException {
 
     private static final String NOT_CHARACTER_VECTOR = "'%s' must be a character vector";
     private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
+    private static final String SET_ROWNAMES_NO_DIMS = "attempt to set 'rownames' on an object with no dimensions";
 
     public static void warning(SourceSection source, String message) {
         RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
@@ -1690,6 +1692,18 @@ public abstract class RError extends RuntimeException {
         };
     }
 
+    public static RError getRowNamesNoDims(SourceSection expr) {
+        return new RErrorInExpr(expr) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public String getMessage() {
+                return RError.SET_ROWNAMES_NO_DIMS;
+            }
+        };
+    }
+
     public static RError getGenericError(SourceSection source, final String msg) {
         return new RErrorInExpr(source) {
 
@@ -2066,4 +2080,9 @@ public abstract class RError extends RuntimeException {
     public static RError getCannotMakeVectorOfMode(SourceSection encapsulatingSourceSection, String mode) {
         return getGenericError(encapsulatingSourceSection, String.format(CANNOT_MAKE_VECTOR_OF_MODE, mode));
     }
+
+    public static RError getRowNamesStringOrInt(SourceSection encapsulatingSourceSection, String type) {
+        return getGenericError(encapsulatingSourceSection, String.format(ROWNAMES_STRING_OR_INT, type));
+    }
+
 }

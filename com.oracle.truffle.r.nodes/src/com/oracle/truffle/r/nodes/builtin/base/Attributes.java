@@ -40,9 +40,9 @@ public abstract class Attributes extends RBuiltinNode {
     }
 
     @Specialization(guards = "hasAttributes")
-    public RList attributes(RAbstractVector vector) {
+    public RList attributes(RAbstractContainer container) {
         controlVisibility();
-        Map<String, Object> map = vector.getAttributes();
+        Map<String, Object> map = container.getAttributes();
         int size = map.size();
         String[] names = new String[size];
         Object[] values = new Object[size];
@@ -57,7 +57,7 @@ public abstract class Attributes extends RBuiltinNode {
         return result;
     }
 
-    public static boolean hasAttributes(RAbstractVector vector) {
-        return vector.getAttributes() != null && vector.getAttributes().size() > 0;
+    public static boolean hasAttributes(RAbstractContainer container) {
+        return container.getAttributes() != null && container.getAttributes().size() > 0;
     }
 }

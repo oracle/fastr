@@ -36,15 +36,58 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-list(1,2); is.data.frame(x) }");
 
         assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-\"data.frame\"; is.data.frame(x) }");
-        // list turned data frame is still a list (and a vector)
+        // list turned data frame is still a list
         assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-\"data.frame\"; is.vector(x) }");
         assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-\"data.frame\"; is.list(x) }");
         assertEval("{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-c(\"foo\", \"data.frame\", \"bar\"); is.data.frame(x) }");
 
         assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; is.data.frame(x) }");
-        // vector turned data frame is not a list (but it's still a vector)
+        // vector turned data frame is not a list
         assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; is.vector(x) }");
         assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; is.list(x) }");
         assertEval("{ x<-c(7,42); class(x)<-c(\"foo\", \"data.frame\", \"bar\"); is.data.frame(x) }");
+
+        // data frame turned (back) into a vector
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; class(x)<-NULL; is.vector(x) }");
+        // vector obtained from data frame retains data frame's attributes
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; attr(x, \"foo\")<-\"foo\"; class(x)<-NULL;  attributes(x) }");
+    }
+
+    @Test
+    public void testRowNames() {
+        // testing row.names
+        assertEvalError("{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }");
+        assertEval("{ x<-c(1,2); row.names(x)<-NULL; attributes(x) }");
+        assertEvalError("{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-logical(); attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-logical(); row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-7; attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-7; row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); row.names(x) }");
+        assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }");
+        assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); attributes(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); row.names(x) }");
+
+        assertEval("{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-\"data.frame\"; row.names(z)<-NULL; attributes(z) }");
+        assertEval("{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-\"data.frame\"; row.names(z)<-c(\"a\", \"b\"); row.names(z)<-NULL; attributes(z) }");
+        assertEval("{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-\"data.frame\"; row.names(z)<-c(\"a\", \"b\", \"c\"); row.names(z)<-NULL; attributes(z) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); class(x)<-\"data.frame\"; row.names(x) }");
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; row.names(x) }");
+    }
+
+    @Test
+    public void testPrint() {
+        assertEval("{x<-c(1,2); class(x)<-\"data.frame\"; x}");
+        assertEval("{ x<-integer(); class(x)<-\"data.frame\"; x }");
+        assertEval("{ x<-c(1,2); class(x)<-\"data.frame\"; row.names(x)<-integer(); x }");
+
     }
 }

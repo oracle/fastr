@@ -26,23 +26,49 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public class IsListFunctions {
     @RBuiltin("is.list")
-    public abstract static class IsList extends IsTypeNode {
+    @SuppressWarnings("unused")
+    public abstract static class IsList extends RBuiltinNode {
 
         @Specialization
-        @Override
         public byte isType(RList value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        @Override
-        public byte isType(Object value) {
+        @Specialization(guards = "!isList")
+        public byte isType(RAbstractVector value) {
             controlVisibility();
-            return RRuntime.asLogical(value instanceof RList);
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Specialization
+        public byte isType(RNull value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Specialization(order = 10, guards = "isList")
+        public byte isTypeFrame(RDataFrame value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization(order = 11, guards = "!isList")
+        public byte isType(RDataFrame value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        protected boolean isList(RAbstractVector vector) {
+            return vector.getElementClass() == Object.class;
+        }
+
+        protected boolean isList(RDataFrame frame) {
+            return isList(frame.getVector());
         }
 
     }

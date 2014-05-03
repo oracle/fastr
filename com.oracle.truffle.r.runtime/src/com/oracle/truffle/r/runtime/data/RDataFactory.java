@@ -286,4 +286,8 @@ public final class RDataFactory {
     public static RList createList(Object[] data, int[] newDimensions, Object names) {
         return traceDataCreated(new RList(data, false, newDimensions, names));
     }
+
+    public static RDataFrame createDataFrame(RVector vector) {
+        return traceDataCreated(new RDataFrame(vector));
+    }
 }

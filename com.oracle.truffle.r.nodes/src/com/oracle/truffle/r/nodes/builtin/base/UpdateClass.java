@@ -30,10 +30,10 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     @Child private CastRawNode castRawNode;
     @Child private CastListNode castListNode;
 
-    public abstract Object execute(VirtualFrame frame, RAbstractVector vector, Object o);
+    public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
     @Specialization
-    public Object setClass(VirtualFrame frame, RAbstractVector arg, RAbstractVector className) {
+    public Object setClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
             return setClass(arg, RNull.instance);
@@ -42,19 +42,17 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(RAbstractVector arg, RStringVector className) {
+    public Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
-        RVector resultVector = getResultVector(arg);
-        resultVector.setClassAttr(className);
-        return resultVector;
+        RVector resultVector = arg.materializeNonSharedVector();
+        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
     }
 
     @Specialization
-    public Object setClass(RAbstractVector arg, @SuppressWarnings("unused") RNull className) {
+    public Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        RVector resultVector = getResultVector(arg);
-        resultVector.setClassAttr(null);
-        return resultVector;
+        RVector resultVector = arg.materializeNonSharedVector();
+        return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);
     }
 
     @Specialization
@@ -120,7 +118,6 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
         return setClassHelper(frame, arg, className);
     }
 
-    @Specialization
     public Object setClassHelper(VirtualFrame frame, RAbstractVector arg, String className) {
         controlVisibility();
         if (className.equals(RRuntime.TYPE_CHARACTER)) {
@@ -173,17 +170,8 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
         }
 
-        RVector resultVector = getResultVector(arg);
-        resultVector.setClassAttr(RDataFactory.createStringVector(className));
-        return resultVector;
-    }
-
-    private static RVector getResultVector(RAbstractVector arg) {
-        RVector resultVector = arg.materialize();
-        if (resultVector.isShared()) {
-            resultVector = resultVector.copy();
-        }
-        return resultVector;
+        RVector resultVector = arg.materializeNonSharedVector();
+        return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);
     }
 
     private void initCastString() {

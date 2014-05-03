@@ -41,6 +41,10 @@ public abstract class RProxyNode extends RNode {
         return sequence;
     }
 
+    protected RDataFrame proxyDataFrame(RDataFrame dataFrame) {
+        return dataFrame;
+    }
+
     @Specialization
     public RNull wrap(RNull x) {
         return proxy(x);
@@ -192,6 +196,15 @@ public abstract class RProxyNode extends RNode {
 
     protected RList proxy(RList x) {
         return (RList) proxyVector(x);
+    }
+
+    @Specialization
+    public RDataFrame wrap(RDataFrame x) {
+        return proxy(x);
+    }
+
+    protected RDataFrame proxy(RDataFrame x) {
+        return proxyDataFrame(x);
     }
 
     @Specialization

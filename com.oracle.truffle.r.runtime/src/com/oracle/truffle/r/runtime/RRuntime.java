@@ -105,6 +105,7 @@ public class RRuntime {
 
     public static final String CLASS_ATTR_KEY = "class";
     public static final String PREVIOUS_ATTR_KEY = "previous";
+    public static final String ROWNAMES_ATTR_KEY = "row.names";
 
     public static final String[] CLASS_INTEGER = new String[]{TYPE_INTEGER, TYPE_NUMERIC};
     public static final String[] CLASS_DOUBLE = new String[]{TYPE_DOUBLE, TYPE_NUMERIC};

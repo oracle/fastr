@@ -53,7 +53,6 @@ public abstract class RVector extends RBounded implements RAbstractVector {
     private HashMap<String, Object> attributes;
     private boolean shared;
     private boolean temporary = true;
-    private boolean isDataFrame;
 
     protected RVector(boolean complete, int length, int[] dimensions, Object names) {
         this.complete = complete;
@@ -82,8 +81,13 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         this(complete, length, dimensions, null);
     }
 
-    public boolean isDataFrame() {
-        return isDataFrame;
+    private void removeAttributeMapping(String key) {
+        if (this.attributes != null) {
+            this.attributes.remove(key);
+            if (this.attributes.size() == 0) {
+                this.attributes = null;
+            }
+        }
     }
 
     private void setMatrixDimensions(int[] newDimensions, int vectorLength) {
@@ -152,7 +156,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         if (attributes != null && newNames == null) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
-            attributes.remove(RRuntime.NAMES_ATTR_KEY);
+            removeAttributeMapping(RRuntime.NAMES_ATTR_KEY);
             this.names = null;
         } else if (newNames != null && newNames != RNull.instance) {
             if (newNames != RNull.instance && ((RStringVector) newNames).getLength() > this.getLength()) {
@@ -185,7 +189,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             attributes = new LinkedHashMap<>();
         }
         if (attributes != null && newDimNames == null) {
-            attributes.remove(RRuntime.DIMNAMES_ATTR_KEY);
+            removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
             this.matrixDimension = 0;
         } else if (newDimNames != null) {
             if (dimensions == null) {
@@ -216,6 +220,27 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
         }
         this.dimNames = newDimNames;
+    }
+
+    @Override
+    public final Object getRowNames() {
+        if (attributes == null) {
+            return RNull.instance;
+        } else {
+            Object result = attributes.get(RRuntime.ROWNAMES_ATTR_KEY);
+            return result == null ? RNull.instance : result;
+        }
+    }
+
+    public final void setRowNames(RAbstractVector rowNames) {
+        if (attributes == null && rowNames != null) {
+            attributes = new LinkedHashMap<>();
+        }
+        if (attributes != null && rowNames == null) {
+            removeAttributeMapping(RRuntime.ROWNAMES_ATTR_KEY);
+        } else if (rowNames != null) {
+            putAttribute(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+        }
     }
 
     public final Map<String, Object> getAttributes() {
@@ -280,7 +305,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             attributes = new LinkedHashMap<>();
         }
         if (attributes != null && newDimensions == null) {
-            attributes.remove(RRuntime.DIM_ATTR_KEY);
+            removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
             setDimNames(null, sourceSection);
         } else if (newDimensions != null) {
             verifyDimensions(newDimensions, sourceSection);
@@ -298,21 +323,31 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         }
     }
 
-    public final void setClassAttr(RStringVector classAttr) {
-        if (attributes == null && classAttr != null && classAttr.getLength() != 0) {
-            attributes = new LinkedHashMap<>();
+    public static final RAbstractContainer setClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame) {
+        if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
+            vector.attributes = new LinkedHashMap<>();
         }
-        if (attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
-            attributes.remove(RRuntime.CLASS_ATTR_KEY);
+        if (vector.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
+            vector.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
+            // class attribute removed - no longer a data frame (even if it was before)
+            return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
-            for (int i = 0; i < classAttr.getLength(); i++) {
+            int i = 0;
+            for (; i < classAttr.getLength(); i++) {
                 if (classAttr.getDataAt(i).equals(RRuntime.TYPE_DATA_FRAME)) {
-                    this.isDataFrame = true;
-                    break;
+                    vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
+                    if (enclosingDataFrame != null) {
+                        // was a frame and still is a frame
+                        return enclosingDataFrame;
+                    } else {
+                        // it's a data frame now
+                        return RDataFactory.createDataFrame(vector);
+                    }
                 }
             }
-            putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
+            vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
         }
+        return vector;
     }
 
     private void setAttributes(RVector result) {
@@ -486,9 +521,9 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         } else {
             // nullifying dimensions does not reset regular attributes
             if (this.attributes != null) {
-                this.attributes.remove(RRuntime.DIM_ATTR_KEY);
-                this.attributes.remove(RRuntime.DIMNAMES_ATTR_KEY);
-                this.attributes.remove(RRuntime.NAMES_ATTR_KEY);
+                removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
+                removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
+                removeAttributeMapping(RRuntime.NAMES_ATTR_KEY);
             }
         }
     }
@@ -538,5 +573,14 @@ public abstract class RVector extends RBounded implements RAbstractVector {
             return RDataFactory.createStringVector(classHrDyn, true);
         }
         return RDataFactory.createStringVector(classHr, true);
+    }
+
+    @Override
+    public RVector materializeNonSharedVector() {
+        if (this.isShared()) {
+            return this.copy();
+        } else {
+            return this;
+        }
     }
 }

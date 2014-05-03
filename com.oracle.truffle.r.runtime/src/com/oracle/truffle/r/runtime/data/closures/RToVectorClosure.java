@@ -36,10 +36,6 @@ public abstract class RToVectorClosure implements RAbstractVector {
         this.vector = vector;
     }
 
-    public boolean isDataFrame() {
-        return vector.isDataFrame();
-    }
-
     public int getLength() {
         return vector.getLength();
     }
@@ -72,6 +68,11 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
+    public Object getRowNames() {
+        return vector.getRowNames();
+    }
+
+    @Override
     public Map<String, Object> getAttributes() {
         return vector.getAttributes();
     }
@@ -95,4 +96,10 @@ public abstract class RToVectorClosure implements RAbstractVector {
     public boolean isObject() {
         return vector.isObject();
     }
+
+    @Override
+    public RVector materializeNonSharedVector() {
+        return vector.materializeNonSharedVector();
+    }
+
 }

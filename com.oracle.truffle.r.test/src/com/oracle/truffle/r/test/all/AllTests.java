@@ -12484,6 +12484,151 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testIsDataFrame_50bf6458c4fb786682d6253a9b73c68a() {
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; class(x)<-NULL; is.vector(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testIsDataFrame_cd257cee4570b2637211bb4a2f7f61d8() {
+        assertEval("{ x<-c(7,42); class(x)<-\"data.frame\"; attr(x, \"foo\")<-\"foo\"; class(x)<-NULL;  attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testPrint_da9c92f6582f469a3303b14bf936c77e() {
+        assertEval("{x<-c(1,2); class(x)<-\"data.frame\"; x}");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testPrint_0399d7a5f29abb9be5fadc14d1e84910() {
+        assertEval("{ x<-integer(); class(x)<-\"data.frame\"; x }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testPrint_ad5c9ea91bca434c54333d0435b9122a() {
+        assertEval("{ x<-c(1,2); class(x)<-\"data.frame\"; row.names(x)<-integer(); x }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_a3af62479ea621f4e185c40355da07ce() {
+        assertEval("{ x<-c(1,2); row.names(x)<-NULL; attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_41f0460307290e851ba9b4488ba67a39() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_a57a59fd9d097e1f3c6560e7c6434341() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_b4283058b421d1b560722cb9b91c413f() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_f23892f7f8527eb3e04bab3ee227e1ca() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_6dde8999e6e039548f2cddb35dc920a9() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-logical(); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_115ec09c56dc2ee60961bd928f5bfb2c() {
+        assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-logical(); row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_d1eec2e905b8f0e89428830a0c65f07f() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-7; attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_6d0eb3d4d4c9a6e46e528f5901db417f() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-7; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_be5bdb373337dc5e05a9ff034589aaed() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_4d2fff3c22fe2049dc71c3b4b1193d8b() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_bf5e3c393fcdfec5052131927d4f24cc() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_c978e73a87192a2ca7540a1d72d36f76() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_e01f55b653adccbdd0b6acc29b829ef2() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_184e011e02eba1d48f60f431bd31be63() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_e4fa209702fa53c2df95a06d8e53236c() {
+        assertEval("{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-\"data.frame\"; row.names(z)<-NULL; attributes(z) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_764d1660bd53e94f66fb610552d50d7c() {
+        assertEval("{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-\"data.frame\"; row.names(z)<-c(\"a\", \"b\"); row.names(z)<-NULL; attributes(z) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_ba334d174b8f21ed6a8da86e760f0790() {
+        assertEval("{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-\"data.frame\"; row.names(z)<-c(\"a\", \"b\", \"c\"); row.names(z)<-NULL; attributes(z) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_b26c1e94c9931acbbe0245799720a609() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); class(x)<-\"data.frame\"; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_14542f6e3a07e0c00e412c455c72b719() {
+        assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_20762235f05c4531c0e009ee91dadfca() {
+        assertEvalError("{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_3a63f20ca3546417b6d5aeb37b93239b() {
+        assertEvalError("{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_4312f7a06665cf28ded33cfcf5808381() {
+        assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testRowNames_617a4bc79c4c6a2d2d1bfc03b84edde6() {
+        assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testBinding_08912db0fc81d6f3582a954d1f9c1fa5() {
         assertEval("{ myapp <- function(f, x, y) { f(x,y) } ; myapp(function(x,y) { x + y }, 1, 2) ; myapp(sum, 1, 2) }");
     }

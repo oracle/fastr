@@ -59,6 +59,12 @@ public abstract class WrapArgumentNode extends RProxyNode {
         return vector;
     }
 
+    @Override
+    protected RDataFrame proxyDataFrame(RDataFrame dataFrame) {
+        proxyVector(dataFrame.getVector());
+        return dataFrame;
+    }
+
     public abstract RNode getOperand();
 
     public static WrapArgumentNode create(RNode operand) {

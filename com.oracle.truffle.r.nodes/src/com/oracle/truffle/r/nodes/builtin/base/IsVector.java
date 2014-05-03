@@ -52,6 +52,16 @@ public abstract class IsVector extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @Specialization(order = 10)
+    public byte isNull(RDataFrame operand, String mode) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization(order = 11)
+    public byte isNull(RDataFrame operand, RMissing mode) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
     @Specialization(order = 100, guards = {"isVectorInt", "namesOnlyOrNoAttr"})
     public byte isInt(RAbstractVector x, String mode) {
         controlVisibility();

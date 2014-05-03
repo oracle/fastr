@@ -86,7 +86,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractVector abstractVector, RList list) {
+    public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractContainer container, RList list) {
         controlVisibility();
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {
@@ -94,12 +94,10 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         }
         RStringVector listNames = (RStringVector) listNamesObject;
         int numAttributes = list.getLength();
-        RVector resultVector;
+        RVector resultVector = container.materializeNonSharedVector();
         if (numAttributes == 0) {
-            resultVector = abstractVector.materialize();
             resultVector.resetAllAttributes(true);
         } else {
-            resultVector = abstractVector.materialize();
             HashMap<String, Object> attributeMap = resultVector.resetAllAttributes(false);
             if (attributeMap == null) {
                 resultVector.setAttributes(new LinkedHashMap<String, Object>());
@@ -150,9 +148,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     }
                 } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                     if (value == RNull.instance) {
-                        resultVector.setClassAttr(null);
+                        RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
                     } else {
-                        UpdateAttr.setClassAttrFromObject(resultVector, value, getEncapsulatingSourceSection());
+                        UpdateAttr.setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
                     }
                 } else {
                     if (value == RNull.instance) {

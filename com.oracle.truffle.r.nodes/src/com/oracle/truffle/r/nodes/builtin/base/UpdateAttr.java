@@ -58,7 +58,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[1], getBuiltin()));
         }
-        return (RAbstractVector) updateDimNames.executeList(frame, vector, o);
+        return updateDimNames.executeList(frame, vector, o);
     }
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
@@ -86,9 +86,9 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(order = 0, guards = "nullValue")
-    public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, String name, RNull value) {
+    public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
         controlVisibility();
-        RVector resultVector = vector.materialize();
+        RVector resultVector = container.materializeNonSharedVector();
         if (resultVector.isShared()) {
             resultVector = resultVector.copy();
         }
@@ -99,29 +99,27 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            resultVector.setClassAttr(null);
+            return RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
         return resultVector;
     }
 
-    public static RVector setClassAttrFromObject(RVector resultVector, Object value, SourceSection sourceSection) {
+    public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
         if (value instanceof RStringVector) {
-            resultVector.setClassAttr((RStringVector) value);
-            return resultVector;
+            return RVector.setClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RVector.class ? container : null);
         }
         if (value instanceof String) {
-            resultVector.setClassAttr(RDataFactory.createStringVector((String) value));
-            return resultVector;
+            return RVector.setClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RVector.class ? container : null);
         }
         throw RError.getInvalidClassAttr(sourceSection);
     }
 
     @Specialization(order = 1, guards = "!nullValue")
-    public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, String name, Object value) {
+    public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
         controlVisibility();
-        RVector resultVector = vector.materialize();
+        RVector resultVector = container.materializeNonSharedVector();
         if (resultVector.isShared()) {
             resultVector = resultVector.copy();
         }
@@ -136,7 +134,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            return setClassAttrFromObject(resultVector, value, getEncapsulatingSourceSection());
+            return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
         } else {
             if (resultVector.getAttributes() == null) {
                 resultVector.setAttributes(new LinkedHashMap<String, Object>());
@@ -147,14 +145,14 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(order = 2, guards = "!nullValue")
-    public RAbstractVector updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
+    public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
         controlVisibility();
         return updateAttr(frame, vector, name.getDataAt(0), value);
     }
 
     // the guard is necessary as RNull and Object cannot be distinguished in case of multiple
     // specializations, such as in: x<-1; attr(x, "dim")<-1; attr(x, "dim")<-NULL
-    public boolean nullValue(RAbstractVector vector, Object name, Object value) {
+    public boolean nullValue(RAbstractContainer container, Object name, Object value) {
         return value == RNull.instance;
     }
 

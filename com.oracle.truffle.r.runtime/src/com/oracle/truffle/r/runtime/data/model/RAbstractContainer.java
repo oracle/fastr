@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.api.*;
+import java.util.*;
+
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractVector extends RAbstractContainer {
+public interface RAbstractContainer {
 
-    int getLength();
+    Map<String, Object> getAttributes();
 
-    boolean isComplete();
+    Class<?> getElementClass();
 
-    boolean hasDimensions();
+    RVector materializeNonSharedVector();
 
-    int[] getDimensions();
-
-    RAbstractVector copy();
-
-    RAbstractVector copyWithNewDimensions(int[] newDimensions);
-
-    void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
-
-    RVector materialize();
-
-    Object getDataAtAsObject(int index);
-
-    Object getNames();
-
-    RList getDimNames();
-
-    boolean isMatrix();
-
-    boolean isArray();
-
-    boolean isObject();
-
-    RStringVector getClassHierarchy();
+    Object getRowNames();
 }

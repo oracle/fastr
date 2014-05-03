@@ -581,6 +581,19 @@ public abstract class PrettyPrinterNode extends RNode {
         return printVector(frame, operand, values, false, false);
     }
 
+    @Specialization(order = 1000)
+    public String prettyPrint(VirtualFrame frame, RDataFrame operand, Object listElementName) {
+        if (operand.getVector().getLength() == 0) {
+            return "data frame with 0 columns and 0 rows";
+
+        }
+        if (operand.getRowNames() == RNull.instance || ((RAbstractVector) operand.getRowNames()).getLength() == 0) {
+            return "NULL\n<0 rows> (or 0-length row.names)";
+        }
+        RFunction function = RContext.getLookup().lookup("format.data.frame");
+        return RRuntime.toString(function.call(frame, RArguments.create(function, new Object[]{operand})));
+    }
+
     protected static boolean twoDimsOrMore(RAbstractVector v) {
         return v.hasDimensions() && v.getDimensions().length > 1;
     }

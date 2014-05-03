@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @TypeSystem({byte.class, int.class, double.class, RRaw.class, RComplex.class, String.class, RIntSequence.class, RDoubleSequence.class, RIntVector.class, RDoubleVector.class, RRawVector.class,
                 RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REnvironment.class, RExpression.class, RConnection.class,
                 MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
-                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, Object[].class})
+                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RDataFrame.class, RAbstractContainer.class, Object[].class})
 public class RTypes {
 
     @TypeCheck
@@ -60,6 +60,91 @@ public class RTypes {
     @SuppressWarnings("unused")
     public RMissing asRMissing(Object value) {
         return RMissing.instance;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(int value) {
+        return RDataFactory.createIntVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(double value) {
+        return RDataFactory.createDoubleVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RRaw value) {
+        return RDataFactory.createRawVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(byte value) {
+        return RDataFactory.createLogicalVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RComplex value) {
+        return RDataFactory.createComplexVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(String value) {
+        return RDataFactory.createStringVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RIntVector vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RDoubleVector vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RLogicalVector vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RComplexVector vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RRawVector vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RStringVector vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RIntSequence vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RDoubleSequence vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RList vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RDataFrame vector) {
+        return vector;
+    }
+
+    @ImplicitCast
+    public RAbstractContainer toAbstractContainer(RAbstractVector vector) {
+        return vector;
     }
 
     @ImplicitCast
@@ -158,7 +243,7 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public RAbstractDoubleVector toAbstractDoubleector(RDoubleSequence vector) {
+    public RAbstractDoubleVector toAbstractDoubleVector(RDoubleSequence vector) {
         return vector;
     }
 
@@ -206,4 +291,5 @@ public class RTypes {
     public RAbstractStringVector toAbstractStringVector(RStringVector vector) {
         return vector;
     }
+
 }

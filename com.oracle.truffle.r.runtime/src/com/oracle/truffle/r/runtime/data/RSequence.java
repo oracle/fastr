@@ -34,10 +34,6 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         this.length = length;
     }
 
-    public boolean isDataFrame() {
-        return false;
-    }
-
     @Override
     protected final int internalGetLength() {
         return length;
@@ -81,6 +77,11 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
+    public Object getRowNames() {
+        return RNull.instance;
+    }
+
+    @Override
     public Map<String, Object> getAttributes() {
         return null;
     }
@@ -96,4 +97,12 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     public boolean isObject() {
         return false;
     }
+
+    @Override
+    public RVector materializeNonSharedVector() {
+        RVector resultVector = this.materialize();
+        assert !resultVector.isShared();
+        return resultVector;
+    }
+
 }

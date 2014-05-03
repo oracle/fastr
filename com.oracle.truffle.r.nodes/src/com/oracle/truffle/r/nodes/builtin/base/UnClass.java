@@ -27,9 +27,19 @@ public abstract class UnClass extends RBuiltinNode {
             if (resultVector.isShared()) {
                 resultVector = resultVector.copy();
             }
-            resultVector.setClassAttr(null);
-            return resultVector;
+            return RVector.setClassAttr(resultVector, null, null);
         }
         return arg;
     }
+
+    @Specialization
+    public Object unClass(RDataFrame arg) {
+        controlVisibility();
+        RDataFrame resultFrame = arg;
+        if (resultFrame.isShared()) {
+            resultFrame = resultFrame.copy();
+        }
+        return RVector.setClassAttr(resultFrame.getVector(), null, arg);
+    }
+
 }

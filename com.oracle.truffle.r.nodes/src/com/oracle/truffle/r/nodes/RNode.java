@@ -154,6 +154,14 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRExpression(execute(frame));
     }
 
+    public RDataFrame executeRDataFrame(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRDataFrame(execute(frame));
+    }
+
+    public RAbstractContainer executeRAbstractContainer(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRAbstractContainer(execute(frame));
+    }
+
     public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
         return a.getLength() == b.getLength();
     }

@@ -9433,6 +9433,16 @@ Error in x >= y : invalid comparison with complex values
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testIsDataFrame
+#{ x<-c(7,42); class(x)<-"data.frame"; attr(x, "foo")<-"foo"; class(x)<-NULL;  attributes(x) }
+$foo
+[1] "foo"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testIsDataFrame
+#{ x<-c(7,42); class(x)<-"data.frame"; class(x)<-NULL; is.vector(x) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testIsDataFrame
 #{ x<-c(7,42); class(x)<-"data.frame"; is.data.frame(x) }
 [1] TRUE
 
@@ -9467,6 +9477,191 @@ Error in x >= y : invalid comparison with complex values
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testIsDataFrame
 #{ x<-list(c(7,42),c(1+1i, 2+2i)); class(x)<-c("foo", "data.frame", "bar"); is.data.frame(x) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-c(1,2); class(x)<-"data.frame"; row.names(x)<-integer(); x }
+NULL
+<0 rows> (or 0-length row.names)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{ x<-integer(); class(x)<-"data.frame"; x }
+data frame with 0 columns and 0 rows
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testPrint
+#{x<-c(1,2); class(x)<-"data.frame"; x}
+NULL
+<0 rows> (or 0-length row.names)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; attributes(x) }
+$dim
+[1] 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; row.names(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); attributes(x) }
+$dim
+[1] 2
+
+$dimnames
+$dimnames[[1]]
+[1] "7"  "42"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); row.names(x) }
+[1] "7"  "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-2; row.names(x)<-logical(); attributes(x) }
+$dim
+[1] 2
+
+$dimnames
+$dimnames[[1]]
+NULL
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-2; row.names(x)<-logical(); row.names(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); class(x)<-"data.frame"; row.names(x) }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); class(x)<-"data.frame"; row.names(x)<-"r1"; row.names(x) }
+[1] "r1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-7; attributes(x) }
+$dim
+[1] 1 2
+
+$dimnames
+$dimnames[[1]]
+[1] "7"
+
+$dimnames[[2]]
+[1] "2.2" "3.3"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-7; row.names(x) }
+[1] "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; attributes(x) }
+$dim
+[1] 1 2
+
+$dimnames
+$dimnames[[1]]
+NULL
+
+$dimnames[[2]]
+[1] "2.2" "3.3"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; row.names(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); attributes(x) }
+$dim
+[1] 1 2
+
+$dimnames
+$dimnames[[1]]
+NULL
+
+$dimnames[[2]]
+[1] "2.2" "3.3"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); row.names(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }
+Error in `rownames<-`(x, value) :
+  length of 'dimnames' [1] not equal to array extent
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }
+Error in `rownames<-`(x, value) :
+  length of 'dimnames' [1] not equal to array extent
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); attributes(x) }
+$dim
+[1] 2 1
+
+$dimnames
+$dimnames[[1]]
+[1] "7"  "42"
+
+$dimnames[[2]]
+[1] "1.1"
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); row.names(x) }
+[1] "7"  "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); row.names(x)<-NULL; attributes(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }
+Error in `rownames<-`(x, value) :
+  attempt to set 'rownames' on an object with no dimensions
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }
+Error in `rownames<-`(x, value) :
+  attempt to set 'rownames' on an object with no dimensions
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-"data.frame"; row.names(z)<-NULL; attributes(z) }
+$class
+[1] "data.frame"
+
+$row.names
+integer(0)
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-"data.frame"; row.names(z)<-c("a", "b"); row.names(z)<-NULL; attributes(z) }
+$class
+[1] "data.frame"
+
+$row.names
+[1] 1 2
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testRowNames
+#{ x<-c(1,2,3); y<-c(4,5); z<-list(x, y); class(z)<-"data.frame"; row.names(z)<-c("a", "b", "c"); row.names(z)<-NULL; attributes(z) }
+$class
+[1] "data.frame"
+
+$row.names
+[1] 1 2 3
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testBinding
 #{ f <- function(func, a) { func(a) && TRUE } ; g <- function(x) {TRUE} ; f(g, 5) ; f(is.na, 4)  }
