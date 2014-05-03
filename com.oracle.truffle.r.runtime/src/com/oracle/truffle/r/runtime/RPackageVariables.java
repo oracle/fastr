@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.r.runtime.REnvironment.PackageKind;
+
 /**
  * Support for (global) variables deined by packages (e.g. {@code base)}. Similar to
  * {@link ROptions}, when a package is loaded, if it defines (global) variables, it must register
@@ -44,7 +46,7 @@ public class RPackageVariables {
 
     public static void initialize() {
         for (Map.Entry<String, Handler> entry : map.entrySet()) {
-            entry.getValue().initialize(REnvironment.lookupByName(entry.getKey()));
+            entry.getValue().initialize(REnvironment.lookupOnSearchPath(REnvironment.packageQualName(PackageKind.PACKAGE, entry.getKey())));
         }
     }
 }

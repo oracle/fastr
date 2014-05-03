@@ -75,7 +75,7 @@ public class EnvFunctions {
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'pos' argument");
             } else {
-                return REnvironment.lookupBySearchName(searchPath[pos - 1]);
+                return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
             }
         }
 
@@ -85,7 +85,7 @@ public class EnvFunctions {
             String[] searchPath = REnvironment.searchPath();
             for (String e : searchPath) {
                 if (e.equals(name)) {
-                    return REnvironment.lookupBySearchName(e);
+                    return REnvironment.lookupOnSearchPath(e);
                 }
             }
             throw RError.getGenericError(getEncapsulatingSourceSection(), "no item named '" + name + "' on the search list");
@@ -258,14 +258,14 @@ public class EnvFunctions {
         public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.NewEnv(callerEnvironment(frame), REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(callerEnvironment(frame), size);
         }
 
         @Specialization
         public REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.NewEnv(parent, REnvironment.UNNAMED, size);
+            return new REnvironment.NewEnv(parent, size);
         }
     }
 

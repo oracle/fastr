@@ -15,6 +15,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.rng.*;
 
 public class RRuntime {
 
@@ -148,6 +149,7 @@ public class RRuntime {
         startTime = System.nanoTime();
         childTimes = new long[]{0, 0};
         RAccuracyInfo.initialize();
+        RRNG.initialize();
         RVersionInfo.initialize();
         REnvVars.initialize();
         LibPaths.initialize();

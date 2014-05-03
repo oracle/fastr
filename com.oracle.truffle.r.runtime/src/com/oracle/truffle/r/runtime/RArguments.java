@@ -73,7 +73,7 @@ public final class RArguments {
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
      * names.
      */
-    private static final int MINIMAL_ARRAY_LENGTH = 4;
+    public static final int MINIMAL_ARRAY_LENGTH = 4;
 
     private RArguments() {
     }
@@ -147,5 +147,29 @@ public final class RArguments {
         if (arguments[INDEX_FUNCTION] != null) {
             ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
         }
+    }
+
+    /**
+     * Support for the R {@code attach} function. Set {@code newEncl} as the new enclosing frame for
+     * {@code frame} and set the enclosing frame for {@code newEncl} to the previous enclosing frame
+     * for {@code frame}. assert {@code} does not denote a function.
+     */
+    public static void attachFrame(Frame frame, MaterializedFrame newEncl) {
+        Object[] arguments = frame.getArguments();
+        MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
+        Object[] newArguments = newEncl.getArguments();
+        newArguments[INDEX_ENCLOSING_FRAME] = encl;
+        arguments[INDEX_ENCLOSING_FRAME] = newEncl;
+    }
+
+    /**
+     * Support for the R {@code detach} function. Set the enclosing frame for {@code frame} to the
+     * enclosing frame of its current enclosing frame. assert {@code} does not denote a function.
+     */
+    public static void detachFrame(Frame frame) {
+        Object[] arguments = frame.getArguments();
+        MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
+        Object[] enclArguments = encl.getArguments();
+        arguments[INDEX_ENCLOSING_FRAME] = enclArguments[INDEX_ENCLOSING_FRAME];
     }
 }

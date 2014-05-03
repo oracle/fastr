@@ -86,7 +86,7 @@ public class FastRSession implements RSession {
 
     public String eval(String expression) {
         consoleHandler.reset();
-        REngine.parseAndEval(expression, true);
+        REngine.parseAndEvalTest(expression, true);
         return consoleHandler.buffer.toString();
     }
 

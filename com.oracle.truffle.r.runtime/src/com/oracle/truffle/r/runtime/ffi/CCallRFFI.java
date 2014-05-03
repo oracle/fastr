@@ -26,5 +26,8 @@ package com.oracle.truffle.r.runtime.ffi;
  * Placeholder for the C call FFI.
  */
 public interface CCallRFFI {
+    void invoke(long address);
+
+    void invoke(long address, Object arg);
 
 }

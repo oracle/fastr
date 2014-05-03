@@ -1572,27 +1572,25 @@ public class TestSimpleBuiltins extends TestBase {
 
         // misc
         assertEvalError("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
-
-    }
-
-    @Test
-    @Ignore
-    public void testEnvironmentIgnore() {
-        // misc
-
+        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+        assertEval("{ ls(.GlobalEnv) }");
+        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
         assertEvalError("{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
-        // This works in the shell, fails in the test related to different MaterializedFrame
-// behavior
-        assertEval("{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }");
+    }
 
-        // requires .GlobalEnv to be defined in base
-        assertEval("{ ls(.GlobalEnv) }");
-        assertEval("{ x <- 1 ; ls(.GlobalEnv) }");
-
+    @Test
+    public void testAttach() {
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
+        assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");
+        assertEval("{ attach(.Platform, 2); file.sep }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2) }");
+        assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x; detach(\"mine\") }");
+        assertEvalError("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
+        assertEvalError("{ detach(\"missing\"); x }");
     }
 
     @Test
@@ -2032,10 +2030,17 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRandom() {
-        assertEval("{ round( rnorm(3), digits = 5 ) }");
-        assertEval("{ round( rnorm(3,1000,10), digits = 5 ) }");
+        assertEval("{ set.seed(4357, \"default\"); sum(runif(10)) }");
+        assertEval("{ set.seed(4336, \"default\"); sum(runif(10000)) }");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); sum(runif(100)) }");
+        assertEval("{ set.seed(4357, \"default\"); round( rnorm(3), digits = 5 ) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRandomIgnore() {
+        assertEval("{ set.seed(4357, \"default\"); round( rnorm(3,1000,10), digits = 5 ) }");
         assertEval("{ round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
 
         assertEval("{ round( runif(3), digits = 5 ) }");

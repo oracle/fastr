@@ -4038,6 +4038,32 @@ $names
 [1] "a" "b"
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ attach(.Platform, 2); file.sep }
+[1] "/"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ detach("missing"); x }
+Error in detach("missing") : invalid 'name' argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ e <- new.env(); assign("x", "abc", e); attach(e, 2); x }
+[1] "abc"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ e <- new.env(); assign("x", 1, e); attach(e, 2); x; detach(2) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ e <- new.env(); assign("x", 1, e); attach(e, 2); x; detach(2); x }
+Error: object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ e <- new.env(); assign("x", 1, e); attach(e, name = "mine"); x }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttach
+#{ e <- new.env(); assign("x", 1, e); attach(e, name = "mine"); x; detach("mine") }
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAttributes
 #{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }
 [1] 1
@@ -5900,6 +5926,10 @@ Error in get("x", e) : object 'x' not found
 Error in get("z", h) : object 'z' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ h <- new.env(parent=globalenv()) ; assign("x", 10, h, inherits=TRUE) ; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ hh <- new.env() ; assign("z", 3, hh) ; h <- new.env(parent=hh) ; assign("y", 2, h) ; exists("z", h) }
 [1] TRUE
 
@@ -5924,13 +5954,37 @@ Error in get("z", h) : object 'z' not found
 character(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ ls(.GlobalEnv) }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ ph <- new.env() ; h <- new.env(parent=ph) ; assign("x", 10, h, inherits=TRUE) ; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ ph <- new.env() ; h <- new.env(parent=ph) ; assign("x", 2, h) ; assign("x", 10, h, inherits=TRUE) ; get("x", ph)}
+Error in get("x", ph) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ ph <- new.env() ; h <- new.env(parent=ph) ; assign("x", 2, ph) ; assign("x", 10, h, inherits=TRUE) ; get("x", ph)}
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ ph <- new.env(parent=emptyenv()) ; h <- new.env(parent=ph) ; assign("x", 10, h, inherits=TRUE) ; get("x", ph)}
+Error in get("x", ph) : object 'x' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ plus <- function(x) { function(y) x + y } ; plus_one <- plus(1) ; ls(environment(plus_one)) }
+[1] "x"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ rm("foo", envir = baseenv()) }
 Error in rm("foo", envir = baseenv()) :
   cannot remove variables from the base environment
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
+#{ x <- 1 ; ls(.GlobalEnv) }
+[1] "x"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ x <- 1; .y <- 2; ls(globalenv()) }
@@ -7452,6 +7506,22 @@ a b
 #{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }
    1    2    3    4    5
   11    7 2222    7   33
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(4336, "default"); sum(runif(10000)) }
+[1] 4997.493
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(4357, "default"); round( rnorm(3), digits = 5 ) }
+[1] -0.13102  0.98938 -0.30562
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(4357, "default"); sum(runif(10)) }
+[1] 6.631059
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
+#{ set.seed(9567, "Marsaglia-Multicarry"); sum(runif(100)) }
+[1] 52.92218
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRbind
 #{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }

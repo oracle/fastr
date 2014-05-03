@@ -162,7 +162,26 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     }
 
     public BaseRFFI getBaseRFFI() {
-        // TODO Auto-generated method stub
+        return this;
+    }
+
+    public Object dlopen(String path, boolean local, boolean now) {
+        Utils.fail("dlopen not implemented");
+        return 0;
+    }
+
+    public long dlsym(Object handle, String symbol) {
+        Utils.fail("dlsym not implemented");
+        return 0;
+    }
+
+    public int dlclose(Object handle) {
+        Utils.fail("dlclose not implemented");
+        return 0;
+    }
+
+    public String dlerror() {
+        Utils.fail("dlerror not implemented");
         return null;
     }
 

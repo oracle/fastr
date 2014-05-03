@@ -90,7 +90,6 @@ public final class RContext {
     private final SourceManager sourceManager = new SourceManager();
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
-    private final RRandomNumberGenerator randomNumberGenerator = new RRandomNumberGenerator();
     private LinkedList<String> evalWarnings;
 
     /**
@@ -184,10 +183,6 @@ public final class RContext {
             Utils.fail("no command args set");
         }
         return commandArgs;
-    }
-
-    public RRandomNumberGenerator getRandomNumberGenerator() {
-        return randomNumberGenerator;
     }
 
     public List<String> extractEvalWarnings() {
