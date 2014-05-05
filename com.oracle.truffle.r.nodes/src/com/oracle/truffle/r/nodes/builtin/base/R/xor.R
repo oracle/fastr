@@ -1,7 +1,7 @@
-#  File src/library/base/R/match.R
+#  File src/library/base/R/xor.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2012 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,10 +16,4 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# partial
-
-pmatch <- function(x, table, nomatch = NA, duplicates.ok = FALSE)
-    .Internal(pmatch(as.character(x), as.character(table), nomatch,
-                    duplicates.ok))
-
-`%in%` <- function(x, table) match(x, table, nomatch=0L) > 0L
+xor <- function(x, y) { (x | y) & !(x & y) }

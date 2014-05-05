@@ -46,6 +46,8 @@ public abstract class Vector extends RBuiltinNode {
     public RAbstractVector vector(String mode, int length) {
         controlVisibility();
         switch (mode) {
+            case "character":
+                return RDataFactory.createStringVector(length);
             case "logical":
                 return RDataFactory.createLogicalVector(length);
             case "numeric":
