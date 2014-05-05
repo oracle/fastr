@@ -178,11 +178,9 @@ public class RRNG {
      * @param normKindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link NormKind}.
      */
-    @SlowPath
     public static void doSetSeed(VirtualFrame frame, Integer seed, int kindAsInt, int normKindAsInt) throws RNGException {
         int newSeed = seed == RESET_SEED ? timeToSeed() : seed;
-        Kind kind = changeKinds(kindAsInt, normKindAsInt);
-        initGenerator(kind, newSeed);
+        changeKindsAndInitGenerator(newSeed, kindAsInt, normKindAsInt);
         updateDotRandomSeed(frame);
     }
 
@@ -190,12 +188,16 @@ public class RRNG {
      * Set the kind and optionally the norm kind, called from R builtin {@code RNGkind}. GnuR
      * chooses the new seed from the previous RNG.
      */
-    @SlowPath
     public static void doRNGKind(VirtualFrame frame, int kindAsInt, int normKindAsInt) throws RNGException {
         int newSeed = (int) (unifRand() * UINT_MAX);
+        changeKindsAndInitGenerator(newSeed, kindAsInt, normKindAsInt);
+        updateDotRandomSeed(frame);
+    }
+
+    @SlowPath
+    private static void changeKindsAndInitGenerator(int newSeed, int kindAsInt, int normKindAsInt) throws RNGException {
         Kind kind = changeKinds(kindAsInt, normKindAsInt);
         initGenerator(kind, newSeed);
-        updateDotRandomSeed(frame);
     }
 
     private static Kind changeKinds(int kindAsInt, int normKindAsInt) throws RNGException {
