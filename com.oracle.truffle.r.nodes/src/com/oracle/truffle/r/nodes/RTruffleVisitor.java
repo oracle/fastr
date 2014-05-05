@@ -117,7 +117,12 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
             index++;
         }
-        return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), CallArgumentsNode.create(nodes, argumentNames));
+        final String functionName = RRuntime.toString(callName);
+        final CallArgumentsNode aCallArgNode = CallArgumentsNode.create(nodes, argumentNames);
+        if (RRuntime.getGroup(functionName) != null) {
+            return DispatchedCallNode.create(functionName, RRuntime.RDotGroup, aCallArgNode);
+        }
+        return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
     }
 
     @Override
@@ -169,14 +174,24 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(UnaryOperation op) {
         RNode operand = op.getLHS().accept(this);
-        return RCallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(operand));
+        final String functionName = op.getPrettyOperator();
+        final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(operand);
+        if (RRuntime.getGroup(functionName) != null) {
+            return DispatchedCallNode.create(functionName, RRuntime.RDotGroup, aCallArgNode);
+        }
+        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
     }
 
     @Override
     public RNode visit(BinaryOperation op) {
         RNode left = op.getLHS().accept(this);
         RNode right = op.getRHS().accept(this);
-        return RCallNode.createStaticCall(op.getSource(), op.getPrettyOperator(), CallArgumentsNode.createUnnamed(left, right));
+        final String functionName = op.getPrettyOperator();
+        final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(left, right);
+        if (RRuntime.getGroup(functionName) != null) {
+            return DispatchedCallNode.create(functionName, RRuntime.RDotGroup, aCallArgNode);
+        }
+        return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
     }
 
     @Override

@@ -498,6 +498,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ matrix(c(1i,NA),10,10) }");
         assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
         assertEval("{ matrix(c(1i,100i),10,10) }");
+        assertEval("{ matrix(1:6, nrow=3,byrow=TRUE)}");
+        assertEval("{ matrix(1:6, nrow=3,byrow=1)}");
+        assertEval("{ matrix(1:6, nrow=c(3,4,5),byrow=TRUE)}");
+        assertEval("{ matrix(1:6)}");
+        assertEval("{ matrix(1:6, ncol=3:5,byrow=TRUE)}");
+
     }
 
     @Test
@@ -647,16 +653,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { sapply(c(\"a\",\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
-    }
-
-    @Test
-    @Ignore
-    public void testApplyIgnore() {
-        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
-        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
-
-        // names
-        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
     }
 
     @Test
@@ -2623,6 +2619,50 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSummaryGroupDispatch() {
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};max(x)}");
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";Summary.foo<-function(x,...){\"summary\"};min(x)}");
+        assertEval("{x<-c(1,2,3);class(x)<-\"foo\";min.foo<-function(x,...){\"summary\"};min(x)}");
+    }
+
+    @Test
+    public void testOpsGroupDispatch() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)};x*y}");
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"fooX\";\"*.foo\"<-function(e1,e2){min(e1,e2)};x*y}");
+        assertEval("{x<-1;y<-7;class(x)<-\"fooX\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)};x*y}");
+        assertEval("{x<-1;y<-7;class(x)<-\"fooX\";class(y)<-\"fooX\";\"*.foo\"<-function(e1,e2){min(e1,e2)};x*y}");
+
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"^.foo\"<-function(e1,e2){e1+e2};x^y}");
+
+        assertEval("{x<-1;class(x)<-\"foo\";\"!.foo\"<-function(e1,e2){x};!x}");
+    }
+
+    @Test
+    public void testMathGroupDispatch() {
+        assertEval("{x<--7;class(x)<-\"foo\";Math.foo<-function(z){x};abs(x);}");
+        assertEval("{x<--7;class(x)<-\"foo\";Math.foo<-function(z){-z;};log(x);}");
+    }
+
+    @Test
+    public void testComplexGroupDispatch() {
+        assertEval("{x<--7+2i;class(x)<-\"foo\";Complex.foo<-function(z){1;};Im(x);}");
+    }
+
+    @Test
+    public void testSwitch() {
+        assertEval("{ test1 <- function(type) { switch(type, mean = 1, median = 2, trimmed = 3) };test1(\"median\")}");
+        assertEval("{switch(3,1,2,3)}");
+        assertEval("{switch(4,1,2,3)}");
+        assertEval("{ test1 <- function(type) { switch(type, mean = mean(c(1,2,3,4)), median = 2, trimmed = 3) };test1(\"mean\")}");
+    }
+
+    @Test
+    @Ignore
+    public void testSwitchIgnore() {
+        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
+    }
+
+    @Test
     @Ignore
     public void testBuiltinPropagationIgnore() {
         // aperm not implemented
@@ -2651,6 +2691,29 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testStorageMode() {
+        assertEval("{storage.mode(1)}");
+        assertEval("{storage.mode(c)}");
+        assertEval("{storage.mode(f<-function(){1})}");
+        assertEval("{storage.mode(c(1,2,3))}");
+        assertEval("{x<-1;storage.mode(x)<-\"character\"}");
+        assertEval("{x<-1;storage.mode(x)<-\"logical\";x}");
+    }
+
+    @Test
+    public void testIsFactor() {
+        assertEval("{x<-1;class(x)<-\"foo\";is.factor(x)}");
+    }
+
+    @Test
+    @Ignore
+    public void testIsFactorIgnore() {
+        assertEval("{is.factor(1)}");
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
+        assertEval("{is.factor(c)}");
+    }
+
+    @Test
     @Ignore
     public void testParen() {
         assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
@@ -2669,6 +2732,23 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-list(1,3); }");
         assertEval("{ x<-c(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
         assertEval("{ x<-list(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+        assertEval("{is.vector(c(TRUE,FALSE),\"numeric\");}");
+        assertEval("{is.vector(c(TRUE,FALSE),\"logical\");}");
+        assertEval("{x<-1;class(x)<-\"a\";is.vector(x);}");
+        assertEval("{x<-1;names(x)<-\"a\";is.vector(x);}");
     }
 
+    @Test
+    public void testLapply() {
+        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
+        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
+        assertEval("{ x<-c(1,3,4);attr(x,\"names\")<-c(\"a\",\"b\",\"c\");lapply(x, function(x,y) { as.character(x*y) }, 2) }");
+        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
+    }
+
+    @Test
+    @Ignore
+    public void testLapplyIgnore() {
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
+    }
 }

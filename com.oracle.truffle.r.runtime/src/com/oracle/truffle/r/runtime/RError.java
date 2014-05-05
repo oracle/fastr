@@ -224,6 +224,15 @@ public abstract class RError extends RuntimeException {
     private static final String OBJECT_NOT_SPECIFIED = "object not specified";
     private static final String NO_METHOD_FOUND = "no method to invoke";
     private static final String GEN_FUNCTION_NOT_SPECIFIED = "generic function not specified";
+    private static final String DUPLICATE_SWITCH_DEFAULT = "duplicate 'switch' defaults: '%s' and '%s'";
+    private static final String NO_ALTERNATIVE_IN_SWITCH = "empty alternative in numeric switch";
+    private static final String EXPR_NOT_LENGTH_ONE = "EXPR must be a length 1 vector";
+    private static final String EXPR_MISSING = "'EXPR' is missing";
+    private static final String INVALID_STORAGE_MODE_UPDATE = "invalid to change the storage mode of a factor";
+    private static final String NULL_VALUE = "'value' must be non-null character string";
+    private static final String USE_DEFUNCT = "use of '%s' is defunct: use %s instead";
+    private static final String NCOL_ZERO = "nc = 0 for non-null data";
+    private static final String NROW_ZERO = "nr = 0 for non-null data";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -2085,4 +2094,39 @@ public abstract class RError extends RuntimeException {
         return getGenericError(encapsulatingSourceSection, String.format(ROWNAMES_STRING_OR_INT, type));
     }
 
+    public static RError getDuplicateSwitchDefaults(SourceSection enSourceSection, String defaultValue1, String defaultValue2) {
+        return getGenericError(enSourceSection, String.format(DUPLICATE_SWITCH_DEFAULT, defaultValue1, defaultValue2));
+    }
+
+    public static RError getNoAlertnativeInSwitch(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NO_ALTERNATIVE_IN_SWITCH);
+    }
+
+    public static RError getExprNotLengthOne(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, EXPR_NOT_LENGTH_ONE);
+    }
+
+    public static RError getExprMissing(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, EXPR_MISSING);
+    }
+
+    public static RError getInvalidStorageModeUpdate(SourceSection enSourceSection) {
+        return getGenericError(enSourceSection, INVALID_STORAGE_MODE_UPDATE);
+    }
+
+    public static RError getValueNull(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NULL_VALUE);
+    }
+
+    public static RError getDefunct(SourceSection encapsulatingSourceSection, String value, String alternate) {
+        return getGenericError(encapsulatingSourceSection, String.format(USE_DEFUNCT, value, alternate));
+    }
+
+    public static RError getNcolZero(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NCOL_ZERO);
+    }
+
+    public static RError getNrowZero(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NROW_ZERO);
+    }
 }

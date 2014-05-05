@@ -57,7 +57,7 @@ public abstract class Sd extends RBuiltinNode {
     @SuppressWarnings("unused")
     public double sd(VirtualFrame frame, RDoubleVector x, byte narm) {
         controlVisibility();
-        double xmean = (double) mean.executeDouble(frame, x, RMissing.instance);
+        double xmean = (double) mean.executeDouble(frame, x);
         double distSum = 0.0;
         for (int i = 0; i < x.getLength(); ++i) {
             distSum = add.op(distSum, pow.op(sub.op(x.getDataAt(i), xmean), 2));

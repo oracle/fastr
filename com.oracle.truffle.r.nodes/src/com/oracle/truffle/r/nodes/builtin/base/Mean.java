@@ -28,13 +28,14 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(value = "mean", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(value = "mean.default", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public abstract class Mean extends RBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "..."};
+    private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
 
     @Override
     public Object[] getParameterNames() {
@@ -43,17 +44,16 @@ public abstract class Mean extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x, Object args);
+    public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
 
     @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
     @Child protected BinaryArithmetic div = BinaryArithmetic.DIV.create();
 
     @Specialization
-    @SuppressWarnings("unused")
-    public double mean(RDoubleVector x, RMissing args) {
+    public double mean(RDoubleVector x) {
         controlVisibility();
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {

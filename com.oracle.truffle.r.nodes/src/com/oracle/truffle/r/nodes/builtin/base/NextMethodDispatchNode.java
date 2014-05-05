@@ -135,13 +135,12 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private void setEnvironment() {
         final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
         RArguments.setEnclosingFrame(newFrame, targetFunction.getEnclosingFrame());
-        wvnMethod = initWvn(wvnMethod, RRuntime.RDotMethod);
+        defineVars(newFrame);
         if (storedFunctionName != null) {
             wvnMethod.execute(newFrame, storedFunctionName);
         } else {
             wvnMethod.execute(newFrame, targetFunctionName);
         }
-        defineVars(newFrame);
         if (hasGroup) {
             wvnGroup = initWvn(wvnGroup, RRuntime.RDotGroup);
             wvnGroup.execute(newFrame, this.group);
