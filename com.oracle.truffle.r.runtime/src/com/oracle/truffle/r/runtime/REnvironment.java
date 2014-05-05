@@ -129,18 +129,30 @@ public abstract class REnvironment {
     }
 
     /**
-     * Check whether the given frame is indeed the frame stored in the global environment.
+     * Returns {@code true} iff {@code frame} is that associated with {@code env}.
      */
-    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
-        FrameSlot idSlot = frame.getFrameDescriptor().findFrameSlot(Global.GLOBAL_ENV_ID);
+    public static boolean isFrameForEnv(MaterializedFrame frame, REnvironment env) {
+        Object id = env.frameAccess.id();
+        if (id == null) {
+            return false;
+        }
+        FrameSlot idSlot = frame.getFrameDescriptor().findFrameSlot(id);
         if (idSlot == null) {
             return false;
         }
         try {
-            return frame.getObject(idSlot) == Global.GLOBAL_ENV_ID;
+            return frame.getObject(idSlot) == id;
         } catch (FrameSlotTypeException fste) {
             return false;
         }
+
+    }
+
+    /**
+     * Check whether the given frame is indeed the frame stored in the global environment.
+     */
+    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
+        return isFrameForEnv(frame, globalEnv);
     }
 
     /**
@@ -350,7 +362,7 @@ public abstract class REnvironment {
      */
     private static REnvFrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
         RArguments.setEnclosingFrame(frame, parent.getFrame());
-        return new REnvTruffleFrameAccess(frame.materialize());
+        return new REnvTruffleFrameAccess(frame);
     }
 
     /**
@@ -545,26 +557,13 @@ public abstract class REnvironment {
      */
     public static final class Global extends REnvironment {
 
-        public static final Object GLOBAL_ENV_ID = new Object();
-
         private Global(REnvironment parent, VirtualFrame frame) {
-            super(parent, "R_GlobalEnv", storeGlobalEnvID(frame));
+            super(parent, "R_GlobalEnv", frame);
         }
 
         @Override
         protected String getSearchName() {
             return ".GlobalEnv";
-        }
-
-        /**
-         * The global environment ID is an object that is stored in the global environment frame and
-         * is its own name.
-         */
-        private static VirtualFrame storeGlobalEnvID(VirtualFrame frame) {
-            FrameDescriptor fd = frame.getFrameDescriptor();
-            FrameSlot idSlot = fd.addFrameSlot(GLOBAL_ENV_ID);
-            frame.setObject(idSlot, GLOBAL_ENV_ID);
-            return frame;
         }
 
     }
