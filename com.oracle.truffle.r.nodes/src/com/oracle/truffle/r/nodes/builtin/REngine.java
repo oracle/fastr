@@ -75,19 +75,15 @@ public final class REngine implements RBuiltinLookupProvider {
         REnvironment.initialize(globalFrame, baseFrame);
         RBuiltinPackage.initialize();
         RRuntime.initialize();
-        evalProfiles(globalFrame);
-        return globalFrame;
-    }
-
-    private static void evalProfiles(VirtualFrame globalFrame) {
         String siteProfile = RProfile.siteProfile();
-        String userProfile = RProfile.userProfile();
         if (siteProfile != null) {
-            REngine.parseAndEval(siteProfile, globalFrame, false);
+            REngine.parseAndEval(siteProfile, baseFrame, false);
         }
+        String userProfile = RProfile.userProfile();
         if (userProfile != null) {
             REngine.parseAndEval(userProfile, globalFrame, false);
         }
+        return globalFrame;
     }
 
     /**
