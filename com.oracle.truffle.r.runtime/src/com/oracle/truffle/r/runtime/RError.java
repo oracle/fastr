@@ -2059,15 +2059,15 @@ public abstract class RError extends RuntimeException {
     }
 
     public static RError getNotLengthOneLogicalVector(SourceSection sourceSection, final String arg) {
-        return getGenericError(sourceSection, String.format(NOT_LEN_ONE_LOGICAL_VECTOR, arg));
+        return getGenericError(sourceSection, stringFormat(NOT_LEN_ONE_LOGICAL_VECTOR, arg));
     }
 
     public static RError getNotCharacterVector(SourceSection sourceSection, final String what) {
-        return getGenericError(sourceSection, String.format(NOT_CHARACTER_VECTOR, what));
+        return getGenericError(sourceSection, stringFormat(NOT_CHARACTER_VECTOR, what));
     }
 
     public static RError getTooLongClassName(SourceSection encapsulatingSourceSection, String generic) {
-        return getGenericError(encapsulatingSourceSection, String.format(TOO_LONG_CLASS_NAME, generic));
+        return getGenericError(encapsulatingSourceSection, stringFormat(TOO_LONG_CLASS_NAME, generic));
     }
 
     public static RError getNonStringGeneric(SourceSection encapsulatingSourceSection) {
@@ -2087,15 +2087,15 @@ public abstract class RError extends RuntimeException {
     }
 
     public static RError getCannotMakeVectorOfMode(SourceSection encapsulatingSourceSection, String mode) {
-        return getGenericError(encapsulatingSourceSection, String.format(CANNOT_MAKE_VECTOR_OF_MODE, mode));
+        return getGenericError(encapsulatingSourceSection, stringFormat(CANNOT_MAKE_VECTOR_OF_MODE, mode));
     }
 
     public static RError getRowNamesStringOrInt(SourceSection encapsulatingSourceSection, String type) {
-        return getGenericError(encapsulatingSourceSection, String.format(ROWNAMES_STRING_OR_INT, type));
+        return getGenericError(encapsulatingSourceSection, stringFormat(ROWNAMES_STRING_OR_INT, type));
     }
 
     public static RError getDuplicateSwitchDefaults(SourceSection enSourceSection, String defaultValue1, String defaultValue2) {
-        return getGenericError(enSourceSection, String.format(DUPLICATE_SWITCH_DEFAULT, defaultValue1, defaultValue2));
+        return getGenericError(enSourceSection, stringFormat(DUPLICATE_SWITCH_DEFAULT, defaultValue1, defaultValue2));
     }
 
     public static RError getNoAlertnativeInSwitch(SourceSection encapsulatingSourceSection) {
@@ -2119,7 +2119,7 @@ public abstract class RError extends RuntimeException {
     }
 
     public static RError getDefunct(SourceSection encapsulatingSourceSection, String value, String alternate) {
-        return getGenericError(encapsulatingSourceSection, String.format(USE_DEFUNCT, value, alternate));
+        return getGenericError(encapsulatingSourceSection, stringFormat(USE_DEFUNCT, value, alternate));
     }
 
     public static RError getNcolZero(SourceSection encapsulatingSourceSection) {
