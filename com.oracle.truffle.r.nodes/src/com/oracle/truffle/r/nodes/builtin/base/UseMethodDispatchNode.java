@@ -34,13 +34,11 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public DispatchNode.FunctionCall execute(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        if (targetFunction != null && isFirst && findFunction(targetFunctionName, callerFrame)) {
-            assert (funCall != null);
-        } else {
+        initArgNodes(frame);
+        if (targetFunction == null || !isFirst || !findFunction(targetFunctionName, callerFrame)) {
             findTargetFunction(callerFrame);
-            initArgNodes(frame);
-            funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
         }
+        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
         setEnvironment(frame);
         return funCall;
     }
