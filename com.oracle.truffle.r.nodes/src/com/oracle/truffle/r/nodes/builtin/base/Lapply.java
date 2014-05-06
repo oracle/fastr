@@ -61,7 +61,7 @@ public abstract class Lapply extends RBuiltinNode {
         controlVisibility();
         RVector xMat = x.materialize();
         /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
-        Object result[] = new Object[xMat.getLength()];
+        Object[] result = new Object[xMat.getLength()];
         for (int i = 0; i < result.length; ++i) {
             combinedArgs[0] = xMat.getDataAtAsObject(i);
             result[i] = fun.call(frame, RArguments.create(fun, combinedArgs));

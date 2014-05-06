@@ -16,7 +16,7 @@
 
 storage.mode <- function(x)
     switch(tx <- typeof(x),
-    		#TODO:switch should be able to handle missing args.
-           closure = "function" , builtin = "function", special = "function",
-           ## otherwise
-           tx)
+        #TODO:switch should be able to handle missing args.
+        closure = "function" , builtin = "function", special = "function",
+        ## otherwise
+        tx)

@@ -23,26 +23,26 @@ format.data.frame <- function(x, ..., justify = "none")
 #    nc <- length(x)
 #    rval <- vector("list", nc)
 #    for(i in 1L:nc)
-#	rval[[i]] <- format(x[[i]], ..., justify = justify)
+#        rval[[i]] <- format(x[[i]], ..., justify = justify)
 #    lens <- sapply(rval, NROW)
 #    if(any(lens != nr)) { # corrupt data frame, must have at least one column
-#	warning("corrupt data frame: columns will be truncated or padded with NAs")
-#	for(i in 1L:nc) {
-#	    len <- NROW(rval[[i]])
-#	    if(len == nr) next
-#	    if(length(dim(rval[[i]])) == 2L) {
-#		rval[[i]] <- if(len < nr)
-#		    rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
-#		else rval[[i]][1L:nr,]
-#	    } else {
-#		rval[[i]] <- if(len < nr) c(rval[[i]], rep.int(NA, nr-len))
-#		else rval[[i]][1L:nr]
-#	    }
-#	}
+#        warning("corrupt data frame: columns will be truncated or padded with NAs")
+#        for(i in 1L:nc) {
+#            len <- NROW(rval[[i]])
+#            if(len == nr) next
+#            if(length(dim(rval[[i]])) == 2L) {
+#                rval[[i]] <- if(len < nr)
+#                    rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
+#                else rval[[i]][1L:nr,]
+#            } else {
+#                rval[[i]] <- if(len < nr) c(rval[[i]], rep.int(NA, nr-len))
+#                    else rval[[i]][1L:nr]
+#            }
+#        }
 #    }
 #    for(i in 1L:nc) {
-#	if(is.character(rval[[i]]) && inherits(rval[[i]], "character"))
-#	    oldClass(rval[[i]]) <- "AsIs"
+#        if(is.character(rval[[i]]) && inherits(rval[[i]], "character"))
+#            oldClass(rval[[i]]) <- "AsIs"
 #    }
 #    cn <- names(x)
 #    m <- match(c("row.names", "check.rows", "check.names", ""), cn, 0L)

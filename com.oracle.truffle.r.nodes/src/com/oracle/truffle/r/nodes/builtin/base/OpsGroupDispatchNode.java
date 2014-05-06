@@ -72,7 +72,7 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
                 this.type = this.typeR;
             }
         }
-        String methods[] = new String[this.evaluatedArgs.length];
+        String[] methods = new String[this.evaluatedArgs.length];
         for (int i = 0; i < methods.length; ++i) {
             RStringVector classHr = getArgClass(this.evaluatedArgs[i]);
             if (classHr == null) {
