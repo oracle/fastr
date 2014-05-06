@@ -31,4 +31,10 @@ public abstract class IsArray extends RBuiltinNode {
         controlVisibility();
         return RRuntime.FALSE;
     }
+
+    @Specialization
+    public byte isType(@SuppressWarnings("unused") RFunction arg) {
+        controlVisibility();
+        return RRuntime.FALSE;
+    }
 }

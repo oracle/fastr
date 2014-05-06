@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
@@ -45,13 +46,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private void initArgNodes(VirtualFrame frame) {
-        if (argNodes != null) {
-            return;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        RNode[] nodes = new RNode[RArguments.getArgumentsLength(frame)];
+        for (int i = 0; i < nodes.length; ++i) {
+            nodes[i] = ConstantNode.create(RArguments.getArgument(frame, i));
         }
-        argNodes = new RNode[RArguments.getArgumentsLength(frame)];
-        for (int i = 0; i < RArguments.getArgumentsLength(frame); ++i) {
-            argNodes[i] = ConstantNode.create(RArguments.getArgument(frame, i));
-        }
+        argNodes = insert(nodes);
     }
 
     private void findTargetFunction(Frame callerFrame) {
@@ -83,9 +83,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 
     private void setEnvironment(VirtualFrame frame) {
         genCallEnv = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        wvnMethod = initWvn(wvnMethod, RRuntime.RDotMethod);
-        wvnMethod.execute(frame, targetFunctionName);
         defineVars(frame);
+        wvnMethod.execute(frame, targetFunctionName);
         storedEnclosingFrame = RArguments.getEnclosingFrame(frame);
         RArguments.setEnclosingFrame(frame, targetFunction.getEnclosingFrame());
         targetFunction.setEnclosingFrame(frame.materialize());

@@ -23,13 +23,17 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("typeof")
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
+
+    public abstract RStringVector execute(VirtualFrame frame, Object x);
 
     @Specialization
     public RStringVector typeof(RNull vector) {

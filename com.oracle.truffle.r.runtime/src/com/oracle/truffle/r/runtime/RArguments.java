@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public final class RArguments {
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     private static final int INDEX_FUNCTION = 0;
     private static final int INDEX_ENCLOSING_FRAME = 1;
@@ -98,11 +99,15 @@ public final class RArguments {
         return create(functionObj, functionObj.getEnclosingFrame(), evaluatedArgs);
     }
 
-    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
-        return create(functionObj, enclosingFrame, evaluatedArgs, EMPTY_OBJECT_ARRAY);
+    public static Object[] create(RFunction functionObj, Object[] evaluatedArgs, String[] names) {
+        return create(functionObj, functionObj.getEnclosingFrame(), evaluatedArgs, names);
     }
 
-    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, Object[] names) {
+    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
+        return create(functionObj, enclosingFrame, evaluatedArgs, EMPTY_STRING_ARRAY);
+    }
+
+    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + names.length];
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;

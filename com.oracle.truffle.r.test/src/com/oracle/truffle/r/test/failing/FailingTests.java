@@ -529,21 +529,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_797cd316f3f859174c906d613c777e40() {
-        assertEval("{ lapply(1:3, function(x) { 2*x }) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_5ed0951d3e7363f21bc554e405102229() {
-        assertEval("{ lapply(1:3, function(x,y) { x*y }, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApplyIgnore_aad1bc65130fb0c42e2e3d991f1b3391() {
-        assertEval("{ f <- function() { lapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testAsCharacterIgnore_c803fc23a52fdc9950e5603f439b132f() {
         assertEval("{ as.character(list(1,2,3)) }");
     }
@@ -1296,6 +1281,26 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_53d1bf6a3bf98883a70a360da169055c() {
         assertEvalError("{ max(1,2,) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testIsFactorIgnore_e43e62dca9f8a682efdd7d472154123e() {
+        assertEval("{is.factor(1)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testIsFactorIgnore_9b6189d7740f2b58ed5ac90834facc44() {
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testIsFactorIgnore_f50a4cd1b0417c209953249fed637957() {
+        assertEval("{is.factor(c)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testLapplyIgnore_bb1b1b8299159a83c87fe6dc760e5b8b() {
+        assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
     }
 
     @Ignore
@@ -2561,6 +2566,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSumIgnore_79d5da5603083c8a7cd4e867a99de305() {
         assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
+        assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
     }
 
     @Ignore

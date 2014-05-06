@@ -23,6 +23,7 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
     protected Object[] args;
+    protected RNode[] argNodes;
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType);
@@ -30,6 +31,13 @@ public abstract class DispatchedCallNode extends RNode {
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
+    }
+
+    public static DispatchedCallNode create(final String genericName, final String dispatchType, final CallArgumentsNode callArgsNode) {
+        if (dispatchType == RRuntime.RDotGroup) {
+            return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callArgsNode));
+        }
+        throw new AssertionError();
     }
 
     @Override
@@ -148,6 +156,9 @@ public abstract class DispatchedCallNode extends RNode {
             if (aCallNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 aCallNode = insert(RCallNode.createCall(null, aFuncCall.args));
+            } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                aCallNode.replace(RCallNode.createCall(null, aFuncCall.args));
             }
             Object result = aCallNode.execute(frame, aFuncCall.function);
             aDispatchNode.unsetEnvironment(frame);
