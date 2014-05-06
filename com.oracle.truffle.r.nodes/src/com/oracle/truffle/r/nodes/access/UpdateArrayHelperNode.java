@@ -222,7 +222,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return vector;
     }
 
-    @Specialization(order = 13, guards = {"emptyValue", "!isPosZero", "!isPosNA"})
+    @Specialization(order = 13, guards = {"emptyValue", "!isPosZero", "!isPosNA", "!isVectorList"})
     RAbstractVector update(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         throw RError.getReplacementZero(getEncapsulatingSourceSection());
     }
@@ -921,7 +921,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return updateSingleDimRec(value, getResultVector(vector, position, false), p, recLevel);
     }
 
-    @Specialization(order = 180, guards = {"!isValueLengthOne", "!isSubset", "!isPosNA", "!isPosZero"})
+    @Specialization(order = 180, guards = {"!isValueLengthOne", "!emptyValue", "!isSubset", "!isPosNA", "!isPosZero"})
     RAbstractVector updateTooManyValues(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
     }

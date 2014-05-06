@@ -57,6 +57,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantComplexNode((RComplex) value);
         } else if (value instanceof RAbstractVector) {
             return new ConstantVectorNode((RAbstractVector) value);
+        } else if (value instanceof RDataFrame) {
+            return new ConstantDataFrameNode((RDataFrame) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -276,4 +278,26 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return vector;
         }
     }
+
+    private static final class ConstantDataFrameNode extends ConstantNode {
+
+        private final RDataFrame dataFrame;
+
+        public ConstantDataFrameNode(RDataFrame dataFrame) {
+            this.dataFrame = dataFrame;
+        }
+
+        @Override
+        public RDataFrame executeRDataFrame(VirtualFrame frame) {
+            controlVisibility();
+            return dataFrame;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return dataFrame;
+        }
+    }
+
 }

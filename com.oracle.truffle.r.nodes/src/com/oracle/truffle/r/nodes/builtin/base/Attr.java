@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -47,10 +48,10 @@ public abstract class Attr extends RBuiltinNode {
         return val;
     }
 
-    @Specialization
-    public Object attr(RAbstractVector vector, String name) {
+    @Specialization(order = 1, guards = "!isRowNamesAttr")
+    public Object attr(RAbstractContainer container, String name) {
         controlVisibility();
-        Map<String, Object> attributes = vector.getAttributes();
+        Map<String, Object> attributes = container.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
@@ -62,9 +63,54 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization
-    public Object dim(RAbstractVector vector, RStringVector name) {
-        controlVisibility();
-        return attr(vector, name.getDataAt(0));
+    public static Object getFullRowNames(Object a) {
+        if (a == RNull.instance) {
+            return RNull.instance;
+        } else {
+            RAbstractVector rowNames = (RAbstractVector) a;
+            return rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
+                            Math.abs(((RAbstractIntVector) rowNames).getDataAt(1))) : a;
+        }
     }
+
+    @Specialization(order = 2, guards = "isRowNamesAttr")
+    public Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
+        controlVisibility();
+        Map<String, Object> attributes = container.getAttributes();
+        if (attributes == null) {
+            return RNull.instance;
+        } else {
+            return getFullRowNames(container.getRowNames());
+        }
+    }
+
+    @Specialization(order = 10, guards = {"!emptyName", "isRowNamesAttr"})
+    public Object attrRowNames(RAbstractContainer container, RStringVector name) {
+        return attrRowNames(container, name.getDataAt(0));
+    }
+
+    @Specialization(order = 11, guards = {"!emptyName", "!isRowNamesAttr"})
+    public Object attr(RAbstractContainer container, RStringVector name) {
+        return attr(container, name.getDataAt(0));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 12, guards = "emptyName")
+    public Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
+        controlVisibility();
+        throw RError.getExactlyOneWhich(getEncapsulatingSourceSection());
+    }
+
+    protected boolean isRowNamesAttr(@SuppressWarnings("unused") RAbstractContainer container, String name) {
+        return name.equals(RRuntime.ROWNAMES_ATTR_KEY);
+    }
+
+    protected boolean isRowNamesAttr(RAbstractContainer container, RStringVector name) {
+        return isRowNamesAttr(container, name.getDataAt(0));
+    }
+
+    protected boolean emptyName(@SuppressWarnings("unused") RAbstractContainer container, RStringVector name) {
+        return name.getLength() == 0;
+    }
+
 }

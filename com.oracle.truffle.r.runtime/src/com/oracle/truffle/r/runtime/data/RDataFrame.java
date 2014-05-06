@@ -69,4 +69,9 @@ public final class RDataFrame implements RAbstractContainer {
         return vector.getRowNames();
     }
 
+    @Override
+    public RStringVector getClassHierarchy() {
+        return vector.getClassHierarchy();
+    }
+
 }

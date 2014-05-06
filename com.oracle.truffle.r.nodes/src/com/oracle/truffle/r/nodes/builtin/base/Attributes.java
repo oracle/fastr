@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -49,7 +50,11 @@ public abstract class Attributes extends RBuiltinNode {
         int z = 0;
         for (Entry<String, Object> entry : map.entrySet()) {
             names[z] = entry.getKey();
-            values[z] = entry.getValue();
+            if (names[z] == RRuntime.ROWNAMES_ATTR_KEY) {
+                values[z] = Attr.getFullRowNames(entry.getValue());
+            } else {
+                values[z] = entry.getValue();
+            }
             ++z;
         }
         RList result = RDataFactory.createList(values);

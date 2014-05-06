@@ -42,7 +42,7 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, RAbstractVector arg) {
+    public Object useMethod(VirtualFrame frame, String generic, RAbstractContainer arg) {
         controlVisibility();
         return useMethodHelper(frame, generic, arg.getClassHierarchy());
     }
@@ -70,7 +70,7 @@ public abstract class UseMethod extends RBuiltinNode {
         if (enclosingArg instanceof Double) {
             return useMethod(frame, generic, (double) enclosingArg);
         }
-        return useMethod(frame, generic, (RAbstractVector) enclosingArg);
+        return useMethod(frame, generic, (RAbstractContainer) enclosingArg);
     }
 
     @Specialization
@@ -112,12 +112,12 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-            lastGenericName = generic;
-        }
+// if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+        dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+        lastGenericName = generic;
+// }
         throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
     }
 }

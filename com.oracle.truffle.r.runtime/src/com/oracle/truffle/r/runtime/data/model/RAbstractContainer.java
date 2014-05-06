@@ -35,4 +35,6 @@ public interface RAbstractContainer {
     RVector materializeNonSharedVector();
 
     Object getRowNames();
+
+    RStringVector getClassHierarchy();
 }

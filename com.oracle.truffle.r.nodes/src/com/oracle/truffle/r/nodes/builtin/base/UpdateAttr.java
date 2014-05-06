@@ -100,10 +100,13 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
             return RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
+        } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            resultVector.setRowNames(value);
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
-        return resultVector;
+        // return frame if it's one, otherwise return the vector
+        return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
     public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
@@ -135,13 +138,16 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
             return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
+        } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            resultVector.setRowNames(value);
         } else {
             if (resultVector.getAttributes() == null) {
                 resultVector.setAttributes(new LinkedHashMap<String, Object>());
             }
             resultVector.getAttributes().put(name, value);
         }
-        return resultVector;
+        // return frame if it's one, otherwise return the vector
+        return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
     @Specialization(order = 2, guards = "!nullValue")

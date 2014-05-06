@@ -54,6 +54,4 @@ public interface RAbstractVector extends RAbstractContainer {
     boolean isArray();
 
     boolean isObject();
-
-    RStringVector getClassHierarchy();
 }

@@ -203,7 +203,9 @@ public abstract class RVector extends RBounded implements RAbstractVector {
                 Object dimObject = newDimNames.getDataAt(i);
                 if (dimObject != RNull.instance) {
                     RStringVector dimVector = (RStringVector) dimObject;
-                    if (dimVector.getLength() != dimensions[i]) {
+                    if (dimVector.getLength() == 0) {
+                        newDimNames.updateDataAt(i, RNull.instance, null);
+                    } else if (dimVector.getLength() != dimensions[i]) {
                         throw RError.getDimNamesDontMatchExtent(sourceSection, i + 1);
                     }
                 }
@@ -232,7 +234,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         }
     }
 
-    public final void setRowNames(RAbstractVector rowNames) {
+    public final void setRowNames(Object rowNames) {
         if (attributes == null && rowNames != null) {
             attributes = new LinkedHashMap<>();
         }
