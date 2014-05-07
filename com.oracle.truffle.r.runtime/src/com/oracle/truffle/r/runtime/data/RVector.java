@@ -62,7 +62,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         if (names == null && dimensions == null) {
             this.attributes = null;
         } else {
-            this.attributes = new LinkedHashMap<>();
+            initAttributesMap(this);
             if (names != null) {
                 if (names != RNull.instance) {
                     // since this constructor is for internal use only, the assertion shouldn't fail
@@ -145,13 +145,18 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return match;
     }
 
+    @SlowPath
+    private static void initAttributesMap(RVector vector) {
+        vector.attributes = new LinkedHashMap<>();
+    }
+
     public final void setNames(Object newNames) {
         setNames(newNames, null);
     }
 
     public void setNames(Object newNames, SourceSection sourceSection) {
         if (attributes == null && newNames != null) {
-            attributes = new LinkedHashMap<>();
+            initAttributesMap(this);
         }
         if (attributes != null && newNames == null) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
@@ -186,7 +191,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public void setDimNames(RList newDimNames, SourceSection sourceSection) {
         if (attributes == null && newDimNames != null) {
-            attributes = new LinkedHashMap<>();
+            initAttributesMap(this);
         }
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
@@ -236,7 +241,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public final void setRowNames(Object rowNames) {
         if (attributes == null && rowNames != null) {
-            attributes = new LinkedHashMap<>();
+            initAttributesMap(this);
         }
         if (attributes != null && rowNames == null) {
             removeAttributeMapping(RRuntime.ROWNAMES_ATTR_KEY);
@@ -309,7 +314,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public final void setDimensions(int[] newDimensions, SourceSection sourceSection) {
         if (attributes == null && newDimensions != null) {
-            attributes = new LinkedHashMap<>();
+            initAttributesMap(this);
         }
         if (attributes != null && newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
@@ -332,15 +337,14 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public static final RAbstractContainer setClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
-            vector.attributes = new LinkedHashMap<>();
+            initAttributesMap(vector);
         }
         if (vector.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
             vector.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
             // class attribute removed - no longer a data frame (even if it was before)
             return vector;
         } else if (classAttr != null && classAttr.getLength() != 0) {
-            int i = 0;
-            for (; i < classAttr.getLength(); i++) {
+            for (int i = 0; i < classAttr.getLength(); i++) {
                 if (classAttr.getDataAt(i).equals(RRuntime.TYPE_DATA_FRAME)) {
                     vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
                     if (enclosingDataFrame != null) {
@@ -490,7 +494,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             return;
         }
         if (this.attributes == null) {
-            this.attributes = new LinkedHashMap<>();
+            initAttributesMap(this);
         }
         for (Map.Entry<String, Object> e : orgAttributes.entrySet()) {
             String key = e.getKey();
@@ -523,7 +527,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             if (this.attributes != null) {
                 this.attributes.clear();
             } else {
-                this.attributes = new LinkedHashMap<>();
+                initAttributesMap(this);
             }
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(this.dimensions, true));
         } else {
