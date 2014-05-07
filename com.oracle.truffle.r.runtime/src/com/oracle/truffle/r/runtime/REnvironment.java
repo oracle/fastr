@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.RPackages.RPackage;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.envframe.*;
 
@@ -99,8 +101,8 @@ public abstract class REnvironment {
 
     private static final Empty emptyEnv = new Empty();
     private static Global globalEnv;
-    private static PackageBase basePackageEnv;
-    private static NamespaceBase baseNamespaceEnv;
+    private static REnvironment initialGlobalEnvParent;
+    private static Base baseEnv;
     private static Autoload autoloadEnv;
     /**
      * The environments returned by the R {@code search} function.
@@ -158,17 +160,17 @@ public abstract class REnvironment {
     /**
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
-    public static PackageBase baseEnv() {
-        assert basePackageEnv != null;
-        return basePackageEnv;
+    public static Package baseEnv() {
+        assert baseEnv != null;
+        return baseEnv;
     }
 
     /**
      * Value set in {@code .baseNameSpaceEnv} variable. This is the "namespace:base" environment.
      */
-    public static NamespaceBase baseNamespaceEnv() {
-        assert baseNamespaceEnv != null;
-        return baseNamespaceEnv;
+    public static Namespace baseNamespaceEnv() {
+        assert baseEnv != null;
+        return baseEnv.getNamespace();
     }
 
     /**
@@ -180,16 +182,46 @@ public abstract class REnvironment {
     }
 
     /**
-     * Invoked on startup to setup the global values.
+     * Invoked on startup to setup the global values and package search path. Owing to the
+     * restrictions on storing {@link VirtualFrame} instances, this method creates the
+     * {@link VirtualFrame} instance(s) for the packages and evaluates any associated R code using
+     * that frame and then installs it in the search path correctly so that Truffle code can locate
+     * objects defined by the R code.
+     *
+     * @param globalFrame this is the anchor frame to which the package search path is attached
+     * @param baseFrame this is for the base frame (we can't create it because our caller also needs
+     *            to eval in it)
+     * @param rPackages the list of packages to add to the search path on startup, including
+     *            {@code base}.
      */
-    public static void initialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
-        basePackageEnv = new PackageBase(baseFrame);
+    public static void initialize(VirtualFrame globalFrame, VirtualFrame baseFrame, ArrayList<RPackage> rPackages) {
+        // The base "package" is special, it has no "imports" and
+        // its "namespace" parent is globalenv
+
+        // Populate the base package.
+        // There is a circularity here in that we can't materialize the frame
+        // until we have evaluated the R code, so if that happened to call baseenv() we have
+        // a problem.
+        RPackages.loadBuiltin("base", baseFrame);
+        baseEnv = new Base(baseFrame);
+        // autoload always next, has no R state
         autoloadEnv = new Autoload();
-        // The following is only true if there are no other default packages loaded.
         globalEnv = new Global(autoloadEnv, globalFrame);
-        baseNamespaceEnv = new NamespaceBase(basePackageEnv);
-        // set up the initial search path
         initSearchList();
+
+        // now load rPackages, we need a new VirtualFrame for each
+        REnvironment pkgParent = autoloadEnv;
+        for (RPackage rPackage : rPackages) {
+            VirtualFrame pkgFrame = RRuntime.createVirtualFrame();
+            RPackages.loadBuiltin(rPackage.name, pkgFrame);
+            Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame);
+            attach(2, pkgEnv);
+            pkgParent = pkgEnv;
+        }
+
+        initialGlobalEnvParent = pkgParent;
+        baseEnv.getNamespace().setParent(globalEnv);
+        // set up the initial search path
     }
 
     private static void initSearchList() {
@@ -204,21 +236,21 @@ public abstract class REnvironment {
     /**
      * Intended for use by unit test environment to reset the environment to a clean state. We want
      * to reset the {@link #globalEnv}, and by extension {@link #searchPath} but not everything
-     * else. This evidently depends on there not being destructive tests.
+     * else. This evidently depends on there not being destructive tests, and in particular any that
+     * mess with the set of default packages.
      *
      */
     public static void resetForTest(VirtualFrame globalFrame) {
-        // The following is only true if there are no other default packages loaded.
-        globalEnv = new Global(autoloadEnv, globalFrame);
+        globalEnv = new Global(initialGlobalEnvParent, globalFrame);
         // update .GlobalEnv
         try {
-            basePackageEnv.put(".GlobalEnv", globalEnv);
+            baseEnv.put(".GlobalEnv", globalEnv);
         } catch (PutException ex) {
             Utils.fail("could not update .GlobalEnv");
         }
         initSearchList();
-        // one more thing, baseNamespaceEnv has globalEnv as it's parent, so change that
-        baseNamespaceEnv.setParent(globalEnv);
+        // one more thing, namespace:base always has globalEnv as it's parent, so update that
+        baseEnv.getNamespace().setParent(globalEnv);
     }
 
     /**
@@ -362,6 +394,7 @@ public abstract class REnvironment {
      */
     private static REnvFrameAccess setEnclosingHelper(REnvironment parent, VirtualFrame frame) {
         RArguments.setEnclosingFrame(frame, parent.getFrame());
+        // This call invokes frame.materialize();
         return new REnvTruffleFrameAccess(frame);
     }
 
@@ -376,6 +409,10 @@ public abstract class REnvironment {
         return parent;
     }
 
+    /**
+     * Explicity set the parent of an environment. TODO Change the enclosingFrame of (any)
+     * associated Truffle frame
+     */
     public void setParent(REnvironment env) {
         parent = env;
     }
@@ -509,45 +546,73 @@ public abstract class REnvironment {
     }
 
     /**
-     * {@link PackageBase} and {@link NamespaceBase} share some characteristics that are implemented
-     * in this adapter.
+     * Denotes the "namespace:xxx" environment of an R package. The "parent" is the associated
+     * "imports" environment, except for "base" where it is globalEnv
      */
-    private static class BaseAdapter extends REnvironment {
-        protected BaseAdapter(REnvironment parent, VirtualFrame frame) {
-            super(parent, "base", frame);
-        }
-
-        protected BaseAdapter(REnvironment parent, PackageBase base) {
-            super(parent, "base", new REnvTruffleFrameAccess(base.getFrame()));
-        }
-
-        @Override
-        public void rm(String key) throws PutException {
-            throw new PutException("cannot remove variables from the " + getPrintNameHelper() + " environment");
-        }
-    }
-
-    /**
-     * The environment for the {@code package:base} package, which is in the search list.
-     */
-    private static class PackageBase extends BaseAdapter implements IsPackage {
-
-        PackageBase(VirtualFrame frame) {
-            super(emptyEnv, frame);
-        }
-    }
-
-    /**
-     * The {@code namespace:base} environment, which is <i>not</i> in the search list.
-     */
-    private static final class NamespaceBase extends BaseAdapter {
-        private NamespaceBase(PackageBase base) {
-            super(globalEnv, base);
+    private static class Namespace extends REnvironment {
+        Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
+            super(parent, name, frameAccess);
         }
 
         @Override
         protected String getPrintNameHelper() {
             return "namespace:" + getName();
+        }
+    }
+
+    /**
+     * Denotes the "imports:xxx" environment of an R package.
+     */
+    private static class Imports extends REnvironment {
+        Imports(String name, REnvFrameAccess frameAccess) {
+            super(baseEnv.getNamespace(), name, frameAccess);
+        }
+
+        @Override
+        protected String getPrintNameHelper() {
+            return "imports:" + getName();
+        }
+    }
+
+    /**
+     * Denotes an environment associated with an R package. This represents the "package:xxx"; the
+     * "namespace:xxx" and "imports:xxx" environments are stored as fields of this instance.
+     */
+    private static class Package extends REnvironment implements IsPackage {
+        private final Imports importsEnv;
+        private final Namespace namespaceEnv;
+
+        Package(REnvironment parent, String name, VirtualFrame frame) {
+            // This sets up the EnvFrameAccess instance, which is shared by the
+            // Namespace (and Imports?) environments.
+            super(parent, name, frame);
+            this.importsEnv = new Imports(name, this.frameAccess);
+            this.namespaceEnv = new Namespace(this.importsEnv, name, this.frameAccess);
+        }
+
+        /**
+         * Constructor for {@link Base}. During initialization the parent is emptyEnv. Ultimately it
+         * will be set to globalEnv..
+         */
+        protected Package(VirtualFrame frame) {
+            super(emptyEnv, "base", frame);
+            this.importsEnv = null;
+            this.namespaceEnv = new Namespace(emptyEnv, "base", this.frameAccess);
+        }
+
+        Namespace getNamespace() {
+            return namespaceEnv;
+        }
+    }
+
+    private static class Base extends Package {
+        Base(VirtualFrame frame) {
+            super(frame);
+        }
+
+        @Override
+        public void rm(String key) throws PutException {
+            throw new PutException("cannot remove variables from the " + getPrintNameHelper() + " environment");
         }
     }
 

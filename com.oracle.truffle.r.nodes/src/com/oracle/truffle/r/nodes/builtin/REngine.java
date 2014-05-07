@@ -70,9 +70,9 @@ public final class REngine implements RBuiltinLookupProvider {
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
-        VirtualFrame globalFrame = createVirtualFrame();
-        VirtualFrame baseFrame = createVirtualFrame();
-        REnvironment.initialize(globalFrame, baseFrame);
+        VirtualFrame globalFrame = RRuntime.createVirtualFrame();
+        VirtualFrame baseFrame = RRuntime.createVirtualFrame();
+        REnvironment.initialize(globalFrame, baseFrame, RPackages.initialize());
         RBuiltinPackage.initialize();
         RRuntime.initialize();
         String siteProfile = RProfile.siteProfile();
@@ -84,15 +84,6 @@ public final class REngine implements RBuiltinLookupProvider {
             REngine.parseAndEval(userProfile, globalFrame, false);
         }
         return globalFrame;
-    }
-
-    /**
-     * Create a {@link VirtualFrame} for use in {@link #parseAndEval} for accumulating the results
-     * from evaluating expressions in an interactive context. Such a value cannot be stored in an
-     * object field, so must be passed as an argument.
-     */
-    private static VirtualFrame createVirtualFrame() {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
     }
 
     public static RContext getContext() {
@@ -113,7 +104,7 @@ public final class REngine implements RBuiltinLookupProvider {
      * desired for each evaluation.
      */
     public static Object parseAndEvalTest(String rscript, boolean printResult) {
-        VirtualFrame frame = createVirtualFrame();
+        VirtualFrame frame = RRuntime.createVirtualFrame();
         REnvironment.resetForTest(frame);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), context.getSourceManager().getFakeFile("<shell_input>", rscript), frame, printResult);
     }
@@ -143,7 +134,7 @@ public final class REngine implements RBuiltinLookupProvider {
     public static Object eval(RExpression expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         CallTarget callTarget = transformToCallTarget((ASTNode) expr.getASTNode(), envir);
         // to evaluate this we must create a new VirtualFrame
-        VirtualFrame frame = createVirtualFrame();
+        VirtualFrame frame = RRuntime.createVirtualFrame();
         Object result = runGlobal(callTarget, frame, false);
         // now copy the values into the environment we were supposed to evaluate this in.
         FrameDescriptor fd = frame.getFrameDescriptor();

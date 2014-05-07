@@ -81,6 +81,7 @@ public class FastRSession implements RSession {
 
     public FastRSession() {
         consoleHandler = new ConsoleHandler();
+        REnvVars.initialize();
         REngine.initialize(new String[0], consoleHandler, false, false);
     }
 
