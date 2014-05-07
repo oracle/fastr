@@ -13289,6 +13289,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_3bda530df1cb70e5e7cd02a33fe016a9() {
+        assertEval("{ f <- function(a=1,...) a ; f() }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDotsIgnore_e620898284cbe5e1d40bfe326c77804e() {
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
     }
