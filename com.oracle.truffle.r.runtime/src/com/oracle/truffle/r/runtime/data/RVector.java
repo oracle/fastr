@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RBounded implements RAbstractVector {
+public abstract class RVector extends RBounded implements RShareable, RAbstractVector {
 
     protected boolean complete;
     private int matrixDimension;
@@ -241,6 +241,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         if (attributes != null && rowNames == null) {
             removeAttributeMapping(RRuntime.ROWNAMES_ATTR_KEY);
         } else if (rowNames != null) {
+            assert rowNames instanceof RAbstractVector;
             putAttribute(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
         }
     }
@@ -257,18 +258,22 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         return complete;
     }
 
+    @Override
     public final void markNonTemporary() {
         temporary = false;
     }
 
+    @Override
     public final boolean isTemporary() {
         return temporary;
     }
 
+    @Override
     public final boolean isShared() {
         return shared;
     }
 
+    @Override
     public final RVector makeShared() {
         if (temporary) {
             temporary = false;
@@ -362,6 +367,7 @@ public abstract class RVector extends RBounded implements RAbstractVector {
         }
     }
 
+    @Override
     public final RVector copy() {
         RVector result = internalCopy();
         setAttributes(result);

@@ -65,7 +65,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     // setting value of the mode parameter to TEMP is meant to prevent changing state; this is
     // needed for the replacement forms of vector updates where a vector is assigned to a temporary
     // variable and then, again, to the original variable (which would cause the vector to be copied
-    // each time)
+    // each time);
     protected void writeObjectValue(@SuppressWarnings("unused") VirtualFrame virtualFrame, Frame frame, FrameSlot frameSlot, Object value, int mode, boolean isSuper) {
         Object newValue = value;
         if (!isArgWrite()) {
@@ -80,41 +80,41 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     everSeenNonEqual = true;
                 }
-                if (value instanceof RVector) {
+                if (value instanceof RShareable) {
                     if (!everSeenVector) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         everSeenVector = true;
                     }
-                    RVector rVector = (RVector) value;
-                    if (rVector.isTemporary()) {
+                    RShareable rShareable = (RShareable) value;
+                    if (rShareable.isTemporary()) {
                         if (!everSeenTemporary) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenTemporary = true;
                         }
                         if (mode == COPY) {
-                            RVector vectorCopy = rVector.copy();
-                            newValue = vectorCopy;
+                            RShareable shareableCopy = rShareable.copy();
+                            newValue = shareableCopy;
                         } else {
-                            rVector.markNonTemporary();
+                            rShareable.markNonTemporary();
                         }
-                    } else if (rVector.isShared()) {
+                    } else if (rShareable.isShared()) {
                         if (!everSeenShared) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenShared = true;
                         }
-                        RVector vectorCopy = rVector.copy();
+                        RShareable shareableCopy = rShareable.copy();
                         if (mode != COPY) {
-                            vectorCopy.markNonTemporary();
+                            shareableCopy.markNonTemporary();
                         }
-                        newValue = vectorCopy;
+                        newValue = shareableCopy;
                     } else {
                         if (!everSeenNonShared) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             everSeenNonShared = true;
                         }
                         if (mode == COPY) {
-                            RVector vectorCopy = rVector.copy();
-                            newValue = vectorCopy;
+                            RShareable shareableCopy = rShareable.copy();
+                            newValue = shareableCopy;
                         } else if (mode != TEMP || isSuper) {
                             // mark shared when assigning to the enclosing frame as there must be a
                             // distinction between variables with the same name defined in different
@@ -122,7 +122,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
                             // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 } ; f()
 
-                            rVector.makeShared();
+                            rShareable.makeShared();
                         }
                     }
                 }

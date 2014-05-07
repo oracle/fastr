@@ -2751,4 +2751,25 @@ public class TestSimpleBuiltins extends TestBase {
     public void testLapplyIgnore() {
         assertEval("{ lapply(1:3, function(x,y,z) { as.character(x*y+z) }, 2,7) }");
     }
+
+    @Test
+    public void testNgettext() {
+        assertEval("{ ngettext(1, \"a\", \"b\") }");
+        assertEval("{ ngettext(0, \"a\", \"b\") }");
+        assertEval("{ ngettext(42, \"a\", \"b\") }");
+        assertEval("{ ngettext(1, c(\"a\"), \"b\") }");
+        assertEval("{ ngettext(1, \"a\", c(\"b\")) }");
+        assertEval("{ ngettext(c(1), \"a\", \"b\") }");
+        assertEval("{ ngettext(c(1,2), \"a\", \"b\") }");
+        assertEvalWarning("{ ngettext(1+1i, \"a\", \"b\") }");
+        assertEvalError("{ ngettext(1, NULL, \"b\") }");
+        assertEvalError("{ ngettext(1, \"a\", NULL) }");
+        assertEvalError("{ ngettext(1, NULL, NULL) }");
+        assertEvalError("{ ngettext(1, c(\"a\", \"c\"), \"b\") }");
+        assertEvalError("{ ngettext(1, \"a\", c(\"b\", \"c\")) }");
+        assertEvalError("{ ngettext(1, c(1), \"b\") }");
+        assertEvalError("{ ngettext(1, \"a\", c(1)) }");
+        assertEvalError("{ ngettext(-1, \"a\", \"b\") }");
+    }
+
 }

@@ -8889,6 +8889,86 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testNgettext_fe6113744bbbaa2a19f45847a5a4a46a() {
+        assertEval("{ ngettext(1, \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_251329dd5a504b24bf9ed856f9f187d8() {
+        assertEval("{ ngettext(0, \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_f47efba03fb200532ff5f812a878998a() {
+        assertEval("{ ngettext(42, \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_669f76caf6bf7e8879e56da9d06160fb() {
+        assertEval("{ ngettext(1, c(\"a\"), \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_32f1890624481b32142f33218e825477() {
+        assertEval("{ ngettext(1, \"a\", c(\"b\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_90a8ef32dc2ddcfa0c5b3676fd7b4285() {
+        assertEval("{ ngettext(c(1), \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_2c58035eae2b96861342ff2a2e93d37b() {
+        assertEval("{ ngettext(c(1,2), \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_2362e3013d4b98836781db2e99804c0e() {
+        assertEvalError("{ ngettext(1, NULL, \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_e5ca380a51b71d39fcc2f73c29db2b99() {
+        assertEvalError("{ ngettext(1, \"a\", NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_765fbbedb97d7208ebfab5825272f7f6() {
+        assertEvalError("{ ngettext(1, NULL, NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_2e9a85cc3fe3c07a4d8ce51bc34cc61c() {
+        assertEvalError("{ ngettext(1, c(\"a\", \"c\"), \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_331cf073d0c9d4579084a406f7ed8065() {
+        assertEvalError("{ ngettext(1, \"a\", c(\"b\", \"c\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_5eb89f5bd5b4f42f1aa9693627ba4379() {
+        assertEvalError("{ ngettext(1, c(1), \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_1f55a518b23c797d6026651f8a888c2d() {
+        assertEvalError("{ ngettext(1, \"a\", c(1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_1b899ec841c0db1db2e8c88aaa3e02aa() {
+        assertEvalError("{ ngettext(-1, \"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testNgettext_ce3ce2ba3594588e16cd0812ff6bcdd5() {
+        assertEvalWarning("{ ngettext(1+1i, \"a\", \"b\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOperators_d4e3be6301b8298150f0b9769e6d59f0() {
         assertEval("{ `+`(1,2) }");
     }
@@ -12661,6 +12741,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleComparison_testVectorsIgnore_9ad8bb825e6c5d11db011ae03b0c67c1() {
         assertEvalError("{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_425ea5f0ee3136cc38c973a338b83071() {
+        assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_d5ecdee9d1474837e7a108f1a622ff3c() {
+        assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(y) }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_bf5e0ec924e5d9b3c6ccdc1662b0a781() {
+        assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
     }
 
     @Test

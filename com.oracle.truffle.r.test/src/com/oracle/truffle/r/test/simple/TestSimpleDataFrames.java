@@ -84,6 +84,13 @@ public class TestSimpleDataFrames extends TestBase {
     }
 
     @Test
+    public void testAsDataFrame() {
+        assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(x) }");
+        assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(y) }");
+        assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
+    }
+
+    @Test
     public void testPrint() {
         assertEval("{x<-c(1,2); class(x)<-\"data.frame\"; x}");
         assertEval("{ x<-integer(); class(x)<-\"data.frame\"; x }");

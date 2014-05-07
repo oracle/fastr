@@ -1,0 +1,32 @@
+#  File src/library/base/R/stop.R
+#  Part of the R package, http://www.R-project.org
+#
+#  Copyright (C) 1995-2012 The R Core Team
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+
+gettext <- function(..., domain = NULL) {
+    args <- lapply(list(...), as.character)
+    .Internal(gettext(domain, unlist(args)))
+}
+
+#bindtextdomain <- function(domain, dirname = NULL)
+#    .Internal(bindtextdomain(domain, dirname))
+
+ngettext <- function(n, msg1, msg2, domain = NULL)
+    .Internal(ngettext(n, msg1, msg2, domain))
+
+gettextf <- function(fmt, ..., domain = NULL)
+    sprintf(gettext(fmt, domain = domain), ...)

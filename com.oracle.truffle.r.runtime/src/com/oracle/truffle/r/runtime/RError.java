@@ -186,6 +186,7 @@ public abstract class RError extends RuntimeException {
     public static final String NON_SQUARE_MATRIX = "non-square matrix in '%s'";
     public static final String LAPACK_ERROR = "error code %d from Lapack routine '%s'";
     public static final String VALUE_OUT_OF_RANGE = "value out of range in '%s'";
+    public static final String MUST_BE_STRING = "'%s' must be a character string";
     public static final String MUST_BE_NONNULL_STRING = "'%s' must be non-null character string";
     public static final String IS_OF_WRONG_LENGTH = "'%s' is of wrong length";
     public static final String IS_OF_WRONG_ARITY = "'%d' argument passed to '%s' which requires '%d'";
@@ -1830,6 +1831,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getLapackError(SourceSection ast, int code, String routine) {
         return getGenericError(ast, stringFormat(RError.LAPACK_ERROR, code, routine));
+    }
+
+    public static RError getMustBeString(SourceSection ast, String argName) {
+        return getGenericError(ast, stringFormat(RError.MUST_BE_STRING, argName));
     }
 
     public static RError getMustBeNonNullString(SourceSection ast, String argName) {

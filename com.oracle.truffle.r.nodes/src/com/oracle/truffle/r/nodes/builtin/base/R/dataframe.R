@@ -84,3 +84,39 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x, TRUE, "row")# 
 }
 
 `row.names<-.default` <- function(x, value) `rownames<-`(x, value)
+
+
+as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
+{
+    if(is.null(x))			# can't assign class to NULL
+	return(as.data.frame(list()))
+    UseMethod("as.data.frame")
+}
+
+as.data.frame.default <- function(x, ...)
+# TODO: implement deparse (sprintf inside of gettextf does not work here either)
+#    stop(gettextf("cannot coerce class \"%s\" to a data.frame",
+#                  deparse(class(x))),
+    stop(sprintf("cannot coerce class to a data.frame"), domain = NA)
+
+###  Here are methods ensuring that the arguments to "data.frame"
+###  are in a form suitable for combining into a data frame.
+
+as.data.frame.data.frame <- function(x, row.names = NULL, ...)
+{
+    cl <- oldClass(x)
+    i <- match("data.frame", cl)
+    if(i > 1L)
+	class(x) <- cl[ - (1L:(i-1L))]
+    if(!is.null(row.names)){
+        nr <- .row_names_info(x, 2L)
+	if(length(row.names) == nr)
+	    attr(x, "row.names") <- row.names
+	else
+            stop(sprintf(ngettext(nr,
+                                  "invalid 'row.names', length %d for a data frame with %d row",
+                                  "invalid 'row.names', length %d for a data frame with %d rows"),
+                         length(row.names), nr), domain = NA)
+    }
+    x
+}

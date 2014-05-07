@@ -89,9 +89,6 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         RVector resultVector = container.materializeNonSharedVector();
-        if (resultVector.isShared()) {
-            resultVector = resultVector.copy();
-        }
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             resultVector.setDimensions(null, getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
@@ -101,7 +98,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
             return RVector.setClassAttr(resultVector, null, container.getElementClass() == RVector.class ? container : null);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-            resultVector.setRowNames(value);
+            resultVector.setRowNames(null);
         } else if (resultVector.getAttributes() != null) {
             resultVector.getAttributes().remove(name);
         }
@@ -123,9 +120,6 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
         controlVisibility();
         RVector resultVector = container.materializeNonSharedVector();
-        if (resultVector.isShared()) {
-            resultVector = resultVector.copy();
-        }
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
             if (dimsVector.getLength() == 0) {
@@ -139,7 +133,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
             return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-            resultVector.setRowNames(value);
+            resultVector.setRowNames(castVector(frame, value));
         } else {
             if (resultVector.getAttributes() == null) {
                 resultVector.setAttributes(new LinkedHashMap<String, Object>());
