@@ -7393,6 +7393,74 @@ In min() : no non-missing arguments to min; returning Inf
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
 #{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
 ab
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(-1, "a", "b") }
+Error in ngettext(-1, "a", "b") : invalid 'n' argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(0, "a", "b") }
+[1] "b"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1+1i, "a", "b") }
+[1] "a"
+Warning message:
+In ngettext(1 + (0+1i), "a", "b") : imaginary parts discarded in coercion
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, "a", "b") }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, "a", NULL) }
+Error in ngettext(1, "a", NULL) : 'msg2' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, "a", c("b")) }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, "a", c("b", "c")) }
+Error in ngettext(1, "a", c("b", "c")) :
+  'msg2' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, "a", c(1)) }
+Error in ngettext(1, "a", c(1)) : 'msg2' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, NULL, "b") }
+Error in ngettext(1, NULL, "b") : 'msg1' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, NULL, NULL) }
+Error in ngettext(1, NULL, NULL) : 'msg1' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, c("a"), "b") }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, c("a", "c"), "b") }
+Error in ngettext(1, c("a", "c"), "b") :
+  'msg1' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(1, c(1), "b") }
+Error in ngettext(1, c(1), "b") : 'msg1' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(42, "a", "b") }
+[1] "b"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(c(1), "a", "b") }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
+#{ ngettext(c(1,2), "a", "b") }
+[1] "a"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOperators
 #{ `!`(TRUE) }
 [1] FALSE
@@ -9689,6 +9757,29 @@ Error in x >= y : invalid comparison with complex values
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ x<-c(FALSE,TRUE, FALSE, FALSE);y<-c(TRUE,FALSE); x<y }
 [1]  TRUE FALSE  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
+#{ x<-list(1,2); class(x)<-"data.frame"; row.names(x)<-"r1"; y<-as.data.frame(x, "r2"); attributes(x) }
+$class
+[1] "data.frame"
+
+$row.names
+[1] "r1"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
+#{ x<-list(1,2); class(x)<-"data.frame"; row.names(x)<-"r1"; y<-as.data.frame(x, "r2"); attributes(y) }
+$class
+[1] "data.frame"
+
+$row.names
+[1] "r2"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
+#{ x<-list(1,2); class(x)<-"data.frame"; row.names(x)<-"r1"; y<-as.data.frame(x, c("r1", "r2")); attributes(y) }
+Error in as.data.frame.data.frame(x, c("r1", "r2")) :
+  invalid 'row.names', length 2 for a data frame with 1 row
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testIsDataFrame
 #{ is.data.frame(1) }

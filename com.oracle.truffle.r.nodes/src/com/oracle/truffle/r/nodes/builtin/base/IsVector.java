@@ -43,12 +43,7 @@ import com.sun.tools.javac.util.*;
 public abstract class IsVector extends RBuiltinNode {
 
     @Specialization(order = 1)
-    public byte isNull(RNull operand, String mode) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization(order = 2)
-    public byte isNull(RNull operand, RMissing mode) {
+    public byte isNull(RNull operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 

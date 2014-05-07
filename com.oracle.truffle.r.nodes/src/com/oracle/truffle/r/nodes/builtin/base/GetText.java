@@ -20,23 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-public interface RAbstractContainer {
+@SuppressWarnings("unused")
+@RBuiltin(".Internal.gettext")
+public abstract class GetText extends RBuiltinNode {
 
-    Map<String, Object> getAttributes();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    Object getRowNames();
-
-    RStringVector getClassHierarchy();
-
-    boolean isObject();
+    @Specialization
+    RAbstractVector getText(Object domain, RAbstractVector vector) {
+        // no translation done at this point
+        return vector;
+    }
 }

@@ -50,6 +50,12 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization
+    public String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
+        controlVisibility();
+        return fmt;
+    }
+
+    @Specialization
     public String sprintf(String fmt, int x) {
         controlVisibility();
         return format(fmt, x);

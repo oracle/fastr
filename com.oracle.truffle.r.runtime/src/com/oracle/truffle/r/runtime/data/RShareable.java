@@ -20,23 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+public interface RShareable {
 
-import com.oracle.truffle.r.runtime.data.*;
+    void markNonTemporary();
 
-public interface RAbstractContainer {
+    boolean isTemporary();
 
-    Map<String, Object> getAttributes();
+    boolean isShared();
 
-    Class<?> getElementClass();
+    RVector makeShared();
 
-    RVector materializeNonSharedVector();
+    RShareable copy();
 
-    Object getRowNames();
-
-    RStringVector getClassHierarchy();
-
-    boolean isObject();
 }

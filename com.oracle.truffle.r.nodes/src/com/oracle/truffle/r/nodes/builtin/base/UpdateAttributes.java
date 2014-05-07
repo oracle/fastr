@@ -156,7 +156,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     if (value == RNull.instance) {
                         resultVector.setRowNames(null);
                     } else {
-                        resultVector.setRowNames(value);
+                        resultVector.setRowNames(castVector(frame, value));
                     }
                 } else {
                     if (value == RNull.instance) {

@@ -17,11 +17,12 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(value = "class")
+// TODO: "oldClass" is the same as long as S4 is not implemented
+@RBuiltin({"class", "oldClass"})
 public abstract class GetClass extends RBuiltinNode {
 
     @Specialization
-    public Object getClass(RAbstractVector arg) {
+    public Object getClass(RAbstractContainer arg) {
         controlVisibility();
         if (arg.isObject()) {
             return arg.getClassHierarchy();

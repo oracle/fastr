@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public final class RDataFrame implements RAbstractContainer {
+public final class RDataFrame implements RShareable, RAbstractContainer {
 
     private RVector vector;
 
@@ -38,10 +38,27 @@ public final class RDataFrame implements RAbstractContainer {
         return vector;
     }
 
+    @Override
+    public void markNonTemporary() {
+        vector.markNonTemporary();
+    }
+
+    @Override
+    public boolean isTemporary() {
+        return vector.isTemporary();
+    }
+
+    @Override
     public boolean isShared() {
         return vector.isShared();
     }
 
+    @Override
+    public RVector makeShared() {
+        return vector.makeShared();
+    }
+
+    @Override
     public RDataFrame copy() {
         return RDataFactory.createDataFrame(vector.copy());
     }
@@ -74,4 +91,8 @@ public final class RDataFrame implements RAbstractContainer {
         return vector.getClassHierarchy();
     }
 
+    @Override
+    public boolean isObject() {
+        return true;
+    }
 }
