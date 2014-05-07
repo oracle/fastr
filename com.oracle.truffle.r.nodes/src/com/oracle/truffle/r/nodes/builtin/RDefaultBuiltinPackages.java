@@ -41,7 +41,7 @@ public final class RDefaultBuiltinPackages extends RBuiltinPackages {
         return instance;
     }
 
-    public static void load(String name, VirtualFrame frame) {
+    public static void load(String name, @SuppressWarnings("unused") VirtualFrame frame) {
         try {
             String className = "com.oracle.truffle.r.nodes.builtin." + name + "." + name.substring(0, 1).toUpperCase() + name.substring(1) + "Package";
             instance.load((RBuiltinPackage) Class.forName(className).newInstance());
