@@ -10235,6 +10235,10 @@ attr(,"myattr")
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) cat(..., "\n") ; f("Hello", "world") }
+Hello world
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { g(...) } ;  g <- function(b=2) { b } ; f() }
 [1] 2
 

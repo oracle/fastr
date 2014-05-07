@@ -179,6 +179,8 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(a, barg) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2) }");
         assertEval("{ f <- function(a, b) { a * b } ; g <- function(...) { f(...,...) } ; g(3) }");
         assertEval("{ g <- function(...) { c(...,...) } ; g(3) }");
+
+        assertEval("{ f <- function(...) cat(..., \"\\n\") ; f(\"Hello\", \"world\") }");
     }
 
     @Test
