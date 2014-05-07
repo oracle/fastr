@@ -32,10 +32,12 @@ import com.oracle.truffle.api.frame.*;
  */
 public class RPackages {
     public static class RPackage {
-        String name;
+        final String name;
+        final String path;
 
-        RPackage(String name) {
+        RPackage(String name, String path) {
             this.name = name;
+            this.path = path;
         }
     }
 
@@ -59,7 +61,7 @@ public class RPackages {
             defaultPackages = defaultPackagesEnv.split(",");
         }
         for (String pkg : defaultPackages) {
-            packages.add(new RPackage(pkg));
+            packages.add(new RPackage(pkg, REnvVars.rHome()));
         }
         return packages;
     }
