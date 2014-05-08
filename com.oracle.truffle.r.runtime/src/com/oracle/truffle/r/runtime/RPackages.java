@@ -41,7 +41,7 @@ public class RPackages {
         }
     }
 
-    private static final String[] DEFAULT_PACKAGES = new String[]{"debug", "stats"};
+    public static final String[] DEFAULT_PACKAGES = new String[]{"debug", "stats"};
     private static ArrayList<RPackage> packages = new ArrayList<>();
 
     /**
@@ -74,7 +74,7 @@ public class RPackages {
             Method loadMethod = Class.forName("com.oracle.truffle.r.nodes.builtin.RDefaultBuiltinPackages").getDeclaredMethod("load", String.class, VirtualFrame.class);
             loadMethod.invoke(null, new Object[]{name, frame});
         } catch (Exception ex) {
-            Utils.fail(ex.getMessage());
+            Utils.fail("failed to load builtin package: " + name + ": " + ex);
         }
     }
 

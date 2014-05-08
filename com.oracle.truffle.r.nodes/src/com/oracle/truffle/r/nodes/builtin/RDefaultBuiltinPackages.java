@@ -23,11 +23,14 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.builtin.base.*;
+import com.oracle.truffle.r.nodes.builtin.debug.*;
+import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * The default set of builtin packages that are loaded on startup. TODO This class should go away
- * and {@link #load} move elsewhere, as the set is no longer static.
+ * The default set of builtin packages that (may be) loaded on startup. TODO This class should go
+ * away and {@link #load} move elsewhere.
  */
 public final class RDefaultBuiltinPackages extends RBuiltinPackages {
 
@@ -42,11 +45,20 @@ public final class RDefaultBuiltinPackages extends RBuiltinPackages {
     }
 
     public static void load(String name, @SuppressWarnings("unused") VirtualFrame frame) {
-        try {
-            String className = "com.oracle.truffle.r.nodes.builtin." + name + "." + name.substring(0, 1).toUpperCase() + name.substring(1) + "Package";
-            instance.load((RBuiltinPackage) Class.forName(className).newInstance());
-        } catch (Exception ex) {
-            Utils.fail("cannot load builtin package " + name + " " + ex);
+        RBuiltinPackage pkg = null;
+        switch (name) {
+            case "debug":
+                pkg = new DebugPackage();
+                break;
+            case "stats":
+                pkg = new StatsPackage();
+                break;
+            case "base":
+                pkg = new BasePackage();
+                break;
+            default:
+                Utils.fail("unknown builtin package: " + name);
         }
+        instance.load(pkg);
     }
 }
