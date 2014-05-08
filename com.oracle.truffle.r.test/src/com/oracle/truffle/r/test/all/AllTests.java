@@ -5219,6 +5219,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_89b0c1cef332aaa820121d111686716a() {
+        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\n\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_75fb049558704ed597a4d49441bae349() {
         assertEvalNoNL("{ cat(1) }");
     }
@@ -9836,6 +9841,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testRep_1304ebded16b81c3bf627d5d6636af76() {
         assertEval("{ rep(c(1,2),c(3,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_8f05cab9d6b7794dd663a1b127caed75() {
+        assertEval("{ rep(NA,8) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_1173238b1181a24badd0c5e5a847007a() {
+        assertEval("{ rep(TRUE,8) }");
     }
 
     @Test

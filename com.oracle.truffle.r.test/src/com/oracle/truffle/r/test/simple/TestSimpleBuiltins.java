@@ -156,6 +156,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(1:3, length.out=4) }");
         assertEval("{ rep(\"hello\", 3) }");
         assertEval("{ rep(c(1,2),c(3,3)) }");
+        assertEval("{ rep(NA,8) }");
+        assertEval("{ rep(TRUE,8) }");
     }
 
     @Test
@@ -688,6 +690,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
         assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
+        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
     }
 
     @Test

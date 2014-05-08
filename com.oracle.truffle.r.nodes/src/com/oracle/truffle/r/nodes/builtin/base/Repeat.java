@@ -153,6 +153,21 @@ public abstract class Repeat extends RBuiltinNode {
         return repeat(value, lengthOut, RMissing.instance, each);
     }
 
+    @Specialization(order = 60)
+    @SuppressWarnings("unused")
+    public RLogicalVector repeat(byte value, int times, RMissing lengthOut, Object each) {
+        controlVisibility();
+        byte[] array = new byte[times];
+        Arrays.fill(array, value);
+        return RDataFactory.createLogicalVector(array, value != RRuntime.LOGICAL_NA);
+    }
+
+    @Specialization(order = 61)
+    @SuppressWarnings("unused")
+    public RLogicalVector repeat(byte value, Object times, int lengthOut, Object each) {
+        return repeat(value, lengthOut, RMissing.instance, each);
+    }
+
     //
     // Specialisations for vector values.
     // The specialisations given for each value type are as follows:

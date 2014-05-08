@@ -4464,6 +4464,10 @@ a b
 #{ cat(c(TRUE,FALSE), TRUE) }
 TRUE FALSE TRUE
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
+#{ cat(rep(NA, 8), "Hey","Hey","Goodbye","\n") }
+NA NA NA NA NA NA NA NA Hey Hey Goodbye
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
 #{ cat(sep=" ", "hello") }
 hello
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCat
@@ -7882,6 +7886,14 @@ Error in Recall(10) : 'Recall' called from outside a closure
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep(1:3,2) }
 [1] 1 2 3 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(NA,8) }
+[1] NA NA NA NA NA NA NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
+#{ rep(TRUE,8) }
+[1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRep
 #{ rep(as.raw(14), 4) }
