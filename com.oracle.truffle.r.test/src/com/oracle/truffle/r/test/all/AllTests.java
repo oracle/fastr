@@ -9104,6 +9104,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testOrder_1d5e3a5008dd094bbe4be90041eabf23() {
+        assertEval("{ order(c(1i,2i,3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_17cb2322c76b3aa7266fcd225ceb80e8() {
+        assertEval("{ order(c(3i,1i,2i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_5a2099b87624b74542d57376cb6a459d() {
+        assertEval("{ order(c(3+1i,2+2i,1+3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_d01c233922d6266e1680d69aaab531ee() {
+        assertEval("{ order(c(3+1i,2+3i,2+2i,1+3i)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOrderIgnore_9d9e462e8a8cc7dbbf92366b9602bf39() {
         assertEval("{ order(1:3) }");
     }

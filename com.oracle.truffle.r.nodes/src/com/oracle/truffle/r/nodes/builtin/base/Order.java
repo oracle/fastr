@@ -87,6 +87,15 @@ public abstract class Order extends RBuiltinNode {
         return order(x, RMissing.instance);
     }
 
+    @Specialization(order = 40)
+    public RIntVector order(RComplexVector x, @SuppressWarnings("unused") RMissing tie) {
+        controlVisibility();
+        double[] xs = x.getDataCopy();
+        int[] ord = ordArray(x.getLength());
+        complexSort(xs, ord, null, 0, x.getLength() - 1);
+        return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
+    }
+
     // specialisations for vector and tie parameters
 
     @Specialization(order = 100)
@@ -215,6 +224,65 @@ public abstract class Order extends RBuiltinNode {
             intSort(x, o, t, l, i - 1);
             intSort(x, o, t, i + 1, r);
         }
+    }
+
+    @SlowPath
+    protected void complexSort(double[] x, int[] o, int[] t, int l, int r) {
+        if (l < r) {
+            int i = l;
+            int j = r - 1;
+            double pr = x[2 * r];
+            double pi = x[2 * r + 1];
+            do {
+                while (complexLE(x[2 * i], x[2 * i + 1], pr, pi) && i < r) {
+                    ++i;
+                }
+                while (complexGE(x[2 * j], x[2 * j + 1], pr, pi) && j > l) {
+                    --j;
+                }
+                if (i < j) {
+                    double str = x[2 * i];
+                    double sti = x[2 * i + 1];
+                    x[2 * i] = x[2 * j];
+                    x[2 * i + 1] = x[2 * j + 1];
+                    x[2 * j] = str;
+                    x[2 * j + 1] = sti;
+                    swaps(o, t, i, j);
+                }
+            } while (i < j);
+            if (complexGT(x[2 * i], x[2 * i + 1], pr, pi)) {
+                double str = x[2 * i];
+                double sti = x[2 * i + 1];
+                x[2 * i] = x[2 * r];
+                x[2 * i + 1] = x[2 * r + 1];
+                x[2 * r] = str;
+                x[2 * r + 1] = sti;
+                swaps(o, t, i, r);
+            }
+            complexSort(x, o, t, l, i - 1);
+            complexSort(x, o, t, i + 1, r);
+        }
+    }
+
+    private boolean complexLE(double xr, double xi, double yr, double yi) {
+        if (eq.op(xr, yr) == RRuntime.LOGICAL_TRUE) {
+            return le.op(xi, yi) == RRuntime.LOGICAL_TRUE;
+        }
+        return le.op(xr, yr) == RRuntime.LOGICAL_TRUE;
+    }
+
+    private boolean complexGE(double xr, double xi, double yr, double yi) {
+        if (eq.op(xr, yr) == RRuntime.LOGICAL_TRUE) {
+            return ge.op(xi, yi) == RRuntime.LOGICAL_TRUE;
+        }
+        return ge.op(xr, yr) == RRuntime.LOGICAL_TRUE;
+    }
+
+    private boolean complexGT(double xr, double xi, double yr, double yi) {
+        if (eq.op(xr, yr) == RRuntime.LOGICAL_TRUE) {
+            return gt.op(xi, yi) == RRuntime.LOGICAL_TRUE;
+        }
+        return gt.op(xr, yr) == RRuntime.LOGICAL_TRUE;
     }
 
     // applying tie decisions
