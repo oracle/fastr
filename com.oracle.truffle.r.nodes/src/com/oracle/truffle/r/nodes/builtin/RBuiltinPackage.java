@@ -36,19 +36,22 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Intended to be subclassed by packages defining builtin functions. Much of the initialization is
- * done statically on startup but, currently, the parsing and generation of the snippet ASTs is
- * delayed until run-time.
- *
- * The snippets themselves are expected to be found (as resources) in the 'R' sub-package
- * (directory) associated with the subclass package, e.g.,
- * {@code com.oracle.truffle.r.nodes.builtin.base.R}.
- *
- * For debugging parsing errors we maintain the content of the individual snippets, although this is
- * not functionally necessary.
+ * Denotes an R package that is built-in to the implementation. It consists of two parts:
+ * <ul>
+ * <li>Classes annotated with {@link RBuiltin} that implement the package functions directly in Java
+ * either as "primitives" or as ".Internal".</li>
+ * <li>R code that defines functions in the package (which typically call the @link RBuiltin}s</li>
+ * </ul>
+ * Note that, although several packages are built-in to the implementation, R allows the exact set
+ * of packages to be controlled at runtime by the {@code R_DEFAULT_PACKAGES} environment variable.
+ * Only the {@code base} package is always loaded.
+ * <p>
+ * The R code is expected to be found (as resources) in the 'R' sub-package (directory) associated
+ * with the subclass package, e.g., {@code com.oracle.truffle.r.nodes.builtin.base.R}. For debugging
+ * parsing errors we retain the R source code, although this is not functionally necessary.
  */
 public abstract class RBuiltinPackage {
-    private static final Map<String, List<RLibraryLoader.Component>> snippetResources = new HashMap<>();
+    private static final Map<String, List<RLibraryLoader.Component>> rSources = new HashMap<>();
     private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
     private static boolean initialized;
 
@@ -74,7 +77,7 @@ public abstract class RBuiltinPackage {
                 }
             }
             if (componentList.size() > 0) {
-                snippetResources.put(getName(), componentList);
+                rSources.put(getName(), componentList);
             }
             loadAuxClass("Options");
             loadAuxClass("Variables");
@@ -114,7 +117,7 @@ public abstract class RBuiltinPackage {
 
     public static void initialize() {
         if (!initialized) {
-            snippetResources.entrySet().stream().parallel().forEach(entry -> doLoad(entry));
+            rSources.entrySet().stream().parallel().forEach(entry -> doLoad(entry));
             initialized = true;
         }
     }

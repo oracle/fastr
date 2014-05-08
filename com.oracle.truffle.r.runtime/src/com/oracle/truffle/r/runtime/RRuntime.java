@@ -13,7 +13,9 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
@@ -261,12 +263,19 @@ public class RRuntime {
         RAccuracyInfo.initialize();
         RRNG.initialize();
         RVersionInfo.initialize();
-        REnvVars.initialize();
         LibPaths.initialize();
         ROptions.initialize();
         RPackageVariables.initialize();
         TempDirPath.initialize();
         RProfile.initialize();
+    }
+
+    /**
+     * Create a {@link VirtualFrame} Such a value cannot be stored in an object field, so must be
+     * passed as an argument.
+     */
+    public static VirtualFrame createVirtualFrame() {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
     }
 
     /**

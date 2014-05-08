@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.test.generate.*;
 
 /**
  * Analyzes the {@link RBuiltin} classes against GnuR. The starting points are:
@@ -98,6 +99,7 @@ public class AnalyzeRBuiltin {
         Visibility visibility;
         Kind kind;
         boolean evalArgs;
+        boolean printable;
         ClassInfo classInfo;
 
         RInfo(String[] info) {
@@ -105,8 +107,12 @@ public class AnalyzeRBuiltin {
             visibility = Visibility.valueOf(info[1]);
             kind = Kind.valueOf(info[2]);
             evalArgs = Boolean.parseBoolean(info[3]);
+            printable = Boolean.parseBoolean(info[4]);
         }
     }
+
+    private static final String DOT_INTERNAL = ".Internal.";
+    private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.nodes.builtin.";
 
     private static SortedMap<String, RInfo> rInfoMap = new TreeMap<>();
     private static ArrayList<RInfo> rInfoList = new ArrayList<>();
@@ -120,6 +126,7 @@ public class AnalyzeRBuiltin {
         boolean toDo = false;
         boolean noEvalArgs = false;
         boolean visibility = false;
+        String printGnuRFunctions = null;
 
         String classFilePath = null;
 
@@ -131,7 +138,8 @@ public class AnalyzeRBuiltin {
             noEvalArgs = true;
             visibility = true;
         } else {
-            for (int i = 0; i < args.length; i++) {
+            int i = 0;
+            while (i < args.length) {
                 String arg = args[i];
                 switch (arg) {
                     case "--all":
@@ -151,10 +159,15 @@ public class AnalyzeRBuiltin {
                     case "--visibility":
                         visibility = true;
                         break;
+                    case "--printGnuRFunctions":
+                        i++;
+                        printGnuRFunctions = args[i];
+                        break;
                     default:
                         classFilePath = arg;
                         break;
                 }
+                i++;
             }
         }
 
@@ -215,6 +228,22 @@ public class AnalyzeRBuiltin {
         if (visibility) {
             listVisibility();
         }
+
+        if (printGnuRFunctions != null) {
+            printGnuRFunctions(printGnuRFunctions);
+        }
+    }
+
+    private static String stripInternal(String name) {
+        if (name.startsWith(DOT_INTERNAL)) {
+            return name.replace(DOT_INTERNAL, "");
+        } else {
+            return name;
+        }
+    }
+
+    private static String stripPackage(String s) {
+        return s.replace(PACKAGE_PREFIX, "");
     }
 
     /**
@@ -268,19 +297,118 @@ public class AnalyzeRBuiltin {
         System.out.println();
     }
 
-    private static final String DOT_INTERNAL = ".Internal.";
-    private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.nodes.builtin.";
+    private static GnuROneShotRSession gnurRSession;
 
-    private static String stripInternal(String name) {
-        if (name.startsWith(DOT_INTERNAL)) {
-            return name.replace(DOT_INTERNAL, "");
-        } else {
-            return name;
+    private static GnuROneShotRSession gnurRSession() {
+        if (gnurRSession == null) {
+            gnurRSession = new GnuROneShotRSession();
+        }
+        return gnurRSession;
+    }
+
+    /**
+     * Print the output from GnuR given the plain function namne as input, (for "printable"
+     * functions)
+     *
+     * @param args value to limit input/output, comma separated, name=value pairs.
+     */
+    private static void printGnuRFunctions(String args) {
+        String[] pairs = args.split(",");
+        Set<String> pkgs = new HashSet<>();
+        String writeFile = null;
+        String readFile = null;
+        boolean checkImpl = false;
+        if (pairs.length > 0) {
+            for (String nameValue : pairs) {
+                int eqx = nameValue.indexOf('=');
+                assert eqx > 0;
+                String key = nameValue.substring(0, eqx);
+                String value = nameValue.substring(eqx + 1);
+                switch (key) {
+                    case "package":
+                        pkgs.add(value);
+                        break;
+                    case "write":
+                        writeFile = value;
+                        break;
+                    case "read":
+                        readFile = value;
+                        break;
+                    case "checkimpl":
+                        checkImpl = true;
+                        break;
+                }
+            }
+        }
+        PrintStream out = System.out;
+        Map<String, String> gnrFunctionInput = null;
+        try {
+            if (writeFile != null) {
+                out = new PrintStream(new FileOutputStream(writeFile));
+            } else {
+                if (readFile != null) {
+                    gnrFunctionInput = readGnrFunctionFile(readFile);
+                }
+            }
+            for (RInfo rInfo : rInfoList) {
+                if (rInfo.printable) {
+                    String output;
+                    if (gnrFunctionInput != null) {
+                        output = gnrFunctionInput.get(rInfo.name);
+                    } else {
+                        output = gnurRSession().eval(rInfo.name);
+                    }
+                    assert output != null;
+                    if (pkgs.size() == 0 || isInPackage(pkgs, output)) {
+                        out.printf("#FN: %s: %s", rInfo.name, output);
+                        if (checkImpl) {
+                            System.out.println(rInfo.classInfo == null ? "not implemented by FastR" : ("implemented by FastR in " + rInfo.classInfo.name));
+                        }
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            System.err.println(ex);
+            System.exit(1);
+        } finally {
+            if (writeFile != null) {
+                out.close();
+            }
         }
     }
 
-    private static String stripPackage(String s) {
-        return s.replace(PACKAGE_PREFIX, "");
+    private static Map<String, String> readGnrFunctionFile(String readFile) throws IOException {
+        File f = new File(readFile);
+        if (!f.exists()) {
+            throw new FileNotFoundException(readFile);
+        }
+        byte[] buffer = new byte[(int) f.length()];
+        try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(f))) {
+            bs.read(buffer);
+        }
+        String content = new String(buffer);
+        String[] outputs = content.split("#FN: ");
+        Map<String, String> result = new HashMap<>();
+        for (String output : outputs) {
+            if (output.length() > 0) {
+                int ix = output.indexOf(':');
+                String name = output.substring(0, ix);
+                result.put(name, output.substring(ix + 1));
+            }
+        }
+        return result;
+    }
+
+    private static final String NAMESPACE_INFO = "<environment: namespace:";
+
+    private static boolean isInPackage(Set<String> pkgs, String output) {
+        int nx = output.indexOf(NAMESPACE_INFO);
+        if (nx > 0) {
+            int ex = output.indexOf('>', nx);
+            String pkg = output.substring(nx + NAMESPACE_INFO.length(), ex);
+            return pkgs.contains(pkg);
+        }
+        return false;
     }
 
 }
