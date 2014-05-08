@@ -2392,15 +2392,12 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testMatch() {
-    }
-
-    @Test
-    @Ignore
-    public void testMatchIgnore() {
         assertEval("{ match(2,c(1,2,3)) }");
         assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
         assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
         assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
+        assertEval("{ match(\"abc\", c(\"xyz\")) }");
+        assertEval("{ match(\"abc\", c(\"xyz\"), nomatch=-1) }");
     }
 
     @Test
