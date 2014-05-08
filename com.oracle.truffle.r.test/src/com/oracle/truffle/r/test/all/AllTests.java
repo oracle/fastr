@@ -11819,6 +11819,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testWhich_8f506264fbe3c31e05ec5899f79cd57f() {
+        assertEval("{ which(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testWhich_b95f6167ca109bbbc1efbebb292937cc() {
+        assertEval("{ which(NA) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testWhichIgnore_6d01b8ef11e5cdf979ca7122cd3de717() {
         assertEval("{ which(c(a=TRUE,b=FALSE,c=TRUE)) }");
     }

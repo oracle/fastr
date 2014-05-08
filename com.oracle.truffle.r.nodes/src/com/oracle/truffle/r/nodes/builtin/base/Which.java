@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin("which")
 public abstract class Which extends RBuiltinNode {
@@ -48,7 +49,7 @@ public abstract class Which extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector which(RLogicalVector x, byte arrInd, byte useNames) {
+    public RIntVector which(RAbstractLogicalVector x, byte arrInd, byte useNames) {
         controlVisibility();
         ArrayList<Integer> w = new ArrayList<>();
         for (int i = 0; i < x.getLength(); ++i) {

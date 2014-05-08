@@ -9024,6 +9024,14 @@ numeric(0)
 logical(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhich
+#{ which(NA) }
+integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhich
+#{ which(TRUE) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhich
 #{ which(c(TRUE, FALSE, NA, TRUE)) }
 [1] 1 4
 

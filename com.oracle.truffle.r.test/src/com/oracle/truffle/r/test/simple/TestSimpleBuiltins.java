@@ -922,6 +922,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testWhich() {
         assertEval("{ which(c(TRUE, FALSE, NA, TRUE)) }");
         assertEval("{ which(logical()) }");
+        assertEval("{ which(TRUE) }");
+        assertEval("{ which(NA) }");
     }
 
     @Test
