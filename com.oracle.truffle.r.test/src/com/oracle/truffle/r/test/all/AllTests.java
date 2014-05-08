@@ -8549,6 +8549,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatch_048ab83fbf746ab7b0de92f083754c50() {
+        assertEval("{ match(2,c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_4b9c00763f8d3b8f32effe9cf00561c6() {
+        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_939487ea836b5aac7a33fa6875c20339() {
+        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_354af2561e4e24ce3b2b61b15e126ce8() {
+        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_e99b3942dd461cd293910d613ffc1cd5() {
+        assertEval("{ match(\"abc\", c(\"xyz\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_37d62ec656f066150fca5b9850d0ff44() {
+        assertEval("{ match(\"abc\", c(\"xyz\"), nomatch=-1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatchFun_4dc251ff1db19e52f20841e136754b32() {
         assertEval("{ f <- match.fun(length) ; f(c(1,2,3)) }");
     }
@@ -8566,26 +8596,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testMatchFun_b060469f6289b6abdddbe023b5919310() {
         assertEval("{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f(\"+\"),f(\"*\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_048ab83fbf746ab7b0de92f083754c50() {
-        assertEval("{ match(2,c(1,2,3)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_4b9c00763f8d3b8f32effe9cf00561c6() {
-        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_939487ea836b5aac7a33fa6875c20339() {
-        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_354af2561e4e24ce3b2b61b15e126ce8() {
-        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
     }
 
     @Test

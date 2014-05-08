@@ -7127,6 +7127,30 @@ Error in get("x") : object 'x' not found
 [1,]    7
 [2,]    9
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match("abc", c("xyz")) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match("abc", c("xyz"), nomatch=-1) }
+[1] -1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match("hello",c("I", "say", "hello", "world")) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match(2,c(1,2,3)) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match(c("hello", "say"),c("I", "say", "hello", "world")) }
+[1] 3 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatch
+#{ match(c(1,2,3,4,5),c(1,2,1,2)) }
+[1]  1  2 NA NA NA
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatchFun
 #{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f("+"),f("*")) }
 [1]  7 12
