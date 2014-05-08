@@ -44,6 +44,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(0,0) }");
         assertEval("{ seq(0L,0L,0L) }");
         assertEval("{ seq(0L,0L) }");
+        assertEval("{ seq(0,0,1i) }");
     }
 
     @Test

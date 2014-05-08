@@ -10279,6 +10279,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSequenceStatement_437ed7508d9c762a7c8e464ff6bff52d() {
+        assertEval("{ seq(0,0,1i) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSequenceStatementIgnore_6e0da5f0115b849917bed14234134dd1() {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,3,10), seq(2L,4L,2L),c(TRUE,FALSE)) }");
     }
