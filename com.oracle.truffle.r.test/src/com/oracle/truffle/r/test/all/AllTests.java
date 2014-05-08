@@ -10259,6 +10259,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSequenceStatement_481327faf16e125d88a6117b46c8706b() {
+        assertEval("{ seq(0,0,0) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_e78a38503650451989dfc4d88cf8c9c8() {
+        assertEval("{ seq(0,0) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_f3adf9a03ea03b3ba5667bc1d8604d4b() {
+        assertEval("{ seq(0L,0L,0L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_f76c10e4607e09b91b9101204f360dfa() {
+        assertEval("{ seq(0L,0L) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSequenceStatementIgnore_6e0da5f0115b849917bed14234134dd1() {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,3,10), seq(2L,4L,2L),c(TRUE,FALSE)) }");
     }

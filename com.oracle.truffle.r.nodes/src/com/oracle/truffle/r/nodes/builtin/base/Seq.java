@@ -30,12 +30,26 @@ import com.oracle.truffle.r.runtime.data.*;
 @SuppressWarnings("unused")
 public abstract class Seq extends RBuiltinNode {
 
-    public static boolean ascending(int start, int to) {
+    protected static boolean ascending(int start, int to) {
         return to > start;
     }
 
-    public static boolean ascending(double start, double to) {
+    protected static boolean ascending(double start, double to) {
         return to > start;
+    }
+
+    protected static boolean zero(int start, int to) {
+        return start == 0 && to == 0;
+    }
+
+    protected static boolean zero(double start, double to) {
+        return start == 0 && to == 0;
+    }
+
+    @Specialization(order = 0, guards = "zero")
+    public int seq(int start, int to, Object stride) {
+        controlVisibility();
+        return 0;
     }
 
     @Specialization(order = 1, guards = "ascending")
@@ -62,7 +76,13 @@ public abstract class Seq extends RBuiltinNode {
         return RDataFactory.createIntSequence(start, stride, (start - to + 1) / -stride);
     }
 
-    @Specialization(order = 100, guards = "ascending")
+    @Specialization(order = 100, guards = "zero")
+    public double seq(double start, double to, Object stride) {
+        controlVisibility();
+        return 0;
+    }
+
+    @Specialization(order = 101, guards = "ascending")
     public RDoubleSequence seq(double start, double to, RMissing stride) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start, 1, (int) (to - start + 1));
