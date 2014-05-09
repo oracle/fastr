@@ -88,6 +88,23 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(x) }");
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(y) }");
         assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-as.double(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-as.logical(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-as.complex(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-as.raw(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+        assertEval("{ x<-as.double(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+        assertEval("{ x<-as.logical(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+        assertEval("{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+        assertEval("{ x<-as.complex(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+        assertEval("{ x<-as.raw(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=\"r1\", nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\"), nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\", \"r3\"), nm=\"x\"); attributes(y); }");
+        assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=NULL, optional=FALSE); attributes(y); }");
+        assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=\"r1\", optional=FALSE); attributes(y); }");
     }
 
     @Test

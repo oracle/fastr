@@ -120,3 +120,110 @@ as.data.frame.data.frame <- function(x, row.names = NULL, ...)
     }
     x
 }
+
+
+# TODO: handle parameters correctly
+#as.data.frame.numeric <- function(x, row.names = NULL, optional = FALSE, ...,
+#                                 nm = paste(deparse(substitute(x),
+#                                 width.cutoff = 500L), collapse=" ")  )
+as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALSE)
+{
+    force(nm)
+    nrows <- length(x)
+    if(is.null(row.names)) {
+	if (nrows == 0L)
+	    row.names <- character()
+# TODO implement anyDuplicated
+#	else if(length(row.names <- names(x)) == nrows &&
+#		!anyDuplicated(row.names)) {}
+	else if(length(row.names <- names(x)) == nrows) {}
+	else row.names <- .set_row_names(nrows)
+    }
+    if(!is.null(names(x))) names(x) <- NULL # remove names as from 2.0.0
+    value <- list(x)
+    if(!optional) names(value) <- nm
+    attr(value, "row.names") <- row.names
+    class(value) <- "data.frame"
+    value
+}
+
+as.data.frame.ts <- function(x, ...)
+{
+    if(is.matrix(x))
+	as.data.frame.matrix(x, ...)
+    else
+	as.data.frame.vector(x, ...)
+}
+
+# TODO: "properly" evaluate these .R files (for some reason assignments do not work at this point)
+#as.data.frame.raw  <- as.data.frame.vector
+as.data.frame.raw <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+#as.data.frame.factor  <- as.data.frame.vector
+#as.data.frame.ordered <- as.data.frame.vector
+#as.data.frame.integer <- as.data.frame.vector
+as.data.frame.integer <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+#as.data.frame.numeric <- as.data.frame.vector
+as.data.frame.numeric <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+#as.data.frame.complex <- as.data.frame.vector
+as.data.frame.complex <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+
+default.stringsAsFactors <- function()
+{
+# TODO: implement getOption
+#    val <- getOption("stringsAsFactors")
+#    if(is.null(val)) val <- TRUE
+#    if(!is.logical(val) || is.na(val) || length(val) != 1L)
+#        stop('options("stringsAsFactors") not set to TRUE or FALSE')
+#    val
+    FALSE
+}
+
+# TODO: implement deparse (on the main execution path)
+## in case someone passes 'nm'
+#as.data.frame.character <-
+#    function(x, ..., stringsAsFactors = default.stringsAsFactors())
+#{
+#    nm <- deparse(substitute(x), width.cutoff=500L)
+#    if(stringsAsFactors) x <- factor(x)
+#    if(!"nm" %in% names(list(...)))
+#        as.data.frame.vector(x, ..., nm = nm)
+#    else as.data.frame.vector(x, ...)
+#}
+as.data.frame.character <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+
+# TODO: "properly" evaluate these .R files (for some reason assignments do not work at this point)
+#as.data.frame.logical <- as.data.frame.vector
+as.data.frame.logical <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+
+as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
+                                 stringsAsFactors = default.stringsAsFactors())
+{
+    d <- dim(x)
+    nrows <- d[1L]; ir <- seq_len(nrows)
+    ncols <- d[2L]; ic <- seq_len(ncols)
+    dn <- dimnames(x)
+    ## surely it cannot be right to override the supplied row.names?
+    ## changed in 1.8.0
+    if(is.null(row.names)) row.names <- dn[[1L]]
+    collabs <- dn[[2L]]
+    if(any(empty <- !nzchar(collabs)))
+	collabs[empty] <- paste0("V", ic)[empty]
+    value <- vector("list", ncols)
+    if(mode(x) == "character" && stringsAsFactors) {
+	for(i in ic)
+	    value[[i]] <- as.factor(x[,i])
+    } else {
+	for(i in ic)
+	    value[[i]] <- as.vector(x[,i])
+    }
+    ## Explicitly check for NULL in case nrows==0
+    if(is.null(row.names) || length(row.names) != nrows)
+	row.names <- .set_row_names(nrows)
+    if(length(collabs) == ncols)
+	names(value) <- collabs
+    else if(!optional)
+	names(value) <- paste0("V", ic)
+    attr(value, "row.names") <- row.names
+    class(value) <- "data.frame"
+    value
+}

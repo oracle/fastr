@@ -12754,6 +12754,91 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testAsDataFrame_08dceaed07e4cc4bcc5ca7d890bd36a8() {
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_20131aee82fc8e9485961d7803591362() {
+        assertEval("{ x<-as.double(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_e16d5e89bcde28504f2d00d16d441ddf() {
+        assertEval("{ x<-as.logical(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_2ee3b7f49cda32465d70d1c50650a1b5() {
+        assertEval("{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_95dc2bef15fa23c36342c5ceccaaac32() {
+        assertEval("{ x<-as.complex(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_135fb4499c43047e3ef3995e44461c79() {
+        assertEval("{ x<-as.raw(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_a3830f603762abcc6c5f172c3548b69d() {
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_3c48c12e0e9b9666a43162856aefbc94() {
+        assertEval("{ x<-as.double(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_c068a2e61149e44a158400adc00a049c() {
+        assertEval("{ x<-as.logical(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_fdae269ccebf53df08bd11940567474d() {
+        assertEval("{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_4c5e3d4678da34d24104e3dcda3dc9e8() {
+        assertEval("{ x<-as.complex(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_10a04d16d555f670715decc99e2a04d9() {
+        assertEval("{ x<-as.raw(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); is.data.frame(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_d3b040ed290ec04700549bf39c0f2646() {
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=\"r1\", nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_e76008f320f1d8ce0c0b51c3e29bc781() {
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\"), nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_0d212802fe8708d8972162e8dc0a11df() {
+        assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\", \"r3\"), nm=\"x\"); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_ae7e136bf9bea5f5e3f42bb31458c3f9() {
+        assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=NULL, optional=FALSE); attributes(y); }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAsDataFrame_dcb0b00a2f2ec72187adf92269dbd74d() {
+        assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=\"r1\", optional=FALSE); attributes(y); }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testAsDataFrame_bf5e0ec924e5d9b3c6ccdc1662b0a781() {
         assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
     }

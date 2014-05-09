@@ -37,6 +37,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(value = "paste", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public abstract class Paste extends RBuiltinNode {
 
+    public abstract Object executeObject(VirtualFrame frame, Object value, String sep, Object collapse);
+
     @Child CastStringNode castCharacterNode;
 
     private String castCharacter(VirtualFrame frame, Object o) {

@@ -53,6 +53,13 @@ public abstract class NZChar extends RBuiltinNode {
         return s.length() > 0 ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    public RLogicalVector rev(VirtualFrame frame, RNull value) {
+        controlVisibility();
+        return RDataFactory.createEmptyLogicalVector();
+    }
+
     @Specialization
     public byte rev(VirtualFrame frame, int value) {
         controlVisibility();

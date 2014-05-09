@@ -49,19 +49,29 @@ public abstract class Sprintf extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
+    @Specialization(order = 1)
     public String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return fmt;
     }
 
-    @Specialization
+    @Specialization(order = 2, guards = "fmtLengthOne")
+    public String sprintf(RAbstractStringVector fmt, RMissing x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 10)
     public String sprintf(String fmt, int x) {
         controlVisibility();
         return format(fmt, x);
     }
 
-    @Specialization
+    @Specialization(order = 11, guards = "fmtLengthOne")
+    public String sprintf(RAbstractStringVector fmt, int x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 20)
     public RStringVector sprintf(String fmt, RAbstractIntVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -71,7 +81,12 @@ public abstract class Sprintf extends RBuiltinNode {
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
+    @Specialization(order = 21, guards = "fmtLengthOne")
+    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 30)
     public String sprintf(String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
@@ -84,7 +99,12 @@ public abstract class Sprintf extends RBuiltinNode {
         return format(fmt, x);
     }
 
-    @Specialization
+    @Specialization(order = 31, guards = "fmtLengthOne")
+    public String sprintf(RAbstractStringVector fmt, double x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 40)
     public RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
@@ -94,7 +114,38 @@ public abstract class Sprintf extends RBuiltinNode {
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
+    @Specialization(order = 41, guards = "fmtLengthOne")
+    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 50)
+    public String sprintf(String fmt, String x) {
+        controlVisibility();
+        return format(fmt, x);
+    }
+
+    @Specialization(order = 51, guards = "fmtLengthOne")
+    public String sprintf(RAbstractStringVector fmt, String x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 60)
+    public RStringVector sprintf(String fmt, RAbstractStringVector x) {
+        controlVisibility();
+        String[] r = new String[x.getLength()];
+        for (int k = 0; k < r.length; ++k) {
+            r[k] = format(fmt, x.getDataAt(k));
+        }
+        return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Specialization(order = 61, guards = "fmtLengthOne")
+    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization(order = 100)
     public String sprintf(String fmt, Object[] args) {
         controlVisibility();
         return format(fmt, args);
@@ -386,6 +437,10 @@ public abstract class Sprintf extends RBuiltinNode {
             }
         }
         return false;
+    }
+
+    protected boolean fmtLengthOne(RAbstractStringVector fmt) {
+        return fmt.getLength() == 1;
     }
 
 }
