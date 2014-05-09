@@ -142,7 +142,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
             wvnMethod.execute(newFrame, targetFunctionName);
         }
         if (hasGroup) {
-            wvnGroup = initWvn(wvnGroup, RRuntime.RDotGroup);
+            wvnGroup = initWvn(wvnGroup, RGroupGenerics.RDotGroup);
             wvnGroup.execute(newFrame, this.group);
         }
         targetFunction.setEnclosingFrame(newFrame.materialize());
@@ -163,7 +163,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (genCallEnv == null) {
             genCallEnv = frame.materialize();
         }
-        rvnGroup = initRvn(RRuntime.RDotGroup, rvnGroup);
+        rvnGroup = initRvn(RGroupGenerics.RDotGroup, rvnGroup);
         try {
             group = rvnGroup.executeString(frame);
             if (group.isEmpty()) {
