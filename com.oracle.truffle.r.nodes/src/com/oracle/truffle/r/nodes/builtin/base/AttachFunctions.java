@@ -38,27 +38,38 @@ public class AttachFunctions {
 
         private static final String POS_WARNING = "*** 'pos=1' is not possible; setting 'pos=2' for now.\n" + "*** Note that 'pos=1' will give an error in the future";
 
-        @Specialization
-        public REnvironment doAttach(@SuppressWarnings("unused") RNull what, double pos, String name) {
+        @Specialization(order = 0)
+        public REnvironment doAttach(@SuppressWarnings("unused") RNull what, int pos, String name) {
             controlVisibility();
             REnvironment env = new REnvironment.NewEnv(name);
             doAttachEnv(pos, env);
             return env;
         }
 
-        @Specialization(order = 0)
+        @Specialization(order = 1)
+        public REnvironment doAttach(RNull what, double pos, String name) {
+            return doAttach(what, (int) pos, name);
+        }
+
+        @Specialization(order = 2)
         public REnvironment doAttach(REnvironment what, String name, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             return doAttachEnv(what, 2, name);
         }
 
-        @Specialization(order = 1)
-        public REnvironment doAttach(REnvironment what, double pos, String name) {
+        @Specialization(order = 3)
+        public REnvironment doAttach(REnvironment what, int pos, String name) {
             controlVisibility();
             return doAttachEnv(what, pos, name);
         }
 
-        REnvironment doAttachEnv(REnvironment what, double pos, String name) {
+        @Specialization(order = 4)
+        public REnvironment doAttach(REnvironment what, double pos, String name) {
+            controlVisibility();
+            return doAttachEnv(what, (int) pos, name);
+        }
+
+        REnvironment doAttachEnv(REnvironment what, int pos, String name) {
             REnvironment env = new REnvironment.NewEnv(name);
             RStringVector names = what.ls(true, null);
             for (int i = 0; i < names.getLength(); i++) {
@@ -72,19 +83,25 @@ public class AttachFunctions {
 
         }
 
-        @Specialization(order = 2)
+        @Specialization(order = 10)
         public REnvironment doAttach(RList what, String name, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             return doAttachList(what, 2, name);
         }
 
-        @Specialization(order = 3)
-        public REnvironment doAttach(RList what, double pos, String name) {
+        @Specialization(order = 11)
+        public REnvironment doAttach(RList what, int pos, String name) {
             controlVisibility();
             return doAttachList(what, pos, name);
         }
 
-        REnvironment doAttachList(RList what, double pos, String name) {
+        @Specialization(order = 12)
+        public REnvironment doAttach(RList what, double pos, String name) {
+            controlVisibility();
+            return doAttachList(what, (int) pos, name);
+        }
+
+        REnvironment doAttachList(RList what, int pos, String name) {
             REnvironment env = new REnvironment.NewEnv(name);
             RStringVector names = (RStringVector) what.getNames();
             for (int i = 0; i < names.getLength(); i++) {
@@ -94,10 +111,10 @@ public class AttachFunctions {
             return env;
         }
 
-        void doAttachEnv(double pos, REnvironment env) {
+        void doAttachEnv(int pos, REnvironment env) {
             // GnuR appears to allow any value of pos except 1.
             // Values < 1 are intepreted as 2
-            int ipos = (int) pos;
+            int ipos = pos;
             if (ipos == 1) {
                 RContext.getInstance().setEvalWarning(POS_WARNING);
                 ipos = 2;
@@ -113,9 +130,14 @@ public class AttachFunctions {
     public abstract static class Detach extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public Object doDetach(double name, int pos, byte unload, byte characterOnly, byte force) {
+        public Object doDetach(int name, int pos, byte unload, byte characterOnly, byte force) {
             controlVisibility();
             return doDetach(name, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
+        }
+
+        @Specialization
+        public Object doDetach(double name, int pos, byte unload, byte characterOnly, byte force) {
+            return doDetach((int) name, pos, unload, characterOnly, force);
         }
 
         @SuppressWarnings("unused")
@@ -129,13 +151,12 @@ public class AttachFunctions {
             return doDetach(ix, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
         }
 
-        REnvironment doDetach(double pos, boolean unload, boolean force) {
-            int ipos = (int) pos;
-            if (ipos == 1) {
+        REnvironment doDetach(int pos, boolean unload, boolean force) {
+            if (pos == 1) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), " invalid 'pos' argument");
             }
             try {
-                return REnvironment.detach(ipos, unload, force);
+                return REnvironment.detach(pos, unload, force);
             } catch (DetachException ex) {
                 throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
             }
