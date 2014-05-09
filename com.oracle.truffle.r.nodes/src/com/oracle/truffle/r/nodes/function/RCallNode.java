@@ -459,15 +459,25 @@ public abstract class RCallNode extends RNode {
         String name = RRuntime.toString(actualName);
         int found = -1;
         for (int i = 0; i < parameterNames.length; i++) {
-            if (parameterNames[i] != null && RRuntime.toString(parameterNames[i]).startsWith(name)) {
-                if (found >= 0) {
-                    throw RError.getArgumentMatchesMultiple(getEncapsulatingSourceSection(), 1 + argPos);
+            if (parameterNames[i] != null) {
+                final String pn = RRuntime.toString(parameterNames[i]);
+                if (pn.equals(name)) {
+                    found = i;
+                    if (matchedArgs[found]) {
+                        throw RError.getFormalMatchedMultiple(getEncapsulatingSourceSection(), pn);
+                    }
+                    matchedArgs[found] = true;
+                    break;
+                } else if (pn.startsWith(name)) {
+                    if (found >= 0) {
+                        throw RError.getArgumentMatchesMultiple(getEncapsulatingSourceSection(), 1 + argPos);
+                    }
+                    found = i;
+                    if (matchedArgs[found]) {
+                        throw RError.getFormalMatchedMultiple(getEncapsulatingSourceSection(), pn);
+                    }
+                    matchedArgs[found] = true;
                 }
-                found = i;
-                if (matchedArgs[found]) {
-                    throw RError.getFormalMatchedMultiple(getEncapsulatingSourceSection(), RRuntime.toString(parameterNames[i]));
-                }
-                matchedArgs[found] = true;
             }
         }
         if (found >= 0 || varArgs) {
