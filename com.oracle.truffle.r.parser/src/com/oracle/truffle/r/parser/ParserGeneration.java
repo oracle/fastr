@@ -47,7 +47,8 @@ public class ParserGeneration {
         "source attribution in parser AST",
         "avoid inclusion of brackets around expressions when generating source attribution",
         "source attribution for while loops includes opening curly brace or body expression",
-        "support :: and ::: at parser level"
+        "support :: and ::: at parser level",
+        "support NA_integer_"
     };
 
 }

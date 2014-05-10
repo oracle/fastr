@@ -18,6 +18,9 @@
 
 # partial
 
+match <- function(x, table, nomatch = NA_integer_, incomparables = NULL)
+    .Internal(match(x, table, nomatch, incomparables))
+
 pmatch <- function(x, table, nomatch = NA, duplicates.ok = FALSE)
     .Internal(pmatch(as.character(x), as.character(table), nomatch,
                     duplicates.ok))

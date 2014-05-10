@@ -22,46 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("which")
-public abstract class Which extends RBuiltinNode {
+public class NamespaceFunctions {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "arr.ind", "use.names"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    public RIntVector which(RAbstractLogicalVector x, byte arrInd, byte useNames) {
-        controlVisibility();
-        ArrayList<Integer> w = new ArrayList<>();
-        for (int i = 0; i < x.getLength(); ++i) {
-            if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
-                w.add(i);
+    @RBuiltin(".Internal.getRegisteredNamespace")
+    public abstract static class GetRegisteredNamespace extends RInvisibleBuiltinNode {
+        @Specialization
+        public Object doGetRegisteredNamespace(String name) {
+            controlVisibility();
+            Object result = REnvironment.getRegisteredNamespace(name);
+            if (result == null) {
+                return RNull.instance;
+            } else {
+                return result;
             }
         }
-        int[] result = new int[w.size()];
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = w.get(i) + 1;
-        }
-        return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
 
+    }
 }

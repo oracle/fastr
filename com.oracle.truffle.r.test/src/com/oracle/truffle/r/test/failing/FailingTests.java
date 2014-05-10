@@ -1384,26 +1384,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testMatchIgnore_048ab83fbf746ab7b0de92f083754c50() {
-        assertEval("{ match(2,c(1,2,3)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMatchIgnore_4b9c00763f8d3b8f32effe9cf00561c6() {
-        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMatchIgnore_939487ea836b5aac7a33fa6875c20339() {
-        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMatchIgnore_354af2561e4e24ce3b2b61b15e126ce8() {
-        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
     }

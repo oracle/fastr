@@ -5219,6 +5219,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_89b0c1cef332aaa820121d111686716a() {
+        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\n\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_75fb049558704ed597a4d49441bae349() {
         assertEvalNoNL("{ cat(1) }");
     }
@@ -8544,6 +8549,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatch_048ab83fbf746ab7b0de92f083754c50() {
+        assertEval("{ match(2,c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_4b9c00763f8d3b8f32effe9cf00561c6() {
+        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_939487ea836b5aac7a33fa6875c20339() {
+        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_354af2561e4e24ce3b2b61b15e126ce8() {
+        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_e99b3942dd461cd293910d613ffc1cd5() {
+        assertEval("{ match(\"abc\", c(\"xyz\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMatch_37d62ec656f066150fca5b9850d0ff44() {
+        assertEval("{ match(\"abc\", c(\"xyz\"), nomatch=-1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatchFun_4dc251ff1db19e52f20841e136754b32() {
         assertEval("{ f <- match.fun(length) ; f(c(1,2,3)) }");
     }
@@ -8561,26 +8596,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testMatchFun_b060469f6289b6abdddbe023b5919310() {
         assertEval("{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f(\"+\"),f(\"*\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_048ab83fbf746ab7b0de92f083754c50() {
-        assertEval("{ match(2,c(1,2,3)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_4b9c00763f8d3b8f32effe9cf00561c6() {
-        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_939487ea836b5aac7a33fa6875c20339() {
-        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMatchIgnore_354af2561e4e24ce3b2b61b15e126ce8() {
-        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
     }
 
     @Test
@@ -9101,6 +9116,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testOrder_1876c32edccfa36eaa58c7526d847258() {
         assertEval("{ order(c(1,1,1,1),c(\"d\",\"c\",\"b\",\"a\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_1d5e3a5008dd094bbe4be90041eabf23() {
+        assertEval("{ order(c(1i,2i,3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_17cb2322c76b3aa7266fcd225ceb80e8() {
+        assertEval("{ order(c(3i,1i,2i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_5a2099b87624b74542d57376cb6a459d() {
+        assertEval("{ order(c(3+1i,2+2i,1+3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOrder_d01c233922d6266e1680d69aaab531ee() {
+        assertEval("{ order(c(3+1i,2+3i,2+2i,1+3i)) }");
     }
 
     @Test
@@ -9819,6 +9854,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRep_8f05cab9d6b7794dd663a1b127caed75() {
+        assertEval("{ rep(NA,8) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_1173238b1181a24badd0c5e5a847007a() {
+        assertEval("{ rep(TRUE,8) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRepIgnore_f5295de8fec47c85c0ebb8273aaffe5e() {
         assertEval("{ rep(1:3, length.out=NA) }");
     }
@@ -10221,6 +10266,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSequenceStatement_7267f495fcb0457ba0bbd81da84d4e56() {
         assertEval("{ seq(1,-4,-2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_481327faf16e125d88a6117b46c8706b() {
+        assertEval("{ seq(0,0,0) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_e78a38503650451989dfc4d88cf8c9c8() {
+        assertEval("{ seq(0,0) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_f3adf9a03ea03b3ba5667bc1d8604d4b() {
+        assertEval("{ seq(0L,0L,0L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_f76c10e4607e09b91b9101204f360dfa() {
+        assertEval("{ seq(0L,0L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_437ed7508d9c762a7c8e464ff6bff52d() {
+        assertEval("{ seq(0,0,1i) }");
     }
 
     @Test
@@ -11761,6 +11831,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testWhich_910e4cd5226a6cd85c417d837cfe28d5() {
         assertEval("{ which(logical()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testWhich_8f506264fbe3c31e05ec5899f79cd57f() {
+        assertEval("{ which(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testWhich_b95f6167ca109bbbc1efbebb292937cc() {
+        assertEval("{ which(NA) }");
     }
 
     @Test
@@ -13366,6 +13446,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDots_cfd4e15d62829d53a1ff023619659bcb() {
         assertEval("{ g <- function(...) { c(...,...) } ; g(3) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_c15f47834acf072533f7d272d4fbd725() {
+        assertEval("{ f <- function(...) cat(..., \"\n\") ; f(\"Hello\", \"world\") }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_3bda530df1cb70e5e7cd02a33fe016a9() {
+        assertEval("{ f <- function(a=1,...) a ; f() }");
     }
 
     @Test

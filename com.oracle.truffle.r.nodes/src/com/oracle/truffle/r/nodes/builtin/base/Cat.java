@@ -88,7 +88,13 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     public Object cat(VirtualFrame frame, Object[] args, String file, String sep, byte fill, Object labels, byte append) {
         ensureToString(sep);
         for (int i = 0; i < args.length; ++i) {
-            catIntl(toString.executeString(frame, args[i]));
+            if (args[i] instanceof Object[]) {
+                // in case cat is called with a ... parameter, it is passed as an array within the
+                // args array
+                cat(frame, (Object[]) args[i], file, sep, fill, labels, append);
+            } else {
+                catIntl(toString.executeString(frame, args[i]));
+            }
             if (i < args.length - 1 || sep.contains("\n")) {
                 catIntl(sep);
             }

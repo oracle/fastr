@@ -44,13 +44,13 @@ package com.oracle.truffle.r.parser;
 
 @members {
     Source source;
-    
+
     public void setSource(Source s) {
         source = s;
     }
-    
+
     private final boolean DUMP_SRC = false;
-    
+
     /**
      * Create a {@link SourceSection} from a start and end token.
      */
@@ -69,14 +69,14 @@ package com.oracle.truffle.r.parser;
         }
         return src;
     }
-    
+
     /**
      * Create a {@link SourceSection} from a single token, e.g., one returned from the lexer.
      */
     private SourceSection sourceSection(String id, Token tok) {
         return sourceSection(id, tok, tok);
     }
-    
+
     /**
      * Create a {@link SourceSection} from two {@link ASTNode}s, spanning their source.
      */
@@ -85,7 +85,7 @@ package com.oracle.truffle.r.parser;
         int ai = as.getCharIndex();
         return new DefaultSourceSection(source, id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
     }
-    
+
     public void display_next_tokens(){
         System.err.print("Expected tokens: ");
         for(int next: next_tokens()) {
@@ -94,7 +94,7 @@ package com.oracle.truffle.r.parser;
             }
         System.err.println("");
     }
-    
+
     public int[] next_tokens(){
         return state.following[state._fsp].toArray();
     }
@@ -102,15 +102,15 @@ package com.oracle.truffle.r.parser;
 
 @lexer::members {
     public final int MAX_INCOMPLETE_SIZE = 1000;
-    
+
     int incomplete_stack[] = new int[MAX_INCOMPLETE_SIZE]; // TODO probably go for an ArrayList of int :S
-    
+
     int incomplete_depth;
-    
+
     public void resetIncomplete() {
         incomplete_stack[incomplete_depth = 0] = 0;
     }
-    
+
     @Override
     public void reportError(RecognitionException e) {
         throw new IllegalArgumentException(e);
@@ -123,7 +123,7 @@ package com.oracle.truffle.r.parser;
 }
 
 /****************************************************
-** Known errors : 
+** Known errors :
 ** - foo * if(...) ... because of priority
 ** - No help support '?' & '??'
 ** - %OP% not very robust, maybe allow everything
@@ -131,7 +131,7 @@ package com.oracle.truffle.r.parser;
 ** - '.' is a valid id
 ** - Line break are tolerated in strings even without a '\' !!! (ugly)
 ** - EOF does'nt work with unbalanced structs
-** - Improve the stack of balanced structures 
+** - Improve the stack of balanced structures
 *****************************************************/
 
 script returns [ASTNode v]
@@ -170,7 +170,7 @@ expr_or_assign returns [ASTNode v]
 
 expr returns [ASTNode v]
     : a=assign { $v = $a.v; }
-    ;    
+    ;
 
 expr_wo_assign returns [ASTNode v]
     : w=while_expr                          { $v = $w.v; }
@@ -178,14 +178,14 @@ expr_wo_assign returns [ASTNode v]
     | f=for_expr                            { $v = $f.v; }
     | r=repeat_expr                         { $v = $r.v; }
     | fun=function                          { $v = $fun.v; }
-    | t=NEXT  /* ((LPAR)=>LPAR n_ RPAR)? */ { $v = Next.create(sourceSection("expr_wo_assign/NEXT", t)); } 
+    | t=NEXT  /* ((LPAR)=>LPAR n_ RPAR)? */ { $v = Next.create(sourceSection("expr_wo_assign/NEXT", t)); }
     | t=BREAK /* ((LPAR)=>LPAR n_ RPAR)? */ { $v = Break.create(sourceSection("expr_wo_assign/BREAK", t)); }
     ;
 
 sequence returns [ASTNode v]
     @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
     @after { $v = Sequence.create(sourceSection("sequence", $start, $stop), stmts); }
-    : LBRACE n_ (e=expr_or_assign { stmts.add($e.v); } (n e=expr_or_assign { stmts.add($e.v); })* n?)? RBRACE  
+    : LBRACE n_ (e=expr_or_assign { stmts.add($e.v); } (n e=expr_or_assign { stmts.add($e.v); })* n?)? RBRACE
     ;
 
 assign returns [ASTNode v]
@@ -196,7 +196,7 @@ assign returns [ASTNode v]
             $v.setSource(sourceSection("assign", $l.v, rr));
         }
     }
-    : l=tilde_expr    
+    : l=tilde_expr
       ( ARROW n_ r=expr             { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
       | SUPER_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(null, true, $l.v, $r.v); }
       | RIGHT_ARROW n_ r=expr       { rr = $r.v; $v = AssignVariable.create(null, false, $r.v, $l.v); }
@@ -213,7 +213,7 @@ alter_assign returns [ASTNode v]
             $v.setSource(sourceSection("alter_assign", $l.v, rr));
         }
     }
-    : l=tilde_expr    
+    : l=tilde_expr
       ( (ARROW)=>ARROW n_ r=expr_or_assign                         { rr = $r.v; $v = AssignVariable.create(null, false, $l.v, $r.v); }
       | (SUPER_ARROW)=>SUPER_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(null, true, $l.v, $r.v); }
       | (RIGHT_ARROW)=>RIGHT_ARROW n_ r=expr_or_assign             { rr = $r.v; $v = AssignVariable.create(null, false, $r.v, $l.v); }
@@ -250,7 +250,7 @@ while_expr returns [ASTNode v]
     ;
 
 for_expr returns [ASTNode v]
-    @after { $v = Loop.create(sourceSection("for_expr", $start, $stop), $i.text, $in.v, $body.v); } 
+    @after { $v = Loop.create(sourceSection("for_expr", $start, $stop), $i.text, $in.v, $body.v); }
     : FOR n_ LPAR n_ i=ID n_ IN n_ in=expr_or_assign n_ RPAR n_ body=expr_or_assign
     ;
 
@@ -274,7 +274,7 @@ function returns [ASTNode v]
     ;
 
 par_decl [ArgumentList l]
-    : i=ID                     { $l.add($i.text, null); } 
+    : i=ID                     { $l.add($i.text, null); }
     | i=ID n_ ASSIGN n_ e=expr { $l.add($i.text, e); }
     | v=VARIADIC               { $l.add($v.text, null); } // FIXME This is not quite good, since `...` is a special token - for this reason let's call RSymbol.xxxx(...)
     // The 3 following cases were not handled ... and everything was working fine.
@@ -447,12 +447,12 @@ basic_expr returns [ASTNode v]
     ;
 
 expr_subset [ASTNode i] returns [ASTNode v]
-    : (t=FIELD n_ name=id                     { $v = FieldAccess.create(sourceSection("expr_subset/FIELD", $t, name), FieldOperator.FIELD, i, name.getText()); }) 
-    | (t=AT n_ name=id                        { $v = FieldAccess.create(sourceSection("expr_subset/AT", $t, name), FieldOperator.AT, i, name.getText()); }) 
+    : (t=FIELD n_ name=id                     { $v = FieldAccess.create(sourceSection("expr_subset/FIELD", $t, name), FieldOperator.FIELD, i, name.getText()); })
+    | (t=AT n_ name=id                        { $v = FieldAccess.create(sourceSection("expr_subset/AT", $t, name), FieldOperator.AT, i, name.getText()); })
     | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); ArgumentList.Default.updateParent(v, subset); })
     | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); ArgumentList.Default.updateParent(v, subscript); })
     // Must use RBRAKET twice instead of RBB beacause this is possible: a[b[1]]
-    | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a);  ArgumentList.Default.updateParent(v, a); }) 
+    | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a);  ArgumentList.Default.updateParent(v, a); })
     //| { $v = i; }
     ;
 
@@ -463,6 +463,7 @@ simple_expr returns [ASTNode v]
     | t=NULL                                    { $v = Constant.getNull(sourceSection("simple_expr/NULL", t)); }
     | t=INF                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/INF", t), "Inf"); }
     | t=NAN                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
+    | t=NAINT                                   { $v = Constant.createIntConstant(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
     | num=number                                { $v = num; }
     | cstr=conststring                          { $v = cstr; }
     | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id { $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), Symbol.getSymbol(nsg.getText()), ArgumentList.Default.create(Constant.createStringConstant(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText()), Constant.createStringConstant(sourceSection("simple_expr/NSG/comp", comp), comp.getText()))); }
@@ -514,7 +515,7 @@ comp_operator returns [BinaryOperator v]
 add_operator returns [BinaryOperator v]
     : PLUS  { $v = BinaryOperator.ADD; }
     | MINUS { $v = BinaryOperator.SUB; }
-    ;    
+    ;
 
 mult_operator returns [BinaryOperator v]
     : MULT { $v = BinaryOperator.MULT; }
@@ -528,7 +529,7 @@ power_operator returns [BinaryOperator v]
 
 args returns [ArgumentList v]
     @init { $v = new ArgumentList.Default(); }
-    : n_ (arg_expr[v] n_ (COMMA ({ $v.add((ASTNode) null); } | n_ arg_expr[v]) n_)* )? 
+    : n_ (arg_expr[v] n_ (COMMA ({ $v.add((ASTNode) null); } | n_ arg_expr[v]) n_)* )?
     | n_ { $v.add((ASTNode)null); } (COMMA ({ $v.add((ASTNode) null); } | n_ arg_expr[v]) n_)+
     ;
 
@@ -595,6 +596,10 @@ AT    : '@' ;
 FUNCTION : 'function' ;
 NULL     : 'NULL' ;
 NA       : 'NA' ;
+NAINT    : 'NA_integer_' ;
+///NAREAL   : 'NA_real_' ;
+///NACHAR   : 'NA_character_' ;
+///NACOMPL  : 'NA_complex_' ;
 TRUE     : 'TRUE' ;
 FALSE    : 'FALSE' ;
 INF      : 'Inf' ;
@@ -630,12 +635,12 @@ DOUBLE
     | '0x' HEX_DIGIT+
     ;
 
-DD : '..' ('0'..'9')+ ;  
+DD : '..' ('0'..'9')+ ;
 
 ID
     : '.'* ID_NAME
     | '.'
-    | '`' ( ESC_SEQ | ~('\\'|'`') )* '`' { setText(getText().substring(1, getText().length()-1)); } 
+    | '`' ( ESC_SEQ | ~('\\'|'`') )* '`' { setText(getText().substring(1, getText().length()-1)); }
     ;
 
 OP : '%' OP_NAME+ '%' ;

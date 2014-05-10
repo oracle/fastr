@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,29 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("which")
-public abstract class Which extends RBuiltinNode {
+@RBuiltin(value = "paste0", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+public abstract class Paste0 extends RBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "arr.ind", "use.names"};
+    @Child Paste pasteNode;
+
+    private Object paste(VirtualFrame frame, Object value, Object collapse) {
+        if (pasteNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin()));
+        }
+        return pasteNode.executeObject(frame, value, " ", collapse);
+    }
+
+    private static final Object[] PARAMETER_NAMES = new Object[]{"...", "collapse"};
 
     @Override
     public Object[] getParameterNames() {
@@ -44,24 +53,12 @@ public abstract class Which extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        return new RNode[]{null, ConstantNode.create(RNull.instance)};
     }
 
     @Specialization
-    @SuppressWarnings("unused")
-    public RIntVector which(RAbstractLogicalVector x, byte arrInd, byte useNames) {
+    public Object paste0(VirtualFrame frame, Object value, Object collapse) {
         controlVisibility();
-        ArrayList<Integer> w = new ArrayList<>();
-        for (int i = 0; i < x.getLength(); ++i) {
-            if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
-                w.add(i);
-            }
-        }
-        int[] result = new int[w.size()];
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = w.get(i) + 1;
-        }
-        return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+        return paste(frame, value, collapse);
     }
-
 }

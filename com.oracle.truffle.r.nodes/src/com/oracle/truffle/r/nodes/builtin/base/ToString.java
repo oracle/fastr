@@ -288,7 +288,6 @@ public abstract class ToString extends RBuiltinNode {
         return toStringRecursive(frame, vector.createVector());
     }
 
-    @SlowPath
     @Specialization
     public String toString(REnvironment env) {
         controlVisibility();

@@ -40,7 +40,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(10L,1L) }");
         assertEval("{ seq(1L,4L,2L) }");
         assertEval("{ seq(1,-4,-2) }");
-
+        assertEval("{ seq(0,0,0) }");
+        assertEval("{ seq(0,0) }");
+        assertEval("{ seq(0L,0L,0L) }");
+        assertEval("{ seq(0L,0L) }");
+        assertEval("{ seq(0,0,1i) }");
     }
 
     @Test
@@ -156,6 +160,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(1:3, length.out=4) }");
         assertEval("{ rep(\"hello\", 3) }");
         assertEval("{ rep(c(1,2),c(3,3)) }");
+        assertEval("{ rep(NA,8) }");
+        assertEval("{ rep(TRUE,8) }");
     }
 
     @Test
@@ -688,6 +694,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
         assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
         assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
+        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
     }
 
     @Test
@@ -916,6 +923,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testWhich() {
         assertEval("{ which(c(TRUE, FALSE, NA, TRUE)) }");
         assertEval("{ which(logical()) }");
+        assertEval("{ which(TRUE) }");
+        assertEval("{ which(NA) }");
     }
 
     @Test
@@ -1051,6 +1060,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ order(c(5,2,2,1,7,4),c(\"a\",\"c\",\"b\",\"d\",\"e\",\"f\")) }");
         assertEval("{ order(c(1,1,1,1),c(4,3,2,1)) }");
         assertEval("{ order(c(1,1,1,1),c(\"d\",\"c\",\"b\",\"a\")) }");
+        assertEval("{ order(c(1i,2i,3i)) }");
+        assertEval("{ order(c(3i,1i,2i)) }");
+        assertEval("{ order(c(3+1i,2+2i,1+3i)) }");
+        assertEval("{ order(c(3+1i,2+3i,2+2i,1+3i)) }");
     }
 
     @Test
@@ -2379,15 +2392,12 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testMatch() {
-    }
-
-    @Test
-    @Ignore
-    public void testMatchIgnore() {
         assertEval("{ match(2,c(1,2,3)) }");
         assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
         assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
         assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
+        assertEval("{ match(\"abc\", c(\"xyz\")) }");
+        assertEval("{ match(\"abc\", c(\"xyz\"), nomatch=-1) }");
     }
 
     @Test

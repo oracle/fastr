@@ -98,6 +98,7 @@ public abstract class REnvironment {
 
     public static final String UNNAMED = "";
     private static final String NAME_ATTR_KEY = "name";
+    private static final String PATH_ATTR_KEY = "path";
 
     private static final Empty emptyEnv = new Empty();
     private static Global globalEnv;
@@ -214,7 +215,7 @@ public abstract class REnvironment {
         for (RPackage rPackage : rPackages) {
             VirtualFrame pkgFrame = RRuntime.createVirtualFrame();
             RPackages.loadBuiltin(rPackage.name, pkgFrame);
-            Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame);
+            Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
             attach(2, pkgEnv);
             pkgParent = pkgEnv;
         }
@@ -291,6 +292,20 @@ public abstract class REnvironment {
             }
         }
         return 0;
+    }
+
+    /**
+     * Get the registered {@link Namespace} environment {@code name}, or {@code null} if not found.
+     * TODO this only searches the search path; it seems namespaces can also be registered without
+     * attaching first.
+     */
+    public static Namespace getRegisteredNamespace(String name) {
+        Package pkgEnv = (Package) lookupOnSearchPath("package:" + name);
+        if (pkgEnv == null) {
+            return null;
+        } else {
+            return pkgEnv.getNamespace();
+        }
     }
 
     /**
@@ -444,14 +459,11 @@ public abstract class REnvironment {
     }
 
     /**
-     * Name returned by the {@code search()} function. The default is just the simple name, but some
-     * environments
+     * Name returned by the {@code search()} function. The default is just the simple name, but
+     * globalenv() is different.
      */
     protected String getSearchName() {
         String result = getName();
-        if (this instanceof IsPackage) {
-            result = "package:" + result;
-        }
         return result;
     }
 
@@ -523,7 +535,7 @@ public abstract class REnvironment {
     @SlowPath
     public void setAttr(String attrName, Object value) {
         if (attributes == null) {
-            attributes = new HashMap<>();
+            attributes = new LinkedHashMap<>();
         }
         attributes.put(attrName, value);
     }
@@ -565,29 +577,36 @@ public abstract class REnvironment {
      */
     private static class Imports extends REnvironment {
         Imports(String name, REnvFrameAccess frameAccess) {
-            super(baseEnv.getNamespace(), name, frameAccess);
+            super(baseEnv.getNamespace(), UNNAMED, frameAccess);
+            setAttr(NAME_ATTR_KEY, "imports:" + name);
         }
 
-        @Override
-        protected String getPrintNameHelper() {
-            return "imports:" + getName();
-        }
     }
 
     /**
      * Denotes an environment associated with an R package. This represents the "package:xxx"; the
      * "namespace:xxx" and "imports:xxx" environments are stored as fields of this instance.
      */
-    private static class Package extends REnvironment implements IsPackage {
+    public static class Package extends REnvironment implements IsPackage {
         private final Imports importsEnv;
         private final Namespace namespaceEnv;
 
-        Package(REnvironment parent, String name, VirtualFrame frame) {
+        Package(REnvironment parent, String name, VirtualFrame frame, String path) {
             // This sets up the EnvFrameAccess instance, which is shared by the
             // Namespace (and Imports?) environments.
             super(parent, name, frame);
             this.importsEnv = new Imports(name, this.frameAccess);
             this.namespaceEnv = new Namespace(this.importsEnv, name, this.frameAccess);
+            setName(name);
+            setPath(path);
+        }
+
+        protected void setName(String name) {
+            setAttr(NAME_ATTR_KEY, "package:" + name);
+        }
+
+        protected void setPath(String path) {
+            setAttr(PATH_ATTR_KEY, path);
         }
 
         /**
@@ -600,7 +619,7 @@ public abstract class REnvironment {
             this.namespaceEnv = new Namespace(emptyEnv, "base", this.frameAccess);
         }
 
-        Namespace getNamespace() {
+        public Namespace getNamespace() {
             return namespaceEnv;
         }
     }
@@ -613,6 +632,21 @@ public abstract class REnvironment {
         @Override
         public void rm(String key) throws PutException {
             throw new PutException("cannot remove variables from the " + getPrintNameHelper() + " environment");
+        }
+
+        @Override
+        protected void setName(String name) {
+            // base not attributed
+        }
+
+        @Override
+        protected void setPath(String path) {
+            // base not attributed
+        }
+
+        @Override
+        protected String getSearchName() {
+            return "package:base";
         }
     }
 

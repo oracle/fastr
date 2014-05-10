@@ -422,8 +422,8 @@ public abstract class RCallNode extends RNode {
                 }
             }
         }
-        if (varArgIndex >= 0) {
-            int varArgCount = arguments.length - varArgIndex - matchedNames.cardinality();
+        int varArgCount = arguments.length - varArgIndex - matchedNames.cardinality();
+        if (varArgIndex >= 0 && varArgCount >= 0) {
             T[] varArgsArray = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgCount);
             String[] namesArray = null;
             if (unmatchedNameCount != 0) {
