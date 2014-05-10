@@ -25,12 +25,11 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -246,24 +245,4 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
     }
 
-    public static class RSnippetNode extends RCustomBuiltinNode {
-
-        @Child protected RCallNode snippetCall;
-
-        public RSnippetNode(RNode[] arguments, RBuiltinFactory builtin, FunctionExpressionNode function) {
-            super(arguments, builtin);
-            snippetCall = RCallNode.createCall(function, CallArgumentsNode.create(getArguments(), new String[]{}));
-            assignSourceSection(((DefaultCallTarget) ((FunctionExpressionNode.StaticFunctionExpressionNode) function).getFunction().getTarget()).getRootNode().getSourceSection());
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return snippetCall.execute(frame);
-        }
-
-        @Override
-        public String getSourceCode() {
-            return getSourceSection().getCode();
-        }
-    }
 }

@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.impl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -198,12 +196,8 @@ public class EnvFunctions {
         @Specialization(order = 1)
         public REnvironment environment(RFunction func) {
             controlVisibility();
-            RootNode rootNode = ((DefaultCallTarget) func.getTarget()).getRootNode();
-            if (rootNode instanceof RBuiltinRootNode) {
-                return REnvironment.baseNamespaceEnv();
-            } else {
-                return lexicalChain(func);
-            }
+            REnvironment env = RArguments.getEnvironment(func.getEnclosingFrame());
+            return env == null ? lexicalChain(func) : env;
         }
 
         @Specialization(order = 100)

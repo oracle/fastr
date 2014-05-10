@@ -34,7 +34,7 @@ public abstract class DispatchedCallNode extends RNode {
     }
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final CallArgumentsNode callArgsNode) {
-        if (dispatchType == RRuntime.RDotGroup) {
+        if (dispatchType == RGroupGenerics.RDotGroup) {
             return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callArgsNode));
         }
         throw new AssertionError();
@@ -160,9 +160,12 @@ public abstract class DispatchedCallNode extends RNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 aCallNode.replace(RCallNode.createCall(null, aFuncCall.args));
             }
-            Object result = aCallNode.execute(frame, aFuncCall.function);
-            aDispatchNode.unsetEnvironment(frame);
-            return result;
+            try {
+                Object result = aCallNode.execute(frame, aFuncCall.function);
+                return result;
+            } finally {
+                aDispatchNode.unsetEnvironment(frame);
+            }
         }
 
         @Override

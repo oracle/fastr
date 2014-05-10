@@ -8,7 +8,6 @@
  *
  * All rights reserved.
  */
-
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
@@ -42,8 +41,8 @@ public class GroupDispatchNode extends S3DispatchNode {
     }
 
     public static GroupDispatchNode create(final String aGenericName, final CallArgumentsNode callArgNode) {
-        final String grpName = RRuntime.getGroup(aGenericName);
-        if (grpName == RRuntime.GROUP_OPS) {
+        final String grpName = RGroupGenerics.getGroup(aGenericName);
+        if (grpName == RGroupGenerics.GROUP_OPS) {
             return new OpsGroupDispatchNode(aGenericName, grpName, callArgNode);
         }
         return new GroupDispatchNode(aGenericName, grpName, callArgNode);
@@ -89,7 +88,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         defineVars(newFrame);
         wvnMethod.execute(newFrame, dotMethod);
         if (writeGroup) {
-            wvnGroup = initWvn(wvnGroup, RRuntime.RDotGroup);
+            wvnGroup = initWvn(wvnGroup, RGroupGenerics.RDotGroup);
             wvnGroup.execute(newFrame, this.groupName);
         }
         targetFunction.setEnclosingFrame(newFrame.materialize());
