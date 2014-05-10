@@ -160,9 +160,12 @@ public abstract class DispatchedCallNode extends RNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 aCallNode.replace(RCallNode.createCall(null, aFuncCall.args));
             }
-            Object result = aCallNode.execute(frame, aFuncCall.function);
-            aDispatchNode.unsetEnvironment(frame);
-            return result;
+            try {
+                Object result = aCallNode.execute(frame, aFuncCall.function);
+                return result;
+            } finally {
+                aDispatchNode.unsetEnvironment(frame);
+            }
         }
 
         @Override

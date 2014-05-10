@@ -105,6 +105,7 @@ public abstract class REnvironment {
     private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
     private static Autoload autoloadEnv;
+
     /**
      * The environments returned by the R {@code search} function.
      */
@@ -148,7 +149,6 @@ public abstract class REnvironment {
         } catch (FrameSlotTypeException fste) {
             return false;
         }
-
     }
 
     /**
@@ -203,13 +203,14 @@ public abstract class REnvironment {
         // There is a circularity here in that we can't materialize the frame
         // until we have evaluated the R code, so if that happened to call baseenv() we have
         // a problem.
-        RPackages.loadBuiltin("base", baseFrame);
         baseEnv = new Base(baseFrame);
         // autoload always next, has no R state
         autoloadEnv = new Autoload();
         globalEnv = new Global(autoloadEnv, globalFrame);
         initSearchList();
 
+        // load base package first
+        RPackages.loadBuiltin("base", baseFrame);
         // now load rPackages, we need a new VirtualFrame for each
         REnvironment pkgParent = autoloadEnv;
         for (RPackage rPackage : rPackages) {
@@ -402,6 +403,7 @@ public abstract class REnvironment {
      */
     protected REnvironment(REnvironment parent, String name, VirtualFrame frame) {
         this(parent, name, setEnclosingHelper(parent, frame));
+        RArguments.setEnvironment(frame, this);
     }
 
     /**
@@ -617,6 +619,7 @@ public abstract class REnvironment {
             super(emptyEnv, "base", frame);
             this.importsEnv = null;
             this.namespaceEnv = new Namespace(emptyEnv, "base", this.frameAccess);
+            RArguments.setEnvironment(frame, this.namespaceEnv);
         }
 
         public Namespace getNamespace() {

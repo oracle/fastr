@@ -32,7 +32,7 @@ public abstract class RBuiltinPackages implements RBuiltinLookup {
 
     private static final List<RBuiltinPackage> packages = new ArrayList<>();
 
-    protected void load(RBuiltinPackage builtins) {
+    protected void add(RBuiltinPackage builtins) {
         packages.add(builtins);
     }
 

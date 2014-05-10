@@ -27,12 +27,11 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -51,9 +50,24 @@ import com.oracle.truffle.r.runtime.*;
  * parsing errors we retain the R source code, although this is not functionally necessary.
  */
 public abstract class RBuiltinPackage {
-    private static final Map<String, List<RLibraryLoader.Component>> rSources = new HashMap<>();
+
+    public static class Component {
+        final String libContents;
+        final String libName;
+
+        Component(String libName, String libContents) {
+            this.libContents = libContents;
+            this.libName = libName;
+        }
+
+        @Override
+        public String toString() {
+            return libName;
+        }
+    }
+
+    private static final Map<String, List<Component>> rSources = new HashMap<>();
     private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
-    private static boolean initialized;
 
     private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
@@ -65,14 +79,14 @@ public abstract class RBuiltinPackage {
             if (is == null) {
                 return;
             }
-            List<RLibraryLoader.Component> componentList = new ArrayList<>();
+            List<Component> componentList = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = r.readLine()) != null) {
                     if (line.endsWith(".r") || line.endsWith(".R")) {
                         final String rResource = "R/" + line.trim();
                         String content = Utils.getResourceAsString(getClass(), rResource, true);
-                        componentList.add(new RLibraryLoader.Component(getClass().getSimpleName() + "/" + rResource, content));
+                        componentList.add(new Component(getClass().getSimpleName() + "/" + rResource, content));
                     }
                 }
             }
@@ -105,20 +119,15 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
-    private static void doLoad(Map.Entry<String, List<RLibraryLoader.Component>> entry) {
-        RLibraryLoader loader = new RLibraryLoader(entry.getKey(), entry.getValue());
-        Map<String, FunctionExpressionNode.StaticFunctionExpressionNode> builtinDefs = loader.loadLibrary();
-        for (Map.Entry<String, FunctionExpressionNode.StaticFunctionExpressionNode> def : builtinDefs.entrySet()) {
-            NodeFactory<RBuiltinNode> nodeFactory = new RSnippetNodeFactory(def.getValue());
-            RBuiltinFactory builtinFactory = new RBuiltinFactory(new String[]{def.getKey()}, LastParameterKind.VALUE, nodeFactory, new Object[0]);
-            putBuiltin(def.getKey(), builtinFactory);
-        }
-    }
-
-    public static void initialize() {
-        if (!initialized) {
-            rSources.entrySet().stream().parallel().forEach(entry -> doLoad(entry));
-            initialized = true;
+    public void loadSources(VirtualFrame frame) {
+        System.err.println("Package " + getName());
+        List<Component> sources = rSources.get(getName());
+        if (sources != null) {
+            for (Component src : sources) {
+                System.err.printf("  Loading %s ... ", src.libName);
+                REngine.parseAndEval(src.libContents, frame, false);
+                System.err.println("ok");
+            }
         }
     }
 
@@ -239,45 +248,6 @@ public abstract class RBuiltinPackage {
 
         public List<Class<? extends Node>> getExecutionSignature() {
             return Arrays.<Class<? extends Node>> asList(RNode.class);
-        }
-
-    }
-
-    private static class RSnippetNodeFactory implements NodeFactory<RBuiltinNode> {
-
-        private final FunctionExpressionNode.StaticFunctionExpressionNode function;
-        private final Class<? extends RBuiltinNode> clazz;
-        private final int nargs;
-
-        public RSnippetNodeFactory(FunctionExpressionNode.StaticFunctionExpressionNode function) {
-            this.function = (FunctionExpressionNode.StaticFunctionExpressionNode) function.copy();
-            clazz = RBuiltinNode.RSnippetNode.class;
-            nargs = ((FunctionDefinitionNode) ((DefaultCallTarget) function.getFunction().getTarget()).getRootNode()).getParameterCount();
-        }
-
-        @Override
-        public RBuiltinNode createNode(Object... arguments) {
-            RBuiltinNode builtin = new RBuiltinNode.RSnippetNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1], function);
-            return builtin;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public Class<RBuiltinNode> getNodeClass() {
-            return (Class<RBuiltinNode>) clazz;
-        }
-
-        @Override
-        public List<List<Class<?>>> getNodeSignatures() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public List<Class<? extends Node>> getExecutionSignature() {
-            Class<? extends Node>[] sig = new Class[nargs];
-            Arrays.fill(sig, RNode.class);
-            return Arrays.<Class<? extends Node>> asList(sig);
         }
 
     }

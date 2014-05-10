@@ -73,7 +73,6 @@ public final class REngine implements RBuiltinLookupProvider {
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
         VirtualFrame baseFrame = RRuntime.createVirtualFrame();
         REnvironment.initialize(globalFrame, baseFrame, RPackages.initialize());
-        RBuiltinPackage.initialize();
         RRuntime.initialize();
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {

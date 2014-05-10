@@ -64,17 +64,18 @@ public final class RArguments {
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    private static final int INDEX_FUNCTION = 0;
-    private static final int INDEX_ENCLOSING_FRAME = 1;
-    private static final int INDEX_N_ARGS = 2;
-    private static final int INDEX_N_NAMES = 3;
-    private static final int INDEX_ARGUMENTS = 4;
+    private static final int INDEX_ENVIRONMENT = 0;
+    private static final int INDEX_FUNCTION = 1;
+    private static final int INDEX_ENCLOSING_FRAME = 2;
+    private static final int INDEX_N_ARGS = 3;
+    private static final int INDEX_N_NAMES = 4;
+    private static final int INDEX_ARGUMENTS = 5;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
      * names.
      */
-    public static final int MINIMAL_ARRAY_LENGTH = 4;
+    public static final int MINIMAL_ARRAY_LENGTH = 5;
 
     private RArguments() {
     }
@@ -100,15 +101,16 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, Object[] evaluatedArgs, String[] names) {
-        return create(functionObj, functionObj.getEnclosingFrame(), evaluatedArgs, names);
+        return create(null, functionObj, functionObj.getEnclosingFrame(), evaluatedArgs, names);
     }
 
     public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs) {
-        return create(functionObj, enclosingFrame, evaluatedArgs, EMPTY_STRING_ARRAY);
+        return create(null, functionObj, enclosingFrame, evaluatedArgs, EMPTY_STRING_ARRAY);
     }
 
-    public static Object[] create(RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
+    public static Object[] create(REnvironment env, RFunction functionObj, MaterializedFrame enclosingFrame, Object[] evaluatedArgs, String[] names) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + names.length];
+        a[INDEX_ENVIRONMENT] = env;
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_N_ARGS] = evaluatedArgs.length;
@@ -116,6 +118,10 @@ public final class RArguments {
         System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
         System.arraycopy(names, 0, a, INDEX_ARGUMENTS + evaluatedArgs.length, names.length);
         return a;
+    }
+
+    public static REnvironment getEnvironment(Frame frame) {
+        return (REnvironment) frame.getArguments()[INDEX_ENVIRONMENT];
     }
 
     public static RFunction getFunction(Frame frame) {
@@ -144,6 +150,10 @@ public final class RArguments {
 
     public static int getNamesLength(Frame frame) {
         return getNNames(frame);
+    }
+
+    public static void setEnvironment(Frame frame, REnvironment env) {
+        frame.getArguments()[INDEX_ENVIRONMENT] = env;
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
