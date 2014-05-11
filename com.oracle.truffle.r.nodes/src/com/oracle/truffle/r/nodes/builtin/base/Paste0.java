@@ -41,7 +41,7 @@ public abstract class Paste0 extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin()));
         }
-        return pasteNode.executeObject(frame, value, " ", collapse);
+        return pasteNode.executeObject(frame, value, "", collapse);
     }
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"...", "collapse"};

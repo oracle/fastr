@@ -112,12 +112,12 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-            lastGenericName = generic;
-        }
+// if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+        dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+        lastGenericName = generic;
+// }
         throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
     }
 }

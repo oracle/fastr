@@ -123,7 +123,7 @@ as.data.frame.data.frame <- function(x, row.names = NULL, ...)
 
 
 # TODO: handle parameters correctly
-#as.data.frame.numeric <- function(x, row.names = NULL, optional = FALSE, ...,
+#as.data.frame.vector <- function(x, row.names = NULL, optional = FALSE, ...,
 #                                 nm = paste(deparse(substitute(x),
 #                                 width.cutoff = 500L), collapse=" ")  )
 as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALSE)
@@ -155,7 +155,7 @@ as.data.frame.ts <- function(x, ...)
 	as.data.frame.vector(x, ...)
 }
 
-# TODO: "properly" evaluate these .R files (for some reason assignments do not work at this point)
+# TODO: for some reason assignments do not work at this point
 #as.data.frame.raw  <- as.data.frame.vector
 as.data.frame.raw <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 #as.data.frame.factor  <- as.data.frame.vector
@@ -191,7 +191,7 @@ default.stringsAsFactors <- function()
 #}
 as.data.frame.character <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 
-# TODO: "properly" evaluate these .R files (for some reason assignments do not work at this point)
+# TODO: for some reason assignments do not work at this point
 #as.data.frame.logical <- as.data.frame.vector
 as.data.frame.logical <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 
