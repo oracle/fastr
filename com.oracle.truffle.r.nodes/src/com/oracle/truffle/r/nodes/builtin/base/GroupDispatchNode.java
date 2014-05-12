@@ -115,6 +115,11 @@ public class GroupDispatchNode extends S3DispatchNode {
         return callBuiltin(frame);
     }
 
+    @Override
+    public Object execute(VirtualFrame frame, final RStringVector aType) {
+        throw new UnsupportedOperationException();
+    }
+
     protected static boolean isEqualType(final RStringVector currentType, final RStringVector lastType) {
         if (currentType == null && lastType == null) {
             return true;

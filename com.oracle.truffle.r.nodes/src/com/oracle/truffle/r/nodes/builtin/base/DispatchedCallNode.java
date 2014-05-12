@@ -82,11 +82,8 @@ public abstract class DispatchedCallNode extends RNode {
                 final DispatchedCallNode cachedNode = new CachedNode(current, new UninitializedDispatchedCallNode(this, this.depth + 1), type);
                 this.replace(cachedNode);
                 return cachedNode;
-            } else {
-                DispatchedCallNode topMost = (DispatchedCallNode) getTopNode();
-                DispatchedCallNode generic = topMost.replace(createCurrentNode(type));
-                return generic;
             }
+            return this.replace(new GenericDispatchNode(createCurrentNode(type)));
         }
 
         protected DispatchedCallNode createCurrentNode(RStringVector type) {
@@ -99,13 +96,19 @@ public abstract class DispatchedCallNode extends RNode {
             // TODO: throw error
             return null;
         }
+    }
 
-        protected Node getTopNode() {
-            Node parentNode = this;
-            for (int i = 0; i < depth; i++) {
-                parentNode = parentNode.getParent();
-            }
-            return parentNode;
+    public static final class GenericDispatchNode extends DispatchedCallNode {
+
+        @Child private DispatchedCallNode dcn;
+
+        public GenericDispatchNode(DispatchedCallNode dcn) {
+            this.dcn = dcn;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RStringVector type) {
+            return dcn.execute(frame, type);
         }
     }
 
@@ -153,6 +156,16 @@ public abstract class DispatchedCallNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame);
+            return executeHelper(frame, aFuncCall);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RStringVector type) {
+            DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame, type);
+            return executeHelper(frame, aFuncCall);
+        }
+
+        private Object executeHelper(VirtualFrame frame, DispatchNode.FunctionCall aFuncCall) {
             if (aCallNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 aCallNode = insert(RCallNode.createCall(null, aFuncCall.args));
@@ -166,11 +179,6 @@ public abstract class DispatchedCallNode extends RNode {
             } finally {
                 aDispatchNode.unsetEnvironment(frame);
             }
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RStringVector type) {
-            return this.execute(frame);
         }
     }
 }
