@@ -2692,8 +2692,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testDefaultArgsIgnore() {
+    public void testDefaultArgs() {
         assertEvalError("{ array(dim=c(-2,2)); }");
         assertEvalError("{ array(dim=c(-2,-2)); }");
         assertEval("{ length(array(dim=c(1,0,2,3))) }");

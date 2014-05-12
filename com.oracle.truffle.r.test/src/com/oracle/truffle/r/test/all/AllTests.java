@@ -6124,22 +6124,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_da411f3d8d8a722a471e77966e8e1135() {
+    public void TestSimpleBuiltins_testDefaultArgs_da411f3d8d8a722a471e77966e8e1135() {
         assertEval("{ length(array(dim=c(1,0,2,3))) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_3cc1186607b6ef41bdbc0c66fc278b3a() {
+    public void TestSimpleBuiltins_testDefaultArgs_3cc1186607b6ef41bdbc0c66fc278b3a() {
         assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_62c7f6f4b6bf06a81284d05487afc849() {
+    public void TestSimpleBuiltins_testDefaultArgs_62c7f6f4b6bf06a81284d05487afc849() {
         assertEvalError("{ array(dim=c(-2,2)); }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_6298ff4d222c7787e6c111563ac6a26a() {
+    public void TestSimpleBuiltins_testDefaultArgs_6298ff4d222c7787e6c111563ac6a26a() {
         assertEvalError("{ array(dim=c(-2,-2)); }");
     }
 

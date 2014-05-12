@@ -5295,6 +5295,22 @@ In cor(cbind(c(1, 1, 1), c(1, 1, 1))) : the standard deviation is zero
 #{ cumsum(c(TRUE,FALSE,TRUE)) }
 [1] 1 1 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDefaultArgs
+#{ array(dim=c(-2,-2)); }
+Error in array(dim = c(-2, -2)) : the dims contain negative values
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDefaultArgs
+#{ array(dim=c(-2,2)); }
+Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDefaultArgs
+#{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }
+[1] 2 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDefaultArgs
+#{ length(array(dim=c(1,0,2,3))) }
+[1] 0
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiagonal
 #{ m <- matrix(1:6, nrow=2) ; diag(m) }
 [1] 1 4
