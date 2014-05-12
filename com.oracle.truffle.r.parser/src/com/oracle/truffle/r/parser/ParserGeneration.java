@@ -50,7 +50,8 @@ public class ParserGeneration {
         "support :: and ::: at parser level",
         "support NA_integer_",
         "allow string literals as argument names",
-        "treat arguments as nodes and argument lists as generic lists"
+        "treat arguments as nodes and argument lists as generic lists",
+        "more verbose debug output for source attribution"
     };
 
 }

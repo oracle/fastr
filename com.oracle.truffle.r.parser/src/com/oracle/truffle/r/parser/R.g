@@ -86,7 +86,14 @@ package com.oracle.truffle.r.parser;
     private SourceSection sourceSection(String id, ASTNode a, ASTNode b) {
         SourceSection as = a.getSource();
         int ai = as.getCharIndex();
-        return new DefaultSourceSection(source, id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
+        if (DUMP_SRC) {
+            System.out.print("<<" + id + "," + as.getStartLine() + "," + as.getStartColumn() + "," + ai + "," + (b.getSource().getCharEndIndex() - ai));
+        }
+        SourceSection src = new DefaultSourceSection(source, id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
+        if (DUMP_SRC) {
+            System.out.println("=>" + src.getCode() + ">>");
+        }
+        return src;
     }
     
     /**
@@ -96,7 +103,14 @@ package com.oracle.truffle.r.parser;
         CommonToken ta = (CommonToken) a;
         int startIndex = ta.getStartIndex();
         int length = b.getSource().getCharEndIndex() - startIndex;
-        return new DefaultSourceSection(source, id, ta.getLine(), ta.getCharPositionInLine() + 1, startIndex, length);
+        if (DUMP_SRC) {
+            System.out.print("<<" + id + "," + ta.getLine() + "," + (ta.getCharPositionInLine() + 1) + "," + startIndex + "," + length);
+        }
+        SourceSection src = new DefaultSourceSection(source, id, ta.getLine(), ta.getCharPositionInLine() + 1, startIndex, length);
+        if (DUMP_SRC) {
+            System.out.println("=>" + src.getCode() + ">>");
+        }
+        return src;
     }
 
     public void display_next_tokens(){
@@ -286,9 +300,9 @@ function returns [ASTNode v]
     ;
 
 par_decl [List<ArgNode> l]
-    : i=ID                     { $l.add(ArgNode.create(null, $i.text, null)); }
-    | i=ID n_ ASSIGN n_ e=expr { $l.add(ArgNode.create(null, $i.text, e)); }
-    | v=VARIADIC               { $l.add(ArgNode.create(null, $v.text, null)); } // FIXME This is not quite good, since `...` is a special token - for this reason let's call RSymbol.xxxx(...)
+    : i=ID                     { $l.add(ArgNode.create(sourceSection("par_decl/ID", i), $i.text, null)); }
+    | i=ID n_ ASSIGN n_ e=expr { $l.add(ArgNode.create(sourceSection("par_decl/ID_ASSIGN", i, e), $i.text, e)); }
+    | v=VARIADIC               { $l.add(ArgNode.create(sourceSection("par_decl/VARIADIC", v), $v.text, null)); } // FIXME This is not quite good, since `...` is a special token - for this reason let's call RSymbol.xxxx(...)
     // The 3 following cases were not handled ... and everything was working fine.
     // They are added for completeness, however note that a function created
     // with such a signature will always fail if it tries to access them!
