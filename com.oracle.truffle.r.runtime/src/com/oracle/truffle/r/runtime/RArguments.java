@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * The frame layout, depicted, is as follows:
  * <pre>
  *                            +-------------------+
+ * INDEX_ENVIRONMENT       -> | REnvironment      |
+ *                            +-------------------+
  * INDEX_FUNCTION          -> | RFunction         |
  *                            +-------------------+
  * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame |

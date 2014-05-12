@@ -199,11 +199,8 @@ public abstract class REnvironment {
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
-        // Populate the base package.
-        // There is a circularity here in that we can't materialize the frame
-        // until we have evaluated the R code, so if that happened to call baseenv() we have
-        // a problem.
         baseEnv = new Base(baseFrame);
+
         // autoload always next, has no R state
         autoloadEnv = new Autoload();
         globalEnv = new Global(autoloadEnv, globalFrame);
