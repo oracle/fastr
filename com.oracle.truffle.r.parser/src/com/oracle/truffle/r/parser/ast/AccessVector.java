@@ -19,7 +19,7 @@ public class AccessVector extends Call {
     final ASTNode vector;
     final boolean subset;
 
-    public AccessVector(SourceSection src, ASTNode vector, ArgumentList args, boolean subset) {
+    public AccessVector(SourceSection src, ASTNode vector, List<ArgNode> args, boolean subset) {
         super(args);
         this.source = src;
         this.vector = vector;

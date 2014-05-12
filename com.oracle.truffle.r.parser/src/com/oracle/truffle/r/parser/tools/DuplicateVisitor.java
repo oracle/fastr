@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.parser.tools;
 
+import java.util.*;
+
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -45,10 +47,10 @@ public class DuplicateVisitor extends BasicVisitor<ASTNode> {
         return new AccessVector(n.getSource(), d(n.getVector()), d(n.getArgs()), n.isSubset());
     }
 
-    protected ArgumentList d(ArgumentList l) {
-        ArgumentList newList = new ArgumentList.Default();
-        for (ArgumentList.Entry e : l) {
-            newList.add(e.getName(), d(e.getValue()));
+    protected List<ArgNode> d(List<ArgNode> l) {
+        List<ArgNode> newList = new ArrayList<>();
+        for (ArgNode e : l) {
+            newList.add(ArgNode.create(e.getSource(), e.getName(), d(e.getValue())));
         }
         return newList;
     }

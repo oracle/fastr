@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadVariableSuperMaterializedNode;
@@ -101,7 +103,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             // A call .Internal(f(args)) is rewritten as .Internal.f(args).
             // If the first arg is not a function call, then it will be an error,
             // but we must not crash here.
-            ASTNode callArg1 = call.getArgs().first().getValue();
+            ASTNode callArg1 = call.getArgs().get(0).getValue();
             if (callArg1 instanceof FunctionCall) {
                 FunctionCall internalCall = (FunctionCall) callArg1;
                 callName = Symbol.getSymbol(".Internal." + internalCall.getName().toString());
@@ -111,7 +113,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         int index = 0;
         String[] argumentNames = new String[call.getArgs().size()];
         RNode[] nodes = new RNode[call.getArgs().size()];
-        for (ArgumentList.Entry e : call.getArgs()) {
+        for (ArgNode e : call.getArgs()) {
             Symbol argName = e.getName();
             argumentNames[index] = (argName == null ? null : RRuntime.toString(argName));
             nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
@@ -127,7 +129,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(Function func) {
-        ArgumentList argumentsList = func.getSignature();
+        List<ArgNode> argumentsList = func.getSignature();
 
         REnvironment.FunctionDefinition funcEnvironment = new REnvironment.FunctionDefinition(environment);
         this.environment = funcEnvironment;
@@ -147,7 +149,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size() + 1];
                 int index = 0;
-                for (ArgumentList.Entry arg : argumentsList) {
+                for (ArgNode arg : argumentsList) {
                     RNode defaultValue = arg.getValue() != null ? arg.getValue().accept(this) : ConstantNode.create(RMissing.instance);
                     init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index, defaultValue), true, false);
                     parameterNames[index] = RRuntime.toString(arg.getName());
@@ -213,7 +215,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         throw new UnsupportedOperationException("Unsupported AST Node " + n.getClass().getName());
     }
 
-    private RNode createPositions(ArgumentList argList, int argLength, boolean isSubset, boolean isAssignment) {
+    @Override
+    public RNode visit(ArgNode n) {
+        assert n.getValue() != null;
+        return n.getValue().accept(this);
+    }
+
+    private RNode createPositions(List<ArgNode> argList, int argLength, boolean isSubset, boolean isAssignment) {
         RNode[] positions;
         OperatorConverterNode[] operatorConverters;
         MultiDimPosConverterNode[] multiDimConverters = null;
@@ -233,7 +241,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
             castPositions = new ArrayPositionCast[argLength];
             for (int i = 0; i < argLength; i++) {
-                ASTNode node = argList.getNode(i);
+                ASTNode node = argList.get(i).getValue();
                 positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this));
                 if (isAssignment) {
                     multiDimConvertersValue[i] = MultiDimPosConverterValueNodeFactory.create(isSubset, null, null, null);
@@ -255,10 +263,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     public RNode visit(AccessVector a) {
         RNode vector = a.getVector().accept(this);
         RNode dropDim = ConstantNode.create(true);
-        ArgumentList args = a.getArgs();
+        List<ArgNode> args = a.getArgs();
         int argLength = args.size();
         if (argLength > 0) {
-            for (ArgumentList.Entry e : args) {
+            for (ArgNode e : args) {
                 if (e.getName() != null && e.getName().toString().equals(RRuntime.DROP_DIM_ARG_NAME)) {
                     argLength--;
                     break;
@@ -266,8 +274,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
             if (argLength < args.size()) {
                 dropDim = null;
-                ArgumentList newArgs = new ArgumentList.Default();
-                for (ArgumentList.Entry e : args) {
+                List<ArgNode> newArgs = new ArrayList<>();
+                for (ArgNode e : args) {
                     if (e.getName() != null && e.getName().toString().equals(RRuntime.DROP_DIM_ARG_NAME) && dropDim == null) {
                         // first occurence of "drop" argument counts - the others are treated as
                         // indexes
@@ -430,22 +438,22 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         // preparations
         RNode rhs = n.getExpr().accept(this);
         FunctionCall f = n.getBuiltin();
-        ArgumentList args = f.getArgs();
-        SimpleAccessVariable vAST = (SimpleAccessVariable) args.first().getValue();
+        List<ArgNode> args = f.getArgs();
+        SimpleAccessVariable vAST = (SimpleAccessVariable) args.get(0).getValue();
         String vSymbol = RRuntime.toString(vAST.getSymbol());
 
         RNode[] seq = new RNode[5];
         final Object rhsSymbol = constructReplacementPrefix(seq, rhs, vSymbol, vAST, n.isSuper());
 
         // massage arguments to replacement function call (replace v with tmp, append a)
-        ArgumentList rfArgs = new ArgumentList.Default();
-        rfArgs.add(AccessVariable.create(null, varSymbol, false));
+        List<ArgNode> rfArgs = new ArrayList<>();
+        rfArgs.add(ArgNode.create(null, (Symbol) null, AccessVariable.create(null, varSymbol, false)));
         if (args.size() > 1) {
             for (int i = 1; i < args.size(); ++i) {
-                rfArgs.add(args.getNode(i));
+                rfArgs.add(args.get(i));
             }
         }
-        rfArgs.add(AccessVariable.create(null, rhsSymbol));
+        rfArgs.add(ArgNode.create(null, (Symbol) null, AccessVariable.create(null, rhsSymbol)));
 
         // replacement function call (use visitor for FunctionCall)
         FunctionCall rfCall = new FunctionCall(null, f.getName(), rfArgs);

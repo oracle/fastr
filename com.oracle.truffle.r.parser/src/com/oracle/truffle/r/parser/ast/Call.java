@@ -13,20 +13,19 @@ package com.oracle.truffle.r.parser.ast;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.r.parser.ast.ArgumentList.*;
 
 public abstract class Call extends ASTNode {
 
-    final ArgumentList args;
+    final List<ArgNode> args;
 
-    public Call(ArgumentList alist) {
+    public Call(List<ArgNode> alist) {
         args = alist;
     }
 
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {
         List<R> list = new ArrayList<>();
-        for (Entry e : args) {
+        for (ArgNode e : args) {
             ASTNode n = e.getValue();
             if (n != null) {
                 list.add(n.accept(v));
@@ -35,11 +34,11 @@ public abstract class Call extends ASTNode {
         return list;
     }
 
-    public ArgumentList getArgs() {
+    public List<ArgNode> getArgs() {
         return args;
     }
 
-    public static ASTNode create(SourceSection src, ASTNode call, ArgumentList args) {
+    public static ASTNode create(SourceSection src, ASTNode call, List<ArgNode> args) {
         if (call instanceof SimpleAccessVariable) {
             SimpleAccessVariable ccall = (SimpleAccessVariable) call;
             return create(src, ccall.getSymbol(), args);
@@ -52,15 +51,16 @@ public abstract class Call extends ASTNode {
         return null;
     }
 
-    public static ASTNode create(SourceSection src, Symbol funName, ArgumentList args) {
+    public static ASTNode create(SourceSection src, Symbol funName, List<ArgNode> args) {
         return new FunctionCall(src, funName, args);
     }
 
-    public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, ArgumentList args) {
+    public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, List<ArgNode> args) {
         return new AccessVector(src, lhs, args, op == CallOperator.SUBSET);
     }
 
     public enum CallOperator {
-        SUBSET, SUBSCRIPT
+        SUBSET,
+        SUBSCRIPT
     }
 }

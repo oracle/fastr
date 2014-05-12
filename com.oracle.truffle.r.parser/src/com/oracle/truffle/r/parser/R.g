@@ -20,6 +20,9 @@ options {
 //@formatter:off
 package com.oracle.truffle.r.parser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.impl.*;
 
@@ -84,6 +87,16 @@ package com.oracle.truffle.r.parser;
         SourceSection as = a.getSource();
         int ai = as.getCharIndex();
         return new DefaultSourceSection(source, id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
+    }
+    
+    /**
+     * Create a {@link SourceSection} from a token and an {@link ASTNode}, spanning their source.
+     */
+    private SourceSection sourceSection(String id, Token a, ASTNode b) {
+        CommonToken ta = (CommonToken) a;
+        int startIndex = ta.getStartIndex();
+        int length = b.getSource().getCharEndIndex() - startIndex;
+        return new DefaultSourceSection(source, id, ta.getLine(), ta.getCharPositionInLine() + 1, startIndex, length);
     }
 
     public void display_next_tokens(){
@@ -261,22 +274,21 @@ repeat_expr returns [ASTNode v]
 
 function returns [ASTNode v]
     @init {
-        ArgumentList l = new ArgumentList.Default();
+        List<ArgNode> l = new ArrayList<>();
         ASTNode vv = null;
     }
     @after {
         SourceSection srcs = sourceSection("function", $start, $stop);
         vv = Function.create(l, $body.v, srcs);
-        ArgumentList.Default.updateParent(vv, l);
         $v = vv;
     }
     : FUNCTION n_ LPAR  n_ (par_decl[l] (n_ COMMA n_ par_decl[l])* n_)? RPAR n_ body=expr_or_assign
     ;
 
-par_decl [ArgumentList l]
-    : i=ID                     { $l.add($i.text, null); }
-    | i=ID n_ ASSIGN n_ e=expr { $l.add($i.text, e); }
-    | v=VARIADIC               { $l.add($v.text, null); } // FIXME This is not quite good, since `...` is a special token - for this reason let's call RSymbol.xxxx(...)
+par_decl [List<ArgNode> l]
+    : i=ID                     { $l.add(ArgNode.create(null, $i.text, null)); }
+    | i=ID n_ ASSIGN n_ e=expr { $l.add(ArgNode.create(null, $i.text, e)); }
+    | v=VARIADIC               { $l.add(ArgNode.create(null, $v.text, null)); } // FIXME This is not quite good, since `...` is a special token - for this reason let's call RSymbol.xxxx(...)
     // The 3 following cases were not handled ... and everything was working fine.
     // They are added for completeness, however note that a function created
     // with such a signature will always fail if it tries to access them!
@@ -449,10 +461,10 @@ basic_expr returns [ASTNode v]
 expr_subset [ASTNode i] returns [ASTNode v]
     : (t=FIELD n_ name=id                     { $v = FieldAccess.create(sourceSection("expr_subset/FIELD", $t, name), FieldOperator.FIELD, i, name.getText()); })
     | (t=AT n_ name=id                        { $v = FieldAccess.create(sourceSection("expr_subset/AT", $t, name), FieldOperator.AT, i, name.getText()); })
-    | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); ArgumentList.Default.updateParent(v, subset); })
-    | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); ArgumentList.Default.updateParent(v, subscript); })
+    | (t=LBRAKET subset=args y=RBRAKET        { $v = Call.create(sourceSection("expr_subset/LBRAKET", $t, $y), CallOperator.SUBSET, i, subset); })
+    | (t=LBB subscript=args RBRAKET y=RBRAKET { $v = Call.create(sourceSection("expr_subset/LBB", $t, $y), CallOperator.SUBSCRIPT, i, subscript); })
     // Must use RBRAKET twice instead of RBB beacause this is possible: a[b[1]]
-    | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a);  ArgumentList.Default.updateParent(v, a); })
+    | (t=LPAR a=args y=RPAR                   { $v = Call.create(sourceSection("expr_subset/LPAR", $t, $y), i, a); })
     //| { $v = i; }
     ;
 
@@ -466,7 +478,14 @@ simple_expr returns [ASTNode v]
     | t=NAINT                                   { $v = Constant.createIntConstant(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
     | num=number                                { $v = num; }
     | cstr=conststring                          { $v = cstr; }
-    | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id { $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), Symbol.getSymbol(nsg.getText()), ArgumentList.Default.create(Constant.createStringConstant(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText()), Constant.createStringConstant(sourceSection("simple_expr/NSG/comp", comp), comp.getText()))); }
+    | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
+        List<ArgNode> args = new ArrayList<>();
+        ASTNode pkgNode = Constant.createStringConstant(sourceSection("simple_expr/NSG/pkg", pkg), pkg.getText());
+        ASTNode compNode = Constant.createStringConstant(sourceSection("simple_expr/NSG/comp", comp), comp.getText());
+        args.add(ArgNode.create(pkgNode.getSource(), "pkg", pkgNode));
+        args.add(ArgNode.create(compNode.getSource(), "name", compNode));
+        $v = Call.create(sourceSection("simple_expr/NSG", pkg, comp), Symbol.getSymbol(nsg.getText()), args);
+    }
     | LPAR n_ ea=expr_or_assign n_ RPAR         { $v = $ea.v; $v.setSource(sourceSection("simple_expr/OMIT_PAR", $ea.start, $ea.stop)); }
     | s=sequence                                { $v = $s.v; }
     | e=expr_wo_assign                          { $v = e; }
@@ -527,16 +546,16 @@ power_operator returns [BinaryOperator v]
     : CARET { $v = BinaryOperator.POW; }
     ;
 
-args returns [ArgumentList v]
-    @init { $v = new ArgumentList.Default(); }
-    : n_ (arg_expr[v] n_ (COMMA ({ $v.add((ASTNode) null); } | n_ arg_expr[v]) n_)* )?
-    | n_ { $v.add((ASTNode)null); } (COMMA ({ $v.add((ASTNode) null); } | n_ arg_expr[v]) n_)+
+args returns [List<ArgNode> v]
+    @init { $v = new ArrayList<>(); }
+    : n_ (arg_expr[v] n_ (COMMA ({ $v.add(ArgNode.create(null, (Symbol) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)* )?
+    | n_ { $v.add(ArgNode.create(null, (Symbol) null, (ASTNode) null)); } (COMMA ({ $v.add(ArgNode.create(null, (Symbol) null, (ASTNode) null)); } | n_ arg_expr[v]) n_)+
     ;
 
-arg_expr [ArgumentList l]
-    : e=expr                                   { $l.add(e); }
-    | name=(id | STRING) n_ ASSIGN n_ val=expr { $l.add(name.getText(), val); }
-    | name=(id | STRING) n_ ASSIGN             { $l.add(name.getText(), null); }
+arg_expr [List<ArgNode> l]
+    : e=expr                                   { $l.add(ArgNode.create(sourceSection("arg_expr/expr", e, e), (Symbol) null, e)); }
+    | name=(id | STRING) n_ ASSIGN n_ val=expr { $l.add(ArgNode.create(sourceSection("arg_expr/name=expr", name, val), name.getText(), val)); }
+    | name=(id | STRING) n_ a=ASSIGN           { $l.add(ArgNode.create(sourceSection("arg_expr/name=", name, a), name.getText(), null)); }
     | NULL n_ ASSIGN n_ val=expr               { Utils.nyi(); }
     | NULL n_ ASSIGN                           { Utils.nyi(); }
     ;
