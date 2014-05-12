@@ -180,7 +180,7 @@ public abstract class RError extends RuntimeException {
     public static final String ATTRIBUTE_VECTOR_SAME_LENGTH = "'%s' attribute [%d] must be the same length as the vector [%d]";
     public static final String SCAN_UNEXPECTED = "scan() expected '%s', got '%s'";
     public static final String MUST_BE_ENVIRON = "'%s' must be an environment";
-    public static final String UNUSED_ARGUMENT = "unused argument(s) (%s)"; // FIXME: GNU-R gives a
+    public static final String UNUSED_ARGUMENT = "unused argument (%s)"; // FIXME: GNU-R gives a
     // list of all unused arguments
     public static final String INFINITE_MISSING_VALUES = "infinite or missing values in '%s'";
     public static final String NON_SQUARE_MATRIX = "non-square matrix in '%s'";

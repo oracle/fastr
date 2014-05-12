@@ -116,7 +116,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         for (ArgNode e : call.getArgs()) {
             Symbol argName = e.getName();
             argumentNames[index] = (argName == null ? null : RRuntime.toString(argName));
-            nodes[index] = e.getValue() != null ? e.getValue().accept(this) : null;
+            ASTNode val = e.getValue();
+            if (val != null) {
+                // the source must include a value assignment (if there is one) - this is ensured by
+                // assigning the source section of the argument node
+                val.setSource(e.getSource());
+                nodes[index] = val.accept(this);
+            }
             index++;
         }
         final String functionName = RRuntime.toString(callName);
