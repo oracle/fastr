@@ -534,11 +534,11 @@ args returns [ArgumentList v]
     ;
 
 arg_expr [ArgumentList l]
-    : e=expr                        { $l.add(e); }
-    | name=id n_ ASSIGN n_ val=expr { $l.add(name.getText(), val); }
-    | name=id n_ ASSIGN             { $l.add(name.getText(), null); }
-    | NULL n_ ASSIGN n_ val=expr    { Utils.nyi(); }
-    | NULL n_ ASSIGN                { Utils.nyi(); }
+    : e=expr                                   { $l.add(e); }
+    | name=(id | STRING) n_ ASSIGN n_ val=expr { $l.add(name.getText(), val); }
+    | name=(id | STRING) n_ ASSIGN             { $l.add(name.getText(), null); }
+    | NULL n_ ASSIGN n_ val=expr               { Utils.nyi(); }
+    | NULL n_ ASSIGN                           { Utils.nyi(); }
     ;
 
 ///

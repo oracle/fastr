@@ -11124,6 +11124,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSwitch_292eca19c367237d5008b2f5eed070a0() {
+        assertEval("{ u <- \"uiui\" ; switch(u, \"iuiu\" = \"ieps\", \"uiui\" = \"miep\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
         assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
     }
