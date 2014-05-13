@@ -74,6 +74,7 @@ public class RPackages {
             Method loadMethod = Class.forName("com.oracle.truffle.r.nodes.builtin.RDefaultBuiltinPackages").getDeclaredMethod("load", String.class, VirtualFrame.class);
             loadMethod.invoke(null, new Object[]{name, frame});
         } catch (Exception ex) {
+            ex.printStackTrace();
             Utils.fail("failed to load builtin package: " + name + ": " + ex);
         }
     }
