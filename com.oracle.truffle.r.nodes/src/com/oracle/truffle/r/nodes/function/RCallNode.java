@@ -242,9 +242,15 @@ public abstract class RCallNode extends RNode {
 
         private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments, Object[] actualNames) {
             RRootNode rootNode = (RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode();
-            if (arguments.getNameCount() != 0 || Arrays.asList(rootNode.getParameterNames()).contains("...")) {
+            final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
+            final boolean hasVarArgs = Arrays.asList(rootNode.getParameterNames()).contains("...");
+            if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount()) {
+                RNode unusedArgNode = arguments.getArguments()[rootNode.getParameterCount()];
+                throw RError.getUnusedArgument(getEncapsulatingSourceSection(), unusedArgNode.getSourceSection().getCode());
+            }
+            if (arguments.getNameCount() != 0 || hasVarArgs) {
                 RNode[] permuted = permuteArguments(arguments.getArguments(), rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
-                if (!(rootNode instanceof RBuiltinRootNode)) {
+                if (!isBuiltin) {
                     for (int i = 0; i < permuted.length; i++) {
                         if (permuted[i] == null) {
                             permuted[i] = ConstantNode.create(RMissing.instance);
