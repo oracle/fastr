@@ -10519,6 +10519,18 @@ Hello world
 [1] 3 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f <- function(a) { a } ; f(1,2) }
+Error in f(1, 2) : unused argument (2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }
+Error in f(h = 1) : argument 1 matches multiple formal arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
+#{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }
+Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }
 [1] 20
 

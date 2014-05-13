@@ -13719,17 +13719,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testMatchingIgnore_7c113e0683905a2c65072aebc1cf14dc() {
+    public void TestSimpleFunctions_testMatching_7c113e0683905a2c65072aebc1cf14dc() {
         assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }");
     }
 
     @Test
-    public void TestSimpleFunctions_testMatchingIgnore_1bd6b789e14102f4d5c84c2e1cd0b3cd() {
+    public void TestSimpleFunctions_testMatching_1bd6b789e14102f4d5c84c2e1cd0b3cd() {
         assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
     }
 
     @Test
-    public void TestSimpleFunctions_testMatchingIgnore_b27e201723ae1ff4db0c5bcbe14b18b6() {
+    public void TestSimpleFunctions_testMatching_b27e201723ae1ff4db0c5bcbe14b18b6() {
         assertEvalError("{ f <- function(a) { a } ; f(1,2) }");
     }
 
