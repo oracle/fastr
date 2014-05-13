@@ -23,12 +23,105 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin("seq")
 @SuppressWarnings("unused")
 public abstract class Seq extends RBuiltinNode {
+
+    private static final Object[] PARAMETER_NAMES = new Object[]{"from", "to", "by", "length.out"};
+
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    }
+
+    @Specialization(order = 0, guards = "zero")
+    public int seq(int start, int to, Object stride, RMissing lengthOut) {
+        controlVisibility();
+        return 0;
+    }
+
+    @Specialization(order = 1, guards = "ascending")
+    public RIntSequence seq(int start, int to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(start, 1, to - start + 1);
+    }
+
+    @Specialization(order = 2, guards = "!ascending")
+    public RIntSequence seqIntDesc(int start, int to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(start, -1, start - to + 1);
+    }
+
+    @Specialization(order = 10, guards = "ascending")
+    public RIntSequence seq(int start, int to, int stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(start, stride, (to - start + 1) / stride);
+    }
+
+    @Specialization(order = 11, guards = "!ascending")
+    public RIntSequence seqIntDesc(int start, int to, int stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(start, stride, (start - to + 1) / -stride);
+    }
+
+    @Specialization(order = 100, guards = "zero")
+    public double seq(double start, double to, Object stride, RMissing lengthOut) {
+        controlVisibility();
+        return 0;
+    }
+
+    @Specialization(order = 101, guards = "ascending")
+    public RDoubleSequence seq(double start, double to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start, 1, (int) (to - start + 1));
+    }
+
+    @Specialization(order = 102, guards = "!ascending")
+    public RDoubleSequence seqIntDesc(double start, double to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start, -1, (int) (start - to + 1));
+    }
+
+    @Specialization(order = 110, guards = "ascending")
+    public RDoubleSequence seq(double start, double to, double stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start, stride, (int) ((to - start + 1) / stride));
+    }
+
+    @Specialization(order = 111, guards = "!ascending")
+    public RDoubleSequence seqIntDesc(double start, double to, double stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start, stride, (int) ((start - to + 1) / -stride));
+    }
+
+    @Specialization(order = 120)
+    public int seqFrom(double start, RMissing to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return (int) start;
+    }
+
+    @Specialization(order = 150)
+    public RIntSequence seq(RMissing start, RMissing to, RMissing stride, int lengthOut) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(1, 1, lengthOut);
+    }
+
+    @Specialization(order = 151)
+    public RIntSequence seq(RMissing start, RMissing to, RMissing stride, double lengthOut) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(1, 1, (int) lengthOut);
+    }
 
     protected static boolean ascending(int start, int to) {
         return to > start;
@@ -44,78 +137,6 @@ public abstract class Seq extends RBuiltinNode {
 
     protected static boolean zero(double start, double to) {
         return start == 0 && to == 0;
-    }
-
-    @Specialization(order = 0, guards = "zero")
-    public int seq(int start, int to, Object stride) {
-        controlVisibility();
-        return 0;
-    }
-
-    @Specialization(order = 1, guards = "ascending")
-    public RIntSequence seq(int start, int to, RMissing stride) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(start, 1, to - start + 1);
-    }
-
-    @Specialization(order = 2, guards = "!ascending")
-    public RIntSequence seqIntDesc(int start, int to, RMissing stride) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(start, -1, start - to + 1);
-    }
-
-    @Specialization(order = 10, guards = "ascending")
-    public RIntSequence seq(int start, int to, int stride) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(start, stride, (to - start + 1) / stride);
-    }
-
-    @Specialization(order = 11, guards = "!ascending")
-    public RIntSequence seqIntDesc(int start, int to, int stride) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(start, stride, (start - to + 1) / -stride);
-    }
-
-    @Specialization(order = 100, guards = "zero")
-    public double seq(double start, double to, Object stride) {
-        controlVisibility();
-        return 0;
-    }
-
-    @Specialization(order = 101, guards = "ascending")
-    public RDoubleSequence seq(double start, double to, RMissing stride) {
-        controlVisibility();
-        return RDataFactory.createDoubleSequence(start, 1, (int) (to - start + 1));
-    }
-
-    @Specialization(order = 102, guards = "!ascending")
-    public RDoubleSequence seqIntDesc(double start, double to, RMissing stride) {
-        controlVisibility();
-        return RDataFactory.createDoubleSequence(start, -1, (int) (start - to + 1));
-    }
-
-    @Specialization(order = 110, guards = "ascending")
-    public RDoubleSequence seq(double start, double to, double stride) {
-        controlVisibility();
-        return RDataFactory.createDoubleSequence(start, stride, (int) ((to - start + 1) / stride));
-    }
-
-    @Specialization(order = 111, guards = "!ascending")
-    public RDoubleSequence seqIntDesc(double start, double to, double stride) {
-        controlVisibility();
-        return RDataFactory.createDoubleSequence(start, stride, (int) ((start - to + 1) / -stride));
-    }
-
-    @Specialization(order = 150)
-    public RIntSequence seq(int start, RMissing to, RMissing stride) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(1, 1, start);
-    }
-
-    @Specialization(order = 151)
-    public RIntSequence seq(double start, RMissing to, RMissing stride) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(1, 1, (int) (start));
     }
 
 }
