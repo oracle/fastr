@@ -225,6 +225,8 @@ def rbench(args):
                         env['R_ENABLE_JIT'] = '3'
                     rc = subprocess.call([args.gnur_path, '--slave'] + command, env=env)
                 else:
+                    # temporary: disable group generics as long as they impose a considerable performance overhead
+                    command = ['--DisableGroupGenerics'] + c
                     rc = runRCommand(command, nonZeroIsFatal=False)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'

@@ -127,7 +127,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
         final String functionName = RRuntime.toString(callName);
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.create(nodes, argumentNames);
-        if (RGroupGenerics.getGroup(functionName) != null) {
+        if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
             return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
         }
         return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
@@ -184,7 +184,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode operand = op.getLHS().accept(this);
         final String functionName = op.getPrettyOperator();
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(operand);
-        if (RGroupGenerics.getGroup(functionName) != null) {
+        if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
             return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
@@ -196,7 +196,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode right = op.getRHS().accept(this);
         final String functionName = op.getPrettyOperator();
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(left, right);
-        if (RGroupGenerics.getGroup(functionName) != null) {
+        if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
             return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
