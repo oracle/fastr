@@ -20,29 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractContainer {
+@RBuiltin("seq_along")
+public abstract class SeqAlong extends RBuiltinNode {
 
-    int getLength();
+    @CreateCast("arguments")
+    public RNode[] createCastValue(RNode[] children) {
+        return new RNode[]{LengthFactory.create(new RNode[]{children[0]}, getBuiltin())};
+    }
 
-    Map<String, Object> getAttributes();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    Object getDataAtAsObject(int index);
-
-    Object getNames();
-
-    Object getRowNames();
-
-    RStringVector getClassHierarchy();
-
-    boolean isObject();
+    @Specialization
+    public RIntSequence seq(int length) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(1, 1, length);
+    }
 }

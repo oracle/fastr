@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -50,6 +51,26 @@ public abstract class Stop extends RBuiltinNode {
     public Object stop(String msg, byte call, Object domain) {
         controlVisibility();
         throw RError.getGenericError(null, msg);
+    }
+
+    @SlowPath
+    private static String collapseStringVector(RStringVector v) {
+        if (v.getLength() == 0) {
+            return "";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < v.getLength(); i++) {
+                sb.append(v.getDataAt(i));
+            }
+            return sb.toString();
+        }
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    public Object stop(RStringVector msg, byte call, Object domain) {
+        controlVisibility();
+        throw RError.getGenericError(null, collapseStringVector(msg));
     }
 
 }

@@ -475,6 +475,8 @@ public class TestSimpleVectors extends TestBase {
         assertEvalError("{ x<-c(1,2,3); x[[-1]]<-NULL }");
         assertEvalError("{ x<-list(1,2,3); x[[-1]]<-NULL }");
 
+        assertEval("{ x<-c(5,10); names(x)<-c(101, 102); names(x)[1]<-42; x }");
+
     }
 
     @Test

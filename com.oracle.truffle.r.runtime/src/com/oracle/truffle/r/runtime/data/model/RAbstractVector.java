@@ -27,8 +27,6 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractVector extends RAbstractContainer {
 
-    int getLength();
-
     boolean isComplete();
 
     boolean hasDimensions();
@@ -42,10 +40,6 @@ public interface RAbstractVector extends RAbstractContainer {
     void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();
-
-    Object getDataAtAsObject(int index);
-
-    Object getNames();
 
     RList getDimNames();
 

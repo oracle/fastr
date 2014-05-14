@@ -79,11 +79,11 @@ public abstract class Unlist extends RBuiltinNode {
                 totalSize++;
             }
         }
-        return unlistHelper(precedence, totalSize, list);
+        return unlistHelper(precedence, totalSize, list, useNames == RRuntime.LOGICAL_TRUE);
     }
 
     @SlowPath
-    private static RAbstractVector unlistHelper(int precedence, int totalSize, RList list) {
+    private static RAbstractVector unlistHelper(int precedence, int totalSize, RList list, boolean useNames) {
         if (precedence == PrecedenceNode.RAW_PRECEDENCE) {
             byte[] result = new byte[totalSize];
             int position = 0;
@@ -94,7 +94,7 @@ public abstract class Unlist extends RBuiltinNode {
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
                     RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance) {
+                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
                         if (namesData == null) {
                             namesData = new String[totalSize];
                         }
@@ -125,7 +125,7 @@ public abstract class Unlist extends RBuiltinNode {
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
                     RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance) {
+                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
                         if (namesData == null) {
                             namesData = new String[totalSize];
                         }
@@ -156,7 +156,7 @@ public abstract class Unlist extends RBuiltinNode {
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
                     RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance) {
+                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
                         if (namesData == null) {
                             namesData = new String[totalSize];
                         }
@@ -188,7 +188,7 @@ public abstract class Unlist extends RBuiltinNode {
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
                     RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance) {
+                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
                         if (namesData == null) {
                             namesData = new String[totalSize];
                         }
@@ -222,7 +222,7 @@ public abstract class Unlist extends RBuiltinNode {
                 if (cur instanceof RAbstractVector) {
                     RAbstractVector rAbstractVector = (RAbstractVector) cur;
                     RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance) {
+                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
                         if (namesData == null) {
                             namesData = new String[totalSize];
                         }
@@ -243,6 +243,37 @@ public abstract class Unlist extends RBuiltinNode {
                 }
             }
             return RDataFactory.createStringVector(result, false, names);
+        } else if (precedence == PrecedenceNode.LIST_PRECEDENCE) {
+            Object[] result = new Object[totalSize];
+            int position = 0;
+            RStringVector names = null;
+            String[] namesData = null;
+            for (int i = 0; i < list.getLength(); ++i) {
+                Object cur = list.getDataAt(i);
+                if (cur instanceof RAbstractContainer) {
+                    RAbstractContainer rAbstractContainer = (RAbstractContainer) cur;
+                    RStringVector orgNames = null;
+                    if (rAbstractContainer.getNames() != RNull.instance && useNames) {
+                        if (namesData == null) {
+                            namesData = new String[totalSize];
+                        }
+                        orgNames = (RStringVector) rAbstractContainer.getNames();
+                    }
+                    for (int j = 0; j < rAbstractContainer.getLength(); ++j) {
+                        result[position] = rAbstractContainer.getDataAtAsObject(j);
+                        if (namesData != null) {
+                            namesData[position] = orgNames.getDataAt(j);
+                        }
+                        position++;
+                    }
+                    if (namesData != null) {
+                        names = RDataFactory.createStringVector(namesData, orgNames.isComplete());
+                    }
+                } else if (cur != RNull.instance) {
+                    result[position++] = unlistValueString(cur);
+                }
+            }
+            return RDataFactory.createList(result, names);
         } else {
             throw Utils.nyi();
         }

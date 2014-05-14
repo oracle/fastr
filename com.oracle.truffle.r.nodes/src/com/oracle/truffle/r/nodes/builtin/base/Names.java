@@ -88,19 +88,19 @@ public abstract class Names extends RBuiltinNode {
     }
 
     @Specialization(guards = "!hasNames")
-    public RNull getEmptyNames(RAbstractVector vector) {
+    public RNull getEmptyNames(RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "hasNames")
-    public RStringVector getNames(RAbstractVector vector) {
+    public RStringVector getNames(RAbstractContainer container) {
         controlVisibility();
-        return (RStringVector) vector.getNames();
+        return (RStringVector) container.getNames();
     }
 
-    public static boolean hasNames(RAbstractVector vector) {
-        return vector.getNames() != null && vector.getNames() != RNull.instance;
+    public static boolean hasNames(RAbstractContainer container) {
+        return container.getNames() != null && container.getNames() != RNull.instance;
     }
 
 }

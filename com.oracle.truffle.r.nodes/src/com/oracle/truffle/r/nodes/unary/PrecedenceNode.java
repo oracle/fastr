@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -45,6 +47,16 @@ public abstract class PrecedenceNode extends UnaryNode {
     }
 
     public abstract int executeInteger(VirtualFrame frame, Object object);
+
+    @Child PrecedenceNode precedenceNode;
+
+    private int precedenceRecursive(VirtualFrame frame, Object o) {
+        if (precedenceNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            precedenceNode = insert(PrecedenceNodeFactory.create(null));
+        }
+        return precedenceNode.executeInteger(frame, o);
+    }
 
     @Specialization
     public int doNull(RNull val) {
@@ -126,4 +138,8 @@ public abstract class PrecedenceNode extends UnaryNode {
         return LIST_PRECEDENCE;
     }
 
+    @Specialization
+    public int doDataFrame(VirtualFrame frame, RDataFrame val) {
+        return precedenceRecursive(frame, val.getVector());
+    }
 }

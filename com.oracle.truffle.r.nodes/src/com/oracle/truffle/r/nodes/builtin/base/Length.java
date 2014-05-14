@@ -38,7 +38,7 @@ public abstract class Length extends RBuiltinNode {
     }
 
     @Specialization
-    public int getLength(RAbstractVector vector) {
+    public int getLength(RAbstractContainer vector) {
         controlVisibility();
         return vector.getLength();
     }

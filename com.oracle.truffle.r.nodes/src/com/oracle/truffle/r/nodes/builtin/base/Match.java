@@ -58,6 +58,12 @@ public abstract class Match extends RBuiltinNode {
 
     // FIXME deal incomparables parameter
 
+    @Specialization(order = 1)
+    @SuppressWarnings("unused")
+    public RIntVector match(VirtualFrame frame, RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
+        return RDataFactory.createIntVector(x.getLength());
+    }
+
     @Specialization(order = 5)
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {

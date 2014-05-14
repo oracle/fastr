@@ -39,6 +39,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public int getLength() {
+        return vector.getLength();
+    }
+
+    @Override
     public void markNonTemporary() {
         vector.markNonTemporary();
     }
@@ -79,6 +84,16 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
             vector = vector.copy();
         }
         return vector;
+    }
+
+    @Override
+    public Object getDataAtAsObject(int index) {
+        return vector.getDataAtAsObject(index);
+    }
+
+    @Override
+    public Object getNames() {
+        return vector.getNames();
     }
 
     @Override

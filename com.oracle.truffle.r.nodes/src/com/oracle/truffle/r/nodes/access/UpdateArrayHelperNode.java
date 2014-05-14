@@ -152,7 +152,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return operatorConverter.executeConvert(frame, vector, operand);
     }
 
-    private Object setMultiDimData(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+    private Object setMultiDimData(VirtualFrame frame, RAbstractContainer value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
                     int accSrcDimensions, int accDstDimensions, NACheck posNACheck, NACheck elementNACheck) {
         if (setMultiDimData == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -163,7 +163,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
-        return CastToVectorNodeFactory.create(child, false, false, false, true);
+        return CastToContainerNodeFactory.create(child, false, false, false, true);
     }
 
     @Specialization(order = 5, guards = "emptyValue")
@@ -304,7 +304,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    private int getReplacementLength(Object[] positions, RAbstractVector value, boolean isList) {
+    private int getReplacementLength(Object[] positions, RAbstractContainer value, boolean isList) {
         int valueLength = value.getLength();
         int length = 1;
         boolean seenNA = false;
@@ -551,7 +551,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     // list
 
-    private RList updateVector(VirtualFrame frame, RAbstractVector value, RList vector, Object[] positions) {
+    private RList updateVector(VirtualFrame frame, RAbstractContainer value, RList vector, Object[] positions) {
         int replacementLength = getReplacementLength(positions, value, true);
         RList resultVector = vector;
         if (replacementLength == 0) {
@@ -618,19 +618,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return position;
     }
 
-    private static RList updateSingleDim(RAbstractVector value, RList resultVector, int position) {
+    private static RList updateSingleDim(RAbstractContainer value, RList resultVector, int position) {
         resultVector.updateDataAt(position - 1, value.getDataAtAsObject(0), null);
         return resultVector;
     }
 
-    private RList updateSingleDimRec(RAbstractVector value, RList resultVector, RIntVector p, int recLevel) {
+    private RList updateSingleDimRec(RAbstractContainer value, RList resultVector, RIntVector p, int recLevel) {
         int position = getPositionInRecursion(resultVector, p.getDataAt(0), recLevel, true);
         resultVector.updateDataAt(position - 1, value, null);
         updateNames(resultVector, p);
         return resultVector;
     }
 
-    private RList updateSingleDimVector(RAbstractVector value, int orgVectorLength, RList resultVector, RIntVector positions) {
+    private RList updateSingleDimVector(RAbstractContainer value, int orgVectorLength, RList resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
@@ -682,7 +682,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @Specialization(order = 100, guards = {"multiDim", "!wrongDimensionsMatrix", "!wrongDimensions"})
-    RList update(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, Object[] positions, RList vector) {
+    RList update(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, Object[] positions, RList vector) {
         return updateVector(frame, value, vector, positions);
     }
 
@@ -692,38 +692,38 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @Specialization(order = 103)
-    Object updateString(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, RStringVector positions, RList vector) {
+    Object updateString(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, RStringVector positions, RList vector) {
         return updateListRecursive(frame, v, value, vector, recLevel, positions);
     }
 
     @Specialization(order = 105, guards = {"isSubset", "!posNames", "multiPos"})
-    RList update(Object v, RAbstractVector value, int recLevel, RIntVector positions, RList vector) {
+    RList update(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions), false), positions);
     }
 
     @Specialization(order = 106, guards = {"isSubset", "!posNames", "onePosition"})
-    Object updateOne(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, RIntVector positions, RList vector) {
+    Object updateOne(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
         return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
     }
 
     @Specialization(order = 107, guards = {"isSubset", "posNames"})
-    RList updateNames(Object v, RAbstractVector value, int recLevel, RIntVector positions, RList vector) {
+    RList updateNames(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions), false), positions);
     }
 
     @Specialization(order = 111, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero", "!isPositionNegative"})
-    RList updateTooManyValuesSubset(Object v, RAbstractVector value, int recLevel, int position, RList vector) {
+    RList updateTooManyValuesSubset(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
         RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position, false), position);
     }
 
     @Specialization(order = 112, guards = {"isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero", "!isPositionNegative"})
-    RList update(Object v, RAbstractVector value, int recLevel, int position, RList vector) {
+    RList update(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
         return updateSingleDim(value, getResultVector(vector, position, false), position);
     }
 
     @Specialization(order = 113, guards = {"!isSubset", "!isPosNA", "!isPosZero", "!isPositionNegative"})
-    RList updateTooManyValuesSubscript(Object v, RAbstractVector value, int recLevel, int position, RList vector) {
+    RList updateTooManyValuesSubscript(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
         RList resultVector = getResultVector(vector, position, false);
         resultVector.updateDataAt(position - 1, value, null);
         return resultVector;
@@ -888,12 +888,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @Specialization(order = 151, guards = {"!isSubset", "multiPos"})
-    Object access(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, RIntVector p, RList vector) {
+    Object access(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, RIntVector p, RList vector) {
         return updateListRecursive(frame, v, value, vector, recLevel, p);
     }
 
     @Specialization(order = 160, guards = {"!isSubset", "inRecursion", "multiPos"})
-    Object accessRecFailed(Object v, RAbstractVector value, int recLevel, RIntVector p, RAbstractVector vector) {
+    Object accessRecFailed(Object v, RAbstractContainer value, int recLevel, RIntVector p, RAbstractVector vector) {
         throw RError.getRecursiveIndexingFailed(getEncapsulatingSourceSection(), recLevel + 1);
     }
 
@@ -916,13 +916,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
     }
 
     @Specialization(order = 173, guards = {"!isSubset", "!multiPos"})
-    Object accessSubscript(Object v, RAbstractVector value, int recLevel, RIntVector p, RList vector) {
+    Object accessSubscript(Object v, RAbstractContainer value, int recLevel, RIntVector p, RList vector) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, true);
         return updateSingleDimRec(value, getResultVector(vector, position, false), p, recLevel);
     }
 
     @Specialization(order = 180, guards = {"!isValueLengthOne", "!emptyValue", "!isSubset", "!isPosNA", "!isPosZero"})
-    RAbstractVector updateTooManyValues(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+    RAbstractVector updateTooManyValues(Object v, RAbstractContainer value, int recLevel, int position, RAbstractVector vector) {
         throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
     }
 
@@ -1030,7 +1030,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
-    private boolean seenNA(int p, RAbstractVector value) {
+    private boolean seenNA(int p, RAbstractContainer value) {
         if (posNACheck.check(p) || p < 0) {
             if (value.getLength() == 1) {
                 return true;
@@ -1042,7 +1042,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    protected static boolean seenNAMultiDim(boolean isPosNA, RAbstractVector value, boolean isList, boolean isSubset, SourceSection sourceSection) {
+    protected static boolean seenNAMultiDim(boolean isPosNA, RAbstractContainer value, boolean isList, boolean isSubset, SourceSection sourceSection) {
         if (isPosNA) {
             if (value.getLength() == 1) {
                 if (!isSubset) {
@@ -2193,7 +2193,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
     }
 
-    protected boolean firstPosZero(Object v, RAbstractVector value, int recLevel, RIntVector positions) {
+    protected boolean firstPosZero(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
         return positions.getDataAt(0) == 0;
     }
 
@@ -2205,7 +2205,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return -position > vector.getLength();
     }
 
-    protected boolean outOfBoundsNegative(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+    protected boolean outOfBoundsNegative(Object v, RAbstractContainer value, int recLevel, int position, RAbstractVector vector) {
         return -position > vector.getLength();
     }
 
@@ -2213,15 +2213,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return vector.getLength() == 1;
     }
 
-    protected boolean oneElemVector(Object v, RAbstractVector value, int recLevel, Object positions, RAbstractVector vector) {
+    protected boolean oneElemVector(Object v, RAbstractContainer value, int recLevel, Object positions, RAbstractVector vector) {
         return vector.getLength() == 1;
     }
 
-    protected boolean posNames(Object v, RAbstractVector value, int recLevel, RIntVector positions) {
+    protected boolean posNames(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
         return positions.getNames() != RNull.instance;
     }
 
-    protected boolean isPositionNegative(Object v, RAbstractVector value, int recLevel, int position) {
+    protected boolean isPositionNegative(Object v, RAbstractContainer value, int recLevel, int position) {
         return position < 0;
     }
 
@@ -2233,11 +2233,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return vector.getElementClass() == Object.class;
     }
 
-    protected boolean isVectorList(Object v, RAbstractVector value, int recLevel, Object positions, RAbstractVector vector) {
+    protected boolean isVectorList(Object v, RAbstractContainer value, int recLevel, Object positions, RAbstractVector vector) {
         return vector.getElementClass() == Object.class;
     }
 
-    protected boolean isVectorLongerThanOne(Object v, RAbstractVector value, int recLevel, Object positions, RAbstractVector vector) {
+    protected boolean isVectorLongerThanOne(Object v, RAbstractContainer value, int recLevel, Object positions, RAbstractVector vector) {
         return vector.getLength() > 1;
     }
 
@@ -2245,19 +2245,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return vector.getLength() > 1;
     }
 
-    protected boolean emptyValue(Object v, RAbstractVector value) {
+    protected boolean emptyValue(Object v, RAbstractContainer value) {
         return value.getLength() == 0;
     }
 
-    protected boolean valueLengthOne(Object v, RAbstractVector value) {
+    protected boolean valueLengthOne(Object v, RAbstractContainer value) {
         return value.getLength() == 1;
     }
 
-    protected boolean valueLongerThanOne(Object v, RAbstractVector value) {
+    protected boolean valueLongerThanOne(Object v, RAbstractContainer value) {
         return value.getLength() > 1;
     }
 
-    protected boolean wrongDimensionsMatrix(Object v, RAbstractVector value, int recLevel, Object[] positions, RAbstractVector vector) {
+    protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
             if (isSubset) {
                 throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
@@ -2268,7 +2268,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return false;
     }
 
-    protected boolean wrongDimensionsMatrix(Object v, RAbstractVector value, int recLevel, Object[] positions, RNull vector) {
+    protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length == 2) {
             if (isSubset) {
                 throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
@@ -2290,7 +2290,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return false;
     }
 
-    protected boolean wrongDimensions(Object v, RAbstractVector value, int recLevel, Object[] positions, RAbstractVector vector) {
+    protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
             if (isSubset) {
                 throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
@@ -2301,7 +2301,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return false;
     }
 
-    protected boolean wrongDimensions(Object v, RAbstractVector value, int recLevel, Object[] positions, RNull vector) {
+    protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length > 2) {
             if (isSubset) {
                 throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
@@ -2323,17 +2323,17 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return false;
     }
 
-    protected boolean multiDim(Object v, RAbstractVector value, int recLevel, Object[] positions, RAbstractVector vector) {
+    protected boolean multiDim(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         return vector.getDimensions() != null && vector.getDimensions().length > 1;
     }
 
-    protected boolean wrongLength(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
+    protected boolean wrongLength(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RAbstractVector vector) {
         int valLength = value.getLength();
         int posLength = positions.getLength();
         return valLength > posLength || (posLength % valLength != 0);
     }
 
-    protected boolean isPosNA(Object v, RAbstractVector value, int recLevel, int position) {
+    protected boolean isPosNA(Object v, RAbstractContainer value, int recLevel, int position) {
         return RRuntime.isNA(position);
     }
 
@@ -2341,7 +2341,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return RRuntime.isNA(position);
     }
 
-    protected boolean isPosZero(Object v, RAbstractVector value, int recLevel, int position) {
+    protected boolean isPosZero(Object v, RAbstractContainer value, int recLevel, int position) {
         return position == 0;
     }
 
@@ -2349,11 +2349,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return position == 0;
     }
 
-    protected boolean isValueLengthOne(Object v, RAbstractVector value) {
+    protected boolean isValueLengthOne(Object v, RAbstractContainer value) {
         return value.getLength() == 1;
     }
 
-    protected boolean twoPositions(Object v, RAbstractVector value, int recLevel, RAbstractVector position) {
+    protected boolean twoPositions(Object v, RAbstractContainer value, int recLevel, RAbstractVector position) {
         return position.getLength() == 2;
     }
 
@@ -2361,7 +2361,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return position.getLength() == 2;
     }
 
-    protected boolean onePosition(Object v, RAbstractVector value, int recLevel, RAbstractVector position) {
+    protected boolean onePosition(Object v, RAbstractContainer value, int recLevel, RAbstractVector position) {
         return position.getLength() == 1;
     }
 
@@ -2369,7 +2369,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return position.getLength() == 1;
     }
 
-    protected boolean noPosition(Object v, RAbstractVector value, int recLevel, RAbstractVector position) {
+    protected boolean noPosition(Object v, RAbstractContainer value, int recLevel, RAbstractVector position) {
         return position.getLength() == 0;
     }
 
@@ -2381,7 +2381,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return isSubset;
     }
 
-    protected boolean inRecursion(Object v, RAbstractVector value, int recLevel) {
+    protected boolean inRecursion(Object v, RAbstractContainer value, int recLevel) {
         return recLevel > 0;
     }
 
@@ -2393,11 +2393,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return positions.getLength() > 1;
     }
 
-    protected boolean multiPos(Object v, RAbstractVector value, int recLevel, RIntVector positions) {
+    protected boolean multiPos(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
         return positions.getLength() > 1;
     }
 
-    protected boolean moreThanTwoPos(Object v, RAbstractVector value, int recLevel, RList positions) {
+    protected boolean moreThanTwoPos(Object v, RAbstractContainer value, int recLevel, RList positions) {
         return positions.getLength() > 2;
     }
 
@@ -2414,8 +2414,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     @NodeChild(value = "accSrcDimensions", type = RNode.class), @NodeChild(value = "accDstDimensions", type = RNode.class)})
     protected abstract static class SetMultiDimDataNode extends RNode {
 
-        public abstract Object executeMultiDimDataSet(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                        int accSrcDimensions, int accDstDimensions);
+        public abstract Object executeMultiDimDataSet(VirtualFrame frame, RAbstractContainer value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase,
+                        int dstArrayBase, int accSrcDimensions, int accDstDimensions);
 
         private final NACheck posNACheck;
         private final NACheck elementNACheck;
@@ -3579,9 +3579,16 @@ public abstract class UpdateArrayHelperNode extends RNode {
             return (RList) castList(frame, vector);
         }
 
+        // data frame value
+
+        @Specialization(order = 809)
+        RList coerce(VirtualFrame frame, RDataFrame value, RAbstractVector vector, Object operand) {
+            return (RList) castList(frame, vector);
+        }
+
         // function vector value
 
-        @Specialization(order = 806)
+        @Specialization(order = 906)
         RFunction coerce(VirtualFrame frame, RFunction value, RAbstractVector vector, Object operand) {
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "closure", RRuntime.classToString(vector.getElementClass(), false));
         }
