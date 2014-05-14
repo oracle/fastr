@@ -86,7 +86,7 @@ public abstract class AssignVariable extends ASTNode {
             FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.name, replacementFunc.getArgs());
             AccessVector newLhs = new AccessVector(func.getSource(), func, lhs.getArgs(), lhs.isSubset());
             UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
-            lhs.args.add("value", rhs);
+            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
             return writeFunction(lhs.getSource(), isSuper, replacementFunc, update);
         } else {
             Utils.nyi(); // TODO here we need to flatten complex assignments

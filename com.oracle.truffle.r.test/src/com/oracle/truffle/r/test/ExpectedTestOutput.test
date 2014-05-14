@@ -9859,6 +9859,11 @@ Error in x >= y : invalid comparison with complex values
 [1]  TRUE FALSE  TRUE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
+#{ x<-1; class(x)<-"foo"; y<-as.data.frame(x) }
+Error in as.data.frame.default(x) :
+  cannot coerce class ""foo"" to a data.frame
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
 #{ x<-as.character(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm="x"); attributes(y); }
 $names
 [1] "x"
@@ -47758,6 +47763,11 @@ Error in x[1] <- NULL : replacement has length zero
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }
 Error in x[[1, 1]] <- NULL :
   more elements supplied than there are to replace
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(5,10); names(x)<-c(101, 102); names(x)[1]<-42; x }
+ 42 102
+  5  10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(TRUE,TRUE,FALSE); x[1L] }

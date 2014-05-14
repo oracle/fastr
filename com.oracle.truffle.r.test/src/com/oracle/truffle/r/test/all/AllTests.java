@@ -12924,6 +12924,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleDataFrames_testAsDataFrame_0f990604bed45f9a868ddd4f5616f9ee() {
+        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
+    }
+
+    @Test
     public void TestSimpleDataFrames_testAsDataFrame_bf5e0ec924e5d9b3c6ccdc1662b0a781() {
         assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
     }
@@ -17491,6 +17496,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testMoreVectorsOther_6195cd6ac53f9f62c9cde2bcbca0cdce() {
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(NA, 1),1]<-7; x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_9dd9f68bb1727db5941a3f4cc4779480() {
+        assertEval("{ x<-c(5,10); names(x)<-c(101, 102); names(x)[1]<-42; x }");
     }
 
     @Test
