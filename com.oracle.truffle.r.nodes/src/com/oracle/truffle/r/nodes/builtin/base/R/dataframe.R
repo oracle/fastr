@@ -86,7 +86,9 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x, TRUE, "row")# 
 `row.names<-.default` <- function(x, value) `rownames<-`(x, value)
 
 
-as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
+# TODO: implement correct argument processing (at this point all methods must have the same signature)
+#as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
+as.data.frame <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = FALSE)
 {
     if(is.null(x)) # can't assign class to NULL
         return(as.data.frame(list()))
@@ -104,7 +106,9 @@ as.data.frame.default <- function(x, ...)
 ###  Here are methods ensuring that the arguments to "data.frame"
 ###  are in a form suitable for combining into a data frame.
 
-as.data.frame.data.frame <- function(x, row.names = NULL, ...)
+# TODO: implement correct argument processing (at this point all methods must have the same signature)
+#as.data.frame.data.frame <- function(x, row.names = NULL, ...)
+as.data.frame.data.frame <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = FALSE)
 {
     cl <- oldClass(x)
     i <- match("data.frame", cl)
@@ -125,9 +129,11 @@ as.data.frame.data.frame <- function(x, row.names = NULL, ...)
 
 ## prior to 1.8.0 this coerced names - PR#3280
 as.data.frame.list <-
-    function(x, row.names = NULL, optional = FALSE, ...,
-             stringsAsFactors = default.stringsAsFactors())
-{
+# TODO: implement correct argument processing (at this point all methods must have the same signature)
+#		function(x, row.names = NULL, optional = FALSE, ...,
+#             stringsAsFactors = default.stringsAsFactors())
+		function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = default.stringsAsFactors())
+		{
     ## need to protect names in x.
     cn <- names(x)
     m <- match(c("row.names", "check.rows", "check.names", "stringsAsFactors"),
@@ -155,16 +161,17 @@ as.data.frame.list <-
 }
 
 # TODO: handle parameters correctly
+# TODO: implement deparse
 #as.data.frame.vector <- function(x, row.names = NULL, optional = FALSE, ...,
 #                                 nm = paste(deparse(substitute(x),
 #                                 width.cutoff = 500L), collapse=" ")  )
-as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALSE)
+as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE)
 {
     force(nm)
     nrows <- length(x)
     if(is.null(row.names)) {
-        if (nrows == 0L)
-            row.names <- character()
+        if (nrows == 0L) {
+            row.names <- character() }
 # TODO implement anyDuplicated
 #        else if(length(row.names <- names(x)) == nrows &&
 #            !anyDuplicated(row.names)) {}
@@ -188,16 +195,17 @@ as.data.frame.ts <- function(x, ...)
 }
 
 # TODO: for some reason assignments do not work at this point
+# TODO: implement correct argument processing (at this point all methods must have the same signature)
 #as.data.frame.raw  <- as.data.frame.vector
-as.data.frame.raw <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.raw <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 #as.data.frame.factor  <- as.data.frame.vector
 #as.data.frame.ordered <- as.data.frame.vector
 #as.data.frame.integer <- as.data.frame.vector
-as.data.frame.integer <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.integer <- function(x, row.names = NULL, nm = NULL, optional, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 #as.data.frame.numeric <- as.data.frame.vector
-as.data.frame.numeric <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.numeric <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 #as.data.frame.complex <- as.data.frame.vector
-as.data.frame.complex <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.complex <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 
 default.stringsAsFactors <- function()
 {
@@ -221,14 +229,16 @@ default.stringsAsFactors <- function()
 #        as.data.frame.vector(x, ..., nm = nm)
 #    else as.data.frame.vector(x, ...)
 #}
-as.data.frame.character <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.character <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 
 # TODO: for some reason assignments do not work at this point
 #as.data.frame.logical <- as.data.frame.vector
-as.data.frame.logical <- function(x, row.names = NULL, nm = NULL, optional = FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.logical <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 
-as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
-                                 stringsAsFactors = default.stringsAsFactors())
+# TODO: implement correct argument processing (at this point all methods must have the same signature)
+#as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
+#                                 stringsAsFactors = default.stringsAsFactors())
+as.data.frame.matrix <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = default.stringsAsFactors())
 {
     d <- dim(x)
     nrows <- d[1L]; ir <- seq_len(nrows)
@@ -265,14 +275,14 @@ data.frame <-
     function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE,
              stringsAsFactors = default.stringsAsFactors())
 {
-
+data.row.names <-		
 	if(check.rows && is.null(row.names))
 	    function(current, new, i) {
 		if(is.character(current)) new <- as.character(new)
 		if(is.character(new)) current <- as.character(current)
 # TODO: implement anyDuplicated
 #		if(anyDuplicated(new))
-#		    return(current)
+#		    return(current)	
 		if(is.null(current))
 		    return(new)
 		if(all(current == new) || all(current == ""))
@@ -333,6 +343,7 @@ data.frame <-
 
         nrows[i] <- .row_names_info(xi) # signed for now
 	ncols[i] <- length(xi)
+	
 	namesi <- names(xi)
 	if(ncols[i] > 1L) {
 	    if(length(namesi) == 0L) namesi <- seq_len(ncols[i])

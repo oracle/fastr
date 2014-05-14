@@ -83,6 +83,9 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     @Specialization
     public RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object names) {
         controlVisibility();
+        if (names == RNull.instance) {
+            return updateNames(vector, RNull.instance);
+        }
         if (names instanceof RAbstractVector) {
             return updateNames(vector, (RStringVector) castString(frame, names));
         } else {
