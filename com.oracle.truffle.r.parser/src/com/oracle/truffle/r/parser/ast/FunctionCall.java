@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 
 public class FunctionCall extends Call {
@@ -19,7 +21,7 @@ public class FunctionCall extends Call {
     boolean isAssignment;
     boolean isSuper;
 
-    public FunctionCall(SourceSection src, Symbol funName, ArgumentList args) {
+    public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> args) {
         super(args);
         source = src;
         name = funName;

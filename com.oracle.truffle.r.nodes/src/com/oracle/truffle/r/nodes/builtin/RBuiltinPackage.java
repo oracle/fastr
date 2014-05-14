@@ -120,13 +120,10 @@ public abstract class RBuiltinPackage {
     }
 
     public void loadSources(VirtualFrame frame) {
-        System.err.println("Package " + getName());
         List<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
-                System.err.printf("  Loading %s ... ", src.libName);
                 REngine.parseAndEval(src.libContents, frame, false);
-                System.err.println("ok");
             }
         }
     }

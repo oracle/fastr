@@ -242,9 +242,15 @@ public abstract class RCallNode extends RNode {
 
         private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments, Object[] actualNames) {
             RRootNode rootNode = (RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode();
-            if (arguments.getNameCount() != 0 || Arrays.asList(rootNode.getParameterNames()).contains("...")) {
+            final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
+            final boolean hasVarArgs = Arrays.asList(rootNode.getParameterNames()).contains("...");
+            if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount()) {
+                RNode unusedArgNode = arguments.getArguments()[rootNode.getParameterCount()];
+                throw RError.getUnusedArgument(getEncapsulatingSourceSection(), unusedArgNode.getSourceSection().getCode());
+            }
+            if (arguments.getNameCount() != 0 || hasVarArgs) {
                 RNode[] permuted = permuteArguments(arguments.getArguments(), rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
-                if (!(rootNode instanceof RBuiltinRootNode)) {
+                if (!isBuiltin) {
                     for (int i = 0; i < permuted.length; i++) {
                         if (permuted[i] == null) {
                             permuted[i] = ConstantNode.create(RMissing.instance);
@@ -407,13 +413,19 @@ public abstract class RCallNode extends RNode {
     @SuppressWarnings("unchecked")
     protected <T> T[] permuteArguments(T[] arguments, Object[] parameterNames, Object[] actualNames, VarArgsFactory<T> listFactory) {
         int varArgIndex = Arrays.asList(parameterNames).indexOf("...");
-        T[] resultArgs = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgIndex != -1 ? parameterNames.length : Math.max(parameterNames.length, arguments.length));
+        boolean hasVarArgs = varArgIndex != -1;
+        boolean hasArgNodes = arguments.getClass() == RNode[].class;
+        T[] resultArgs = (T[]) Array.newInstance(arguments.getClass().getComponentType(), hasVarArgs ? parameterNames.length : Math.max(parameterNames.length, arguments.length));
         BitSet matchedNames = new BitSet(actualNames.length);
         int unmatchedNameCount = 0;
         boolean[] matchedArgs = new boolean[parameterNames.length];
         for (int i = 0; i < actualNames.length; i++) {
             if (actualNames[i] != null) {
-                int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, true/* TODO */);
+                RNode argNode = null;
+                if (hasArgNodes) {
+                    argNode = (RNode) arguments[i];
+                }
+                int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, hasVarArgs, argNode);
                 if (parameterPosition >= 0) {
                     resultArgs[parameterPosition] = arguments[i];
                     matchedNames.set(i);
@@ -442,7 +454,7 @@ public abstract class RCallNode extends RNode {
             resultArgs[varArgIndex] = listFactory.makeList(varArgsArray, namesArray);
         }
         int cursor = 0;
-        for (int i = 0; i < resultArgs.length && (varArgIndex == -1 || i < varArgIndex); i++) {
+        for (int i = 0; i < resultArgs.length && (!hasVarArgs || i < varArgIndex); i++) {
             if (resultArgs[i] == null) {
                 while (cursor < actualNames.length && matchedNames.get(cursor)) {
                     cursor++;
@@ -455,7 +467,7 @@ public abstract class RCallNode extends RNode {
         return resultArgs;
     }
 
-    private int findParameterPosition(Object[] parameterNames, Object actualName, boolean[] matchedArgs, int argPos, boolean varArgs) {
+    private int findParameterPosition(Object[] parameterNames, Object actualName, boolean[] matchedArgs, int argPos, boolean varArgs, RNode argNode) {
         String name = RRuntime.toString(actualName);
         int found = -1;
         for (int i = 0; i < parameterNames.length; i++) {
@@ -483,6 +495,6 @@ public abstract class RCallNode extends RNode {
         if (found >= 0 || varArgs) {
             return found;
         }
-        throw RError.getUnusedArgument(getEncapsulatingSourceSection(), name);
+        throw RError.getUnusedArgument(getEncapsulatingSourceSection(), argNode != null ? argNode.getSourceSection().getCode() : name);
     }
 }

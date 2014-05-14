@@ -90,6 +90,8 @@ public class RCmdOptions {
     public static final Option<String> DEFAULT_PACKAGES = newStringOption(Client.RSCRIPT, false, null, "default-packages=list", null, "Where 'list' is a comma-separated set\n"
                     + "                          of package names, or 'NULL'");
 
+    public static final Option<Boolean> DISABLE_GROUP_GENERICS = newBooleanOption(true, "DisableGroupGenerics", false, "disable prototypical group generics implementation");
+
     public static Option<Boolean> newBooleanOption(boolean implemented, String name, boolean defaultValue, String help) {
         return newBooleanOption(implemented, null, name, defaultValue, help);
     }
@@ -121,7 +123,9 @@ public class RCmdOptions {
     }
 
     public static enum OptionType {
-        BOOLEAN, STRING, REPEATED_STRING
+        BOOLEAN,
+        STRING,
+        REPEATED_STRING
     }
 
     public static class Option<T> {

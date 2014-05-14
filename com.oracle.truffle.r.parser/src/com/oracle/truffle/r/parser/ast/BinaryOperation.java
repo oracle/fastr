@@ -89,23 +89,37 @@ public abstract class BinaryOperation extends Operation {
             return new In(src, left, right);
         }
         // user-defined operator
-        ArgumentList args = new ArgumentList.Default();
-        args.add(left);
-        args.add(right);
+        List<ArgNode> args = new ArrayList<>();
+        args.add(ArgNode.create(left.getSource(), (Symbol) null, left));
+        args.add(ArgNode.create(right.getSource(), (Symbol) null, right));
         return new FunctionCall(src, Symbol.getSymbol(op), args);
     }
 
     public enum BinaryOperator {
-        ASSIGN, SUPER_ASSIGN,
+        ASSIGN,
+        SUPER_ASSIGN,
 
-        ADD, SUB, MULT, DIV, MOD,
+        ADD,
+        SUB,
+        MULT,
+        DIV,
+        MOD,
 
         POW,
 
-        MODEL, COLON,
+        MODEL,
+        COLON,
 
-        GE, GT, LE, LT, EQ, NE,
+        GE,
+        GT,
+        LE,
+        LT,
+        EQ,
+        NE,
 
-        OR, ELEMENTWISEOR, AND, ELEMENTWISEAND,
+        OR,
+        ELEMENTWISEOR,
+        AND,
+        ELEMENTWISEAND,
     }
 }

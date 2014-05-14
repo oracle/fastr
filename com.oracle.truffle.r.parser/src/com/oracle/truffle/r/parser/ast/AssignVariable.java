@@ -75,11 +75,11 @@ public abstract class AssignVariable extends ASTNode {
                 newLhs.setParent(lhs.getParent());
             }
             UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
-            lhs.args.add("value", rhs);
+            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
             return update;
         } else if (first instanceof AccessVector) {
             UpdateVector update = new UpdateVector(isSuper, lhs, rhs);
-            lhs.args.add("value", rhs);
+            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
             return update;
         } else if (first instanceof FunctionCall) {
             FunctionCall replacementFunc = (FunctionCall) first;
@@ -105,7 +105,7 @@ public abstract class AssignVariable extends ASTNode {
         lhs.setAssignment(true);
         lhs.setSuper(isSuper);
         if (lhs.args.size() > 0) {
-            ASTNode first = lhs.args.first().getValue();
+            ASTNode first = lhs.args.get(0).getValue();
             if (!(first instanceof SimpleAccessVariable)) {
                 Utils.nyi(); // TODO here we need to flatten complex assignments
             } else {

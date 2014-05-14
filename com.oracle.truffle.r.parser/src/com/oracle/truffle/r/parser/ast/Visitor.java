@@ -94,5 +94,5 @@ public interface Visitor<R> {
 
     R visit(AccessVector accessVector);
 
-    R visit(ArgumentList.Default.DefaultEntry entry);
+    R visit(ArgNode arg);
 }

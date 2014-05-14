@@ -43,6 +43,17 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return funCall;
     }
 
+    @Override
+    public DispatchNode.FunctionCall execute(VirtualFrame frame, RStringVector aType) {
+        this.type = aType;
+        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        initArgNodes(frame);
+        findTargetFunction(callerFrame);
+        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
+        setEnvironment(frame);
+        return funCall;
+    }
+
     private void initArgNodes(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         RNode[] nodes = new RNode[RArguments.getArgumentsLength(frame)];

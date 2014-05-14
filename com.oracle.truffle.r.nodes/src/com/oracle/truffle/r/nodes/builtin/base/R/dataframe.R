@@ -163,13 +163,13 @@ as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALS
     force(nm)
     nrows <- length(x)
     if(is.null(row.names)) {
-	if (nrows == 0L)
-	    row.names <- character()
+        if (nrows == 0L)
+            row.names <- character()
 # TODO implement anyDuplicated
-#	else if(length(row.names <- names(x)) == nrows &&
-#		!anyDuplicated(row.names)) {}
-	else if(length(row.names <- names(x)) == nrows) {}
-	else row.names <- .set_row_names(nrows)
+#        else if(length(row.names <- names(x)) == nrows &&
+#            !anyDuplicated(row.names)) {}
+        else if(length(row.names <- names(x)) == nrows) {}
+        else row.names <- .set_row_names(nrows)
     }
     if(!is.null(names(x))) names(x) <- NULL # remove names as from 2.0.0
     value <- list(x)
@@ -182,9 +182,9 @@ as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALS
 as.data.frame.ts <- function(x, ...)
 {
     if(is.matrix(x))
-	as.data.frame.matrix(x, ...)
+        as.data.frame.matrix(x, ...)
     else
-	as.data.frame.vector(x, ...)
+        as.data.frame.vector(x, ...)
 }
 
 # TODO: for some reason assignments do not work at this point
@@ -239,22 +239,22 @@ as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
     if(is.null(row.names)) row.names <- dn[[1L]]
     collabs <- dn[[2L]]
     if(any(empty <- !nzchar(collabs)))
-	collabs[empty] <- paste0("V", ic)[empty]
+        collabs[empty] <- paste0("V", ic)[empty]
     value <- vector("list", ncols)
     if(mode(x) == "character" && stringsAsFactors) {
-	for(i in ic)
-	    value[[i]] <- as.factor(x[,i])
+        for(i in ic)
+            value[[i]] <- as.factor(x[,i])
     } else {
-	for(i in ic)
-	    value[[i]] <- as.vector(x[,i])
+        for(i in ic)
+            value[[i]] <- as.vector(x[,i])
     }
     ## Explicitly check for NULL in case nrows==0
     if(is.null(row.names) || length(row.names) != nrows)
-	row.names <- .set_row_names(nrows)
+        row.names <- .set_row_names(nrows)
     if(length(collabs) == ncols)
-	names(value) <- collabs
+        names(value) <- collabs
     else if(!optional)
-	names(value) <- paste0("V", ic)
+        names(value) <- paste0("V", ic)
     attr(value, "row.names") <- row.names
     class(value) <- "data.frame"
     value

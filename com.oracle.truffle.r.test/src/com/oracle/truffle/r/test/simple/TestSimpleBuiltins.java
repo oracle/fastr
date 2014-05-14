@@ -2664,6 +2664,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{switch(3,1,2,3)}");
         assertEval("{switch(4,1,2,3)}");
         assertEval("{ test1 <- function(type) { switch(type, mean = mean(c(1,2,3,4)), median = 2, trimmed = 3) };test1(\"mean\")}");
+        assertEval("{ u <- \"uiui\" ; switch(u, \"iuiu\" = \"ieps\", \"uiui\" = \"miep\") }");
     }
 
     @Test
@@ -2692,8 +2693,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testDefaultArgsIgnore() {
+    public void testDefaultArgs() {
         assertEvalError("{ array(dim=c(-2,2)); }");
         assertEvalError("{ array(dim=c(-2,-2)); }");
         assertEval("{ length(array(dim=c(1,0,2,3))) }");

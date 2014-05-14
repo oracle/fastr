@@ -949,26 +949,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_da411f3d8d8a722a471e77966e8e1135() {
-        assertEval("{ length(array(dim=c(1,0,2,3))) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_3cc1186607b6ef41bdbc0c66fc278b3a() {
-        assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_62c7f6f4b6bf06a81284d05487afc849() {
-        assertEvalError("{ array(dim=c(-2,2)); }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_6298ff4d222c7787e6c111563ac6a26a() {
-        assertEvalError("{ array(dim=c(-2,-2)); }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testDelayedAssign_8ec95e38ecb3a999ffba3e7abc6ffb72() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
     }
@@ -3001,21 +2981,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testErrors_bf29c1dae99e04f8cd11a340f54e1287() {
         assertEvalError("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testMatchingIgnore_7c113e0683905a2c65072aebc1cf14dc() {
-        assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testMatchingIgnore_1bd6b789e14102f4d5c84c2e1cd0b3cd() {
-        assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testMatchingIgnore_b27e201723ae1ff4db0c5bcbe14b18b6() {
-        assertEvalError("{ f <- function(a) { a } ; f(1,2) }");
     }
 
     @Ignore

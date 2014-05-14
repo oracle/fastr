@@ -249,8 +249,8 @@ public class BasicVisitor<R> implements Visitor<R> {
     }
 
     @Override
-    public R visit(ArgumentList.Default.DefaultEntry entry) {
-        return visit((ASTNode) entry);
+    public R visit(ArgNode n) {
+        return visit((ASTNode) n);
     }
 
 }

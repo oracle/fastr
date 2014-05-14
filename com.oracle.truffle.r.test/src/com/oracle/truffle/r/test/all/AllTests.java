@@ -6124,22 +6124,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_da411f3d8d8a722a471e77966e8e1135() {
+    public void TestSimpleBuiltins_testDefaultArgs_da411f3d8d8a722a471e77966e8e1135() {
         assertEval("{ length(array(dim=c(1,0,2,3))) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_3cc1186607b6ef41bdbc0c66fc278b3a() {
+    public void TestSimpleBuiltins_testDefaultArgs_3cc1186607b6ef41bdbc0c66fc278b3a() {
         assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_62c7f6f4b6bf06a81284d05487afc849() {
+    public void TestSimpleBuiltins_testDefaultArgs_62c7f6f4b6bf06a81284d05487afc849() {
         assertEvalError("{ array(dim=c(-2,2)); }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDefaultArgsIgnore_6298ff4d222c7787e6c111563ac6a26a() {
+    public void TestSimpleBuiltins_testDefaultArgs_6298ff4d222c7787e6c111563ac6a26a() {
         assertEvalError("{ array(dim=c(-2,-2)); }");
     }
 
@@ -11124,6 +11124,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSwitch_292eca19c367237d5008b2f5eed070a0() {
+        assertEval("{ u <- \"uiui\" ; switch(u, \"iuiu\" = \"ieps\", \"uiui\" = \"miep\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
         assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
     }
@@ -13714,17 +13719,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testMatchingIgnore_7c113e0683905a2c65072aebc1cf14dc() {
+    public void TestSimpleFunctions_testMatching_7c113e0683905a2c65072aebc1cf14dc() {
         assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(h = 1) }");
     }
 
     @Test
-    public void TestSimpleFunctions_testMatchingIgnore_1bd6b789e14102f4d5c84c2e1cd0b3cd() {
+    public void TestSimpleFunctions_testMatching_1bd6b789e14102f4d5c84c2e1cd0b3cd() {
         assertEvalError("{ f <- function(hello, hi) { hello + hi } ; f(hello = 1, bye = 3) }");
     }
 
     @Test
-    public void TestSimpleFunctions_testMatchingIgnore_b27e201723ae1ff4db0c5bcbe14b18b6() {
+    public void TestSimpleFunctions_testMatching_b27e201723ae1ff4db0c5bcbe14b18b6() {
         assertEvalError("{ f <- function(a) { a } ; f(1,2) }");
     }
 

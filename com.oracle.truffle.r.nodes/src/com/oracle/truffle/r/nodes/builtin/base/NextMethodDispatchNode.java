@@ -48,16 +48,27 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame) {
         readGenericVars(frame);
-        if (isSame() && isFirst && findFunction(targetFunctionName, genCallEnv)) {
-            assert (funCall != null);
-        } else {
-            findTargetFunction(frame);
-            storeValues();
-            initArgNodes(frame);
-            funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
+        if (!isSame() || !isFirst || !findFunction(targetFunctionName, genCallEnv)) {
+            executeHelper(frame);
         }
         setEnvironment();
         return funCall;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame, final RStringVector aType) {
+        this.type = aType;
+        readGenericVars(frame);
+        executeHelper(frame);
+        setEnvironment();
+        return funCall;
+    }
+
+    private void executeHelper(VirtualFrame frame) {
+        findTargetFunction(frame);
+        storeValues();
+        initArgNodes(frame);
+        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
     }
 
     @Override

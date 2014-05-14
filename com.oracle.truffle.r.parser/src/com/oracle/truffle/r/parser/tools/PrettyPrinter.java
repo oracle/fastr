@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.parser.tools;
 
 import java.io.*;
+import java.util.*;
 
 import com.oracle.truffle.r.parser.ast.*;
 
@@ -292,9 +293,9 @@ public class PrettyPrinter extends BasicVisitor<Void> {
         return null;
     }
 
-    private void print(ArgumentList alist, boolean isCall) {
+    private void print(List<ArgNode> alist, boolean isCall) {
         boolean f = true;
-        for (ArgumentList.Entry arg : alist) {
+        for (ArgNode arg : alist) {
             if (!f) {
                 print(", ");
             } else {
@@ -304,7 +305,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
         }
     }
 
-    private void print(ArgumentList.Entry arg, boolean isCall) {
+    private void print(ArgNode arg, boolean isCall) {
         Symbol n = arg.getName();
         ASTNode v = arg.getValue();
         if (n != null) {
