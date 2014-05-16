@@ -291,7 +291,7 @@ data.frame <-
             }
         else function(current, new, i) {
             if(is.null(current)) {
-                if(anyDuplicated(new)) {
+#                if(anyDuplicated(new)) {
 #                    warning(gettextf("some row.names duplicated: %s --> row.names NOT used",
 #                                     paste(which(duplicated(new)), collapse=",")),
 #                            domain = NA)
