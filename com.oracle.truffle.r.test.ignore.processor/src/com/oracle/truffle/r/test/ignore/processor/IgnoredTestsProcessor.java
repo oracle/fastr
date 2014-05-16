@@ -38,15 +38,15 @@ import com.sun.source.util.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 @SupportedAnnotationTypes("org.junit.Ignore")
 /**
- * Audits the set of units tests, updating the {@code IgnoredTests} class so that each micro-test in a unit test is 
- * represented as one {@code JUnit} test, allowing it to be un-ignored and debugged easily. It also creates a file 
+ * Audits the set of units tests, updating the {@code IgnoredTests} class so that each micro-test in a unit test is
+ * represented as one {@code JUnit} test, allowing it to be un-ignored and debugged easily. It also creates a file
  * {@code AllTests} that contains every test as a single JUnit test, whether ignored or not.
  */
 public class IgnoredTestsProcessor extends AbstractProcessor {
     private/* Trees */Object treesObj;
     private boolean inEclipse;
 
-    private static class CallAndArg implements Comparable {
+    private static class CallAndArg implements Comparable<CallAndArg> {
         final String call;
         final String arg;
         final boolean isIgnored;
@@ -62,11 +62,10 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
             return call + "(\"" + arg + "\")";
         }
 
-        public int compareTo(Object o) {
-            CallAndArg oCallAndArg = (CallAndArg) o;
-            int callCompare = call.compareTo(oCallAndArg.call);
+        public int compareTo(CallAndArg o) {
+            int callCompare = call.compareTo(o.call);
             if (callCompare == 0) {
-                return arg.compareTo(oCallAndArg.call);
+                return arg.compareTo(o.call);
             } else {
                 return callCompare;
             }

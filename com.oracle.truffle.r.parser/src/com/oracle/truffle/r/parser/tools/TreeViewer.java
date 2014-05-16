@@ -25,7 +25,7 @@ public class TreeViewer extends JTree {
 
     private static final long serialVersionUID = 1L;
 
-    private static Map<Class, Field[]> fieldsForClass = new LinkedHashMap<>();
+    private static Map<Class<?>, Field[]> fieldsForClass = new LinkedHashMap<>();
 
     private static TreeViewer treeViewer;
 
@@ -40,11 +40,11 @@ public class TreeViewer extends JTree {
     ASTNode root;
     JFrame frame;
 
-    private static Field[] getFieldsFor(Class clazz) {
+    private static Field[] getFieldsFor(Class<?> clazz) {
         if (fieldsForClass.containsKey(clazz)) {
             return fieldsForClass.get(clazz);
         }
-        Class current = clazz;
+        Class<?> current = clazz;
         ArrayList<Field> fields = new ArrayList<>();
         while (current != ASTNode.class) {
             Field[] f = current.getDeclaredFields();
