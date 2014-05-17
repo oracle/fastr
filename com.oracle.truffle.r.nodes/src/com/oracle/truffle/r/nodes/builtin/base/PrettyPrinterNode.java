@@ -60,8 +60,6 @@ public abstract class PrettyPrinterNode extends RNode {
 
     public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName);
 
-    private static final String NA_HEADER = "<NA>";
-
     @Child PrettyPrinterNode attributePrettyPrinter;
     @Child PrettyPrinterNode recursivePrettyPrinter;
     @Child PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
@@ -118,6 +116,13 @@ public abstract class PrettyPrinterNode extends RNode {
     @Specialization(order = 1)
     public String prettyPrintVector(byte operand, Object listElementName) {
         return concat("[1] ", prettyPrint(operand));
+    }
+
+    @SlowPath
+    public static String prettyPrint(byte operand, int width) {
+        StringBuilder sb = new StringBuilder();
+        String valStr = RRuntime.logicalToString(operand);
+        return spaces(sb, width - valStr.length()).append(valStr).toString();
     }
 
     public static String prettyPrint(byte operand) {
@@ -231,7 +236,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 for (int i = 0; i < names.getLength(); i++) {
                     String s = names.getDataAt(i);
                     if (s == RRuntime.STRING_NA) {
-                        s = NA_HEADER;
+                        s = RRuntime.NA_HEADER;
                     }
                     maxWidth = Math.max(maxWidth, s.length());
                 }
@@ -292,7 +297,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         }
                         String headerString = names.getDataAt(index);
                         if (headerString == RRuntime.STRING_NA) {
-                            headerString = NA_HEADER;
+                            headerString = RRuntime.NA_HEADER;
                         }
                         for (int k = 0; k < actualColumnWidth - headerString.length(); ++k) {
                             headerBuilder.append(' ');
@@ -334,7 +339,7 @@ public abstract class PrettyPrinterNode extends RNode {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(1);
             String dimId = dimNamesVector.getDataAt(r - 1);
             if (dimId == RRuntime.STRING_NA) {
-                dimId = NA_HEADER;
+                dimId = RRuntime.NA_HEADER;
             }
             wdiff = dataColWidth - dimId.length();
             if (!isListOrStringVector && wdiff > 0) {
@@ -360,16 +365,19 @@ public abstract class PrettyPrinterNode extends RNode {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(0);
             String dimId = dimNamesVector.getDataAt(c - 1);
             if (dimId == RRuntime.STRING_NA) {
-                dimId = NA_HEADER;
+                dimId = RRuntime.NA_HEADER;
             }
             return dimId;
         }
     }
 
-    protected static void spaces(StringBuilder sb, int s) {
-        for (int i = 0; i < s; ++i) {
-            sb.append(' ');
+    public static StringBuilder spaces(StringBuilder sb, int s) {
+        if (s > 0) {
+            for (int i = 0; i < s; ++i) {
+                sb.append(' ');
+            }
         }
+        return sb;
     }
 
     private static String getDimId(RAbstractVector vector, int dimLevel, int dimInd) {
@@ -692,7 +700,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    private static void padTrailingDecimalPointAndZeroesIfRequired(String[] values) {
+    public static void padTrailingDecimalPointAndZeroesIfRequired(String[] values) {
         int[] decimalPointOffsets = new int[values.length];
         int[] lenAfterPoint = new int[values.length];
         int maxLenAfterPoint = requiresDecimalPointsAndTrailingZeroes(values, decimalPointOffsets, lenAfterPoint);
@@ -1231,7 +1239,7 @@ public abstract class PrettyPrinterNode extends RNode {
             if (columnDimNames != null) {
                 String columnName = columnDimNames.getDataAt(c);
                 if (columnName == RRuntime.STRING_NA) {
-                    columnName = NA_HEADER;
+                    columnName = RRuntime.NA_HEADER;
                 }
                 if (columnName.length() > dataColWidths[c]) {
                     dataColWidths[c] = columnName.length();

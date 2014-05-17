@@ -446,7 +446,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode rhs = n.getExpr().accept(this);
         FunctionCall f = n.getBuiltin();
         List<ArgNode> args = f.getArgs();
-        SimpleAccessVariable vAST = (SimpleAccessVariable) args.get(0).getValue();
+        SimpleAccessVariable vAST;
+        ASTNode val = args.get(0).getValue();
+        if (val instanceof SimpleAccessVariable) {
+            vAST = (SimpleAccessVariable) val;
+        } else {
+            vAST = getVectorVariable((AccessVector) val);
+        }
         String vSymbol = RRuntime.toString(vAST.getSymbol());
 
         RNode[] seq = new RNode[5];

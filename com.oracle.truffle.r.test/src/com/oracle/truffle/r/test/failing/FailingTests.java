@@ -2484,21 +2484,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_221901876479773561663a589e4c633b() {
-        assertEval("{ substr(NA,1,2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_d6fcea25fcf0ab63be67b287b1d36d91() {
-        assertEval("{ substr(\"fastr\", NA, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_b67af38ded736620a9005880de5731e0() {
-        assertEval("{ substr(\"fastr\", 1, NA) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSumIgnore_512304594d55f1330efacd6cc594cf7a() {
         assertEval("{ sum(0, 1[3]) }");
     }

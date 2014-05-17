@@ -7054,6 +7054,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFormat_a5c45251663371ea3559d756bcbdce71() {
+        assertEval("{ format(7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFormat_5a77ed311eaf2cf89dfbf67df80f115f() {
+        assertEval("{ format(7.42) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFormat_afccbf51b13faff82c0faaf74dab82a6() {
+        assertEval("{ format(c(7,42)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFormat_906330809bf407c389d07d8f1e8463f4() {
+        assertEval("{ format(c(7.42,42.7)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFormat_5b49973c1d63ca0aa8a1b921a1b2fe15() {
+        assertEval("{ format(c(7.42,42.7,NA)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGet_17b5e1592125ebc43403174fb9611f19() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
     }
@@ -7141,6 +7166,26 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGetIgnore_64afee6cadb778dda13b25a2f3f9ecef() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\",inherits=FALSE);};y();}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGrep_bd3d37228dd5044cbf31c75cfeae1918() {
+        assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grep(\"foo\", txt) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGrep_e93dcf0b953746b7f5578d07a9bea21d() {
+        assertEval("{ txt<-c(\"is\", \"intended\", \"to\", \"guarantee\", \"your\", \"freedom\"); grep(\"[gu]\", txt) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGrep_87bc999e454a101cdcc2e5158443d54b() {
+        assertEval("{ txt<-c(\"1+1i\", \"7\", \"42.1\", \"7+42i\"); grep(\"[0-9].*[-+][0-9].*i$\", txt) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGrep_463c5e470c47e103f39fd9d5086fa0b1() {
+        assertEval("{ txt<-c(\"rai\", \"ira\", \"iri\"); grep(\"i$\", txt) }");
     }
 
     @Test
@@ -10989,6 +11034,131 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSubstring_823c17a8b96f9c94cba9400e32bddbf1() {
+        assertEval("{ substr(character(), integer(), integer()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_1c9501bd0c6ae99c312be46ec414ca44() {
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), NA, 4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_c11f255dc54f88a2dc1de1b6a24806ec() {
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), 3, NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_84a66e0f1648a8e1752633ea50df2633() {
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), c(NA,8), 4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_213a2a8ea2f9d5cd312016dedc507402() {
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), c(1,NA), 4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_221901876479773561663a589e4c633b() {
+        assertEval("{ substr(NA,1,2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_d6fcea25fcf0ab63be67b287b1d36d91() {
+        assertEval("{ substr(\"fastr\", NA, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_b67af38ded736620a9005880de5731e0() {
+        assertEval("{ substr(\"fastr\", 1, NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_c4a62c8f07e7621ca475d76a48c73844() {
+        assertEval("{ x<-\"abcdef\"; substr(x,1,4)<-\"0000\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_074c2375e3686756397120e7b040b0fc() {
+        assertEval("{ x<-\"abcdef\"; substr(x,1,3)<-\"0000\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_de511c1d2398630b8f1d1829cc1e67fd() {
+        assertEval("{ x<-\"abcdef\"; substr(x,1,3)<-\"0\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_b8c28298d84f773c39448d5398e1bb79() {
+        assertEval("{ x<-\"abcdef\"; substr(x,NA,3)<-\"0\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_b995c42381f49e4d06126527673b1f35() {
+        assertEval("{ x<-\"abcdef\"; substr(x,1,NA)<-\"0\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_7d0044bb1bbc108367b273b8c1271b5a() {
+        assertEval("{ x<-character(); substr(x,1,3)<-\"0\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_eede564bcb60679cb33408d3d8451a0a() {
+        assertEval("{ x<-c(\"abcdef\", \"ghijklm\"); substr(x, c(1,NA), 4)<-\"0\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_f24df3fb69a8b894ad90ea7203cc7e1e() {
+        assertEval("{ x<-character(); substr(x,1,3)<-0; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_72ca4589b6b71f0b02caeb358562c89c() {
+        assertEval("{ x<-character(); substr(x,1,3)<-NULL; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_f4245170554adb43abee3a7833710df5() {
+        assertEval("{ x<-character(); substr(x,integer(),3)<-NULL; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_ccad57b43ec1e9b7e77e7d6337e2b6c6() {
+        assertEval("{ x<-c(\"abcdef\"); substr(x[1], 2, 3)<-\"0\"; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_a06032ac4164820a440a5bd94b6f3b2a() {
+        assertEvalError("{ substr(c(\"abcdef\", \"aa\"), integer(), 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_fdd273e2854ec3b5967c14198144e0e5() {
+        assertEvalError("{ substr(c(\"abcdef\", \"aa\"), 2, integer()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_0569de1b1e739e8247d06e6c1804662a() {
+        assertEvalError("{ x<-\"abcdef\"; substr(x,3,1)<-0; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_0ecd8fac84661607b27a25d34853fafb() {
+        assertEvalError("{ x<-\"abcdef\"; substr(x,1,3)<-character(); x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_26ff19fb94bbd19ab92d02cfd29a182e() {
+        assertEvalError("{ x<-\"abcdef\"; substr(x,1,3)<-NULL; x }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSubstring_21a24d02ea5b537e125bc298b8f62bb4() {
+        assertEvalError("{ x<-\"abcdef\"; substr(x,integer(),3)<-NULL; x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSubstringIgnore_41302c9bd877c3627e699cd303bfef78() {
         assertEval("{ substring(\"123456\", first=2, last=4) }");
     }
@@ -11006,21 +11176,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSubstringIgnore_6dd56114a5d7ba502c449ca3c03308ae() {
         assertEval("{ substring(\"fastr\", first=NA, last=2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSubstringIgnore_221901876479773561663a589e4c633b() {
-        assertEval("{ substr(NA,1,2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSubstringIgnore_d6fcea25fcf0ab63be67b287b1d36d91() {
-        assertEval("{ substr(\"fastr\", NA, 2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSubstringIgnore_b67af38ded736620a9005880de5731e0() {
-        assertEval("{ substr(\"fastr\", 1, NA) }");
     }
 
     @Test

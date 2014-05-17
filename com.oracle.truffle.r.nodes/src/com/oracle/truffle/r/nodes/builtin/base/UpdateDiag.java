@@ -77,6 +77,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         RIntVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RIntVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
         int nrow = resultVector.getDimensions()[0];
@@ -95,6 +96,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         RDoubleVector resultVector = vector;
         if (vector.isShared()) {
             resultVector = (RDoubleVector) vector.copy();
+            resultVector.markNonTemporary();
         }
         int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
         int nrow = resultVector.getDimensions()[0];

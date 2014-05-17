@@ -106,10 +106,12 @@ public abstract class AssignVariable extends ASTNode {
         lhs.setSuper(isSuper);
         if (lhs.args.size() > 0) {
             ASTNode first = lhs.args.get(0).getValue();
-            if (!(first instanceof SimpleAccessVariable)) {
-                Utils.nyi(); // TODO here we need to flatten complex assignments
-            } else {
+            if (first instanceof SimpleAccessVariable) {
                 return new Replacement(src, isSuper, lhs, rhs);
+            } else if (first instanceof AccessVector) {
+                return new Replacement(src, isSuper, lhs, rhs);
+            } else {
+                Utils.nyi(); // TODO here we need to flatten complex assignments
             }
         }
         return lhs;

@@ -73,9 +73,7 @@ import com.oracle.truffle.r.runtime.envframe.*;
  */
 public abstract class REnvironment {
     public enum PackageKind {
-        PACKAGE,
-        IMPORTS,
-        NAMESPACE
+        PACKAGE, IMPORTS, NAMESPACE
     }
 
     /**
@@ -543,6 +541,9 @@ public abstract class REnvironment {
     public void removeAttr(String attrName) {
         if (attributes != null) {
             attributes.remove(attrName);
+            if (attributes.size() == 0) {
+                attributes = null;
+            }
         }
     }
 

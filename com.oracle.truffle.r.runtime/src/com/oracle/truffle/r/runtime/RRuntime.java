@@ -104,7 +104,8 @@ public class RRuntime {
 
     public static final String NAMES_ATTR_KEY = new String("names");
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
-    public static final String NAMES_ATTR_NA_HEADER = "<NA>";
+
+    public static final String NA_HEADER = "<NA>";
 
     public static final String DIM_ATTR_KEY = new String("dim");
     public static final String DIMNAMES_ATTR_KEY = "dimnames";
