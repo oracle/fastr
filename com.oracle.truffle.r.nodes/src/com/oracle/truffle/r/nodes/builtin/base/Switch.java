@@ -21,6 +21,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = "switch", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 @NodeField(name = "argNames", type = String[].class)
@@ -47,15 +48,16 @@ public abstract class Switch extends RBuiltinNode {
         return this.isVisible;
     }
 
-    @Specialization(order = 1)
-    public Object doSwitch(String x, Object[] optionalArgs) {
+    @Specialization(order = 0, guards = "isLengthOne")
+    public Object doSwitch(RAbstractStringVector x, Object[] optionalArgs) {
         controlVisibility();
         Object currentDefaultValue = null;
+        final String xStr = x.getDataAt(0);
         final String[] argNames = this.getArgNames();
         for (int i = 1; i < argNames.length; ++i) {
             final String argName = argNames[i];
             final Object value = optionalArgs[i - 1];
-            if (x.equals(argName)) {
+            if (xStr.equals(argName)) {
                 if (value != null) {
                     return returnNonNull(value);
                 }
@@ -74,20 +76,12 @@ public abstract class Switch extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 0)
-    public Object doSwitch(RStringVector x, Object[] optionalArgs) {
-        if (x.getLength() != 1) {
-            throw RError.getExprNotLengthOne(getEncapsulatingSourceSection());
-        }
-        return doSwitch(x.getDataAt(0), optionalArgs);
-    }
-
-    @Specialization(order = 2)
+    @Specialization(order = 1)
     public Object doSwitch(int x, Object[] optionalArgs) {
         return doSwitchInt(x, optionalArgs);
     }
 
-    @Specialization(order = 3)
+    @Specialization(order = 2)
     public Object doSwitch(VirtualFrame frame, Object x, Object[] optionalArgs) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -99,6 +93,12 @@ public abstract class Switch extends RBuiltinNode {
         }
         int index = (Integer) objIndex;
         return doSwitchInt(index, optionalArgs);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 3)
+    public Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
+        throw RError.getExprMissing(getEncapsulatingSourceSection());
     }
 
     private Object doSwitchInt(int index, Object[] optionalArgs) {
@@ -113,9 +113,8 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 5)
-    public Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
-        throw RError.getExprMissing(getEncapsulatingSourceSection());
+    protected boolean isLengthOne(RAbstractStringVector x, Object[] optionalArgs) {
+        return x.getLength() == 1;
     }
 
     private Object returnNull() {

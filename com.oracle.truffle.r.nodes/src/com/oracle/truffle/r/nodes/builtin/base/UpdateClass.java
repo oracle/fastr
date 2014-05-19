@@ -70,7 +70,7 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             }
         }
         initCastTypeNode();
-        Object result = castTypeNode.doCast(frame, arg, className);
+        Object result = castTypeNode.execute(frame, arg, className);
         if (result != null) {
             return setClass((RAbstractVector) result, RNull.instance);
         }

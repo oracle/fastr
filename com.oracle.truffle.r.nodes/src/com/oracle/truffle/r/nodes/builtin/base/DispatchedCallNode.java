@@ -97,7 +97,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
     }
 
-    public static final class GenericDispatchNode extends DispatchedCallNode {
+    private static final class GenericDispatchNode extends DispatchedCallNode {
 
         @Child private DispatchedCallNode dcn;
 
@@ -111,7 +111,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
     }
 
-    public static final class CachedNode extends DispatchedCallNode {
+    private static final class CachedNode extends DispatchedCallNode {
 
         @Child protected DispatchedCallNode nextNode;
         @Child protected DispatchedCallNode currentNode;
@@ -144,7 +144,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
     }
 
-    private static class ResolvedDispatchedCallNode extends DispatchedCallNode {
+    private static final class ResolvedDispatchedCallNode extends DispatchedCallNode {
         @Child protected RCallNode aCallNode;
         @Child protected DispatchNode aDispatchNode;
 

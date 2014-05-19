@@ -28,7 +28,7 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     }
 
     private void initDispatchTypes(VirtualFrame frame) {
-        evaluatedArgs = callArgNodes.executeArray(frame);
+        evaluatedArgs = callArgsNode.executeArray(frame);
         if (evaluatedArgs.length > 0) {
             this.typeL = getArgClass(evaluatedArgs[0]);
         }
