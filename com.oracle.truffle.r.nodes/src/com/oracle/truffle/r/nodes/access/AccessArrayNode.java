@@ -122,9 +122,9 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null));
+            getNamesNode = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null, null));
         }
-        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel);
+        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RRuntime.LOGICAL_TRUE, RNull.instance);
     }
 
     private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
@@ -1383,21 +1383,22 @@ public abstract class AccessArrayNode extends RNode {
         return AccessArrayNodeFactory.create(isSubset, vector, ConstantNode.create(0), positions, dropDim);
     }
 
-    @NodeChildren({@NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class), @NodeChild(value = "currDimLevel", type = RNode.class)})
+    @NodeChildren({@NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class), @NodeChild(value = "currDimLevel", type = RNode.class),
+                    @NodeChild(value = "allNull", type = RNode.class), @NodeChild(value = "names", type = RNode.class)})
     protected abstract static class GetNamesNode extends RNode {
 
-        public abstract Object executeNamesGet(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel);
+        public abstract Object executeNamesGet(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, Object names);
 
         private final NACheck namesNACheck;
 
         @Child private GetNamesNode getNamesNodeRecursive;
 
-        private RStringVector getNamesRecursive(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
+        private RStringVector getNamesRecursive(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, Object names, NACheck namesCheck) {
             if (getNamesNodeRecursive == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNamesNodeRecursive = insert(GetNamesNodeFactory.create(namesCheck, null, null, null));
+                getNamesNodeRecursive = insert(GetNamesNodeFactory.create(namesCheck, null, null, null, null, null));
             }
-            return (RStringVector) getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel);
+            return (RStringVector) getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel, allNull, names);
         }
 
         protected GetNamesNode(NACheck namesNACheck) {
@@ -1409,18 +1410,47 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel) {
+        RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
+            return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, names);
+        }
+
+        @Specialization
+        RStringVector getNamesNull(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, @SuppressWarnings("unused") RNull names) {
+            return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, null);
+        }
+
+        RStringVector getNamesInternal(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
             RIntVector p = (RIntVector) positions[currentDimLevel - 1];
             int numPositions = p.getLength();
+            RList dimNames = vector.getDimNames();
+            Object srcNames = dimNames == null ? RNull.instance : (dimNames.getDataAt(currentDimLevel - 1) == RNull.instance ? RNull.instance : dimNames.getDataAt(currentDimLevel - 1));
+            RStringVector newNames = null;
+            if (numPositions > 0) {
+                if (numPositions == 1 && p.getDataAt(0) == 0) {
+                    return null;
+                } else {
+                    newNames = getNamesVector(srcNames, p, numPositions, namesNACheck);
+                }
+            }
             if (numPositions > 1) {
-                RList dimNames = vector.getDimNames();
-                Object srcNames = dimNames == null ? RNull.instance : (dimNames.getDataAt(currentDimLevel - 1) == RNull.instance ? RNull.instance : dimNames.getDataAt(currentDimLevel - 1));
-                return getNamesVector(srcNames, p, numPositions, namesNACheck);
+                return newNames;
+            }
+            byte newAllNull = allNull;
+            if (newNames != null) {
+                if (names != null) {
+                    newAllNull = RRuntime.LOGICAL_FALSE;
+                }
+            } else {
+                newNames = names;
             }
             if (currentDimLevel == 1) {
-                return null;
+                if (newAllNull == RRuntime.LOGICAL_TRUE) {
+                    return newNames != null ? newNames : (names != null ? names : null);
+                } else {
+                    return null;
+                }
             } else {
-                return getNamesRecursive(frame, vector, positions, currentDimLevel - 1, namesNACheck);
+                return getNamesRecursive(frame, vector, positions, currentDimLevel - 1, newAllNull, newNames == null ? RNull.instance : newNames, namesNACheck);
             }
         }
     }

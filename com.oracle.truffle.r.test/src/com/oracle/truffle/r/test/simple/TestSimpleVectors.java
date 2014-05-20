@@ -477,6 +477,14 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x<-c(5,10); names(x)<-c(101, 102); names(x)[1]<-42; x }");
 
+        assertEvalError("{ x<-c(\"a\", \"b\"); dim(x)<-c(2,1); dimnames(x)<-list(c(\"Z\", \"X\"), NULL); x[, \"Z\"] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL); x[1,] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1); dimnames(x)<-list(c(\"b\", \"c\"), \"d\"); x[1,] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(1,2); dimnames(x)<-list(NULL, c(\"b\", \"c\")); x[,1] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(1,2); dimnames(x)<-list(\"a\", c(\"b\", \"c\")); x[,1] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), \"a\", NULL); x[1,,] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL, \"a\"); x[1,,] }");
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL, NULL); x[1,,] }");
     }
 
     @Test

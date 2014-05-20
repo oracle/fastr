@@ -17704,6 +17704,41 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_f9a60d725b1b60a2a0095a6e55c11473() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL); x[1,] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_b2261b9a127cd2b0dee55ba1a51fa84e() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1); dimnames(x)<-list(c(\"b\", \"c\"), \"d\"); x[1,] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_7146d90e749b9663f30ec430b7f38880() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(1,2); dimnames(x)<-list(NULL, c(\"b\", \"c\")); x[,1] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_d2a4c6489da922032421ddeadfd06fc0() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(1,2); dimnames(x)<-list(\"a\", c(\"b\", \"c\")); x[,1] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_8d2566234121ea82bd9e125642f9b2c0() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), \"a\", NULL); x[1,,] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_b1b07b78431620412aeb29e97fad589c() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL, \"a\"); x[1,,] }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_8f2642f1ea54a41c0a1ed48542a00e69() {
+        assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL, NULL); x[1,,] }");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_23e220f9c43711417c97b6024e96b424() {
         assertEvalError("{ x<-c(1,2); x[[c(\"a\")]] }");
     }
@@ -18561,6 +18596,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testMoreVectorsOther_74c9929fc75d004bdc650475dbabe040() {
         assertEvalError("{ x<-list(1,2,3); x[[-1]]<-NULL }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_a9f6d3f602cd6ea1fbff7d8502ee26db() {
+        assertEvalError("{ x<-c(\"a\", \"b\"); dim(x)<-c(2,1); dimnames(x)<-list(c(\"Z\", \"X\"), NULL); x[, \"Z\"] }");
     }
 
     @Test
