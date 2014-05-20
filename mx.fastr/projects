@@ -1,5 +1,5 @@
 suite=fastr
-mxversion=2.1.0
+mxversion=2.2.3
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 
