@@ -70,46 +70,68 @@ format.default <-
 
 format.data.frame <- function(x, ..., justify = "none")
 {
-"dummy"
-#    nr <- .row_names_info(x, 2L)
-#    nc <- length(x)
-#    rval <- vector("list", nc)
-#    for(i in 1L:nc)
+    nr <- .row_names_info(x, 2L)
+    nc <- length(x)
+    rval <- vector("list", nc)
+    for(i in 1L:nc)
+# TODO: something wrong with argument passing
 #        rval[[i]] <- format(x[[i]], ..., justify = justify)
-#    lens <- sapply(rval, NROW)
-#    if(any(lens != nr)) { # corrupt data frame, must have at least one column
-#        warning("corrupt data frame: columns will be truncated or padded with NAs")
-#        for(i in 1L:nc) {
-#            len <- NROW(rval[[i]])
-#            if(len == nr) next
-#            if(length(dim(rval[[i]])) == 2L) {
-#                rval[[i]] <- if(len < nr)
-#                    rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
-#                else rval[[i]][1L:nr,]
-#            } else {
-#                rval[[i]] <- if(len < nr) c(rval[[i]], rep.int(NA, nr-len))
-#                    else rval[[i]][1L:nr]
-#            }
-#        }
-#    }
-#    for(i in 1L:nc) {
-#        if(is.character(rval[[i]]) && inherits(rval[[i]], "character"))
-#            oldClass(rval[[i]]) <- "AsIs"
-#    }
-#    cn <- names(x)
-#    m <- match(c("row.names", "check.rows", "check.names", ""), cn, 0L)
-#    if(any(m)) cn[m] <- paste0("..dfd.", cn[m])
-#    ## This requires valid symbols for the columns, so we need to
-#    ## truncate any of more than 256 bytes.
-#    long <- nchar(cn, "bytes") > 256L
-#    cn[long] <- paste(substr(cn[long], 1L, 250L), "...")
-#    names(rval) <- cn
-#    rval$check.names <- FALSE
-#    rval$row.names <- row.names(x)
+        rval[[i]] <- format(x[[i]])
+    lens <- sapply(rval, NROW)
+    if(any(lens != nr)) { # corrupt data frame, must have at least one column
+        warning("corrupt data frame: columns will be truncated or padded with NAs")
+        for(i in 1L:nc) {
+            len <- NROW(rval[[i]])
+            if(len == nr) next
+            if(length(dim(rval[[i]])) == 2L) {
+                rval[[i]] <- if(len < nr)
+                    rbind(rval[[i]], matrix(NA, nr-len, ncol(rval[[i]])))
+                else rval[[i]][1L:nr,]
+            } else {
+                rval[[i]] <- if(len < nr) c(rval[[i]], rep.int(NA, nr-len))
+                    else rval[[i]][1L:nr]
+            }
+        }
+    }
+    for(i in 1L:nc) {
+        if(is.character(rval[[i]]) && inherits(rval[[i]], "character"))
+            oldClass(rval[[i]]) <- "AsIs"
+    }
+    cn <- names(x)
+    m <- match(c("row.names", "check.rows", "check.names", ""), cn, 0L)
+    if(any(m)) cn[m] <- paste0("..dfd.", cn[m])
+    ## This requires valid symbols for the columns, so we need to
+    ## truncate any of more than 256 bytes.
+    long <- nchar(cn, "bytes") > 256L
+    cn[long] <- paste(substr(cn[long], 1L, 250L), "...")
+    names(rval) <- cn
+    rval$check.names <- FALSE
+    rval$row.names <- row.names(x)
+# TODO: implement do.call
 #    x <- do.call("data.frame", rval)
-#    ## x will have more cols than rval if there are matrix/data.frame cols
-#    if(any(m)) names(x) <- sub("^..dfd.", "", names(x))
-#    x
+    x <- data.frame(rval)
+    ## x will have more cols than rval if there are matrix/data.frame cols
+    if(any(m)) names(x) <- sub("^..dfd.", "", names(x))
+    x
+}
+
+format.AsIs <- function(x, width = 12, ...)
+{
+    if(is.character(x)) return(format.default(x, ...))
+    if(is.null(width)) width = 12L
+    n <- length(x)
+    rvec <- rep.int(NA_character_, n)
+    for(i in 1L:n) {
+        y <- x[[i]]
+        ## need to remove class AsIs to avoid an infinite loop.
+        cl <- oldClass(y)
+        if(m <- match("AsIs", cl, 0L)) oldClass(y) <- cl[-m]
+        rvec[i] <- toString(y, width = width, ...)
+    }
+    ## AsIs might be around a matrix, which is not a class.
+    dim(rvec) <- dim(x)
+    dimnames(rvec) <- dimnames(x)
+    format.default(rvec, justify = "right")
 }
 
 prettyNum <-

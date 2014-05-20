@@ -598,8 +598,9 @@ public abstract class PrettyPrinterNode extends RNode {
         if (operand.getRowNames() == RNull.instance || ((RAbstractVector) operand.getRowNames()).getLength() == 0) {
             return "NULL\n<0 rows> (or 0-length row.names)";
         }
-        RFunction function = RContext.getLookup().lookup("format.data.frame");
-        return RRuntime.toString(function.call(frame, RArguments.create(function, new Object[]{operand})));
+        RFunction getFunction = RContext.getLookup().lookup("get");
+        RFunction formatFunction = (RFunction) getFunction.call(frame, RArguments.create(getFunction, REnvironment.globalEnv().getFrame(), new Object[]{"format.data.frame"}));
+        return RRuntime.toString(formatFunction.call(frame, RArguments.create(formatFunction, new Object[]{operand})));
     }
 
     protected static boolean twoDimsOrMore(RAbstractVector v) {

@@ -74,6 +74,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public int[] getDimensions() {
+        return vector.getDimensions();
+    }
+
+    @Override
     public Class<?> getElementClass() {
         return RVector.class;
     }
@@ -94,6 +99,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     @Override
     public Object getNames() {
         return vector.getNames();
+    }
+
+    @Override
+    public RList getDimNames() {
+        return vector.getDimNames();
     }
 
     @Override

@@ -7159,6 +7159,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGetClass_1129b85c7f5e653b334e8eda2fa3d0f8() {
+        assertEval("{ x<-1; oldClass(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGetClassIgnore_04e1bbb35c3306f6feb801b5cce80b88() {
         assertEval("{x<-seq(1,10);class(x)}");
     }
@@ -11719,6 +11724,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUpdateClass_5507a2f23d9bd7277c5ecd5f442d5629() {
+        assertEval("{ x<-1; oldClass(x)<-\"foo\"; class(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_9602b77c4b264a86c03286c619dcb5c7() {
+        assertEval("{ x<-1; oldClass(x)<-\"foo\"; oldClass(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_ecd0f33424bda622ee0e39fb8e1fb913() {
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_de592deb872ad28063ea5056506030b1() {
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; oldClass(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_eed27f11a63f1d0b0e2161cc2dd1ac80() {
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; class(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateClass_9980d815c4dff18b4560739311fdec2a() {
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; oldClass(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
     }
@@ -12981,6 +13016,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleComparison_testVectorsIgnore_9ad8bb825e6c5d11db011ae03b0c67c1() {
         assertEvalError("{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_566f65764c7f000d0c5ab2da64d936d9() {
+        assertEval("{ x<-list(7,42); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; x[[1]] }");
+    }
+
+    @Test
+    public void TestSimpleDataFrames_testAccess_9beb2cd2f5ca48a9340798ab10f23fc8() {
+        assertEval("{ x<-c(7,42); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); y[[1]] }");
     }
 
     @Test
