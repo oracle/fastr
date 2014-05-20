@@ -20,33 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-public interface RAbstractContainer {
+@RBuiltin("oldClass")
+public abstract class GetOldClass extends RBuiltinNode {
 
-    int getLength();
+    @Specialization
+    public Object getOldClass(RAbstractContainer arg) {
+        controlVisibility();
+        if (arg.isObject()) {
+            return arg.getClassHierarchy();
+        } else {
+            return RNull.instance;
+        }
+    }
 
-    Map<String, Object> getAttributes();
+    @Specialization
+    public Object getOldClass(@SuppressWarnings("unused") RFunction arg) {
+        controlVisibility();
+        return RNull.instance;
+    }
 
-    int[] getDimensions();
-
-    Class<?> getElementClass();
-
-    RVector materializeNonSharedVector();
-
-    Object getDataAtAsObject(int index);
-
-    Object getNames();
-
-    RList getDimNames();
-
-    Object getRowNames();
-
-    RStringVector getClassHierarchy();
-
-    boolean isObject();
+    public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }

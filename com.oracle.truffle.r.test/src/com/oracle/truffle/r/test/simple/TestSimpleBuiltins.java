@@ -2582,6 +2582,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;attr(x,\"class\")<-\"b\";x;}");
 
         assertEval("{x<-1;y<-\"b\";attr(x,\"class\")<-y;x;}");
+
+        // oldClass
+        assertEval("{ x<-1; oldClass(x)<-\"foo\"; class(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"foo\"; oldClass(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; oldClass(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; class(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; oldClass(x) }");
+
     }
 
     @Test
@@ -2605,6 +2619,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;class(x)}");
 
         assertEval("{x<-c(1,2,3);class(x)}");
+
+        assertEval("{ x<-1; oldClass(x) }");
     }
 
     @Test

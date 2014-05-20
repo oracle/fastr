@@ -293,9 +293,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 args = newArgs;
             }
         }
-        RNode castVector = CastToVectorNodeFactory.create(vector, false, false, false, true);
+        RNode castContainer = CastToContainerNodeFactory.create(vector, false, false, false, true);
         RNode positions = createPositions(args, argLength, a.isSubset(), false);
-        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castVector, (PositionsArrayNode) positions, CastLogicalNodeFactory.create(dropDim, false, false, false));
+        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castContainer, (PositionsArrayNode) positions, CastLogicalNodeFactory.create(dropDim, false, false, false));
         access.assignSourceSection(a.getSource());
         return access;
     }

@@ -6083,6 +6083,10 @@ function(){y<-2;get("y",mode="closure")}
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass
+#{ x<-1; oldClass(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass
 #{x<-1;class(x)}
 [1] "numeric"
 
@@ -8825,6 +8829,30 @@ character(0)
 [1] "hello" "hi"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"foo"; class(x) }
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"foo"; oldClass(x) }
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; class(x) }
+[1] "integer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; class(x)<-"integer"; class(x) }
+[1] "integer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; class(x)<-"integer"; oldClass(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; oldClass(x) }
+[1] "integer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
 #{ x=1;class(x)<-"character"; x}
 [1] "1"
 
@@ -9996,6 +10024,14 @@ Error in x >= y : invalid comparison with complex values
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ x<-c(FALSE,TRUE, FALSE, FALSE);y<-c(TRUE,FALSE); x<y }
 [1]  TRUE FALSE  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-c(7,42); y<-as.data.frame(x, row.names=NULL, nm="x"); y[[1]] }
+[1]  7 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-list(7,42); class(x)<-"data.frame"; row.names(x)<-"r1"; x[[1]] }
+[1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
 #{ x<-1; class(x)<-"foo"; y<-as.data.frame(x) }
