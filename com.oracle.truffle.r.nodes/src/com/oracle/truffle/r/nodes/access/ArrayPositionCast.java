@@ -515,10 +515,13 @@ public abstract class ArrayPositionCast extends RNode {
             return operand;
         }
 
-        private int findPosition(RAbstractContainer container, RStringVector names, String operand) {
-            for (int j = 0; j < names.getLength(); j++) {
-                if (operand.equals(names.getDataAt(j))) {
-                    return j + 1;
+        private int findPosition(RAbstractContainer container, Object namesObj, String operand) {
+            if (namesObj != RNull.instance) {
+                RStringVector names = (RStringVector) namesObj;
+                for (int j = 0; j < names.getLength(); j++) {
+                    if (operand.equals(names.getDataAt(j))) {
+                        return j + 1;
+                    }
                 }
             }
             if (numDimensions == 1) {
@@ -607,7 +610,7 @@ public abstract class ArrayPositionCast extends RNode {
         @Specialization(order = 57, guards = {"hasDimNames", "!numDimensionsOne"})
         public int doString(RAbstractContainer container, String operand) {
             RList dimNames = container.getDimNames();
-            RStringVector names = (RStringVector) dimNames.getDataAt(dimension);
+            Object names = dimNames.getDataAt(dimension);
             return findPosition(container, names, operand);
         }
 
