@@ -44,29 +44,29 @@ public abstract class Print extends RInvisibleBuiltinNode {
     public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
 
-    private static Config RPrint;
+    private static Config printConfig;
 
     public static Config setPrintDefaults() {
-        if (RPrint == null) {
-            RPrint = new Config();
+        if (printConfig == null) {
+            printConfig = new Config();
         }
-        RPrint.width = RContext.getInstance().getConsoleHandler().getWidth();
-        RPrint.naWidth = RRuntime.STRING_NA.length();
-        RPrint.naWidthNoQuote = RRuntime.NA_HEADER.length();
-        RPrint.digits = 7 /* default */;
-        RPrint.scipen = 0 /* default */;
-        RPrint.gap = 1;
-        RPrint.quote = 1;
-        RPrint.right = Adjustment.LEFT;
-        RPrint.max = 99999 /* default */;
-        RPrint.naString = RRuntime.STRING_NA;
-        RPrint.naStringNoQuote = RRuntime.NA_HEADER;
-        RPrint.useSource = 8 /* default */;
-        RPrint.cutoff = 60;
-        return RPrint;
+        printConfig.width = RContext.getInstance().getConsoleHandler().getWidth();
+        printConfig.naWidth = RRuntime.STRING_NA.length();
+        printConfig.naWidthNoQuote = RRuntime.NA_HEADER.length();
+        printConfig.digits = 7 /* default */;
+        printConfig.scipen = 0 /* default */;
+        printConfig.gap = 1;
+        printConfig.quote = 1;
+        printConfig.right = Adjustment.LEFT;
+        printConfig.max = 99999 /* default */;
+        printConfig.naString = RRuntime.STRING_NA;
+        printConfig.naStringNoQuote = RRuntime.NA_HEADER;
+        printConfig.useSource = 8 /* default */;
+        printConfig.cutoff = 60;
+        return printConfig;
     }
 
-    public static Config getRPrint() {
+    public static Config getConfig() {
         return setPrintDefaults();
     }
 

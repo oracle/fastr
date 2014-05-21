@@ -108,7 +108,7 @@ public abstract class Format extends RBuiltinNode {
         for (int i = 0; i < value.getLength(); i++) {
             byte val = value.getDataAt(i);
             if (RRuntime.isNA(val)) {
-                width = Print.getRPrint().naWidth;
+                width = Print.getConfig().naWidth;
             } else if (val != RRuntime.LOGICAL_FALSE && width < 4) {
                 width = 4;
             } else if (val == RRuntime.LOGICAL_FALSE && width < 5) {
@@ -176,7 +176,7 @@ public abstract class Format extends RBuiltinNode {
             ret = tmp;
         }
         if (!RRuntime.isNA(ret)) {
-            Print.getRPrint().scipen = ret;
+            Print.getConfig().scipen = ret;
         }
         return ret;
     }
@@ -209,7 +209,7 @@ public abstract class Format extends RBuiltinNode {
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
-        Print.getRPrint().digits = digits;
+        Print.getConfig().digits = digits;
         int nsmall = nsmallVec.getLength() > 0 ? nsmallVec.getDataAt(0) : RRuntime.INT_NA;
         int width = widthVec.getLength() > 0 ? widthVec.getDataAt(0) : 0;
         int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
