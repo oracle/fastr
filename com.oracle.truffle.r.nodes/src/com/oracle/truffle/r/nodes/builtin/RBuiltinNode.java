@@ -79,7 +79,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return args;
     }
 
-    static CallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
+    static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
         RNode[] args = createCallArguments(builtin);
         RBuiltinNode node = createNode(builtin, args, null);
         injectParameterDefaultValues(node);

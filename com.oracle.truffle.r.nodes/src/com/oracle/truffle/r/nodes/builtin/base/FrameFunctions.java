@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * sys.R.
@@ -42,16 +41,8 @@ public class FrameFunctions {
         @Specialization(guards = "isOne")
         public REnvironment parentFrame(@SuppressWarnings("unused") double n) {
             controlVisibility();
-            Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
-            RFunction func = EnvFunctions.frameToFunction(callerFrame);
-            if (func == null) {
-                // called from shell
-                return REnvironment.globalEnv();
-            } else {
-                // need the caller of func
-                Frame funcCallerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY, 1);
-                return EnvFunctions.callerEnvironment(funcCallerFrame);
-            }
+            Frame callerFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, 2);
+            return EnvFunctions.frameToEnvironment(callerFrame);
         }
 
         @Specialization

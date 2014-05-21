@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -34,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = "apply", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public abstract class Apply extends RBuiltinNode {
+
+    @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"X", "MARGIN", "FUN", "..."};
 
@@ -61,7 +65,7 @@ public abstract class Apply extends RBuiltinNode {
                 rowData[i] = x.getDataAt(i * rows + row);
             }
             RDoubleVector rowVec = RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR);
-            result[row] = executeFunction(frame, fun, RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR));
+            result[row] = callFunction(frame, fun, RDataFactory.createDoubleVector(rowData, RDataFactory.COMPLETE_VECTOR));
         }
         return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
@@ -80,7 +84,7 @@ public abstract class Apply extends RBuiltinNode {
                 colData[i] = x.getDataAt(col * rows + i);
             }
             RDoubleVector colVec = RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR);
-            result[col] = executeFunction(frame, fun, RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR));
+            result[col] = callFunction(frame, fun, RDataFactory.createDoubleVector(colData, RDataFactory.COMPLETE_VECTOR));
         }
         return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
@@ -95,9 +99,9 @@ public abstract class Apply extends RBuiltinNode {
         return margin == 2.0;
     }
 
-    private static Object executeFunction(VirtualFrame frame, RFunction fun, Object input) {
+    private Object callFunction(VirtualFrame frame, RFunction fun, Object input) {
         Object[] args = RArguments.create(fun, new Object[]{input});
-        return fun.call(frame, args);
+        return funCall.call(frame, fun.getTarget(), args);
     }
 
 }

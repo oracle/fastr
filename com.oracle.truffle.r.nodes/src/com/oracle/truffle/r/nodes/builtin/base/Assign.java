@@ -61,6 +61,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         if (writeVariableNode == null || !x.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastName = x;
+            // must write to super (effect must be visible in caller frame of the assign builtin)
             WriteVariableNode wvn = WriteVariableNode.create(lastName, null, false, false);
             writeVariableNode = writeVariableNode == null ? insert(wvn) : writeVariableNode.replace(wvn);
         }

@@ -135,7 +135,7 @@ public abstract class REnvironment {
     /**
      * Returns {@code true} iff {@code frame} is that associated with {@code env}.
      */
-    public static boolean isFrameForEnv(MaterializedFrame frame, REnvironment env) {
+    private static boolean isFrameForEnv(MaterializedFrame frame, REnvironment env) {
         Object id = env.frameAccess.id();
         if (id == null) {
             return false;
@@ -149,6 +149,26 @@ public abstract class REnvironment {
         } catch (FrameSlotTypeException fste) {
             return false;
         }
+    }
+
+    /**
+     * Looks up the search path for an environment that is associated with {@code frame}.
+     *
+     * @param frame
+     * @return the corresponding {@link REnvironment} or {@code null} if not found. If the
+     *         environment is {@code base} the "namespace:base" instance is returned.
+     */
+    public static REnvironment lookupEnvForFrame(MaterializedFrame frame) {
+        for (REnvironment env : searchPath) {
+            if (isFrameForEnv(frame, env)) {
+                if (env == baseEnv) {
+                    return baseEnv.getNamespace();
+                } else {
+                    return env;
+                }
+            }
+        }
+        return null;
     }
 
     /**

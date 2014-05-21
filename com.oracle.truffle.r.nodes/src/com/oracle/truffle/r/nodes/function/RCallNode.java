@@ -81,12 +81,10 @@ public abstract class RCallNode extends RNode {
         return cn;
     }
 
-    private static RBuiltinRootNode findBuiltinRootNode(CallTarget callTarget) {
-        if (callTarget instanceof DefaultCallTarget) {
-            RootNode root = ((DefaultCallTarget) callTarget).getRootNode();
-            if (root instanceof RBuiltinRootNode) {
-                return (RBuiltinRootNode) root;
-            }
+    private static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
+        RootNode root = callTarget.getRootNode();
+        if (root instanceof RBuiltinRootNode) {
+            return (RBuiltinRootNode) root;
         }
         return null;
     }
@@ -230,7 +228,7 @@ public abstract class RCallNode extends RNode {
             clonedArgs = permuteArguments(function, clonedArgs, clonedArgs.getNames());
 
             if (function.isBuiltin()) {
-                CallTarget callTarget = function.getTarget();
+                RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
                     return root.inline(clonedArgs);
@@ -241,7 +239,7 @@ public abstract class RCallNode extends RNode {
         }
 
         private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments, Object[] actualNames) {
-            RRootNode rootNode = (RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode();
+            RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
             final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
             final boolean hasVarArgs = Arrays.asList(rootNode.getParameterNames()).contains("...");
             if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount()) {
@@ -266,17 +264,20 @@ public abstract class RCallNode extends RNode {
     private static class DispatchedCallNode extends RCallNode {
 
         @Child protected CallArgumentsNode arguments;
+        @Child protected DirectCallNode call;
+
         protected final RFunction function;
 
         DispatchedCallNode(RFunction function, CallArgumentsNode arguments) {
             this.arguments = arguments;
             this.function = function;
+            this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
             Object[] argsObject = RArguments.create(function, arguments.executeArray(frame));
-            return function.call(frame, argsObject);
+            return call.call(frame, argsObject);
         }
 
     }
@@ -284,6 +285,7 @@ public abstract class RCallNode extends RNode {
     private static final class GenericCallNode extends RootCallNode {
 
         @Child protected CallArgumentsNode arguments;
+        @Child protected IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
         GenericCallNode(RNode functionNode, CallArgumentsNode arguments) {
             super(functionNode);
@@ -293,7 +295,7 @@ public abstract class RCallNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
             Object[] argsObject = RArguments.create(function, permuteArguments(function, arguments.executeArray(frame), arguments.getNames()));
-            return function.call(frame, argsObject);
+            return indirectCall.call(frame, function.getTarget(), argsObject);
         }
 
         private Object[] permuteArguments(RFunction function, Object[] evaluatedArgs, Object[] actualNames) {

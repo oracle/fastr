@@ -40,12 +40,22 @@ public final class FunctionDefinitionNode extends RRootNode {
     @Child private RNode body;
     private final String description;
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description) {
+    /**
+     * An instance of this node may be called from a global scope with the intention to have its
+     * execution leave a footprint behind in that scope, e.g., during library loading. In that case,
+     * {@code forGlobal} is {@code true}, and the {@link #execute(VirtualFrame)} method must be
+     * invoked with one argument, namely the {@link VirtualFrame} representing the global scope.
+     * Execution will then proceed in the context of that frame.
+     */
+    private final boolean forGlobal;
+
+    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description, boolean forGlobal) {
         super(src, parameterNames, descriptor.getDescriptor());
         this.descriptor = descriptor;
         this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
         this.description = description;
+        this.forGlobal = forGlobal;
     }
 
     public Node getUninitializedBody() {
@@ -59,7 +69,13 @@ public final class FunctionDefinitionNode extends RRootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         try {
-            return body.execute(frame);
+            if (forGlobal) {
+                VirtualFrame vf = (VirtualFrame) frame.getArguments()[0];
+                Object result = body.execute(vf);
+                return result;
+            } else {
+                return body.execute(frame);
+            }
         } catch (ReturnException ex) {
             return ex.getResult();
         }

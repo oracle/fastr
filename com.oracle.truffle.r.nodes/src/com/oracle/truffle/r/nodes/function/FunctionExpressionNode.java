@@ -41,7 +41,7 @@ public abstract class FunctionExpressionNode extends RNode {
         return new StaticFunctionExpressionNode(function);
     }
 
-    public static FunctionExpressionNode create(CallTarget callTarget) {
+    public static FunctionExpressionNode create(RootCallTarget callTarget) {
         return new DynamicFunctionExpressionNode(callTarget);
     }
 
@@ -65,9 +65,9 @@ public abstract class FunctionExpressionNode extends RNode {
 
     public static final class DynamicFunctionExpressionNode extends FunctionExpressionNode {
 
-        private final CallTarget callTarget;
+        private final RootCallTarget callTarget;
 
-        public DynamicFunctionExpressionNode(CallTarget callTarget) {
+        public DynamicFunctionExpressionNode(RootCallTarget callTarget) {
             this.callTarget = callTarget;
         }
 
@@ -76,7 +76,7 @@ public abstract class FunctionExpressionNode extends RNode {
             return new RFunction("", callTarget, false, frame.materialize());
         }
 
-        public CallTarget getCallTarget() {
+        public RootCallTarget getCallTarget() {
             return callTarget;
         }
     }

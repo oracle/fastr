@@ -25,10 +25,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
@@ -69,6 +71,9 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Child Re re;
     @Child Im im;
+
+    @CompilationFinal RFunction formatDataFrame;
+    @Child DirectCallNode formatDataFrameCall;
 
     protected abstract boolean isPrintingAttributes();
 
@@ -173,7 +178,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Specialization
     public String prettyPrint(RFunction operand, Object listElementName) {
-        return ((RRootNode) ((DefaultCallTarget) operand.getTarget()).getRootNode()).getSourceCode();
+        return ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
     }
 
     @Specialization
@@ -590,8 +595,12 @@ public abstract class PrettyPrinterNode extends RNode {
         if (operand.getRowNames() == RNull.instance || ((RAbstractVector) operand.getRowNames()).getLength() == 0) {
             return "NULL\n<0 rows> (or 0-length row.names)";
         }
-        RFunction function = RContext.getLookup().lookup("format.data.frame");
-        return RRuntime.toString(function.call(frame, RArguments.create(function, new Object[]{operand})));
+        if (formatDataFrame == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            RFunction function = RContext.getLookup().lookup("format.data.frame");
+            formatDataFrameCall = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
+        }
+        return RRuntime.toString(formatDataFrameCall.call(frame, RArguments.create(formatDataFrame, new Object[]{operand})));
     }
 
     protected static boolean twoDimsOrMore(RAbstractVector v) {
