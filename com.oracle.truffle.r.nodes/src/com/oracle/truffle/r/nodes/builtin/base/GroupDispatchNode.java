@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class GroupDispatchNode extends S3DispatchNode {
 
     @Child protected WriteVariableNode wvnGroup;
-    @Child protected CallArgumentsNode callArgNodes;
+    @Child protected CallArgumentsNode callArgsNode;
     @Child protected ReadVariableNode builtInNode;
     @CompilationFinal private final String groupName;
     protected boolean writeGroup;
@@ -37,7 +37,7 @@ public class GroupDispatchNode extends S3DispatchNode {
     protected GroupDispatchNode(final String aGenericName, final String groupName, final CallArgumentsNode callArgNode) {
         this.genericName = aGenericName;
         this.groupName = groupName;
-        this.callArgNodes = callArgNode;
+        this.callArgsNode = callArgNode;
     }
 
     public static GroupDispatchNode create(final String aGenericName, final CallArgumentsNode callArgNode) {
@@ -97,7 +97,7 @@ public class GroupDispatchNode extends S3DispatchNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RNode[] args = callArgNodes.getArguments();
+        RNode[] args = callArgsNode.getArguments();
         if (args == null || args.length < 1) {
             return callBuiltin(frame);
         }
@@ -148,7 +148,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         try {
             builtinFunc = builtInNode.executeFunction(frame);
         } catch (UnexpectedResultException e) {
-            throw new UnsupportedOperationException();
+            throw new RuntimeException("Builtin " + this.genericName + " not found");
         }
         initFunCall(builtinFunc);
         return this.funCall;
@@ -171,18 +171,18 @@ public class GroupDispatchNode extends S3DispatchNode {
     private void initFunCall(RFunction func) {
         // avoid re-evaluating arguments.
         if (evaluatedArgs != null) {
-            RNode[] argArray = new RNode[callArgNodes.getArguments().length];
-            System.arraycopy(callArgNodes.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
+            RNode[] argArray = new RNode[callArgsNode.getArguments().length];
+            System.arraycopy(callArgsNode.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
             for (int i = 0; i < evaluatedArgs.length; ++i) {
                 if (evaluatedArgs[i] != null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     argArray[i] = ConstantNode.create(evaluatedArgs[i]);
                 }
             }
-            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(argArray, callArgNodes.getNames()));
+            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(argArray, callArgsNode.getNames()));
         }
         if (this.funCall == null) {
-            this.funCall = new DispatchNode.FunctionCall(func, callArgNodes);
+            this.funCall = new DispatchNode.FunctionCall(func, callArgsNode);
         }
         this.funCall.function = func;
     }

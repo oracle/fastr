@@ -27,15 +27,9 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Child private CastTypeNode castTypeNode;
     @Child private IsFactor isFactor;
 
-    @Specialization(order = 0)
+    @Specialization(order = 0, guards = {"!isReal", "!isSingle"})
     public Object update(VirtualFrame frame, final Object x, final String value) {
         controlVisibility();
-        if (value.equals(RRuntime.REAL)) {
-            throw RError.getDefunct(getEncapsulatingSourceSection(), RRuntime.REAL, RRuntime.TYPE_DOUBLE);
-        }
-        if (value.equals(RRuntime.SINGLE)) {
-            throw RError.getDefunct(getEncapsulatingSourceSection(), RRuntime.SINGLE, "mode<-");
-        }
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
@@ -61,9 +55,32 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1)
+    @Specialization(order = 1, guards = "isReal")
+    public Object updateReal(VirtualFrame frame, final Object x, final String value) {
+        throw RError.getDefunct(getEncapsulatingSourceSection(), RRuntime.REAL, RRuntime.TYPE_DOUBLE);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 2, guards = "isSingle")
+    public Object updateSingle(VirtualFrame frame, final Object x, final String value) {
+        throw RError.getDefunct(getEncapsulatingSourceSection(), RRuntime.SINGLE, "mode<-");
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 3)
     public Object update(VirtualFrame frame, final Object x, final Object value) {
         controlVisibility();
         throw RError.getValueNull(getEncapsulatingSourceSection());
     }
+
+    @SuppressWarnings("unused")
+    protected static boolean isReal(VirtualFrame frame, final Object x, final String value) {
+        return value.equals(RRuntime.REAL);
+    }
+
+    @SuppressWarnings("unused")
+    protected static boolean isSingle(VirtualFrame frame, final Object x, final String value) {
+        return value.equals(RRuntime.SINGLE);
+    }
+
 }
