@@ -29,15 +29,15 @@ package com.oracle.truffle.r.runtime;
  */
 public class RVersionNumber {
     public static final String MAJOR = "0";
-    public static final String MINOR = "6";
-    public static final String PATCH = "2";
+    public static final String MINOR = "7";
+    public static final String PATCH = "0";
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
 
     public static final String RELEASE_YEAR = "2014";
-    public static final String RELEASE_MONTH = "03";
-    public static final String RELEASE_DAY = "11";
+    public static final String RELEASE_MONTH = "05";
+    public static final String RELEASE_DAY = "22";
 
     public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
