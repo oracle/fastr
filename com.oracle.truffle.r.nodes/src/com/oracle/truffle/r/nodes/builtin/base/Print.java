@@ -41,35 +41,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class Print extends RInvisibleBuiltinNode {
 
-    public static final int R_MAX_DIGITS_OPT = 22;
-    public static final int R_MIN_DIGITS_OPT = 0;
-
-    private static Config printConfig;
-
-    public static Config setPrintDefaults() {
-        if (printConfig == null) {
-            printConfig = new Config();
-        }
-        printConfig.width = RContext.getInstance().getConsoleHandler().getWidth();
-        printConfig.naWidth = RRuntime.STRING_NA.length();
-        printConfig.naWidthNoQuote = RRuntime.NA_HEADER.length();
-        printConfig.digits = 7 /* default */;
-        printConfig.scipen = 0 /* default */;
-        printConfig.gap = 1;
-        printConfig.quote = 1;
-        printConfig.right = Adjustment.LEFT;
-        printConfig.max = 99999 /* default */;
-        printConfig.naString = RRuntime.STRING_NA;
-        printConfig.naStringNoQuote = RRuntime.NA_HEADER;
-        printConfig.useSource = 8 /* default */;
-        printConfig.cutoff = 60;
-        return printConfig;
-    }
-
-    public static Config getConfig() {
-        return setPrintDefaults();
-    }
-
     @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, false);
 
     private static void printHelper(String string) {
@@ -85,25 +56,4 @@ public abstract class Print extends RInvisibleBuiltinNode {
         controlVisibility();
         return o;
     }
-
-    public static class Config {
-        public int width;
-        public int naWidth;
-        public int naWidthNoQuote;
-        public int digits;
-        public int scipen;
-        public int gap;
-        public int quote;
-        public Adjustment right;
-        public int max;
-        public String naString;
-        public String naStringNoQuote;
-        public int useSource;
-        public int cutoff;
-    }
-
-    public enum Adjustment {
-        LEFT, RIGHT, CENTRE, NONE;
-    }
-
 }
