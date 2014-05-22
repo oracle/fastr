@@ -71,9 +71,11 @@ import com.oracle.truffle.r.runtime.envframe.*;
  * "namespace:base" is the global environment.
  *
  */
-public abstract class REnvironment {
+public abstract class REnvironment implements RAttributable {
     public enum PackageKind {
-        PACKAGE, IMPORTS, NAMESPACE
+        PACKAGE,
+        IMPORTS,
+        NAMESPACE
     }
 
     /**
@@ -112,7 +114,7 @@ public abstract class REnvironment {
     private REnvironment parent;
     private final String name;
     final REnvFrameAccess frameAccess;
-    private Map<String, Object> attributes;
+    private RAttributes attributes;
     private boolean locked;
 
     /**
@@ -549,26 +551,14 @@ public abstract class REnvironment {
         return frameAccess.bindingIsLocked(key);
     }
 
-    @SlowPath
-    public void setAttr(String attrName, Object value) {
-        if (attributes == null) {
-            attributes = new LinkedHashMap<>();
-        }
-        attributes.put(attrName, value);
-    }
-
-    @SlowPath
-    public void removeAttr(String attrName) {
-        if (attributes != null) {
-            attributes.remove(attrName);
-            if (attributes.size() == 0) {
-                attributes = null;
-            }
-        }
-    }
-
-    public Map<String, Object> getAttributes() {
+    public RAttributes getAttributes() {
         return attributes;
+    }
+
+    public void initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributes.create();
+        }
     }
 
     @Override

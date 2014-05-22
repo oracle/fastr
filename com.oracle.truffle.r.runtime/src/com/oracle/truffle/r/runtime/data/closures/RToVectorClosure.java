@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -73,7 +71,12 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public Map<String, Object> getAttributes() {
+    public void initAttributes() {
+        vector.initAttributes();
+    }
+
+    @Override
+    public RAttributes getAttributes() {
         return vector.getAttributes();
     }
 
