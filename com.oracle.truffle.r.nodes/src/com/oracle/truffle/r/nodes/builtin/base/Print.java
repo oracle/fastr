@@ -56,5 +56,4 @@ public abstract class Print extends RInvisibleBuiltinNode {
         controlVisibility();
         return o;
     }
-
 }

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -124,13 +123,13 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
 
         @Override
-        public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
+        public int executeInteger(VirtualFrame frame) {
             controlVisibility();
             return intValue;
         }
 
         @Override
-        public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
+        public byte executeByte(VirtualFrame frame) {
             controlVisibility();
             return logicalValue;
         }
@@ -222,7 +221,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     private static final class ConstantNullNode extends ConstantNode {
 
         @Override
-        public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
+        public RNull executeNull(VirtualFrame frame) {
             controlVisibility();
             return RNull.instance;
         }
@@ -237,7 +236,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     private static final class ConstantMissingNode extends ConstantNode {
 
         @Override
-        public RMissing executeMissing(VirtualFrame frame) throws UnexpectedResultException {
+        public RMissing executeMissing(VirtualFrame frame) {
             controlVisibility();
             return RMissing.instance;
         }
@@ -252,7 +251,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     private static final class ConstantEmptyObjectArrayNode extends ConstantNode {
 
         @Override
-        public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
+        public Object[] executeArray(VirtualFrame frame) {
             controlVisibility();
             return EMPTY_OBJECT_ARRAY;
         }
@@ -273,7 +272,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
 
         @Override
-        public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
+        public Object[] executeArray(VirtualFrame frame) {
             controlVisibility();
             return array;
         }
@@ -336,7 +335,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
 
         @Override
-        public RRaw executeRRaw(VirtualFrame frame) throws UnexpectedResultException {
+        public RRaw executeRRaw(VirtualFrame frame) {
             controlVisibility();
             return data;
         }
@@ -357,7 +356,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
 
         @Override
-        public RFunction executeFunction(VirtualFrame frame) throws UnexpectedResultException {
+        public RFunction executeFunction(VirtualFrame frame) {
             controlVisibility();
             return function;
         }

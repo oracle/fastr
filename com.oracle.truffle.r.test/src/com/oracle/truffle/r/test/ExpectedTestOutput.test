@@ -6022,6 +6022,26 @@ Error in rm("foo", envir = baseenv()) :
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   0  -4  NA NaN Inf
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
+#{ format(7) }
+[1] "7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
+#{ format(7.42) }
+[1] "7.42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
+#{ format(c(7,42)) }
+[1] " 7" "42"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
+#{ format(c(7.42,42.7)) }
+[1] " 7.42" "42.70"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
+#{ format(c(7.42,42.7,NA)) }
+[1] " 7.42" "42.70" "   NA"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
 #{ get(".Platform")$endian }
 [1] "little"
@@ -6063,6 +6083,10 @@ function(){y<-2;get("y",mode="closure")}
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass
+#{ x<-1; oldClass(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass
 #{x<-1;class(x)}
 [1] "numeric"
 
@@ -6085,6 +6109,22 @@ function(){y<-2;get("y",mode="closure")}
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGetClass
 #{x<-seq(1L,10L);class(x)}
 [1] "integer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGrep
+#{ txt<-c("1+1i", "7", "42.1", "7+42i"); grep("[0-9].*[-+][0-9].*i$", txt) }
+[1] 1 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGrep
+#{ txt<-c("arm","foot","lefroo", "bafoobar"); grep("foo", txt) }
+[1] 2 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGrep
+#{ txt<-c("is", "intended", "to", "guarantee", "your", "freedom"); grep("[gu]", txt) }
+[1] 4 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGrep
+#{ txt<-c("rai", "ira", "iri"); grep("i$", txt) }
+[1] 1 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIfelse
 #{ ifelse(FALSE,1,0) }
@@ -8396,12 +8436,50 @@ Error: object 'x' not found
 [1] "abc"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr("fastr", 1, NA) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr("fastr", NA, 2) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ substr(1234,2,3) }
 [1] "23"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ substr(1234L,2,3) }
 [1] "23"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(NA,1,2) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(c("abcdef", "aa"), 2, integer()) }
+Error in substr(c("abcdef", "aa"), 2, integer()) :
+  invalid substring arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(c("abcdef", "aa"), 3, NA) }
+[1] NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(c("abcdef", "aa"), NA, 4) }
+[1] NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(c("abcdef", "aa"), c(1,NA), 4) }
+[1] "abcd" NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(c("abcdef", "aa"), c(NA,8), 4) }
+[1] NA ""
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(c("abcdef", "aa"), integer(), 2) }
+Error in substr(c("abcdef", "aa"), integer(), 2) :
+  invalid substring arguments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ substr(c("hello", "bye"), 1, 2) }
@@ -8418,6 +8496,71 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ substr(c("hello", "bye"), c(1,2,3), 4) }
 [1] "hell" "ye"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ substr(character(), integer(), integer()) }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,1,3)<-"0"; x }
+[1] "0bcdef"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,1,3)<-"0000"; x }
+[1] "000def"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,1,3)<-NULL; x }
+Error in `substr<-`(`*tmp*`, 1, 3, value = NULL) : invalid value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,1,3)<-character(); x }
+Error in `substr<-`(`*tmp*`, 1, 3, value = character(0)) : invalid value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,1,4)<-"0000"; x }
+[1] "0000ef"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,1,NA)<-"0"; x }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,3,1)<-0; x }
+Error in `substr<-`(`*tmp*`, 3, 1, value = 0) : invalid value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,NA,3)<-"0"; x }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-"abcdef"; substr(x,integer(),3)<-NULL; x }
+Error in `substr<-`(`*tmp*`, integer(), 3, value = NULL) :
+  invalid substring arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-c("abcdef"); substr(x[1], 2, 3)<-"0"; x }
+[1] "a0cdef"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-c("abcdef", "ghijklm"); substr(x, c(1,NA), 4)<-"0"; x }
+[1] "0bcdef" NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-character(); substr(x,1,3)<-"0"; x }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-character(); substr(x,1,3)<-0; x }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-character(); substr(x,1,3)<-NULL; x }
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
+#{ x<-character(); substr(x,integer(),3)<-NULL; x }
+character(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ `sum`(1:10) }
@@ -8684,6 +8827,30 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ unlist(list("hello", "hi")) }
 [1] "hello" "hi"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"foo"; class(x) }
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"foo"; oldClass(x) }
+[1] "foo"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; class(x) }
+[1] "integer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; class(x)<-"integer"; class(x) }
+[1] "integer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; class(x)<-"integer"; oldClass(x) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
+#{ x<-1; oldClass(x)<-"integer"; oldClass(x) }
+[1] "integer"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
 #{ x=1;class(x)<-"character"; x}
@@ -9857,6 +10024,14 @@ Error in x >= y : invalid comparison with complex values
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ x<-c(FALSE,TRUE, FALSE, FALSE);y<-c(TRUE,FALSE); x<y }
 [1]  TRUE FALSE  TRUE FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-c(7,42); y<-as.data.frame(x, row.names=NULL, nm="x"); y[[1]] }
+[1]  7 42
+
+##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAccess
+#{ x<-list(7,42); class(x)<-"data.frame"; row.names(x)<-"r1"; x[[1]] }
+[1] 7
 
 ##com.oracle.truffle.r.test.simple.TestSimpleDataFrames.testAsDataFrame
 #{ x<-1; class(x)<-"foo"; y<-as.data.frame(x) }
@@ -47662,6 +47837,10 @@ Error in x[[as.integer(NA)]] : subscript out of bounds
 Error in x[[as.integer(NA)]] : subscript out of bounds
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c("a", "b"); dim(x)<-c(2,1); dimnames(x)<-list(c("Z", "X"), NULL); x[, "Z"] }
+Error in x[, "Z"] : subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1); x[[-4]]<-7 }
 Error in x[[-4]] <- 7 : attempt to select less than one element
 
@@ -47673,6 +47852,37 @@ Error in x[[-4]] <- NULL :
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1); x[[NA]] }
 Error in x[[NA]] : subscript out of bounds
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(1,2); dimnames(x)<-list("a", c("b", "c")); x[,1] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(1,2); dimnames(x)<-list(NULL, c("b", "c")); x[,1] }
+b
+1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(2,1); dimnames(x)<-list(c("b", "c"), "d"); x[1,] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(2,1); dimnames(x)<-list(c("b", "c"), NULL); x[1,] }
+b
+1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c("b", "c"), "a", NULL); x[1,,] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c("b", "c"), NULL, "a"); x[1,,] }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c("b", "c"), NULL, NULL); x[1,,] }
+b
+1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1,2); dim(x)<-2; attr(x, "foo")<-"foo"; x["a"]<-42; attributes(x) }

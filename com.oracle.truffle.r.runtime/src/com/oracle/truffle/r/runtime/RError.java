@@ -168,6 +168,7 @@ public abstract class RError extends RuntimeException {
     public static final String UNKNOWN_FUNCTION_USE_METHOD = "no applicable method for '%s' applied to an object of class '%s'";
     public static final String UNKNOWN_OBJECT = "object '%s' not found";
     public static final String INVALID_ARGUMENT = "invalid '%s' argument";
+    public static final String INVALID_ARGUMENTS_NO_QUOTE = "invalid %s arguments";
     public static final String INVALID_SUBSCRIPT_TYPE = "invalid subscript type '%s'";
     public static final String ARGUMENT_NOT_VECTOR = "argument %d is not a vector";
     public static final String CANNOT_COERCE = "cannot coerce type '%s' to vector of type '%s'";
@@ -256,6 +257,7 @@ public abstract class RError extends RuntimeException {
     public static final String SUBASSIGN_TYPE_FIX = "incompatible types (from %s to %s) in subassignment type fix";
     public static final String SUBSCRIPT_TYPES = "incompatible types (from %s to %s) in [[ assignment";
     public static final String RECURSIVE_INDEXING_FAILED = "recursive indexing failed at level %d";
+    public static final String ARGUMENTS_PASSED = "%d arguments passed to %s which requires %d";
 
     private static final String NOT_CHARACTER_VECTOR = "'%s' must be a character vector";
     private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
@@ -1777,6 +1779,10 @@ public abstract class RError extends RuntimeException {
         return getGenericError(ast, stringFormat(RError.INVALID_ARGUMENT, str));
     }
 
+    public static RError getInvalidArgumentsNoQuote(SourceSection ast, String str) {
+        return getGenericError(ast, stringFormat(RError.INVALID_ARGUMENTS_NO_QUOTE, str));
+    }
+
     public static RError getInvalidSubscriptType(SourceSection ast, String str) {
         return getGenericError(ast, stringFormat(RError.INVALID_SUBSCRIPT_TYPE, str));
     }
@@ -2044,6 +2050,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getRecursiveIndexingFailed(SourceSection ast, int level) {
         return getGenericError(ast, stringFormat(RError.RECURSIVE_INDEXING_FAILED, level));
+    }
+
+    public static RError getArgumentsPassed(SourceSection ast, int numArgs, String func, int numArgsReq) {
+        return getGenericError(ast, stringFormat(RError.ARGUMENTS_PASSED, numArgs, func, numArgsReq));
     }
 
     public static RError getNotMatixUpdateClass(SourceSection ast, int dim) {

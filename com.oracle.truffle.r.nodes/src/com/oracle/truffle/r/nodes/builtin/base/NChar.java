@@ -50,6 +50,13 @@ public abstract class NChar extends RBuiltinNode {
         }
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    public RIntVector rev(VirtualFrame frame, RNull value) {
+        controlVisibility();
+        return RDataFactory.createEmptyIntVector();
+    }
+
     @Specialization
     public int rev(VirtualFrame frame, int value) {
         controlVisibility();

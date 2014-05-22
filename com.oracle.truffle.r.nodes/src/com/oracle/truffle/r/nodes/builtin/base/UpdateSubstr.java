@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -30,8 +31,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(".Internal.substr")
-public abstract class Substr extends RBuiltinNode {
+@RBuiltin(".Internal.substr<-")
+public abstract class UpdateSubstr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
 
@@ -41,7 +42,12 @@ public abstract class Substr extends RBuiltinNode {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
     }
 
-    protected String substr0(String x, int start, int stop) {
+    @SlowPath
+    private static String replaceSubstring(String x, String value, int actualStart, int replacementLength, int actualStop) {
+        return x.substring(0, actualStart - 1) + value.substring(0, replacementLength) + x.substring(actualStop, x.length());
+    }
+
+    protected String substr0(String x, int start, int stop, String value) {
         na.enable(true);
         if (na.check(x) || na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
@@ -54,7 +60,7 @@ public abstract class Substr extends RBuiltinNode {
                 everSeenIllegalRange = true;
             }
             if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
-                return "";
+                return x;
             }
             if (start <= 0) {
                 actualStart = 1;
@@ -63,27 +69,44 @@ public abstract class Substr extends RBuiltinNode {
                 actualStop = x.length();
             }
         }
-        return x.substring(actualStart - 1, actualStop);
+        int replacementLength = actualStop - (actualStart - 1);
+        if (replacementLength > value.length()) {
+            actualStop -= (replacementLength - value.length());
+            replacementLength = value.length();
+        }
+        return replaceSubstring(x, value, actualStart, replacementLength, actualStop);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 1, guards = "emptyArg")
-    public RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    public RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = {"!emptyArg", "wrongParams"})
-    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         assert false; // should never happen
         return RNull.instance; // dummy
     }
 
-    @Specialization(order = 3, guards = {"!emptyArg", "!wrongParams"})
-    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    @SuppressWarnings("unused")
+    @Specialization(order = 10, guards = {"!emptyArg", "!wrongParams"})
+    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
+        throw RError.getInvalidUnnamedValue(getEncapsulatingSourceSection());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 11, guards = {"!emptyArg", "!wrongParams", "wrongValue"})
+    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
+        throw RError.getInvalidUnnamedValue(getEncapsulatingSourceSection());
+    }
+
+    @Specialization(order = 12, guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
+    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
         String[] res = new String[arg.getLength()];
-        for (int i = 0, j = 0, k = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength())) {
-            res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));
+        for (int i = 0, j = 0, k = 0, l = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength()), l = Utils.incMod(k, value.getLength())) {
+            res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k), value.getDataAt(l));
         }
         return RDataFactory.createStringVector(res, na.neverSeenNA());
 
@@ -100,4 +123,10 @@ public abstract class Substr extends RBuiltinNode {
         }
         return false;
     }
+
+    @SuppressWarnings("unused")
+    protected boolean wrongValue(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
+        return value.getElementClass() != RString.class || value.getLength() == 0;
+    }
+
 }

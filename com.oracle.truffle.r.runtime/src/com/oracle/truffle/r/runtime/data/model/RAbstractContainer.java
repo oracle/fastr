@@ -32,6 +32,8 @@ public interface RAbstractContainer {
 
     Map<String, Object> getAttributes();
 
+    int[] getDimensions();
+
     Class<?> getElementClass();
 
     RVector materializeNonSharedVector();
@@ -39,6 +41,8 @@ public interface RAbstractContainer {
     Object getDataAtAsObject(int index);
 
     Object getNames();
+
+    RList getDimNames();
 
     Object getRowNames();
 

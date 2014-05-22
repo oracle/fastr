@@ -17,8 +17,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-// TODO: "oldClass" is the same as long as S4 is not implemented
-@RBuiltin({"class", "oldClass"})
+@RBuiltin("class")
 public abstract class GetClass extends RBuiltinNode {
 
     @Specialization

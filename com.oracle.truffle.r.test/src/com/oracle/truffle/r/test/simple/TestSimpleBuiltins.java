@@ -1039,6 +1039,34 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ substr(1234L,2,3) }");
         assertEval("{ substr(1234,2,3) }");
         assertEval("{ substr(\"abcdef\",c(1,2),c(3L,5L)) }");
+        assertEvalError("{ substr(c(\"abcdef\", \"aa\"), integer(), 2) }");
+        assertEvalError("{ substr(c(\"abcdef\", \"aa\"), 2, integer()) }");
+        assertEval("{ substr(character(), integer(), integer()) }");
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), NA, 4) }");
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), 3, NA) }");
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), c(NA,8), 4) }");
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), c(1,NA), 4) }");
+
+        assertEval("{ substr(NA,1,2) }");
+        assertEval("{ substr(\"fastr\", NA, 2) }");
+        assertEval("{ substr(\"fastr\", 1, NA) }");
+
+        assertEval("{ x<-\"abcdef\"; substr(x,1,4)<-\"0000\"; x }");
+        assertEval("{ x<-\"abcdef\"; substr(x,1,3)<-\"0000\"; x }");
+        assertEval("{ x<-\"abcdef\"; substr(x,1,3)<-\"0\"; x }");
+        assertEval("{ x<-\"abcdef\"; substr(x,NA,3)<-\"0\"; x }");
+        assertEval("{ x<-\"abcdef\"; substr(x,1,NA)<-\"0\"; x }");
+        assertEval("{ x<-character(); substr(x,1,3)<-\"0\"; x }");
+        assertEval("{ x<-c(\"abcdef\", \"ghijklm\"); substr(x, c(1,NA), 4)<-\"0\"; x }");
+        assertEvalError("{ x<-\"abcdef\"; substr(x,3,1)<-0; x }");
+        assertEvalError("{ x<-\"abcdef\"; substr(x,1,3)<-character(); x }");
+        assertEvalError("{ x<-\"abcdef\"; substr(x,1,3)<-NULL; x }");
+        assertEvalError("{ x<-\"abcdef\"; substr(x,integer(),3)<-NULL; x }");
+        assertEval("{ x<-character(); substr(x,1,3)<-0; x }");
+        assertEval("{ x<-character(); substr(x,1,3)<-NULL; x }");
+        assertEval("{ x<-character(); substr(x,integer(),3)<-NULL; x }");
+
+        assertEval("{ x<-c(\"abcdef\"); substr(x[1], 2, 3)<-\"0\"; x }");
     }
 
     @Test
@@ -1048,9 +1076,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ substring(\"123456\", first=2.8, last=4) }");
         assertEval("{ substring(c(\"hello\", \"bye\"), first=c(1,2,3), last=4) }");
         assertEval("{ substring(\"fastr\", first=NA, last=2) }");
-        assertEval("{ substr(NA,1,2) }"); // FIXME print formatting
-        assertEval("{ substr(\"fastr\", NA, 2) }"); // FIXME print formatting
-        assertEval("{ substr(\"fastr\", 1, NA) }"); // FIXME print formatting
     }
 
     @Test
@@ -1253,6 +1278,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
+    }
+
+    @Test
+    public void testGrep() {
+        assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grep(\"foo\", txt) }");
+        assertEval("{ txt<-c(\"is\", \"intended\", \"to\", \"guarantee\", \"your\", \"freedom\"); grep(\"[gu]\", txt) }");
+        assertEval("{ txt<-c(\"1+1i\", \"7\", \"42.1\", \"7+42i\"); grep(\"[0-9].*[-+][0-9].*i$\", txt) }");
+        assertEval("{ txt<-c(\"rai\", \"ira\", \"iri\"); grep(\"i$\", txt) }");
     }
 
     @Test
@@ -2549,6 +2582,20 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;attr(x,\"class\")<-\"b\";x;}");
 
         assertEval("{x<-1;y<-\"b\";attr(x,\"class\")<-y;x;}");
+
+        // oldClass
+        assertEval("{ x<-1; oldClass(x)<-\"foo\"; class(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"foo\"; oldClass(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; oldClass(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; class(x) }");
+
+        assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; oldClass(x) }");
+
     }
 
     @Test
@@ -2572,6 +2619,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;class(x)}");
 
         assertEval("{x<-c(1,2,3);class(x)}");
+
+        assertEval("{ x<-1; oldClass(x) }");
     }
 
     @Test
@@ -2780,6 +2829,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ ngettext(1, c(1), \"b\") }");
         assertEvalError("{ ngettext(1, \"a\", c(1)) }");
         assertEvalError("{ ngettext(-1, \"a\", \"b\") }");
+    }
+
+    @Test
+    public void testFormat() {
+        assertEval("{ format(7) }");
+        assertEval("{ format(7.42) }");
+        assertEval("{ format(c(7,42)) }");
+        assertEval("{ format(c(7.42,42.7)) }");
+        assertEval("{ format(c(7.42,42.7,NA)) }");
     }
 
 }

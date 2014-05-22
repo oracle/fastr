@@ -155,10 +155,10 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public void setNames(Object newNames, SourceSection sourceSection) {
-        if (attributes == null && newNames != null) {
+        if (attributes == null && newNames != null && newNames != RNull.instance) {
             initAttributesMap(this);
         }
-        if (attributes != null && newNames == null) {
+        if (attributes != null && (newNames == null || newNames == RNull.instance)) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
             removeAttributeMapping(RRuntime.NAMES_ATTR_KEY);
@@ -559,7 +559,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public boolean isObject() {
-        return (this.attributes != null && this.attributes.get(RRuntime.CLASS_ATTR_KEY) != null) ? true : false;
+        return this.getClassAttr() != null ? true : false;
     }
 
     public RStringVector getClassHierarchy() {
@@ -569,9 +569,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return getImplicitClassHr();
     }
 
-    protected RStringVector getImplicitClassHr() {
-        return null;
-    }
+    protected abstract RStringVector getImplicitClassHr();
 
     // As shape of the vector may change at run-time we need to compute
     // class hierarchy on the fly.

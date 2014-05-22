@@ -30,8 +30,6 @@ public abstract class Lapply extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"X", "FUN", "..."};
 
-    private Object[] combinedArgs;
-
     @Override
     public Object[] getParameterNames() {
         return PARAMETER_NAMES;
@@ -44,34 +42,35 @@ public abstract class Lapply extends RBuiltinNode {
 
     @Specialization
     public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
-        combinedArgs = new Object[optionalArgs.length + 1];
+        Object[] combinedArgs = new Object[optionalArgs.length + 1];
         System.arraycopy(optionalArgs, 0, combinedArgs, 1, optionalArgs.length);
-        return lapplyHelper(frame, x, fun);
+        return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
     @Specialization
     public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
-        combinedArgs = new Object[]{null, optionalArg};
-        return lapplyHelper(frame, x, fun);
+        Object[] combinedArgs = new Object[]{null, optionalArg};
+        return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
     @Specialization
     public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, @SuppressWarnings("unused") RMissing optionalArg) {
-        combinedArgs = new Object[]{null};
-        return lapplyHelper(frame, x, fun);
+        Object[] combinedArgs = new Object[]{null};
+        return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
-    private Object lapplyHelper(VirtualFrame frame, RAbstractVector x, RFunction fun) {
+    private Object lapplyHelper(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] combinedArgs) {
         controlVisibility();
         RVector xMat = x.materialize();
         /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
         Object[] result = new Object[xMat.getLength()];
+        Object[] arguments = RArguments.create(fun, combinedArgs);
+        int firstArgOffset = arguments.length - combinedArgs.length;
         for (int i = 0; i < result.length; ++i) {
-            combinedArgs[0] = xMat.getDataAtAsObject(i);
-            result[i] = funCall.call(frame, fun.getTarget(), RArguments.create(fun, combinedArgs));
+            // FIXME breaks encapsulation.
+            arguments[firstArgOffset] = xMat.getDataAtAsObject(i);
+            result[i] = funCall.call(frame, fun.getTarget(), arguments);
         }
-        RList ans = RDataFactory.createList(result, null);
-        ans.setNames(xMat.getNames());
-        return ans;
+        return RDataFactory.createList(result, xMat.getNames());
     }
 }

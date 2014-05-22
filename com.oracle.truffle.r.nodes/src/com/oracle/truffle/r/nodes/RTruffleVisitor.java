@@ -292,9 +292,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 args = newArgs;
             }
         }
-        RNode castVector = CastToVectorNodeFactory.create(vector, false, false, false, true);
+        RNode castContainer = CastToContainerNodeFactory.create(vector, false, false, false, true);
         RNode positions = createPositions(args, argLength, a.isSubset(), false);
-        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castVector, (PositionsArrayNode) positions, CastLogicalNodeFactory.create(dropDim, false, false, false));
+        AccessArrayNode access = AccessArrayNode.create(a.isSubset(), castContainer, (PositionsArrayNode) positions, CastLogicalNodeFactory.create(dropDim, false, false, false));
         access.assignSourceSection(a.getSource());
         return access;
     }
@@ -445,7 +445,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode rhs = n.getExpr().accept(this);
         FunctionCall f = n.getBuiltin();
         List<ArgNode> args = f.getArgs();
-        SimpleAccessVariable vAST = (SimpleAccessVariable) args.get(0).getValue();
+        SimpleAccessVariable vAST;
+        ASTNode val = args.get(0).getValue();
+        if (val instanceof SimpleAccessVariable) {
+            vAST = (SimpleAccessVariable) val;
+        } else {
+            vAST = getVectorVariable((AccessVector) val);
+        }
         String vSymbol = RRuntime.toString(vAST.getSymbol());
 
         RNode[] seq = new RNode[5];

@@ -85,6 +85,13 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x, TRUE, "row")# 
 
 `row.names<-.default` <- function(x, value) `rownames<-`(x, value)
 
+print.AsIs <- function (x, ...)
+{
+    cl <- oldClass(x)
+    oldClass(x) <- cl[cl != "AsIs"]
+    NextMethod("print")
+    invisible(x)
+}
 
 # TODO: implement correct argument processing (at this point all methods must have the same signature)
 #as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
@@ -270,6 +277,40 @@ as.data.frame.matrix <- function(x, row.names = NULL, nm = NULL, optional = FALS
     value
 }
 
+# TODO: handle parameters correctly
+#as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE, ...)
+as.data.frame.AsIs <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE)
+{
+    ## why not remove class and NextMethod here?
+    if(length(dim(x)) == 2L)
+# TODO: implement as.data.frame.model.matrix
+#	as.data.frame.model.matrix(x, row.names, optional)
+     stop("as.data.frame.model.matrix not yet supported")
+    else { # as.data.frame.vector without removing names
+        nrows <- length(x)
+# TODO: implement deparse
+#        nm <- paste(deparse(substitute(x), width.cutoff=500L), collapse=" ")
+        if(is.null(row.names)) {
+            if (nrows == 0L)
+                row.names <- character()
+# TODO: implement anyDuplicated
+#            else if(length(row.names <- names(x)) == nrows &&
+#                    !anyDuplicated(row.names)) {}
+            else row.names <- .set_row_names(nrows)
+        }
+        value <- list(x)
+# TODO: implement deparse (see above)
+#        if(!optional) names(value) <- nm
+        if(!optional) stop("deparse not yet supported")
+        attr(value, "row.names") <- row.names
+        class(value) <- "data.frame"
+        value
+    }
+
+}
+
+###  This is the real "data.frame".
+###  It does everything by calling the methods presented above.
 
 data.frame <-
     function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE,
@@ -337,8 +378,8 @@ data.frame <-
 #                 as.data.frame(x[[i]], optional = TRUE,
 #                               stringsAsFactors = stringsAsFactors)
 #        else as.data.frame(x[[i]], optional = TRUE)
-                 as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE)
-        else as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE)
+                 as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE, stringsAsFactors=FALSE)
+        else as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE, stringsAsFactors=FALSE)
 
         nrows[i] <- .row_names_info(xi) # signed for now
         ncols[i] <- length(xi)

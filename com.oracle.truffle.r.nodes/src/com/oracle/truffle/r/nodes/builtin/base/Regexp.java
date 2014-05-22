@@ -59,7 +59,7 @@ public abstract class Regexp extends RBuiltinNode {
     }
 
     @SlowPath
-    private static Matcher getPatternMatcher(String pattern, String text) {
+    public static Matcher getPatternMatcher(String pattern, String text) {
         return Pattern.compile(pattern).matcher(text);
     }
 }

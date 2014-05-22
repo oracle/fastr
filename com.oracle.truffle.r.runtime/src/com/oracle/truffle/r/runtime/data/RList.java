@@ -131,7 +131,7 @@ public final class RList extends RVector implements RAbstractVector {
         if (names != null && names != RNull.instance) {
             String name = ((RStringVector) names).getDataAt(index);
             if (name == RRuntime.STRING_NA) {
-                return "$" + RRuntime.NAMES_ATTR_NA_HEADER;
+                return "$" + RRuntime.NA_HEADER;
             } else if (name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
                 return "[[" + Integer.toString(index + 1) + "]]";
             } else if (name.matches("^[a-zA-Z.]+[a-zA-Z0-9_.]*$")) {

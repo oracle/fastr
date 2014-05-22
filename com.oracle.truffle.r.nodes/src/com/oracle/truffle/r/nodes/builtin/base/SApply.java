@@ -52,6 +52,8 @@ public abstract class SApply extends RBuiltinNode {
     private static final int TARGET_ARRAY_UNINITIALIZED = 0;
     private static final int TARGET_ARRAY_INT = 1;
     private static final int TARGET_ARRAY_DOUBLE = 2;
+    private static final int TARGET_ARRAY_STRING = 3;
+    private static final int TARGET_ARRAY_STRING_VECTOR = 4;
     private static final int TARGET_ARRAY_GENERIC = -1;
 
     @CompilationFinal private int targetArray = TARGET_ARRAY_UNINITIALIZED;
@@ -69,6 +71,11 @@ public abstract class SApply extends RBuiltinNode {
     private final NACheck check = new NACheck();
 
     @Specialization
+    public Object sapply(VirtualFrame frame, RAbstractVector vector, RFunction fun, @SuppressWarnings("unused") RMissing namesEnabled) {
+        return sapply(frame, vector, fun, RRuntime.LOGICAL_TRUE);
+    }
+
+    @Specialization
     public Object sapply(VirtualFrame frame, RAbstractVector vector, RFunction fun, byte namesEnabled) {
         controlVisibility();
         int len = vector.getLength();
@@ -78,6 +85,10 @@ public abstract class SApply extends RBuiltinNode {
                 resultVector = sapplyInt(frame, vector, fun, len);
             } else if (targetArray == TARGET_ARRAY_DOUBLE) {
                 resultVector = sapplyDouble(frame, vector, fun, len);
+            } else if (targetArray == TARGET_ARRAY_STRING) {
+                resultVector = sapplyString(frame, vector, fun, len);
+            } else if (targetArray == TARGET_ARRAY_STRING_VECTOR) {
+                resultVector = sapplyRStringVector(frame, vector, fun, len);
             } else {
                 resultVector = sapplyGeneric(frame, new Object[len], 0, vector, fun);
             }
@@ -130,6 +141,52 @@ public abstract class SApply extends RBuiltinNode {
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
+    private RAbstractVector sapplyString(VirtualFrame frame, RAbstractVector vector, RFunction fun, int len) {
+        String[] result = new String[len];
+        for (int i = 0; i < len; i++) {
+            write(frame, vector.getDataAtAsObject(i));
+            try {
+                result[i] = callString(frame, fun);
+            } catch (UnexpectedResultException e) {
+                targetArray = TARGET_ARRAY_GENERIC;
+                Object[] recoveryResult = new Object[len];
+                for (int j = 0; j < i; j++) {
+                    recoveryResult[j] = result[j];
+                }
+                recoveryResult[i] = e.getResult();
+                return sapplyGeneric(frame, recoveryResult, i + 1, vector, fun);
+            }
+            check.check(result[i]);
+        }
+        return RDataFactory.createStringVector(result, check.neverSeenNA());
+    }
+
+    private RAbstractVector sapplyRStringVector(VirtualFrame frame, RAbstractVector vector, RFunction fun, int len) {
+        String[] result = new String[len];
+        for (int i = 0; i < len; i++) {
+            write(frame, vector.getDataAtAsObject(i));
+            try {
+                RStringVector v = callRStringVector(frame, fun);
+                if (v.getLength() != 1) {
+                    // TODO: the whole implementation must be re-done, but for now this is required
+                    // to support the format function
+                    throw RError.getGenericError(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
+                }
+                result[i] = v.getDataAt(0);
+            } catch (UnexpectedResultException e) {
+                targetArray = TARGET_ARRAY_GENERIC;
+                Object[] recoveryResult = new Object[len];
+                for (int j = 0; j < i; j++) {
+                    recoveryResult[j] = result[j];
+                }
+                recoveryResult[i] = e.getResult();
+                return sapplyGeneric(frame, recoveryResult, i + 1, vector, fun);
+            }
+            check.check(result[i]);
+        }
+        return RDataFactory.createStringVector(result, check.neverSeenNA());
+    }
+
     private RAbstractVector sapplyGeneric(VirtualFrame frame, Object[] array, int start, RAbstractVector vector, RFunction fun) {
         for (int i = start; i < array.length; i++) {
             write(frame, vector.getDataAtAsObject(i));
@@ -151,6 +208,24 @@ public abstract class SApply extends RBuiltinNode {
                 result[i] = (double) array[i];
             }
             return RDataFactory.createDoubleVector(result, check.neverSeenNA());
+        } else if (targetArray == TARGET_ARRAY_STRING) {
+            String[] result = new String[array.length];
+            for (int i = 0; i < array.length; ++i) {
+                result[i] = (String) array[i];
+            }
+            return RDataFactory.createStringVector(result, check.neverSeenNA());
+        } else if (targetArray == TARGET_ARRAY_STRING_VECTOR) {
+            String[] result = new String[array.length];
+            for (int i = 0; i < array.length; ++i) {
+                RStringVector v = (RStringVector) array[i];
+                if (v.getLength() != 1) {
+                    // TODO: the whole implementation must be re-done, but for now this is required
+                    // to support the format function
+                    throw RError.getGenericError(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
+                }
+                result[i] = v.getDataAt(0);
+            }
+            return RDataFactory.createStringVector(result, check.neverSeenNA());
         } else {
             // generic
             return RDataFactory.createList(array);
@@ -164,6 +239,10 @@ public abstract class SApply extends RBuiltinNode {
                 targetArray = TARGET_ARRAY_INT;
             } else if (value instanceof Double) {
                 targetArray = TARGET_ARRAY_DOUBLE;
+            } else if (value instanceof String) {
+                targetArray = TARGET_ARRAY_STRING;
+            } else if (value instanceof RStringVector) {
+                targetArray = TARGET_ARRAY_STRING_VECTOR;
             } else {
                 targetArray = TARGET_ARRAY_GENERIC;
             }
@@ -173,6 +252,14 @@ public abstract class SApply extends RBuiltinNode {
             }
         } else if (targetArray == TARGET_ARRAY_DOUBLE) {
             if (!(value instanceof Double)) {
+                targetArray = TARGET_ARRAY_GENERIC;
+            }
+        } else if (targetArray == TARGET_ARRAY_STRING) {
+            if (!(value instanceof String)) {
+                targetArray = TARGET_ARRAY_GENERIC;
+            }
+        } else if (targetArray == TARGET_ARRAY_STRING_VECTOR) {
+            if (!(value instanceof RStringVector)) {
                 targetArray = TARGET_ARRAY_GENERIC;
             }
         }
@@ -221,6 +308,22 @@ public abstract class SApply extends RBuiltinNode {
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
         return RTypesGen.RTYPES.expectDouble(callNode.execute(frame, function));
+    }
+
+    private String callString(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
+        if (callNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
+        }
+        return RTypesGen.RTYPES.expectString(callNode.execute(frame, function));
+    }
+
+    private RStringVector callRStringVector(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
+        if (callNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
+        }
+        return RTypesGen.RTYPES.expectRStringVector(callNode.execute(frame, function));
     }
 
     private void write(VirtualFrame frame, Object value) {

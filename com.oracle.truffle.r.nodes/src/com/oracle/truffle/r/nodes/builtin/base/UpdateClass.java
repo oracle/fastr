@@ -66,11 +66,12 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
         if (!arg.isObject()) {
             final String argType = this.typeof.execute(frame, arg).getDataAt(0);
             if (argType.equals(className) || (className.equals(RRuntime.TYPE_NUMERIC) && (argType.equals(RRuntime.TYPE_INTEGER) || (argType.equals(RRuntime.TYPE_DOUBLE))))) {
-                return arg;
+                // "explicit" attribute might have been set (e.g. by oldClass<-)
+                return setClass(arg, RNull.instance);
             }
         }
         initCastTypeNode();
-        Object result = castTypeNode.doCast(frame, arg, className);
+        Object result = castTypeNode.execute(frame, arg, className);
         if (result != null) {
             return setClass((RAbstractVector) result, RNull.instance);
         }
@@ -94,6 +95,11 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
 
         RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);
+    }
+
+    public Object setClass(RFunction arg, @SuppressWarnings("unused") Object className) {
+        controlVisibility();
+        return arg;
     }
 
     private void initCastTypeNode() {

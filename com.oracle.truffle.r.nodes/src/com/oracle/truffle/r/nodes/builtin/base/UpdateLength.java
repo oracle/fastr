@@ -47,6 +47,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         RVector resultVector = vector.materialize();
         if (resultVector.isShared()) {
             resultVector = resultVector.copy();
+            resultVector.markNonTemporary();
         }
         resultVector.resizeWithNames(length);
         return resultVector;

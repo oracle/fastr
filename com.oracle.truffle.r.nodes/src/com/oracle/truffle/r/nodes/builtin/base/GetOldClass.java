@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.stats;
+package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-public class StatsPackage extends RBuiltinPackage {
+@RBuiltin("oldClass")
+public abstract class GetOldClass extends RBuiltinNode {
 
-    public StatsPackage() {
-        loadBuiltins();
+    @Specialization
+    public Object getOldClass(RAbstractContainer arg) {
+        controlVisibility();
+        if (arg.isObject()) {
+            return arg.getClassHierarchy();
+        } else {
+            return RNull.instance;
+        }
     }
 
-    @Override
-    public String getName() {
-        return "stats";
+    @Specialization
+    public Object getOldClass(@SuppressWarnings("unused") RFunction arg) {
+        controlVisibility();
+        return RNull.instance;
     }
 
+    public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }
