@@ -284,7 +284,7 @@ as.data.frame.AsIs <- function(x, row.names = NULL, nm = NULL, optional = FALSE,
     ## why not remove class and NextMethod here?
     if(length(dim(x)) == 2L)
 # TODO: implement as.data.frame.model.matrix
-#	as.data.frame.model.matrix(x, row.names, optional)
+#     as.data.frame.model.matrix(x, row.names, optional)
      stop("as.data.frame.model.matrix not yet supported")
     else { # as.data.frame.vector without removing names
         nrows <- length(x)
