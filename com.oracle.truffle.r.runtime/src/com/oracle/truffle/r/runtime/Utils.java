@@ -112,7 +112,7 @@ public final class Utils {
             }
         }
 
-        return gotSection ? new DefaultSourceSection(s, "<bounding box>", minLine, minLineColumn, minCharIndex, maxCharIndex - minCharIndex) : null;
+        return gotSection ? s.createSection("<bounding box>", minLine, minLineColumn, minCharIndex, maxCharIndex - minCharIndex) : null;
     }
 
     public static void dumpFunction(String groupName, RFunction function) {
