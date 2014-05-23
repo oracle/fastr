@@ -327,18 +327,18 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
     // Performance analysis
 
     /**
-     * Only used when gathering performance statistics.
+     * Only used when gathering performance statistics. Assumes single threaded.
      */
     private static class RAttributesStatsImpl extends RAttributesImpl {
-        private static ArrayList<RAttributesStatsImpl> instances = new ArrayList<>();
-        private static final int OVERFLOW = 3;
+        private static final int OVERFLOW = 5;
         private static int[] hist = new int[OVERFLOW + 1];
+        private static int globalMaxSize;
 
         private int maxSize;
 
         RAttributesStatsImpl() {
             super();
-            instances.add(this);
+            hist[0]++;
         }
 
         @Override
@@ -346,25 +346,34 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
             super.put(name, value);
             int s = size();
             if (s > maxSize) {
+                int eIndexPrev = eIndex(maxSize);
+                int eIndexNow = eIndex(s);
+                hist[eIndexPrev]--;
+                hist[eIndexNow]++;
                 maxSize = s;
+                if (maxSize > globalMaxSize) {
+                    globalMaxSize = maxSize;
+                }
+            }
+        }
+
+        private static int eIndex(int index) {
+            if (index > OVERFLOW) {
+                return OVERFLOW;
+            } else {
+                return index;
             }
         }
 
         static void report() {
             // Checkstyle: stop system print check
-            int globalMaxSize = 0;
-            for (RAttributesStatsImpl instance : instances) {
-                if (instance.maxSize > globalMaxSize) {
-                    globalMaxSize = instance.maxSize;
-                }
-                if (instance.maxSize > OVERFLOW) {
-                    hist[OVERFLOW]++;
-                } else {
-                    hist[instance.maxSize]++;
-                }
+            int sum = 0;
+            for (int i = 0; i < hist.length; i++) {
+                sum += hist[i];
             }
-            System.out.println("RAttributes statistics");
-            System.out.printf("size 0: %d, 1: %d, 2: %d, > 2: %d, max %d%n", hist[0], hist[1], hist[2], hist[3], globalMaxSize);
+            System.out.printf("RAttributes statistics: %d instances, max size %d%n", sum, globalMaxSize);
+            System.out.printf("%-9s%9d%9d%9d%9d%9d%9s%n", "Size:", 0, 1, 2, 3, 4, "> 4");
+            System.out.printf("%-9s%9d%9d%9d%9d%9d%9d%n", "Count", hist[0], hist[1], hist[2], hist[3], hist[4], hist[5]);
         }
     }
 
