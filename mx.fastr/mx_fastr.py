@@ -309,6 +309,20 @@ def rbcheck(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)
 
+def cmplibr(args):
+    '''compare FastR library R sources against GnuR'''
+    parser = ArgumentParser(prog='mx cmplibr')
+    parser.add_argument('--gnurhome', action='store',  help='path to GnuR sources', required=True)
+    parser.add_argument('--lib', action='store', help='library to check', default="base")
+    args = parser.parse_args(args)
+    cmpArgs = []
+    cmpArgs.append("--gnurhome")
+    cmpArgs.append(args.gnurhome)
+    cmpArgs.append("--lib")
+    cmpArgs.append(args.lib)
+    cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
+    mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
+
 def mx_init(suite):
     global _fastr_suite
     _fastr_suite = suite
@@ -327,5 +341,6 @@ def mx_init(suite):
         'junitsimple' : [junit_simple, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
+        'cmplibr' : [cmplibr, ['options']],
     }
     mx.update_commands(suite, commands)
