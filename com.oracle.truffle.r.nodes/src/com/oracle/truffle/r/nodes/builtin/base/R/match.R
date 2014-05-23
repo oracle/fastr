@@ -30,14 +30,14 @@ pmatch <- function(x, table, nomatch = NA, duplicates.ok = FALSE)
 match.arg <- function (arg, choices, several.ok = FALSE)
 {
     if (missing(choices)) {
-		stop("missing choices in match.arg")
-# TODO: implement deparse		
-#	formal.args <- formals(sys.function(sys.parent()))
-#	choices <- eval(formal.args[[deparse(substitute(arg))]])
+        stop("missing choices in match.arg")
+# TODO: implement deparse
+#    formal.args <- formals(sys.function(sys.parent()))
+#    choices <- eval(formal.args[[deparse(substitute(arg))]])
     }
     if (is.null(arg)) return(choices[1L])
     else if(!is.character(arg))
-	stop("'arg' must be NULL or a character vector")
+        stop("'arg' must be NULL or a character vector")
     if (!several.ok) { # most important (default) case:
         ## the arg can be the whole of choices as a default argument.
         if(identical(arg, choices)) return(arg[1L])
@@ -47,7 +47,7 @@ match.arg <- function (arg, choices, several.ok = FALSE)
     ## handle each element of arg separately
     i <- pmatch(arg, choices, nomatch = 0L, duplicates.ok = TRUE)
     if (all(i == 0L))
-	stop(gettextf("'arg' should be one of %s",
+        stop(gettextf("'arg' should be one of %s",
                       paste(dQuote(choices), collapse = ", ")),
              domain = NA)
     i <- i[i > 0L]

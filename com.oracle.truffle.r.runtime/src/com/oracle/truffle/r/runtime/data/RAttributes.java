@@ -365,7 +365,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
             }
             System.out.println("RAttributes statistics");
             System.out.printf("size 0: %d, 1: %d, 2: %d, > 2: %d, max %d%n", hist[0], hist[1], hist[2], hist[3], globalMaxSize);
-
         }
     }
 
