@@ -67,6 +67,7 @@ public final class REngine implements RBuiltinLookupProvider {
      *         {@link #parseAndEval(String, VirtualFrame, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+        RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
@@ -204,7 +205,7 @@ public final class REngine implements RBuiltinLookupProvider {
         // R suicide, unless, e.g., we are running units tests.
         // We don't call quit as the system is broken.
         if (crashOnFatalError) {
-            System.exit(2);
+            Utils.exit(2);
         }
     }
 

@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.r.runtime.*;
+
 /**
  * Provides the generic mechanism for associating attributes with a R object. It does no special
  * analysis of the "name" of the attribute; that is left to other classes, e.g. {@link RVector}.
@@ -85,7 +87,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
     public abstract Iterator<RAttribute> iterator();
 
     public static RAttributes create() {
-        RAttributes result = new RAttributesImpl();
+        RAttributes result = stats ? new RAttributesStatsImpl() : new RAttributesImpl();
         return result;
     }
 
@@ -93,9 +95,9 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
      * The implementation class which is separate to avoid a circularity that would result from the
      * {@code Iterable} in the abstract class.
      */
-    private static final class RAttributesImpl extends RAttributes implements RAttribute {
+    private static class RAttributesImpl extends RAttributes implements RAttribute {
 
-        private RAttributesImpl() {
+        RAttributesImpl() {
         }
 
         private RAttributesImpl(RAttributesImpl attrs) {
@@ -320,6 +322,69 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         public Object getValue() {
             return value1;
         }
+    }
+
+    // Performance analysis
+
+    /**
+     * Only used when gathering performance statistics.
+     */
+    private static class RAttributesStatsImpl extends RAttributesImpl {
+        private static ArrayList<RAttributesStatsImpl> instances = new ArrayList<>();
+        private static final int OVERFLOW = 3;
+        private static int[] hist = new int[OVERFLOW + 1];
+
+        private int maxSize;
+
+        RAttributesStatsImpl() {
+            super();
+            instances.add(this);
+        }
+
+        @Override
+        public void put(String name, Object value) {
+            super.put(name, value);
+            int s = size();
+            if (s > maxSize) {
+                maxSize = s;
+            }
+        }
+
+        static void report() {
+            // Checkstyle: stop system print check
+            int globalMaxSize = 0;
+            for (RAttributesStatsImpl instance : instances) {
+                if (instance.maxSize > globalMaxSize) {
+                    globalMaxSize = instance.maxSize;
+                }
+                if (instance.maxSize > OVERFLOW) {
+                    hist[OVERFLOW]++;
+                } else {
+                    hist[instance.maxSize]++;
+                }
+            }
+            System.out.println("RAttributes statistics");
+            System.out.printf("size 0: %d, 1: %d, 2: %d, > 2: %d, max %d%n", hist[0], hist[1], hist[2], hist[3], globalMaxSize);
+
+        }
+    }
+
+    private static boolean stats;
+
+    public static class PerfHandler implements RPerfAnalysis.Handler {
+        public void initialize() {
+            stats = true;
+        }
+
+        public String getName() {
+            return "attributes";
+
+        }
+
+        public void report() {
+            RAttributesStatsImpl.report();
+        }
+
     }
 
 }
