@@ -44,7 +44,6 @@ public abstract class Grep extends RBuiltinNode {
         }
     }
 
-    @SlowPath
     protected static int[] findAllIndexes(String pattern, RAbstractStringVector vector) {
         int[] tmp = new int[vector.getLength()];
         int numMatches = 0;
@@ -69,6 +68,7 @@ public abstract class Grep extends RBuiltinNode {
         }
     }
 
+    @SlowPath
     protected static boolean findIndex(String pattern, String text) {
         Matcher m = Regexp.getPatternMatcher(pattern, text);
         if (m.find()) {

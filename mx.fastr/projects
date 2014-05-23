@@ -1,5 +1,5 @@
 suite=fastr
-mxversion=2.2.3
+mxversion=2.3.0
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 
@@ -76,7 +76,6 @@ project@com.oracle.truffle.r.nodes@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.test.ignore.processor
 project@com.oracle.truffle.r.test.ignore.processor@sourceDirs=src
-#project@com.oracle.truffle.r.test.ignore.processor@dependencies=JUNIT,JDK_TOOLS
 project@com.oracle.truffle.r.test.ignore.processor@dependencies=JUNIT,JDK_TOOLS
 project@com.oracle.truffle.r.test.ignore.processor@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.test.ignore.processor@javaCompliance=1.8

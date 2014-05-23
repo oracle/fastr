@@ -61,7 +61,7 @@ public class EnvFunctions {
                 if (callerFrame == null) {
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
                 } else {
-                    return callerEnvironment(callerFrame);
+                    return frameToEnvironment(callerFrame);
                 }
 
             }
@@ -184,10 +184,8 @@ public class EnvFunctions {
         @Specialization(order = 0)
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
-            // Owing to the .Internal, the caller is environment(),
-            // so we need to find the caller of that
             Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
-            return callerEnvironment(callerFrame);
+            return frameToEnvironment(callerFrame);
         }
 
         /**
@@ -196,8 +194,9 @@ public class EnvFunctions {
         @Specialization(order = 1)
         public REnvironment environment(RFunction func) {
             controlVisibility();
-            REnvironment env = RArguments.getEnvironment(func.getEnclosingFrame());
-            return env == null ? lexicalChain(func) : env;
+            Frame enclosing = func.getEnclosingFrame();
+            REnvironment env = RArguments.getEnvironment(enclosing);
+            return env == null ? lexicalChain(enclosing) : env;
         }
 
         @Specialization(order = 100)
@@ -252,7 +251,7 @@ public class EnvFunctions {
         public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             controlVisibility();
             // FIXME don't ignore hash parameter
-            return new REnvironment.NewEnv(callerEnvironment(frame), size);
+            return new REnvironment.NewEnv(frameToEnvironment(frame), size);
         }
 
         @Specialization
@@ -375,21 +374,33 @@ public class EnvFunctions {
         }
     }
 
-    static RFunction frameToFunction(Frame frame) {
-        return RArguments.getFunction(frame);
+    /**
+     * Check if a frame corresponds to a function. If there is no function associated with the
+     * frame, then is it one of the package environments. Fortunately, we do not have to do a search
+     * as, in this case, the {@link REnvironment} value is also stored in the frame.
+     *
+     * @return ({code null) if this is a function frame, else the associated environment
+     */
+    static REnvironment checkNonFunctionFrame(Frame frame) {
+        RFunction callerFunc = RArguments.getFunction(frame);
+        if (callerFunc == null) {
+            REnvironment env = RArguments.getEnvironment(frame);
+            assert env != null;
+            return env;
+        } else {
+            return null;
+        }
     }
 
     /**
-     * Handles the common case where the caller is the global environment and is therefore not an
-     * {@link com.oracle.truffle.r.runtime.REnvironment.Function} function environment.
+     * Converts a {@link Frame} to an {@link REnvironment}.
      */
-    static REnvironment callerEnvironment(Frame callerFrame) {
-        RFunction callerFunc = frameToFunction(callerFrame);
-        if (callerFunc == null) {
-            return REnvironment.globalEnv();
-        } else {
-            return REnvironment.Function.create(lexicalChain(callerFunc), callerFrame.materialize());
+    static REnvironment frameToEnvironment(Frame frame) {
+        REnvironment env = checkNonFunctionFrame(frame);
+        if (env == null) {
+            env = lexicalChain(frame);
         }
+        return env;
     }
 
     /**
@@ -397,19 +408,17 @@ public class EnvFunctions {
      * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment instance
      * whose parent is the lexically enclosing environment. This chain can be followed back to
      * whichever "base" (i.e. non-function) environment the outermost function was defined in, e.g.
-     * "global" or "base". These environments evidently do not have an associated execution frame.
-     * The purpose of this method is to create an analogous lexical parent chain of
-     * {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
+     * "global" or "base". The purpose of this method is to create an analogous lexical parent chain
+     * of {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
      * {@link MaterializedFrame}.
      */
-    static REnvironment lexicalChain(RFunction func) {
-        MaterializedFrame enclosingFrame = func.getEnclosingFrame();
-        if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
-            return REnvironment.globalEnv();
-        } else {
-            // How do we get the RFunction associated with enclosingFrame?
-            return REnvironment.Function.create(lexicalChain(RArguments.getFunction(enclosingFrame)), enclosingFrame);
+    static REnvironment lexicalChain(Frame frame) {
+        REnvironment env = checkNonFunctionFrame(frame);
+        if (env == null) {
+            // parent is the env of the enclosing frame
+            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame.materialize());
         }
+        return env;
     }
 
     private static RError notAnEnvironment(RBuiltinNode node) {

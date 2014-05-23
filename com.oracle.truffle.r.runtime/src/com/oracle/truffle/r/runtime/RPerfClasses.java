@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,22 +23,8 @@
 package com.oracle.truffle.r.runtime;
 
 /**
- * Defines the R version number and it's release date. Separate from {@link RVersionInfo} to allow
- * use in {@code static final} fields and to finesse the fact that such fields cannot precede the
- * {@code enum} elements.
+ * The set of classes that can provide performance analysis.
  */
-public class RVersionNumber {
-    public static final String MAJOR = "0";
-    public static final String MINOR = "7";
-    public static final String PATCH = "0";
-
-    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
-    public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
-
-    public static final String RELEASE_YEAR = "2014";
-    public static final String RELEASE_MONTH = "05";
-    public static final String RELEASE_DAY = "22";
-
-    public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
-
+class RPerfClasses {
+    @SuppressWarnings("unchecked") public static final Class<? extends RPerfAnalysis.Handler>[] CLASSES = new Class[]{com.oracle.truffle.r.runtime.data.RAttributes.PerfHandler.class};
 }

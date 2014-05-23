@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
-
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RSequence extends RBounded implements RAbstractVector {
@@ -82,7 +80,12 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public Map<String, Object> getAttributes() {
+    public void initAttributes() {
+
+    }
+
+    @Override
+    public RAttributes getAttributes() {
         return null;
     }
 

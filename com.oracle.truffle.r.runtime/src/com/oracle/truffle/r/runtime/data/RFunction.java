@@ -24,9 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.*;
-import com.oracle.truffle.api.impl.*;
-import com.oracle.truffle.r.runtime.*;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -43,18 +40,18 @@ import com.oracle.truffle.r.runtime.*;
 public final class RFunction extends RScalar {
 
     private final String name;
-    private final CallTarget target;
+    private final RootCallTarget target;
     private final boolean builtin;
     private MaterializedFrame enclosingFrame;
 
-    public RFunction(String name, CallTarget target, boolean builtin, MaterializedFrame enclosingFrame) {
+    public RFunction(String name, RootCallTarget target, boolean builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
         this.enclosingFrame = enclosingFrame;
     }
 
-    public RFunction(String name, CallTarget target, boolean builtin) {
+    public RFunction(String name, RootCallTarget target, boolean builtin) {
         this(name, target, builtin, null);
     }
 
@@ -66,7 +63,7 @@ public final class RFunction extends RScalar {
         return name;
     }
 
-    public CallTarget getTarget() {
+    public RootCallTarget getTarget() {
         return target;
     }
 
@@ -74,24 +71,8 @@ public final class RFunction extends RScalar {
         return enclosingFrame;
     }
 
-    public Object call(VirtualFrame frame, Object[] argsObject) {
-        return DefaultCallNode.callProxy(MATERIALIZED_FRAME_NOTIFY, target, frame, argsObject);
-    }
-
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
     }
-
-    private static final MaterializedFrameNotify MATERIALIZED_FRAME_NOTIFY = new MaterializedFrameNotify() {
-
-        public FrameAccess getOutsideFrameAccess() {
-            return FrameAccess.MATERIALIZE;
-        }
-
-        public void setOutsideFrameAccess(FrameAccess outsideFrameAccess) {
-            Utils.fatalError("should not be called");
-        }
-
-    };
 
 }

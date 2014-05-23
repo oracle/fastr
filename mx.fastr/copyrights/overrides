@@ -21,6 +21,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UseMethod
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UseMethodDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Lapply.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Switch.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Format.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/stats/Rnorm.java,gnu_r.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseException.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseUtil.java,purdue.copyright

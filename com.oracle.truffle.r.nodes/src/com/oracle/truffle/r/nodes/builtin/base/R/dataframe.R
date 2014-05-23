@@ -137,35 +137,35 @@ as.data.frame.data.frame <- function(x, row.names = NULL, nm = NULL, optional = 
 ## prior to 1.8.0 this coerced names - PR#3280
 as.data.frame.list <-
 # TODO: implement correct argument processing (at this point all methods must have the same signature)
-#		function(x, row.names = NULL, optional = FALSE, ...,
-#             stringsAsFactors = default.stringsAsFactors())
-		function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = default.stringsAsFactors())
-		{
-    ## need to protect names in x.
-    cn <- names(x)
-    m <- match(c("row.names", "check.rows", "check.names", "stringsAsFactors"),
-               cn, 0L)
-    if(any(m)) {
-        cn[m] <- paste0("..adfl.", cn[m])
-        names(x) <- cn
-    }
+#       function(x, row.names = NULL, optional = FALSE, ...,
+#                stringsAsFactors = default.stringsAsFactors())
+        function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = default.stringsAsFactors())
+        {
+            ## need to protect names in x.
+            cn <- names(x)
+            m <- match(c("row.names", "check.rows", "check.names", "stringsAsFactors"),
+                       cn, 0L)
+            if(any(m)) {
+                cn[m] <- paste0("..adfl.", cn[m])
+                names(x) <- cn
+            }
 # TODO: implement eval
 #    x <- eval(as.call(c(expression(data.frame), x, check.names = !optional,
 #                        stringsAsFactors = stringsAsFactors)))
-    x <- data.frame(x, check.names = !optional,
-                        stringsAsFactors = stringsAsFactors)
-    if(any(m)) names(x) <- sub("^\\.\\.adfl\\.", "", names(x))
-    if(!is.null(row.names)) {
-	# row.names <- as.character(row.names)
-	if(length(row.names) != dim(x)[[1L]])
-            stop(sprintf(ngettext(length(row.names),
-                                  "supplied %d row name for %d rows",
-                                  "supplied %d row names for %d rows"),
+            x <- data.frame(x, check.names = !optional,
+                            stringsAsFactors = stringsAsFactors)
+            if(any(m)) names(x) <- sub("^\\.\\.adfl\\.", "", names(x))
+            if(!is.null(row.names)) {
+                # row.names <- as.character(row.names)
+                if(length(row.names) != dim(x)[[1L]])
+                    stop(sprintf(ngettext(length(row.names),
+                         "supplied %d row name for %d rows",
+                         "supplied %d row names for %d rows"),
                          length(row.names), dim(x)[[1L]]), domain = NA)
-	attr(x, "row.names") <- row.names
-    }
-    x
-}
+                attr(x, "row.names") <- row.names
+            }
+            x
+        }
 
 # TODO: handle parameters correctly
 # TODO: implement deparse
@@ -284,7 +284,7 @@ as.data.frame.AsIs <- function(x, row.names = NULL, nm = NULL, optional = FALSE,
     ## why not remove class and NextMethod here?
     if(length(dim(x)) == 2L)
 # TODO: implement as.data.frame.model.matrix
-#	as.data.frame.model.matrix(x, row.names, optional)
+#     as.data.frame.model.matrix(x, row.names, optional)
      stop("as.data.frame.model.matrix not yet supported")
     else { # as.data.frame.vector without removing names
         nrows <- length(x)
@@ -316,32 +316,31 @@ data.frame <-
     function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE,
              stringsAsFactors = default.stringsAsFactors())
 {
-data.row.names <-		
-	if(check.rows && is.null(row.names))
-	    function(current, new, i) {
-		if(is.character(current)) new <- as.character(new)
-		if(is.character(new)) current <- as.character(current)
+    data.row.names <-
+        if(check.rows && is.null(row.names))
+            function(current, new, i) {
+                if(is.character(current)) new <- as.character(new)
+                if(is.character(new)) current <- as.character(current)
 # TODO: implement anyDuplicated
-#		if(anyDuplicated(new))
-#		    return(current)	
-		if(is.null(current))
-		    return(new)
-		if(all(current == new) || all(current == ""))
-		    return(new)
-		stop(gettextf("mismatch of row names in arguments of 'data.frame\', item %d", i), domain = NA)
-	    }
-	else function(current, new, i) {
-	    if(is.null(current)) {
-
-#		if(anyDuplicated(new)) {
-#		    warning(gettextf("some row.names duplicated: %s --> row.names NOT used",
+#                if(anyDuplicated(new))
+#                    return(current)
+                if(is.null(current))
+                    return(new)
+                if(all(current == new) || all(current == ""))
+                    return(new)
+                stop(gettextf("mismatch of row names in arguments of 'data.frame\', item %d", i), domain = NA)
+            }
+        else function(current, new, i) {
+            if(is.null(current)) {
+#                if(anyDuplicated(new)) {
+#                    warning(gettextf("some row.names duplicated: %s --> row.names NOT used",
 #                                     paste(which(duplicated(new)), collapse=",")),
 #                            domain = NA)
-#		    current
-#		} else new
-       new
-	    } else current
-	}
+#                    current
+#                } else new
+                    new
+                } else current
+        }
 # TODO: implement substitute
 #    object <- as.list(substitute(list(...))[-1L]
     object <- list(...)
@@ -362,19 +361,19 @@ data.row.names <-
 #                                    collapse = ", ")),
 #                    domain = NA)
         } else row.names <- integer()
-	return(structure(list(), names = character(),
+        return(structure(list(), names = character(),
                          row.names = row.names,
-			 class = "data.frame"))
+                class = "data.frame"))
     }
     vnames <- names(x)
     if(length(vnames) != n)
-	vnames <- character(n)
+        vnames <- character(n)
     no.vn <- !nzchar(vnames)
     vlist <- vnames <- as.list(vnames)
     nrows <- ncols <- integer(n)
     for(i in seq_len(n)) {
         ## do it this way until all as.data.frame methods have been updated
-	xi <- if(is.character(x[[i]]) || is.list(x[[i]]))
+        xi <- if(is.character(x[[i]]) || is.list(x[[i]]))
 # TODO: handle as.data.frame.vector parameters correctly
 #                 as.data.frame(x[[i]], optional = TRUE,
 #                               stringsAsFactors = stringsAsFactors)
@@ -383,15 +382,15 @@ data.row.names <-
         else as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE, stringsAsFactors=FALSE)
 
         nrows[i] <- .row_names_info(xi) # signed for now
-	ncols[i] <- length(xi)
-	
-	namesi <- names(xi)
-	if(ncols[i] > 1L) {
-	    if(length(namesi) == 0L) namesi <- seq_len(ncols[i])
-	    if(no.vn[i]) vnames[[i]] <- namesi
-	    else vnames[[i]] <- paste(vnames[[i]], namesi, sep=".")
-	}
-	else {
+        ncols[i] <- length(xi)
+
+        namesi <- names(xi)
+        if(ncols[i] > 1L) {
+            if(length(namesi) == 0L) namesi <- seq_len(ncols[i])
+            if(no.vn[i]) vnames[[i]] <- namesi
+            else vnames[[i]] <- paste(vnames[[i]], namesi, sep=".")
+        }
+        else {
             if(length(namesi)) vnames[[i]] <- namesi
             else if (no.vn[[i]]) {
                 stop("deparse not implemented")
@@ -404,7 +403,7 @@ data.row.names <-
 #                vnames[[i]] <- tmpname
             }
         } # end of ncols[i] <= 1
-	if(mirn && nrows[i] > 0L) {
+        if(mirn && nrows[i] > 0L) {
             rowsi <- attr(xi, "row.names")
             ## Avoid all-blank names
             nc <- nchar(rowsi, allowNA = FALSE)
@@ -413,12 +412,12 @@ data.row.names <-
                 row.names <- data.row.names(row.names, rowsi, i)
         }
         nrows[i] <- abs(nrows[i])
-	vlist[[i]] <- xi
+        vlist[[i]] <- xi
     }
     nr <- max(nrows)
     for(i in seq_len(n)[nrows < nr]) {
-	xi <- vlist[[i]]
-	if(nrows[i] > 0L && (nr %% nrows[i] == 0L)) {
+        xi <- vlist[[i]]
+        if(nrows[i] > 0L && (nr %% nrows[i] == 0L)) {
             ## make some attempt to recycle column i
             xi <- unclass(xi) # avoid data-frame methods
             fixed <- TRUE
@@ -426,7 +425,7 @@ data.row.names <-
                 xi1 <- xi[[j]]
                 if(is.vector(xi1) || is.factor(xi1))
                     xi[[j]] <- rep(xi1, length.out = nr)
-		else if(is.character(xi1) && inherits(xi1, "AsIs"))
+                else if(is.character(xi1) && inherits(xi1, "AsIs"))
                     xi[[j]] <- structure(rep(xi1, length.out = nr),
                                          class = class(xi1))
                 else if(inherits(xi1, "Date") || inherits(xi1, "POSIXct"))
@@ -450,10 +449,10 @@ data.row.names <-
     vnames <- unlist(vnames[ncols > 0L])
     noname <- !nzchar(vnames)
     if(any(noname))
-	vnames[noname] <- paste("Var", seq_along(vnames), sep = ".")[noname]
+        vnames[noname] <- paste("Var", seq_along(vnames), sep = ".")[noname]
     if(check.names)
 # TODO: implement make.names
-#	vnames <- make.names(vnames, unique=TRUE)
+#    vnames <- make.names(vnames, unique=TRUE)
     names(value) <- vnames
     if(!mrn) { # non-null row.names arg was supplied
         if(length(row.names) == 1L && nr != 1L) {  # one of the variables

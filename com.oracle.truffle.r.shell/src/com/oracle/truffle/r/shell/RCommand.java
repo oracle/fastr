@@ -119,18 +119,19 @@ public class RCommand {
             readEvalPrint(consoleInput == System.in, console, args);
         }
         // TODO exit code
+        Utils.exit(0);
     }
 
     private static void printVersionAndExit() {
         System.out.print("FastR version ");
         System.out.println(RVersionNumber.FULL);
         System.out.println(RRuntime.LICENSE);
-        System.exit(0);
+        Utils.exit(0);
     }
 
     private static void printRHomeAndExit() {
         System.out.println(REnvVars.rHome());
-        System.exit(0);
+        Utils.exit(0);
     }
 
     private static void evalFileInput(String filePath, String[] commandArgs) {

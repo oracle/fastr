@@ -16,6 +16,8 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -24,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
+    @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     private MaterializedFrame storedEnclosingFrame;
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
@@ -54,7 +57,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         Object[] argObject = RArguments.create(targetFunction, args);
         VirtualFrame newFrame = runtime.createVirtualFrame(argObject, new FrameDescriptor());
         defineVars(newFrame);
-        return targetFunction.call(newFrame, argObject);
+        return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 
     @Override
@@ -85,9 +88,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 if (i > 0) {
                     isFirst = false;
                     classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataCopy(), i, this.type.getLength()), true);
-                    LinkedHashMap<String, Object> attr = new LinkedHashMap<>();
-                    attr.put(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
-                    classVec.setAttributes(attr);
+                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
                 } else {
                     isFirst = true;
                     classVec = this.type.copyResized(this.type.getLength(), false);
