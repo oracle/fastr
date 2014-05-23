@@ -157,16 +157,21 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         attributes.put(attribute, value);
     }
 
-    /*
-     * Generic methods from RAttributable. Currently, no callers use these methods to process the
-     * "special" attributes, such as "names". Defensive programming would check the "name" parameter
-     * and handle it appropriately.
-     */
     public void setAttr(String name, Object value) {
         if (attributes == null) {
             initAttributes();
         }
-        attributes.put(name, value);
+        if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+            setNames(value);
+        } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+            setDimNames((RList) value);
+        } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            setRowNames(value);
+        } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+            setClassAttr(this, (RStringVector) value, null);
+        } else {
+            attributes.put(name, value);
+        }
     }
 
     public Object getAttr(String name) {
@@ -178,7 +183,17 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
 
     public void removeAttr(String name) {
         if (attributes != null) {
-            attributes.remove(name);
+            if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+                setNames(null);
+            } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+                setDimNames((RList) null);
+            } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                setRowNames(null);
+            } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+                setClassAttr(this, (RStringVector) null, null);
+            } else {
+                attributes.remove(name);
+            }
             if (attributes.size() == 0) {
                 attributes = null;
             }
