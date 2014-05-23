@@ -7194,6 +7194,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testGrep_8acdaa9fa6a40c31da932b6ad729bdb3() {
+        assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grepl(\"foo\", txt) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testIdentical_c46eaf60fda944bdf1391b5fe9af0427() {
         assertEval("{ identical(1,1) }");
     }

@@ -254,6 +254,10 @@ public class RRuntime {
         return b ? LOGICAL_TRUE : LOGICAL_FALSE;
     }
 
+    public static boolean fromLogical(byte b) {
+        return b == LOGICAL_TRUE;
+    }
+
     // conversions from logical
 
     public static int logical2intNoCheck(byte value) {

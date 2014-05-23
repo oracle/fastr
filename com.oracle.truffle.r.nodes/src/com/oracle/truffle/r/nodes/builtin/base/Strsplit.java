@@ -24,29 +24,15 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("strsplit")
+@RBuiltin(".Internal.strsplit")
 public abstract class Strsplit extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "split", "fixed", "perl", "useBytes"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{null, null, ConstantNode.create(false), ConstantNode.create(false), ConstantNode.create(false)};
-    }
 
     @SuppressWarnings("unused")
     @Specialization

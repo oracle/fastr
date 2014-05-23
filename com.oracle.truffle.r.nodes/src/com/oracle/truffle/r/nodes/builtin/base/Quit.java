@@ -24,26 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin({"quit", "q"})
+@RBuiltin(".Internal.quit")
 public abstract class Quit extends RInvisibleBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"save", "status", "runLast"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create("default"), ConstantNode.create(0), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
-    }
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
