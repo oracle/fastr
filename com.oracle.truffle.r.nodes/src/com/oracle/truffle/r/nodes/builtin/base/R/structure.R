@@ -24,15 +24,15 @@ structure <- function (.Data, ...)
     if(length(attrib)) {
         specials <- c(".Dim", ".Dimnames", ".Names", ".Tsp", ".Label")
         replace <- c("dim", "dimnames", "names", "tsp", "levels")
-	m <- match(names(attrib), specials)
-	ok <- (!is.na(m) & m)
-	names(attrib)[ok] <- replace[m[ok]]
+        m <- match(names(attrib), specials)
+        ok <- (!is.na(m) & m)
+        names(attrib)[ok] <- replace[m[ok]]
         ## prior to 2.5.0 factors would deparse to double codes
 # TODO: implement storage.mode<-
-#	if("factor" %in% attrib[["class", exact = TRUE]]
+#        if("factor" %in% attrib[["class", exact = TRUE]]
 #           && typeof(.Data) == "double")
-#	   storage.mode(.Data) <- "integer"
-	attributes(.Data) <- c(attributes(.Data), attrib)
+#           storage.mode(.Data) <- "integer"
+        attributes(.Data) <- c(attributes(.Data), attrib)
     }
     return(.Data)
 }

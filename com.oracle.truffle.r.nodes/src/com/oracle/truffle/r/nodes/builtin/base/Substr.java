@@ -74,8 +74,9 @@ public abstract class Substr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = {"!emptyArg", "wrongParams"})
-    public RStringVector substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
-        return null; /* dummy */
+    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+        assert false; // should never happen
+        return RNull.instance; // dummy
     }
 
     @Specialization(order = 3, guards = {"!emptyArg", "!wrongParams"})

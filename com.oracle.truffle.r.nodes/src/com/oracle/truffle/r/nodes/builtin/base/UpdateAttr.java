@@ -135,10 +135,8 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(castVector(frame, value));
         } else {
-            if (resultVector.getAttributes() == null) {
-                resultVector.setAttributes(new LinkedHashMap<String, Object>());
-            }
-            resultVector.getAttributes().put(name, value);
+            // generic attribute
+            resultVector.setAttr(name, value);
         }
         // return frame if it's one, otherwise return the vector
         return container.getElementClass() == RVector.class ? container : resultVector;

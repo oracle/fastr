@@ -43,6 +43,10 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     @SlowPath
+    private static String replaceSubstring(String x, String value, int actualStart, int replacementLength, int actualStop) {
+        return x.substring(0, actualStart - 1) + value.substring(0, replacementLength) + x.substring(actualStop, x.length());
+    }
+
     protected String substr0(String x, int start, int stop, String value) {
         na.enable(true);
         if (na.check(x) || na.check(start) || na.check(stop)) {
@@ -70,7 +74,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
             actualStop -= (replacementLength - value.length());
             replacementLength = value.length();
         }
-        return x.substring(0, actualStart - 1) + value.substring(0, replacementLength) + x.substring(actualStop, x.length());
+        return replaceSubstring(x, value, actualStart, replacementLength, actualStop);
     }
 
     @SuppressWarnings("unused")
@@ -81,8 +85,9 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = {"!emptyArg", "wrongParams"})
-    public RStringVector substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
-        return null; /* dummy */
+    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
+        assert false; // should never happen
+        return RNull.instance; // dummy
     }
 
     @SuppressWarnings("unused")

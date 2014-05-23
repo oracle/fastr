@@ -71,9 +71,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 if (i > 0) {
                     isFirst = false;
                     classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataCopy(), i, this.type.getLength()), true);
-                    LinkedHashMap<String, Object> attr = new LinkedHashMap<>();
-                    attr.put(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
-                    classVec.setAttributes(attr);
+                    classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
                 } else {
                     isFirst = true;
                     classVec = this.type.copyResized(this.type.getLength(), false);

@@ -1,24 +1,13 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2014, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
@@ -37,6 +26,35 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
+
+    public static final int R_MAX_DIGITS_OPT = 22;
+    public static final int R_MIN_DIGITS_OPT = 0;
+
+    private static Config printConfig;
+
+    public static Config setPrintDefaults() {
+        if (printConfig == null) {
+            printConfig = new Config();
+        }
+        printConfig.width = RContext.getInstance().getConsoleHandler().getWidth();
+        printConfig.naWidth = RRuntime.STRING_NA.length();
+        printConfig.naWidthNoQuote = RRuntime.NA_HEADER.length();
+        printConfig.digits = 7 /* default */;
+        printConfig.scipen = 0 /* default */;
+        printConfig.gap = 1;
+        printConfig.quote = 1;
+        printConfig.right = Adjustment.LEFT;
+        printConfig.max = 99999 /* default */;
+        printConfig.naString = RRuntime.STRING_NA;
+        printConfig.naStringNoQuote = RRuntime.NA_HEADER;
+        printConfig.useSource = 8 /* default */;
+        printConfig.cutoff = 60;
+        return printConfig;
+    }
+
+    public static Config getConfig() {
+        return setPrintDefaults();
+    }
 
     private RAbstractIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
@@ -78,7 +96,7 @@ public abstract class Format extends RBuiltinNode {
         return null;
     }
 
-    // TODO: handling of logical values resembles what happens in GNU R, with handling of other
+    // TODO: handling of logical values has been derived from GNU R, with handling of other
     // types following suit at some point for compliance
 
     @SlowPath
@@ -108,7 +126,7 @@ public abstract class Format extends RBuiltinNode {
         for (int i = 0; i < value.getLength(); i++) {
             byte val = value.getDataAt(i);
             if (RRuntime.isNA(val)) {
-                width = Print.getRPrint().naWidth;
+                width = getConfig().naWidth;
             } else if (val != RRuntime.LOGICAL_FALSE && width < 4) {
                 width = 4;
             } else if (val == RRuntime.LOGICAL_FALSE && width < 5) {
@@ -176,7 +194,7 @@ public abstract class Format extends RBuiltinNode {
             ret = tmp;
         }
         if (!RRuntime.isNA(ret)) {
-            Print.getRPrint().scipen = ret;
+            getConfig().scipen = ret;
         }
         return ret;
     }
@@ -209,7 +227,7 @@ public abstract class Format extends RBuiltinNode {
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
-        Print.getRPrint().digits = digits;
+        getConfig().digits = digits;
         int nsmall = nsmallVec.getLength() > 0 ? nsmallVec.getDataAt(0) : RRuntime.INT_NA;
         int width = widthVec.getLength() > 0 ? widthVec.getDataAt(0) : 0;
         int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
@@ -228,7 +246,7 @@ public abstract class Format extends RBuiltinNode {
         if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "trim");
         }
-        if (digitsVec.getLength() > 0 && (RRuntime.isNA(digitsVec.getDataAt(0)) || digitsVec.getDataAt(0) < Print.R_MIN_DIGITS_OPT || digitsVec.getDataAt(0) > Print.R_MAX_DIGITS_OPT)) {
+        if (digitsVec.getLength() > 0 && (RRuntime.isNA(digitsVec.getDataAt(0)) || digitsVec.getDataAt(0) < R_MIN_DIGITS_OPT || digitsVec.getDataAt(0) > R_MAX_DIGITS_OPT)) {
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "digits");
         }
         if (nsmallVec.getLength() > 0 && (RRuntime.isNA(nsmallVec.getDataAt(0)) || nsmallVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 20)) {
@@ -253,4 +271,25 @@ public abstract class Format extends RBuiltinNode {
                     RAbstractVector sciVec) {
         return wrongArgsObject(value, trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
     }
+
+    public static class Config {
+        public int width;
+        public int naWidth;
+        public int naWidthNoQuote;
+        public int digits;
+        public int scipen;
+        public int gap;
+        public int quote;
+        public Adjustment right;
+        public int max;
+        public String naString;
+        public String naStringNoQuote;
+        public int useSource;
+        public int cutoff;
+    }
+
+    public enum Adjustment {
+        LEFT, RIGHT, CENTRE, NONE;
+    }
+
 }

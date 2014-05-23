@@ -29,15 +29,14 @@ import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -68,6 +67,7 @@ public final class REngine implements RBuiltinLookupProvider {
      *         {@link #parseAndEval(String, VirtualFrame, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+        RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
@@ -131,7 +131,7 @@ public final class REngine implements RBuiltinLookupProvider {
     }
 
     public static Object eval(RExpression expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
-        CallTarget callTarget = transformToCallTarget((ASTNode) expr.getASTNode(), envir);
+        RootCallTarget callTarget = transformToCallTarget((ASTNode) expr.getASTNode(), envir);
         // to evaluate this we must create a new VirtualFrame
         VirtualFrame frame = RRuntime.createVirtualFrame();
         Object result = runGlobal(callTarget, frame, false);
@@ -153,29 +153,29 @@ public final class REngine implements RBuiltinLookupProvider {
         }
     }
 
-    private static CallTarget parseToCallTarget(ANTLRStringStream stream, Source source) throws RecognitionException {
+    private static RootCallTarget parseToCallTarget(ANTLRStringStream stream, Source source) throws RecognitionException {
         return transformToCallTarget(ParseUtil.parseAST(stream, source), REnvironment.globalEnv());
     }
 
-    private static CallTarget transformToCallTarget(ASTNode astNode, REnvironment environment) {
+    private static RootCallTarget transformToCallTarget(ASTNode astNode, REnvironment environment) {
         RTruffleVisitor transform = new RTruffleVisitor(environment);
         RNode node = transform.transform(astNode);
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.globalEnv());
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>");
-        CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>", true);
+        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }
 
-    private static Object runGlobal(CallTarget callTarget, VirtualFrame globalFrame, boolean printResult) {
+    private static Object runGlobal(RootCallTarget callTarget, VirtualFrame globalFrame, boolean printResult) {
         Object result = null;
         try {
             try {
-                result = ((DefaultCallTarget) callTarget).getRootNode().execute(globalFrame);
+                result = callTarget.call(globalFrame);
             } catch (ControlFlowException cfe) {
                 throw RError.getNoLoopForBreakNext(null);
             }
             if (printResult) {
-                printResult(globalFrame, result);
+                printResult(result);
             }
             reportWarnings(false);
         } catch (RError e) {
@@ -186,10 +186,10 @@ public final class REngine implements RBuiltinLookupProvider {
         return result;
     }
 
-    private static void printResult(VirtualFrame frame, Object result) {
+    private static void printResult(Object result) {
         if (RContext.isVisible()) {
             RFunction function = RContext.getLookup().lookup("print");
-            RRuntime.toString(function.call(frame, RArguments.create(function, new Object[]{result})));
+            function.getTarget().call(RArguments.create(function, new Object[]{result}));
         }
     }
 
@@ -205,7 +205,7 @@ public final class REngine implements RBuiltinLookupProvider {
         // R suicide, unless, e.g., we are running units tests.
         // We don't call quit as the system is broken.
         if (crashOnFatalError) {
-            System.exit(2);
+            Utils.exit(2);
         }
     }
 

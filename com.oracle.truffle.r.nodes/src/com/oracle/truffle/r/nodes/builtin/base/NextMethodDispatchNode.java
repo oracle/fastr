@@ -123,9 +123,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         } else {
             classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataCopy(), nextClassIndex, type.getLength()), true);
         }
-        LinkedHashMap<String, Object> attr = new LinkedHashMap<>();
-        attr.put(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
-        classVec.setAttributes(attr);
+        classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
         klass = classVec;
     }
 

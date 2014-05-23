@@ -27,6 +27,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.impl.*;
@@ -111,7 +112,7 @@ public final class Utils {
             }
         }
 
-        return gotSection ? new DefaultSourceSection(s, "<bounding box>", minLine, minLineColumn, minCharIndex, maxCharIndex - minCharIndex) : null;
+        return gotSection ? s.createSection("<bounding box>", minLine, minLineColumn, minCharIndex, maxCharIndex - minCharIndex) : null;
     }
 
     public static void dumpFunction(String groupName, RFunction function) {
@@ -157,15 +158,23 @@ public final class Utils {
         System.err.println("FastR warning: " + msg);
     }
 
+    /**
+     * All terminations should go through this method.
+     */
+    public static void exit(int status) {
+        RPerfAnalysis.report();
+        System.exit(status);
+    }
+
     public static void fail(String msg) {
         // CheckStyle: stop system..print check
         System.err.println("FastR internal error: " + msg);
-        System.exit(2);
+        Utils.exit(2);
     }
 
     public static void fatalError(String msg) {
         System.err.println("Fatal error: " + msg);
-        System.exit(2);
+        Utils.exit(2);
     }
 
     private static String userHome;
@@ -195,29 +204,66 @@ public final class Utils {
     }
 
     /**
-     * Retrieve a caller frame from the call stack. The level indicates how many frames have to be
-     * skipped; 1 means the caller of the current frame.
+     * Retrieve a frame from the call stack. The current frame is at depth 0, caller at depth 1,
+     * etc.
+     *
+     * @param fa kind of access required to the frame
+     * @param depth identifies which frame is required
+     * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
      */
-    public static Frame getCallerFrame(FrameAccess fa, int level) {
+    public static Frame getStackFrame(FrameAccess fa, int depth) {
+        if (depth == 0) {
+            return Truffle.getRuntime().getCurrentFrame().getFrame(fa, true);
+        }
         Iterator<FrameInstance> it = Truffle.getRuntime().getStackTrace().iterator();
         if (!it.hasNext()) {
             return null;
         }
-        FrameInstance fi = it.next(); // current frame: discard
-        for (int i = 0; i < level; ++i) {
+        FrameInstance fi = null;
+        for (int i = 0; i < depth; ++i) {
             if (!it.hasNext()) {
                 return null;
             }
             fi = it.next();
         }
-        return fi.getFrame(fa, false);
+        return fi == null ? null : fi.getFrame(fa, false);
     }
 
     /**
      * Retrieve the caller frame of the current frame.
      */
     public static Frame getCallerFrame(FrameAccess fa) {
-        return getCallerFrame(fa, 0);
+        return getStackFrame(fa, 1);
+    }
+
+    /**
+     * Generate a stack trace as a string.
+     */
+    @SlowPath
+    public static String createStackTrace() {
+        StringBuilder str = new StringBuilder();
+
+        FrameInstance current = Truffle.getRuntime().getCurrentFrame();
+        dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), current.isVirtualFrame());
+
+        Iterable<FrameInstance> frames = Truffle.getRuntime().getStackTrace();
+        if (frames != null) {
+            for (FrameInstance frame : frames) {
+                dumpFrame(str, frame.getCallTarget(), frame.getFrame(FrameAccess.READ_ONLY, true), frame.isVirtualFrame());
+            }
+        }
+        return str.toString();
+    }
+
+    private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean isVirtual) {
+        if (str.length() > 0) {
+            str.append("\n");
+        }
+        str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        for (FrameSlot s : frameDescriptor.getSlots()) {
+            str.append("\n  ").append(s.getIdentifier()).append("=").append(frame.getValue(s));
+        }
     }
 
 }

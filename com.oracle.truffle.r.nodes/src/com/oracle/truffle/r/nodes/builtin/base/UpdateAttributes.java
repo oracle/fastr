@@ -98,10 +98,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         if (numAttributes == 0) {
             resultVector.resetAllAttributes(true);
         } else {
-            HashMap<String, Object> attributeMap = resultVector.resetAllAttributes(false);
-            if (attributeMap == null) {
-                resultVector.setAttributes(new LinkedHashMap<String, Object>());
-            }
+            resultVector.resetAllAttributes(false);
             // error checking is a little weird - seems easier to separate it than weave it into the
             // update loop
             if (listNames.getLength() > 1) {
@@ -160,9 +157,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     }
                 } else {
                     if (value == RNull.instance) {
-                        resultVector.getAttributes().remove(attrName);
+                        resultVector.removeAttr(attrName);
                     } else {
-                        resultVector.getAttributes().put(attrName, value);
+                        resultVector.setAttr(attrName, value);
                     }
                 }
             }

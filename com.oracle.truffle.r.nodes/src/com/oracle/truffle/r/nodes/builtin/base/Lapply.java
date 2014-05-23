@@ -11,8 +11,10 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -23,6 +25,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(value = ".Internal.lapply", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public abstract class Lapply extends RBuiltinNode {
+
+    @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"X", "FUN", "..."};
 
@@ -65,7 +69,7 @@ public abstract class Lapply extends RBuiltinNode {
         for (int i = 0; i < result.length; ++i) {
             // FIXME breaks encapsulation.
             arguments[firstArgOffset] = xMat.getDataAtAsObject(i);
-            result[i] = fun.call(frame, arguments);
+            result[i] = funCall.call(frame, fun.getTarget(), arguments);
         }
         return RDataFactory.createList(result, xMat.getNames());
     }

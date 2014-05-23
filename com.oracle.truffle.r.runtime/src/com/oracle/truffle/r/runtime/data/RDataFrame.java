@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
-
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RDataFrame implements RShareable, RAbstractContainer {
@@ -69,7 +67,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public Map<String, Object> getAttributes() {
+    public RAttributes getAttributes() {
         return vector.getAttributes();
     }
 
@@ -119,5 +117,9 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     @Override
     public boolean isObject() {
         return true;
+    }
+
+    public void initAttributes() {
+        vector.initAttributes();
     }
 }

@@ -51,7 +51,8 @@ public class ParserGeneration {
         "support NA_integer_",
         "allow string literals as argument names",
         "treat arguments as nodes and argument lists as generic lists",
-        "more verbose debug output for source attribution"
+        "more verbose debug output for source attribution",
+        "adopt changed SourceSection creation API"
     };
 
 }
