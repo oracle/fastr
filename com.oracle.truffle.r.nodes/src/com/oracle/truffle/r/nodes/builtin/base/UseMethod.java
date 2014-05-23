@@ -28,6 +28,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
+    private static final boolean USE_CACHE = false;
     @Child protected DispatchedCallNode dispatchedCallNode;
     protected String lastGenericName;
 
@@ -70,6 +71,9 @@ public abstract class UseMethod extends RBuiltinNode {
         if (enclosingArg instanceof Double) {
             return useMethod(frame, generic, (double) enclosingArg);
         }
+        if (enclosingArg instanceof RComplex) {
+            return useMethod(frame, generic, (double) enclosingArg);
+        }
         return useMethod(frame, generic, (RAbstractContainer) enclosingArg);
     }
 
@@ -98,6 +102,12 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Specialization
+    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RComplex arg) {
+        controlVisibility();
+        return useMethodHelper(frame, generic, RRuntime.TYPE_COMPLEX);
+    }
+
+    @Specialization
     public Object useMethod(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object generic, @SuppressWarnings("unused") Object arg) {
         controlVisibility();
         throw RError.getNonStringGeneric(getEncapsulatingSourceSection());
@@ -112,12 +122,15 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-            lastGenericName = generic;
+        if (USE_CACHE) {
+            if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+                lastGenericName = generic;
+            }
+            throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
         }
-        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
+        throw new ReturnException(new UseMethodDispatchNode(generic, classNames).executeNoCache(frame));
     }
 }

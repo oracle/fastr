@@ -7474,9 +7474,6 @@ In min() : no non-missing arguments to min; returning Inf
 #{ nchar(c(10,130)) }
 [1] 2 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
-#{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
-ab
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
 #{ ngettext(-1, "a", "b") }
 Error in ngettext(-1, "a", "b") : invalid 'n' argument
@@ -9207,9 +9204,6 @@ $<NA>
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodEnclFuncArgs
 #{f <- function(x,y,z){ UseMethod("f"); }; f.second <- function(x,y,z){cat("f second",x,y,z)}; obj <-1; attr(obj,"class") <- "second"; arg2=2; arg3=3; f(obj,arg2,arg3);}
 f second 1 2 3
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodLocalVars
-#{f <- function(x){ y<-2;locFun <- function(){cat("local")}; UseMethod("f"); }; f.second <- function(x){cat("f second",x);locFun();}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
-f second 1local
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodNested
 #{f <- function(x){g<- function(x){ h<- function(x){ UseMethod("f");}; h(x)}; g(x) }; f.second <- function(x){cat("f second",x);}; obj <-1; attr(obj,"class")  <- "second"; f(obj);}
 f second 1

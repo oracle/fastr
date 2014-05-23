@@ -43,6 +43,20 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return funCall;
     }
 
+    public Object executeNoCache(VirtualFrame frame) {
+        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        findTargetFunction(callerFrame);
+        TruffleRuntime runtime = Truffle.getRuntime();
+        Object args[] = new Object[RArguments.getArgumentsLength(frame)];
+        for (int i = 0; i < args.length; ++i) {
+            args[i] = RArguments.getArgument(frame, i);
+        }
+        Object[] argObject = RArguments.create(targetFunction, args);
+        VirtualFrame newFrame = runtime.createVirtualFrame(argObject, new FrameDescriptor());
+        defineVars(newFrame);
+        return targetFunction.call(newFrame, argObject);
+    }
+
     @Override
     public DispatchNode.FunctionCall execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
