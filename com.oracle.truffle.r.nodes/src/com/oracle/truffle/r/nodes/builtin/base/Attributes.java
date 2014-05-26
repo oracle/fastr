@@ -22,16 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-import java.util.Map.Entry;
-
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("attributes")
+@RBuiltin(name = "attributes", kind = PRIMITIVE)
 public abstract class Attributes extends RBuiltinNode {
 
     @Specialization(guards = "!hasAttributes")
@@ -43,17 +42,17 @@ public abstract class Attributes extends RBuiltinNode {
     @Specialization(guards = "hasAttributes")
     public RList attributes(RAbstractContainer container) {
         controlVisibility();
-        Map<String, Object> map = container.getAttributes();
-        int size = map.size();
+        RAttributes attributes = container.getAttributes();
+        int size = attributes.size();
         String[] names = new String[size];
         Object[] values = new Object[size];
         int z = 0;
-        for (Entry<String, Object> entry : map.entrySet()) {
-            names[z] = entry.getKey();
+        for (RAttribute attr : attributes) {
+            names[z] = attr.getName();
             if (names[z] == RRuntime.ROWNAMES_ATTR_KEY) {
-                values[z] = Attr.getFullRowNames(entry.getValue());
+                values[z] = Attr.getFullRowNames(attr.getValue());
             } else {
-                values[z] = entry.getValue();
+                values[z] = attr.getValue();
             }
             ++z;
         }

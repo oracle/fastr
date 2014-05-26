@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin({".Internal.tempdir"})
+@RBuiltin(name = "tempdir", kind = INTERNAL)
 public abstract class TempDir extends RBuiltinNode {
 
     @Specialization

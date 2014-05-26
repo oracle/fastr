@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -32,7 +33,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("match.fun")
+@RBuiltin(name = "match.fun", kind = SUBSTITUTE)
+// TODO revert to R
 public abstract class MatchFun extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"fun", "descend"};

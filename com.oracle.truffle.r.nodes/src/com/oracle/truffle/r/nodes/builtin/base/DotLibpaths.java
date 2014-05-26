@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
@@ -49,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * </pre>
  *
  */
-@RBuiltin(".libPaths")
+@RBuiltin(name = ".libPaths", kind = SUBSTITUTE)
 public abstract class DotLibpaths extends RBuiltinNode {
     @Specialization(order = 0)
     public Object libPathsVec(@SuppressWarnings("unused") RMissing missing) {

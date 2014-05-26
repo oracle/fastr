@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -27,7 +28,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
  */
 public class LaFunctions {
 
-    @RBuiltin(".Internal.La_version")
+    @RBuiltin(name = "La_version", kind = INTERNAL)
     public abstract static class Version extends RBuiltinNode {
         @Specialization
         @SlowPath
@@ -38,7 +39,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(".Internal.La_rg")
+    @RBuiltin(name = "La_rg", kind = INTERNAL)
     public abstract static class Rg extends RBuiltinNode {
 
         private static final String[] NAMES = new String[]{"values", "vectors"};

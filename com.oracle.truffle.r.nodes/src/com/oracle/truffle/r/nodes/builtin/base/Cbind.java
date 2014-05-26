@@ -22,13 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
 
-@RBuiltin(value = "cbind", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "cbind", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+// TODO Should be INTERNAL
 public final class Cbind extends RWrapperBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
 

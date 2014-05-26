@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @SuppressWarnings("unused")
-@RBuiltin(".Internal.gettext")
+@RBuiltin(name = "gettext", kind = INTERNAL)
 public abstract class GetText extends RBuiltinNode {
 
     @Specialization

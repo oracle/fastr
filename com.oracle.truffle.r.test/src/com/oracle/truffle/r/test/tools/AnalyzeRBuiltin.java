@@ -63,7 +63,7 @@ public class AnalyzeRBuiltin {
     private static class ClassInfo {
         String name;
         @SuppressWarnings("unused") String path;
-        boolean dotInternal;
+        RBuiltinKind kind;
 
         ClassInfo(String name, String path) {
             this.name = name;
@@ -111,7 +111,6 @@ public class AnalyzeRBuiltin {
         }
     }
 
-    private static final String DOT_INTERNAL = ".Internal.";
     private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.nodes.builtin.";
 
     private static SortedMap<String, RInfo> rInfoMap = new TreeMap<>();
@@ -188,19 +187,22 @@ public class AnalyzeRBuiltin {
                 Class<?> klass = Class.forName(classInfo.name);
                 RBuiltin rb = klass.getAnnotation(RBuiltin.class);
                 if (rb != null) {
-                    String[] functions = rb.value();
+                    int al = rb.aliases().length;
+                    String[] functions = new String[1 + al];
+                    String name = rb.name();
+                    classInfo.kind = rb.kind();
+                    functions[0] = name;
+                    if (al > 0) {
+                        System.arraycopy(rb.aliases(), 0, functions, 1, al);
+                    }
                     for (String function : functions) {
-                        String cleanFunction = stripInternal(function);
-                        if (!cleanFunction.equals(function)) {
-                            classInfo.dotInternal = true;
-                        }
-                        RInfo rInfo = rInfoMap.get(cleanFunction);
+                        RInfo rInfo = rInfoMap.get(function);
                         if (rInfo == null) {
                             unkownToGnuR.add(function);
                             continue;
                         }
                         if (rInfo.classInfo != null) {
-                            System.err.printf("function %s defined in %s is redefined by %s%n", cleanFunction, stripPackage(rInfo.classInfo.name), stripPackage(classInfo.name));
+                            System.err.printf("function %s defined in %s is redefined by %s%n", function, stripPackage(rInfo.classInfo.name), stripPackage(classInfo.name));
                             continue;
                         }
                         rInfo.classInfo = classInfo;
@@ -234,14 +236,6 @@ public class AnalyzeRBuiltin {
         }
     }
 
-    private static String stripInternal(String name) {
-        if (name.startsWith(DOT_INTERNAL)) {
-            return name.replace(DOT_INTERNAL, "");
-        } else {
-            return name;
-        }
-    }
-
     private static String stripPackage(String s) {
         return s.replace(PACKAGE_PREFIX, "");
     }
@@ -250,10 +244,10 @@ public class AnalyzeRBuiltin {
      * For each .Internal in {@link #rInfoList} check how FastR implements it.
      */
     private static void checkInternals() {
-        System.out.println("Functions defined as .Internal that are not implemented as .Internal.xxx in FastR");
+        System.out.println("Functions defined in GnuR as .Internal that are not implemented as .Internal in FastR");
         for (RInfo rInfo : rInfoList) {
             if (rInfo.classInfo != null && rInfo.kind == Kind.Internal) {
-                if (!rInfo.classInfo.dotInternal) {
+                if (rInfo.classInfo.kind != RBuiltinKind.INTERNAL) {
                     System.out.println(rInfo.name);
                 }
             }
@@ -307,7 +301,7 @@ public class AnalyzeRBuiltin {
     }
 
     /**
-     * Print the output from GnuR given the plain function namne as input, (for "printable"
+     * Print the output from GnuR given the plain function name as input, (for "printable"
      * functions)
      *
      * @param args value to limit input/output, comma separated, name=value pairs.

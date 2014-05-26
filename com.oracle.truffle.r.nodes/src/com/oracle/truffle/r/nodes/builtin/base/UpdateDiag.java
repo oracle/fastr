@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -32,7 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("diag<-")
+@RBuiltin(name = "diag<-", kind = SUBSTITUTE)
+// TODO Implement in R
 public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();

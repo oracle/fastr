@@ -25,8 +25,8 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
@@ -43,14 +43,14 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RBounded implements RShareable, RAbstractVector {
+public abstract class RVector extends RBounded implements RShareable, RAttributable, RAbstractVector {
 
     protected boolean complete;
     private int matrixDimension;
     protected int[] dimensions;
     protected Object names;
     protected RList dimNames;
-    private HashMap<String, Object> attributes;
+    private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
 
@@ -59,20 +59,15 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.dimensions = dimensions;
         setMatrixDimensions(dimensions, length);
         this.names = names;
-        if (names == null && dimensions == null) {
-            this.attributes = null;
-        } else {
-            initAttributesMap(this);
-            if (names != null) {
-                if (names != RNull.instance) {
-                    // since this constructor is for internal use only, the assertion shouldn't fail
-                    assert ((RStringVector) names).getLength() == length;
-                    putAttribute(RRuntime.NAMES_ATTR_KEY, names);
-                }
+        if (names != null) {
+            if (names != RNull.instance) {
+                // since this constructor is for internal use only, the assertion shouldn't fail
+                assert ((RStringVector) names).getLength() == length;
+                putAttribute(RRuntime.NAMES_ATTR_KEY, names);
             }
-            if (dimensions != null) {
-                putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
-            }
+        }
+        if (dimensions != null) {
+            putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
         }
         this.dimNames = null;
     }
@@ -145,9 +140,64 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return match;
     }
 
-    @SlowPath
-    private static void initAttributesMap(RVector vector) {
-        vector.attributes = new LinkedHashMap<>();
+    public void initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributes.create();
+        }
+    }
+
+    /**
+     * Guarded method that checks whether {@code attributes} is initialized.
+     *
+     * @param attribute
+     * @param value
+     */
+    private void putAttribute(String attribute, Object value) {
+        initAttributes();
+        attributes.put(attribute, value);
+    }
+
+    public void setAttr(String name, Object value) {
+        if (attributes == null) {
+            initAttributes();
+        }
+        if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+            setNames(value);
+        } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+            setDimNames((RList) value);
+        } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            setRowNames(value);
+        } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+            setClassAttr(this, (RStringVector) value, null);
+        } else {
+            attributes.put(name, value);
+        }
+    }
+
+    public Object getAttr(String name) {
+        if (attributes == null) {
+            return null;
+        }
+        return attributes.get(name);
+    }
+
+    public void removeAttr(String name) {
+        if (attributes != null) {
+            if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+                setNames(null);
+            } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+                setDimNames((RList) null);
+            } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                setRowNames(null);
+            } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
+                setClassAttr(this, (RStringVector) null, null);
+            } else {
+                attributes.remove(name);
+            }
+            if (attributes.size() == 0) {
+                attributes = null;
+            }
+        }
     }
 
     public final void setNames(Object newNames) {
@@ -155,9 +205,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public void setNames(Object newNames, SourceSection sourceSection) {
-        if (attributes == null && newNames != null && newNames != RNull.instance) {
-            initAttributesMap(this);
-        }
         if (attributes != null && (newNames == null || newNames == RNull.instance)) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
@@ -190,9 +237,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public void setDimNames(RList newDimNames, SourceSection sourceSection) {
-        if (attributes == null && newDimNames != null) {
-            initAttributesMap(this);
-        }
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
             this.matrixDimension = 0;
@@ -240,9 +284,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final void setRowNames(Object rowNames) {
-        if (attributes == null && rowNames != null) {
-            initAttributesMap(this);
-        }
         if (attributes != null && rowNames == null) {
             removeAttributeMapping(RRuntime.ROWNAMES_ATTR_KEY);
         } else if (rowNames != null) {
@@ -251,12 +292,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public final Map<String, Object> getAttributes() {
+    public final RAttributes getAttributes() {
         return attributes;
-    }
-
-    public final void setAttributes(LinkedHashMap<String, Object> attributes) {
-        this.attributes = attributes;
     }
 
     public final boolean isComplete() {
@@ -313,9 +350,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final void setDimensions(int[] newDimensions, SourceSection sourceSection) {
-        if (attributes == null && newDimensions != null) {
-            initAttributesMap(this);
-        }
         if (attributes != null && newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
             setDimNames(null, sourceSection);
@@ -337,7 +371,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public static final RAbstractContainer setClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
-            initAttributesMap(vector);
+            vector.initAttributes();
         }
         if (vector.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
             vector.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
@@ -366,8 +400,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         result.dimNames = this.dimNames;
         result.dimensions = this.dimensions;
         result.setMatrixDimensions(result.dimensions, result.getLength());
-        if (this.getAttributes() != null) {
-            result.setAttributes(copyAttributeHashMap(this));
+        if (this.attributes != null) {
+            result.attributes = this.attributes.copy();
         }
     }
 
@@ -387,16 +421,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     // to be overridden by recursive structures
     protected RVector internalDeepCopy() {
         return internalCopy();
-    }
-
-    @SlowPath
-    private static LinkedHashMap<String, Object> copyAttributeHashMap(RAbstractVector origin) {
-        return new LinkedHashMap<>(origin.getAttributes());
-    }
-
-    @SlowPath
-    private void putAttribute(String attribute, Object value) {
-        attributes.put(attribute, value);
     }
 
     public final boolean verify() {
@@ -451,7 +475,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.dimensions = vector.getDimensions();
         this.setMatrixDimensions(this.dimensions, this.getLength());
         if (vector.getAttributes() != null) {
-            this.setAttributes(copyAttributeHashMap(vector));
+            this.attributes = vector.getAttributes().copy();
         }
     }
 
@@ -489,17 +513,14 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public void copyRegAttributesFrom(RAbstractVector vector) {
-        Map<String, Object> orgAttributes = vector.getAttributes();
+        RAttributes orgAttributes = vector.getAttributes();
         if (orgAttributes == null) {
             return;
         }
-        if (this.attributes == null) {
-            initAttributesMap(this);
-        }
-        for (Map.Entry<String, Object> e : orgAttributes.entrySet()) {
-            String key = e.getKey();
-            if (key != RRuntime.DIM_ATTR_KEY && key != RRuntime.DIMNAMES_ATTR_KEY && key != RRuntime.NAMES_ATTR_KEY) {
-                putAttribute(key, e.getValue());
+        for (RAttribute e : orgAttributes) {
+            String name = e.getName();
+            if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
+                putAttribute(name, e.getValue());
             }
         }
     }
@@ -516,7 +537,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public void resetDimensions(int[] newDimensions) {
-        // reset all atributes other than dimensions;
+        // reset all attributes other than dimensions;
         this.dimensions = newDimensions;
         this.setMatrixDimensions(newDimensions, getLength());
         // whether we nullify dimensions or re-set them to a different value, names and dimNames
@@ -526,8 +547,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         if (this.dimensions != null) {
             if (this.attributes != null) {
                 this.attributes.clear();
-            } else {
-                initAttributesMap(this);
             }
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(this.dimensions, true));
         } else {
@@ -540,7 +559,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public HashMap<String, Object> resetAllAttributes(boolean nullify) {
+    public RAttributes resetAllAttributes(boolean nullify) {
         this.dimensions = null;
         this.matrixDimension = 0;
         this.names = null;

@@ -22,21 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("attr")
+@RBuiltin(name = "attr", kind = PRIMITIVE)
 public abstract class Attr extends RBuiltinNode {
 
-    private static Object searchKeyPartial(Map<String, Object> attributes, String name) {
+    private static Object searchKeyPartial(RAttributes attributes, String name) {
         Object val = RNull.instance;
-        for (Map.Entry<String, Object> e : attributes.entrySet()) {
-            if (e.getKey().startsWith(name)) {
+        for (RAttribute e : attributes) {
+            if (e.getName().startsWith(name)) {
                 if (val == RNull.instance) {
                     val = e.getValue();
                 } else {
@@ -51,7 +51,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(order = 1, guards = "!isRowNamesAttr")
     public Object attr(RAbstractContainer container, String name) {
         controlVisibility();
-        Map<String, Object> attributes = container.getAttributes();
+        RAttributes attributes = container.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {
@@ -76,7 +76,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(order = 2, guards = "isRowNamesAttr")
     public Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
         controlVisibility();
-        Map<String, Object> attributes = container.getAttributes();
+        RAttributes attributes = container.getAttributes();
         if (attributes == null) {
             return RNull.instance;
         } else {

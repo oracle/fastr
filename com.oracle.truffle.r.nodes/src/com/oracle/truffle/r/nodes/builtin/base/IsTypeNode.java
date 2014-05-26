@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
-@RBuiltin("is.ANYTYPEBASE")
 public abstract class IsTypeNode extends RBuiltinNode {
 
     @Specialization

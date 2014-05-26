@@ -22,15 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import java.util.*;
-
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractContainer {
+public interface RAbstractContainer extends RAttributable {
 
     int getLength();
-
-    Map<String, Object> getAttributes();
 
     int[] getDimensions();
 

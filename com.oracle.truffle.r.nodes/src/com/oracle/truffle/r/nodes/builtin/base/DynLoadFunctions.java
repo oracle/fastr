@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,7 +35,7 @@ public class DynLoadFunctions {
     private static final String DLLINFO_CLASS = "DLLInfo";
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
 
-    @RBuiltin(".Internal.dyn.load")
+    @RBuiltin(name = "dyn.load", kind = INTERNAL)
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
         @Specialization
         public RList doDynLoad(String lib, byte local, byte now, @SuppressWarnings("unused") String unused) {
@@ -53,7 +54,7 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(".Internal.dyn.unload")
+    @RBuiltin(name = "dyn.unload", kind = INTERNAL)
     public abstract static class DynUnload extends RInvisibleBuiltinNode {
         @Specialization
         public RNull doDynunload(String lib) {
@@ -68,7 +69,7 @@ public class DynLoadFunctions {
 
     }
 
-    @RBuiltin(".Internal.getLoadedDLLs")
+    @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL)
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
         @Specialization
         public RList doGetLoadedDLLs() {

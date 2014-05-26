@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -33,7 +34,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(value = "unlist")
+@RBuiltin(name = "unlist", kind = SUBSTITUTE)
+// TODO INTERNAL
 public abstract class Unlist extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "recursive", "use.names"};

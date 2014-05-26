@@ -22,13 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("is.matrix")
+@RBuiltin(name = "is.matrix", kind = PRIMITIVE)
 public abstract class IsMatrix extends RBuiltinNode {
 
     @Specialization

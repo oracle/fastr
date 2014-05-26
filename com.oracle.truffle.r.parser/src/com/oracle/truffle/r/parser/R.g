@@ -66,7 +66,7 @@ package com.oracle.truffle.r.parser;
         if (DUMP_SRC) {
             System.out.print("<<" + id + "," + cstart.getLine() + "," + (cstart.getCharPositionInLine() + 1) + "," + startIndex + "," + length);
         }
-        SourceSection src = new DefaultSourceSection(source, id, cstart.getLine(), cstart.getCharPositionInLine() + 1, startIndex, length);
+        SourceSection src = source.createSection(id, cstart.getLine(), cstart.getCharPositionInLine() + 1, startIndex, length);
         if (DUMP_SRC) {
             System.out.println("=>" + src.getCode() + ">>");
         }
@@ -89,7 +89,7 @@ package com.oracle.truffle.r.parser;
         if (DUMP_SRC) {
             System.out.print("<<" + id + "," + as.getStartLine() + "," + as.getStartColumn() + "," + ai + "," + (b.getSource().getCharEndIndex() - ai));
         }
-        SourceSection src = new DefaultSourceSection(source, id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
+        SourceSection src = source.createSection(id, as.getStartLine(), as.getStartColumn(), ai, b.getSource().getCharEndIndex() - ai);
         if (DUMP_SRC) {
             System.out.println("=>" + src.getCode() + ">>");
         }
@@ -106,7 +106,7 @@ package com.oracle.truffle.r.parser;
         if (DUMP_SRC) {
             System.out.print("<<" + id + "," + ta.getLine() + "," + (ta.getCharPositionInLine() + 1) + "," + startIndex + "," + length);
         }
-        SourceSection src = new DefaultSourceSection(source, id, ta.getLine(), ta.getCharPositionInLine() + 1, startIndex, length);
+        SourceSection src = source.createSection(id, ta.getLine(), ta.getCharPositionInLine() + 1, startIndex, length);
         if (DUMP_SRC) {
             System.out.println("=>" + src.getCode() + ">>");
         }

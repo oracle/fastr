@@ -6123,6 +6123,10 @@ NULL
 [1] 2 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGrep
+#{ txt<-c("arm","foot","lefroo", "bafoobar"); grepl("foo", txt) }
+[1] FALSE  TRUE FALSE  TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGrep
 #{ txt<-c("is", "intended", "to", "guarantee", "your", "freedom"); grep("[gu]", txt) }
 [1] 4 5
 

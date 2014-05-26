@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -21,7 +22,8 @@ import com.oracle.truffle.r.runtime.rng.*;
 /*
  * Logic derived from GNU-R, see inline comments.
  */
-@RBuiltin("rnorm")
+@RBuiltin(name = "rnorm", kind = SUBSTITUTE)
+// TODO INTERNAL
 public abstract class Rnorm extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"n", "mean", "sd"};

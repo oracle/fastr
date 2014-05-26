@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -38,7 +39,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("sapply")
+@RBuiltin(name = "sapply", kind = SUBSTITUTE)
+// TODO Implement in R
 public abstract class SApply extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"X", "FUN", "USE.NAMES"};

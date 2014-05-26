@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -37,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // FIXME honour times in case length.out is given but NA
 // FIXME honour "each" parameter
 
-@RBuiltin("rep")
+@RBuiltin(name = "rep", kind = PRIMITIVE)
 public abstract class Repeat extends RBuiltinNode {
 
     private static final String[] PARAMETER_NAMES = new String[]{"x", "times", "length.out", "each"};

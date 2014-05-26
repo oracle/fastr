@@ -43,6 +43,7 @@ import static com.oracle.truffle.r.nodes.RTypesGen.*;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.sun.jmx.snmp.defaults.*;
 
@@ -105,7 +106,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
         StringBuilder sb = new StringBuilder();
         sb.append((String) multiDimPrinter.executeString(frame, vector, RRuntime.asLogical(isListOrStringVector), RRuntime.asLogical(isComplexOrRawVector)));
-        Map<String, Object> attributes = vector.getAttributes();
+        RAttributes attributes = vector.getAttributes();
         if (attributes != null) {
             sb.append(printAttributes(frame, vector, attributes));
         }
@@ -191,26 +192,26 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Specialization
     public String prettyPrint(VirtualFrame frame, REnvironment operand, Object listElementName) {
-        Map<String, Object> attributes = operand.getAttributes();
+        RAttributes attributes = operand.getAttributes();
         if (attributes == null) {
             return operand.toString();
         } else {
             StringBuilder builder = new StringBuilder(operand.toString());
-            for (Map.Entry<String, Object> attr : attributes.entrySet()) {
+            for (RAttribute attr : attributes) {
                 printAttribute(builder, frame, attr);
             }
             return builderToString(builder);
         }
     }
 
-    private String printAttributes(VirtualFrame frame, RAbstractVector vector, Map<String, Object> attributes) {
+    private String printAttributes(VirtualFrame frame, RAbstractVector vector, RAttributes attributes) {
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, Object> attr : attributes.entrySet()) {
-            if (attr.getKey().equals(RRuntime.NAMES_ATTR_KEY) && !vector.hasDimensions()) {
+        for (RAttribute attr : attributes) {
+            if (attr.getName().equals(RRuntime.NAMES_ATTR_KEY) && !vector.hasDimensions()) {
                 // names attribute already printed
                 continue;
             }
-            if (attr.getKey().equals(RRuntime.DIM_ATTR_KEY) || attr.getKey().equals(RRuntime.DIMNAMES_ATTR_KEY)) {
+            if (attr.getName().equals(RRuntime.DIM_ATTR_KEY) || attr.getName().equals(RRuntime.DIMNAMES_ATTR_KEY)) {
                 // dim and dimnames attributes never gets printed
                 continue;
             }
@@ -219,9 +220,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return builderToString(builder);
     }
 
-    private void printAttribute(StringBuilder builder, VirtualFrame frame, Map.Entry<String, Object> attr) {
+    private void printAttribute(StringBuilder builder, VirtualFrame frame, RAttribute attr) {
         builder.append("\n");
-        builder.append(concat("attr(,\"", attr.getKey(), "\")\n"));
+        builder.append(concat("attr(,\"", attr.getName(), "\")\n"));
         builder.append(prettyPrintAttributes(frame, attr.getValue()));
     }
 
@@ -323,7 +324,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             StringBuilder resultBuilder = printNamesHeader ? headerBuilder : builder;
             resultBuilder.deleteCharAt(resultBuilder.length() - 1);
-            Map<String, Object> attributes = vector.getAttributes();
+            RAttributes attributes = vector.getAttributes();
             if (attributes != null) {
                 resultBuilder.append(printAttributes(frame, vector, attributes));
             }
@@ -471,7 +472,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 sb.append(prettyPrintSingleListElement(frame, value, name)).append("\n\n");
             }
             sb.deleteCharAt(sb.length() - 1);
-            Map<String, Object> attributes = operand.getAttributes();
+            RAttributes attributes = operand.getAttributes();
             if (attributes != null) {
                 sb.append(printAttributes(frame, operand, attributes));
             }

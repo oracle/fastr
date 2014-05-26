@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -33,7 +34,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("as.vector")
+@RBuiltin(name = "as.vector", kind = SUBSTITUTE)
+// TODO should be INTERNAL
 public abstract class AsVector extends RBuiltinNode {
 
     private static final String[] PARAMETER_NAMES = new String[]{"x", "mode"};

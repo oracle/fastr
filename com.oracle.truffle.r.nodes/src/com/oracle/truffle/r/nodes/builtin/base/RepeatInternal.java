@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -31,7 +32,8 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("rep.int")
+@RBuiltin(name = "rep.int", kind = SUBSTITUTE)
+// TODO INTERNAL
 public abstract class RepeatInternal extends RBuiltinNode {
 
     @CreateCast("arguments")

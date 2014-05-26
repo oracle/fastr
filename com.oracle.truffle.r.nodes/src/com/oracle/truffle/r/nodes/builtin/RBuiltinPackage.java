@@ -150,13 +150,23 @@ public abstract class RBuiltinPackage {
 
     protected final RBuiltinBuilder load(Class<? extends RBuiltinNode> clazz) {
         RBuiltin builtin = clazz.getAnnotation(RBuiltin.class);
-        String[] aliases = null;
+        String[] names = null;
         LastParameterKind lastParameterKind = LastParameterKind.VALUE;
         if (builtin != null) {
-            aliases = builtin.value();
+            int al = builtin.aliases().length;
+            names = new String[1 + al];
+            String name = builtin.name();
+            if (builtin.kind() == RBuiltinKind.INTERNAL) {
+                // change the name to match the AST rewrite
+                name = ".Internal." + name;
+            }
+            names[0] = name;
+            if (al > 0) {
+                System.arraycopy(builtin.aliases(), 0, names, 1, al);
+            }
             lastParameterKind = builtin.lastParameterKind();
         }
-        return loadImpl(clazz, aliases, lastParameterKind);
+        return loadImpl(clazz, names, lastParameterKind);
     }
 
     void updateNames(RBuiltinFactory builtin, String[] oldNames, String[] newNames) {

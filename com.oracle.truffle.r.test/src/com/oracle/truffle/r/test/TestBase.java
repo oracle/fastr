@@ -26,7 +26,7 @@ import com.oracle.truffle.r.test.generate.*;
  * micro-tests of the form {@code assertXXX(String test)}, organized into groups under one JUnit
  * test method, i.e., annotated with {@link Test}. Some of the micro-tests are generated dynamically
  * from templates.
- * 
+ *
  * Given this two-level structure, it is important that a failing micro-test does not fail the
  * entire JUnit test, as this will prevent the subsequent micro-tests from running at all. Instead
  * failure is handled by setting the {@link #microTestFailed} field, and JUnit failure is indicated
@@ -116,7 +116,7 @@ public class TestBase {
                         if (expectedOutputManager.checkOnly) {
                             // fail fast
                             System.err.println("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
-                            System.exit(1);
+                            Utils.exit(1);
                         }
                         System.out.println("updating " + expectedOutputManager.outputFile);
                     }
@@ -128,6 +128,7 @@ public class TestBase {
                 if (diffsOutputFile != null) {
                     TestOutputManager.writeDiffsTestOutputFile(diffsOutputFile, expectedOutputManager, fastROutputManager);
                 }
+                RPerfAnalysis.report();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -244,7 +245,7 @@ public class TestBase {
     /**
      * A way to limit which tests are actually run. TODO requires more JUnit support for filtering
      * in the wrapper.
-     * 
+     *
      */
     @SuppressWarnings("unused") private static String testMethodsPattern;
 
@@ -368,7 +369,7 @@ public class TestBase {
     /**
      * Variant where the expressions to be checked are generated from a template. Tests may cause
      * errors and/or warnings.
-     * 
+     *
      * @param expressions
      */
     protected static void assertTemplateEval(String... expressions) {
@@ -482,7 +483,7 @@ public class TestBase {
             }
             // CheckStyle: stop system..print check
             // @formatter:off
-             System.err.printf("Micro-test failure: %s(%s:%d)%n", 
+             System.err.printf("Micro-test failure: %s(%s:%d)%n",
                             culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
              System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
              System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
@@ -516,7 +517,7 @@ public class TestBase {
      * Test a given string with R source against stored expected error/warning. This is specially
      * named because, currently, FastR does not provide the 'context' output to the left of the ':',
      * so we cannot do a simple exact match.
-     * 
+     *
      * Furthermore, sometimes GnuR includes a newline and whitespace after the ':', for who knows
      * what reason, and FastR doesn't. Perhaps FastR shouldn't but perhaps it's a GnuR bug.
      */

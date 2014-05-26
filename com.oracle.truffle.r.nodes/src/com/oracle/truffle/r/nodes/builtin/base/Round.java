@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(value = "round")
+@RBuiltin(name = "round", kind = PRIMITIVE)
 public abstract class Round extends RBuiltinNode {
 
     @Child protected UnaryArithmetic roundOp = UnaryArithmetic.ROUND.create();

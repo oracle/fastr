@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -32,7 +33,7 @@ import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 
 public class RNGFunctions {
-    @RBuiltin(".Internal.set.seed")
+    @RBuiltin(name = "set.seed", kind = INTERNAL)
     public abstract static class SetSeed extends RInvisibleBuiltinNode {
 
         @SuppressWarnings("unused")
@@ -80,7 +81,7 @@ public class RNGFunctions {
 
     }
 
-    @RBuiltin(".Internal.RNGkind")
+    @RBuiltin(name = "RNGkind", kind = INTERNAL)
     public abstract static class RNGkind extends RBuiltinNode {
 
         @Specialization(order = 0)

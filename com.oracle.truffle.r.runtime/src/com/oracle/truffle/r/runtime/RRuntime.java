@@ -29,7 +29,7 @@ public class RRuntime {
         "Copyright (c) 2013-4, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2012, The R Core Team\n" +
         "Copyright (c) 2003 The R Foundation\n" +
-        "Copyright (c) 2012-3 Purdue University\n" +
+        "Copyright (c) 2012-4 Purdue University\n" +
         "Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura\n" +
         "All rights reserved.\n" +
         "\n" +
@@ -253,6 +253,10 @@ public class RRuntime {
 
     public static byte asLogical(boolean b) {
         return b ? LOGICAL_TRUE : LOGICAL_FALSE;
+    }
+
+    public static boolean fromLogical(byte b) {
+        return b == LOGICAL_TRUE;
     }
 
     // conversions from logical
