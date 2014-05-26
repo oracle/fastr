@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.text.*;
 
 import com.oracle.truffle.api.*;
@@ -35,7 +37,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("names")
+@RBuiltin(name = "names", kind = PRIMITIVE)
 @SuppressWarnings("unused")
 public abstract class Names extends RBuiltinNode {
 

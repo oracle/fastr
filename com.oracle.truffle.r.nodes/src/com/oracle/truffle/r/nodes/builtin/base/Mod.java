@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
@@ -30,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin("Mod")
+@RBuiltin(name = "Mod", kind = PRIMITIVE)
 public abstract class Mod extends RBuiltinNode {
 
     @Child protected BinaryArithmeticNode pow = BinaryArithmeticNode.create(BinaryArithmetic.POW);

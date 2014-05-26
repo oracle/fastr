@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.lang.reflect.*;
 
 import com.oracle.truffle.api.*;
@@ -30,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("debug.compile")
+@RBuiltin(name = "debug.compile", kind = PRIMITIVE)
 public abstract class DebugCompileBuiltin extends RBuiltinNode {
 
     static final class Compiler {

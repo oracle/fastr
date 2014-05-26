@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * snippets.
  */
 public class AttachFunctions {
-    @RBuiltin(".Internal.attach")
+    @RBuiltin(name = "attach", kind = INTERNAL)
     public abstract static class Attach extends RInvisibleBuiltinNode {
 
         private static final String POS_WARNING = "*** 'pos=1' is not possible; setting 'pos=2' for now.\n" + "*** Note that 'pos=1' will give an error in the future";
@@ -126,7 +127,7 @@ public class AttachFunctions {
         }
     }
 
-    @RBuiltin(".Internal.detach")
+    @RBuiltin(name = "detach", kind = INTERNAL)
     public abstract static class Detach extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

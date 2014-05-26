@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -30,7 +32,8 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("complex")
+@RBuiltin(name = "complex", kind = SUBSTITUTE)
+// TODO INTERNAL
 public abstract class Complex extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"length.out", "real", "imaginary", "modulus", "argument"};

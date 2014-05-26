@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -32,7 +34,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
-@RBuiltin("is.na")
+@RBuiltin(name = "is.na", kind = PRIMITIVE)
 public abstract class IsNA extends RBuiltinNode {
 
     @Child IsNA recursiveIsNA;

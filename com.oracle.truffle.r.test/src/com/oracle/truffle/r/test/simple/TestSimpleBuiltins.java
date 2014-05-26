@@ -1286,6 +1286,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ txt<-c(\"is\", \"intended\", \"to\", \"guarantee\", \"your\", \"freedom\"); grep(\"[gu]\", txt) }");
         assertEval("{ txt<-c(\"1+1i\", \"7\", \"42.1\", \"7+42i\"); grep(\"[0-9].*[-+][0-9].*i$\", txt) }");
         assertEval("{ txt<-c(\"rai\", \"ira\", \"iri\"); grep(\"i$\", txt) }");
+        assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grepl(\"foo\", txt) }");
     }
 
     @Test
@@ -1729,6 +1730,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
         assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
         assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
+        assertEvalError("{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
         assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");
         assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, names=NULL, hello=3, hi=2, hello=NULL) ; x }");
@@ -2077,6 +2079,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ set.seed(4336, \"default\"); sum(runif(10000)) }");
         assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); sum(runif(100)) }");
         assertEval("{ set.seed(4357, \"default\"); round( rnorm(3), digits = 5 ) }");
+        assertEval("{ set.seed(7); runif(10) }");
+        assertEval("{ set.seed(7); runif(100) }");
+        assertEval("{ set.seed(7); runif(25*25) }");
+        assertEval("{ set.seed(7); rnorm(10) }");
+        assertEval("{ set.seed(7); rnorm(100) }");
+        assertEval("{ set.seed(7); rnorm(25*25) }");
+        assertEval("{ set.seed(7); matrix(rnorm(10), ncol=5) }");
+        assertEval("{ set.seed(7); matrix(rnorm(100), ncol=10) }");
+        assertEval("{ set.seed(7); matrix(rnorm(25*25), ncol=25) }");
     }
 
     @Test

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -33,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * TODO Implement completely. Currently just what is needed for {@code set.seed}.
  */
-@RBuiltin(".Internal.pmatch")
+@RBuiltin(name = "pmatch", kind = INTERNAL)
 public abstract class PMatch extends RBuiltinNode {
 
     @Specialization

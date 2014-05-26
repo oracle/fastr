@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.io.*;
 import java.util.*;
 
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class SysFunctions {
 
-    @RBuiltin({".Internal.Sys.getpid"})
+    @RBuiltin(name = "Sys.getpid", kind = INTERNAL)
     public abstract static class SysGetpid extends RBuiltinNode {
 
         @Specialization
@@ -45,7 +46,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin({".Internal.Sys.getenv"})
+    @RBuiltin(name = "Sys.getenv", kind = INTERNAL)
     public abstract static class SysGetenv extends RBuiltinNode {
 
         @Specialization
@@ -88,7 +89,7 @@ public class SysFunctions {
 
     }
 
-    @RBuiltin(".Internal.Sys.sleep")
+    @RBuiltin(name = "Sys.sleep", kind = INTERNAL)
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
         @Specialization(order = 0)
@@ -152,7 +153,7 @@ public class SysFunctions {
     /**
      * TODO: Handle ~ expansion which is not handled by POSIX.
      */
-    @RBuiltin("Sys.readlink")
+    @RBuiltin(name = "Sys.readlink", kind = INTERNAL)
     public abstract static class SysReadlink extends RBuiltinNode {
 
         @Specialization(order = 0)

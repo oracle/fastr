@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -36,7 +37,7 @@ public class FrameFunctions {
     /**
      * The environment of the caller of the function that called parent.frame(n = 1).
      */
-    @RBuiltin(".Internal.parent.frame")
+    @RBuiltin(name = "parent.frame", kind = INTERNAL)
     public abstract static class ParentFrame extends RBuiltinNode {
         @Specialization(guards = "isOne")
         public REnvironment parentFrame(@SuppressWarnings("unused") double n) {

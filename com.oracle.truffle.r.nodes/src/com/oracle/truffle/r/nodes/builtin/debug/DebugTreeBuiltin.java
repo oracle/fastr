@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.impl.*;
@@ -32,7 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("debug.tree")
+@RBuiltin(name = "debug.tree", kind = PRIMITIVE)
 @RBuiltinComment("Prints the Truffle tree of a function. Use debug.tree(a, TRUE) for more detailed output.")
 public abstract class DebugTreeBuiltin extends RBuiltinNode {
 

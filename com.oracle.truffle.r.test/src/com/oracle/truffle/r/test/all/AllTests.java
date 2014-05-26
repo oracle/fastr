@@ -4964,6 +4964,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAttributes_25c4c05e4a7dcd010c688402b165d623() {
+        assertEvalError("{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testBuiltinPropagationIgnore_815238e2a76d61eb69db36c00e322f34() {
         assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  aperm(m) }");
     }
@@ -7191,6 +7196,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testGrep_463c5e470c47e103f39fd9d5086fa0b1() {
         assertEval("{ txt<-c(\"rai\", \"ira\", \"iri\"); grep(\"i$\", txt) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testGrep_8acdaa9fa6a40c31da932b6ad729bdb3() {
+        assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grepl(\"foo\", txt) }");
     }
 
     @Test
@@ -9601,6 +9611,51 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testRandom_dc977e323c2273125e313a31a84c55ce() {
         assertEval("{ set.seed(4357, \"default\"); round( rnorm(3), digits = 5 ) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_6c476dd76e83146c418f2439e2bd6219() {
+        assertEval("{ set.seed(7); runif(10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_624282265c8adb6241f4b69fa2160e21() {
+        assertEval("{ set.seed(7); runif(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_fe496af2360fbd78bf7391e70687d745() {
+        assertEval("{ set.seed(7); runif(25*25) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_7da22faba8a9b80894d3a372d6832411() {
+        assertEval("{ set.seed(7); rnorm(10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_6ec5a8eb2a2164460eedcb849646bdfa() {
+        assertEval("{ set.seed(7); rnorm(100) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_a542864c69d194d642a099dfb1614171() {
+        assertEval("{ set.seed(7); rnorm(25*25) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_df978c7c4ae2f1a5807af2e7b94c56af() {
+        assertEval("{ set.seed(7); matrix(rnorm(10), ncol=5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_e560dc13b1f1b306ad6fa1b2fce918dc() {
+        assertEval("{ set.seed(7); matrix(rnorm(100), ncol=10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRandom_0a8ca2987a86633f17d5c51210c07507() {
+        assertEval("{ set.seed(7); matrix(rnorm(25*25), ncol=25) }");
     }
 
     @Test

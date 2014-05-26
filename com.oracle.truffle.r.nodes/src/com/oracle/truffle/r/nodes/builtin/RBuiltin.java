@@ -27,12 +27,18 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RBuiltin {
 
-    String[] value() default {""};
+    RBuiltinKind kind();
+
+    String name();
+
+    String[] aliases() default {};
 
     LastParameterKind lastParameterKind() default LastParameterKind.VALUE;
 
     public enum LastParameterKind {
-        VALUE, VAR_ARGS_SPECIALIZE, VAR_ARGS_ALWAYS_ARRAY;
+        VALUE,
+        VAR_ARGS_SPECIALIZE,
+        VAR_ARGS_ALWAYS_ARRAY;
 
         public boolean isVarArgs() {
             return this != VALUE;

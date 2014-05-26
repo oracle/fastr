@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.nodes.*;
@@ -33,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * Dump Truffle trees to a listening IGV instance, if any.
  */
-@RBuiltin("debug.dump")
+@RBuiltin(name = "debug.dump", kind = PRIMITIVE)
 @RBuiltinComment("Dumps Truffle trees to IGV if an IGV instance running.")
 public abstract class DebugDumpBuiltin extends RBuiltinNode {
 

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -37,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * parse(file, n, text, prompt, srcfile, encoding)
  * </pre>
  */
-@RBuiltin(".Internal.parse")
+@RBuiltin(name = "parse", kind = INTERNAL)
 public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")

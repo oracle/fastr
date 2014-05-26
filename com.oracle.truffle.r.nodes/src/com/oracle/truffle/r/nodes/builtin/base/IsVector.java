@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.RTypesGen.*;
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import java.text.*;
 
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.sun.tools.javac.util.*;
 
-@RBuiltin("is.vector")
+@RBuiltin(name = "is.vector", kind = PRIMITIVE)
 @SuppressWarnings("unused")
 public abstract class IsVector extends RBuiltinNode {
 

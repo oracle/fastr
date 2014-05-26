@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 
-@RBuiltin("force")
+@RBuiltin(name = "force", kind = SUBSTITUTE)
+// TODO revert to R (promises)
 public abstract class Force extends RBuiltinNode {
 
     @Specialization
