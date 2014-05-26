@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -87,7 +86,6 @@ public final class RContext {
         int getWidth();
     }
 
-    private final SourceManager sourceManager = new SourceManager();
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
     private LinkedList<String> evalWarnings;
@@ -163,10 +161,6 @@ public final class RContext {
             Utils.fail("no console handler set");
         }
         return consoleHandler;
-    }
-
-    public SourceManager getSourceManager() {
-        return sourceManager;
     }
 
     public RFunction putCachedFunction(Object key, RFunction function) {
