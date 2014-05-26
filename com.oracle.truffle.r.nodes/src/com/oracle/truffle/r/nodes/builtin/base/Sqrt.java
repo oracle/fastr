@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("sqrt")
+@RBuiltin(name = "sqrt", kind = PRIMITIVE)
 public abstract class Sqrt extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

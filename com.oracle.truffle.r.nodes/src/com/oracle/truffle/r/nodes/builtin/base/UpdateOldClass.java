@@ -23,6 +23,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
-@RBuiltin(value = "oldClass<-")
+@RBuiltin(name = "oldClass<-", kind = PRIMITIVE)
 public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;

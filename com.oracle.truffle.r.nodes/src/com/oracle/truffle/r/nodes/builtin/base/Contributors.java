@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("contributors")
+@RBuiltin(name = "contributors", kind = SUBSTITUTE)
 public abstract class Contributors extends RInvisibleBuiltinNode {
 
     private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);

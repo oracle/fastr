@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
  * {@code .Internal.f(args)}. So this builtin will only ever be invoked for an invalid argument,
  * i.e., not a function call, e.g. {@code .Internal(f)}.
  */
-@RBuiltin(".Internal")
+@RBuiltin(name = ".Internal", kind = PRIMITIVE)
 public abstract class Internal extends RBuiltinNode {
 
     @Specialization

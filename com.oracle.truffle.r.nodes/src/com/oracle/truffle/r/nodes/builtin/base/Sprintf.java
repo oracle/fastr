@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -34,7 +36,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(value = "sprintf", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "sprintf", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+// TODO INTERNAL
 public abstract class Sprintf extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"fmt", "..."};

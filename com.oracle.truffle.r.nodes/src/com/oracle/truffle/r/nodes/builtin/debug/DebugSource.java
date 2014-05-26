@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -32,7 +34,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("debug.source")
+@RBuiltin(name = "debug.source", kind = PRIMITIVE)
 @RBuiltinComment("Returns the source code associated with a function, and for all of its nodes.")
 public abstract class DebugSource extends RBuiltinNode {
 

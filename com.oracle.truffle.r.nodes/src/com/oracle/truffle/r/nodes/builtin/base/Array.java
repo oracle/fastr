@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO complete. This is sufficient for the b25 benchmark use.
  */
-@RBuiltin(".Internal.array")
+@RBuiltin(name = "array", kind = INTERNAL)
 public abstract class Array extends RBuiltinNode {
 
     @CreateCast({"arguments"})

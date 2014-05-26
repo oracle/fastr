@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class FileFunctions {
     private static final String INVALID_FILE_ARGUMENT = "invalid 'file' argument";
 
-    @RBuiltin(".Internal.file.create")
+    @RBuiltin(name = "file.create", kind = INTERNAL)
     public abstract static class FileCreate extends RBuiltinNode {
 
         @Specialization
@@ -107,7 +108,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(".Internal.file.link")
+    @RBuiltin(name = "file.link", kind = INTERNAL)
     public abstract static class FileLink extends FileLinkAdaptor {
         @Specialization
         public Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -122,7 +123,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(".Internal.file.symlink")
+    @RBuiltin(name = "file.symlink", kind = INTERNAL)
     public abstract static class FileSymLink extends FileLinkAdaptor {
         @Specialization
         public Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -137,7 +138,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(".Internal.file.remove")
+    @RBuiltin(name = "file.remove", kind = INTERNAL)
     public abstract static class FileRemove extends RBuiltinNode {
 
         @Specialization
@@ -167,7 +168,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(".Internal.file.rename")
+    @RBuiltin(name = "file.rename", kind = INTERNAL)
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
         public Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -202,7 +203,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(".Internal.file.exists")
+    @RBuiltin(name = "file.exists", kind = INTERNAL)
     public abstract static class FileExists extends RBuiltinNode {
 
         @Specialization

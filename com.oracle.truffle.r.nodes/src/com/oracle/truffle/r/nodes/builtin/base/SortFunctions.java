@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -36,7 +37,8 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class SortFunctions {
 
-    @RBuiltin("sort.list")
+    @RBuiltin(name = "sort.list", kind = SUBSTITUTE)
+    // TODO Implement in R
     public abstract static class SortList extends RBuiltinNode {
         @Specialization
         public RDoubleVector sortList(RDoubleVector vec, byte decreasing) {

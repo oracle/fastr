@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 import com.sun.org.apache.xml.internal.utils.*;
 
-@RBuiltin("as.integer")
+@RBuiltin(name = "as.integer", kind = PRIMITIVE)
 @SuppressWarnings("unused")
 public abstract class AsInteger extends RBuiltinNode {
 

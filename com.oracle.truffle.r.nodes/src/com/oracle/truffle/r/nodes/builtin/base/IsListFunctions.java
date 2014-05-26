@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -29,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class IsListFunctions {
-    @RBuiltin("is.list")
+    @RBuiltin(name = "is.list", kind = PRIMITIVE)
     @SuppressWarnings("unused")
     public abstract static class IsList extends RBuiltinNode {
 
@@ -73,7 +75,7 @@ public class IsListFunctions {
 
     }
 
-    @RBuiltin("is.pairlist")
+    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE)
     public abstract static class IsPairList extends IsTypeNode {
         @Specialization
         @Override

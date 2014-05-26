@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -29,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin("Re")
+@RBuiltin(name = "Re", kind = PRIMITIVE)
 public abstract class Re extends RBuiltinNode {
 
     public abstract Object executeRDoubleVector(VirtualFrame frame, RAbstractComplexVector vector);

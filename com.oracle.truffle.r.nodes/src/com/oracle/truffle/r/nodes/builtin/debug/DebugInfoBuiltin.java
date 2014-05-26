@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
@@ -29,7 +31,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin({"debug.info"})
+@RBuiltin(name = "debug.info", kind = PRIMITIVE)
 @RBuiltinComment("Prints this message.")
 public abstract class DebugInfoBuiltin extends RBuiltinNode {
 

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -31,7 +32,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
-@RBuiltin("ifelse")
+@RBuiltin(name = "ifelse", kind = SUBSTITUTE)
+// TODO revert to R
 public abstract class Ifelse extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

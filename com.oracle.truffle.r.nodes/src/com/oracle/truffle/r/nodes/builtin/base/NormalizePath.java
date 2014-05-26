@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.io.*;
 import java.nio.file.*;
 
@@ -31,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(".Internal.normalizePath")
+@RBuiltin(name = "normalizePath", kind = INTERNAL)
 public abstract class NormalizePath extends RBuiltinNode {
 
     @Specialization

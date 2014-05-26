@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin("ceiling")
+@RBuiltin(name = "ceiling", kind = PRIMITIVE)
 public class Ceiling extends RWrapperBuiltinNode {
 
     public Ceiling(RBuiltinNode prev) {

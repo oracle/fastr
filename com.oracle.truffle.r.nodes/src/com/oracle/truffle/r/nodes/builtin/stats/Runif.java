@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -30,7 +32,7 @@ import com.oracle.truffle.r.runtime.rng.*;
 /**
  * TODO GnuR checks/updates {@code .Random.seed} across this call.
  */
-@RBuiltin("runif")
+@RBuiltin(name = "runif", kind = SUBSTITUTE)
 public abstract class Runif extends RBuiltinNode {
 
     @Specialization

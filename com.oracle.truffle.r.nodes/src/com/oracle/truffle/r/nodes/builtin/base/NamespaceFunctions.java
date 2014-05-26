@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -29,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class NamespaceFunctions {
 
-    @RBuiltin(".Internal.getRegisteredNamespace")
+    @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL)
     public abstract static class GetRegisteredNamespace extends RInvisibleBuiltinNode {
         @Specialization
         public Object doGetRegisteredNamespace(String name) {

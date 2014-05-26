@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 /**
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
-@RBuiltin(value = "sum", lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "sum", kind = PRIMITIVE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
 public final class Sum extends RWrapperBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"...", "na.rm"};
 
