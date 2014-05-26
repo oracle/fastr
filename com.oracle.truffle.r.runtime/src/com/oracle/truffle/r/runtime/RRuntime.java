@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.text.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -486,17 +487,12 @@ public class RRuntime {
     }
 
     @SlowPath
-    public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
-        return String.format("%." + digitsBehindDot + "f", operand);
-    }
-
-    @SlowPath
     public static String doubleToString(double operand, int digitsBehindDot) {
         return isNA(operand) ? STRING_NA : doubleToStringNoCheck(operand, digitsBehindDot);
     }
 
     @SlowPath
-    public static String doubleToStringNoCheck(double operand) {
+    public static String doubleToStringNoCheck(double operand, int digitsBehindDot) {
         if (doubleIsInt(operand)) {
             return String.valueOf((int) operand);
         }
@@ -521,7 +517,20 @@ public class RRuntime {
         if (operand > 1000000000000L) {
             return String.format((Locale) null, "%.6e", operand);
         }
-        return Double.toString(operand);
+        if (digitsBehindDot == -1) {
+            return Double.toString(operand);
+        } else {
+            StringBuilder sb = new StringBuilder("#.");
+            for (int i = 0; i < digitsBehindDot; i++) {
+                sb.append('#');
+            }
+            DecimalFormat df = new DecimalFormat(sb.toString());
+            return df.format(operand);
+        }
+    }
+
+    public static String doubleToStringNoCheck(double operand) {
+        return doubleToStringNoCheck(operand, -1);
     }
 
     public static String doubleToString(double operand) {

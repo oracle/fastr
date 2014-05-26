@@ -151,6 +151,10 @@ public abstract class PrettyPrinterNode extends RNode {
         return doubleToStringPrintFormat(operand, calcRoundFactor(operand, 10000000));
     }
 
+    public static String prettyPrint(double operand, double roundFactor, int digitsBehindDot) {
+        return doubleToStringPrintFormat(operand, roundFactor, digitsBehindDot);
+    }
+
     @Specialization(order = 30)
     public String prettyPrintVector(RComplex operand, Object listElementName) {
         return concat("[1] ", prettyPrint(operand));
@@ -423,17 +427,25 @@ public abstract class PrettyPrinterNode extends RNode {
         return factor;
     }
 
-    private static String doubleToStringPrintFormat(double input, double roundFactor) {
+    private static String doubleToStringPrintFormat(double input, double roundFactor, int digitsBehindDot) {
         double data = input;
-        if (!Double.isNaN(data) && !Double.isInfinite(data)) {
-            if (roundFactor < 1) {
-                double inverse = 1 / roundFactor;
-                data = Math.round(data / inverse) * inverse;
-            } else {
-                data = Math.round(data * roundFactor) / roundFactor;
+        if (digitsBehindDot == -1) {
+            // processing a single double value or a complex value; use rounding instead of
+            // digitsBehindDot (which is in this case invalid) to determine precision
+            if (!Double.isNaN(data) && !Double.isInfinite(data)) {
+                if (roundFactor < 1) {
+                    double inverse = 1 / roundFactor;
+                    data = Math.round(data / inverse) * inverse;
+                } else {
+                    data = Math.round(data * roundFactor) / roundFactor;
+                }
             }
         }
-        return RRuntime.doubleToString(data);
+        return RRuntime.doubleToString(data, digitsBehindDot);
+    }
+
+    private static String doubleToStringPrintFormat(double input, double roundFactor) {
+        return doubleToStringPrintFormat(input, roundFactor, -1);
     }
 
     private String prettyPrintList0(VirtualFrame frame, RList operand, Object listElementName) {
@@ -505,13 +517,35 @@ public abstract class PrettyPrinterNode extends RNode {
         return prettyPrintList0(frame, operand, listElementName);
     }
 
+    protected static double getMaxRoundFactor(RAbstractDoubleVector operand) {
+        double maxRoundFactor = 0;
+        for (int i = 0; i < operand.getLength(); i++) {
+            double data = operand.getDataAt(i);
+            double roundFactor = calcRoundFactor(data, 10000000);
+            if (roundFactor > maxRoundFactor) {
+                maxRoundFactor = roundFactor;
+            }
+        }
+        return maxRoundFactor;
+    }
+
+    protected static int getMaxDigitsBehindDot(double maxRoundFactor) {
+        int maxDigitsBehindDot = 0;
+        for (double j = 1; j < maxRoundFactor; j *= 10) {
+            maxDigitsBehindDot++;
+        }
+        return maxDigitsBehindDot;
+    }
+
     @Specialization(order = 300, guards = "!twoDimsOrMore")
     public String prettyPrint(VirtualFrame frame, RAbstractDoubleVector operand, Object listElementName) {
         int length = operand.getLength();
         String[] values = new String[length];
+        double maxRoundFactor = getMaxRoundFactor(operand);
+        int maxDigitsBehindDot = getMaxDigitsBehindDot(maxRoundFactor);
         for (int i = 0; i < length; i++) {
             double data = operand.getDataAt(i);
-            values[i] = prettyPrint(data);
+            values[i] = prettyPrint(data, maxRoundFactor, maxDigitsBehindDot);
         }
         padTrailingDecimalPointAndZeroesIfRequired(values);
         return printVector(frame, operand, values, false, false);
@@ -1097,14 +1131,28 @@ public abstract class PrettyPrinterNode extends RNode {
             if (dimNames != null && dimNames.getDataAt(1) != RNull.instance) {
                 columnDimNames = (RStringVector) dimNames.getDataAt(1);
             }
-            int rowHeaderWidth = 0;
-            for (int r = 0; r < nrow; ++r) {
-                for (int c = 0; c < ncol; ++c) {
+            double[] maxRoundFactors = new double[ncol];
+            int[] maxDigitsBehindDot = new int[ncol];
+            for (int c = 0; c < ncol; ++c) {
+                maxRoundFactors[c] = 0;
+                for (int r = 0; r < nrow; ++r) {
                     int index = c * nrow + r;
-                    dataStrings[index] = prettyPrintSingleVectorElement(frame, vector.getDataAtAsObject(index + offset));
-                    maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
+                    double data = vector.getDataAt(index + offset);
+                    double roundFactor = calcRoundFactor(data, 10000000);
+                    if (roundFactor > maxRoundFactors[c]) {
+                        maxRoundFactors[c] = roundFactor;
+                    }
                 }
-                rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
+                maxDigitsBehindDot[c] = getMaxDigitsBehindDot(maxRoundFactors[c]);
+            }
+            int rowHeaderWidth = 0;
+            for (int c = 0; c < ncol; ++c) {
+                for (int r = 0; r < nrow; ++r) {
+                    int index = c * nrow + r;
+                    dataStrings[index] = prettyPrint(vector.getDataAt(index + offset), maxRoundFactors[c], maxDigitsBehindDot[c]);
+                    maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
+                    rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
+                }
             }
 
             // probably add trailing decimal points and zeroes
@@ -1112,15 +1160,23 @@ public abstract class PrettyPrinterNode extends RNode {
             for (int c = 0; c < ncol; ++c) {
                 postProcessDoubleColumn(dataStrings, nrow, ncol, c);
                 // final adjustment of column width
+                boolean hasNegative = false;
                 for (int r = 0; r < nrow; ++r) {
-                    int l = dataStrings[c * nrow + r].length();
+                    // do not count minus signs
+                    String data = dataStrings[c * nrow + r];
+                    boolean isNegative = data.charAt(0) == '-';
+                    hasNegative = hasNegative || isNegative;
+                    int l = isNegative ? data.length() - 1 : data.length();
                     if (l > dataColWidths[c]) {
                         dataColWidths[c] = l;
                     }
                 }
+                if (hasNegative) {
+                    dataColWidths[c] = -dataColWidths[c];
+                }
             }
 
-            return formatResult(vector, isListOrStringVector == RRuntime.LOGICAL_TRUE, false, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
+            return formatResult(vector, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
         }
 
         @Specialization(order = 20, guards = "!isEmpty")
@@ -1163,17 +1219,19 @@ public abstract class PrettyPrinterNode extends RNode {
             // final adjustment of column width
             for (int c = 0; c < ncol; ++c) {
                 for (int r = 0; r < nrow; ++r) {
-                    int l = dataStrings[c * nrow + r].length();
+                    // do not count minus signs
+                    String data = dataStrings[c * nrow + r];
+                    int l = data.charAt(0) == '-' ? data.length() - 1 : data.length();
                     if (l > dataColWidths[c]) {
                         dataColWidths[c] = l;
                     }
                 }
             }
 
-            return formatResult(vector, isListOrStringVector == RRuntime.LOGICAL_TRUE, true, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
+            return formatResult(vector, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
         }
 
-        @Specialization(order = 200, guards = "!isEmpty")
+        @Specialization(order = 200, guards = {"!isEmpty", "notDoubleOrComplex"})
         public String printVector2Dim(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1196,7 +1254,11 @@ public abstract class PrettyPrinterNode extends RNode {
                 rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
             }
 
-            return formatResult(vector, isListOrStringVector == RRuntime.LOGICAL_TRUE, false, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
+            return formatResult(vector, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth);
+        }
+
+        protected boolean notDoubleOrComplex(RAbstractVector vector) {
+            return vector.getElementClass() != RDouble.class && vector.getElementClass() != RComplex.class;
         }
 
         @SlowPath
@@ -1238,8 +1300,10 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @SlowPath
         private static void maintainColumnData(int[] dataColWidths, RStringVector columnDimNames, int c, String data) {
-            if (data.length() > dataColWidths[c]) {
-                dataColWidths[c] = data.length();
+            // do not count minus signs
+            int dataLength = !data.equals("") && data.charAt(0) == '-' ? data.length() - 1 : data.length();
+            if (dataLength > dataColWidths[c]) {
+                dataColWidths[c] = dataLength;
             }
             if (columnDimNames != null) {
                 String columnName = columnDimNames.getDataAt(c);
@@ -1253,52 +1317,79 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @SlowPath
-        private static String formatResult(RAbstractVector vector, boolean isListOrStringVector, boolean isComplexVector, int nrow, int ncol, String[] dataStrings, int[] dataColWidths,
-                        int rowHeaderWidth) {
+        private static String formatResult(RAbstractVector vector, int nrow, int ncol, String[] dataStrings, int[] dataColWidths, int rowHeaderWidth) {
+            boolean isListOrStringVector = vector.getElementClass() == Object.class || vector.getElementClass() == RString.class;
+            boolean isComplexVector = vector.getElementClass() == RComplex.class;
+            boolean isDoubleVector = vector.getElementClass() == RDouble.class;
             String rowFormat = concat("%", intString(rowHeaderWidth), "s");
 
             StringBuilder b = new StringBuilder();
 
-            // column header
-            spaces(b, rowHeaderWidth + 1);
-            for (int c = 1; c <= ncol; ++c) {
-                b.append(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector));
-                if (c < ncol) {
-                    b.append(' ');
+            int colInd = 0;
+            while (true) {
+                int totalWidth = rowHeaderWidth + 1;
+                int startColInd = colInd;
+                for (; colInd < dataColWidths.length; colInd++) {
+                    boolean hasNegative = dataColWidths[colInd] < 0;
+                    totalWidth += Math.abs(dataColWidths[colInd]) + ((isDoubleVector || isComplexVector) && hasNegative ? 2 : 1);
+                    if (totalWidth > RContext.getInstance().getConsoleHandler().getWidth()) {
+                        break;
+                    }
                 }
-            }
-            b.append('\n');
 
-            boolean indexRowHeaders = rowHeaderUsesIndices(vector.getDimNames());
-
-            // rows
-            for (int r = 1; r <= nrow; ++r) {
-                String headerString = rowHeader(r, vector);
-                if (indexRowHeaders) {
-                    spaces(b, rowHeaderWidth - headerString.length());
-                    b.append(headerString).append(' ');
-                } else {
-                    b.append(headerString);
-                    spaces(b, rowHeaderWidth - headerString.length() + 1);
+                // column header
+                spaces(b, rowHeaderWidth + 1);
+                for (int c = startColInd + 1; c <= colInd; ++c) {
+                    boolean hasNegative = dataColWidths[c - 1] < 0;
+                    // header of the first column needs extra padding if this column has negative
+                    // numbers
+                    int padding = Math.abs(dataColWidths[c - 1]) + ((isDoubleVector || isComplexVector) && hasNegative ? 1 : 0);
+                    b.append(padColHeader(c, padding, vector, isListOrStringVector));
+                    if (c < colInd) {
+                        b.append(" ");
+                    }
                 }
-                for (int c = 1; c <= ncol; ++c) {
-                    String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
-                    if (isListOrStringVector || (isComplexVector && !RRuntime.STRING_NA.equals(dataString))) {
-                        // list elements are left-justified, and so are complex matrix elements that
-                        // are not NA
-                        b.append(dataString);
-                        spaces(b, padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector).length() - dataString.length());
+                b.append('\n');
+
+                boolean indexRowHeaders = rowHeaderUsesIndices(vector.getDimNames());
+
+                // rows
+                for (int r = 1; r <= nrow; ++r) {
+                    String headerString = rowHeader(r, vector);
+                    if (indexRowHeaders) {
+                        spaces(b, rowHeaderWidth - headerString.length());
+                        b.append(headerString).append(' ');
                     } else {
-                        // vector elements are right-justified, and so are NAs in complex matrices
-                        String cellFormat = concat("%", intString(padColHeader(c, dataColWidths[c - 1], vector, isListOrStringVector).length()), "s");
-                        b.append(stringFormat(cellFormat, dataString));
+                        b.append(headerString);
+                        spaces(b, rowHeaderWidth - headerString.length() + 1);
                     }
-                    if (c < ncol) {
-                        b.append(' ');
+                    for (int c = startColInd + 1; c <= colInd; ++c) {
+                        String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
+                        boolean hasNegative = dataColWidths[c - 1] < 0;
+                        int padding = Math.abs(dataColWidths[c - 1]) + ((isDoubleVector || isComplexVector) && hasNegative ? 1 : 0);
+                        if (isListOrStringVector || (isComplexVector && !RRuntime.STRING_NA.equals(dataString))) {
+                            // list elements are left-justified, and so are complex matrix elements
+                            // that are not NA
+                            b.append(dataString);
+                            spaces(b, padColHeader(c, padding, vector, isListOrStringVector).length() - dataString.length());
+                        } else {
+                            // vector elements are right-justified, and so are NAs in complex
+                            // matrices
+                            String cellFormat = concat("%", intString(padColHeader(c, padding, vector, isListOrStringVector).length()), "s");
+                            b.append(stringFormat(cellFormat, dataString));
+                        }
+                        if (c < colInd) {
+                            b.append(' ');
+                        }
+                    }
+                    if (r < nrow) {
+                        b.append('\n');
                     }
                 }
-                if (r < nrow) {
+                if (colInd < dataColWidths.length) {
                     b.append('\n');
+                } else {
+                    break;
                 }
             }
             return builderToString(b);

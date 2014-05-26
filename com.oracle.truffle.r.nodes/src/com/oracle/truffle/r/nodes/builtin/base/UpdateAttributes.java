@@ -107,13 +107,13 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             if (listNames.getLength() > 1) {
                 for (int i = 1; i < numAttributes; i++) {
                     String attrName = listNames.getDataAt(i);
-                    if (attrName == RRuntime.NAMES_ATTR_EMPTY_VALUE) {
+                    if (attrName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
                         throw RError.getAllAttributesNames(getEncapsulatingSourceSection(), i + 1);
                     }
                 }
             }
             // has to be reported if no other name is undefined
-            if (listNames.getDataAt(0) == RRuntime.NAMES_ATTR_EMPTY_VALUE) {
+            if (listNames.getDataAt(0).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
                 throw RError.getZeroLengthVariable(getEncapsulatingSourceSection());
             }
             // set the dim attribute first
