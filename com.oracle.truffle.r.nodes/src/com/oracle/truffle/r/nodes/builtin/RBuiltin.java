@@ -27,7 +27,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RBuiltin {
 
-    RBuiltinKind kind() default RBuiltinKind.PRIMITIVE;
+    RBuiltinKind kind();
 
     String name();
 
