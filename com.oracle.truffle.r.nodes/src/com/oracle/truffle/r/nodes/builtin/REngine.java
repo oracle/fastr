@@ -68,6 +68,7 @@ public final class REngine implements RBuiltinLookupProvider {
      *         {@link #parseAndEval(String, VirtualFrame, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+        Locale.setDefault(Locale.ROOT);
         RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
