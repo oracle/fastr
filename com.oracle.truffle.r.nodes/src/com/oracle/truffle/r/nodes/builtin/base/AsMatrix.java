@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -30,7 +31,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * TODO flesh this out, it only supports the identify function currently (for b25).
  */
-@RBuiltin("as.matrix")
+@RBuiltin(name = "as.matrix", kind = SUBSTITUTE)
+// TODO revert to R
 public abstract class AsMatrix extends RBuiltinNode {
 
     @Specialization(order = 0, guards = "isMatrix")

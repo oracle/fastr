@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin("log10")
+@RBuiltin(name = "log10", kind = PRIMITIVE)
 public abstract class Log10 extends RBuiltinNode {
 
     @SuppressWarnings("unused")

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -61,7 +62,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(value = ".Internal.grep")
+    @RBuiltin(name = "grep", kind = INTERNAL)
     public abstract static class Grep extends ExtraArgsChecker {
 
         @Specialization
@@ -114,7 +115,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(value = ".Internal.grepl")
+    @RBuiltin(name = "grepl", kind = INTERNAL)
     public abstract static class GrepL extends ExtraArgsChecker {
 
         @Specialization
@@ -129,7 +130,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(".Internal.sub")
+    @RBuiltin(name = "sub", kind = INTERNAL)
     public abstract static class Sub extends ExtraArgsChecker {
 
         @Specialization(order = 1)
@@ -177,7 +178,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(".Internal.gsub")
+    @RBuiltin(name = "gsub", kind = INTERNAL)
     public abstract static class GSub extends Sub {
 
         @Specialization(order = 1)
@@ -203,7 +204,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(value = ".Internal.regexpr")
+    @RBuiltin(name = "regexpr", kind = INTERNAL)
     public abstract static class Regexp extends ExtraArgsChecker {
 
         @Specialization
@@ -237,7 +238,7 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(value = ".Internal.gregexpr")
+    @RBuiltin(name = "gregexpr", kind = INTERNAL)
     public abstract static class Gregexpr extends Regexp {
 
         @Specialization

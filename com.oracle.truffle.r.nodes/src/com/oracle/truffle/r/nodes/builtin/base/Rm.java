@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -32,7 +33,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(value = {"rm", "remove"}, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+// TODO remove should be INTERNAL and rm is in R
 public abstract class Rm extends RInvisibleBuiltinNode {
 
     public static Rm create(String name) {

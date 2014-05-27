@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.io.*;
 import java.util.*;
 
@@ -59,7 +60,7 @@ public abstract class ConnectionFunctions {
 
     private static StdinConnection stdin;
 
-    @RBuiltin(".Internal.stdin")
+    @RBuiltin(name = "stdin", kind = INTERNAL)
     public abstract static class Stdin extends RInvisibleBuiltinNode {
         @Specialization
         public RConnection stdin() {
@@ -95,7 +96,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(".Internal.file")
+    @RBuiltin(name = "file", kind = INTERNAL)
     public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
@@ -122,7 +123,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin("close")
+    @RBuiltin(name = "close", kind = INTERNAL)
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
         public Object close(@SuppressWarnings("unused") Object con) {
@@ -132,7 +133,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(".Internal.readLines")
+    @RBuiltin(name = "readLines", kind = INTERNAL)
     public abstract static class ReadLines extends RBuiltinNode {
         @Specialization
         public Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {

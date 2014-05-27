@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("character")
+@RBuiltin(name = "character", kind = SUBSTITUTE)
+// TODO Implement in R
 public abstract class CharacterBuiltin extends RBuiltinNode {
 
     @Specialization

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.nio.file.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -39,7 +40,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * N.B. GnuR seems to allow other types as the component, e.g. integer, although the spec does not
  * mention coercions.
  */
-@RBuiltin({".Internal.R.home"})
+@RBuiltin(name = "R.home", kind = INTERNAL)
+// TODO revert to R implementation
 public abstract class Rhome extends RBuiltinNode {
 
     @Specialization(order = 0)

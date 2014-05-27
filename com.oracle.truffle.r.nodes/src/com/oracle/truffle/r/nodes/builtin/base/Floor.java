@@ -22,13 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin("floor")
+@RBuiltin(name = "floor", kind = PRIMITIVE)
 public class Floor extends RWrapperBuiltinNode {
 
     public Floor(RBuiltinNode prev) {

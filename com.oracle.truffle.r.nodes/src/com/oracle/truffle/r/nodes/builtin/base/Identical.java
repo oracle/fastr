@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -30,9 +31,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Internal part of {@code identical}. The default values for args after {@code x} and {@code y} are
- * all set to {@code TRUE/FALSE} by the R snippet.
+ * all set to {@code TRUE/FALSE} by the R wrapper.
  */
-@RBuiltin(".Internal.identical")
+@RBuiltin(name = "identical", kind = INTERNAL)
 public abstract class Identical extends RBuiltinNode {
 
     @Specialization(order = 0)

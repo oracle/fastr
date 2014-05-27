@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.builtin;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-
-@RBuiltin(name = "missing", kind = PRIMITIVE)
-public abstract class Missing extends IsTypeNode {
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public byte isType(RMissing value) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
+/**
+ * The {@link RBuiltin} "kinds".
+ */
+public enum RBuiltinKind {
+    /**
+     * A "primitive" function built into the implementation and called directly by name.
+     */
+    PRIMITIVE,
+    /**
+     * A function built into the implement and called by {@code .Internal(name(args)}.
+     */
+    INTERNAL,
+    /**
+     * A function that, in GnuR, is defined in R (possibly calling an {@code .Internal}), but is
+     * built into the implementation (and called directly) in FastR.
+     */
+    SUBSTITUTE,
 }

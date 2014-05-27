@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -29,7 +30,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin("readRenviron")
+@RBuiltin(name = "readRenviron", kind = SUBSTITUTE)
+// TODO INTERNAL
 public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector")

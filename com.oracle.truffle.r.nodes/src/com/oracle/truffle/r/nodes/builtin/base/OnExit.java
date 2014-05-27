@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * Placeholder. {@code on.exit} is special (cf {@code .Internal} in that {@code expr} is not
  * evaluated, but {@code add} is.
  */
-@RBuiltin("on.exit")
+@RBuiltin(name = "on.exit", kind = PRIMITIVE)
 public abstract class OnExit extends RInvisibleBuiltinNode {
 
     @Specialization
