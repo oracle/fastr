@@ -15,9 +15,6 @@ library@ANTLR-C@urls=http://central.maven.org/maven2/org/antlr/antlr-complete/3.
 library@JLINE@path=lib/jline-2.11.jar
 library@JLINE@urls=http://repo1.maven.org/maven2/jline/jline/2.11/jline-2.11.jar
 
-library@JRUBYSTDLIB@path=lib/jruby-stdlib-1.7.4.jar
-library@JRUBYSTDLIB@urls=http://repo1.maven.org/maven2/org/jruby/jruby-stdlib/1.7.4/jruby-stdlib-1.7.4.jar
-
 library@JNR_POSIX@path=lib/jnr-posix-3.0.1.jar
 library@JNR_POSIX@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-posix/3.0.1/jnr-posix-3.0.1.jar
 
@@ -50,6 +47,12 @@ library@ASM_TREE@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-tree/4.0/asm
 
 library@ASM_UTIL@path=lib/asm-util-4.0.jar
 library@ASM_UTIL@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-util/4.0/asm-util-4.0.jar
+
+distribution@FASTR@path=fastr.jar
+distribution@FASTR@sourcesPath=fastr-sources.jar
+distribution@FASTR@dependencies=com.oracle.truffle.r.nodes
+distribution@FASTR@exclude=JDK_TOOLS,FINDBUGS,NETLIB,ASM_UTIL,ASM_TREE,ASM_COMMONS,ASM_ANALYSIS,ASM,JNR_X86ASM,JFFI_NATIVE,JFFI,JNR_FFI,JNR_CONSTANTS,JNR_POSIX,JLINE,ANTLR-C,ANTLR
+distribution@FASTR@distDependencies=TRUFFLE,GRAAL
 
 # com.oracle.truffle.r.parser.processor
 project@com.oracle.truffle.r.parser.processor@sourceDirs=src
