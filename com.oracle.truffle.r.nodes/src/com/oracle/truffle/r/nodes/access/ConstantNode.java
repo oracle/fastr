@@ -65,6 +65,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         } else if (value instanceof RFunction) {
             return new ConstantFunctionNode((RFunction) value);
         }
+        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException(value.getClass().getName());
     }
 

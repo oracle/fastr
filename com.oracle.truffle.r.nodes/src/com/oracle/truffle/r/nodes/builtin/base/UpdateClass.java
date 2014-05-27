@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -85,12 +86,14 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             if (dimensions != null) {
                 dimLength = dimensions.length;
             }
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNotMatixUpdateClass(getEncapsulatingSourceSection(), dimLength);
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
             if (arg.isArray()) {
                 return setClass(arg, RNull.instance);
             }
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
         }
 

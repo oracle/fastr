@@ -245,8 +245,8 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     private void verifySet(FrameSlot slot, FrameSlotKind accessKind) {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
-            CompilerDirectives.transferToInterpreter();
             if (!resize()) {
+                CompilerDirectives.transferToInterpreter();
                 throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
             }
         }
@@ -256,20 +256,20 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     private void verifyGet(FrameSlot slot, FrameSlotKind accessKind) throws FrameSlotTypeException {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
-            CompilerDirectives.transferToInterpreter();
             if (!resize()) {
+                CompilerDirectives.transferToInterpreter();
                 throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
             }
         }
         byte tag = this.getTags()[slotIndex];
         if (tag != accessKind.ordinal()) {
-            CompilerDirectives.transferToInterpreter();
             if (slot.getKind() == accessKind || tag == 0) {
                 descriptor.getTypeConversion().updateFrameSlot(this, slot, getValue(slot));
                 if (getTags()[slotIndex] == accessKind.ordinal()) {
                     return;
                 }
             }
+            CompilerDirectives.transferToInterpreter();
             throw new FrameSlotTypeException();
         }
     }

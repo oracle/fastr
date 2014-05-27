@@ -61,6 +61,7 @@ public abstract class AccessFieldNode extends RNode {
 
     @Specialization(order = 1000)
     public Object accessField(@SuppressWarnings("unused") RAbstractVector object) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getDollarAtomicVectors(getEncapsulatingSourceSection());
     }
 

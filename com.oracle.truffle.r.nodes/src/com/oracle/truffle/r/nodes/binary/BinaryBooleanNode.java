@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -683,6 +684,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
 
     @Specialization(order = 1000, guards = "differentDimensions")
     public RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonConformableArrays(getEncapsulatingSourceSection());
     }
 

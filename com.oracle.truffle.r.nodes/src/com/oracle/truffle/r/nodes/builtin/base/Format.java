@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
@@ -75,6 +76,7 @@ public abstract class Format extends RBuiltinNode {
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
         if (children.length != PARAMETER_NAMES.length) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getArgumentsPassed(getEncapsulatingSourceSection(), children.length, ".Internal(format)", PARAMETER_NAMES.length);
         }
         RNode[] newChildren = new RNode[children.length];
@@ -245,24 +247,31 @@ public abstract class Format extends RBuiltinNode {
     protected boolean wrongArgsObject(@SuppressWarnings("unused") Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "trim");
         }
         if (digitsVec.getLength() > 0 && (RRuntime.isNA(digitsVec.getDataAt(0)) || digitsVec.getDataAt(0) < R_MIN_DIGITS_OPT || digitsVec.getDataAt(0) > R_MAX_DIGITS_OPT)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "digits");
         }
         if (nsmallVec.getLength() > 0 && (RRuntime.isNA(nsmallVec.getDataAt(0)) || nsmallVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 20)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "nsmall");
         }
         if (widthVec.getLength() > 0 && RRuntime.isNA(widthVec.getDataAt(0))) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "width");
         }
         if (justifyVec.getLength() > 0 && (RRuntime.isNA(justifyVec.getDataAt(0)) || justifyVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 3)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "justify");
         }
         if (naEncodeVec.getLength() > 0 && RRuntime.isNA(naEncodeVec.getDataAt(0))) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "na.encode");
         }
         if (sciVec.getLength() != 1 || (sciVec.getElementClass() != RLogical.class && sciVec.getElementClass() != RInt.class && sciVec.getElementClass() != RDouble.class)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "scientific");
         }
         return false;

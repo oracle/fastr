@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -61,6 +62,7 @@ public class EnvFunctions {
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
                 if (callerFrame == null) {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
                 } else {
                     return frameToEnvironment(callerFrame);
@@ -73,6 +75,7 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'pos' argument");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
@@ -88,11 +91,13 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "no item named '" + name + "' on the search list");
         }
 
         @Specialization(order = 100)
         public REnvironment asEnvironment(@SuppressWarnings("unused") Object x) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), " invalid object for 'as.environment'");
         }
 
@@ -138,6 +143,7 @@ public class EnvFunctions {
         public REnvironment parentenv(REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
             }
             return env.getParent();
@@ -146,6 +152,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
     }
@@ -157,6 +164,7 @@ public class EnvFunctions {
         public REnvironment setParentenv(REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot set the parent of the empty environment");
             }
             env.setParent(parent);
@@ -166,6 +174,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public REnvironment setParentenv(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
         }
     }
@@ -287,6 +296,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object lockEnvironment(Object x, byte y) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw notAnEnvironment(this);
         }
     }
@@ -302,6 +312,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object lockEnvironment(@SuppressWarnings("unused") Object env) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw notAnEnvironment(this);
         }
     }
@@ -319,6 +330,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object lockBinding(Object x, Object y) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
         }
     }
@@ -336,6 +348,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object unlockBinding(Object x, Object y) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
         }
     }
@@ -352,6 +365,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object bindingIsLocked(Object x, Object y) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
         }
     }
@@ -363,6 +377,7 @@ public class EnvFunctions {
         public Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
         }
     }

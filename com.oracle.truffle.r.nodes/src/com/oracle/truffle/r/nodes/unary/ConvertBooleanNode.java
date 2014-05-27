@@ -44,6 +44,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doLogical(byte value) {
         check.enable(value);
         if (check.check(value)) {
+            CompilerDirectives.transferToInterpreter();
             throw unexpectedNAError();
         }
         return value;
@@ -53,6 +54,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doInt(int value) {
         check.enable(value);
         if (check.check(value)) {
+            CompilerDirectives.transferToInterpreter();
             throw unexpectedNAError();
         }
         return RRuntime.asLogical(value != 0);
@@ -62,6 +64,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doDouble(double value) {
         check.enable(value);
         if (check.check(value)) {
+            CompilerDirectives.transferToInterpreter();
             throw unexpectedNAError();
         }
         return RRuntime.asLogical(value != 0D);
@@ -71,6 +74,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doComplex(RComplex value) {
         check.enable(value);
         if (check.check(value)) {
+            CompilerDirectives.transferToInterpreter();
             throw unexpectedNAError();
         }
         return RRuntime.asLogical(!value.isZero());
@@ -96,10 +100,12 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         if (isNotEmpty(value)) {
             check.enable(value);
             if (check.check(value.getDataAt(0))) {
+                CompilerDirectives.transferToInterpreter();
                 throw unexpectedNAError();
             }
             return RRuntime.asLogical(value.getDataAt(0) != 0);
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw lengthZeroError();
         }
     }
@@ -109,10 +115,12 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         if (isNotEmpty(value)) {
             check.enable(value);
             if (check.check(value.getDataAt(0))) {
+                CompilerDirectives.transferToInterpreter();
                 throw unexpectedNAError();
             }
             return RRuntime.asLogical(value.getDataAt(0) != 0D);
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw lengthZeroError();
         }
     }
@@ -122,10 +130,12 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         if (isNotEmpty(value)) {
             check.enable(value);
             if (check.check(value.getDataAt(0))) {
+                CompilerDirectives.transferToInterpreter();
                 throw unexpectedNAError();
             }
             return RRuntime.asLogical(value.getDataAt(0) != RRuntime.LOGICAL_FALSE);
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw lengthZeroError();
         }
     }
@@ -135,10 +145,12 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         if (isNotEmpty(value)) {
             check.enable(value);
             if (check.check(value.getDataAt(0))) {
+                CompilerDirectives.transferToInterpreter();
                 throw unexpectedNAError();
             }
             return RRuntime.asLogical(!value.getDataAt(0).isZero());
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw lengthZeroError();
         }
     }
@@ -148,6 +160,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         if (isNotEmpty(value)) {
             return RRuntime.asLogical(value.getDataAt(0).getValue() != 0);
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw lengthZeroError();
         }
     }
@@ -168,6 +181,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
 
     @Generic
     public byte doInvalid(@SuppressWarnings("unused") Object value) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getArgumentNotInterpretableLogical(getEncapsulatingSourceSection());
     }
 

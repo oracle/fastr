@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -66,6 +68,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
@@ -75,6 +78,7 @@ public class FileFunctions {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
             if (lenFrom < 1) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "nothing to link");
             }
             if (lenTo < 1) {
@@ -119,6 +123,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
@@ -134,6 +139,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
@@ -164,6 +170,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
@@ -175,6 +182,7 @@ public class FileFunctions {
             controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "'from' and 'to' are of different lengths");
             }
             byte[] status = new byte[len];
@@ -199,6 +207,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }
@@ -227,6 +236,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
         }
     }

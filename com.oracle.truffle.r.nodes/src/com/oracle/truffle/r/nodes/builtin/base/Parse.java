@@ -26,6 +26,8 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import java.io.*;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.REngine.ParseException;
@@ -55,6 +57,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
         }
     }
 
+    @SlowPath
     private static String coalesce(String[] lines) {
         StringBuffer sb = new StringBuffer();
         for (String line : lines) {
@@ -68,6 +71,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
     @Specialization(order = 100)
     public Object parseGeneric(Object file, Object n, Object text, Object prompt, Object srcFile, Object encoding) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
     }
 }

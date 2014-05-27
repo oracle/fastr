@@ -69,6 +69,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
 
     @Specialization(order = 23, guards = "isSingleElementEmptyPosition")
     public Object access(RAbstractVector vector, Object right, RAbstractVector position) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
@@ -299,6 +300,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         for (int leftIndex = 0; leftIndex < left.getLength(); leftIndex++) {
             byte value = positions.getDataAt(posIndex);
             if (positionNACheck.check(value)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNASubscripted(getEncapsulatingSourceSection());
             }
             if (value == RRuntime.LOGICAL_TRUE) {
@@ -317,6 +319,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         if (isSubset) {
             return list;
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
     }
@@ -500,6 +503,7 @@ public abstract class UpdateVectorHelperNode extends CoercedBinaryOperationNode 
         for (int leftIndex = 0; leftIndex < left.getLength(); leftIndex++) {
             byte value = positions.getDataAt(posIndex);
             if (positionNACheck.check(value)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNASubscripted(getEncapsulatingSourceSection());
             }
             if (value == RRuntime.LOGICAL_TRUE) {

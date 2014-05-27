@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -49,6 +50,7 @@ public abstract class NextMethod extends RBuiltinNode {
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
         if (genericName == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getUnspecifiedGenFunction(getEncapsulatingSourceSection());
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
@@ -75,10 +77,12 @@ public abstract class NextMethod extends RBuiltinNode {
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getObjectNotSpecified(getEncapsulatingSourceSection());
         }
         RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getObjectNotSpecified(getEncapsulatingSourceSection());
         }
         return enclosingArg.getClassHierarchy();

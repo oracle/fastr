@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -98,6 +99,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Specialization
     public RAbstractVector updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getDimnamesList(getEncapsulatingSourceSection());
     }
 

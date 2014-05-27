@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -72,6 +73,7 @@ public abstract class MatchFun extends RBuiltinNode {
         }
         Object r = lookup.execute(frame);
         if (r == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getUnknownFunction(getEncapsulatingSourceSection(), fun);
         } else {
             return r;

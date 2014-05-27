@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.RPackages.RPackage;
@@ -373,9 +374,11 @@ public abstract class REnvironment implements RAttributable {
      */
     public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
         if (pos == searchPath.size()) {
+            CompilerDirectives.transferToInterpreter();
             throw new DetachException("detaching \"package:base\" is not allowed");
         }
         if (pos <= 0 || pos >= searchPath.size()) {
+            CompilerDirectives.transferToInterpreter();
             throw new DetachException("subscript out of range");
         }
         assert pos != 1; // explicitly checked in caller
@@ -513,6 +516,7 @@ public abstract class REnvironment implements RAttributable {
         if (locked) {
             // if the binding exists already, can try to update it
             if (frameAccess.get(key) == null) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PutException("cannot add bindings to a locked environment");
             }
         }
@@ -529,6 +533,7 @@ public abstract class REnvironment implements RAttributable {
 
     public void rm(String key) throws PutException {
         if (locked) {
+            CompilerDirectives.transferToInterpreter();
             throw new PutException("cannot remove bindings from a locked environment");
         }
         frameAccess.rm(key);
@@ -642,6 +647,7 @@ public abstract class REnvironment implements RAttributable {
 
         @Override
         public void rm(String key) throws PutException {
+            CompilerDirectives.transferToInterpreter();
             throw new PutException("cannot remove variables from the " + getPrintNameHelper() + " environment");
         }
 
@@ -796,6 +802,7 @@ public abstract class REnvironment implements RAttributable {
 
         @Override
         public void put(String key, Object value) throws PutException {
+            CompilerDirectives.transferToInterpreter();
             throw new PutException("cannot assign values in the empty environment");
         }
 

@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +42,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     public RNull abs(RNull x) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
     }
 
@@ -78,6 +81,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     public Object abs(RRaw vector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
@@ -85,6 +89,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     public Object abs(String vector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
@@ -142,6 +147,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     public Object abs(RStringVector vector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 
@@ -149,6 +155,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     public Object abs(RRawVector vector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
     }
 

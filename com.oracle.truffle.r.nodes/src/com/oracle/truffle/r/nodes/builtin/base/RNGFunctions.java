@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -64,6 +66,7 @@ public class RNGFunctions {
         @Specialization(order = 10)
         public RNull setSeed(VirtualFrame frame, byte seed, RNull kind, RNull normKind) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "supplied seed is not a valid integer");
         }
 

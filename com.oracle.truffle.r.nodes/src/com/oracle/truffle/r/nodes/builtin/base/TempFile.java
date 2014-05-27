@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -108,6 +110,7 @@ public abstract class TempFile extends RBuiltinNode {
         } else if (obj instanceof String) {
             return RDataFactory.createStringVector((String) obj);
         }
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
     }
 

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -243,12 +244,14 @@ public abstract class Match extends RBuiltinNode {
     @Specialization(order = 100)
     @SuppressWarnings("unused")
     public RIntVector match(RFunction x, Object table, Object nomatchObj, Object incomparables) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getMatchVectorArgs(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 101)
     @SuppressWarnings("unused")
     public RIntVector match(Object x, RFunction table, Object nomatchObj, Object incomparables) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getMatchVectorArgs(getEncapsulatingSourceSection());
     }
 

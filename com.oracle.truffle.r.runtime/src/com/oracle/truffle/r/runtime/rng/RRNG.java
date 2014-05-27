@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
@@ -208,6 +209,7 @@ public class RRNG {
             } else {
                 kind = setKind(kindAsInt);
                 if (!kind.available) {
+                    CompilerDirectives.transferToInterpreter();
                     throw new RNGException("RNG kind " + kind + " is not available", true);
                 }
             }
@@ -234,6 +236,7 @@ public class RRNG {
 
     private static Kind setKind(int kindAsInt) throws RNGException {
         if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length) {
+            CompilerDirectives.transferToInterpreter();
             throw new RNGException("unimplemented RNG kind " + kindAsInt, true);
         }
         return Kind.VALUES[kindAsInt];

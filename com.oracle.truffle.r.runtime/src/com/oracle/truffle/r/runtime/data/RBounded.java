@@ -41,13 +41,16 @@ public abstract class RBounded {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
             if (RRuntime.isNA(newDimensions[i])) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getDimsContainNA(sourceSection);
             } else if (newDimensions[i] < 0) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getDimsContainNegativeValues(sourceSection);
             }
             length *= newDimensions[i];
         }
         if (length != getLength()) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getDimsDontMatchLength(sourceSection, length, getLength());
         }
     }

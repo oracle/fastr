@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
@@ -38,6 +39,7 @@ public abstract class AccessVarArgumentsNode extends RNode {
 
     public static AccessVarArgumentsNode create(LastParameterKind parameterKind, int index) {
         if (!parameterKind.isVarArgs()) {
+            CompilerDirectives.transferToInterpreter();
             throw new IllegalArgumentException("No varArgs parameter kind.");
         }
 

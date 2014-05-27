@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -172,6 +173,7 @@ public abstract class SApply extends RBuiltinNode {
                 if (v.getLength() != 1) {
                     // TODO: the whole implementation must be re-done, but for now this is required
                     // to support the format function
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
                 }
                 result[i] = v.getDataAt(0);
@@ -223,6 +225,7 @@ public abstract class SApply extends RBuiltinNode {
                 if (v.getLength() != 1) {
                     // TODO: the whole implementation must be re-done, but for now this is required
                     // to support the format function
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
                 }
                 result[i] = v.getDataAt(0);

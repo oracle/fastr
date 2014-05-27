@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -38,6 +40,7 @@ public abstract class Internal extends RBuiltinNode {
     @Specialization
     public Object doInternal(@SuppressWarnings("unused") Object x) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid .Internal() argument");
     }
 }

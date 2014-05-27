@@ -434,6 +434,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
+            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("unsupported complex operation");
         }
     }
@@ -465,6 +466,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getUnimplementedComplex(this.getEncapsulatingSourceSection());
         }
     }
@@ -898,6 +900,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
+            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
     }
@@ -920,6 +923,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
+            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
     }

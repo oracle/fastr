@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
@@ -109,6 +110,7 @@ public abstract class Get extends RBuiltinNode {
             }
         }
         if (r == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getUnknownVariable(getEncapsulatingSourceSection(), sx);
         } else {
             return r;

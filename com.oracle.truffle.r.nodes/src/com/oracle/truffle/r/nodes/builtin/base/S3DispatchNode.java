@@ -112,6 +112,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     private void checkLength(final String className, final String generic) {
         // The magic number two taken from src/main/objects.c
         if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getTooLongClassName(getEncapsulatingSourceSection(), generic);
         }
     }

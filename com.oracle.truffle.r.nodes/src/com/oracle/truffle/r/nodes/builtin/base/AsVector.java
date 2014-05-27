@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -180,6 +181,7 @@ public abstract class AsVector extends RBuiltinNode {
     @Specialization(order = 1002, guards = "invalidMode")
     public RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidMode(getEncapsulatingSourceSection());
     }
 

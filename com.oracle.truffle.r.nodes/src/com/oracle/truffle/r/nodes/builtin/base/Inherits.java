@@ -12,8 +12,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -78,6 +80,7 @@ public abstract class Inherits extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, Object which) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNotLengthOneLogicalVector(getEncapsulatingSourceSection(), RRuntime.WHICH);
     }
 
@@ -85,6 +88,7 @@ public abstract class Inherits extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object doesInherit(RAbstractVector x, Object what, Object which) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNotCharacterVector(getEncapsulatingSourceSection(), RRuntime.WHAT);
     }
 

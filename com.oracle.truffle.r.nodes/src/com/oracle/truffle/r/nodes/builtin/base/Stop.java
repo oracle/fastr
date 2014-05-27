@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
@@ -52,6 +54,7 @@ public abstract class Stop extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object stop(String msg, byte call, Object domain) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(null, msg);
     }
 
@@ -72,6 +75,7 @@ public abstract class Stop extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object stop(RStringVector msg, byte call, Object domain) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(null, collapseStringVector(msg));
     }
 

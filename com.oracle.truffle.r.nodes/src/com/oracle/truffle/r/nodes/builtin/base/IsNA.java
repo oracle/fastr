@@ -109,6 +109,7 @@ public abstract class IsNA extends RBuiltinNode {
                 // and the single element of that vector is regarded as NA
                 isNAResult = (vector.getLength() == 1) ? vector.getDataAt(0) : RRuntime.LOGICAL_FALSE;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw new UnsupportedOperationException("unhandled return type in isNA(list)");
             }
             resultVector[i] = isNAResult;

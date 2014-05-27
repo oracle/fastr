@@ -30,6 +30,7 @@ import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.runtime.*;
 import com.oracle.graal.compiler.target.*;
 import com.oracle.graal.runtime.*;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
@@ -142,6 +143,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
                     return null;
                 } else {
                     // some other error
+                    CompilerDirectives.transferToInterpreter();
                     throw new IOException();
                 }
             } else {

@@ -87,6 +87,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
     @Specialization
     public byte compileFunction(@SuppressWarnings("unused") Object arg) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'function' argument");
     }
 }

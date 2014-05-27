@@ -114,6 +114,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findFunction(this.genericName, frame);
             if (targetFunction == null || !targetFunction.isBuiltin()) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNoMethodFound(getEncapsulatingSourceSection());
             }
         }

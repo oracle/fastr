@@ -174,16 +174,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 return vector;
             }
         }
+        CompilerDirectives.transferToInterpreter();
         throw RError.getReplacementZero(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 7)
     RNull accessFunction(Object v, Object value, int recLevel, Object position, RFunction vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getObjectNotSubsettable(getEncapsulatingSourceSection(), "closure");
     }
 
     @Specialization(order = 8)
     RAbstractVector update(Object v, RNull value, int recLevel, Object[] positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         if (isSubset) {
             throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
         } else {
@@ -194,6 +197,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 9, guards = "isPosZero")
     RAbstractVector updateNAOrZero(Object v, RNull value, int recLevel, int position, RList vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         } else {
             return vector;
@@ -202,21 +206,18 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 11)
     RAbstractVector update(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (isSubset) {
             throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
         } else {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
-            // CheckStyle: stop system..print check
-            // with no "--silent" command flag, this should get thrown
-            // throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL",
-            // RRuntime.classToString(vector.getElementClass(), false));
-            // CheckStyle: resume system..print check
         }
     }
 
     @Specialization(order = 12, guards = {"emptyValue", "isPosZero"})
     RAbstractVector updatePosZero(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
         }
         return vector;
@@ -224,27 +225,32 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 13, guards = {"emptyValue", "!isPosZero", "!isPosNA", "!isVectorList"})
     RAbstractVector update(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getReplacementZero(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 14, guards = "!isVectorLongerThanOne")
     RAbstractVector updateVectorLongerThanOne(Object v, RNull value, int recLevel, RNull position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 15, guards = "isVectorLongerThanOne")
     RAbstractVector update(Object v, RNull value, int recLevel, RNull position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 16)
     RAbstractVector update(Object v, RAbstractVector value, int recLevel, RNull position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 17, guards = {"isPosNA", "isValueLengthOne", "isVectorLongerThanOne"})
     RAbstractVector updateNAValueLengthOneLongVector(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         } else {
             return vector;
@@ -254,6 +260,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 18, guards = {"isPosNA", "isValueLengthOne", "!isVectorLongerThanOne"})
     RAbstractVector updateNAValueLengthOne(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         } else {
             return vector;
@@ -262,6 +269,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 19, guards = {"isPosNA", "!isValueLengthOne"})
     RAbstractVector updateNA(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (isSubset) {
             throw RError.getNASubscripted(getEncapsulatingSourceSection());
         } else {
@@ -272,6 +280,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 20, guards = {"isPosZero", "isValueLengthOne"})
     RAbstractVector updateZeroValueLengthOne(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         } else {
             return vector;
@@ -281,6 +290,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 21, guards = {"isPosZero", "!isValueLengthOne"})
     RAbstractVector updateZero(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
             return vector;
@@ -290,6 +300,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 22, guards = "isPosZero")
     RAbstractVector updateZero(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
             return vector;
@@ -298,6 +309,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private int getSrcArrayBase(int pos, int accSrcDimensions) {
         if (posNACheck.check(pos)) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNASubscripted(getEncapsulatingSourceSection());
         } else {
             return accSrcDimensions * (pos - 1);
@@ -333,6 +345,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (valueLength != 0 && length != 0 && length % valueLength != 0) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
         } else if (seenNA) {
             seenNAMultiDim(true, value, isList, isSubset, getEncapsulatingSourceSection());
@@ -516,36 +529,43 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 80, guards = {"!isPosNA", "isPositionNegative", "!isVectorList"})
     RList updateNegativeNull(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 81, guards = {"!isPosNA", "isPositionNegative", "!outOfBoundsNegative"})
     RList updateNegativeNull(Object v, RNull value, int recLevel, int position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 82, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "oneElemVector"})
     RList updateNegativeOutOfBoundsOneElemNull(Object v, RNull value, int recLevel, int position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 83, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "!oneElemVector"})
     RList updateNegativeOutOfBoundsNull(Object v, RNull value, int recLevel, int position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 85, guards = {"!isPosNA", "isPositionNegative", "!outOfBoundsNegative"})
     RList updateNegative(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 86, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "oneElemVector"})
     RList updateNegativeOneElem(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 87, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "!oneElemVector"})
     RList updateOutOfBoundsNegative(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
@@ -601,6 +621,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private int getPositionInRecursion(RList vector, int position, int recLevel, boolean lastPos) {
         if (RRuntime.isNA(position)) {
+            CompilerDirectives.transferToInterpreter();
             if (lastPos && recLevel > 0) {
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else if (recLevel == 0) {
@@ -609,10 +630,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
             }
         } else if (!lastPos && position > vector.getLength()) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
         } else if (position < 0) {
+            CompilerDirectives.transferToInterpreter();
             return AccessArrayNode.getPositionFromNegative(vector, position, getEncapsulatingSourceSection());
         } else if (position == 0) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
         return position;
@@ -632,6 +656,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RList updateSingleDimVector(RAbstractContainer value, int orgVectorLength, RList resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         for (int i = 0; i < positions.getLength(); i++) {
@@ -660,6 +685,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
         Object el;
@@ -795,6 +821,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 122, guards = {"isSubset", "!noPosition"})
     RList update(Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
 
@@ -861,6 +888,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
         RList resultList = vector;
@@ -894,6 +922,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 160, guards = {"!isSubset", "inRecursion", "multiPos"})
     Object accessRecFailed(Object v, RAbstractContainer value, int recLevel, RIntVector p, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getRecursiveIndexingFailed(getEncapsulatingSourceSection(), recLevel + 1);
     }
 
@@ -923,6 +952,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 180, guards = {"!isValueLengthOne", "!emptyValue", "!isSubset", "!isPosNA", "!isPosZero"})
     RAbstractVector updateTooManyValues(Object v, RAbstractContainer value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
     }
 
@@ -931,6 +961,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 185, guards = {"isPosZero", "!isVectorList"})
     RAbstractVector updatePosZero(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
         }
         return vector;
@@ -938,6 +969,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 186, guards = {"!isPosZero", "!isPosNA", "!isVectorList"})
     RAbstractVector update(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -952,31 +984,37 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 189, guards = {"isSubset", "!isVectorList", "!noPosition"})
     RAbstractVector updateNullSubset(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getReplacementZero(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 190, guards = {"!isSubset", "!isVectorList", "noPosition"})
     RAbstractVector updateNullNoPos(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 191, guards = {"!isSubset", "!isVectorList", "onePosition"})
     RAbstractVector updateNullOnePos(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 192, guards = {"!isSubset", "!isVectorList", "twoPositions", "firstPosZero"})
     RAbstractVector updateNullTwoElemsZero(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 193, guards = {"!isSubset", "!isVectorList", "twoPositions", "!firstPosZero"})
     RAbstractVector updateNullTwoElems(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 194, guards = {"!isSubset", "!isVectorList", "multiPos"})
     RAbstractVector updateNull(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
@@ -1035,6 +1073,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (value.getLength() == 1) {
                 return true;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNASubscripted(getEncapsulatingSourceSection());
             }
         } else {
@@ -1046,11 +1085,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (isPosNA) {
             if (value.getLength() == 1) {
                 if (!isSubset) {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getSubscriptBoundsSub(sourceSection);
                 } else {
                     return true;
                 }
             } else {
+                CompilerDirectives.transferToInterpreter();
                 if (!isSubset) {
                     if (isList) {
                         throw RError.getSubscriptBoundsSub(sourceSection);
@@ -1069,6 +1110,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RIntVector updateSingleDimVector(RAbstractIntVector value, int orgVectorLength, RIntVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         elementNACheck.enable(value);
@@ -1095,16 +1137,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 195, guards = {"!isSubset", "!isVectorList", "!posNames", "!twoPositions"})
     Object update(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 196, guards = {"!isSubset", "!isVectorList", "!posNames", "twoPositions", "firstPosZero"})
     RList updateTwoElemsZero(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 197, guards = {"!isSubset", "!isVectorList", "!posNames", "twoPositions", "!firstPosZero"})
     RList updateTwoElems(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
     }
 
@@ -1232,6 +1277,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RDoubleVector updateSingleDimVector(RAbstractDoubleVector value, int orgVectorLength, RDoubleVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         for (int i = 0; i < positions.getLength(); i++) {
@@ -1418,6 +1464,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RLogicalVector updateSingleDimVector(RAbstractLogicalVector value, int orgVectorLength, RLogicalVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         for (int i = 0; i < positions.getLength(); i++) {
@@ -1529,6 +1576,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RStringVector updateSingleDimVector(RAbstractStringVector value, int orgVectorLength, RStringVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         for (int i = 0; i < positions.getLength(); i++) {
@@ -1676,6 +1724,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RComplexVector updateSingleDimVector(RAbstractComplexVector value, int orgVectorLength, RComplexVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         for (int i = 0; i < positions.getLength(); i++) {
@@ -1893,6 +1942,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RRawVector updateSingleDimVector(RAbstractRawVector value, int orgVectorLength, RRawVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         }
         for (int i = 0; i < positions.getLength(); i++) {
@@ -1954,6 +2004,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1000, guards = {"noPosition", "emptyValue"})
     Object accessListEmptyPosEmptyValueList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         } else {
@@ -1963,6 +2014,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1001, guards = {"noPosition", "emptyValue", "!isVectorList"})
     Object accessListEmptyPosEmptyValue(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
         } else {
@@ -1972,6 +2024,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1002, guards = {"noPosition", "valueLengthOne"})
     Object accessListEmptyPosValueLengthOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         } else {
@@ -1981,6 +2034,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1003, guards = {"noPosition", "valueLongerThanOne"})
     Object accessListEmptyPosValueLongerThanOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -1990,6 +2044,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1004, guards = "noPosition")
     Object accessListEmptyPosValueNullList(Object v, RNull value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         } else {
@@ -1999,6 +2054,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1005, guards = {"noPosition", "!isVectorList"})
     Object accessListEmptyPosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2008,11 +2064,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1010, guards = {"onePosition", "emptyValue"})
     Object accessListOnePosEmptyValueList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1011, guards = {"onePosition", "emptyValue", "!isVectorList"})
     Object accessListOnePosEmptyValue(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
         } else {
@@ -2022,11 +2080,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1012, guards = {"onePosition", "valueLengthOne"})
     Object accessListOnePosValueLengthOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1013, guards = {"onePosition", "valueLongerThanOne"})
     Object accessListOnePosValueLongerThanTwo(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2036,11 +2096,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1014, guards = "onePosition")
     Object accessListOnePosValueNullList(Object v, RNull value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1015, guards = {"onePosition", "!isVectorList"})
     Object accessListOnePosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2050,21 +2112,25 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1020, guards = "twoPositions")
     Object accessListTwoPos(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1021, guards = "twoPositions")
     Object accessListTwoPosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1030, guards = {"moreThanTwoPos", "emptyValue"})
     Object accessListMultiPosEmptyValueList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1031, guards = {"moreThanTwoPos", "emptyValue", "!isVectorList"})
     Object accessListMultiPosEmptyValue(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         } else {
@@ -2074,11 +2140,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1032, guards = {"moreThanTwoPos", "valueLengthOne"})
     Object accessListMultiPosValueLengthOneList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1033, guards = {"moreThanTwoPos", "valueLengthOne", "!isVectorList"})
     Object accessListMultiPosValueLengthOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         } else {
@@ -2088,6 +2156,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1034, guards = {"moreThanTwoPos", "valueLongerThanOne"})
     Object accessListMultiPos(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         } else {
@@ -2097,11 +2166,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1035, guards = "moreThanTwoPos")
     Object accessListMultiPosValueNullList(Object v, RNull value, int recLevel, RList positions, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
     }
 
     @Specialization(order = 1036, guards = {"moreThanTwoPos", "!isVectorList"})
     Object accessListMultiPosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         } else {
@@ -2111,6 +2182,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1100, guards = {"emptyValue", "!isVectorList"})
     Object accessComplexEmptyValue(Object v, RAbstractVector value, int recLevel, RComplex position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
         } else {
@@ -2120,6 +2192,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1101, guards = {"valueLongerThanOne", "!isVectorList"})
     Object accessComplexValueLongerThanOne(Object v, RAbstractVector value, int recLevel, RComplex position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2129,16 +2202,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1102, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
     Object accessComplex(Object v, RAbstractVector value, int recLevel, RComplex position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
     }
 
     @Specialization(order = 1103)
     Object accessComplexList(Object v, RAbstractVector value, int recLevel, RComplex position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
     }
 
     @Specialization(order = 1104, guards = "!isVectorList")
     Object accessComplex(Object v, RNull value, int recLevel, RComplex position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2148,11 +2224,13 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1105)
     Object accessComplexList(Object v, RNull value, int recLevel, RComplex position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
     }
 
     @Specialization(order = 1200, guards = {"emptyValue", "!isVectorList"})
     Object accessRawEmptyValue(Object v, RAbstractVector value, int recLevel, RRaw position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getReplacementZero(getEncapsulatingSourceSection());
         } else {
@@ -2162,6 +2240,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1201, guards = {"valueLongerThanOne", "!isVectorList"})
     Object accessRawValueLongerThanOne(Object v, RAbstractVector value, int recLevel, RRaw position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2171,16 +2250,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1202, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
     Object accessRaw(Object v, RAbstractVector value, int recLevel, RRaw position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
     }
 
     @Specialization(order = 1203)
     Object accessRawList(Object v, RAbstractVector value, int recLevel, RRaw position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
     }
 
     @Specialization(order = 1204, guards = "!isVectorList")
     Object accessRaw(Object v, RNull value, int recLevel, RRaw position, RAbstractVector vector) {
+        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
             throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
         } else {
@@ -2190,6 +2272,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1205)
     Object accessRawList(Object v, RNull value, int recLevel, RRaw position, RList vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
     }
 
@@ -2259,6 +2342,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
+            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
                 throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
             } else {
@@ -2270,6 +2354,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length == 2) {
+            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
                 throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
             } else {
@@ -2281,6 +2366,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
+            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
                 throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
             } else {
@@ -2292,6 +2378,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
+            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
                 throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
             } else {
@@ -2303,6 +2390,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length > 2) {
+            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
                 throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
             } else {
@@ -2314,6 +2402,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
+            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
                 throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
             } else {
@@ -2677,6 +2766,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private int getNewArrayBase(int srcArrayBase, int pos, int newAccSrcDimensions) {
             int newSrcArrayBase;
             if (posNACheck.check(pos)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNASubscripted(getEncapsulatingSourceSection());
             } else {
                 newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
@@ -2686,6 +2776,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         private int getSrcIndex(int srcArrayBase, int pos, int newAccSrcDimensions) {
             if (posNACheck.check(pos)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNASubscripted(getEncapsulatingSourceSection());
             } else {
                 return srcArrayBase + newAccSrcDimensions * (pos - 1);
@@ -2724,6 +2815,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             }
         }
@@ -2733,6 +2825,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             }
         }
@@ -2752,6 +2845,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
             }
         }
@@ -2761,18 +2855,21 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
             }
         }
 
         @Specialization(order = 9, guards = {"!emptyValue", "singlePosNegative"})
         public RAbstractIntVector doIntVectorNegative(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         }
 
         @Specialization(order = 10, guards = "emptyValue")
         public RAbstractVector doIntVectorEmptyValue(RNull vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -2790,6 +2887,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 21, guards = {"valueLongerThanOne", "!isVectorList"})
         Object accessComplexValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RComplex position) {
+            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
@@ -2799,21 +2897,25 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 22, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
         Object accessComplex(RAbstractVector vector, RAbstractVector value, RComplex position) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
         }
 
         @Specialization(order = 23)
         Object accessComplexList(RList vector, RAbstractVector value, RComplex position) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
         }
 
         @Specialization(order = 24)
         Object accessComplexList(RList vector, RNull value, RComplex position) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
         }
 
         @Specialization(order = 25, guards = "!isVectorList")
         Object accessComplex(RAbstractVector vector, RNull value, RComplex position) {
+            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
@@ -2823,6 +2925,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 30, guards = {"emptyValue", "!isVectorList"})
         Object accessRawEmptyValue(RAbstractVector vector, RAbstractVector value, RRaw position) {
+            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else {
@@ -2832,6 +2935,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 31, guards = {"valueLongerThanOne", "!isVectorList"})
         Object accessRawValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RRaw position) {
+            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
@@ -2841,21 +2945,25 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 32, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
         Object accessRaw(RAbstractVector vector, RAbstractVector value, RRaw position) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
         }
 
         @Specialization(order = 33)
         Object accessRawList(RList vector, RAbstractVector value, RRaw position) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
         }
 
         @Specialization(order = 34)
         Object accessRawList(RList vector, RNull value, RRaw position) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
         }
 
         @Specialization(order = 35, guards = "!isVectorList")
         Object accessRaw(RAbstractVector vector, RNull value, RRaw position) {
+            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
@@ -2866,8 +2974,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 100, guards = {"noPosition", "emptyValue"})
         RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2877,8 +2987,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 101, guards = {"noPosition", "emptyValue", "!isVectorList"})
         RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2888,8 +3000,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 102, guards = {"noPosition", "valueLengthOne"})
         RAbstractVector accessListEmptyPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2899,8 +3013,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 103, guards = {"noPosition", "valueLongerThanOne"})
         RAbstractVector accessListEmptyPosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2910,8 +3026,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 104, guards = {"noPosition", "valueLongerThanOne", "!isVectorList"})
         RAbstractVector accessListEmptyPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2921,8 +3039,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 105, guards = "noPosition")
         RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2932,8 +3052,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 106, guards = {"noPosition", "!isVectorList"})
         RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2943,6 +3065,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 110, guards = {"onePosition", "emptyValue", "!isPosVectorInt"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2952,6 +3075,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 111, guards = {"onePosition", "emptyValue", "!firstPosZero"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2961,6 +3085,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 112, guards = {"onePosition", "emptyValue", "firstPosZero"})
         RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -2970,8 +3095,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 113, guards = {"onePosition", "emptyValue", "!isVectorList", "!isPosVectorInt"})
         RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -2981,6 +3108,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 114, guards = {"onePosition", "emptyValue", "!isVectorList", "!firstPosZero"})
         RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -2990,6 +3118,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 115, guards = {"onePosition", "emptyValue", "!isVectorList", "firstPosZero"})
         RAbstractVector accessListOnePosZeroEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -2999,6 +3128,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 116, guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3013,6 +3143,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 118, guards = {"onePosition", "valueLengthOne", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3022,6 +3153,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 119, guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3031,6 +3163,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 120, guards = {"onePosition", "valueLongerThanOne", "!firstPosZero"})
         RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3040,6 +3173,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 121, guards = {"onePosition", "valueLongerThanOne", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3049,8 +3183,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 122, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3060,6 +3196,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 123, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!firstPosZero"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3069,6 +3206,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 124, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3078,6 +3216,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 125, guards = {"onePosition", "!isPosVectorInt"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3087,6 +3226,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 126, guards = {"onePosition", "!firstPosZero"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
             if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3096,6 +3236,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 127, guards = {"onePosition", "firstPosZero"})
         RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3105,8 +3246,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 128, guards = {"onePosition", "!isVectorList", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3116,6 +3259,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 129, guards = {"onePosition", "!isVectorList", "!firstPosZero"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3125,6 +3269,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 130, guards = {"onePosition", "!isVectorList", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else {
                 return positions;
@@ -3134,8 +3279,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 140, guards = "multiPos")
         RAbstractVector accessListTwoPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3145,8 +3292,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 141, guards = {"multiPos", "emptyValue", "!isVectorList"})
         RAbstractVector accessListTwoPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getReplacementZero(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3156,8 +3305,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 142, guards = {"multiPos", "valueLengthOne", "!isVectorList"})
         RAbstractVector accessListTwoPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3167,8 +3318,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 143, guards = {"multiPos", "valueLongerThanOne", "!isVectorList"})
         RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3178,8 +3331,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 144, guards = "multiPos")
         RAbstractVector accessListTwoPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3189,8 +3344,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 145, guards = {"multiPos", "!isVectorList"})
         RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
             } else if (positions.getElementClass() == Object.class) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
             } else {
                 return positions;
@@ -3394,6 +3551,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 105)
         RIntVector coerce(VirtualFrame frame, RAbstractIntVector value, RAbstractRawVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "integer", "raw");
         }
 
@@ -3431,6 +3589,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 205)
         RDoubleVector coerce(VirtualFrame frame, RAbstractDoubleVector value, RAbstractRawVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "double", "raw");
         }
 
@@ -3468,6 +3627,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 305)
         RLogicalVector coerce(VirtualFrame frame, RAbstractLogicalVector value, RAbstractRawVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "logical", "raw");
         }
 
@@ -3505,6 +3665,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 405)
         RStringVector coerce(VirtualFrame frame, RAbstractStringVector value, RAbstractRawVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "character", "raw");
         }
 
@@ -3542,6 +3703,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 505)
         RComplexVector coerce(VirtualFrame frame, RAbstractComplexVector value, RAbstractRawVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "complex", "raw");
         }
 
@@ -3559,6 +3721,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 606, guards = "!isVectorList")
         RRawVector coerce(VirtualFrame frame, RAbstractRawVector value, RAbstractVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "raw", RRuntime.classToString(vector.getElementClass(), false));
         }
 
@@ -3590,6 +3753,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 906)
         RFunction coerce(VirtualFrame frame, RFunction value, RAbstractVector vector, Object operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "closure", RRuntime.classToString(vector.getElementClass(), false));
         }
 

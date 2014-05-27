@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -98,6 +100,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(order = 12, guards = "emptyName")
     public Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getExactlyOneWhich(getEncapsulatingSourceSection());
     }
 

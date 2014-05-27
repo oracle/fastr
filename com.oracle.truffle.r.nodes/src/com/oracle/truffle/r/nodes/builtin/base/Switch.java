@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -65,6 +66,7 @@ public abstract class Switch extends RBuiltinNode {
             }
             if (argName == null) {
                 if (currentDefaultValue != null) {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getDuplicateSwitchDefaults(getEncapsulatingSourceSection(), currentDefaultValue.toString(), value.toString());
                 }
                 currentDefaultValue = value;
@@ -99,6 +101,7 @@ public abstract class Switch extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 3)
     public Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getExprMissing(getEncapsulatingSourceSection());
     }
 
@@ -108,6 +111,7 @@ public abstract class Switch extends RBuiltinNode {
             if (value != null) {
                 return returnNonNull(value);
             }
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNoAlertnativeInSwitch(getEncapsulatingSourceSection());
         }
         return returnNull();

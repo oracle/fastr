@@ -73,14 +73,18 @@ public abstract class ArrayPositionCast extends RNode {
             if (assignment) {
                 if (isSubset) {
                     if (numDimensions == 2) {
+                        CompilerDirectives.transferToInterpreter();
                         throw RError.getIncorrectSubscriptsMatrix(sourceSection);
                     } else {
+                        CompilerDirectives.transferToInterpreter();
                         throw RError.getIncorrectSubscripts(sourceSection);
                     }
                 } else {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getImproperSubscript(sourceSection);
                 }
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getIncorrectDimensions(sourceSection);
             }
         }
@@ -271,12 +275,14 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 1)
         public RMissing doFuncOp(RAbstractContainer container, RFunction operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "closure");
         }
 
         @Specialization(order = 6, guards = "dimLengthOne")
         public int doMissingDimLengthOne(RAbstractContainer container, RMissing operand) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 if (assignment) {
                     throw RError.getMissingSubscript(getEncapsulatingSourceSection());
                 } else {
@@ -289,6 +295,7 @@ public abstract class ArrayPositionCast extends RNode {
         @Specialization(order = 7, guards = "!dimLengthOne")
         public RMissing doMissing(RAbstractContainer container, RMissing operand) {
             if (!isSubset) {
+                CompilerDirectives.transferToInterpreter();
                 if (assignment) {
                     throw RError.getMissingSubscript(getEncapsulatingSourceSection());
                 } else {
@@ -303,6 +310,7 @@ public abstract class ArrayPositionCast extends RNode {
             if (isSubset) {
                 return 0;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             }
         }
@@ -330,6 +338,7 @@ public abstract class ArrayPositionCast extends RNode {
         @Specialization(order = 13, guards = {"indNA", "!isSubset", "!isVectorList"})
         public int doIntNA(RAbstractContainer container, int operand) {
             if (!assignment) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
             } else {
                 // let assignment handle it as it depends on the value
@@ -355,6 +364,7 @@ public abstract class ArrayPositionCast extends RNode {
                 if (isSubset) {
                     return RRuntime.INT_NA;
                 } else {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
                 }
             }
@@ -362,6 +372,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 17, guards = {"!indNA", "outOfBounds", "!numDimensionsOne"})
         public int doIntOutOfBounds(RAbstractContainer container, int operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubscriptBounds(assignment ? getEncapsulatingSourceSection() : null);
         }
 
@@ -527,6 +538,7 @@ public abstract class ArrayPositionCast extends RNode {
             if (numDimensions == 1) {
                 return RRuntime.INT_NA;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSubscriptBounds(isSubset ? null : getEncapsulatingSourceSection());
             }
         }
@@ -552,6 +564,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 48, guards = {"indNA", "!numDimensionsOne"})
         public Object doStringNA(RAbstractContainer container, String operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
         }
 
@@ -619,6 +632,7 @@ public abstract class ArrayPositionCast extends RNode {
             if (numDimensions == 1) {
                 return RRuntime.INT_NA;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNoArrayDimnames(null);
             }
         }
@@ -628,6 +642,7 @@ public abstract class ArrayPositionCast extends RNode {
             if (numDimensions == 1) {
                 return RNull.instance;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNoArrayDimnames(null);
             }
         }
@@ -638,9 +653,11 @@ public abstract class ArrayPositionCast extends RNode {
                 if (numDimensions == 1) {
                     return RRuntime.INT_NA;
                 } else {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getNoArrayDimnames(null);
                 }
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
             }
         }
@@ -654,6 +671,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 66, guards = {"!isSubset", "opLengthZero"})
         public RAbstractIntVector doIntVectorOp(RList vector, RAbstractVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
         }
 
@@ -704,11 +722,13 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 136, guards = {"outOfBounds", "isSubset", "!opLengthOne", "!opLengthZero"})
         public RIntVector doLogicalVectorOutOfBounds(RAbstractContainer container, RAbstractLogicalVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getLogicalSubscriptLong(isSubset ? null : getEncapsulatingSourceSection());
         }
 
         @Specialization(order = 137, guards = {"outOfBounds", "!isSubset", "!opLengthOne", "!opLengthZero"})
         public RIntVector doLogicalVectorOutOfBoundsTooManySelected(RAbstractContainer container, RAbstractLogicalVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         }
 
@@ -766,6 +786,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 139, guards = {"!outOfBounds", "!isSubset", "!opLengthOne", "!opLengthZero"})
         public RIntVector doLogicalVectorTooManySelected(RAbstractContainer container, RAbstractLogicalVector operand) {
+            CompilerDirectives.transferToInterpreter();
             if (operand.getLength() == 2 && operand.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
                 throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
             } else {
@@ -785,11 +806,13 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 151, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
         public RIntVector doComplexVectorSubset(RAbstractContainer container, RAbstractComplexVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
         }
 
         @Specialization(order = 152, guards = {"!isSubset", "!opLengthOne", "!opLengthZero"})
         public RIntVector doComplexVector(RAbstractContainer container, RAbstractComplexVector operand) {
+            CompilerDirectives.transferToInterpreter();
             if (operand.getLength() == 2) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
             } else {
@@ -799,6 +822,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 153, guards = {"isSubset", "opLengthZero"})
         public RIntVector doComplexVectoTooFewSelectedSubset(RAbstractContainer container, RAbstractComplexVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
         }
 
@@ -809,11 +833,13 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 161, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
         public RAbstractIntVector doRawVectorSubset(RAbstractContainer container, RAbstractRawVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
         }
 
         @Specialization(order = 162, guards = {"!isSubset", "!opLengthOne", "!opLengthZero"})
         public RAbstractIntVector doRawVector(RAbstractContainer container, RAbstractRawVector operand) {
+            CompilerDirectives.transferToInterpreter();
             if (operand.getLength() == 2) {
                 throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
             } else {
@@ -823,6 +849,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 163, guards = {"isSubset", "opLengthZero"})
         public RIntVector doRawVectorTooFewSelectedSubset(RAbstractContainer container, RAbstractRawVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
         }
 
@@ -843,6 +870,7 @@ public abstract class ArrayPositionCast extends RNode {
                         data[i] = RRuntime.INT_NA;
                         seenNA = true;
                     } else {
+                        CompilerDirectives.transferToInterpreter();
                         throw RError.getSubscriptBounds(null);
                     }
                 }
@@ -893,7 +921,7 @@ public abstract class ArrayPositionCast extends RNode {
                 } else {
                     // TODO: this is slow - is it important to make it faster?
                     initialPos = eliminateDuplicate(operand, data, initialPos, i);
-// data[i] = (initialPos++) + 1;
+                    // data[i] = (initialPos++) + 1;
                 }
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, resNames);
@@ -948,6 +976,7 @@ public abstract class ArrayPositionCast extends RNode {
 
         @Specialization(order = 177, guards = {"!isSubset", "!opLengthOne", "!opLengthZero"})
         public RIntVector doStringVectorTooManySelected(RAbstractContainer container, RAbstractStringVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
         }
 
@@ -958,6 +987,7 @@ public abstract class ArrayPositionCast extends RNode {
                 Arrays.fill(data, RRuntime.INT_NA);
                 return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getSubscriptBounds(null);
             }
         }
@@ -1062,12 +1092,14 @@ public abstract class ArrayPositionCast extends RNode {
                     }
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
+                        CompilerDirectives.transferToInterpreter();
                         throw RError.getSubscriptBounds(null);
                     }
                     if (numDimensions == 1 && pos > container.getLength()) {
                         if (isSubset) {
                             outOfBounds = true;
                         } else {
+                            CompilerDirectives.transferToInterpreter();
                             throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
                         }
                     }
@@ -1093,6 +1125,7 @@ public abstract class ArrayPositionCast extends RNode {
             }
             if (hasSeenPositive || hasSeenNA) {
                 if (hasSeenNegative) {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getOnlyZeroMixed(getEncapsulatingSourceSection());
                 } else if (hasSeenZero || (outOfBounds && numDimensions == 1)) {
                     // eliminate 0-s and handle out-of-bounds for single-subscript accesses
@@ -1113,6 +1146,7 @@ public abstract class ArrayPositionCast extends RNode {
                 }
             } else if (hasSeenNegative) {
                 if (hasSeenNA) {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getOnlyZeroMixed(getEncapsulatingSourceSection());
                 }
                 boolean[] excludedPositions = new boolean[dimLength];

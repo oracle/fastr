@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -68,6 +69,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 10)
     public Object doNull(RNull operand) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
@@ -77,6 +79,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Specialization
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RFunction operand) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
@@ -87,11 +90,13 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Specialization(order = 30)
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RAbstractStringVector vector) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 
     @Specialization(order = 40)
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RList list) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidArgType(getEncapsulatingSourceSection());
     }
 

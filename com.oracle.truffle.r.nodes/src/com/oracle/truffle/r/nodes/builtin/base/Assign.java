@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -106,6 +107,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     public Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         if (pos == REnvironment.emptyEnv()) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot assign values in the empty environment");
         }
         try {

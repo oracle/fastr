@@ -12,6 +12,8 @@
 package com.oracle.truffle.r.nodes.builtin.stats;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -236,6 +238,7 @@ public abstract class Rnorm extends RBuiltinNode {
         /* else */
         if (x < xmin) {
             /* answer less than half precision because x too near -1 */
+            CompilerDirectives.transferToInterpreter();
             throw new RuntimeException("ERROR: ML_ERROR(ME_PRECISION, \"log1p\")");
         }
         return Math.log(1 + x);

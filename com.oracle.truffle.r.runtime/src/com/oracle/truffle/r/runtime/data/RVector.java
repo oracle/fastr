@@ -212,6 +212,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
             this.names = null;
         } else if (newNames != null && newNames != RNull.instance) {
             if (newNames != RNull.instance && ((RStringVector) newNames).getLength() > this.getLength()) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getAttributeVectorSameLength(sourceSection, RRuntime.NAMES_ATTR_KEY, ((RStringVector) newNames).getLength(), this.getLength());
             }
             if (this.dimensions != null && dimensions.length == 1) {
@@ -242,10 +243,12 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
             this.matrixDimension = 0;
         } else if (newDimNames != null) {
             if (dimensions == null) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getDimnamesNonarray(sourceSection);
             }
             int newDimNamesLength = newDimNames.getLength();
             if (newDimNamesLength > dimensions.length) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getDimNamesDontMatchDims(sourceSection, newDimNamesLength, dimensions.length);
             }
             for (int i = 0; i < newDimNamesLength; i++) {
@@ -255,6 +258,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
                     if (dimVector.getLength() == 0) {
                         newDimNames.updateDataAt(i, RNull.instance, null);
                     } else if (dimVector.getLength() != dimensions[i]) {
+                        CompilerDirectives.transferToInterpreter();
                         throw RError.getDimNamesDontMatchExtent(sourceSection, i + 1);
                     }
                 }

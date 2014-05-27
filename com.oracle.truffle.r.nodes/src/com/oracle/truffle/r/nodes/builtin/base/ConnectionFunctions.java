@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -103,6 +105,7 @@ public abstract class ConnectionFunctions {
         public Object file(String description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!open.equals("r")) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented open mode:" + open);
             }
             String ePath = Utils.tildeExpand(description);
@@ -119,6 +122,7 @@ public abstract class ConnectionFunctions {
         @Specialization(order = 100)
         public Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
         }
     }
@@ -141,6 +145,7 @@ public abstract class ConnectionFunctions {
             try {
                 String[] lines = con.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
+                    CompilerDirectives.transferToInterpreter();
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "too few lines read in readLines");
                 }
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
@@ -153,6 +158,7 @@ public abstract class ConnectionFunctions {
         @Specialization(order = 100)
         public Object readLines(Object con, Object n, Object ok, Object warn, Object encoding) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
         }
     }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -60,6 +61,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     public RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
         controlVisibility();
         if (dimensions.getLength() == 0) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
         }
         int[] dimsData = castInteger(frame, dimensions).materialize().getDataCopy();

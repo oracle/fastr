@@ -30,6 +30,7 @@ import jnr.ffi.annotations.*;
 import jnr.posix.*;
 import jnr.constants.platform.Errno;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -112,6 +113,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
                 // not a link
             } else {
                 // some other error
+                CompilerDirectives.transferToInterpreter();
                 throw new IOException();
             }
         }

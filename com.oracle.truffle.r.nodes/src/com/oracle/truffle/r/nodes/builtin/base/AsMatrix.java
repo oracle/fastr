@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -44,6 +46,7 @@ public abstract class AsMatrix extends RBuiltinNode {
     @Specialization(order = 100)
     public Object doAsMatrixNot(@SuppressWarnings("unused") Object vec) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getGenericError(getEncapsulatingSourceSection(), "invslid or unimplemented arg to as.matrix");
     }
 

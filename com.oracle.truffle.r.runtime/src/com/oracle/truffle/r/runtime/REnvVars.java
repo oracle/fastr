@@ -26,6 +26,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -114,6 +115,7 @@ public class REnvVars {
                 // name=value
                 int ix = line.indexOf('=');
                 if (ix < 0) {
+                    CompilerDirectives.transferToInterpreter();
                     throw invalid(path, line);
                 }
                 String var = line.substring(0, ix);

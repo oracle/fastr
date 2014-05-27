@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -56,6 +57,7 @@ public abstract class UseMethod extends RBuiltinNode {
     public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RMissing arg) {
         controlVisibility();
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
         }
         Object enclosingArg = RArguments.getArgument(frame, 0);
@@ -101,6 +103,7 @@ public abstract class UseMethod extends RBuiltinNode {
     @Specialization
     public Object useMethod(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object generic, @SuppressWarnings("unused") Object arg) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNonStringGeneric(getEncapsulatingSourceSection());
     }
 

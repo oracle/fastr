@@ -296,6 +296,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     private RLogicalVector cannotCoerceListError() {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getListCoercion(this.getSourceSection(), "logical");
     }
 

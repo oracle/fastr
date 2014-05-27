@@ -91,11 +91,13 @@ public abstract class UnaryArithmetic extends Operation {
 
         @Override
         public double opd(double op, int digits) {
+            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException();
         }
 
         @Override
         public RComplex opd(double re, double im, int digits) {
+            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException();
         }
 

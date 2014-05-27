@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.envframe;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
@@ -50,6 +51,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     @Override
     public void put(String key, Object value) throws REnvironment.PutException {
         if (lockedBindings != null && lockedBindings.contains(key)) {
+            CompilerDirectives.transferToInterpreter();
             throw createPutException(key);
         }
     }

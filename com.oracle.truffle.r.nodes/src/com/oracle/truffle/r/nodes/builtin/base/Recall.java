@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -54,6 +55,7 @@ public class Recall extends RCustomBuiltinNode {
         controlVisibility();
         RFunction function = RArguments.getFunction(frame);
         if (function == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getRecallCalledOutsideClosure(getEncapsulatingSourceSection());
         }
         if (callNode == null) {

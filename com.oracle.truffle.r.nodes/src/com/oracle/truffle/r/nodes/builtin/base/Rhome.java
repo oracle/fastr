@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.nio.file.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -61,6 +63,7 @@ public abstract class Rhome extends RBuiltinNode {
     @Specialization(order = 100)
     public Object doRhomeGeneric(@SuppressWarnings("unused") Object x) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
     }
 

@@ -83,6 +83,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findFunction(this.genericName, RRuntime.DEFAULT, callerFrame);
             if (targetFunction == null) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), this.genericName, RRuntime.toString(this.type));
             }
         }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -114,6 +115,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         if (value instanceof String) {
             return RVector.setClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RVector.class ? container : null);
         }
+        CompilerDirectives.transferToInterpreter();
         throw RError.getInvalidClassAttr(sourceSection);
     }
 
@@ -124,6 +126,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
             if (dimsVector.getLength() == 0) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
             }
             resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());

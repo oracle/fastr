@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -48,6 +50,7 @@ public class FrameFunctions {
 
         @Specialization
         public REnvironment parentFrame(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object n) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid argument");
         }
 

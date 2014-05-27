@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeFactory.ArithmeticCastFactory;
@@ -192,6 +193,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
     private void checkUnary() {
         if (unary == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getArgumentEmpty(getSourceSection(), 2);
         }
     }
@@ -1059,6 +1061,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 return RDataFactory.createComplexRealOne();
             } else if (this.binary instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getUnimplementedComplex(this.getEncapsulatingSourceSection());
             }
             return RRuntime.createComplexNA();
@@ -1069,6 +1072,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);
             } else if (this.binary instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getUnimplementedComplex(this.getEncapsulatingSourceSection());
             }
             return RRuntime.createComplexNA();
@@ -1247,11 +1251,13 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
         @Specialization
         public Object doStringVector(RStringVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNonNumericBinary(this.getSourceSection());
         }
 
         @Specialization
         public Object doRawVector(RRawVector operand) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNonNumericBinary(this.getSourceSection());
         }
 

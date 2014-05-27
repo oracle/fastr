@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -58,6 +60,7 @@ public class GrepFunctions {
         }
 
         private void notImplemented(String arg) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), arg + " arg not implemented");
         }
     }
@@ -70,6 +73,7 @@ public class GrepFunctions {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, invert);
             if (RRuntime.fromLogical(value)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "value == TRUE is not implemented");
             }
             int[] result = findAllIndexes(pattern, vector);

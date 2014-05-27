@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -84,6 +86,7 @@ public class SysFunctions {
         @Specialization(order = 100)
         public Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
         }
 
@@ -122,18 +125,19 @@ public class SysFunctions {
         @Specialization(order = 100)
         public Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw invalid();
         }
 
-        private RError invalid() throws RError {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'time' value");
+        private RError invalid() {
+            return RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'time' value");
         }
 
         private static long convertToMillis(double d) {
             return (long) (d * 1000);
         }
 
-        private double checkValidString(String s) throws RError {
+        private double checkValidString(String s) {
             try {
                 return Double.parseDouble(s);
             } catch (NumberFormatException ex) {
@@ -197,6 +201,7 @@ public class SysFunctions {
         @Specialization(order = 100)
         public Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
             controlVisibility();
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'paths' argument");
         }
     }

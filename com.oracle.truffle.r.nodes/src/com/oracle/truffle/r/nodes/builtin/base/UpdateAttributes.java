@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -91,6 +92,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         controlVisibility();
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getAttributesNamed(getEncapsulatingSourceSection());
         }
         RStringVector listNames = (RStringVector) listNamesObject;
@@ -112,6 +114,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             }
             // has to be reported if no other name is undefined
             if (listNames.getDataAt(0).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getZeroLengthVariable(getEncapsulatingSourceSection());
             }
             // set the dim attribute first
@@ -124,6 +127,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     } else {
                         RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
                         if (dimsVector.getLength() == 0) {
+                            CompilerDirectives.transferToInterpreter();
                             throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
                         }
                         resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
@@ -170,8 +174,8 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
     @Generic
     public RList doOther(VirtualFrame frame, Object vector, Object operand) {
-        CompilerDirectives.transferToInterpreter();
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getAttributesListOrNull(getEncapsulatingSourceSection());
     }
 

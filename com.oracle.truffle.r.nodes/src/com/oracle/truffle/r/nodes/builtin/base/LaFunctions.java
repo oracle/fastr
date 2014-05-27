@@ -12,6 +12,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -48,10 +50,12 @@ public class LaFunctions {
         public Object doRg(RDoubleVector matrix, byte onlyValues) {
             controlVisibility();
             if (!matrix.isMatrix()) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "'x' must be a square numeric matrix");
             }
             int[] dims = matrix.getDimensions();
             if (onlyValues == RRuntime.LOGICAL_NA) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid \"only.values\" argument");
             }
             // copy array component of matrix as Lapack destroys it
@@ -62,6 +66,7 @@ public class LaFunctions {
             boolean vectors = onlyValues == RRuntime.LOGICAL_FALSE;
             if (vectors) {
                 // TODO fix
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "\"only.values == FALSE\" not implemented");
             }
             double[] left = null;
@@ -116,7 +121,8 @@ public class LaFunctions {
             return result;
         }
 
-        private void dgeevError(int info) throws RError {
+        private void dgeevError(int info) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "error code " + info + " from Lapack routine 'dgeev'");
         }
     }

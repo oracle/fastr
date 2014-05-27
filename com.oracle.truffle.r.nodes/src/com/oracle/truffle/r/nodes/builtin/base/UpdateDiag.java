@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -63,6 +64,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @Specialization(order = 0, guards = "!isMatrix")
     public RIntVector updateDiagNoMatrix(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getOnlyMatrixDiagonals(this.getEncapsulatingSourceSection());
     }
 
@@ -70,6 +72,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @Specialization(order = 1, guards = {"isMatrix", "!correctReplacementLength"})
     public RIntVector updateDiagReplacementDiagonalLength(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getReplacementDiagonalLength(this.getEncapsulatingSourceSection());
     }
 

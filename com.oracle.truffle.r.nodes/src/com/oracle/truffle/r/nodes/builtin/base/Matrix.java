@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -166,6 +167,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     private int getValue(VirtualFrame frame, RAbstractVector arg) {
         if (isNumeric.execute(frame, arg) == RRuntime.LOGICAL_FALSE) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNonNumericMatrixExtent(getEncapsulatingSourceSection());
         }
         if (castIntNode == null) {
@@ -188,9 +190,11 @@ public abstract class Matrix extends RBuiltinNode {
     private int getNrow(VirtualFrame frame, RAbstractVector vecRow) {
         int nRow = getValue(frame, vecRow);
         if (nRow == RRuntime.INT_NA) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidNRow(getEncapsulatingSourceSection());
         }
         if (nRow < 0) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNegativeNRow(getEncapsulatingSourceSection());
         }
         return nRow;
@@ -199,9 +203,11 @@ public abstract class Matrix extends RBuiltinNode {
     private int getNcol(VirtualFrame frame, RAbstractVector vecCol) {
         int nCol = getValue(frame, vecCol);
         if (nCol == RRuntime.INT_NA) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getInvalidNCol(getEncapsulatingSourceSection());
         }
         if (nCol < 0) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getNegativeNCol(getEncapsulatingSourceSection());
         }
         return nCol;
@@ -214,6 +220,7 @@ public abstract class Matrix extends RBuiltinNode {
         int nCol = getNcol(frame, ncolp);
         if (nCol == 0) {
             if (xLen > 0) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNcolZero(getEncapsulatingSourceSection());
             } else {
                 nRow = 0;
@@ -231,6 +238,7 @@ public abstract class Matrix extends RBuiltinNode {
         int nRow = getNrow(frame, nrowp);
         if (nRow == 0) {
             if (xLen > 0) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getNrowZero(getEncapsulatingSourceSection());
             } else {
                 nCol = 0;

@@ -412,6 +412,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     private RIntVector cannotCoerceListError() {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getListCoercion(this.getSourceSection(), "integer");
     }
 

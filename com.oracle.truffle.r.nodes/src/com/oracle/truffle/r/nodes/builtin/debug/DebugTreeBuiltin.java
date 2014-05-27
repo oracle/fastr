@@ -68,6 +68,7 @@ public abstract class DebugTreeBuiltin extends RBuiltinNode {
     @Specialization
     public RNull printTree(Object function, @SuppressWarnings("unused") Object verbose) {
         controlVisibility();
+        CompilerDirectives.transferToInterpreter();
         throw RError.getNYI("Not a function value: " + function.toString());
     }
 }

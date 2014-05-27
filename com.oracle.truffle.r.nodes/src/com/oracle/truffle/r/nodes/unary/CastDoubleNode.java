@@ -367,6 +367,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     private RDoubleVector cannotCoerceListError() {
+        CompilerDirectives.transferToInterpreter();
         throw RError.getListCoercion(this.getSourceSection(), "numeric");
     }
 

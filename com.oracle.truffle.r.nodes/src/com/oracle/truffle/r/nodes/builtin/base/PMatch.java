@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -52,6 +53,7 @@ public abstract class PMatch extends RBuiltinNode {
         } else if (size == 1) {
             return RDataFactory.createIntVectorFromScalar(matches.get(0));
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "not implemented");
         }
     }
