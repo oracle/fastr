@@ -1042,11 +1042,12 @@ public abstract class ArrayPositionCast extends RNode {
             return data;
         }
 
+        @CompilationFinal private boolean hasSeenPositive = false;
+        @CompilationFinal private boolean hasSeenZero = false;
+        @CompilationFinal private boolean hasSeenNegative = false;
+        @CompilationFinal private boolean hasSeenNA = false;
+
         private RAbstractIntVector transformIntoPositive(RAbstractContainer container, RAbstractIntVector positions) {
-            boolean hasSeenPositive = false;
-            boolean hasSeenZero = false;
-            boolean hasSeenNegative = false;
-            boolean hasSeenNA = false;
             int zeroCount = 0;
             positionNACheck.enable(positions);
             int positionsLength = positions.getLength();

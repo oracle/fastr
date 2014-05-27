@@ -288,43 +288,35 @@ public abstract class SApply extends RBuiltinNode {
         }
     }
 
-    private Object call(VirtualFrame frame, RFunction function) {
+    private void ensureCallNode() {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
+    }
+
+    private Object call(VirtualFrame frame, RFunction function) {
+        ensureCallNode();
         return callNode.execute(frame, function);
     }
 
     private int callInt(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        if (callNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
-        }
+        ensureCallNode();
         return RTypesGen.RTYPES.expectInteger(callNode.execute(frame, function));
     }
 
     private double callDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        if (callNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
-        }
+        ensureCallNode();
         return RTypesGen.RTYPES.expectDouble(callNode.execute(frame, function));
     }
 
     private String callString(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        if (callNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
-        }
+        ensureCallNode();
         return RTypesGen.RTYPES.expectString(callNode.execute(frame, function));
     }
 
     private RStringVector callRStringVector(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        if (callNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
-        }
+        ensureCallNode();
         return RTypesGen.RTYPES.expectRStringVector(callNode.execute(frame, function));
     }
 
