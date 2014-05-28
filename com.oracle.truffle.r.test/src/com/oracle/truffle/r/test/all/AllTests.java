@@ -7084,6 +7084,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFrames_593fe73c46a68d53e16a70b3a0c583b5() {
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"\n\"); cat(\"parents are frame numbers\", sys.parents(), \"\n\"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testGet_17b5e1592125ebc43403174fb9611f19() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
     }

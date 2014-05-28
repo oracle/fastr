@@ -1626,6 +1626,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testFrames() {
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"\n\"); cat(\"parents are frame numbers\", sys.parents(), \"\n\"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }");
+    }
+
+    @Test
     public void testAttach() {
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, name = \"mine\"); x }");
         assertEval("{ e <- new.env(); assign(\"x\", \"abc\", e); attach(e, 2); x }");

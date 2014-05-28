@@ -6046,6 +6046,11 @@ Error in rm("foo", envir = baseenv()) :
 #{ format(c(7.42,42.7,NA)) }
 [1] " 7.42" "42.70" "   NA"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFrames
+#{ t1 <- function() {  aa <- 1; t2 <- function() { cat("current frame is", sys.nframe(), "
+"); cat("parents are frame numbers", sys.parents(), "
+"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
 #{ get(".Platform")$endian }
 [1] "little"

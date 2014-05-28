@@ -230,6 +230,19 @@ public final class Utils {
     }
 
     /**
+     * Return the depth of the stack, excluding the current frame and the pseudo-frame at the base.
+     */
+    public static int stackDepth() {
+        int depth = 0;
+        Iterator<FrameInstance> it = Truffle.getRuntime().getStackTrace().iterator();
+        while (it.hasNext()) {
+            depth++;
+            it.next();
+        }
+        return depth - 1;
+    }
+
+    /**
      * Retrieve the caller frame of the current frame.
      */
     public static Frame getCallerFrame(FrameAccess fa) {
