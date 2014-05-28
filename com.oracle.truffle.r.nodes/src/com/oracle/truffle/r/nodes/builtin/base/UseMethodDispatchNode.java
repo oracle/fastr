@@ -16,6 +16,8 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -24,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
+    @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     private MaterializedFrame storedEnclosingFrame;
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
@@ -41,6 +44,20 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
         setEnvironment(frame);
         return funCall;
+    }
+
+    public Object executeNoCache(VirtualFrame frame) {
+        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
+        findTargetFunction(callerFrame);
+        TruffleRuntime runtime = Truffle.getRuntime();
+        Object args[] = new Object[RArguments.getArgumentsLength(frame)];
+        for (int i = 0; i < args.length; ++i) {
+            args[i] = RArguments.getArgument(frame, i);
+        }
+        Object[] argObject = RArguments.create(targetFunction, args);
+        VirtualFrame newFrame = runtime.createVirtualFrame(argObject, new FrameDescriptor());
+        defineVars(newFrame);
+        return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 
     @Override
