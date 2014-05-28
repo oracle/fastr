@@ -49,4 +49,9 @@ public abstract class RRootNode extends RootNode {
         return getSourceSection().getCode();
     }
 
+    @Override
+    public boolean isSplittable() {
+        return true;
+    }
+
 }

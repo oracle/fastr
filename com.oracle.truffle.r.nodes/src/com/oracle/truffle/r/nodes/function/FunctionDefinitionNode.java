@@ -58,10 +58,6 @@ public final class FunctionDefinitionNode extends RRootNode {
         this.forGlobal = forGlobal;
     }
 
-    public Node getUninitializedBody() {
-        return uninitializedBody;
-    }
-
     public REnvironment getDescriptor() {
         return descriptor;
     }
@@ -85,4 +81,16 @@ public final class FunctionDefinitionNode extends RRootNode {
     public String toString() {
         return description;
     }
+
+    @Override
+    public boolean isSplittable() {
+        // don't bother splitting library-loading nodes
+        return !forGlobal;
+    }
+
+    @Override
+    public RootNode split() {
+        return new FunctionDefinitionNode(getSourceSection(), descriptor, NodeUtil.cloneNode(uninitializedBody), getParameterNames(), description, false);
+    }
+
 }
