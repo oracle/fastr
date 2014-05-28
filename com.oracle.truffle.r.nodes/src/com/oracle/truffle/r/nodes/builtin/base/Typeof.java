@@ -36,114 +36,114 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
 
-    public abstract RStringVector execute(VirtualFrame frame, Object x);
+    public abstract String execute(VirtualFrame frame, Object x);
 
     @Specialization
-    public RStringVector typeof(RNull vector) {
+    public String typeof(RNull vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("NULL");
+        return "NULL";
     }
 
     @Specialization
-    public RStringVector typeof(byte x) {
+    public String typeof(byte x) {
         controlVisibility();
-        return RDataFactory.createStringVector("logical");
+        return "logical";
     }
 
     @Specialization
-    public RStringVector typeof(int s) {
+    public String typeof(int s) {
         controlVisibility();
-        return RDataFactory.createStringVector("integer");
+        return "integer";
     }
 
     @Specialization
-    public RStringVector typeof(double x) {
+    public String typeof(double x) {
         controlVisibility();
-        return RDataFactory.createStringVector("double");
+        return "double";
     }
 
     @Specialization
-    public RStringVector typeof(RComplex x) {
+    public String typeof(RComplex x) {
         controlVisibility();
-        return RDataFactory.createStringVector("complex");
+        return "complex";
     }
 
     @Specialization
-    public RStringVector typeof(RRaw x) {
+    public String typeof(RRaw x) {
         controlVisibility();
-        return RDataFactory.createStringVector("raw");
+        return "raw";
     }
 
     @Specialization
-    public RStringVector typeof(String x) {
+    public String typeof(String x) {
         controlVisibility();
-        return RDataFactory.createStringVector("character");
+        return "character";
     }
 
     @Specialization
-    public RStringVector typeof(RIntSequence vector) {
+    public String typeof(RIntSequence vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("integer");
+        return "integer";
     }
 
     @Specialization
-    public RStringVector typeof(RLogicalVector vector) {
+    public String typeof(RLogicalVector vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("logical");
+        return "logical";
     }
 
     @Specialization
-    public RStringVector typeof(RIntVector vector) {
+    public String typeof(RIntVector vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("integer");
+        return "integer";
     }
 
     @Specialization
-    public RStringVector typeof(RDoubleVector vector) {
+    public String typeof(RDoubleVector vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("double");
+        return "double";
     }
 
     @Specialization
-    public RStringVector typeof(RStringVector vector) {
+    public String typeof(RStringVector vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("character");
+        return "character";
     }
 
     @Specialization
-    public RStringVector typeof(RComplexVector vector) {
+    public String typeof(RComplexVector vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("complex");
+        return "complex";
     }
 
     @Specialization
-    public RStringVector typeof(RRawVector vector) {
+    public String typeof(RRawVector vector) {
         controlVisibility();
-        return RDataFactory.createStringVector("raw");
+        return "raw";
     }
 
     @Specialization
-    public RStringVector typeof(RList list) {
+    public String typeof(RList list) {
         controlVisibility();
-        return RDataFactory.createStringVector("list");
+        return "list";
     }
 
     @Specialization()
-    public RStringVector typeof(REnvironment env) {
+    public String typeof(REnvironment env) {
         controlVisibility();
-        return RDataFactory.createStringVector("environment");
+        return "environment";
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")
-    public RStringVector typeofBuiltin(RFunction obj) {
+    public String typeofBuiltin(RFunction obj) {
         controlVisibility();
-        return RDataFactory.createStringVector("builtin");
+        return "builtin";
     }
 
     @Specialization(order = 101, guards = "!isFunctionBuiltin")
-    public RStringVector typeofClosure(RFunction obj) {
+    public String typeofClosure(RFunction obj) {
         controlVisibility();
-        return RDataFactory.createStringVector("closure");
+        return "closure";
     }
 
     public static boolean isFunctionBuiltin(RFunction fun) {

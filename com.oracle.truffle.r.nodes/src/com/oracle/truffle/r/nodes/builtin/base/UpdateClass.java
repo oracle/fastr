@@ -66,7 +66,7 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
         controlVisibility();
         initTypeof();
         if (!arg.isObject()) {
-            final String argType = this.typeof.execute(frame, arg).getDataAt(0);
+            final String argType = this.typeof.execute(frame, arg);
             if (argType.equals(className) || (className.equals(RRuntime.TYPE_NUMERIC) && (argType.equals(RRuntime.TYPE_INTEGER) || (argType.equals(RRuntime.TYPE_DOUBLE))))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);

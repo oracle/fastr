@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -40,64 +41,39 @@ import com.sun.tools.javac.util.*;
 @SuppressWarnings("unused")
 public abstract class IsVector extends RBuiltinNode {
 
+    @Child private Typeof typeof;
+
+    private String typeof(VirtualFrame frame, Object operand) {
+        if (typeof == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            typeof = insert(TypeofFactory.create(new RNode[1], getBuiltin()));
+        }
+        return typeof.execute(frame, operand);
+    }
+
     @Specialization(order = 1)
     public byte isNull(RNull operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization(order = 10)
-    public byte isNull(RDataFrame operand, String mode) {
+    public byte isNull(RDataFrame operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(order = 11)
-    public byte isNull(RDataFrame operand, RMissing mode) {
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization(order = 100, guards = {"isVectorInt", "namesOnlyOrNoAttr"})
-    public byte isInt(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(order = 200, guards = {"isVectorDouble", "namesOnlyOrNoAttr"})
-    public byte isDouble(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(order = 300, guards = {"isVectorComplex", "namesOnlyOrNoAttr"})
-    public byte isComplex(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(order = 400, guards = {"isVectorLogical", "namesOnlyOrNoAttr"})
-    public byte isLogical(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(order = 500, guards = {"isVectorString", "namesOnlyOrNoAttr"})
-    public byte isString(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(order = 600, guards = {"isVectorRaw", "namesOnlyOrNoAttr"})
-    public byte isRaw(RAbstractVector x, String mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(order = 700, guards = {"isVectorList", "namesOnlyOrNoAttr"})
+    @Specialization(order = 50, guards = {"namesOnlyOrNoAttr", "modeIsAnyOrMatches"})
     public byte isList(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization(order = 900, guards = "!namesOnlyOrNoAttr")
+    @Specialization(order = 51, guards = {"namesOnlyOrNoAttr", "!modeIsAnyOrMatches"})
+    public byte isNotVector(RAbstractVector x, String mode) {
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization(order = 52, guards = "!namesOnlyOrNoAttr")
     public byte isVectorAttr(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
@@ -111,12 +87,6 @@ public abstract class IsVector extends RBuiltinNode {
 
     @Specialization(order = 1001, guards = "!namesOnlyOrNoAttr")
     public byte isVectorAttr(RAbstractVector x, RMissing mode) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization(order = 1100, guards = "!modeIsAnyOrMatches")
-    public byte isNotVector(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
@@ -140,36 +110,9 @@ public abstract class IsVector extends RBuiltinNode {
         return namesOnlyOrNoAttrInternal(x, mode);
     }
 
-    protected boolean isVectorInt(RAbstractVector x, String mode) {
-        return x.getElementClass() == RInt.class && RRuntime.TYPE_INTEGER.equals(mode);
-    }
-
-    protected boolean isVectorDouble(RAbstractVector x, String mode) {
-        return x.getElementClass() == RDouble.class && (RRuntime.TYPE_NUMERIC.equals(mode) || RRuntime.TYPE_DOUBLE.equals(mode));
-    }
-
-    protected boolean isVectorComplex(RAbstractVector x, String mode) {
-        return x.getElementClass() == RComplex.class && RRuntime.TYPE_COMPLEX.equals(mode);
-    }
-
-    protected boolean isVectorLogical(RAbstractVector x, String mode) {
-        return x.getElementClass() == RLogical.class && RRuntime.TYPE_LOGICAL.equals(mode);
-    }
-
-    protected boolean isVectorString(RAbstractVector x, String mode) {
-        return x.getElementClass() == RString.class && RRuntime.TYPE_CHARACTER.equals(mode);
-    }
-
-    protected boolean isVectorRaw(RAbstractVector x, String mode) {
-        return x.getElementClass() == RRaw.class && RRuntime.TYPE_RAW.equals(mode);
-    }
-
-    protected boolean isVectorList(RAbstractVector x, String mode) {
-        return x.getElementClass() == Object.class && mode.equals("list");
-    }
-
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
-        return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode);
+        return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || (x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode)) ||
+                        (x.getElementClass() == Object.class && mode.equals("list"));
     }
 
 }

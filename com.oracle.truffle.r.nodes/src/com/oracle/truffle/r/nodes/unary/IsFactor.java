@@ -32,7 +32,7 @@ public abstract class IsFactor extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
         }
-        if (!typeof.execute(frame, x).getDataAt(0).equals(RRuntime.TYPE_INTEGER)) {
+        if (!typeof.execute(frame, x).equals(RRuntime.TYPE_INTEGER)) {
             return RRuntime.LOGICAL_FALSE;
         }
         if (inherits == null) {

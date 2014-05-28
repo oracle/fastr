@@ -36,7 +36,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
         }
-        String typeX = typeof.execute(frame, x).getDataAt(0);
+        String typeX = typeof.execute(frame, x);
         if (typeX.equals(value)) {
             return x;
         }

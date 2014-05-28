@@ -133,8 +133,8 @@ public abstract class CastTypeNode extends RInvisibleBuiltinNode {
 
     protected boolean isSameType(VirtualFrame frame, final RAbstractVector value, final String type) {
         initTypeof();
-        RStringVector givenType = typeof.execute(frame, value);
-        return givenType.getDataAt(0).equals(type);
+        String givenType = typeof.execute(frame, value);
+        return givenType.equals(type);
     }
 
     private void initTypeof() {
