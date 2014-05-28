@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,25 +24,30 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "commandArgs", kind = INTERNAL)
-public abstract class CommandArgs extends RBuiltinNode {
+@RBuiltin(name = "crossprod", kind = INTERNAL)
+public abstract class Crossprod extends RBuiltinNode {
+
+    // TODO: this is supposed to be slightly faster than t(x) %*% y but for now it should suffice
+
+    @Child protected MatMult matMult = MatMultFactory.create(new RNode[1], getBuiltin());
+    @Child protected Transpose transpose = TransposeFactory.create(new RNode[1], getBuiltin());
+
+    public Object crossprod(VirtualFrame frame, RAbstractVector vector1, RAbstractVector vector2) {
+        controlVisibility();
+        return matMult.executeObject(frame, transpose.execute(frame, vector1), vector2);
+    }
 
     @Specialization
-    public RStringVector commandArgs() {
+    @SuppressWarnings("unused")
+    public Object dimWithDimensions(VirtualFrame frame, RAbstractVector vector1, RNull vector2) {
         controlVisibility();
-        return getCommandArgs();
+        return matMult.executeObject(frame, transpose.execute(frame, vector1), vector1);
     }
-
-    @SlowPath
-    private static RStringVector getCommandArgs() {
-        String[] s = RContext.getInstance().getCommandArgs();
-        return RDataFactory.createStringVector(s, RDataFactory.COMPLETE_VECTOR);
-    }
-
 }

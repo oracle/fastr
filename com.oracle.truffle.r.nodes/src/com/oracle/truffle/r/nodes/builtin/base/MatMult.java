@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -37,6 +38,8 @@ public abstract class MatMult extends RBuiltinNode {
     @Child protected BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
     @Child protected BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
 
+    protected abstract Object executeObject(VirtualFrame frame, Object a, Object b);
+
     protected final NACheck na;
 
     public MatMult() {
@@ -48,7 +51,7 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 1, guards = "bothZeroDim")
-    public RDoubleVector both0Dim(RDoubleVector a, RDoubleVector b) {
+    public RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         int r = b.getDimensions()[1];
         int c = a.getDimensions()[0];
@@ -74,7 +77,7 @@ public abstract class MatMult extends RBuiltinNode {
     // double-double
 
     @Specialization(order = 10, guards = "matmat")
-    public RDoubleVector matmatmult(RDoubleVector a, RDoubleVector b) {
+    public RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
@@ -97,7 +100,7 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 11, guards = "vecvec")
-    public RDoubleVector vecvecmult(RDoubleVector a, RDoubleVector b) {
+    public RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         assert a.getLength() == b.getLength();
         double result = 0.0;
@@ -110,7 +113,7 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 12, guards = "matvec")
-    public RDoubleVector matvecmult(RDoubleVector a, RDoubleVector b) {
+    public RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         assert aCols == b.getLength();
@@ -129,7 +132,7 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 13, guards = "vecmat")
-    public RDoubleVector vecmatmult(RDoubleVector a, RDoubleVector b) {
+    public RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         // convert a to a matrix with one column, perform matrix multiplication
         int[] dims;
         if (b.getDimensions()[0] == 1) {
@@ -137,7 +140,7 @@ public abstract class MatMult extends RBuiltinNode {
         } else {
             dims = new int[]{1, a.getLength()};
         }
-        RDoubleVector amat = a.copyWithNewDimensions(dims);
+        RDoubleVector amat = a.materialize().copyWithNewDimensions(dims);
         return matmatmult(amat, b);
     }
 
@@ -223,19 +226,19 @@ public abstract class MatMult extends RBuiltinNode {
 
     // guards
 
-    protected static boolean matmat(RVector a, RVector b) {
+    protected static boolean matmat(RAbstractVector a, RAbstractVector b) {
         return a.isMatrix() && b.isMatrix();
     }
 
-    protected static boolean vecvec(RVector a, RVector b) {
+    protected static boolean vecvec(RAbstractVector a, RAbstractVector b) {
         return !a.isMatrix() && !b.isMatrix();
     }
 
-    protected static boolean matvec(RVector a, RVector b) {
+    protected static boolean matvec(RAbstractVector a, RAbstractVector b) {
         return a.isMatrix() && !b.isMatrix();
     }
 
-    protected static boolean vecmat(RVector a, RVector b) {
+    protected static boolean vecmat(RAbstractVector a, RAbstractVector b) {
         return !a.isMatrix() && b.isMatrix();
     }
 
