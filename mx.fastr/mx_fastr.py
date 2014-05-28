@@ -310,7 +310,7 @@ def rbcheck(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)
 
-def cmplibr(args):
+def rcmplib(args):
     '''compare FastR library R sources against GnuR'''
     parser = ArgumentParser(prog='mx cmplibr')
     parser.add_argument('--gnurhome', action='store',  help='path to GnuR sources', required=True)
@@ -342,6 +342,6 @@ def mx_init(suite):
         'junitsimple' : [junit_simple, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
-        'cmplibr' : [cmplibr, ['options']],
+        'rcmplib' : [rcmplib, ['options']],
     }
     mx.update_commands(suite, commands)

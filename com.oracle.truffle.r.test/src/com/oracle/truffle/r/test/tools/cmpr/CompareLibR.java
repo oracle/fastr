@@ -80,8 +80,8 @@ public class CompareLibR {
 
         Map<String, FileContent> fastRFiles = getFastR(lib);
         Map<String, FileContent> gnuRFiles = getGnuR(gnurHome, lib, fastRFiles);
-        flatten(gnuRFiles);
-        flatten(fastRFiles);
+        deformat(gnuRFiles);
+        deformat(fastRFiles);
         for (Map.Entry<String, FileContent> entry : fastRFiles.entrySet()) {
             FileContent fastR = entry.getValue();
             String fileName = entry.getKey();
@@ -98,33 +98,14 @@ public class CompareLibR {
         }
     }
 
-    private static String flatten(String s) {
-        String ss = s;
-        ss = ss.replace('\n', ' ');
-        ss = ss.replace('\t', ' ');
-        int i = 0;
-        int psx = 0;
-        StringBuffer sb = new StringBuffer();
-        int len = ss.length();
-        while (i < len) {
-            int sx = ss.indexOf("  ", psx);
-            if (sx < 0) {
-                break;
-            }
-            sb.append(ss.substring(psx, sx + 1));
-            psx = sx + 2;
-            while (psx < len && ss.charAt(psx) == ' ') {
-                psx++;
-            }
-        }
-        sb.append(ss.substring(psx));
-        return sb.toString();
+    private static String deformat(String s) {
+        return s.replaceAll("\\s+", " ");
     }
 
-    private static void flatten(Map<String, FileContent> map) {
+    private static void deformat(Map<String, FileContent> map) {
         for (Map.Entry<String, FileContent> entry : map.entrySet()) {
             FileContent fc = entry.getValue();
-            fc.flattened = flatten(fc.content);
+            fc.flattened = deformat(fc.content);
         }
     }
 
