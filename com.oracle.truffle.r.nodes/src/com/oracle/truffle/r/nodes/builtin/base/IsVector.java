@@ -24,74 +24,63 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
-import java.text.*;
-
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.sun.tools.javac.util.*;
 
 @RBuiltin(name = "is.vector", kind = PRIMITIVE)
-@SuppressWarnings("unused")
 public abstract class IsVector extends RBuiltinNode {
 
-    @Child private Typeof typeof;
-
-    private String typeof(VirtualFrame frame, Object operand) {
-        if (typeof == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], getBuiltin()));
-        }
-        return typeof.execute(frame, operand);
-    }
-
+    @SuppressWarnings("unused")
     @Specialization(order = 1)
     public byte isNull(RNull operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 10)
     public byte isNull(RDataFrame operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 50, guards = {"namesOnlyOrNoAttr", "modeIsAnyOrMatches"})
     public byte isList(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 51, guards = {"namesOnlyOrNoAttr", "!modeIsAnyOrMatches"})
     public byte isNotVector(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 52, guards = "!namesOnlyOrNoAttr")
     public byte isVectorAttr(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 1000, guards = "namesOnlyOrNoAttr")
     public byte isVector(RAbstractVector x, RMissing mode) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(order = 1001, guards = "!namesOnlyOrNoAttr")
     public byte isVectorAttr(RAbstractVector x, RMissing mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
-    protected static boolean namesOnlyOrNoAttrInternal(RAbstractVector x, Object mode) {
+    protected static boolean namesOnlyOrNoAttrInternal(RAbstractVector x, @SuppressWarnings("unused") Object mode) {
         // there should be no attributes other than names
         if (x.getNames() == RNull.instance) {
             assert x.getAttributes() == null || x.getAttributes().size() > 0;
