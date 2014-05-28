@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -1072,10 +1073,10 @@ public abstract class ArrayPositionCast extends RNode {
             return data;
         }
 
-        @CompilationFinal private boolean hasSeenPositive = false;
-        @CompilationFinal private boolean hasSeenZero = false;
-        @CompilationFinal private boolean hasSeenNegative = false;
-        @CompilationFinal private boolean hasSeenNA = false;
+        private AssumedValue<Boolean> hasSeenPositive = new AssumedValue<>("hasSeenPositive", false);
+        private AssumedValue<Boolean> hasSeenZero = new AssumedValue<>("hasSeenZero", false);
+        private AssumedValue<Boolean> hasSeenNegative = new AssumedValue<>("hasSeenNegative", false);
+        private AssumedValue<Boolean> hasSeenNA = new AssumedValue<>("hasSeenNA", false);
 
         private RAbstractIntVector transformIntoPositive(RAbstractContainer container, RAbstractIntVector positions) {
             int zeroCount = 0;
@@ -1086,9 +1087,8 @@ public abstract class ArrayPositionCast extends RNode {
             for (int i = 0; i < positionsLength; ++i) {
                 int pos = positions.getDataAt(i);
                 if (positionNACheck.check(pos)) {
-                    if (!hasSeenNA) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        hasSeenNA = true;
+                    if (!hasSeenNA.get()) {
+                        hasSeenNA.set(true);
                     }
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
@@ -1103,31 +1103,30 @@ public abstract class ArrayPositionCast extends RNode {
                             throw RError.getSubscriptBounds(getEncapsulatingSourceSection());
                         }
                     }
-                    if (!hasSeenPositive) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        hasSeenPositive = true;
+                    if (!hasSeenPositive.get()) {
+                        hasSeenPositive.set(true);
                     }
                 } else if (pos == 0) {
                     if (!isSubset) {
                         RError.getSelectLessThanOne(getEncapsulatingSourceSection());
                     }
-                    if (!hasSeenZero) {
+                    if (!hasSeenZero.get()) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        hasSeenZero = true;
+                        hasSeenZero.set(true);
                     }
                     zeroCount++;
                 } else {
-                    if (!hasSeenNegative) {
+                    if (!hasSeenNegative.get()) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        hasSeenNegative = true;
+                        hasSeenNegative.set(true);
                     }
                 }
             }
-            if (hasSeenPositive || hasSeenNA) {
-                if (hasSeenNegative) {
+            if (hasSeenPositive.get() || hasSeenNA.get()) {
+                if (hasSeenNegative.get()) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.getOnlyZeroMixed(getEncapsulatingSourceSection());
-                } else if (hasSeenZero || (outOfBounds && numDimensions == 1)) {
+                } else if (hasSeenZero.get() || (outOfBounds && numDimensions == 1)) {
                     // eliminate 0-s and handle out-of-bounds for single-subscript accesses
                     int[] data = eliminateZeros(container, positions, zeroCount);
                     return RDataFactory.createIntVector(data, positionNACheck.neverSeenNA() && !outOfBounds);
@@ -1144,8 +1143,8 @@ public abstract class ArrayPositionCast extends RNode {
                         return positions;
                     }
                 }
-            } else if (hasSeenNegative) {
-                if (hasSeenNA) {
+            } else if (hasSeenNegative.get()) {
+                if (hasSeenNA.get()) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.getOnlyZeroMixed(getEncapsulatingSourceSection());
                 }

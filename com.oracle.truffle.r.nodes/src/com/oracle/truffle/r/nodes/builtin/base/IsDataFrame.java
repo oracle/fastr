@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.text.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;

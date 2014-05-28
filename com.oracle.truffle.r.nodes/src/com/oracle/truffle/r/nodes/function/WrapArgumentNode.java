@@ -22,39 +22,30 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeChild(value = "operand", type = RNode.class)
 public abstract class WrapArgumentNode extends RProxyNode {
 
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenShared;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenTemporary;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenNonTemporary;
+    private BranchProfile everSeenShared = new BranchProfile();
+    private BranchProfile everSeenTemporary = new BranchProfile();
+    private BranchProfile everSeenNonTemporary = new BranchProfile();
 
     @Override
     protected RVector proxyVector(RVector vector) {
         if (vector.isShared()) {
-            if (!everSeenShared) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenShared = true;
-            }
+            everSeenShared.enter();
             return vector;
         }
         if (vector.isTemporary()) {
-            if (!everSeenTemporary) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenTemporary = true;
-            }
+            everSeenTemporary.enter();
             vector.markNonTemporary();
             return vector;
         }
-        if (!everSeenNonTemporary) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            everSeenNonTemporary = true;
-        }
+        everSeenNonTemporary.enter();
         vector.makeShared();
         return vector;
     }

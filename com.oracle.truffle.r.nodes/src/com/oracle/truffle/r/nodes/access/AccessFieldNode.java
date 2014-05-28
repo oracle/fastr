@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,16 +39,13 @@ public abstract class AccessFieldNode extends RNode {
 
     public abstract String getField();
 
-    @CompilationFinal protected boolean inexactMatch = false;
+    private final BranchProfile inexactMatch = new BranchProfile();
 
     @Specialization(order = 1, guards = "hasNames")
     public Object accessField(RList object) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
-            if (!inexactMatch) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                inexactMatch = true;
-            }
+            inexactMatch.enter();
             index = object.getElementIndexByNameInexact(getField());
         }
         return index == -1 ? RNull.instance : object.getDataAt(index);

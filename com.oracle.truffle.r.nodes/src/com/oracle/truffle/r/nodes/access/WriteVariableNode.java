@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeFactory;
@@ -44,12 +45,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public abstract RNode getRhs();
 
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenNonEqual;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenVector;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenNonShared;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenShared;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenTemporary;
-    @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean everSeenSequence;
+    private BranchProfile everSeenNonEqual = new BranchProfile();
+    private BranchProfile everSeenVector = new BranchProfile();
+    private BranchProfile everSeenNonShared = new BranchProfile();
+    private BranchProfile everSeenShared = new BranchProfile();
+    private BranchProfile everSeenTemporary = new BranchProfile();
 
     @Override
     public final boolean getVisibility() {
@@ -76,21 +76,12 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 throw new IllegalStateException();
             }
             if (frameValue != value) {
-                if (!everSeenNonEqual) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    everSeenNonEqual = true;
-                }
+                everSeenNonEqual.enter();
                 if (value instanceof RShareable) {
-                    if (!everSeenVector) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        everSeenVector = true;
-                    }
+                    everSeenVector.enter();
                     RShareable rShareable = (RShareable) value;
                     if (rShareable.isTemporary()) {
-                        if (!everSeenTemporary) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            everSeenTemporary = true;
-                        }
+                        everSeenTemporary.enter();
                         if (mode == COPY) {
                             RShareable shareableCopy = rShareable.copy();
                             newValue = shareableCopy;
@@ -98,20 +89,14 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                             rShareable.markNonTemporary();
                         }
                     } else if (rShareable.isShared()) {
-                        if (!everSeenShared) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            everSeenShared = true;
-                        }
+                        everSeenShared.enter();
                         RShareable shareableCopy = rShareable.copy();
                         if (mode != COPY) {
                             shareableCopy.markNonTemporary();
                         }
                         newValue = shareableCopy;
                     } else {
-                        if (!everSeenNonShared) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            everSeenNonShared = true;
-                        }
+                        everSeenNonShared.enter();
                         if (mode == COPY) {
                             RShareable shareableCopy = rShareable.copy();
                             newValue = shareableCopy;

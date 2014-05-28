@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -38,7 +39,7 @@ public final class NACheck implements RDataCheckClosure {
     private static final int CHECK = 2;
 
     @CompilerDirectives.CompilationFinal int state;
-    @CompilerDirectives.CompilationFinal boolean conversionOverflowReached;
+    private BranchProfile conversionOverflowReached = new BranchProfile();
     @CompilerDirectives.CompilationFinal boolean seenNaN;
 
     public static NACheck create() {
@@ -290,10 +291,7 @@ public final class NACheck implements RDataCheckClosure {
         }
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-            if (!this.conversionOverflowReached) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                this.conversionOverflowReached = true;
-            }
+            conversionOverflowReached.enter();
             RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
             check(RRuntime.INT_NA); // na encountered
             return RRuntime.INT_NA;
@@ -312,10 +310,7 @@ public final class NACheck implements RDataCheckClosure {
             } else {
                 int intValue = (int) value;
                 if (intValue == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                    if (!this.conversionOverflowReached) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        this.conversionOverflowReached = true;
-                    }
+                    conversionOverflowReached.enter();
                     warning = true;
                     check(RRuntime.INT_NA); // NA encountered
                     intValue = RRuntime.INT_NA;

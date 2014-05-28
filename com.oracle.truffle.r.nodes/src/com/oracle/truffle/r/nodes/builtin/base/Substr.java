@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -37,7 +38,7 @@ public abstract class Substr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
 
-    @CompilerDirectives.CompilationFinal protected boolean everSeenIllegalRange = false;
+    private BranchProfile everSeenIllegalRange = new BranchProfile();
 
     protected static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
@@ -51,10 +52,7 @@ public abstract class Substr extends RBuiltinNode {
         int actualStart = start;
         int actualStop = stop;
         if (!rangeOk(x, start, stop)) {
-            if (!everSeenIllegalRange) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenIllegalRange = true;
-            }
+            everSeenIllegalRange.enter();
             if (start > stop || (start <= 0 && stop <= 0) || (start > x.length() && stop > x.length())) {
                 return "";
             }

@@ -25,13 +25,13 @@ package com.oracle.truffle.r.nodes.access;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -41,7 +41,7 @@ public abstract class UpdateFieldNode extends RNode {
 
     public abstract String getField();
 
-    @CompilationFinal private boolean inexactMatch = false;
+    BranchProfile inexactMatch = new BranchProfile();
 
     @Child private CastListNode castList;
 
@@ -49,10 +49,7 @@ public abstract class UpdateFieldNode extends RNode {
     public Object updateField(RList object, Object value) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
-            if (!inexactMatch) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                inexactMatch = true;
-            }
+            inexactMatch.enter();
             index = object.getElementIndexByNameInexact(getField());
         }
 

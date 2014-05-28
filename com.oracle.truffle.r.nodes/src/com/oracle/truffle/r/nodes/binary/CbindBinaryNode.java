@@ -22,16 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CbindBinaryNode extends CombineBinaryNode {
 
-    @CompilationFinal boolean everSeenNotEqualRows;
+    private BranchProfile everSeenNotEqualRows = new BranchProfile();
 
     @SuppressWarnings("unused")
     @Specialization
@@ -70,10 +69,7 @@ public abstract class CbindBinaryNode extends CombineBinaryNode {
         }
         int leftEnd = leftLength;
         if (notEqualRows) {
-            if (!everSeenNotEqualRows) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenNotEqualRows = true;
-            }
+            everSeenNotEqualRows.enter();
             int j = 0;
             for (leftEnd = resultDimensions[0] * leftDimensions[1]; i < leftEnd; ++i, Utils.incMod(j, leftLength)) {
                 result.transferElementSameType(i, left, j);
@@ -87,10 +83,7 @@ public abstract class CbindBinaryNode extends CombineBinaryNode {
             result.transferElementSameType(i, right, i - leftEnd);
         }
         if (notEqualRows) {
-            if (!everSeenNotEqualRows) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenNotEqualRows = true;
-            }
+            everSeenNotEqualRows.enter();
             int j = 0;
             for (int resultEnd = resultDimensions[0] * resultDimensions[1]; i < resultEnd; ++i, Utils.incMod(j, leftLength)) {
                 result.transferElementSameType(i, right, j);

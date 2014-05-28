@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.CoerceBinaryNodeFactory.VectorUpdateValueCastFactory;
 import com.oracle.truffle.r.nodes.access.CoerceBinaryNodeFactory.VectorUpdateVectorCastFactory;
@@ -626,7 +627,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
         public abstract RNode getOperand();
 
-        @com.oracle.truffle.api.CompilerDirectives.CompilationFinal boolean seenShared;
+        BranchProfile seenShared = new BranchProfile();
 
         @Specialization
         public RNull doNull(RNull operand) {
@@ -714,10 +715,7 @@ public abstract class CoerceBinaryNode extends RNode {
         @SuppressWarnings("unchecked")
         private <T extends RVector> T doVector(T operand) {
             if (operand.isShared()) {
-                if (!seenShared) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    seenShared = true;
-                }
+                seenShared.enter();
                 return (T) operand.copy();
             }
             return operand;

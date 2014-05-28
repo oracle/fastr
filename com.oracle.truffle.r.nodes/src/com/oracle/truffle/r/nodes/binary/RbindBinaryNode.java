@@ -22,16 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RbindBinaryNode extends CombineBinaryNode {
 
-    @CompilationFinal boolean everSeenNotEqualCols;
+    private BranchProfile everSeenNotEqualCols = new BranchProfile();
 
     @SuppressWarnings("unused")
     @Specialization
@@ -80,10 +79,7 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
 
         // fill up from left into remaining columns if required
         if (notEqualCols) {
-            if (!everSeenNotEqualCols) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenNotEqualCols = true;
-            }
+            everSeenNotEqualCols.enter();
             rRow = 0;
             rCol = 0;
             for (int iLeft = 0; rCol + leftDimensions[1] < cols && rRow < leftDimensions[0]; iLeft = Utils.incMod(iLeft, leftLength)) {
@@ -108,10 +104,7 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
 
         // fill up from right into remaining columns if required
         if (notEqualCols) {
-            if (!everSeenNotEqualCols) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                everSeenNotEqualCols = true;
-            }
+            everSeenNotEqualCols.enter();
             rRow = 0;
             rCol = 0;
             for (int iRight = 0; rCol + rightDimensions[1] < cols && rRow + leftDimensions[0] < rows; iRight = Utils.incMod(iRight, rightLength)) {

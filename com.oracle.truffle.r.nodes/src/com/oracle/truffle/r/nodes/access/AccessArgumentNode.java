@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,7 +32,6 @@ public class AccessArgumentNode extends RNode {
     private final int index;
     @Child private RNode defaultValue;
     private final boolean defaultValueIsMissing;
-    @CompilationFinal private boolean neverSeenMissing = true;
 
     public AccessArgumentNode(int index, RNode defaultValue) {
         this.index = index;
@@ -48,9 +45,6 @@ public class AccessArgumentNode extends RNode {
             Object argument = RArguments.getArgument(frame, index);
             if (defaultValueIsMissing || argument != RMissing.instance) {
                 return argument;
-            } else if (neverSeenMissing) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                neverSeenMissing = false;
             }
         }
         return defaultValue.execute(frame);

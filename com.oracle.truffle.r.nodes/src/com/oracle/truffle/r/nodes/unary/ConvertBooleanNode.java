@@ -23,9 +23,9 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -165,17 +165,14 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         }
     }
 
-    @CompilationFinal private boolean neverSeenLengthZero = true;
+    private BranchProfile everSeenLengthZero = new BranchProfile();
 
     private boolean isNotEmpty(RVector value) {
         // TODO output warning if vector length > 1
         if (value.getLength() != 0) {
             return true;
         }
-        if (neverSeenLengthZero) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            neverSeenLengthZero = false;
-        }
+        everSeenLengthZero.enter();
         return false;
     }
 

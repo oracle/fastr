@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -357,7 +358,7 @@ public abstract class BinaryArithmetic extends Operation {
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // libgcc2
 
-        @CompilerDirectives.CompilationFinal private boolean everSeenNaN = false;
+        private BranchProfile everSeenNaN = new BranchProfile();
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
@@ -377,10 +378,7 @@ public abstract class BinaryArithmetic extends Operation {
             }
 
             if (Double.isNaN(real) && Double.isNaN(imag)) {
-                if (!everSeenNaN) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    everSeenNaN = true;
-                }
+                everSeenNaN.enter();
                 if (rightReal == 0.0 && rightImag == 0.0 && (!Double.isNaN(leftReal) || !Double.isNaN(leftImag)) && leftReal != 0.0 && rightReal != 0.0) {
                     real = Math.copySign(Double.POSITIVE_INFINITY, rightReal) * leftReal;
                     imag = Math.copySign(Double.POSITIVE_INFINITY, rightReal) * leftImag;
@@ -473,9 +471,9 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static class Pow extends BinaryArithmetic {
 
-        @CompilerDirectives.CompilationFinal private boolean exponentAlwaysTwo = true;
-        @CompilerDirectives.CompilationFinal private boolean exponentAlwaysInteger = true;
-        @CompilerDirectives.CompilationFinal private boolean exponentAlwaysPositiveInteger = true;
+        BranchProfile everSeenExponentOtherThanTwo = new BranchProfile();
+        BranchProfile everSeenNonIntegralExponent = new BranchProfile();
+        BranchProfile everSeenNegativeExponent = new BranchProfile();
 
         public Pow() {
             super(false, false, false);
@@ -491,37 +489,23 @@ public abstract class BinaryArithmetic extends Operation {
             int castExponent = (int) b;
 
             // Special case with exponent always two.
-            if (exponentAlwaysTwo) {
-                if (castExponent == 2) {
-                    return a * a;
-                } else {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    exponentAlwaysTwo = false;
-                }
+            if (castExponent == 2) {
+                return a * a;
             }
+            everSeenExponentOtherThanTwo.enter();
 
             // Special case with exponent always integer.
-            if (exponentAlwaysInteger) {
-                if (castExponent == b) {
-                    if (exponentAlwaysPositiveInteger) {
-                        if (castExponent >= 0) {
-                            return positivePow(a, castExponent);
-                        } else {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            exponentAlwaysPositiveInteger = false;
-                        }
-                    }
-                    if (castExponent < 0) {
-                        if (a == 0.0) {
-                            return Double.POSITIVE_INFINITY;
-                        }
-                        return 1 / positivePow(a, -castExponent);
-                    }
-                } else {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    exponentAlwaysInteger = false;
+            if (castExponent == b) {
+                if (castExponent >= 0) {
+                    return positivePow(a, castExponent);
                 }
+                everSeenNegativeExponent.enter();
+                if (a == 0.0) {
+                    return Double.POSITIVE_INFINITY;
+                }
+                return 1 / positivePow(a, -castExponent);
             }
+            everSeenNonIntegralExponent.enter();
 
             // Generic case with double exponent.
             if (isFinite(a) && isFinite(b)) {
@@ -640,15 +624,12 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CHypot extends Node {
 
-            @CompilerDirectives.CompilationFinal private boolean everSeenInfinite = false;
+            private BranchProfile everSeenInfinite = new BranchProfile();
 
             public double chypot(double real, double imag) {
                 double res = Math.sqrt(real * real + imag * imag);
                 if (!isFinite(real) || !isFinite(imag)) {
-                    if (!everSeenInfinite) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        everSeenInfinite = true;
-                    }
+                    everSeenInfinite.enter();
                     if (Double.isInfinite(real) || Double.isInfinite(imag)) {
                         res = Double.POSITIVE_INFINITY;
                     } else if (Double.isNaN(imag)) {
@@ -664,7 +645,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CPow2 extends Node {
 
-            @CompilerDirectives.CompilationFinal boolean everSeenNaN = false;
+            private BranchProfile everSeenNaN = new BranchProfile();
 
             public RComplex cpow2(double cre, double cim) {
                 double cre2 = cre * cre;
@@ -673,10 +654,7 @@ public abstract class BinaryArithmetic extends Operation {
                 double real = cre2 - cim2;
                 double imag = 2 * crecim;
                 if (Double.isNaN(real) && Double.isNaN(imag)) {
-                    if (!everSeenNaN) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        everSeenNaN = true;
-                    }
+                    everSeenNaN.enter();
                     boolean recalc = false;
                     double ra = cre;
                     double rb = cim;
@@ -773,7 +751,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CReciprocal extends Node {
 
-            @CompilerDirectives.CompilationFinal private boolean everSeenNaN = false;
+            private BranchProfile everSeenNaN = new BranchProfile();
 
             public RComplex creciprocal(RComplex c) {
                 double cre = c.getRealPart();
@@ -793,10 +771,7 @@ public abstract class BinaryArithmetic extends Operation {
                     imag = -ratio / denom;
                 }
                 if (Double.isNaN(real) && Double.isNaN(imag)) {
-                    if (!everSeenNaN) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        everSeenNaN = true;
-                    }
+                    everSeenNaN.enter();
                     if (cre == 0.0 && cim == 0.0) {
                         real = Math.copySign(Double.POSITIVE_INFINITY, cre);
                         imag = Math.copySign(Double.NaN, cre);
