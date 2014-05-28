@@ -6129,7 +6129,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testDate_dc2d15503c397a52d19f8f822448e08d() {
+    public void TestSimpleBuiltins_testDateIgnore_dc2d15503c397a52d19f8f822448e08d() {
         assertEval("{date()}");
     }
 
@@ -8844,6 +8844,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMean_88ca788f002cdf382d282f2b3775b846() {
+        assertEval("{ mean(c(1+2i))}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMean_02915f7c08b5f12a210dcf33404da606() {
         assertEval("{ mean(c(1+2i, 2+3i))}");
     }
@@ -8861,11 +8866,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testMean_6387bc9a676ed239e07185cd4cdd2f56() {
         assertEval("{ mean(c(TRUE, FALSE))}");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMeanIgnore_88ca788f002cdf382d282f2b3775b846() {
-        assertEval("{ mean(c(1+2i))}");
     }
 
     @Test

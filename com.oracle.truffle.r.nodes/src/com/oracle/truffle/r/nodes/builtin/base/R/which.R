@@ -16,5 +16,35 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+which <- function(x, arr.ind = FALSE, useNames = TRUE)
+{
+    wh <- .Internal(which(x))
+    if (arr.ind && !is.null(d <- dim(x)))
+        arrayInd(wh, d, dimnames(x), useNames=useNames) else wh
+}
+
+arrayInd <- function(ind, .dim, .dimnames = NULL, useNames = FALSE) {
+    ##-- return a matrix  length(ind) x rank == length(ind) x length(.dim)
+    m <- length(ind)
+    rank <- length(.dim)
+    wh1 <- ind - 1L
+    ind <- 1L + wh1 %% .dim[1L]
+    ind <- matrix(ind, nrow = m, ncol = rank,
+                  dimnames = if(useNames)
+                  list(.dimnames[[1L]][ind],
+                       if(rank == 2L) c("row", "col") # for matrices
+                       else paste0("dim", seq_len(rank))))
+    if(rank >= 2L) {
+        denom <- 1L
+        for (i in 2L:rank) {
+            denom <- denom * .dim[i-1L]
+            nextd1 <- wh1 %/% denom     # (next dim of elements) - 1
+            ind[,i] <- 1L + nextd1 %% .dim[i]
+        }
+    }
+    storage.mode(ind) <- "integer"
+    ind
+}
+
 which.min <- function(x) .Internal(which.min(x))
 which.max <- function(x) .Internal(which.max(x))

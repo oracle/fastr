@@ -929,7 +929,7 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDate_dc2d15503c397a52d19f8f822448e08d() {
+    public void TestSimpleBuiltins_testDateIgnore_dc2d15503c397a52d19f8f822448e08d() {
         assertEval("{date()}");
     }
 
@@ -1371,11 +1371,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testMaximumIgnore_05c8d18859b5c967c43445aa5d36985c() {
         assertEval("{ max(\"hi\",\"abbey\",\"hello\") }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testMeanIgnore_88ca788f002cdf382d282f2b3775b846() {
-        assertEval("{ mean(c(1+2i))}");
     }
 
     @Ignore

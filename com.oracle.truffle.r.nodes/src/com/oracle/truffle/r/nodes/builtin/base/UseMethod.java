@@ -75,7 +75,7 @@ public abstract class UseMethod extends RBuiltinNode {
             return useMethod(frame, generic, (double) enclosingArg);
         }
         if (enclosingArg instanceof RComplex) {
-            return useMethod(frame, generic, (double) enclosingArg);
+            return useMethod(frame, generic, (RComplex) enclosingArg);
         }
         return useMethod(frame, generic, (RAbstractContainer) enclosingArg);
     }

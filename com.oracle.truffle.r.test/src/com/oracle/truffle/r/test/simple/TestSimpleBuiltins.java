@@ -2861,7 +2861,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     // Date at real time differs by milliseconds.
-    public void testDate() {
+    public void testDateIgnore() {
         assertEval("{date()}");
     }
 
@@ -2900,16 +2900,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ mean(c(2,4))}");
         assertEval("{ mean(c(2L,4L,3L))}");
         assertEval("{ mean(c(1,2,3,4,5))}");
+        assertEval("{ mean(c(1+2i))}");
         assertEval("{ mean(c(1+2i, 2+3i))}");
         assertEval("{ mean(c(1+2i,1+3i,1+45i))}");
         assertEval("{ mean(c(TRUE, TRUE))}");
         assertEval("{ mean(c(TRUE, FALSE))}");
-    }
-
-    @Test
-    @Ignore
-    public void testMeanIgnore() {
-        assertEval("{ mean(c(1+2i))}");
     }
 
     @Test

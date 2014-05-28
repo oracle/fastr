@@ -7460,6 +7460,10 @@ In max() : no non-missing arguments to max; returning -Inf
 [1] 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(1+2i))}
+[1] 1+2i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
 #{ mean(c(1+2i, 2+3i))}
 [1] 1.5+2.5i
 

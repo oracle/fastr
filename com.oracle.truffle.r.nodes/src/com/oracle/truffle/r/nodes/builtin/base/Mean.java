@@ -88,20 +88,13 @@ public abstract class Mean extends RBuiltinNode {
     @Specialization
     public RComplex mean(RAbstractComplexVector x) {
         controlVisibility();
-
         RComplex sum = x.getDataAt(0);
-        double finalReal;
-        double finalImag;
         RComplex comp;
-
         for (int k = 1; k < x.getLength(); ++k) {
             comp = x.getDataAt(k);
             sum = add.op(sum.getRealPart(), sum.getImaginaryPart(), comp.getRealPart(), comp.getImaginaryPart());
         }
-        finalReal = div.op(sum.getRealPart(), x.getLength());
-        finalImag = div.op(sum.getImaginaryPart(), x.getLength());
-
-        return RDataFactory.createComplex(finalReal, finalImag);
+        return div.op(sum.getRealPart(), sum.getImaginaryPart(), x.getLength(), 0);
     }
 
 }
