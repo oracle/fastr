@@ -414,7 +414,25 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return vector;
     }
 
-    @Specialization(order = 50)
+    @Specialization(order = 48, guards = "emptyValue")
+    RNull updatePosZero(Object v, RAbstractVector value, int recLevel, int position, RNull vector) {
+        if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        }
+        return vector;
+    }
+
+    @Specialization(order = 49, guards = "emptyValue")
+    RNull updatePosZero(Object v, RAbstractVector value, int recLevel, RIntVector positions, RNull vector) {
+        if (!isSubset) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        }
+        return vector;
+    }
+
+    @Specialization(order = 50, guards = "!emptyValue")
     RIntVector update(Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         int[] data = new int[highestPos];
@@ -422,7 +440,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return updateSingleDimVector(value, 0, RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR), positions);
     }
 
-    @Specialization(order = 51, guards = {"!isPosNA", "!isPosZero"})
+    @Specialization(order = 51, guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     RIntVector update(Object v, RAbstractIntVector value, int recLevel, int position, RNull vector) {
         if (position > 1) {
             int[] data = new int[position];
@@ -433,7 +451,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization(order = 55)
+    @Specialization(order = 55, guards = "!emptyValue")
     RDoubleVector update(Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         double[] data = new double[highestPos];
@@ -441,7 +459,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return updateSingleDimVector(value, 0, RDataFactory.createDoubleVector(data, RDataFactory.INCOMPLETE_VECTOR), positions);
     }
 
-    @Specialization(order = 56, guards = {"!isPosNA", "!isPosZero"})
+    @Specialization(order = 56, guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     RDoubleVector update(Object v, RAbstractDoubleVector value, int recLevel, int position, RNull vector) {
         if (position > 1) {
             double[] data = new double[position];
@@ -452,7 +470,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization(order = 60)
+    @Specialization(order = 60, guards = "!emptyValue")
     RLogicalVector update(Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         byte[] data = new byte[highestPos];
@@ -460,7 +478,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return updateSingleDimVector(value, 0, RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR), positions);
     }
 
-    @Specialization(order = 61, guards = {"!isPosNA", "!isPosZero"})
+    @Specialization(order = 61, guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     RLogicalVector update(Object v, RAbstractLogicalVector value, int recLevel, int position, RNull vector) {
         if (position > 1) {
             byte[] data = new byte[position];
@@ -471,7 +489,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization(order = 65)
+    @Specialization(order = 65, guards = "!emptyValue")
     RStringVector update(Object v, RAbstractStringVector value, int recLevel, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         String[] data = new String[highestPos];
@@ -479,7 +497,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return updateSingleDimVector(value, 0, RDataFactory.createStringVector(data, RDataFactory.INCOMPLETE_VECTOR), positions);
     }
 
-    @Specialization(order = 66, guards = {"!isPosNA", "!isPosZero"})
+    @Specialization(order = 66, guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     RStringVector update(Object v, RAbstractStringVector value, int recLevel, int position, RNull vector) {
         if (position > 1) {
             String[] data = new String[position];
@@ -490,7 +508,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization(order = 70)
+    @Specialization(order = 70, guards = "!emptyValue")
     RComplexVector update(Object v, RAbstractComplexVector value, int recLevel, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         double[] data = new double[highestPos << 1];
@@ -502,7 +520,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return updateSingleDimVector(value, 0, RDataFactory.createComplexVector(data, RDataFactory.INCOMPLETE_VECTOR), positions);
     }
 
-    @Specialization(order = 71, guards = {"!isPosNA", "!isPosZero"})
+    @Specialization(order = 71, guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     RComplexVector update(Object v, RAbstractComplexVector value, int recLevel, int position, RNull vector) {
         if (position > 1) {
             double[] data = new double[position << 1];
@@ -517,12 +535,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization(order = 75)
+    @Specialization(order = 75, guards = "!emptyValue")
     RRawVector update(Object v, RAbstractRawVector value, int recLevel, RIntVector positions, RNull vector) {
         return updateSingleDimVector(value, 0, RDataFactory.createRawVector(getHighestPos(positions)), positions);
     }
 
-    @Specialization(order = 76, guards = {"!isPosNA", "!isPosZero"})
+    @Specialization(order = 76, guards = {"!emptyValue", "!isPosNA", "!isPosZero"})
     RRawVector update(Object v, RAbstractRawVector value, int recLevel, int position, RNull vector) {
         return updateSingleDim(value, RDataFactory.createRawVector(position), position);
     }

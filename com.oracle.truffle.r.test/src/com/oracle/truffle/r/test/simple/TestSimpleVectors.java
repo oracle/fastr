@@ -485,6 +485,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), \"a\", NULL); x[1,,] }");
         assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL, \"a\"); x[1,,] }");
         assertEval("{ x<-c(1, 2); dim(x)<-c(2,1,1); dimnames(x)<-list(c(\"b\", \"c\"), NULL, NULL); x[1,,] }");
+
+        assertEval("{ x <- c(\"a\", \"b\"); y<-NULL; y[integer()]<-x[integer()]; y }");
+        assertEval("{ x <- c(\"a\", \"b\"); y<-c(\"c\",\"d\"); y[integer()]<-x[integer()]; y}");
     }
 
     @Test

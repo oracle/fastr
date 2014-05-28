@@ -17794,6 +17794,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testMoreVectorsOther_d0dea4eb2381280371b9da9003fad5ae() {
+        assertEval("{ x <- c(\"a\", \"b\"); y<-NULL; y[integer()]<-x[integer()]; y }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testMoreVectorsOther_730ebd913a8fe72719fac23f4898793e() {
+        assertEval("{ x <- c(\"a\", \"b\"); y<-c(\"c\",\"d\"); y[integer()]<-x[integer()]; y}");
+    }
+
+    @Test
     public void TestSimpleVectors_testMoreVectorsOther_23e220f9c43711417c97b6024e96b424() {
         assertEvalError("{ x<-c(1,2); x[[c(\"a\")]] }");
     }

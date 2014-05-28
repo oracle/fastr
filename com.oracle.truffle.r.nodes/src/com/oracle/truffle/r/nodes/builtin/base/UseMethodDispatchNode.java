@@ -49,7 +49,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         findTargetFunction(callerFrame);
         TruffleRuntime runtime = Truffle.getRuntime();
-        Object args[] = new Object[RArguments.getArgumentsLength(frame)];
+        Object[] args = new Object[RArguments.getArgumentsLength(frame)];
         for (int i = 0; i < args.length; ++i) {
             args[i] = RArguments.getArgument(frame, i);
         }
