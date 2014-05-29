@@ -38,4 +38,11 @@ public interface LapackRFFI extends RFFI {
     // @formatter:off
     int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl,
                     double[] vr, int ldvr, double[] work, int lwork);
+
+    /**
+     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeqp3.f">spec</a>. The {@code info}
+     * arg in the Fortran spec is returned as result.
+     */
+    // @formatter:off
+    int dgeqp3(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork);
 }

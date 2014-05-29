@@ -569,15 +569,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- c(x=1) ; as.list(l) }");
+
+        // as.matrix
+        assertEval("{ as.matrix(1) }");
+        assertEval("{ as.matrix(1:3) }");
+        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
+        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
+
     }
 
     @Test
     @Ignore
     public void testCastsIgnore() {
-        assertEval("{ as.matrix(1) }");
-        assertEval("{ as.matrix(1:3) }");
-        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
-        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
         assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
         assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }"); // FIXME missing warning
     }
@@ -1623,6 +1626,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
+    }
+
+    @Test
+    public void testFrames() {
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"\n\"); cat(\"parents are frame numbers\", sys.parents(), \"\n\"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }");
     }
 
     @Test

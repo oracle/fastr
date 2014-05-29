@@ -184,7 +184,12 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
         void dgeev_(byte[] jobVL, byte[] jobVR, @In int[] n, @In double[] a, @In int[] lda, @Out double[] wr, @Out double[] wi,
                         @Out double[] vl, @In int[] ldvl, @Out double[] vr, @In int[] ldvr,
                         @In @Out double[] work, @In int[] lwork, @Out int[] info);
-    }
+
+        // @formatter:off
+        // Checkstyle: stop method name
+        void dgeqp3_(@In int[] m, @In int[] n, double[] a, @In int[] lda, int[] jpvt, @Out double[] tau, double[] work,
+                        @In int[] lwork, @Out int[] info);
+}
 
     private static class LapackProvider {
         private static Lapack lapack;
@@ -206,6 +211,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
         static int[] minor = new int[1];
         static int[] patch = new int[1];
     }
+
     public void ilaver(int[] version) {
         lapack().ilaver_(RefScalars_ilaver.major, RefScalars_ilaver.minor, RefScalars_ilaver.patch);
         version[0] = RefScalars_ilaver.major[0];
@@ -240,6 +246,26 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
                         RefScalars_dgeev.ldvl, vr, RefScalars_dgeev.ldvr, work,
                         RefScalars_dgeev.lwork, RefScalars_dgeev.info);
         return RefScalars_dgeev.info[0];
+    }
+
+    private static class RefScalars_dgeqp3 {
+        static int[] m = new int[1];
+        static int[] n = new int[1];
+        static int[] lda = new int[1];
+        static int[] lwork = new int[1];
+        static int[] info = new int[1];
+    }
+
+    public int dgeqp3(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
+        // assume single threaded calls here
+        RefScalars_dgeqp3.m[0] = m;
+        RefScalars_dgeqp3.n[0] = n;
+        RefScalars_dgeqp3.lda[0] = lda;
+        RefScalars_dgeqp3.lwork[0] = lwork;
+        // @formatter:off
+        lapack().dgeqp3_(RefScalars_dgeqp3.m, RefScalars_dgeqp3.n, a, RefScalars_dgeqp3.lda, jpvt, tau, work,
+                        RefScalars_dgeqp3.lwork, RefScalars_dgeqp3.info);
+        return RefScalars_dgeqp3.info[0];
     }
 
     /*
@@ -304,6 +330,5 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
             n[i] = pInt.getInt(i);
         }
     }
-
 
 }

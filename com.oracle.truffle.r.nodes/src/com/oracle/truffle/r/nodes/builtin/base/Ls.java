@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -48,19 +49,26 @@ public abstract class Ls extends RBuiltinNode {
                         ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
+    @Specialization(order = 0)
+    @SuppressWarnings("unused")
+    public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
+        controlVisibility();
+        // this is the ls() specialisation
+        return REnvironment.Function.createLsCurrent(frame.materialize()).ls(allNames == RRuntime.LOGICAL_TRUE, null);
+    }
+
+    @Specialization(order = 1)
     @SuppressWarnings("unused")
     public RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, RMissing pattern) {
         controlVisibility();
         return name.ls(allNames == RRuntime.LOGICAL_TRUE, null);
     }
 
-    @Specialization
     @SuppressWarnings("unused")
-    public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
+    @Specialization(order = 2)
+    public RStringVector ls(VirtualFrame frame, RMissing name, int pos, REnvironment envir, byte allNames, RMissing pattern) {
         controlVisibility();
-        // this is the ls() specialisation
-        return REnvironment.Function.createLsCurrent(frame.materialize()).ls(allNames == RRuntime.LOGICAL_TRUE, null);
+        return envir.ls(allNames == RRuntime.LOGICAL_TRUE, null);
     }
 
 }

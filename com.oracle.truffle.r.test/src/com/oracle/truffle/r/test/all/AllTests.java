@@ -5194,22 +5194,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_fd41615e647202e9a7f994c633674ca4() {
+    public void TestSimpleBuiltins_testCasts_fd41615e647202e9a7f994c633674ca4() {
         assertEval("{ as.matrix(1) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_c9e133e0d7fd2ee951acf79fd6d3f133() {
+    public void TestSimpleBuiltins_testCasts_c9e133e0d7fd2ee951acf79fd6d3f133() {
         assertEval("{ as.matrix(1:3) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_9887ea3892849f36e6cad0e4fc3793fa() {
+    public void TestSimpleBuiltins_testCasts_9887ea3892849f36e6cad0e4fc3793fa() {
         assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_e446fc18e1ac80f3580fd22c9214d841() {
+    public void TestSimpleBuiltins_testCasts_e446fc18e1ac80f3580fd22c9214d841() {
         assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
     }
 
@@ -7081,6 +7081,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testFormat_5b49973c1d63ca0aa8a1b921a1b2fe15() {
         assertEval("{ format(c(7.42,42.7,NA)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testFrames_593fe73c46a68d53e16a70b3a0c583b5() {
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"\n\"); cat(\"parents are frame numbers\", sys.parents(), \"\n\"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }");
     }
 
     @Test
