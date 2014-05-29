@@ -21,6 +21,8 @@ import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
 @RBuiltin(name = "storage.mode<-", kind = PRIMITIVE)
 public abstract class UpdateStorageMode extends RBuiltinNode {
@@ -53,8 +55,22 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin()));
         }
         Object result = castTypeNode.execute(frame, x, value);
-        // TODO: copy attributes from x to result.
-        return result != null ? result : x;
+        if (result == null) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getInvalidUnnamedValue(getEncapsulatingSourceSection());
+        } else {
+            if (x instanceof RAttributable && result instanceof RAttributable) {
+                RAttributable rx = (RAttributable) x;
+                RAttributes attrs = rx.getAttributes();
+                if (attrs != null) {
+                    RAttributable rresult = (RAttributable) result;
+                    for (RAttribute attr : attrs) {
+                        rresult.setAttr(attr.getName(), attr.getValue());
+                    }
+                }
+            }
+            return result;
+        }
     }
 
     @SuppressWarnings("unused")

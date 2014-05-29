@@ -80,8 +80,10 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public void initAttributes() {
-
+    public RAttributes initAttributes() {
+        // TODO implement
+        assert false;
+        return null;
     }
 
     @Override

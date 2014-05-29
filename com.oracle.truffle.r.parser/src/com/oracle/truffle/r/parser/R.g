@@ -95,7 +95,7 @@ package com.oracle.truffle.r.parser;
         }
         return src;
     }
-    
+
     /**
      * Create a {@link SourceSection} from a token and an {@link ASTNode}, spanning their source.
      */
@@ -490,6 +490,7 @@ simple_expr returns [ASTNode v]
     | t=INF                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/INF", t), "Inf"); }
     | t=NAN                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
     | t=NAINT                                   { $v = Constant.createIntConstant(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
+    | t=NAREAL                                  { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAREAL", t), "NA_real_"); }
     | num=number                                { $v = num; }
     | cstr=conststring                          { $v = cstr; }
     | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
@@ -630,7 +631,7 @@ FUNCTION : 'function' ;
 NULL     : 'NULL' ;
 NA       : 'NA' ;
 NAINT    : 'NA_integer_' ;
-///NAREAL   : 'NA_real_' ;
+NAREAL   : 'NA_real_' ;
 ///NACHAR   : 'NA_character_' ;
 ///NACOMPL  : 'NA_complex_' ;
 TRUE     : 'TRUE' ;

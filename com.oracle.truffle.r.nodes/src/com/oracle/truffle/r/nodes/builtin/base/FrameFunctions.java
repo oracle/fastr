@@ -48,7 +48,7 @@ public class FrameFunctions {
         }
 
         /**
-         * Handles n > 0 and n < 0 and errors relating to stack depth
+         * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
         protected Frame getFrame(int nn) {
             int n = nn;

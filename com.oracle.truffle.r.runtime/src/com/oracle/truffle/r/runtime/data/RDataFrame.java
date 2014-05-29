@@ -119,7 +119,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         return true;
     }
 
-    public void initAttributes() {
-        vector.initAttributes();
+    public RAttributes initAttributes() {
+        return vector.initAttributes();
     }
 }

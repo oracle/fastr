@@ -98,6 +98,14 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return copy;
     }
 
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public double[] getDataWithoutCopying() {
+        return data;
+    }
+
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
     }
