@@ -5194,22 +5194,22 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_fd41615e647202e9a7f994c633674ca4() {
+    public void TestSimpleBuiltins_testCasts_fd41615e647202e9a7f994c633674ca4() {
         assertEval("{ as.matrix(1) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_c9e133e0d7fd2ee951acf79fd6d3f133() {
+    public void TestSimpleBuiltins_testCasts_c9e133e0d7fd2ee951acf79fd6d3f133() {
         assertEval("{ as.matrix(1:3) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_9887ea3892849f36e6cad0e4fc3793fa() {
+    public void TestSimpleBuiltins_testCasts_9887ea3892849f36e6cad0e4fc3793fa() {
         assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCastsIgnore_e446fc18e1ac80f3580fd22c9214d841() {
+    public void TestSimpleBuiltins_testCasts_e446fc18e1ac80f3580fd22c9214d841() {
         assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
     }
 

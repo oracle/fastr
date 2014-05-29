@@ -569,15 +569,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- c(x=1) ; as.list(l) }");
+
+        // as.matrix
+        assertEval("{ as.matrix(1) }");
+        assertEval("{ as.matrix(1:3) }");
+        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
+        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
+
     }
 
     @Test
     @Ignore
     public void testCastsIgnore() {
-        assertEval("{ as.matrix(1) }");
-        assertEval("{ as.matrix(1:3) }");
-        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
-        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
         assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
         assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }"); // FIXME missing warning
     }

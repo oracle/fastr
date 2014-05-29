@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /*
@@ -41,8 +42,20 @@ public class LaFunctions {
         }
     }
 
+    public abstract static class LaHelper extends RBuiltinNode {
+
+        protected void error(String msg) throws RError {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
+        }
+
+        protected void lapackError(String func, int info) {
+            error("error code " + info + " from Lapack routine '" + func + "'");
+        }
+    }
+
     @RBuiltin(name = "La_rg", kind = INTERNAL)
-    public abstract static class Rg extends RBuiltinNode {
+    public abstract static class Rg extends LaHelper {
 
         private static final String[] NAMES = new String[]{"values", "vectors"};
 
@@ -50,13 +63,11 @@ public class LaFunctions {
         public Object doRg(RDoubleVector matrix, byte onlyValues) {
             controlVisibility();
             if (!matrix.isMatrix()) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "'x' must be a square numeric matrix");
+                error("'x' must be a square numeric matrix");
             }
             int[] dims = matrix.getDimensions();
             if (onlyValues == RRuntime.LOGICAL_NA) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid \"only.values\" argument");
+                error("invalid \"only.values\" argument");
             }
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
@@ -66,8 +77,7 @@ public class LaFunctions {
             boolean vectors = onlyValues == RRuntime.LOGICAL_FALSE;
             if (vectors) {
                 // TODO fix
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "\"only.values == FALSE\" not implemented");
+                error("\"only.values == FALSE\" not implemented");
             }
             double[] left = null;
             double[] right = null;
@@ -81,14 +91,14 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, -1);
             if (info != 0) {
-                dgeevError(info);
+                lapackError("dgeev", info);
             }
             // now allocate work array and make the actual call
             int lwork = (int) work[0];
             work = new double[lwork];
             info = RFFIFactory.getRFFI().getLapackRFFI().dgeev(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, lwork);
             if (info != 0) {
-                dgeevError(info);
+                lapackError("dgeev", info);
             }
             // result is a list containing "values" and "vectors" (unless only.values is TRUE)
             boolean complexValues = false;
@@ -121,9 +131,51 @@ public class LaFunctions {
             return result;
         }
 
-        private void dgeevError(int info) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "error code " + info + " from Lapack routine 'dgeev'");
+    }
+
+    @RBuiltin(name = "La_qr", kind = INTERNAL)
+    public abstract static class Qr extends LaHelper {
+        private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
+
+        @Specialization
+        public RList doQr(RAbstractVector aIn) {
+            // This implementation is sufficient for B25 matcal-5.
+            if (!aIn.isMatrix()) {
+                error("'a' must be a numeric matrix");
+            }
+            if (!(aIn instanceof RDoubleVector)) {
+                error("non-real vectors not supported (yet)");
+            }
+            RDoubleVector daIn = (RDoubleVector) aIn;
+            int[] dims = daIn.getDimensions();
+            // copy array component of matrix as Lapack destroys it
+            int n = dims[0];
+            int m = dims[1];
+            double[] a = daIn.getDataCopy();
+            int[] jpvt = new int[n];
+            double[] tau = new double[m < n ? m : n];
+            double[] work = new double[1];
+            // ask for optimal size of work array
+            int info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, -1);
+            if (info < 0) {
+                lapackError("dgeqp3", info);
+            }
+            int lwork = (int) work[0];
+            work = new double[lwork];
+            info = RFFIFactory.getRFFI().getLapackRFFI().dgeqp3(m, n, a, m, jpvt, tau, work, lwork);
+            if (info < 0) {
+                lapackError("dgeqp3", info);
+            }
+            Object[] data = new Object[4];
+            // TODO check complete
+            RDoubleVector ra = RDataFactory.createDoubleVector(a, RDataFactory.COMPLETE_VECTOR);
+            // TODO check pivot
+            ra.setDimensions(dims);
+            data[0] = ra;
+            data[1] = m < n ? m : n;
+            data[2] = RDataFactory.createDoubleVector(tau, RDataFactory.COMPLETE_VECTOR);
+            data[3] = RDataFactory.createIntVector(jpvt, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createList(data, RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR));
         }
     }
 
