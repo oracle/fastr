@@ -28,8 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "R.Version", kind = SUBSTITUTE)
-// TODO Implement in R, with Version INTERNAL
+@RBuiltin(name = "Version", kind = INTERNAL)
 public abstract class RVersion extends RBuiltinNode {
 
     @Specialization

@@ -6584,6 +6584,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDrop_9c4466ae3aad8bb14766359234733c90() {
+        assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEigen_5f76ba83937083ccca6e7d8fca5c8d43() {
         assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
     }
