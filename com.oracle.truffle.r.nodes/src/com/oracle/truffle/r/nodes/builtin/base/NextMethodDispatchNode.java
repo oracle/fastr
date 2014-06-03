@@ -15,7 +15,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -62,6 +61,27 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         executeHelper(frame);
         setEnvironment();
         return funCall;
+    }
+
+    public Object executeNoCache(VirtualFrame frame) {
+        readGenericVars(frame);
+        executeHelper(frame);
+        // Merge arguments passed to current function with arguments passed to NextMethod call.
+        final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
+        RArguments.copyArgumentsInto(frame, mergedArgs);
+        System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
+        Object[] argObject = RArguments.createS3Args(targetFunction, mergedArgs);
+        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
+        defineVarsNew(newFrame);
+        if (storedFunctionName != null) {
+            RArguments.setS3Method(newFrame, storedFunctionName);
+        } else {
+            RArguments.setS3Method(newFrame, targetFunctionName);
+        }
+        if (hasGroup) {
+            RArguments.setS3Group(newFrame, this.group);
+        }
+        return funCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
     private void executeHelper(VirtualFrame frame) {
@@ -165,33 +185,19 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     }
 
     private void readGenericVars(VirtualFrame frame) {
-        rvnDefEnv = initRvn(RRuntime.RDotGenericDefEnv, rvnDefEnv);
-        genDefEnv = readFrame(rvnDefEnv, frame);
+        genDefEnv = RArguments.getS3DefEnv(frame);
         // TODO if(genDefEnv == null) genDefEnv = globalenv
-        rvnCallEnv = initRvn(RRuntime.RDotGenericCallEnv, rvnCallEnv);
-        genCallEnv = readFrame(rvnCallEnv, frame);
+        genCallEnv = RArguments.getS3CallEnv(frame);
         if (genCallEnv == null) {
             genCallEnv = frame.materialize();
         }
-        rvnGroup = initRvn(RGroupGenerics.RDotGroup, rvnGroup);
-        try {
-            group = rvnGroup.executeString(frame);
-            if (group.isEmpty()) {
-                handleMissingGroup();
-            } else {
-                handlePresentGroup();
-            }
-        } catch (UnexpectedResultException e) {
+        group = RArguments.getS3Group(frame);
+        if (group == null || group.isEmpty()) {
             handleMissingGroup();
-        } catch (RError r) {
-            handleMissingGroup();
+        } else {
+            handlePresentGroup();
         }
-        rvnMethod = initRvn(RRuntime.RDotMethod, rvnMethod);
-        try {
-            storedFunctionName = rvnMethod.executeString(frame);
-        } catch (UnexpectedResultException e) {
-        } catch (RError r) {
-        }
+        storedFunctionName = RArguments.getS3Method(frame);
     }
 
     private void handleMissingGroup() {
@@ -207,25 +213,5 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         prefix[0] = genericName;
         prefix[1] = group;
         hasGroup = true;
-    }
-
-    private ReadVariableNode initRvn(final String name, ReadVariableNode node) {
-        if (node == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            ReadVariableNode rvn = ReadVariableNode.create(name, false);
-            return insert(rvn);
-        }
-        return node;
-    }
-
-    private static MaterializedFrame readFrame(ReadVariableNode rvn, VirtualFrame frame) {
-        try {
-            Object temp = rvn.execute(frame);
-            if (temp instanceof MaterializedFrame) {
-                return (MaterializedFrame) temp;
-            }
-        } catch (RError r) {
-        }
-        return null;
     }
 }

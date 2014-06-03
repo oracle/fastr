@@ -25,7 +25,6 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     private MaterializedFrame storedEnclosingFrame;
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
@@ -48,7 +47,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object executeNoCache(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         findTargetFunction(callerFrame);
-        TruffleRuntime runtime = Truffle.getRuntime();
         List<Object> argList = new ArrayList<>();
         for (int i = 0; i < RArguments.getArgumentsLength(frame); ++i) {
             Object arg = RArguments.getArgument(frame, i);
@@ -60,9 +58,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argList.add(arg);
             }
         }
-        Object[] argObject = RArguments.create(targetFunction, argList.toArray());
-        VirtualFrame newFrame = runtime.createVirtualFrame(argObject, new FrameDescriptor());
-        defineVars(newFrame);
+        Object[] argObject = RArguments.createS3Args(targetFunction, argList.toArray());
+        VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
+        genCallEnv = callerFrame;
+        defineVarsNew(newFrame);
+        RArguments.setS3Method(newFrame, targetFunctionName);
+        System.out.println("wrting targetFunctionName " + targetFunctionName);
         return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 

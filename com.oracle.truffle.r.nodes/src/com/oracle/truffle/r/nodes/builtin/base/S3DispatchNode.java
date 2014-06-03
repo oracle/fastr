@@ -14,6 +14,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
@@ -29,6 +31,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     @Child protected WriteVariableNode wvnMethod;
     @Child protected WriteVariableNode wvnDefEnv;
     @Child protected RNode[] argNodes;
+    @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;
     protected RStringVector klass;
@@ -89,6 +92,13 @@ public abstract class S3DispatchNode extends DispatchNode {
         wvnCallEnv.execute(frame, genCallEnv);
         wvnDefEnv = initWvn(wvnDefEnv, RRuntime.RDotGenericDefEnv);
         wvnDefEnv.execute(frame, genDefEnv);
+    }
+
+    protected void defineVarsNew(VirtualFrame frame) {
+        RArguments.setS3Generic(frame, genericName);
+        RArguments.setS3Class(frame, klass);
+        RArguments.setS3CallEnv(frame, genCallEnv);
+        RArguments.setS3DefEnv(frame, genDefEnv);
     }
 
     protected void addVars(VirtualFrame frame) {
