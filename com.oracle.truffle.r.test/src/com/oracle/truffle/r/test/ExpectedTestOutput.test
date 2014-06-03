@@ -6069,9 +6069,8 @@ Error in rm("foo", envir = baseenv()) :
 [1] " 7.42" "42.70" "   NA"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFrames
-#{ t1 <- function() {  aa <- 1; t2 <- function() { cat("current frame is", sys.nframe(), "
-"); cat("parents are frame numbers", sys.parents(), "
-"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }
+#{ t1 <- function() {  aa <- 1; t2 <- function() { cat("current frame is", sys.nframe(), "; "); cat("parents are frame numbers", sys.parents(), "; "); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }
+current frame is 2 ; parents are frame numbers 0 1 ; [1] "aa" "t2"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testGet
 #{ get(".Platform")$endian }
@@ -7509,6 +7508,9 @@ In min() : no non-missing arguments to min; returning Inf
 #{ nchar(c(10,130)) }
 [1] 2 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
+#{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
+ab
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
 #{ ngettext(-1, "a", "b") }
 Error in ngettext(-1, "a", "b") : invalid 'n' argument
@@ -9662,6 +9664,18 @@ $<NA>
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateNames
 #{ z <- c(a=1, b=2) ; names(z) <- NULL ; z }
 [1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateStorageMode
+#{ x <- c(1L, 2L); dim(x)<-c(1,2); storage.mode(x) <- "double"; x}
+     [,1] [,2]
+[1,]    1    2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateStorageMode
+#{ x <- c(1L, 2L); storage.mode(x) <- "double"}
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateStorageMode
+#{ x <- c(1L, 2L); storage.mode(x) <- "not.double"}
+Error in storage.mode(x) <- "not.double" : invalid value
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpperTriangular
 #{ m <- matrix(1:6, nrow=2) ;  upper.tri(m, diag=FALSE) }

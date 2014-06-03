@@ -63,7 +63,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);
-        System.out.println("wrting targetFunctionName " + targetFunctionName);
         return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 

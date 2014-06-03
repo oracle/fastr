@@ -140,10 +140,11 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         return match;
     }
 
-    public void initAttributes() {
+    public RAttributes initAttributes() {
         if (attributes == null) {
             attributes = RAttributes.create();
         }
+        return attributes;
     }
 
     /**
@@ -163,6 +164,8 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         }
         if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
             setNames(value);
+        } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
+            setDimensions(((RIntVector) value).getDataCopy());
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             setDimNames((RList) value);
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
@@ -185,6 +188,8 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         if (attributes != null) {
             if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
                 setNames(null);
+            } else if (name.equals(RRuntime.DIM_ATTR_KEY)) {
+                setDimensions(null);
             } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
                 setDimNames((RList) null);
             } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {

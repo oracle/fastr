@@ -7084,8 +7084,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testFrames_593fe73c46a68d53e16a70b3a0c583b5() {
-        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"\n\"); cat(\"parents are frame numbers\", sys.parents(), \"\n\"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }");
+    public void TestSimpleBuiltins_testFrames_a43ce3b962648c0ad589424dca9b966d() {
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"; \"); cat(\"parents are frame numbers\", sys.parents(), \"; \"); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }");
     }
 
     @Test
@@ -12001,6 +12001,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testUpdateNamesIgnore_d40e4da2cc65cb7648581165a629d52a() {
         assertEval("{ x <- 1:2; names(x) <- c(\"A\", \"B\") ; y <- c(1,2,3,4) ; names(y) <- c(\"X\", \"Y\", \"Z\") ; x + y }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateStorageMode_33228de9c28bb602b6f7c8b9217e5f80() {
+        assertEval("{ x <- c(1L, 2L); storage.mode(x) <- \"double\"}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateStorageMode_15e6d85f22cea8cf26ac980ef46d818f() {
+        assertEval("{ x <- c(1L, 2L); dim(x)<-c(1,2); storage.mode(x) <- \"double\"; x}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUpdateStorageMode_71eee9c23d388e1ee01b1077629133d6() {
+        assertEvalError("{ x <- c(1L, 2L); storage.mode(x) <- \"not.double\"}");
     }
 
     @Test

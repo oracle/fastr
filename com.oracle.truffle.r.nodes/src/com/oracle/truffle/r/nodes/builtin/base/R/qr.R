@@ -23,23 +23,14 @@ is.qr <- function(x) inherits(x, "qr")
 qr <- function(x, ...) UseMethod("qr")
 
 qr.default <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
-#qr <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
 {
   x <- as.matrix(x)
   if(is.complex(x)) {
-#		return(structure(.Internal(La_qr_cmplx(x)), class = "qr"))
-    # work around problem with structure
-    res <- .Internal(La_qr_cmplx(x))
-    attr(res, "class") <- "qr"
-        return(res)
+    return(structure(.Internal(La_qr_cmplx(x)), class = "qr"))
   }
   ## otherwise :
   if(LAPACK) {
-#		return(structure(.Internal(La_qr(x)), useLAPACK = TRUE, class = "qr"))
-    # work around problem with structure
-    res <- .Internal(La_qr(x))
-    attr(res, "class") <- "qr"
-    return(res)
+    return(structure(.Internal(La_qr(x)), useLAPACK = TRUE, class = "qr"))
   }
 
   p <- as.integer(ncol(x))
@@ -92,11 +83,12 @@ qr.coef <- function(qr, y)
   if(isTRUE(attr(qr, "useLAPACK"))) {
     coef <- matrix(NA_real_, nrow = p, ncol = ny)
     coef[qr$pivot, ] <- .Internal(qr_coef_real(qr, y))[ix, ]
-    return(if(im) coef else c(coef))
+	return(if(im) coef else c(coef))
   }
   if (k == 0L) return( if (im) matrix(NA, p, ny) else rep.int(NA, p))
 
   storage.mode(y) <- "double"
+  zz <- nrow(y)
   if( nrow(y) != n )
     stop("'qr' and 'y' must have the same number of rows")
   z <- .Fortran(.F_dqrcf,

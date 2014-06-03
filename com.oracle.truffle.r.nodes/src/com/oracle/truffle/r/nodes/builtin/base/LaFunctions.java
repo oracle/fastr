@@ -16,7 +16,9 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -179,4 +181,66 @@ public class LaFunctions {
         }
     }
 
+    @RBuiltin(name = "qr_coef_real", kind = INTERNAL)
+    public abstract static class QrCoefReal extends LaHelper {
+
+        private static final char SIDE = 'L';
+        private static final char TRANS = 'T';
+
+        @CreateCast("arguments")
+        protected RNode[] castbInArgument(RNode[] arguments) {
+            arguments[1] = CastDoubleNodeFactory.create(arguments[1], false, true, false);
+            return arguments;
+        }
+
+        @Specialization
+        public RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn) {
+            if (!bIn.isMatrix()) {
+                error("'b' must be a numeric matrix");
+            }
+            // If bIn was coerced this extra copy is unnecessary
+            RDoubleVector b = (RDoubleVector) bIn.copy();
+
+            RDoubleVector qr = (RDoubleVector) qIn.getDataAt(0);
+
+            RDoubleVector tau = (RDoubleVector) qIn.getDataAt(2);
+            int k = tau.getLength();
+
+            int[] bDims = bIn.getDimensions();
+            int[] qrDims = qr.getDimensions();
+            int n = qrDims[0];
+            if (bDims[0] != n) {
+                errorFormat("right-hand side should have %d not %d rows", n, bDims[0]);
+            }
+            int nrhs = bDims[1];
+            double[] work = new double[1];
+            // qr and tau do not really need copying
+            double[] qrData = qr.getDataWithoutCopying();
+            double[] tauData = tau.getDataWithoutCopying();
+            // we work directly in the internal data of b
+            double[] bData = b.getDataWithoutCopying();
+            // ask for optimal size of work array
+            int info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
+            if (info < 0) {
+                lapackError("dormqr", info);
+            }
+            int lwork = (int) work[0];
+            work = new double[lwork];
+            info = RFFIFactory.getRFFI().getLapackRFFI().dormqr(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, lwork);
+            if (info < 0) {
+                lapackError("dormqr", info);
+            }
+            info = RFFIFactory.getRFFI().getLapackRFFI().dtrtrs('U', 'N', 'N', k, nrhs, qrData, n, bData, n);
+            if (info < 0) {
+                lapackError("dtrtrs", info);
+            }
+            // TODO check complete
+            return b;
+        }
+
+        @SlowPath
+        private void errorFormat(String format, int a, int b) {
+            error(String.format(format, a, b));
+        }
+    }
 }

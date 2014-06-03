@@ -1630,7 +1630,7 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testFrames() {
-        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"\n\"); cat(\"parents are frame numbers\", sys.parents(), \"\n\"); print(ls(envir = sys.frame(-1))); invisible();  };  t2()} }");
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"; \"); cat(\"parents are frame numbers\", sys.parents(), \"; \"); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }");
     }
 
     @Test
@@ -2777,6 +2777,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{storage.mode(c(1,2,3))}");
         assertEval("{x<-1;storage.mode(x)<-\"character\"}");
         assertEval("{x<-1;storage.mode(x)<-\"logical\";x}");
+    }
+
+    @Test
+    public void testUpdateStorageMode() {
+        assertEval("{ x <- c(1L, 2L); storage.mode(x) <- \"double\"}");
+        assertEvalError("{ x <- c(1L, 2L); storage.mode(x) <- \"not.double\"}");
+        assertEval("{ x <- c(1L, 2L); dim(x)<-c(1,2); storage.mode(x) <- \"double\"; x}");
     }
 
     @Test

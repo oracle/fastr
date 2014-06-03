@@ -33,8 +33,10 @@ import com.oracle.truffle.r.runtime.*;
 public interface RAttributable {
     /**
      * If the attribute set is not initialized, then initialize it.
+     * 
+     * @return the pre-existing or new value
      */
-    void initAttributes();
+    RAttributes initAttributes();
 
     /**
      * Access all the attributes. Use {@code for (RAttribute a : getAttributes) ... }. Returns
@@ -47,10 +49,11 @@ public interface RAttributable {
      * generic; a class may need to override this to handle certain attributes specially,
      */
     default void setAttr(String name, Object value) {
-        if (getAttributes() == null) {
-            initAttributes();
+        RAttributes attributes = getAttributes();
+        if (attributes == null) {
+            attributes = initAttributes();
         }
-        getAttributes().put(name, value);
+        attributes.put(name, value);
     }
 
     /**
