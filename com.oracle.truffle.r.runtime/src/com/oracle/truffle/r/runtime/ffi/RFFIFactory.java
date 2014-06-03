@@ -79,6 +79,11 @@ public abstract class RFFIFactory {
         return null;
     }
 
+    public LinpackRFFI getLinpackRFFI() {
+        Utils.fail("getLinpackRFFI not implemented");
+        return null;
+    }
+
     public FCallRFFI getFCallRFFI() {
         Utils.fail("getFCallRFFI not implemented");
         return null;

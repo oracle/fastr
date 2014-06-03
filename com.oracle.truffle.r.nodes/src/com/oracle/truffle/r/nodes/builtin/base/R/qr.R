@@ -23,7 +23,7 @@ is.qr <- function(x) inherits(x, "qr")
 # qr <- function(x, ...) UseMethod("qr")
 
 #qr.default <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
-qr <- function(x, tol = 1e-07, LAPACK = TRUE, ...)
+qr <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
 {
   x <- as.matrix(x)
   if(is.complex(x)) {
@@ -40,8 +40,9 @@ qr <- function(x, tol = 1e-07, LAPACK = TRUE, ...)
   if(is.na(n)) stop("invalid nrow(x)")
   if(1.0 * n * p > 2147483647) stop("too large a matrix for LINPACK")
   storage.mode(x) <- "double"
-  res <- .Fortran(.F_dqrdc2,
-      qr = x,
+#  res <- .Fortran(.F_dqrdc2,
+  res <- .Fortran("dqrdc2",
+				  qr = x,
       n,
       n,
       p,
@@ -51,9 +52,9 @@ qr <- function(x, tol = 1e-07, LAPACK = TRUE, ...)
       pivot = as.integer(seq_len(p)),
       double(2L*p))[c(1,6,7,8)]# c("qr", "rank", "qraux", "pivot")
   if(!is.null(cn <- colnames(x))) {
-    # colnames(res$rq) <- cn[res$pivot]
+    # colnames(res$qr) <- cn[res$pivot]
     # work around parser limitation
-    resqr <- res$rq
+    resqr <- res$qr
     colnames(resqr) <- cn[res$pivot]
   }
   class(res) <- "qr"
@@ -92,7 +93,8 @@ qr.coef <- function(qr, y)
   zz <- nrow(y)
   if( nrow(y) != n )
     stop("'qr' and 'y' must have the same number of rows")
-  z <- .Fortran(.F_dqrcf,
+# z <- .Fortran(.F_dqrcf,
+  z <- .Fortran("dqrcf",
       as.double(qr$qr),
       n, k,
       as.double(qr$qraux),

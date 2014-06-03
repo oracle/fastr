@@ -34,9 +34,9 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * JNR-based factory Implements {@link BaseRFFI} and {@link LapackRFFI} directly.
+ * JNR-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, BaseRFFI, LapackRFFI, UserRngRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, BaseRFFI, LinpackRFFI, LapackRFFI, UserRngRFFI {
 
     // Base
 
@@ -329,6 +329,66 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
        lapack().dtrtrs_(RefScalars_dtrtrs.uplo, RefScalars_dtrtrs.trans, RefScalars_dtrtrs.diag, RefScalars_dtrtrs.n,
                        RefScalars_dtrtrs.nrhs, a, RefScalars_dtrtrs.lda, b, RefScalars_dtrtrs.ldb, RefScalars_dtrtrs.info);
        return RefScalars_dtrtrs.info[0];
+   }
+
+   /*
+    * Linpack functions
+    */
+
+   @Override
+   public LinpackRFFI getLinpackRFFI() {
+       return this;
+   }
+
+   public interface Linpack {
+       // @formatter:off
+       void dqrdc2_(double[] x, @In int[] ldx, @In int[] n, @In int[] p, @In double[] tol, int[] rank, double[] qraux,
+                       int[] pivot, @Out double[] work);
+       void dqrcf_(double[] x, @In int[] n, @In int[] k, double[] qraux, double[] y, @In int[] ny, double[] b, int[] info);
+   }
+
+   private static class LinpackProvider {
+       private static Linpack linpack;
+
+       static Linpack linpack() {
+           if (linpack == null) {
+               linpack = LibraryLoader.create(Linpack.class).load("R");
+           }
+           return linpack;
+       }
+   }
+
+   private static Linpack linpack() {
+       return LinpackProvider.linpack();
+   }
+
+   private static class RefScalars_dqrdc2 {
+       static int[] ldx = new int[1];
+       static int[] n = new int[1];
+       static int[] p = new int[1];
+       static double[] tol = new double[1];
+   }
+
+   public void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
+       RefScalars_dqrdc2.ldx[0] = ldx;
+       RefScalars_dqrdc2.n[0] = n;
+       RefScalars_dqrdc2.p[0] = p;
+       RefScalars_dqrdc2.tol[0] = tol;
+       linpack().dqrdc2_(x, RefScalars_dqrdc2.ldx, RefScalars_dqrdc2.n, RefScalars_dqrdc2.p, RefScalars_dqrdc2.tol, rank, qraux, pivot, work);
+   }
+
+
+   private static class RefScalars_dqrcf {
+       static int[] n = new int[1];
+       static int[] k = new int[1];
+       static int[] ny = new int[1];
+   }
+
+   public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
+       RefScalars_dqrcf.n[0] = n;
+       RefScalars_dqrcf.k[0] = k;
+       RefScalars_dqrcf.ny[0] = ny;
+       linpack().dqrcf_(x, RefScalars_dqrcf.n, RefScalars_dqrcf.k, qraux, y, RefScalars_dqrcf.ny, b, info);
    }
 
     /*

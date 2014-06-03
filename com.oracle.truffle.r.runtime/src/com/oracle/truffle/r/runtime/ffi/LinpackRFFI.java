@@ -23,34 +23,10 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * FastR foreign function interface. There are separate interfaces for the various kinds of foreign
- * functions that are possible in R:
- * <ul>
- * <li>{@link BaseRFFI}: the specific, typed, foreign functions required the built-in {@code base}
- * package.</li>
- * <li>{@link LapackRFFI}: the specific, typed, foreign functions required by the built-in
- * {@code Lapack} functions.</li>
- * <li>{@link LinpackRFFI}: the specific, typed, foreign functions required by the built-in
- * {@code Linpack} functions.</li>
- * <li>{@link FCallRFFI}: generic Fortran function interface</li>
- * <li>{@link CCallRFFI}: generic C call interface.
- * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.
- * </ul>
- *
- * These interfaces may be implemented by one or more providers, specified either when the FastR
- * system is built or run.
+ * Collection of statically typed methods from Linpack that are built in to a GnuR implementation.
  */
-public interface RFFI {
-    BaseRFFI getBaseRFFI();
+public interface LinpackRFFI {
+    void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
 
-    LapackRFFI getLapackRFFI();
-
-    LinpackRFFI getLinpackRFFI();
-
-    FCallRFFI getFCallRFFI();
-
-    CCallRFFI getCCallRFFI();
-
-    UserRngRFFI getUserRngRFFI();
-
+    void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
 }

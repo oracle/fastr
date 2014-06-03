@@ -579,6 +579,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testDrop() {
+        assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
+    }
+
+    @Test
     @Ignore
     public void testCastsIgnore() {
         assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
