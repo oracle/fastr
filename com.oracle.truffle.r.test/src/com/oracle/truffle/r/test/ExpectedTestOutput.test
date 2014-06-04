@@ -9245,6 +9245,126 @@ character(0)
      [,1] [,2] [,3]
 [1,]    1    2    3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ acos() }
+Error in acos() : 0 arguments passed to 'acos' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ acos(0.4) }
+[1] 1.159279
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ acos(c(0.3,0.6,0.9)) }
+[1] 1.2661037 0.9272952 0.4510268
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ asin() }
+Error in asin() : 0 arguments passed to 'asin' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ asin(0.4) }
+[1] 0.4115168
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ asin(c(0.3,0.6,0.9)) }
+[1] 0.3046927 0.6435011 1.1197695
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan() }
+Error in atan() : 0 arguments passed to 'atan' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan(0.4) }
+[1] 0.3805064
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan(c(0.3,0.6,0.9)) }
+[1] 0.2914568 0.5404195 0.7328151
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan2() }
+Error in atan2() : argument "y" is missing, with no default
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan2(0.4, 0.8) }
+[1] 0.4636476
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan2(0.4, c(0.3,0.6,0.9)) }
+[1] 0.9272952 0.5880026 0.4182243
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan2(0.7) }
+Error in atan2(0.7) : argument "x" is missing, with no default
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan2(c(0.3,0.6,0.9), 0.4) }
+[1] 0.6435011 0.9827937 1.1525720
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ atan2(c(0.3,0.6,0.9), c(0.4, 0.3)) }
+[1] 0.6435011 1.1071487 1.1525720
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ cos() }
+Error in cos() : 0 arguments passed to 'cos' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ cos(1.2) }
+[1] 0.3623578
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ cos(c(0.3,0.6,0.9)) }
+[1] 0.9553365 0.8253356 0.6216100
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ exp() }
+Error in exp() : 0 arguments passed to 'exp' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ exp(1) }
+[1] 2.718282
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ exp(c(1,2,3)) }
+[1]  2.718282  7.389056 20.085537
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ expm1() }
+Error in expm1() : 0 arguments passed to 'expm1' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ expm1(2) }
+[1] 6.389056
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ expm1(c(1,2,3)) }
+[1]  1.718282  6.389056 19.085537
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ sin() }
+Error in sin() : 0 arguments passed to 'sin' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ sin(1.2) }
+[1] 0.9320391
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ sin(c(0.3,0.6,0.9)) }
+[1] 0.2955202 0.5646425 0.7833269
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ tan() }
+Error in tan() : 0 arguments passed to 'tan' which requires 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ tan(1.2) }
+[1] 2.572152
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTrigExp
+#{ tan(c(0.3,0.6,0.9)) }
+[1] 0.3093362 0.6841368 1.2601582
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeCheck
 #{ is.array(1) }
 [1] FALSE
