@@ -102,15 +102,15 @@ public abstract class WhiteList {
 
     public void report() {
         int unusedCount = map.size();
-        System.out.printf("Ignored entries in %s%n", whiteListResource);
         for (Map.Entry<String, Results> entry : map.entrySet()) {
             if (!entry.getValue().used) {
-                System.out.println(entry.getKey());
                 unusedCount++;
             }
         }
         if (unusedCount == 0) {
-            System.out.printf("All entries in %s matched%n", whiteListResource);
+            System.out.printf("All entries in %s used%n", whiteListResource);
+        } else {
+            System.out.printf("%d entries in %s were not used%n", unusedCount, whiteListResource);
         }
     }
 

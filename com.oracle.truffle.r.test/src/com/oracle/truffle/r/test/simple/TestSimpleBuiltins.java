@@ -1127,6 +1127,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ asin(0.4) }");
         assertEval("{ acos(0.4) }");
         assertEval("{ atan(0.4) }");
+        assertEval("{ atan2(0.4, 0.8) }");
         assertEval("{ exp(1) }");
         assertEval("{ expm1(2) }");
         assertEval("{ sin(c(0.3,0.6,0.9)) }");
@@ -1135,8 +1136,21 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ asin(c(0.3,0.6,0.9)) }");
         assertEval("{ acos(c(0.3,0.6,0.9)) }");
         assertEval("{ atan(c(0.3,0.6,0.9)) }");
+        assertEval("{ atan2(c(0.3,0.6,0.9), 0.4) }");
+        assertEval("{ atan2(0.4, c(0.3,0.6,0.9)) }");
+        assertEval("{ atan2(c(0.3,0.6,0.9), c(0.4, 0.3)) }");
         assertEval("{ exp(c(1,2,3)) }");
         assertEval("{ expm1(c(1,2,3)) }");
+        assertEvalError("{ sin() }");
+        assertEvalError("{ cos() }");
+        assertEvalError("{ tan() }");
+        assertEvalError("{ asin() }");
+        assertEvalError("{ acos() }");
+        assertEvalError("{ atan() }");
+        assertEvalError("{ atan2() }");
+        assertEvalError("{ atan2(0.7) }");
+        assertEvalError("{ exp() }");
+        assertEvalError("{ expm1() }");
     }
 
     @Test

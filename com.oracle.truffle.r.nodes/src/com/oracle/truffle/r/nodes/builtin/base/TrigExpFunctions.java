@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class TrigExpFunctions {
 
     public static abstract class Adapter extends RBuiltinNode {
-        private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
+        private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
         Object error(String f) throws RError {
             CompilerDirectives.transferToInterpreter();
@@ -389,7 +389,7 @@ public class TrigExpFunctions {
     @RBuiltin(name = "atan2", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Atan2 extends AdapterCall2 {
 
-        private static final Object[] PARAMETER_NAMES = new Object[]{"x", "y"};
+        private static final String[] PARAMETER_NAMES = new String[]{"y", "x"};
 
         @Override
         public Object[] getParameterNames() {
@@ -404,7 +404,7 @@ public class TrigExpFunctions {
         @Override
         Object error(String arg) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument '" + arg + "' is missing, with no default");
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument \"" + arg + "\" is missing, with no default");
         }
 
         private static RNode castArgument(RNode node) {
@@ -423,12 +423,12 @@ public class TrigExpFunctions {
 
         @Specialization(order = 10)
         public Object atan(@SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
-            return error("x");
+            return error(PARAMETER_NAMES[0]);
         }
 
         @Specialization(order = 11)
         public Object atan(@SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
-            return error("y");
+            return error(PARAMETER_NAMES[1]);
         }
 
         @Specialization(order = 0)
@@ -446,7 +446,7 @@ public class TrigExpFunctions {
         @Specialization(order = 2)
         public RDoubleVector atan2(double x, RDoubleVector y) {
             controlVisibility();
-            RDoubleVector xv = RDataFactory.createDoubleVectorFromScalar(x);
+            RDoubleVector xv = RDataFactory.createDoubleVectorFromScalar(x).copyResized(y.getLength(), false);
             return doFun(xv, y, (double d1, double d2) -> Math.atan2(d1, d2));
         }
 
