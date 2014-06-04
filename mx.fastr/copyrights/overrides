@@ -1,6 +1,7 @@
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/binary/CastTypeNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Base.r,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Covcor.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Date.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchedCallNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
@@ -12,6 +13,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactor.java,pu
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/LaFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethodDispatchNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Prod.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/S3DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/S3MethodDispatch.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UnClass.java,purdue.copyright
@@ -22,6 +24,8 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/UseMethod
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Lapply.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Switch.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Format.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/WhichMax.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/WhichMin.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/stats/Rnorm.java,gnu_r.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseException.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseUtil.java,purdue.copyright

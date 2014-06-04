@@ -929,6 +929,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testDate_dc2d15503c397a52d19f8f822448e08d() {
+        assertEval("{date()}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testDelayedAssign_8ec95e38ecb3a999ffba3e7abc6ffb72() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
     }
@@ -1369,6 +1374,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testMeanIgnore_88ca788f002cdf382d282f2b3775b846() {
+        assertEval("{ mean(c(1+2i))}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testMinimumIgnore_439b91bb3000e058b9736056b15556a1() {
         assertEval("{ min(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
     }
@@ -1586,6 +1596,21 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testPasteIgnore_3408303a6c99992f74f43cb72bc7fa75() {
         assertEval("{ file.path() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testProdNa_75349670d382cb12b8cdbbfa32158e8a() {
+        assertEval("{prod(c(2,4,NA))}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testProdNa_568e8381169ab3f99f187e83583f8455() {
+        assertEval("{prod(c(2,4,3,NA),TRUE)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testProdNa_9bbd7d1d1e4ccf2057fefdbf93dd46a4() {
+        assertEval("{prod(c(1,2,3,4,5,NA),FALSE)}");
     }
 
     @Ignore
