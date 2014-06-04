@@ -234,7 +234,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    private static final class ConstantMissingNode extends ConstantNode {
+    public static final class ConstantMissingNode extends ConstantNode {
 
         @Override
         public RMissing executeMissing(VirtualFrame frame) {

@@ -22,36 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-/**
- * TODO flesh this out, it only supports the identify function currently (for b25).
- */
-@RBuiltin(name = "as.matrix", kind = SUBSTITUTE)
-// TODO revert to R
-public abstract class AsMatrix extends RBuiltinNode {
-
-    @Specialization(order = 0, guards = "isMatrix")
-    public Object doAsMatrix(RAbstractVector vec) {
-        controlVisibility();
-        return vec;
+@RBuiltin(name = "drop", kind = RBuiltinKind.INTERNAL)
+public abstract class Drop extends RBuiltinNode {
+    @Specialization
+    public RAbstractVector doDrop(RAbstractVector x) {
+        int[] dims = x.getDimensions();
+        int[] newDims = new int[dims.length];
+        int count = 0;
+        for (int i = 0; i < dims.length; i++) {
+            if (dims[i] != 1) {
+                newDims[count++] = dims[i];
+            }
+        }
+        if (count == 0) {
+            return x;
+        }
+        RAbstractVector result = x.copyWithNewDimensions(Arrays.copyOf(newDims, count));
+        RList dimNames = x.getDimNames();
+        if (dimNames != null) {
+            // TODO adjust
+            assert false;
+        }
+        return result;
     }
-
-    @Specialization(order = 100)
-    public Object doAsMatrixNot(@SuppressWarnings("unused") Object vec) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invslid or unimplemented arg to as.matrix");
-    }
-
-    public boolean isMatrix(RAbstractVector vec) {
-        return vec.isMatrix();
-    }
-
 }

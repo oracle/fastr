@@ -20,20 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.builtin.debug;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "Version", kind = INTERNAL)
-public abstract class RVersion extends RBuiltinNode {
+@RBuiltin(name = "debug.break", kind = PRIMITIVE)
+public abstract class DebugBreak extends RBuiltinNode {
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public RNull doBreak(VirtualFrame frame, RMissing arg) {
+        return RNull.instance;
+    }
 
     @Specialization
-    public Object doRVersion(@SuppressWarnings("unused") RMissing x) {
-        controlVisibility();
-        return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
+    public RNull doBreak(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
+        return RNull.instance;
     }
+
 }

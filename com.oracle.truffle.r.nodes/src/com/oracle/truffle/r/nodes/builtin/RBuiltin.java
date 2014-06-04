@@ -33,6 +33,8 @@ public @interface RBuiltin {
 
     String[] aliases() default {};
 
+    boolean isCombine() default false;
+
     LastParameterKind lastParameterKind() default LastParameterKind.VALUE;
 
     public enum LastParameterKind {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.runtime.ffi;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+/**
+ * Collection of statically typed methods from Linpack that are built in to a GnuR implementation.
+ */
+public interface LinpackRFFI {
+    void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
 
-@RBuiltin(name = "Version", kind = INTERNAL)
-public abstract class RVersion extends RBuiltinNode {
-
-    @Specialization
-    public Object doRVersion(@SuppressWarnings("unused") RMissing x) {
-        controlVisibility();
-        return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
-    }
+    void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
 }

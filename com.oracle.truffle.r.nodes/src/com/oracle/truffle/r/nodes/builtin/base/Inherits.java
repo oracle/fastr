@@ -41,7 +41,7 @@ public abstract class Inherits extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what);
+    public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what, byte which);
 
     @Specialization(order = 0)
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {

@@ -34,9 +34,9 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * JNR-based factory Implements {@link BaseRFFI} and {@link LapackRFFI} directly.
+ * JNR-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, BaseRFFI, LapackRFFI, UserRngRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, BaseRFFI, LinpackRFFI, LapackRFFI, UserRngRFFI {
 
     // Base
 
@@ -173,7 +173,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
 
     /**
      * Fortran does call by reference for everything, which we handle with arrays. Evidently, this
-     * is not as efficient as it could be.
+     * is not as efficient as it could be. This implementation assumes a single-threaded
+     * environment.
      */
     public interface Lapack {
         // Checkstyle: stop method name
@@ -181,10 +182,26 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
 
         // @formatter:off
         // Checkstyle: stop method name
-        void dgeev_(byte[] jobVL, byte[] jobVR, @In int[] n, @In double[] a, @In int[] lda, @Out double[] wr, @Out double[] wi,
+        void dgeev_(@In byte[] jobVL, @In byte[] jobVR, @In int[] n, @In double[] a, @In int[] lda, @Out double[] wr, @Out double[] wi,
                         @Out double[] vl, @In int[] ldvl, @Out double[] vr, @In int[] ldvr,
-                        @In @Out double[] work, @In int[] lwork, @Out int[] info);
-    }
+                        @Out double[] work, @In int[] lwork, @Out int[] info);
+
+        // @formatter:off
+        // Checkstyle: stop method name
+        void dgeqp3_(@In int[] m, @In int[] n, double[] a, @In int[] lda, int[] jpvt, @Out double[] tau, @Out double[] work,
+                        @In int[] lwork, @Out int[] info);
+
+        // @formatter:off
+        // Checkstyle: stop method name
+        int dormqr_(@In byte[] side, @In byte[] trans, @In int[] m, @In int[] n, @In int[] k, @In double[] a, @In int[] lda,
+                        @In double[] tau, double[] c, @In int[] ldc, @Out double[] work, @In int[] lwork, @Out int[] info);
+
+        // @formatter:off
+        // Checkstyle: stop method name
+       int dtrtrs_(@In byte[] uplo, @In byte[] trans, @In byte[] diag, @In int[] n, @In int[] nrhs, @In double[] a, @In int[] lda,
+                       double[] b, @In int[] ldb, @Out int[] info);
+
+}
 
     private static class LapackProvider {
         private static Lapack lapack;
@@ -201,11 +218,17 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
         return LapackProvider.lapack();
     }
 
+    private static abstract class RefScalars_basic {
+        static int[] lwork = new int[1];
+        static int[] info = new int[1];
+    }
+
     private static class RefScalars_ilaver {
         static int[] major = new int[1];
         static int[] minor = new int[1];
         static int[] patch = new int[1];
     }
+
     public void ilaver(int[] version) {
         lapack().ilaver_(RefScalars_ilaver.major, RefScalars_ilaver.minor, RefScalars_ilaver.patch);
         version[0] = RefScalars_ilaver.major[0];
@@ -213,21 +236,18 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
         version[2] = RefScalars_ilaver.patch[0];
     }
 
-    private static class RefScalars_dgeev {
+    private static class RefScalars_dgeev extends RefScalars_basic {
         static byte[] jobVL = new byte[1];
         static byte[] jobVR = new byte[1];
         static int[] n = new int[1];
         static int[] lda = new int[1];
         static int[] ldvl = new int[1];
         static int[] ldvr = new int[1];
-        static int[] lwork = new int[1];
-        static int[] info = new int[1];
     }
 
     // @formatter:off
     public int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi,
                     double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
-        // assume single threaded calls here
         RefScalars_dgeev.jobVL[0] = (byte) jobVL;
         RefScalars_dgeev.jobVR[0] = (byte) jobVR;
         RefScalars_dgeev.n[0] = n;
@@ -241,6 +261,135 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
                         RefScalars_dgeev.lwork, RefScalars_dgeev.info);
         return RefScalars_dgeev.info[0];
     }
+
+    private static class RefScalars_dgeqp3 extends RefScalars_basic {
+        static int[] m = new int[1];
+        static int[] n = new int[1];
+        static int[] lda = new int[1];
+    }
+
+    public int dgeqp3(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
+        RefScalars_dgeqp3.m[0] = m;
+        RefScalars_dgeqp3.n[0] = n;
+        RefScalars_dgeqp3.lda[0] = lda;
+        RefScalars_dgeqp3.lwork[0] = lwork;
+        // @formatter:off
+        lapack().dgeqp3_(RefScalars_dgeqp3.m, RefScalars_dgeqp3.n, a, RefScalars_dgeqp3.lda, jpvt, tau, work,
+                        RefScalars_dgeqp3.lwork, RefScalars_dgeqp3.info);
+        return RefScalars_dgeqp3.info[0];
+    }
+
+    private static class RefScalars_dormqr extends RefScalars_basic {
+        static byte[] side = new byte[1];
+        static byte[] trans = new byte[1];
+        static int[] m = new int[1];
+        static int[] n = new int[1];
+        static int[] k = new int[1];
+        static int[] lda = new int[1];
+        static int[] ldc = new int[1];
+   }
+
+    // @formatter:off
+    public int dormqr(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc,
+                    double[] work, int lwork) {
+        RefScalars_dormqr.side[0] = (byte) side;
+        RefScalars_dormqr.trans[0] = (byte) trans;
+        RefScalars_dormqr.m[0] = m;
+        RefScalars_dormqr.n[0] = n;
+        RefScalars_dormqr.k[0] = k;
+        RefScalars_dormqr.lda[0] = lda;
+        RefScalars_dormqr.ldc[0] = ldc;
+        RefScalars_dormqr.lwork[0] = lwork;
+        // @formatter:off
+        lapack().dormqr_(RefScalars_dormqr.side, RefScalars_dormqr.trans, RefScalars_dormqr.m, RefScalars_dormqr.n,
+                        RefScalars_dormqr.k, a, RefScalars_dormqr.lda, tau, c, RefScalars_dormqr.ldc, work,
+                        RefScalars_dormqr.lwork, RefScalars_dormqr.info);
+        return RefScalars_dormqr.info[0];
+    }
+
+    private static class RefScalars_dtrtrs extends RefScalars_basic {
+        static byte[] uplo = new byte[1];
+        static byte[] trans = new byte[1];
+        static byte[] diag = new byte[1];
+        static int[] n = new int[1];
+        static int[] nrhs = new int[1];
+        static int[] lda = new int[1];
+        static int[] ldb = new int[1];
+   }
+
+   public int dtrtrs(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
+       RefScalars_dtrtrs.uplo[0] = (byte) uplo;
+       RefScalars_dtrtrs.trans[0] = (byte) trans;
+       RefScalars_dtrtrs.diag[0] = (byte) diag;
+       RefScalars_dtrtrs.n[0] = (byte) n;
+       RefScalars_dtrtrs.nrhs[0] = (byte) nrhs;
+       RefScalars_dtrtrs.lda[0] = lda;
+       RefScalars_dtrtrs.ldb[0] = ldb;
+       // @formatter:off
+       lapack().dtrtrs_(RefScalars_dtrtrs.uplo, RefScalars_dtrtrs.trans, RefScalars_dtrtrs.diag, RefScalars_dtrtrs.n,
+                       RefScalars_dtrtrs.nrhs, a, RefScalars_dtrtrs.lda, b, RefScalars_dtrtrs.ldb, RefScalars_dtrtrs.info);
+       return RefScalars_dtrtrs.info[0];
+   }
+
+   /*
+    * Linpack functions
+    */
+
+   @Override
+   public LinpackRFFI getLinpackRFFI() {
+       return this;
+   }
+
+   public interface Linpack {
+       // @formatter:off
+       void dqrdc2_(double[] x, @In int[] ldx, @In int[] n, @In int[] p, @In double[] tol, int[] rank, double[] qraux,
+                       int[] pivot, @Out double[] work);
+       void dqrcf_(double[] x, @In int[] n, @In int[] k, double[] qraux, double[] y, @In int[] ny, double[] b, int[] info);
+   }
+
+   private static class LinpackProvider {
+       private static Linpack linpack;
+
+       static Linpack linpack() {
+           if (linpack == null) {
+               linpack = LibraryLoader.create(Linpack.class).load("R");
+           }
+           return linpack;
+       }
+   }
+
+   private static Linpack linpack() {
+       return LinpackProvider.linpack();
+   }
+
+   private static class RefScalars_dqrdc2 {
+       static int[] ldx = new int[1];
+       static int[] n = new int[1];
+       static int[] p = new int[1];
+       static double[] tol = new double[1];
+   }
+
+   public void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
+       RefScalars_dqrdc2.ldx[0] = ldx;
+       RefScalars_dqrdc2.n[0] = n;
+       RefScalars_dqrdc2.p[0] = p;
+       RefScalars_dqrdc2.tol[0] = tol;
+       linpack().dqrdc2_(x, RefScalars_dqrdc2.ldx, RefScalars_dqrdc2.n, RefScalars_dqrdc2.p, RefScalars_dqrdc2.tol, rank, qraux, pivot, work);
+   }
+
+
+   private static class RefScalars_dqrcf {
+       static int[] n = new int[1];
+       static int[] k = new int[1];
+       static int[] ny = new int[1];
+   }
+
+   public void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
+       RefScalars_dqrcf.n[0] = n;
+       RefScalars_dqrcf.k[0] = k;
+       RefScalars_dqrcf.ny[0] = ny;
+       linpack().dqrcf_(x, RefScalars_dqrcf.n, RefScalars_dqrcf.k, qraux, y, RefScalars_dqrcf.ny, b, info);
+   }
 
     /*
      * UserRng
@@ -304,6 +453,5 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
             n[i] = pInt.getInt(i);
         }
     }
-
 
 }

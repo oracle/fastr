@@ -1,4 +1,4 @@
-#  File src/library/base/R/as.R
+#  File src/library/base/R/constants.R
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
@@ -16,15 +16,17 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-# Minimal currently.
+pi <- 4*atan(1)
 
-as.list <- function(x, ...) if (typeof(x) == "list") x else as.vector(x, "list")
+letters <- c("a","b","c","d","e","f","g","h","i","j","k","l", "m",
+    "n","o","p","q","r","s","t","u","v","w","x","y","z")
 
-#as.matrix <- function(x, ...) UseMethod("as.matrix")
-#as.matrix.default <- function(x, ...) {
-as.matrix <- function(x, ...) {
-  if (is.matrix(x)) x
-  else
-    array(x, c(length(x), 1L),
-        if(!is.null(names(x))) list(names(x), NULL) else NULL)
-}
+LETTERS <- c("A","B","C","D","E","F","G","H","I","J","K","L", "M",
+    "N","O","P","Q","R","S","T","U","V","W","X","Y","Z")
+
+month.name <-
+    c("January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December")
+
+month.abb <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")

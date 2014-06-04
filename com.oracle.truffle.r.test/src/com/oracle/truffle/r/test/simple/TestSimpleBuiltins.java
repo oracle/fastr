@@ -569,15 +569,23 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ l <- list(1) ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- 1 ; attr(l, \"my\") <- 1; as.list(l) }");
         assertEval("{ l <- c(x=1) ; as.list(l) }");
+
+        // as.matrix
+        assertEval("{ as.matrix(1) }");
+        assertEval("{ as.matrix(1:3) }");
+        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
+        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
+
+    }
+
+    @Test
+    public void testDrop() {
+        assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
     }
 
     @Test
     @Ignore
     public void testCastsIgnore() {
-        assertEval("{ as.matrix(1) }");
-        assertEval("{ as.matrix(1:3) }");
-        assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
-        assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
         assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
         assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }"); // FIXME missing warning
     }
@@ -1112,6 +1120,40 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testTrigExp() {
+        assertEval("{ sin(1.2) }");
+        assertEval("{ cos(1.2) }");
+        assertEval("{ tan(1.2) }");
+        assertEval("{ asin(0.4) }");
+        assertEval("{ acos(0.4) }");
+        assertEval("{ atan(0.4) }");
+        assertEval("{ atan2(0.4, 0.8) }");
+        assertEval("{ exp(1) }");
+        assertEval("{ expm1(2) }");
+        assertEval("{ sin(c(0.3,0.6,0.9)) }");
+        assertEval("{ cos(c(0.3,0.6,0.9)) }");
+        assertEval("{ tan(c(0.3,0.6,0.9)) }");
+        assertEval("{ asin(c(0.3,0.6,0.9)) }");
+        assertEval("{ acos(c(0.3,0.6,0.9)) }");
+        assertEval("{ atan(c(0.3,0.6,0.9)) }");
+        assertEval("{ atan2(c(0.3,0.6,0.9), 0.4) }");
+        assertEval("{ atan2(0.4, c(0.3,0.6,0.9)) }");
+        assertEval("{ atan2(c(0.3,0.6,0.9), c(0.4, 0.3)) }");
+        assertEval("{ exp(c(1,2,3)) }");
+        assertEval("{ expm1(c(1,2,3)) }");
+        assertEvalError("{ sin() }");
+        assertEvalError("{ cos() }");
+        assertEvalError("{ tan() }");
+        assertEvalError("{ asin() }");
+        assertEvalError("{ acos() }");
+        assertEvalError("{ atan() }");
+        assertEvalError("{ atan2() }");
+        assertEvalError("{ atan2(0.7) }");
+        assertEvalError("{ exp() }");
+        assertEvalError("{ expm1() }");
+    }
+
+    @Test
     public void testLog() {
         assertEval("{ log(1) } ");
         assertEval("{ log(0) }");
@@ -1623,6 +1665,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ h <- new.env(parent=globalenv()) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
 
+    }
+
+    @Test
+    public void testFrames() {
+        assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"; \"); cat(\"parents are frame numbers\", sys.parents(), \"; \"); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }");
     }
 
     @Test
@@ -2770,6 +2817,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{storage.mode(c(1,2,3))}");
         assertEval("{x<-1;storage.mode(x)<-\"character\"}");
         assertEval("{x<-1;storage.mode(x)<-\"logical\";x}");
+    }
+
+    @Test
+    public void testUpdateStorageMode() {
+        assertEval("{ x <- c(1L, 2L); storage.mode(x) <- \"double\"}");
+        assertEvalError("{ x <- c(1L, 2L); storage.mode(x) <- \"not.double\"}");
+        assertEval("{ x <- c(1L, 2L); dim(x)<-c(1,2); storage.mode(x) <- \"double\"; x}");
     }
 
     @Test

@@ -249,7 +249,7 @@ def _bench_harness_body(args, vmArgs):
              'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
              'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm',
              'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-3', 'b25.bench.prog-4', 'b25.bench.prog-5',
-             'b25.matcal-1', 'b25.matcal-2']
+             'b25.bench.matcal-1', 'b25.bench.matcal-2']
     return rbench(marks)
 
 def bench(args):

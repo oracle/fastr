@@ -23,7 +23,9 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Collection of statically typed Lapack methods that are used in the {@code base} package.
+ * Collection of statically typed Lapack methods that are used in the {@code base} package. The
+ * signatures match the Fortran definition with the exception that the "info" value is returned as
+ * the result of the call.
  */
 public interface LapackRFFI extends RFFI {
     /**
@@ -32,10 +34,29 @@ public interface LapackRFFI extends RFFI {
     void ilaver(int[] version);
 
     /**
-     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeev.f">spec</a>. The {@code info}
-     * arg in the Fortran spec is returned as result.
+     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeev.f">spec</a>.
      */
     // @formatter:off
     int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl,
                     double[] vr, int ldvr, double[] work, int lwork);
+
+    /**
+     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeqp3.f">spec</a>.
+     */
+    // @formatter:off
+    int dgeqp3(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork);
+
+    /**
+     * See <a href="http://www.netlib.no/netlib/lapack/double/dormqr.f">spec</a>.
+     */
+    // @formatter:off
+    int dormqr(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc,
+                    double[] work, int lwork);
+
+
+    /**
+     * See <a href="http://www.netlib.no/netlib/lapack/double/dtrtrs.f">spec</a>.
+     */
+    // @formatter:off
+    int dtrtrs(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb);
 }

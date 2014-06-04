@@ -30,32 +30,144 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * sys.R.
+ * sys.R. See <a
+ * href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/sys.parent.html">here</a>. N.B. The
+ * frame for the sys functions themselves is not counted in the R spec. Frames are numbered 0, 1, ..
+ * starting from .GlobalEnv. Non-negative arguments are frame numbers, negative arguments are
+ * relative to the current frame.
  */
 public class FrameFunctions {
 
+    public abstract static class FrameHelper extends RBuiltinNode {
+        protected void error(String msg) throws RError {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
+        }
+
+        /**
+         * Handles n > 0 and n < 0 and errors relating to stack depth.
+         */
+        protected Frame getFrame(int nn) {
+            int n = nn;
+            if (n > 0) {
+                int d = Utils.stackDepth();
+                if (n > d) {
+                    error("not that many frames on the stack");
+                }
+                n = d - n;
+            } else {
+                n = -n + 1;
+            }
+            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n);
+            if (callerFrame == null) {
+                error("not that many frames on the stack");
+            }
+            return callerFrame;
+        }
+    }
+
+    @RBuiltin(name = "sys.nframe", kind = INTERNAL)
+    public abstract static class SysNFrame extends RBuiltinNode {
+        @Specialization()
+        public int sysNFrame() {
+            controlVisibility();
+            return Utils.stackDepth();
+        }
+    }
+
+    @RBuiltin(name = "sys.frame", kind = INTERNAL)
+    public abstract static class SysFrame extends FrameHelper {
+        @Specialization()
+        public REnvironment sysFrame(double nd) {
+            controlVisibility();
+            int n = (int) nd;
+            if (n == 0) {
+                // TODO Strictly this should be the value of .GlobalEnv
+                // (which may differ from globalenv() during startup)
+                return REnvironment.globalEnv();
+            } else {
+                Frame callerFrame = getFrame(n);
+                return EnvFunctions.frameToEnvironment(callerFrame);
+            }
+        }
+    }
+
+    @RBuiltin(name = "sys.parent", kind = INTERNAL)
+    public abstract static class SysParent extends RBuiltinNode {
+        @Specialization()
+        public int sysFunction(double nd) {
+            controlVisibility();
+            int n = (int) nd;
+            int d = Utils.stackDepth();
+            if (n > d) {
+                return 0;
+            } else {
+                return d - n;
+            }
+        }
+    }
+
+    @RBuiltin(name = "sys.function", kind = INTERNAL)
+    public abstract static class SysFunction extends FrameHelper {
+        @Specialization()
+        public Object sysFunction(double nd) {
+            controlVisibility();
+            int n = (int) nd;
+            // N.B. Despite the spec, n==0 is treated as the current function
+            Frame callerFrame = getFrame(n);
+            RFunction func = RArguments.getFunction(callerFrame);
+            if (func == null) {
+                return RNull.instance;
+            } else {
+                return func;
+            }
+        }
+    }
+
+    @RBuiltin(name = "sys.parents", kind = INTERNAL)
+    public abstract static class SysParents extends FrameHelper {
+        @Specialization()
+        public RIntVector sysParents() {
+            controlVisibility();
+            int d = Utils.stackDepth();
+            int[] data = new int[d];
+            for (int i = 0; i < d; i++) {
+                data[i] = i;
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(name = "sys.frames", kind = INTERNAL)
+    public abstract static class SysFrames extends FrameHelper {
+        @Specialization()
+        public Object sysFrames() {
+            error("sys.frames is not implemented");
+            return RNull.instance;
+        }
+    }
+
     /**
-     * The environment of the caller of the function that called parent.frame(n = 1).
+     * The environment of the caller of the function that called parent.frame.
      */
     @RBuiltin(name = "parent.frame", kind = INTERNAL)
-    public abstract static class ParentFrame extends RBuiltinNode {
-        @Specialization(guards = "isOne")
-        public REnvironment parentFrame(@SuppressWarnings("unused") double n) {
+    public abstract static class ParentFrame extends FrameHelper {
+        @Specialization()
+        public REnvironment parentFrame(double nd) {
             controlVisibility();
-            Frame callerFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, 2);
-            return EnvFunctions.frameToEnvironment(callerFrame);
-        }
-
-        @Specialization
-        public REnvironment parentFrame(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object n) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid argument");
-        }
-
-        public boolean isOne(@SuppressWarnings("unused") VirtualFrame frame, double n) {
-            return (int) n == 1;
+            int n = (int) nd;
+            if (n == 0) {
+                error("invalid 'n' value");
+            }
+            Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n + 1);
+            if (callerFrame == null) {
+                return REnvironment.globalEnv();
+            } else {
+                return EnvFunctions.frameToEnvironment(callerFrame);
+            }
         }
     }
 }

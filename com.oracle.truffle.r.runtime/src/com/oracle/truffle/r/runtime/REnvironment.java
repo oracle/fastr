@@ -560,10 +560,11 @@ public abstract class REnvironment implements RAttributable {
         return attributes;
     }
 
-    public void initAttributes() {
+    public RAttributes initAttributes() {
         if (attributes == null) {
             attributes = RAttributes.create();
         }
+        return attributes;
     }
 
     @Override
