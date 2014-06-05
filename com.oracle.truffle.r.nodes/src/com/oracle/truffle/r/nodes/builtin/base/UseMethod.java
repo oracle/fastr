@@ -30,9 +30,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
-    private static final boolean USE_CACHE = false;
     @Child protected DispatchedCallNode dispatchedCallNode;
-    @Child protected UseMethodDispatchNode useMethodDispatchNode;
     protected String lastGenericName;
 
     @Override
@@ -76,7 +74,7 @@ public abstract class UseMethod extends RBuiltinNode {
             return useMethod(frame, generic, (double) enclosingArg);
         }
         if (enclosingArg instanceof RComplex) {
-            return useMethod(frame, generic, (double) enclosingArg);
+            return useMethod(frame, generic, (RComplex) enclosingArg);
         }
         return useMethod(frame, generic, (RAbstractContainer) enclosingArg);
     }
@@ -127,19 +125,12 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (USE_CACHE) {
-            if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-                dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-                lastGenericName = generic;
-            }
-            throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
-        }
-        if (useMethodDispatchNode == null) {
+        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            useMethodDispatchNode = new UseMethodDispatchNode(generic, classNames);
+            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+            lastGenericName = generic;
         }
-        throw new ReturnException(useMethodDispatchNode.executeNoCache(frame));
+        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
     }
 }

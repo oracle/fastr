@@ -6065,26 +6065,6 @@ Error in rm("foo", envir = baseenv()) :
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   0  -4  NA NaN Inf
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
-#{ format(7) }
-[1] "7"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
-#{ format(7.42) }
-[1] "7.42"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
-#{ format(c(7,42)) }
-[1] " 7" "42"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
-#{ format(c(7.42,42.7)) }
-[1] " 7.42" "42.70"
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormat
-#{ format(c(7.42,42.7,NA)) }
-[1] " 7.42" "42.70" "   NA"
-
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFrames
 #{ t1 <- function() {  aa <- 1; t2 <- function() { cat("current frame is", sys.nframe(), "; "); cat("parents are frame numbers", sys.parents(), "; "); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }
 current frame is 2 ; parents are frame numbers 0 1 ; [1] "aa" "t2"
@@ -7460,12 +7440,44 @@ In max() : no non-missing arguments to max; returning -Inf
 [1] 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(1+2i))}
+[1] 1+2i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(1+2i, 2+3i))}
+[1] 1.5+2.5i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(1+2i,1+3i,1+45i))}
+[1] 1+16.66667i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
 #{ mean(c(1,2,3,4,5)) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(1,2,3,4,5))}
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(2,4))}
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(2L,4L,3L))}
 [1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
 #{ mean(c(5,5,5,5,5)) }
 [1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(TRUE, FALSE))}
+[1] 0.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMean
+#{ mean(c(TRUE, TRUE))}
+[1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMinimum
 #{ max(c(1,2,0/0)) }
@@ -7525,6 +7537,9 @@ In min() : no non-missing arguments to min; returning Inf
 #{ nchar(c(10,130)) }
 [1] 2 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNextMethod
+#{g<-function(){ x<-1; class(x)<-c("a","b","c"); f<-function(x){UseMethod("f")}; f.a<-function(x){cat("a");NextMethod("f",x)}; f.b<-function(x){cat("b")}; f(x); }; g();}
+ab
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testNgettext
 #{ ngettext(-1, "a", "b") }
 Error in ngettext(-1, "a", "b") : invalid 'n' argument
@@ -7872,6 +7887,38 @@ a b
 #{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }
    1    2    3    4    5
   11    7 2222    7   33
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(1+2i))}
+[1] 1+2i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(1+2i, 2+3i))}
+[1] -4+7i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(1+2i,1+3i,1+45i))}
+[1] -230-220i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(1,2,3,4,5))}
+[1] 120
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(2,4))}
+[1] 8
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(2,4,3))}
+[1] 24
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(TRUE, FALSE))}
+[1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
+#{prod(c(TRUE, TRUE))}
+[1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
 #{ set.seed(4336, "default"); sum(runif(10000)) }
@@ -9883,6 +9930,86 @@ integer(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhich
 #{ which(logical()) }
 integer(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(1,2,3,4,5)) }
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(1,2,3,4,5))}
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(1:10000))}
+[1] 10000
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(1:5))}
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(2,4))}
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(2L,4L,3L))}
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(5,5,5,5,5)) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(5:1))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(TRUE, FALSE))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMax
+#{ which.max(c(TRUE, TRUE))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(1,2,3,4,5)) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(1,2,3,4,5))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(1:10000))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(1:5))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(2,4))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(2L,4L,3L))}
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(5,5,5,5,5)) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(5:1))}
+[1] 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(TRUE, FALSE))}
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testWhichMin
+#{ which.min(c(TRUE, TRUE))}
+[1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testAttributes
 #{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x > y }

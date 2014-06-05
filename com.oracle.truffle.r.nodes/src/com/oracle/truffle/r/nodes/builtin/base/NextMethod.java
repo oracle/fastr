@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -59,7 +58,6 @@ public abstract class NextMethod extends RBuiltinNode {
             dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = genericName;
         }
-
         return dispatchedCallNode.execute(frame, type);
     }
 
@@ -88,32 +86,20 @@ public abstract class NextMethod extends RBuiltinNode {
         return enclosingArg.getClassHierarchy();
     }
 
-    private String readGenericName(VirtualFrame frame, final String genericMethod) {
-        if (rvnGeneric == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            rvnGeneric = insert(ReadVariableNode.create(RRuntime.RDotGeneric, false));
-        }
-        try {
-            return rvnGeneric.executeString(frame);
-        } catch (UnexpectedResultException e) {
-            return genericMethod;
-        } catch (RError e) {
+    private static String readGenericName(VirtualFrame frame, final String genericMethod) {
+        final String storedGeneric = RArguments.getS3Generic(frame);
+        if (storedGeneric == null || storedGeneric.isEmpty()) {
             return genericMethod;
         }
+        return storedGeneric;
     }
 
     private RStringVector readType(VirtualFrame frame) {
-        if (rvnClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            rvnClass = insert(ReadVariableNode.create(RRuntime.RDotClass, false));
-        }
-        try {
-            return rvnClass.executeRStringVector(frame);
-        } catch (UnexpectedResultException e) {
-            return getAlternateClassHr(frame);
-        } catch (RError e) {
+        final RStringVector storedClass = RArguments.getS3Class(frame);
+        if (storedClass == null) {
             return getAlternateClassHr(frame);
         }
+        return storedClass;
     }
 
 }

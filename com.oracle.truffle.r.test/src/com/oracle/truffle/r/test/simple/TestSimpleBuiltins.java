@@ -2507,12 +2507,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testMean() {
-        assertEval("{ mean(c(5,5,5,5,5)) }");
-        assertEval("{ mean(c(1,2,3,4,5)) }");
-    }
-
-    @Test
     public void testSd() {
         assertEval("{ round(100*sd(c(1,2))^2) }");
     }
@@ -2732,7 +2726,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testNextMethod() {
         assertEval("{g<-function(){ x<-1; class(x)<-c(\"a\",\"b\",\"c\"); f<-function(x){UseMethod(\"f\")}; f.a<-function(x){cat(\"a\");NextMethod(\"f\",x)}; f.b<-function(x){cat(\"b\")}; f(x); }; g();}");
     }
@@ -2899,6 +2892,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
+    // Date at real time differs by milliseconds.
+    public void testDateIgnore() {
+        assertEval("{date()}");
+    }
+
     public void testFormat() {
         assertEval("{ format(7) }");
         assertEval("{ format(7.42) }");
@@ -2907,4 +2906,65 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ format(c(7.42,42.7,NA)) }");
     }
 
+    @Test
+    public void testProd() {
+        assertEval("{prod(c(2,4))}");
+        assertEval("{prod(c(2,4,3))}");
+        assertEval("{prod(c(1,2,3,4,5))}");
+        assertEval("{prod(c(1+2i))}");
+        assertEval("{prod(c(1+2i, 2+3i))}");
+        assertEval("{prod(c(1+2i,1+3i,1+45i))}");
+        assertEval("{prod(c(TRUE, TRUE))}");
+        assertEval("{prod(c(TRUE, FALSE))}");
+    }
+
+    @Test
+    @Ignore
+    public void testProdNa() {
+        assertEval("{prod(c(2,4,NA))}");
+        assertEval("{prod(c(2,4,3,NA),TRUE)}");
+        assertEval("{prod(c(1,2,3,4,5,NA),FALSE)}");
+    }
+
+    @Test
+    public void testMean() {
+        assertEval("{ mean(c(5,5,5,5,5)) }");
+        assertEval("{ mean(c(1,2,3,4,5)) }");
+        assertEval("{ mean(c(2,4))}");
+        assertEval("{ mean(c(2L,4L,3L))}");
+        assertEval("{ mean(c(1,2,3,4,5))}");
+        assertEval("{ mean(c(1+2i))}");
+        assertEval("{ mean(c(1+2i, 2+3i))}");
+        assertEval("{ mean(c(1+2i,1+3i,1+45i))}");
+        assertEval("{ mean(c(TRUE, TRUE))}");
+        assertEval("{ mean(c(TRUE, FALSE))}");
+    }
+
+    @Test
+    public void testWhichMin() {
+        assertEval("{ which.min(c(5,5,5,5,5)) }");
+        assertEval("{ which.min(c(1,2,3,4,5)) }");
+        assertEval("{ which.min(c(2,4))}");
+        assertEval("{ which.min(c(2L,4L,3L))}");
+        assertEval("{ which.min(c(1,2,3,4,5))}");
+        assertEval("{ which.min(c(TRUE, TRUE))}");
+        assertEval("{ which.min(c(TRUE, FALSE))}");
+        assertEval("{ which.min(c(1:5))}");
+        assertEval("{ which.min(c(5:1))}");
+        assertEval("{ which.min(c(1:10000))}");
+    }
+
+    @Test
+    public void testWhichMax() {
+        assertEval("{ which.max(c(5,5,5,5,5)) }");
+        assertEval("{ which.max(c(1,2,3,4,5)) }");
+        assertEval("{ which.max(c(2,4))}");
+        assertEval("{ which.max(c(2L,4L,3L))}");
+        assertEval("{ which.max(c(1,2,3,4,5))}");
+        assertEval("{ which.max(c(TRUE, TRUE))}");
+        assertEval("{ which.max(c(TRUE, FALSE))}");
+        assertEval("{ which.max(c(1:5))}");
+        assertEval("{ which.max(c(5:1))}");
+        assertEval("{ which.max(c(1:10000))}");
+    }
 }
