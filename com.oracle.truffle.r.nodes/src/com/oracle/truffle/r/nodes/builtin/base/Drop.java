@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "Version", kind = INTERNAL)
-public abstract class RVersion extends RBuiltinNode {
-
+@RBuiltin(name = "drop", kind = RBuiltinKind.INTERNAL)
+public abstract class Drop extends RBuiltinNode {
     @Specialization
-    public Object doRVersion(@SuppressWarnings("unused") RMissing x) {
-        controlVisibility();
-        return RDataFactory.createList(RVersionInfo.listValues(), RDataFactory.createStringVector(RVersionInfo.listNames(), RDataFactory.COMPLETE_VECTOR));
+    public RAbstractVector doDrop(RAbstractVector x) {
+        int[] dims = x.getDimensions();
+        int[] newDims = new int[dims.length];
+        int count = 0;
+        for (int i = 0; i < dims.length; i++) {
+            if (dims[i] != 1) {
+                newDims[count++] = dims[i];
+            }
+        }
+        if (count == 0) {
+            return x;
+        }
+        RAbstractVector result = x.copyWithNewDimensions(Arrays.copyOf(newDims, count));
+        RList dimNames = x.getDimNames();
+        if (dimNames != null) {
+            // TODO adjust
+            assert false;
+        }
+        return result;
     }
 }

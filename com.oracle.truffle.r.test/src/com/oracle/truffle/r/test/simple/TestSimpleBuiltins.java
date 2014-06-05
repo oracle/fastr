@@ -579,6 +579,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testDrop() {
+        assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
+    }
+
+    @Test
     @Ignore
     public void testCastsIgnore() {
         assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
@@ -1112,6 +1117,40 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ order(c(1,2,3,NA), na.last=FALSE, decreasing=TRUE) }");
         assertEval("{ order(c(0/0, -1/0, 2)) }");
         assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
+    }
+
+    @Test
+    public void testTrigExp() {
+        assertEval("{ sin(1.2) }");
+        assertEval("{ cos(1.2) }");
+        assertEval("{ tan(1.2) }");
+        assertEval("{ asin(0.4) }");
+        assertEval("{ acos(0.4) }");
+        assertEval("{ atan(0.4) }");
+        assertEval("{ atan2(0.4, 0.8) }");
+        assertEval("{ exp(1) }");
+        assertEval("{ expm1(2) }");
+        assertEval("{ sin(c(0.3,0.6,0.9)) }");
+        assertEval("{ cos(c(0.3,0.6,0.9)) }");
+        assertEval("{ tan(c(0.3,0.6,0.9)) }");
+        assertEval("{ asin(c(0.3,0.6,0.9)) }");
+        assertEval("{ acos(c(0.3,0.6,0.9)) }");
+        assertEval("{ atan(c(0.3,0.6,0.9)) }");
+        assertEval("{ atan2(c(0.3,0.6,0.9), 0.4) }");
+        assertEval("{ atan2(0.4, c(0.3,0.6,0.9)) }");
+        assertEval("{ atan2(c(0.3,0.6,0.9), c(0.4, 0.3)) }");
+        assertEval("{ exp(c(1,2,3)) }");
+        assertEval("{ expm1(c(1,2,3)) }");
+        assertEvalError("{ sin() }");
+        assertEvalError("{ cos() }");
+        assertEvalError("{ tan() }");
+        assertEvalError("{ asin() }");
+        assertEvalError("{ acos() }");
+        assertEvalError("{ atan() }");
+        assertEvalError("{ atan2() }");
+        assertEvalError("{ atan2(0.7) }");
+        assertEvalError("{ exp() }");
+        assertEvalError("{ expm1() }");
     }
 
     @Test
@@ -2468,12 +2507,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testMean() {
-        assertEval("{ mean(c(5,5,5,5,5)) }");
-        assertEval("{ mean(c(1,2,3,4,5)) }");
-    }
-
-    @Test
     public void testSd() {
         assertEval("{ round(100*sd(c(1,2))^2) }");
     }
@@ -2859,6 +2892,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
+    // Date at real time differs by milliseconds.
+    public void testDateIgnore() {
+        assertEval("{date()}");
+    }
+
     public void testFormat() {
         assertEval("{ format(7) }");
         assertEval("{ format(7.42) }");
@@ -2867,4 +2906,65 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ format(c(7.42,42.7,NA)) }");
     }
 
+    @Test
+    public void testProd() {
+        assertEval("{prod(c(2,4))}");
+        assertEval("{prod(c(2,4,3))}");
+        assertEval("{prod(c(1,2,3,4,5))}");
+        assertEval("{prod(c(1+2i))}");
+        assertEval("{prod(c(1+2i, 2+3i))}");
+        assertEval("{prod(c(1+2i,1+3i,1+45i))}");
+        assertEval("{prod(c(TRUE, TRUE))}");
+        assertEval("{prod(c(TRUE, FALSE))}");
+    }
+
+    @Test
+    @Ignore
+    public void testProdNa() {
+        assertEval("{prod(c(2,4,NA))}");
+        assertEval("{prod(c(2,4,3,NA),TRUE)}");
+        assertEval("{prod(c(1,2,3,4,5,NA),FALSE)}");
+    }
+
+    @Test
+    public void testMean() {
+        assertEval("{ mean(c(5,5,5,5,5)) }");
+        assertEval("{ mean(c(1,2,3,4,5)) }");
+        assertEval("{ mean(c(2,4))}");
+        assertEval("{ mean(c(2L,4L,3L))}");
+        assertEval("{ mean(c(1,2,3,4,5))}");
+        assertEval("{ mean(c(1+2i))}");
+        assertEval("{ mean(c(1+2i, 2+3i))}");
+        assertEval("{ mean(c(1+2i,1+3i,1+45i))}");
+        assertEval("{ mean(c(TRUE, TRUE))}");
+        assertEval("{ mean(c(TRUE, FALSE))}");
+    }
+
+    @Test
+    public void testWhichMin() {
+        assertEval("{ which.min(c(5,5,5,5,5)) }");
+        assertEval("{ which.min(c(1,2,3,4,5)) }");
+        assertEval("{ which.min(c(2,4))}");
+        assertEval("{ which.min(c(2L,4L,3L))}");
+        assertEval("{ which.min(c(1,2,3,4,5))}");
+        assertEval("{ which.min(c(TRUE, TRUE))}");
+        assertEval("{ which.min(c(TRUE, FALSE))}");
+        assertEval("{ which.min(c(1:5))}");
+        assertEval("{ which.min(c(5:1))}");
+        assertEval("{ which.min(c(1:10000))}");
+    }
+
+    @Test
+    public void testWhichMax() {
+        assertEval("{ which.max(c(5,5,5,5,5)) }");
+        assertEval("{ which.max(c(1,2,3,4,5)) }");
+        assertEval("{ which.max(c(2,4))}");
+        assertEval("{ which.max(c(2L,4L,3L))}");
+        assertEval("{ which.max(c(1,2,3,4,5))}");
+        assertEval("{ which.max(c(TRUE, TRUE))}");
+        assertEval("{ which.max(c(TRUE, FALSE))}");
+        assertEval("{ which.max(c(1:5))}");
+        assertEval("{ which.max(c(5:1))}");
+        assertEval("{ which.max(c(1:10000))}");
+    }
 }

@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "mean.default", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
@@ -46,7 +47,7 @@ public abstract class Mean extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
     public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
@@ -55,13 +56,45 @@ public abstract class Mean extends RBuiltinNode {
     @Child protected BinaryArithmetic div = BinaryArithmetic.DIV.create();
 
     @Specialization
-    public double mean(RDoubleVector x) {
+    public double mean(RAbstractDoubleVector x) {
         controlVisibility();
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
             sum = add.op(sum, x.getDataAt(k));
         }
         return div.op(sum, x.getLength());
+    }
+
+    @Specialization
+    public double mean(RAbstractIntVector x) {
+        controlVisibility();
+        double sum = x.getDataAt(0);
+        for (int k = 1; k < x.getLength(); ++k) {
+            sum = add.op(sum, x.getDataAt(k));
+        }
+        return div.op(sum, x.getLength());
+    }
+
+    @Specialization
+    public double mean(RAbstractLogicalVector x) {
+        controlVisibility();
+        double sum = x.getDataAt(0);
+        for (int k = 1; k < x.getLength(); ++k) {
+            sum = add.op(sum, x.getDataAt(k));
+        }
+        return div.op(sum, x.getLength());
+    }
+
+    @Specialization
+    public RComplex mean(RAbstractComplexVector x) {
+        controlVisibility();
+        RComplex sum = x.getDataAt(0);
+        RComplex comp;
+        for (int k = 1; k < x.getLength(); ++k) {
+            comp = x.getDataAt(k);
+            sum = add.op(sum.getRealPart(), sum.getImaginaryPart(), comp.getRealPart(), comp.getImaginaryPart());
+        }
+        return div.op(sum.getRealPart(), sum.getImaginaryPart(), x.getLength(), 0);
     }
 
 }
