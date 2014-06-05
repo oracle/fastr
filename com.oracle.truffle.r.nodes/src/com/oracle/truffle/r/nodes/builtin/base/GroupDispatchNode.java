@@ -75,7 +75,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         }
     }
 
-    protected void unsetEnvironment(VirtualFrame frame) {
+    protected void unsetEnvironment() {
         if (isEnvSet) {
             targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(targetFunction.getEnclosingFrame()));
             isEnvSet = false;
