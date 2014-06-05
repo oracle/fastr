@@ -33,6 +33,7 @@ public class GroupDispatchNode extends S3DispatchNode {
     private boolean isEnvSet;
     protected RStringVector typeLast;
     protected Object[] evaluatedArgs;
+    protected RStringVector dotMethod;
 
     protected GroupDispatchNode(final String aGenericName, final String groupName, final CallArgumentsNode callArgNode) {
         this.genericName = aGenericName;
@@ -74,7 +75,6 @@ public class GroupDispatchNode extends S3DispatchNode {
         }
     }
 
-    @Override
     protected void unsetEnvironment(VirtualFrame frame) {
         if (isEnvSet) {
             targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(targetFunction.getEnclosingFrame()));

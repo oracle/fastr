@@ -15,10 +15,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -49,31 +46,37 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame) {
         readGenericVars(frame);
         if (!isSame() || !isFirst || !findFunction(targetFunctionName, genCallEnv)) {
-            executeHelper(frame);
+            findTargetFunction(frame);
+            storeValues();
         }
-        setEnvironment();
-        return funCall;
+        return executeHelper(frame);
     }
 
     @Override
     public Object execute(VirtualFrame frame, final RStringVector aType) {
-        this.type = aType;
         readGenericVars(frame);
-        executeHelper(frame);
-        setEnvironment();
-        return funCall;
-    }
-
-    private void executeHelper(VirtualFrame frame) {
         findTargetFunction(frame);
         storeValues();
-        initArgNodes(frame);
-        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
+        return executeHelper(frame);
     }
 
-    @Override
-    protected void unsetEnvironment(VirtualFrame frame) {
-        targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(targetFunction.getEnclosingFrame()));
+    private Object executeHelper(VirtualFrame frame) {
+        // Merge arguments passed to current function with arguments passed to NextMethod call.
+        final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
+        RArguments.copyArgumentsInto(frame, mergedArgs);
+        System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
+        Object[] argObject = RArguments.createS3Args(targetFunction, mergedArgs);
+        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
+        defineVarsNew(newFrame);
+        if (storedFunctionName != null) {
+            RArguments.setS3Method(newFrame, storedFunctionName);
+        } else {
+            RArguments.setS3Method(newFrame, targetFunctionName);
+        }
+        if (hasGroup) {
+            RArguments.setS3Group(newFrame, this.group);
+        }
+        return funCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
     private boolean isSame() {
@@ -128,36 +131,6 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         klass = classVec;
     }
 
-    private void initArgNodes(VirtualFrame frame) {
-        if (argNodes != null) {
-            return;
-        }
-        // Merge arguments passed to current function with arguments passed to NextMethod call.
-        final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
-        RArguments.copyArgumentsInto(frame, mergedArgs);
-        System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
-        argNodes = new RNode[mergedArgs.length];
-        for (int i = 0; i < mergedArgs.length; ++i) {
-            argNodes[i] = ConstantNode.create(mergedArgs[i]);
-        }
-    }
-
-    private void setEnvironment() {
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
-        RArguments.setEnclosingFrame(newFrame, targetFunction.getEnclosingFrame());
-        defineVars(newFrame);
-        if (storedFunctionName != null) {
-            wvnMethod.execute(newFrame, storedFunctionName);
-        } else {
-            wvnMethod.execute(newFrame, targetFunctionName);
-        }
-        if (hasGroup) {
-            wvnGroup = initWvn(wvnGroup, RGroupGenerics.RDotGroup);
-            wvnGroup.execute(newFrame, this.group);
-        }
-        targetFunction.setEnclosingFrame(newFrame.materialize());
-    }
-
     private void storeValues() {
         lastHasGroup = hasGroup;
         lastGroup = group;
@@ -165,33 +138,19 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     }
 
     private void readGenericVars(VirtualFrame frame) {
-        rvnDefEnv = initRvn(RRuntime.RDotGenericDefEnv, rvnDefEnv);
-        genDefEnv = readFrame(rvnDefEnv, frame);
+        genDefEnv = RArguments.getS3DefEnv(frame);
         // TODO if(genDefEnv == null) genDefEnv = globalenv
-        rvnCallEnv = initRvn(RRuntime.RDotGenericCallEnv, rvnCallEnv);
-        genCallEnv = readFrame(rvnCallEnv, frame);
+        genCallEnv = RArguments.getS3CallEnv(frame);
         if (genCallEnv == null) {
             genCallEnv = frame.materialize();
         }
-        rvnGroup = initRvn(RGroupGenerics.RDotGroup, rvnGroup);
-        try {
-            group = rvnGroup.executeString(frame);
-            if (group.isEmpty()) {
-                handleMissingGroup();
-            } else {
-                handlePresentGroup();
-            }
-        } catch (UnexpectedResultException e) {
+        group = RArguments.getS3Group(frame);
+        if (group == null || group.isEmpty()) {
             handleMissingGroup();
-        } catch (RError r) {
-            handleMissingGroup();
+        } else {
+            handlePresentGroup();
         }
-        rvnMethod = initRvn(RRuntime.RDotMethod, rvnMethod);
-        try {
-            storedFunctionName = rvnMethod.executeString(frame);
-        } catch (UnexpectedResultException e) {
-        } catch (RError r) {
-        }
+        storedFunctionName = RArguments.getS3Method(frame);
     }
 
     private void handleMissingGroup() {
@@ -207,25 +166,5 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         prefix[0] = genericName;
         prefix[1] = group;
         hasGroup = true;
-    }
-
-    private ReadVariableNode initRvn(final String name, ReadVariableNode node) {
-        if (node == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            ReadVariableNode rvn = ReadVariableNode.create(name, false);
-            return insert(rvn);
-        }
-        return node;
-    }
-
-    private static MaterializedFrame readFrame(ReadVariableNode rvn, VirtualFrame frame) {
-        try {
-            Object temp = rvn.execute(frame);
-            if (temp instanceof MaterializedFrame) {
-                return (MaterializedFrame) temp;
-            }
-        } catch (RError r) {
-        }
-        return null;
     }
 }
