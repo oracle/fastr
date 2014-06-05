@@ -46,7 +46,7 @@ public class RPackages {
 
     /**
      * Set up the initial set of packages, checking {@code R_DEFAULT_PACKAGES}. GnuR does the latter
-     * using "Common.R", which we may do also eventually.
+     * using "Rprofile", which we may do also eventually.
      *
      * @return the initial set of packages
      */

@@ -143,30 +143,7 @@ public class RRuntime {
 
     public static final String SYSTEM_DATE_FORMAT = "EEE MMM dd HH:mm:ss yyyy";
 
-    private static long startTime;
-
     public static final String DROP_DIM_ARG_NAME = "drop";
-
-    private static long[] childTimes;
-
-    /**
-     * Perform any runtime initialization necessary before the first R evaluation.
-     *
-     * TODO Check possible ordering issues. It may be that a simple one-phase initialization is
-     * inadequate.
-     */
-    public static void initialize() {
-        startTime = System.nanoTime();
-        childTimes = new long[]{0, 0};
-        RAccuracyInfo.initialize();
-        RRNG.initialize();
-        RVersionInfo.initialize();
-        LibPaths.initialize();
-        ROptions.initialize();
-        RPackageVariables.initialize();
-        TempDirPath.initialize();
-        RProfile.initialize();
-    }
 
     /**
      * Create a {@link VirtualFrame} Such a value cannot be stored in an object field, so must be
@@ -174,23 +151,6 @@ public class RRuntime {
      */
     public static VirtualFrame createVirtualFrame() {
         return Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
-    }
-
-    /**
-     * Elapsed time of process.
-     *
-     * @return elapsed time in nanosecs.
-     */
-    public static long elapsedTimeInNanos() {
-        return System.nanoTime() - startTime;
-    }
-
-    /**
-     * Return user and system times for any spawned child processes in nanosecs, < 0 means not
-     * available (Windows).
-     */
-    public static long[] childTimesInNanos() {
-        return childTimes;
     }
 
     public static RComplex createComplexNA() {

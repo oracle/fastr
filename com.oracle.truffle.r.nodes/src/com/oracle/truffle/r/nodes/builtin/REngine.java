@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.rng.*;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is exactly one
@@ -49,6 +50,8 @@ public final class REngine implements RBuiltinLookupProvider {
     private static REngine singleton = new REngine();
     private static final RContext context = RContext.linkRBuiltinLookupProvider(singleton);
     private static boolean crashOnFatalError;
+    private static long startTime;
+    private static long[] childTimes;
 
     private REngine() {
     }
@@ -68,14 +71,26 @@ public final class REngine implements RBuiltinLookupProvider {
      *         {@link #parseAndEval(String, VirtualFrame, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+        startTime = System.nanoTime();
+        childTimes = new long[]{0, 0};
         Locale.setDefault(Locale.ROOT);
         RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
         RContext.setRuntimeState(commandArgs, consoleHandler, headless);
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
         VirtualFrame baseFrame = RRuntime.createVirtualFrame();
-        REnvironment.initialize(globalFrame, baseFrame, RPackages.initialize());
-        RRuntime.initialize();
+        REnvironment.baseInitialize(globalFrame, baseFrame);
+        RVersionInfo.initialize();
+        RAccuracyInfo.initialize();
+        RRNG.initialize();
+        TempDirPath.initialize();
+        LibPaths.initialize();
+        ROptions.initialize();
+        RProfile.initialize();
+        // eval the system profile
+        REngine.parseAndEval(RProfile.systemProfile(), globalFrame, false);
+        REnvironment.packagesInitialize(RPackages.initialize());
+        RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {
             REngine.parseAndEval(siteProfile, baseFrame, false);
@@ -85,6 +100,23 @@ public final class REngine implements RBuiltinLookupProvider {
             REngine.parseAndEval(userProfile, globalFrame, false);
         }
         return globalFrame;
+    }
+
+    /**
+     * Elapsed time of process.
+     *
+     * @return elapsed time in nanosecs.
+     */
+    public static long elapsedTimeInNanos() {
+        return System.nanoTime() - startTime;
+    }
+
+    /**
+     * Return user and system times for any spawned child processes in nanosecs, < 0 means not
+     * available (Windows).
+     */
+    public static long[] childTimesInNanos() {
+        return childTimes;
     }
 
     public static RContext getContext() {
