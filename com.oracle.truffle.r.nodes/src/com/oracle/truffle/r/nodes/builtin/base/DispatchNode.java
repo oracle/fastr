@@ -32,7 +32,5 @@ public abstract class DispatchNode extends RNode {
         }
     }
 
-    protected abstract void unsetEnvironment(VirtualFrame frame);
-
     public abstract Object execute(VirtualFrame frame, RStringVector aType);
 }

@@ -30,7 +30,6 @@ public abstract class UseMethod extends RBuiltinNode {
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
-    private static final boolean USE_CACHE = false;
     @Child protected DispatchedCallNode dispatchedCallNode;
     protected String lastGenericName;
 
@@ -126,15 +125,12 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (USE_CACHE) {
-            if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-                dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-                lastGenericName = generic;
-            }
-            throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
+        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+            lastGenericName = generic;
         }
-        throw new ReturnException(new UseMethodDispatchNode(generic, classNames).executeNoCache(frame));
+        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
     }
 }

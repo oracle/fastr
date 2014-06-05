@@ -39,7 +39,6 @@ public abstract class S3DispatchNode extends DispatchNode {
     protected Frame genCallEnv;
     protected Frame genDefEnv;
     protected boolean isFirst;
-    protected RStringVector dotMethod;
 
     protected boolean findFunction(final String functionName, Frame frame) {
         if (lookup == null || !functionName.equals(lastFun)) {

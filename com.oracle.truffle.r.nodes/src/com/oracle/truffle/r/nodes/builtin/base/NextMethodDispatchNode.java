@@ -15,9 +15,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -48,24 +46,21 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame) {
         readGenericVars(frame);
         if (!isSame() || !isFirst || !findFunction(targetFunctionName, genCallEnv)) {
-            executeHelper(frame);
+            findTargetFunction(frame);
+            storeValues();
         }
-        setEnvironment();
-        return funCall;
+        return executeHelper(frame);
     }
 
     @Override
     public Object execute(VirtualFrame frame, final RStringVector aType) {
-        this.type = aType;
         readGenericVars(frame);
-        executeHelper(frame);
-        setEnvironment();
-        return funCall;
+        findTargetFunction(frame);
+        storeValues();
+        return executeHelper(frame);
     }
 
-    public Object executeNoCache(VirtualFrame frame) {
-        readGenericVars(frame);
-        executeHelper(frame);
+    private Object executeHelper(VirtualFrame frame) {
         // Merge arguments passed to current function with arguments passed to NextMethod call.
         final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
         RArguments.copyArgumentsInto(frame, mergedArgs);
@@ -82,18 +77,6 @@ public class NextMethodDispatchNode extends S3DispatchNode {
             RArguments.setS3Group(newFrame, this.group);
         }
         return funCallNode.call(frame, targetFunction.getTarget(), argObject);
-    }
-
-    private void executeHelper(VirtualFrame frame) {
-        findTargetFunction(frame);
-        storeValues();
-        initArgNodes(frame);
-        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
-    }
-
-    @Override
-    protected void unsetEnvironment(VirtualFrame frame) {
-        targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(targetFunction.getEnclosingFrame()));
     }
 
     private boolean isSame() {
@@ -146,36 +129,6 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         }
         classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
         klass = classVec;
-    }
-
-    private void initArgNodes(VirtualFrame frame) {
-        if (argNodes != null) {
-            return;
-        }
-        // Merge arguments passed to current function with arguments passed to NextMethod call.
-        final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
-        RArguments.copyArgumentsInto(frame, mergedArgs);
-        System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
-        argNodes = new RNode[mergedArgs.length];
-        for (int i = 0; i < mergedArgs.length; ++i) {
-            argNodes[i] = ConstantNode.create(mergedArgs[i]);
-        }
-    }
-
-    private void setEnvironment() {
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
-        RArguments.setEnclosingFrame(newFrame, targetFunction.getEnclosingFrame());
-        defineVars(newFrame);
-        if (storedFunctionName != null) {
-            wvnMethod.execute(newFrame, storedFunctionName);
-        } else {
-            wvnMethod.execute(newFrame, targetFunctionName);
-        }
-        if (hasGroup) {
-            wvnGroup = initWvn(wvnGroup, RGroupGenerics.RDotGroup);
-            wvnGroup.execute(newFrame, this.group);
-        }
-        targetFunction.setEnclosingFrame(newFrame.materialize());
     }
 
     private void storeValues() {

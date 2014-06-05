@@ -32,7 +32,6 @@ public abstract class NextMethod extends RBuiltinNode {
     @Child protected ReadVariableNode rvnClass;
     @Child protected ReadVariableNode rvnGeneric;
     protected String lastGenericName;
-    private boolean USE_CACHE = false;
 
     @Override
     public Object[] getParameterNames() {
@@ -53,17 +52,13 @@ public abstract class NextMethod extends RBuiltinNode {
             CompilerDirectives.transferToInterpreter();
             throw RError.getUnspecifiedGenFunction(getEncapsulatingSourceSection());
         }
-        if (USE_CACHE) {
-            if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args);
-                dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-                lastGenericName = genericName;
-            }
-            return dispatchedCallNode.execute(frame, type);
-        } else {
-            return new NextMethodDispatchNode(genericName, type, args).executeNoCache(frame);
+        if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args);
+            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+            lastGenericName = genericName;
         }
+        return dispatchedCallNode.execute(frame, type);
     }
 
     @Specialization(order = 10)

@@ -77,7 +77,7 @@ public abstract class DispatchedCallNode extends RNode {
         private DispatchedCallNode specialize(RStringVector type) {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
-                final DispatchedCallNode current = createCurrentNode(type);
+                final DispatchNode current = createCurrentNode(type);
                 final DispatchedCallNode cachedNode = new CachedNode(current, new UninitializedDispatchedCallNode(this, this.depth + 1), type);
                 this.replace(cachedNode);
                 return cachedNode;
@@ -85,12 +85,12 @@ public abstract class DispatchedCallNode extends RNode {
             return this.replace(new GenericDispatchNode(createCurrentNode(type)));
         }
 
-        protected DispatchedCallNode createCurrentNode(RStringVector type) {
+        protected DispatchNode createCurrentNode(RStringVector type) {
             if (this.dispatchType == RRuntime.USE_METHOD) {
-                return new ResolvedDispatchedCallNode(new UseMethodDispatchNode(this.genericName, type));
+                return new UseMethodDispatchNode(this.genericName, type);
             }
             if (this.dispatchType == RRuntime.NEXT_METHOD) {
-                return new ResolvedDispatchedCallNode(new NextMethodDispatchNode(this.genericName, type, this.args));
+                return new NextMethodDispatchNode(this.genericName, type, this.args);
             }
             // TODO: throw error
             return null;
@@ -99,9 +99,9 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final class GenericDispatchNode extends DispatchedCallNode {
 
-        @Child private DispatchedCallNode dcn;
+        @Child private DispatchNode dcn;
 
-        public GenericDispatchNode(DispatchedCallNode dcn) {
+        public GenericDispatchNode(DispatchNode dcn) {
             this.dcn = dcn;
         }
 
@@ -114,10 +114,10 @@ public abstract class DispatchedCallNode extends RNode {
     private static final class CachedNode extends DispatchedCallNode {
 
         @Child protected DispatchedCallNode nextNode;
-        @Child protected DispatchedCallNode currentNode;
+        @Child protected DispatchNode currentNode;
         private final RStringVector type;
 
-        CachedNode(final DispatchedCallNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
+        CachedNode(final DispatchNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
             this.nextNode = nextNode;
             this.currentNode = currentNode;
             this.type = type;
@@ -146,9 +146,9 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final class ResolvedDispatchedCallNode extends DispatchedCallNode {
         @Child protected RCallNode aCallNode;
-        @Child protected DispatchNode aDispatchNode;
+        @Child protected GroupDispatchNode aDispatchNode;
 
-        public ResolvedDispatchedCallNode(DispatchNode dNode) {
+        public ResolvedDispatchedCallNode(GroupDispatchNode dNode) {
             this.aDispatchNode = dNode;
         }
 

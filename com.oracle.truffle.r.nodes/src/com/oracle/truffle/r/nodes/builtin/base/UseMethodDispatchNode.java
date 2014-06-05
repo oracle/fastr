@@ -16,16 +16,10 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
-
-    private MaterializedFrame storedEnclosingFrame;
 
     UseMethodDispatchNode(final String generic, final RStringVector type) {
         this.genericName = generic;
@@ -33,20 +27,23 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @Override
-    public DispatchNode.FunctionCall execute(VirtualFrame frame) {
+    public Object execute(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        initArgNodes(frame);
         if (targetFunction == null || !isFirst || !findFunction(targetFunctionName, callerFrame)) {
             findTargetFunction(callerFrame);
         }
-        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
-        setEnvironment(frame);
-        return funCall;
+        return executeHelper(frame, callerFrame);
     }
 
-    public Object executeNoCache(VirtualFrame frame) {
+    @Override
+    public Object execute(VirtualFrame frame, RStringVector aType) {
+        this.type = aType;
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         findTargetFunction(callerFrame);
+        return executeHelper(frame, callerFrame);
+    }
+
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
         List<Object> argList = new ArrayList<>();
         for (int i = 0; i < RArguments.getArgumentsLength(frame); ++i) {
             Object arg = RArguments.getArgument(frame, i);
@@ -64,26 +61,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         defineVarsNew(newFrame);
         RArguments.setS3Method(newFrame, targetFunctionName);
         return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
-    }
-
-    @Override
-    public DispatchNode.FunctionCall execute(VirtualFrame frame, RStringVector aType) {
-        this.type = aType;
-        Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        initArgNodes(frame);
-        findTargetFunction(callerFrame);
-        funCall = new DispatchNode.FunctionCall(targetFunction, CallArgumentsNode.create(argNodes, null));
-        setEnvironment(frame);
-        return funCall;
-    }
-
-    private void initArgNodes(VirtualFrame frame) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        RNode[] nodes = new RNode[RArguments.getArgumentsLength(frame)];
-        for (int i = 0; i < nodes.length; ++i) {
-            nodes[i] = ConstantNode.create(RArguments.getArgument(frame, i));
-        }
-        argNodes = insert(nodes);
     }
 
     private void findTargetFunction(Frame callerFrame) {
@@ -110,22 +87,5 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), this.genericName, RRuntime.toString(this.type));
             }
         }
-    }
-
-    private void setEnvironment(VirtualFrame frame) {
-        genCallEnv = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        defineVars(frame);
-        wvnMethod.execute(frame, targetFunctionName);
-        storedEnclosingFrame = RArguments.getEnclosingFrame(frame);
-        RArguments.setEnclosingFrame(frame, targetFunction.getEnclosingFrame());
-        targetFunction.setEnclosingFrame(frame.materialize());
-    }
-
-    @Override
-    protected void unsetEnvironment(VirtualFrame frame) {
-        // Remove all generic variables added by defineVars
-        removeVars(frame);
-        targetFunction.setEnclosingFrame(RArguments.getEnclosingFrame(frame));
-        RArguments.setEnclosingFrame(frame, storedEnclosingFrame);
     }
 }
