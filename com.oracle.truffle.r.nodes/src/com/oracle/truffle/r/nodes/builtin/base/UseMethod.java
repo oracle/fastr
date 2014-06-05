@@ -32,6 +32,7 @@ public abstract class UseMethod extends RBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
     private static final boolean USE_CACHE = false;
     @Child protected DispatchedCallNode dispatchedCallNode;
+    @Child protected UseMethodDispatchNode useMethodDispatchNode;
     protected String lastGenericName;
 
     @Override
@@ -135,6 +136,10 @@ public abstract class UseMethod extends RBuiltinNode {
             }
             throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
         }
-        throw new ReturnException(new UseMethodDispatchNode(generic, classNames).executeNoCache(frame));
+        if (useMethodDispatchNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            useMethodDispatchNode = new UseMethodDispatchNode(generic, classNames);
+        }
+        throw new ReturnException(useMethodDispatchNode.executeNoCache(frame));
     }
 }
