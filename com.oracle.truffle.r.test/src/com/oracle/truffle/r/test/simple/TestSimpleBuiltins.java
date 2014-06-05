@@ -190,6 +190,23 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testRepLen() {
+        assertEval("{ rep_len(1, 2) }");
+        assertEval("{ rep_len(3.14159, 3) }");
+        assertEval("{ rep_len(\"RepeatTest\", 5) }");
+        assertEval("{ rep_len(2+6i, 4) }");
+        assertEval("{ rep_len(TRUE, 2) }");
+        assertEval("{ x<-as.raw(16); rep_len(x, 2) }");
+
+        assertEval("{ rep_len(1:4, 10) }");
+        assertEval("{ rep_len(1:4, 3) }");
+        assertEval("{ rep_len(1:4, 4) }");
+        assertEval("{ rep_len(c(3.1415, 0.8), 1) }");
+        assertEval("{ rep_len(c(2i+3, 4+2i), 4) }");
+        assertEval("{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }");
+    }
+
+    @Test
     public void testCombine() {
         assertEval("{ c(\"1.2\",\"3.4\") }");
         assertEval("{ c(\"a\",\"b\",\"c\") }");
