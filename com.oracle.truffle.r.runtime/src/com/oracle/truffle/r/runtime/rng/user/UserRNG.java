@@ -62,15 +62,16 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
     }
 
     private static long findSymbol(String symbol, boolean optional) throws RNGException {
-        try {
-            return DLL.findSymbol(symbol);
-        } catch (DLLException ex) {
+        DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(symbol, null);
+        if (symbolInfo == null) {
             if (!optional) {
                 CompilerDirectives.transferToInterpreter();
-                throw new RNGException(ex.getMessage(), true);
+                throw new RNGException(symbol + " not found in user rng library", true);
             } else {
                 return 0;
             }
+        } else {
+            return symbolInfo.getAddress();
         }
     }
 

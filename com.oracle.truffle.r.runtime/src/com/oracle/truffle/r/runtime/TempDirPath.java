@@ -35,7 +35,7 @@ public class TempDirPath {
 
     private static String tempDirPath;
 
-    static void initialize() {
+    public static void initialize() {
         if (tempDirPath == null) {
             //
             final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};

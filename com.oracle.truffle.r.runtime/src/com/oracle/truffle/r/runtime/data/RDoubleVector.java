@@ -186,8 +186,9 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return getDataAt(index);
     }
 
-    public void resetData(double[] newData) {
+    public RDoubleVector resetData(double[] newData) {
         this.data = newData;
+        return this;
     }
 
     @Override

@@ -110,44 +110,70 @@ public class DLL {
         return result;
     }
 
-    public static long findSymbol(String symbol) throws DLLException {
-        boolean found = false;
+    public static class SymbolInfo {
+        private final String libName;
+        private final String symbol;
+        private long address;
+
+        SymbolInfo(String libName, String symbol, long address) {
+            this.libName = libName;
+            this.symbol = symbol;
+            this.address = address;
+        }
+
+        public String getLibName() {
+            return libName;
+        }
+
+        public long getAddress() {
+            return address;
+        }
+
+        public String getSymbol() {
+            return symbol;
+        }
+
+    }
+
+    /**
+     * Attempts to locate a symbol in the list of loaded libraries, possible constrained by the
+     * {@code libName} argument.
+     *
+     * @param symbol the symbol name to search for
+     * @param libName if not {@code null} restrict search to this library.
+     * @return a {@code SymbolInfo} instance or {@code null} if not found.
+     */
+    public static SymbolInfo findSymbolInfo(String symbol, String libName) {
         long val = 0;
+        DLLInfo dllInfo = null;
         for (DLLInfo info : list) {
-            val = RFFIFactory.getRFFI().getBaseRFFI().dlsym(info.handle, symbol);
-            if (val != 0) {
-                found = true;
-                break;
-            } else {
-                // symbol might actually be zero
-                if (RFFIFactory.getRFFI().getBaseRFFI().dlerror() == null) {
-                    found = true;
+            if (libName == null || info.name.equals(libName)) {
+                val = RFFIFactory.getRFFI().getBaseRFFI().dlsym(info.handle, symbol);
+                if (val != 0) {
+                    dllInfo = info;
                     break;
+                } else {
+                    // symbol might actually be zero
+                    if (RFFIFactory.getRFFI().getBaseRFFI().dlerror() == null) {
+                        dllInfo = info;
+                        break;
+                    }
                 }
             }
         }
-        if (!found) {
-            throw new DLLException("symbol " + symbol + " not found");
+        if (dllInfo == null) {
+            return null;
         } else {
-            return val;
+            return new SymbolInfo(dllInfo.name, symbol, val);
         }
     }
 
     public static String findLibraryContainingSymbol(String symbol) {
-        String lib = null;
-        for (DLLInfo info : list) {
-            long val = RFFIFactory.getRFFI().getBaseRFFI().dlsym(info.handle, symbol);
-            if (val != 0) {
-                lib = info.path;
-                break;
-            } else {
-                // symbol might actually be zero
-                if (RFFIFactory.getRFFI().getBaseRFFI().dlerror() == null) {
-                    lib = info.path;
-                    break;
-                }
-            }
+        SymbolInfo symbolInfo = findSymbolInfo(symbol, null);
+        if (symbolInfo == null) {
+            return null;
+        } else {
+            return symbolInfo.libName;
         }
-        return lib;
     }
 }

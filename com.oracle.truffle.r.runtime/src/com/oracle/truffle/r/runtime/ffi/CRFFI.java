@@ -23,8 +23,17 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Placeholder for the Fortran call FFI.
+ * Support for the {.C} and {.Fortran} calls.
  */
-public interface FCallRFFI {
-
+public interface CRFFI {
+    /**
+     * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
+     * {@code args}. The values in {@code args} should be native types,e.g., {@code double[]} not
+     * {@code RDoubleVector}.
+     * 
+     * @param symbolInfo identifies the symbol and the defining library
+     * @param args native arguments
+     * @throws Throwable on any error during the call
+     */
+    void invoke(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
 }
