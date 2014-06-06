@@ -16,7 +16,7 @@ import com.oracle.truffle.api.*;
 
 public class FunctionCall extends Call {
 
-    // FIXME: LHS of a call does not need to be a symbol, it can be a lambda expression
+    // LHS of a call does not need to be a symbol, it can be a lambda expression (FunctionCall)
     private Object lhs;
     boolean isAssignment;
     boolean isSuper;

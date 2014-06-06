@@ -134,6 +134,12 @@ public abstract class Typeof extends RBuiltinNode {
         return "environment";
     }
 
+    @Specialization()
+    public String typeof(RSymbol symbol) {
+        controlVisibility();
+        return "symbol";
+    }
+
     @Specialization(order = 100, guards = "isFunctionBuiltin")
     public String typeofBuiltin(RFunction obj) {
         controlVisibility();

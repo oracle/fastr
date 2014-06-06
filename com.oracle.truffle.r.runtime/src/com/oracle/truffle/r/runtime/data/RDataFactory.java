@@ -304,4 +304,8 @@ public final class RDataFactory {
         }
         return null;
     }
+
+    public static RSymbol createSymbol(String name) {
+        return new RSymbol(name);
+    }
 }

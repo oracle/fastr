@@ -88,6 +88,7 @@ public class RRuntime {
     public static final String TYPE_SPECIAL = new String("special");
     public static final String TYPE_DATA_FRAME = new String("data.frame");
     public static final String TYPE_FACTOR = new String("factor");
+    public static final String TYPE_SYMBOL = new String("symbol");
     // Defunct types
     public static final String REAL = new String("real");
     public static final String SINGLE = new String("single");

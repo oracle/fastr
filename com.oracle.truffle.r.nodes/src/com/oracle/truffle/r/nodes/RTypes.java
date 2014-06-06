@@ -30,14 +30,16 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Whenever you add a type {@code T} to the list below, make sure a corresponding {@code executeT()}
- * method is added to {@link RNode}.
+ * method is added to {@link RNode}, {@code wrap} and {@code proxy} methods are added to
+ * {@link RProxyNode}, a {@code typeof} method is added to {@code TypeNode} and a {@code print}
+ * method added to {code PrettyPrint}.
  *
  * @see RNode
  */
 @TypeSystem({byte.class, int.class, double.class, RRaw.class, RComplex.class, String.class, RIntSequence.class, RDoubleSequence.class, RIntVector.class, RDoubleVector.class, RRawVector.class,
                 RComplexVector.class, RStringVector.class, RLogicalVector.class, RFunction.class, RNull.class, RMissing.class, REnvironment.class, RExpression.class, RConnection.class,
                 MaterializedFrame.class, FrameSlot.class, RAbstractIntVector.class, RAbstractDoubleVector.class, RAbstractLogicalVector.class, RAbstractComplexVector.class,
-                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RDataFrame.class, RAbstractContainer.class, Object[].class})
+                RAbstractStringVector.class, RAbstractRawVector.class, RList.class, RAbstractVector.class, RDataFrame.class, RSymbol.class, RAbstractContainer.class, Object[].class})
 public class RTypes {
 
     @TypeCheck
