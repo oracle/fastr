@@ -14,11 +14,10 @@ package com.oracle.truffle.r.runtime;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.rng.*;
 
 public class RRuntime {
 

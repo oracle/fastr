@@ -159,8 +159,8 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return getDataAt(index);
     }
 
-    public RLogicalVector resetData(byte[] data) {
-        this.data = data;
+    public RLogicalVector resetData(byte[] newData) {
+        data = newData;
         return this;
     }
 

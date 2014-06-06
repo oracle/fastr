@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.rng.user;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
