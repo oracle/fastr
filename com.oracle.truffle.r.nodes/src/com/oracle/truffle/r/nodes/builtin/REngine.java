@@ -88,7 +88,7 @@ public final class REngine implements RBuiltinLookupProvider {
         ROptions.initialize();
         RProfile.initialize();
         // eval the system profile
-        REngine.parseAndEval(RProfile.systemProfile(), globalFrame, false);
+        REngine.parseAndEval(RProfile.systemProfile(), baseFrame, false);
         REnvironment.packagesInitialize(RPackages.initialize());
         RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
