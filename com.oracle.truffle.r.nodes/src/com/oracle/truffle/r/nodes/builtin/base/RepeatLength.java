@@ -35,7 +35,7 @@ public abstract class RepeatLength extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RNull rep_len(RNull value, int length) {
+    public RNull repLen(RNull value, int length) {
         controlVisibility();
         return RNull.instance;
     }
@@ -44,7 +44,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     // Specialization for single values
     //
     @Specialization
-    public RRawVector rep_len(RRaw value, int length) {
+    public RRawVector repLen(RRaw value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
         Arrays.fill(array, value.getValue());
@@ -52,7 +52,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector rep_len(int value, int length) {
+    public RIntVector repLen(int value, int length) {
         controlVisibility();
         int[] array = new int[length];
         Arrays.fill(array, length);
@@ -60,7 +60,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector rep_len(double value, int length) {
+    public RDoubleVector repLen(double value, int length) {
         controlVisibility();
         double[] array = new double[length];
         Arrays.fill(array, value);
@@ -68,15 +68,15 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector rep_len(String value, int length) {
+    public RStringVector repLen(String value, int length) {
         controlVisibility();
         String[] array = new String[length];
         Arrays.fill(array, value);
-        return RDataFactory.createStringVector(array, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createStringVector(array, !RRuntime.isNA(value));
     }
 
     @Specialization
-    public RComplexVector rep_len(RComplex value, int length) {
+    public RComplexVector repLen(RComplex value, int length) {
         controlVisibility();
         int complexLength = length * 2;
         double[] array = new double[complexLength];
@@ -88,7 +88,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector rep_len(byte value, int length) {
+    public RLogicalVector repLen(byte value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
         Arrays.fill(array, value);
@@ -99,7 +99,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     // Specialization for vector values
     //
     @Specialization
-    public RIntVector rep_len(RAbstractIntVector value, int length) {
+    public RIntVector repLen(RAbstractIntVector value, int length) {
         controlVisibility();
         int[] array = new int[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
@@ -109,7 +109,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector rep_len(RDoubleVector value, int length) {
+    public RDoubleVector repLen(RDoubleVector value, int length) {
         controlVisibility();
         double[] array = new double[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
@@ -119,7 +119,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector rep_len(RRawVector value, int length) {
+    public RRawVector repLen(RRawVector value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
@@ -129,11 +129,11 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector rep_len(RComplexVector value, int length) {
+    public RComplexVector repLen(RComplexVector value, int length) {
         controlVisibility();
-        length *= 2;
-        double[] array = new double[length];
-        for (int i = 0, j = 0; i < length; i += 2, j = Utils.incMod(j, value.getLength())) {
+        final int resultLength = length * 2;
+        double[] array = new double[resultLength];
+        for (int i = 0, j = 0; i < resultLength; i += 2, j = Utils.incMod(j, value.getLength())) {
             array[i] = value.getDataAt(j).getRealPart();
             array[i + 1] = value.getDataAt(j).getImaginaryPart();
         }
