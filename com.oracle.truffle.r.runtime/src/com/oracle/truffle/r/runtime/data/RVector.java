@@ -421,6 +421,11 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         return result;
     }
 
+    @Override
+    public final RVector copyDropAttributes() {
+        return internalCopy();
+    }
+
     public final RVector deepCopy() {
         RVector result = internalDeepCopy();
         setAttributes(result);

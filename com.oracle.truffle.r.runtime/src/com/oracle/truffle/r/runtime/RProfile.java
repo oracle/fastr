@@ -28,12 +28,15 @@ import java.nio.file.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * Handles the loading of site and user profile code. For the time being, owing to issues regarding
- * environments/frames, this code only reads the files and leaves the evaluation to the caller,
- * using {@link #siteProfile()} and {@link #userProfile()}.
+ * Handles the setup of system, site and user profile code. N.B. {@link #initialize()} only reads
+ * the files and leaves the evaluation to the caller, using {@link #siteProfile()} and
+ * {@link #userProfile()}.
  */
 public class RProfile {
     public static void initialize() {
+        // The system profile location is hard-wired relative to this class.
+        systemProfile = Utils.getResourceAsString(RProfile.class, "R/Rprofile.R", true);
+
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
 
@@ -71,8 +74,13 @@ public class RProfile {
         }
     }
 
+    private static String systemProfile;
     private static String siteProfile;
     private static String userProfile;
+
+    public static String systemProfile() {
+        return systemProfile;
+    }
 
     public static String siteProfile() {
         return siteProfile;

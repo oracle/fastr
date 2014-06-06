@@ -5154,6 +5154,10 @@ NULL
 [1] 1 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
+#{ is.matrix(c(matrix(1:4,2))) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
 #{ x <- 1:2 ; names(x) <- c("A",NA) ; c(x,test=x) }
       A    <NA>  test.A test.NA
       1       2       1       2
@@ -8562,6 +8566,54 @@ numeric(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepInt
 #{ rep.int(c(1,2),2) }
 [1] 1 2 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len("RepeatTest", 5) }
+[1] "RepeatTest" "RepeatTest" "RepeatTest" "RepeatTest" "RepeatTest"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(1, 2) }
+[1] 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(1:4, 10) }
+ [1] 1 2 3 4 1 2 3 4 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(1:4, 3) }
+[1] 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(1:4, 4) }
+[1] 1 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(2+6i, 4) }
+[1] 2+6i 2+6i 2+6i 2+6i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(3.14159, 3) }
+[1] 3.14159 3.14159 3.14159
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(TRUE, 2) }
+[1] TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(c(2i+3, 4+2i), 4) }
+[1] 3+2i 4+2i 3+2i 4+2i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ rep_len(c(3.1415, 0.8), 1) }
+[1] 3.1415
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ x<-as.raw(16); rep_len(x, 2) }
+[1] 10 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }
+[1] 10 05 10 05 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRev
 #{ rev(1:3) }

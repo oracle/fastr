@@ -103,7 +103,7 @@ public abstract class Order extends RBuiltinNode {
     @Specialization(order = 100)
     public RIntVector order(RIntVector x, RStringVector tie) {
         controlVisibility();
-        int[] t = order(tie, RMissing.instance).getDataCopy();
+        int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         int[] xs = x.getDataCopy();
         int[] ord = ordArray(xs.length);
         intSort(xs, ord, t, 0, xs.length - 1);
@@ -114,7 +114,7 @@ public abstract class Order extends RBuiltinNode {
     @Specialization(order = 110)
     public RIntVector order(RDoubleVector x, RStringVector tie) {
         controlVisibility();
-        int[] t = order(tie, RMissing.instance).getDataCopy();
+        int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         double[] xs = x.getDataCopy();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, t, 0, xs.length - 1);
@@ -125,7 +125,7 @@ public abstract class Order extends RBuiltinNode {
     @Specialization(order = 120)
     public RIntVector order(RDoubleVector x, RDoubleVector tie) {
         controlVisibility();
-        int[] t = order(tie, RMissing.instance).getDataCopy();
+        int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         double[] xs = x.getDataCopy();
         int[] ord = ordArray(xs.length);
         doubleSort(xs, ord, t, 0, xs.length - 1);

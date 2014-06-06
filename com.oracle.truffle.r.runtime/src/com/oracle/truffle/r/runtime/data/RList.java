@@ -85,6 +85,14 @@ public final class RList extends RVector implements RAbstractVector {
         return true;
     }
 
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public Object[] getDataWithoutCopying() {
+        return data;
+    }
+
     public Object[] getDataCopy() {
         Object[] copy = new Object[data.length];
         System.arraycopy(data, 0, copy, 0, data.length);

@@ -137,6 +137,14 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return Arrays.copyOf(data, data.length);
     }
 
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public byte[] getDataWithoutCopying() {
+        return data;
+    }
+
     @Override
     public RLogicalVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createLogicalVector(data, isComplete(), newDimensions);
@@ -149,6 +157,11 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
+    }
+
+    public RLogicalVector resetData(byte[] newData) {
+        data = newData;
+        return this;
     }
 
     @Override

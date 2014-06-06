@@ -37,6 +37,8 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
+    RAbstractVector copyDropAttributes();
+
     void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();

@@ -125,7 +125,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (nextClassIndex == type.getLength()) {
             classVec = RDataFactory.createStringVector("");
         } else {
-            classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataCopy(), nextClassIndex, type.getLength()), true);
+            classVec = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), nextClassIndex, type.getLength()), true);
         }
         classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
         klass = classVec;

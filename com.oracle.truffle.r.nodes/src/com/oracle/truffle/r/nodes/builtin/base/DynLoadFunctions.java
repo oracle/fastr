@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -45,6 +47,7 @@ public class DynLoadFunctions {
                 RList result = createDLLInfoList(info.toRValues());
                 return result;
             } catch (DLLException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
             }
         }
@@ -62,6 +65,7 @@ public class DynLoadFunctions {
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
+                controlVisibility();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
             }
             return RNull.instance;
@@ -94,6 +98,17 @@ public class DynLoadFunctions {
         RList dllInfo = RDataFactory.createList(data, RDataFactory.createStringVector(DLLInfo.NAMES, RDataFactory.COMPLETE_VECTOR));
         RVector.setClassAttr(dllInfo, RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS), null);
         return dllInfo;
+    }
+
+    @RBuiltin(name = "is.loaded", kind = INTERNAL)
+    public abstract static class IsLoaded extends RBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        public byte isLoaded(String symbol, String packageName, String type) {
+            // TODO Pay attention to packageName
+            boolean found = DLL.findSymbolInfo(symbol, null) != null;
+            return RRuntime.asLogical(found);
+        }
     }
 
 }

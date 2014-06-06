@@ -213,10 +213,8 @@ public abstract class REnvironment implements RAttributable {
      * @param globalFrame this is the anchor frame to which the package search path is attached
      * @param baseFrame this is for the base frame (we can't create it because our caller also needs
      *            to eval in it)
-     * @param rPackages the list of packages to add to the search path on startup, including
-     *            {@code base}.
      */
-    public static void initialize(VirtualFrame globalFrame, VirtualFrame baseFrame, ArrayList<RPackage> rPackages) {
+    public static void baseInitialize(VirtualFrame globalFrame, VirtualFrame baseFrame) {
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
@@ -229,6 +227,9 @@ public abstract class REnvironment implements RAttributable {
 
         // load base package first
         RPackages.loadBuiltin("base", baseFrame);
+    }
+
+    public static void packagesInitialize(ArrayList<RPackage> rPackages) {
         // now load rPackages, we need a new VirtualFrame for each
         REnvironment pkgParent = autoloadEnv;
         for (RPackage rPackage : rPackages) {

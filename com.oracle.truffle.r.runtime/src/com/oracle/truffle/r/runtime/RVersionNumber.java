@@ -26,18 +26,21 @@ package com.oracle.truffle.r.runtime;
  * Defines the R version number and it's release date. Separate from {@link RVersionInfo} to allow
  * use in {@code static final} fields and to finesse the fact that such fields cannot precede the
  * {@code enum} elements.
+ *
+ * N.B. Since packages check against the version number, we have to have a GnuR version number.
  */
 public class RVersionNumber {
-    public static final String MAJOR = "0";
-    public static final String MINOR = "7";
+    public static final String MAJOR = "3";
+    public static final String MINOR = "1";
     public static final String PATCH = "0";
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
+    public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
 
     public static final String RELEASE_YEAR = "2014";
-    public static final String RELEASE_MONTH = "05";
-    public static final String RELEASE_DAY = "22";
+    public static final String RELEASE_MONTH = "06";
+    public static final String RELEASE_DAY = "05";
 
     public static final String VERSION_STRING = "FastR version " + FULL + " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
