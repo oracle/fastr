@@ -58,7 +58,7 @@ public class GroupDispatchNode extends S3DispatchNode {
                     RStringVector classVec = null;
                     if (i > 0) {
                         isFirst = false;
-                        classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataCopy(), i, this.type.getLength()), true);
+                        classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataWithoutCopying(), i, this.type.getLength()), true);
                     } else {
                         isFirst = true;
                         classVec = this.type.copyResized(this.type.getLength(), false);

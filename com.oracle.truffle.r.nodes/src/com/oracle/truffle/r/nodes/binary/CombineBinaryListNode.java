@@ -35,7 +35,7 @@ public abstract class CombineBinaryListNode extends CombineBinaryNode {
 
     @Specialization(order = 100)
     public RList combine(RList left, RAbstractVector right) {
-        Object[] data = left.getDataCopy();
+        Object[] data = left.getDataWithoutCopying();
         Object[] result = new Object[data.length + right.getLength()];
         System.arraycopy(data, 0, result, 0, data.length);
         for (int i = 0; i < right.getLength(); ++i) {
@@ -47,7 +47,7 @@ public abstract class CombineBinaryListNode extends CombineBinaryNode {
     protected static RList extend(RList list, Object x) {
         final int ll = list.getLength();
         Object[] result = new Object[ll + 1];
-        System.arraycopy(list.getDataCopy(), 0, result, 0, ll);
+        System.arraycopy(list.getDataWithoutCopying(), 0, result, 0, ll);
         result[ll] = x;
         return RDataFactory.createList(result, combineNames(list, false));
     }

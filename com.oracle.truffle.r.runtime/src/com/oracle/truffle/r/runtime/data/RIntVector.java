@@ -96,6 +96,14 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return Arrays.copyOf(data, data.length);
     }
 
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public int[] getDataWithoutCopying() {
+        return data;
+    }
+
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }
