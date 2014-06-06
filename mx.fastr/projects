@@ -57,7 +57,7 @@ library@ASM_UTIL@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-util/4.0/asm
 distribution@FASTR@path=fastr.jar
 distribution@FASTR@sourcesPath=fastr-sources.jar
 distribution@FASTR@dependencies=com.oracle.truffle.r.nodes
-distribution@FASTR@exclude=JDK_TOOLS,FINDBUGS,NETLIB,ASM_UTIL,ASM_TREE,ASM_COMMONS,ASM_ANALYSIS,ASM,JNR_X86ASM,JFFI_NATIVE,JFFI,JNR_FFI,JNR_CONSTANTS,JNR_POSIX,JLINE,ANTLR-C,ANTLR
+distribution@FASTR@exclude=JDK_TOOLS,FINDBUGS,NETLIB,ASM_UTIL,ASM_TREE,ASM_COMMONS,ASM_ANALYSIS,ASM,JNR_X86ASM,JFFI_NATIVE,JFFI,JNR_FFI,JNR_CONSTANTS,JNR_POSIX,JNR_INVOKE,JNR_UDIS86,JLINE,ANTLR-C,ANTLR
 distribution@FASTR@distDependencies=TRUFFLE,GRAAL
 
 # com.oracle.truffle.r.parser.processor
