@@ -65,7 +65,7 @@ public class DynLoadFunctions {
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
-                controlVisibility();
+                CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
             }
             return RNull.instance;
@@ -105,6 +105,7 @@ public class DynLoadFunctions {
         @SuppressWarnings("unused")
         @Specialization
         public byte isLoaded(String symbol, String packageName, String type) {
+            controlVisibility();
             // TODO Pay attention to packageName
             boolean found = DLL.findSymbolInfo(symbol, null) != null;
             return RRuntime.asLogical(found);
