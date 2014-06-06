@@ -47,7 +47,10 @@ public abstract class Call extends ASTNode {
             assert c.getType() == Constant.ConstantType.STRING;
             assert c.getValues().length == 1;
             return create(src, Symbol.getSymbol(c.getValues()[0]), args);
+        } else if (call instanceof FunctionCall) {
+            return new FunctionCall(src, (FunctionCall) call, args);
         }
+        assert false;
         return null;
     }
 

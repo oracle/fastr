@@ -96,10 +96,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     @Override
     public RNode visit(FunctionCall callParam) {
         FunctionCall call = callParam;
-        Symbol callName = call.getName();
+        Symbol callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
 
-        if (callName.toString().equals(".Internal")) {
+        if (callName != null && callName.toString().equals(".Internal")) {
             // A call .Internal(f(args)) is rewritten as .Internal.f(args).
             // If the first arg is not a function call, then it will be an error,
             // but we must not crash here.
@@ -125,12 +125,18 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
             index++;
         }
-        final String functionName = RRuntime.toString(callName);
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.create(nodes, argumentNames);
-        if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
-            return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
+
+        if (callName != null) {
+            final String functionName = RRuntime.toString(callName);
+            if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
+                return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
+            }
+            return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
+        } else {
+            RNode lhs = call.getFunctionCall().accept(this);
+            return RCallNode.createCall(callSource, lhs, aCallArgNode);
         }
-        return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
     }
 
     @Override
