@@ -115,55 +115,73 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization
     public RIntVector pass(RIntVector vector) {
         controlVisibility();
-        return vector;
+        RIntVector result = (RIntVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
     public RDoubleVector pass(RDoubleVector vector) {
         controlVisibility();
-        return vector;
+        RDoubleVector result = (RDoubleVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
     public RComplexVector pass(RComplexVector vector) {
         controlVisibility();
-        return vector;
+        RComplexVector result = (RComplexVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
     public RStringVector pass(RStringVector vector) {
         controlVisibility();
-        return vector;
+        RStringVector result = (RStringVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
     public RRawVector pass(RRawVector vector) {
         controlVisibility();
-        return vector;
+        RRawVector result = (RRawVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
     public RLogicalVector pass(RLogicalVector vector) {
         controlVisibility();
-        return vector;
+        RLogicalVector result = (RLogicalVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
-    public RIntSequence pass(RIntSequence vector) {
+    public RIntVector pass(RIntSequence vector) {
         controlVisibility();
-        return vector;
+        RIntVector result = (RIntVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
-    public RDoubleSequence pass(RDoubleSequence vector) {
+    public RDoubleVector pass(RDoubleSequence vector) {
         controlVisibility();
-        return vector;
+        RDoubleVector result = (RDoubleVector) vector.copyDropAttributes();
+        result.copyNamesFrom(vector);
+        return result;
     }
 
     @Specialization
     public RList pass(RList list) {
         controlVisibility();
-        return list;
+        RList result = (RList) list.copyDropAttributes();
+        result.copyNamesFrom(list);
+        return result;
     }
 
     @Specialization(guards = "noArgNames")

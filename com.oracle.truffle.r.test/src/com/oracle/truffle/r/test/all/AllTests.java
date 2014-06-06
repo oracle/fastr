@@ -5929,6 +5929,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCombine_b4f1d4583eed5adc7042a3bfd6d30011() {
+        assertEval("{ is.matrix(c(matrix(1:4,2))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCombineBroken_d365e1ffe5f8c886f6d1911c69b3af00() {
         assertEval("{ c(1i,0/0) }");
     }

@@ -5154,6 +5154,10 @@ NULL
 [1] 1 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
+#{ is.matrix(c(matrix(1:4,2))) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCombine
 #{ x <- 1:2 ; names(x) <- c("A",NA) ; c(x,test=x) }
       A    <NA>  test.A test.NA
       1       2       1       2

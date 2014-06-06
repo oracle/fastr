@@ -55,7 +55,13 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
 
     protected abstract RVector internalCreateVector();
 
+    @Override
     public RAbstractVector copy() {
+        return createVector();
+    }
+
+    @Override
+    public RAbstractVector copyDropAttributes() {
         return createVector();
     }
 

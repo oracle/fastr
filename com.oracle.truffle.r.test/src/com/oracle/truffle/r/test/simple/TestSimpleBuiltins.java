@@ -290,6 +290,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1:2 ; names(x) <- c(\"A\",NA) ; c(x,test=x) }");
         assertEval("{ c(a=1,b=2:3,list(x=FALSE))  }");
         assertEval("{ c(1,z=list(1,b=22,3)) }");
+
+        assertEval("{ is.matrix(c(matrix(1:4,2))) }");
     }
 
     @Test
