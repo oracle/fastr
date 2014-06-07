@@ -42,9 +42,9 @@ public class TrigExpFunctions {
     public static abstract class Adapter extends RBuiltinNode {
         private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
-        Object error(String f) throws RError {
+        byte error() throws RError {
             CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "0 arguments passed to '" + f + "' which requires 1");
+            throw RError.getZ1ArgumentsPassed(getEncapsulatingSourceSection(), getRBuiltin().name());
         }
 
         @Override
@@ -56,6 +56,13 @@ public class TrigExpFunctions {
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
+
+        @Specialization
+        public byte isType(@SuppressWarnings("unused") RMissing value) {
+            controlVisibility();
+            return error();
+        }
+
     }
 
     public static abstract class AdapterCall1 extends Adapter {
@@ -96,11 +103,6 @@ public class TrigExpFunctions {
     @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Exp extends AdapterCall1 {
         @Specialization
-        public Object exp(@SuppressWarnings("unused") RMissing instance) {
-            return error("exp");
-        }
-
-        @Specialization
         public double exp(int x) {
             controlVisibility();
             return Math.exp(x);
@@ -129,11 +131,6 @@ public class TrigExpFunctions {
     @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class ExpM1 extends AdapterCall1 {
         @Specialization
-        public Object expm1(@SuppressWarnings("unused") RMissing instance) {
-            return error("expm1");
-        }
-
-        @Specialization
         public double expm1(int x) {
             controlVisibility();
             return Math.expm1(x);
@@ -161,12 +158,6 @@ public class TrigExpFunctions {
 
     @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Sin extends AdapterCall1 {
-
-        @Specialization
-        public Object sin(@SuppressWarnings("unused") RMissing x) {
-            return error("sin");
-        }
-
         @Specialization
         public double sin(int x) {
             controlVisibility();
@@ -194,11 +185,6 @@ public class TrigExpFunctions {
 
     @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Cos extends AdapterCall1 {
-
-        @Specialization
-        public Object cos(@SuppressWarnings("unused") RMissing x) {
-            return error("cos");
-        }
 
         @Specialization
         public double cos(int x) {
@@ -229,11 +215,6 @@ public class TrigExpFunctions {
     public abstract static class Tan extends AdapterCall1 {
 
         @Specialization
-        public Object tan(@SuppressWarnings("unused") RMissing x) {
-            return error("tan");
-        }
-
-        @Specialization
         public double tan(int x) {
             controlVisibility();
             return Math.tan(x);
@@ -260,12 +241,6 @@ public class TrigExpFunctions {
 
     @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Asin extends AdapterCall1 {
-
-        @Specialization
-        public Object sin(@SuppressWarnings("unused") RMissing x) {
-            return error("asin");
-        }
-
         @Specialization
         public double asin(int x) {
             controlVisibility();
@@ -293,12 +268,6 @@ public class TrigExpFunctions {
 
     @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Acos extends AdapterCall1 {
-
-        @Specialization
-        public Object acos(@SuppressWarnings("unused") RMissing x) {
-            return error("acos");
-        }
-
         @Specialization
         public double acos(int x) {
             controlVisibility();
@@ -326,12 +295,6 @@ public class TrigExpFunctions {
 
     @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Atan extends AdapterCall1 {
-
-        @Specialization
-        public Object atan(@SuppressWarnings("unused") RMissing x) {
-            return error("atan");
-        }
-
         @Specialization
         public double atan(int x) {
             controlVisibility();
@@ -357,7 +320,7 @@ public class TrigExpFunctions {
         }
     }
 
-    public static abstract class AdapterCall2 extends Adapter {
+    public static abstract class AdapterCall2 extends RBuiltinNode {
 
         protected interface MathCall2 {
             double call(double x, double y);
@@ -401,8 +364,7 @@ public class TrigExpFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        @Override
-        Object error(String arg) {
+        byte errorArg(String arg) {
             CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), "argument \"" + arg + "\" is missing, with no default");
         }
@@ -423,12 +385,12 @@ public class TrigExpFunctions {
 
         @Specialization(order = 10)
         public Object atan(@SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
-            return error(PARAMETER_NAMES[0]);
+            return errorArg(PARAMETER_NAMES[0]);
         }
 
         @Specialization(order = 11)
         public Object atan(@SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
-            return error(PARAMETER_NAMES[1]);
+            return errorArg(PARAMETER_NAMES[1]);
         }
 
         @Specialization(order = 0)

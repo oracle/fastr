@@ -95,6 +95,12 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization
+    public String doSymbol(VirtualFrame frame, RSymbol value) {
+        controlVisibility();
+        return value.getValue();
+    }
+
+    @Specialization
     public RStringVector doNull(RNull value) {
         controlVisibility();
         return RDataFactory.createStringVector(0);

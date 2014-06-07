@@ -106,6 +106,11 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return builtin;
     }
 
+    protected RBuiltin getRBuiltin() {
+        GeneratedBy generatedBy = getClass().getAnnotation(GeneratedBy.class);
+        return generatedBy.value().getAnnotation(RBuiltin.class);
+    }
+
     private static RBuiltinNode createNode(RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {
         RBuiltin rBuiltin = null;
         GeneratedBy generatedBy = factory.getFactory().getClass().getAnnotation(GeneratedBy.class);

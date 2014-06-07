@@ -257,7 +257,8 @@ public abstract class RError extends RuntimeException {
     public static final String SUBASSIGN_TYPE_FIX = "incompatible types (from %s to %s) in subassignment type fix";
     public static final String SUBSCRIPT_TYPES = "incompatible types (from %s to %s) in [[ assignment";
     public static final String RECURSIVE_INDEXING_FAILED = "recursive indexing failed at level %d";
-    public static final String ARGUMENTS_PASSED = "%d arguments passed to %s which requires %d";
+    public static final String ARGUMENTS_PASSED = "%d arguments passed to '%s' which requires %d";
+    public static final String ARGUMENTS_PASSED_0_1 = "0 arguments passed to '%s' which requires 1";
 
     private static final String NOT_CHARACTER_VECTOR = "'%s' must be a character vector";
     private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
@@ -2050,6 +2051,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getRecursiveIndexingFailed(SourceSection ast, int level) {
         return getGenericError(ast, stringFormat(RError.RECURSIVE_INDEXING_FAILED, level));
+    }
+
+    public static RError getZ1ArgumentsPassed(SourceSection ast, String func) {
+        return getGenericError(ast, stringFormat(RError.ARGUMENTS_PASSED_0_1, func));
     }
 
     public static RError getArgumentsPassed(SourceSection ast, int numArgs, String func, int numArgsReq) {
