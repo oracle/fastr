@@ -59,6 +59,14 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return copy;
     }
 
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public String[] getDataWithoutCopying() {
+        return data;
+    }
+
     @Override
     @SlowPath
     public String toString() {

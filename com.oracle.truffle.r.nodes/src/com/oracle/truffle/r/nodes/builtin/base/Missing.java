@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "missing", kind = PRIMITIVE)
 public abstract class Missing extends IsTypeNode {
 
-    @SuppressWarnings("unused")
+    @Override
     @Specialization
     public byte isType(RMissing value) {
         controlVisibility();

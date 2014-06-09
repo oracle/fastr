@@ -169,6 +169,13 @@ public abstract class Paste extends RBuiltinNode {
         return checkCollapse(castCharacterVector(frame, vector), collapse);
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    public RStringVector paste(VirtualFrame frame, RList list, Object sep, Object collapse) {
+        controlVisibility();
+        return checkCollapse(castCharacterVector(frame, list), collapse);
+    }
+
     @Specialization
     public RStringVector paste(VirtualFrame frame, Object[] args, Object sep, Object collapse) {
         controlVisibility();

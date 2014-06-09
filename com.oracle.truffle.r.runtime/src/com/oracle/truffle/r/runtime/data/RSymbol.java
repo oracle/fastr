@@ -20,11 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.runtime.data;
 
-/**
- * Placeholder for the Fortran call FFI.
- */
-public interface FCallRFFI {
+@com.oracle.truffle.api.CompilerDirectives.ValueType
+public class RSymbol {
+    private final String name;
+
+    RSymbol(String value) {
+        this.name = value;
+    }
+
+    public String getValue() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 
 }

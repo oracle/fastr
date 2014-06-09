@@ -16,19 +16,45 @@ import com.oracle.truffle.api.*;
 
 public class FunctionCall extends Call {
 
-    // FIXME: LHS of a call does not need to be a symbol, it can be a lambda expression
-    Symbol name;
+    // LHS of a call does not need to be a symbol, it can be a lambda expression (FunctionCall)
+    private Object lhs;
     boolean isAssignment;
     boolean isSuper;
 
-    public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> args) {
+    public FunctionCall(SourceSection src, Object lhsNode, List<ArgNode> args) {
         super(args);
         source = src;
-        name = funName;
+        lhs = lhsNode;
+    }
+
+    public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> args) {
+        this(src, (Object) funName, args);
+    }
+
+    public FunctionCall(SourceSection src, FunctionCall funCall, List<ArgNode> args) {
+        this(src, (Object) funCall, args);
+    }
+
+    public Object getLhs() {
+        return lhs;
+    }
+
+    public void setSymbol(Symbol symbol) {
+        lhs = symbol;
+    }
+
+    public boolean isSymbol() {
+        return lhs instanceof Symbol;
     }
 
     public Symbol getName() {
-        return name;
+        assert lhs instanceof Symbol;
+        return (Symbol) lhs;
+    }
+
+    public FunctionCall getFunctionCall() {
+        assert lhs instanceof FunctionCall;
+        return (FunctionCall) lhs;
     }
 
     public boolean isSuper() {

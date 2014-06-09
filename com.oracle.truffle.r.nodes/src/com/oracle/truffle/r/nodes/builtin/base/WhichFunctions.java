@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class WhichFunctions {
 
     @RBuiltin(name = "which", kind = INTERNAL)
-    public static abstract class Which extends RBuiltinNode {
+    public abstract static class Which extends RBuiltinNode {
 
         @Specialization
         public RIntVector which(RAbstractLogicalVector x) {
@@ -61,7 +61,7 @@ public class WhichFunctions {
     }
 
     @RBuiltin(name = "which.max", kind = RBuiltinKind.INTERNAL)
-    public static abstract class WhichMax extends RBuiltinNode {
+    public abstract static class WhichMax extends RBuiltinNode {
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
@@ -73,14 +73,14 @@ public class WhichFunctions {
         public int which(RAbstractDoubleVector x) {
             controlVisibility();
             double max = x.getDataAt(0);
-            int max_index = 0;
+            int maxIndex = 0;
             for (int i = 0; i < x.getLength(); i++) {
                 if (x.getDataAt(i) > max) {
                     max = x.getDataAt(i);
-                    max_index = i;
+                    maxIndex = i;
                 }
             }
-            return max_index + 1;
+            return maxIndex + 1;
         }
 
         @Specialization
@@ -92,7 +92,7 @@ public class WhichFunctions {
     }
 
     @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL)
-    public static abstract class WhichMin extends RBuiltinNode {
+    public abstract static class WhichMin extends RBuiltinNode {
 
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
@@ -104,14 +104,14 @@ public class WhichFunctions {
         public int which(RAbstractDoubleVector x) {
             controlVisibility();
             double minimum = x.getDataAt(0);
-            int min_index = 0;
+            int minIndex = 0;
             for (int i = 0; i < x.getLength(); i++) {
                 if (x.getDataAt(i) < minimum) {
                     minimum = x.getDataAt(i);
-                    min_index = i;
+                    minIndex = i;
                 }
             }
-            return min_index + 1;
+            return minIndex + 1;
         }
 
         @Specialization

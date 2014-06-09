@@ -22,13 +22,38 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
 public abstract class IsTypeNode extends RBuiltinNode {
+    private static final String[] PARAMETER_NAMES = new String[]{"x"};
+
+    protected byte error() throws RError {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.getZ1ArgumentsPassed(getEncapsulatingSourceSection(), getRBuiltin().name());
+    }
+
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    }
+
+    @Specialization
+    public byte isType(RMissing value) {
+        controlVisibility();
+        return error();
+    }
 
     @Specialization
     public byte isType(int value) {
@@ -125,6 +150,11 @@ public abstract class IsTypeNode extends RBuiltinNode {
 
     @Specialization
     public byte isType(RFunction value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    public byte isType(RSymbol value) {
         return RRuntime.LOGICAL_FALSE;
     }
 

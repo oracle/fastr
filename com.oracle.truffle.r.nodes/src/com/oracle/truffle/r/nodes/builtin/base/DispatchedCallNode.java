@@ -176,7 +176,7 @@ public abstract class DispatchedCallNode extends RNode {
                 Object result = aCallNode.execute(frame, aFuncCall.function);
                 return result;
             } finally {
-                aDispatchNode.unsetEnvironment(frame);
+                aDispatchNode.unsetEnvironment();
             }
         }
     }

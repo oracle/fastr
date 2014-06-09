@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.rng.user;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
@@ -62,15 +61,16 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
     }
 
     private static long findSymbol(String symbol, boolean optional) throws RNGException {
-        try {
-            return DLL.findSymbol(symbol);
-        } catch (DLLException ex) {
+        DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(symbol, null);
+        if (symbolInfo == null) {
             if (!optional) {
                 CompilerDirectives.transferToInterpreter();
-                throw new RNGException(ex.getMessage(), true);
+                throw new RNGException(symbol + " not found in user rng library", true);
             } else {
                 return 0;
             }
+        } else {
+            return symbolInfo.getAddress();
         }
     }
 

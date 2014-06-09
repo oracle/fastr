@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 /**
  * JNR-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, BaseRFFI, LinpackRFFI, LapackRFFI, UserRngRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, LinpackRFFI, LapackRFFI, UserRngRFFI {
 
     // Base
 
@@ -146,20 +146,6 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
 
     public String dlerror() {
         return com.kenai.jffi.Library.getLastError();
-    }
-
-    /*
-     * CCall methods
-     */
-
-    public void invoke(long address) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void invoke(long address, Object arg) {
-        // TODO Auto-generated method stub
-
     }
 
     /*
@@ -392,7 +378,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
    }
 
     /*
-     * UserRng
+     * UserRng.
+     * This is a singleton instance, although the actual library may vary from run to run.
      */
 
 
@@ -453,5 +440,20 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, CCallRFFI, Bas
             n[i] = pInt.getInt(i);
         }
     }
+
+    /*
+     * CCall methods
+     */
+
+    private static CRFFI cRFFI;
+
+    @Override
+    public CRFFI getCRFFI() {
+        if (cRFFI == null) {
+           cRFFI =  new CRFFI_JNR_Invoke();
+        }
+        return cRFFI;
+    }
+
 
 }

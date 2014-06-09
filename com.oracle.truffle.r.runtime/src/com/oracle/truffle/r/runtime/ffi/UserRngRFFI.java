@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 /**
  * Explicit statically typed interface to user-supplied random number generators. TODO This could
- * eventually be subsumed by {@link CCallRFFI}.
+ * eventually be subsumed by {@link CRFFI}.
  */
 public interface UserRngRFFI {
 

@@ -83,7 +83,7 @@ public abstract class AssignVariable extends ASTNode {
             return update;
         } else if (first instanceof FunctionCall) {
             FunctionCall replacementFunc = (FunctionCall) first;
-            FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.name, replacementFunc.getArgs());
+            FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.getLhs(), replacementFunc.getArgs());
             AccessVector newLhs = new AccessVector(func.getSource(), func, lhs.getArgs(), lhs.isSubset());
             UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
             lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
@@ -100,8 +100,12 @@ public abstract class AssignVariable extends ASTNode {
 
     public static ASTNode writeFunction(SourceSection src, boolean isSuper, FunctionCall lhs, ASTNode rhs) {
         // FIXME Probably we need a special node, for now all assign function should return value
-        String builtinName = lhs.name.pretty() + "<-";
-        lhs.name = Symbol.getSymbol(builtinName);
+        if (lhs.isSymbol()) {
+            String builtinName = lhs.getName().pretty() + "<-";
+            lhs.setSymbol(Symbol.getSymbol(builtinName));
+        } else {
+            assert false;
+        }
         lhs.setAssignment(true);
         lhs.setSuper(isSuper);
         if (lhs.args.size() > 0) {

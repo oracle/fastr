@@ -28,7 +28,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -105,6 +104,11 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
         builtin.onCreate();
         return builtin;
+    }
+
+    protected RBuiltin getRBuiltin() {
+        GeneratedBy generatedBy = getClass().getAnnotation(GeneratedBy.class);
+        return generatedBy.value().getAnnotation(RBuiltin.class);
     }
 
     private static RBuiltinNode createNode(RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {

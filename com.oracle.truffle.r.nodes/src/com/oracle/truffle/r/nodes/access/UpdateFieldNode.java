@@ -59,7 +59,7 @@ public abstract class UpdateFieldNode extends RNode {
         }
 
         Object[] resultData = new Object[newLength];
-        System.arraycopy(object.getDataCopy(), 0, resultData, 0, object.getLength());
+        System.arraycopy(object.getDataWithoutCopying(), 0, resultData, 0, object.getLength());
 
         String[] resultNames = new String[newLength];
         boolean namesComplete = true;
@@ -67,7 +67,7 @@ public abstract class UpdateFieldNode extends RNode {
             Arrays.fill(resultNames, "");
         } else {
             RStringVector names = (RStringVector) object.getNames();
-            System.arraycopy(names.getDataCopy(), 0, resultNames, 0, names.getLength());
+            System.arraycopy(names.getDataWithoutCopying(), 0, resultNames, 0, names.getLength());
             namesComplete = names.isComplete();
         }
 

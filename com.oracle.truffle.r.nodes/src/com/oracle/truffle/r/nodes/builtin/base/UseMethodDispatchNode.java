@@ -70,7 +70,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 RStringVector classVec = null;
                 if (i > 0) {
                     isFirst = false;
-                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataCopy(), i, this.type.getLength()), true);
+                    classVec = RDataFactory.createStringVector(Arrays.copyOfRange(this.type.getDataWithoutCopying(), i, this.type.getLength()), true);
                     classVec.setAttr(RRuntime.PREVIOUS_ATTR_KEY, this.type.copyResized(this.type.getLength(), false));
                 } else {
                     isFirst = true;

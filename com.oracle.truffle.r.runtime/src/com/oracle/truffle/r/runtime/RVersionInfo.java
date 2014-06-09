@@ -29,7 +29,7 @@ public enum RVersionInfo {
     OS(java.lang.System.getProperty("os.name")),
     System(),
     Major(RVersionNumber.MAJOR),
-    Minor(RVersionNumber.MINOR),
+    Minor(RVersionNumber.MINOR_PATCH), // GnuR compatibility
     Year(RVersionNumber.RELEASE_YEAR),
     Month(RVersionNumber.RELEASE_MONTH),
     Day(RVersionNumber.RELEASE_DAY),

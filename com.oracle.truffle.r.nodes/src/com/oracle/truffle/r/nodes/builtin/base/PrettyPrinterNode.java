@@ -168,6 +168,10 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.quoteString(operand);
     }
 
+    public static String prettyPrint(RSymbol operand) {
+        return operand.getValue();
+    }
+
     @Specialization(order = 50)
     public String prettyPrintVector(RRaw operand, Object listElementName) {
         return concat("[1] ", prettyPrint(operand));

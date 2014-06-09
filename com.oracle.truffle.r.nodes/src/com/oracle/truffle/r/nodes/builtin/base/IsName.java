@@ -20,14 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-/**
- * Placeholder for the C call FFI.
- */
-public interface CCallRFFI {
-    void invoke(long address);
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
-    void invoke(long address, Object arg);
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+
+@RBuiltin(name = "is.name", kind = PRIMITIVE)
+public abstract class IsName extends IsTypeNode {
+
+    @Specialization
+    @Override
+    public byte isType(RSymbol value) {
+        controlVisibility();
+        return RRuntime.LOGICAL_TRUE;
+    }
+
+    @Specialization
+    @Override
+    public byte isType(Object value) {
+        controlVisibility();
+        return RRuntime.asLogical(value instanceof RSymbol);
+    }
 
 }

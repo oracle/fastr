@@ -5929,6 +5929,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCombine_b4f1d4583eed5adc7042a3bfd6d30011() {
+        assertEval("{ is.matrix(c(matrix(1:4,2))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCombineBroken_d365e1ffe5f8c886f6d1911c69b3af00() {
         assertEval("{ c(1i,0/0) }");
     }
@@ -10131,6 +10136,66 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testRepInt_25dc3c5afcc02fec6b3cc41d5fbc3e7e() {
         assertEval("{ rep.int(\"a\",3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_1e2944bdccf7b834c200a495c2ed8b8c() {
+        assertEval("{ rep_len(1, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_b9d08d63b74bbd0aefc44dbbe5978d1f() {
+        assertEval("{ rep_len(3.14159, 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_7d3ff4e42e34159cda8990221b46466c() {
+        assertEval("{ rep_len(\"RepeatTest\", 5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_b036379806a33dc79973ab7e745ad73e() {
+        assertEval("{ rep_len(2+6i, 4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_4550656fefb8ff3b24b5835af4fbf72b() {
+        assertEval("{ rep_len(TRUE, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_33547fe05740e9582db00a8b57af6199() {
+        assertEval("{ x<-as.raw(16); rep_len(x, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_250740578ca7d04b67028c2cc6eb3e19() {
+        assertEval("{ rep_len(1:4, 10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_11516442170dae4ad3a3529f82c8fb67() {
+        assertEval("{ rep_len(1:4, 3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_56dad484fa4e0c5dff1b1946656da020() {
+        assertEval("{ rep_len(1:4, 4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_50e734b6c06233be95f2a255cd1ebdc6() {
+        assertEval("{ rep_len(c(3.1415, 0.8), 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_cd26d2d81526a8ed20194f6a5a94fc64() {
+        assertEval("{ rep_len(c(2i+3, 4+2i), 4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_1f8358482acddfecc54bb97e1c4256a3() {
+        assertEval("{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }");
     }
 
     @Test

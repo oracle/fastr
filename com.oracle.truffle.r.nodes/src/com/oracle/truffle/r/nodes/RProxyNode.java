@@ -244,6 +244,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    protected RSymbol wrap(RSymbol x) {
+        return proxy(x);
+    }
+
+    protected RSymbol proxy(RSymbol x) {
+        return (RSymbol) proxyScalar(x);
+    }
+
+    @Specialization
     protected Object[] wrap(Object[] x) {
         return proxy(x);
     }

@@ -105,6 +105,11 @@ public abstract class AsVector extends RBuiltinNode {
         return castList.executeList(frame, operand);
     }
 
+    private RSymbol castSymbol(VirtualFrame frame, Object operand) {
+        RStringVector vec = castString(frame, operand);
+        return RDataFactory.createSymbol(vec.getDataAt(0));
+    }
+
     @Override
     public Object[] getParameterNames() {
         return PARAMETER_NAMES;
@@ -163,6 +168,12 @@ public abstract class AsVector extends RBuiltinNode {
         return castList(frame, x);
     }
 
+    @Specialization(order = 800, guards = "castToSymbol")
+    public RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return castSymbol(frame, x);
+    }
+
     @Specialization(order = 1000)
     public RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -213,6 +224,10 @@ public abstract class AsVector extends RBuiltinNode {
         return x.getElementClass() != Object.class && mode.equals("list");
     }
 
+    protected boolean castToSymbol(RAbstractVector x, String mode) {
+        return x.getElementClass() != Object.class && mode.equals("symbol");
+    }
+
     protected boolean modeIsAnyOrMatches(RAbstractVector x, String mode) {
         return RRuntime.TYPE_ANY.equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RRuntime.TYPE_DOUBLE.equals(mode);
     }
@@ -220,7 +235,7 @@ public abstract class AsVector extends RBuiltinNode {
     protected boolean invalidMode(@SuppressWarnings("unused") RAbstractVector x, String mode) {
         return !RRuntime.TYPE_ANY.equals(mode) && !RRuntime.TYPE_ARRAY.equals(mode) && !RRuntime.TYPE_CHARACTER.equals(mode) && !RRuntime.TYPE_COMPLEX.equals(mode) &&
                         !RRuntime.TYPE_DOUBLE.equals(mode) && !RRuntime.TYPE_INTEGER.equals(mode) && !RRuntime.TYPE_LIST.equals(mode) && !RRuntime.TYPE_LOGICAL.equals(mode) &&
-                        !RRuntime.TYPE_MATRIX.equals(mode) && !RRuntime.TYPE_NUMERIC.equals(mode) && !RRuntime.TYPE_RAW.equals(mode);
+                        !RRuntime.TYPE_MATRIX.equals(mode) && !RRuntime.TYPE_NUMERIC.equals(mode) && !RRuntime.TYPE_RAW.equals(mode) && !RRuntime.TYPE_SYMBOL.equals(mode);
     }
 
 }

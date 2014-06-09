@@ -80,8 +80,14 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.getAttributes();
     }
 
+    @Override
     public RAbstractVector copy() {
         return copyWithNewDimensions(getDimensions());
+    }
+
+    @Override
+    public RAbstractVector copyDropAttributes() {
+        return vector.copyDropAttributes();
     }
 
     public boolean isMatrix() {

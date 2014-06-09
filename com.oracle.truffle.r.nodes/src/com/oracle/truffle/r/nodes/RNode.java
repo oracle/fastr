@@ -158,6 +158,10 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRDataFrame(execute(frame));
     }
 
+    public RSymbol executeRSymbol(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRSymbol(execute(frame));
+    }
+
     public RAbstractContainer executeRAbstractContainer(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectRAbstractContainer(execute(frame));
     }
