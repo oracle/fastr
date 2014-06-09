@@ -45,7 +45,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame) {
         readGenericVars(frame);
-        if (!isSame() || !isFirst || !findFunction(targetFunctionName, genCallEnv)) {
+        if (!isSame() || !isFirst) {
             findTargetFunction(frame);
             storeValues();
         }

@@ -40,7 +40,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     protected Frame genDefEnv;
     protected boolean isFirst;
 
-    protected boolean findFunction(final String functionName, Frame frame) {
+    protected void findFunction(final String functionName, Frame frame) {
         if (lookup == null || !functionName.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = functionName;
@@ -60,9 +60,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (func != null && func instanceof RFunction) {
             targetFunctionName = functionName;
             targetFunction = (RFunction) func;
-            return true;
         }
-        return false;
     }
 
     protected void findFunction(final String generic, final String className, Frame frame) {
