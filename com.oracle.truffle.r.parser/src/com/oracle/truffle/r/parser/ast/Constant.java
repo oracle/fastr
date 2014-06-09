@@ -91,6 +91,10 @@ public class Constant extends ASTNode {
         return new Constant(values, ConstantType.STRING, src);
     }
 
+    public static Constant createStringNA(SourceSection src) {
+        return new Constant(new String[]{RRuntime.STRING_NA}, ConstantType.STRING, src);
+    }
+
     public void addNegativeSign() {
         values[0] = "-" + values[0];
     }
