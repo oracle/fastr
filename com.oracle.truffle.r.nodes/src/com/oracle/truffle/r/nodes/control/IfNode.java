@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;

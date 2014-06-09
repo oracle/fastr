@@ -10,7 +10,7 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 
 public class Repeat extends Loop {
 

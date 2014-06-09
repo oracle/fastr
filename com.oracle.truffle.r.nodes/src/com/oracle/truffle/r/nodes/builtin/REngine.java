@@ -128,7 +128,7 @@ public final class REngine implements RBuiltinLookupProvider {
      * {@code printResult == true}, the result of the evaluation is printed to the console.
      */
     public static Object parseAndEval(String rscript, VirtualFrame globalFrame, boolean printResult) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), SourceFactory.asFakeFile(rscript, "<shell_input>"), globalFrame, printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), globalFrame, printResult);
     }
 
     /**
@@ -139,7 +139,7 @@ public final class REngine implements RBuiltinLookupProvider {
     public static Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createVirtualFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), SourceFactory.asFakeFile(rscript, "<shell_input>"), frame, printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult);
     }
 
     public static class ParseException extends Exception {
@@ -152,7 +152,7 @@ public final class REngine implements RBuiltinLookupProvider {
 
     public static Object[] parse(String rscript) throws ParseException {
         try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), SourceFactory.asFakeFile(rscript, "<parse_input>"));
+            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
             ASTNode[] exprs = seq.getExprs();
             RExpression[] result = new RExpression[exprs.length];
             for (int i = 0; i < exprs.length; i++) {

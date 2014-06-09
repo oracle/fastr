@@ -12,7 +12,7 @@ package com.oracle.truffle.r.parser.ast;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 
 @Precedence(Precedence.MAX)
 public class SimpleAccessVariable extends AccessVariable {

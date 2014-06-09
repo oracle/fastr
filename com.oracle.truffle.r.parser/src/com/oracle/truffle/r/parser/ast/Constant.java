@@ -13,14 +13,19 @@ package com.oracle.truffle.r.parser.ast;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
 @Precedence(Precedence.MAX)
 public class Constant extends ASTNode {
 
     public enum ConstantType {
-        DOUBLE, COMPLEX, INT, BOOL, STRING, NULL
+        DOUBLE,
+        COMPLEX,
+        INT,
+        BOOL,
+        STRING,
+        NULL
     }
 
     final String[] values;

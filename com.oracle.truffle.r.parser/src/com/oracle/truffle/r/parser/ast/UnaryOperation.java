@@ -10,7 +10,7 @@
  */
 package com.oracle.truffle.r.parser.ast;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 
 public abstract class UnaryOperation extends Operation {
 
@@ -34,6 +34,9 @@ public abstract class UnaryOperation extends Operation {
     public enum UnaryOperator {
         REPEAT,
 
-        PLUS, MINUS, NOT, MODEL
+        PLUS,
+        MINUS,
+        NOT,
+        MODEL
     }
 }

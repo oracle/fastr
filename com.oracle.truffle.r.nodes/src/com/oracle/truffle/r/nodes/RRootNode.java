@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 
 public abstract class RRootNode extends RootNode {
 

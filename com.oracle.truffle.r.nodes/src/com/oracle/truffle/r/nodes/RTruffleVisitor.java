@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadVariableSuperMaterializedNode;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceVector;

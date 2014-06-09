@@ -12,7 +12,7 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 
 /*
  * The error messages are copy-pasted and/or hand re-written from GNU R.
