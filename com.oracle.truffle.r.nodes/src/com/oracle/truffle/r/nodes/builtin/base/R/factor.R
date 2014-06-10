@@ -18,3 +18,9 @@
 
 
 is.factor <- function(x) inherits(x, "factor")
+
+levels <- function(x) UseMethod("levels")
+levels.default <- function(x) attr(x, "levels")
+nlevels <- function(x) length(levels(x))
+
+is.ordered <- function(x) inherits(x, "ordered")
