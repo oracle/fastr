@@ -491,6 +491,7 @@ simple_expr returns [ASTNode v]
     | t=NAN                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
     | t=NAINT                                   { $v = Constant.createIntConstant(sourceSection("simple_expr/NAINT", t), "NA_integer_"); }
     | t=NAREAL                                  { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAREAL", t), "NA_real_"); }
+    | t=NACHAR                                  { $v = Constant.createStringNA(sourceSection("simple_expr/NACHAR", t)); }
     | num=number                                { $v = num; }
     | cstr=conststring                          { $v = cstr; }
     | pkg=id nsg=(NS_GET|NS_GET_INT) n_ comp=id {
@@ -632,7 +633,7 @@ NULL     : 'NULL' ;
 NA       : 'NA' ;
 NAINT    : 'NA_integer_' ;
 NAREAL   : 'NA_real_' ;
-///NACHAR   : 'NA_character_' ;
+NACHAR   : 'NA_character_' ;
 ///NACOMPL  : 'NA_complex_' ;
 TRUE     : 'TRUE' ;
 FALSE    : 'FALSE' ;
