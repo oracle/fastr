@@ -31,7 +31,7 @@ public abstract class UseMethod extends RBuiltinNode {
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
 
-    @Child UseMethodRoot useMethodRoot;
+    @Child UseMethodNode useMethodNode;
 
     @Override
     public Object[] getParameterNames() {
@@ -46,26 +46,26 @@ public abstract class UseMethod extends RBuiltinNode {
     @Specialization
     public Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();
-        if (useMethodRoot == null) {
+        if (useMethodNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            useMethodRoot = insert(new UseMethodUninitialized());
+            useMethodNode = insert(new UseMethodUninitializedNode());
         }
-        return useMethodRoot.execute(frame, generic, arg);
+        return useMethodNode.execute(frame, generic, arg);
     }
 
-    private static final class UseMethodUninitialized extends UseMethodRoot {
+    private static final class UseMethodUninitializedNode extends UseMethodNode {
         @Override
         public Object execute(VirtualFrame frame, final String generic, Object obj) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return specialize(obj).execute(frame, generic, obj);
         }
 
-        private UseMethodRoot specialize(Object obj) {
+        private UseMethodNode specialize(Object obj) {
             CompilerAsserts.neverPartOfCompilation();
             if (obj instanceof RMissing) {
-                return this.replace(new UseMethodGenericOnly());
+                return this.replace(new UseMethodGenericOnlyNode());
             }
-            return this.replace(new UseMethodGenericNObject());
+            return this.replace(new UseMethodGenericAndObjectNode());
         }
     }
 
@@ -73,7 +73,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * If only one argument is passed to UseMethod, the first argument of enclosing function is used
      * to resolve the generic.
      */
-    private static final class UseMethodGenericOnly extends UseMethodRoot {
+    private static final class UseMethodGenericOnlyNode extends UseMethodNode {
 
         @Override
         public Object execute(VirtualFrame frame, final String generic, Object obj) {
@@ -87,7 +87,7 @@ public abstract class UseMethod extends RBuiltinNode {
         }
     }
 
-    private static final class UseMethodGenericNObject extends UseMethodRoot {
+    private static final class UseMethodGenericAndObjectNode extends UseMethodNode {
 
         @Override
         public Object execute(VirtualFrame frame, final String generic, Object obj) {
@@ -96,7 +96,7 @@ public abstract class UseMethod extends RBuiltinNode {
         }
     }
 
-    private static abstract class UseMethodRoot extends RNode {
+    private abstract static class UseMethodNode extends RNode {
 
         @Child protected DispatchedCallNode dispatchedCallNode;
         protected String lastGenericName;
