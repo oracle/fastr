@@ -31,6 +31,7 @@ import jnr.posix.*;
 import jnr.constants.platform.Errno;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -57,6 +58,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
     private static class LibCXProvider {
         private static LibCX libcx;
 
+        @SlowPath
         static LibCX libcx() {
             if (libcx == null) {
                 libcx = LibraryLoader.create(LibCX.class).load("c");
@@ -192,6 +194,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
     private static class LapackProvider {
         private static Lapack lapack;
 
+        @SlowPath
         static Lapack lapack() {
             if (lapack == null) {
                 lapack = LibraryLoader.create(Lapack.class).load("Rlapack");
@@ -381,6 +384,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
    private static class LinpackProvider {
        private static Linpack linpack;
 
+       @SlowPath
        static Linpack linpack() {
            if (linpack == null) {
                linpack = LibraryLoader.create(Linpack.class).load("R");
@@ -448,6 +452,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
             UserRngProvider.libPath = libPath;
         }
 
+        @SlowPath
         static UserRng userRng() {
             if (userRng == null) {
                 userRng = LibraryLoader.create(UserRng.class).load(libPath);
