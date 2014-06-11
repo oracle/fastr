@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -53,16 +52,12 @@ public abstract class DebugTreeBuiltin extends RBuiltinNode {
     @Specialization
     public Object printTree(RFunction function, byte verbose) {
         controlVisibility();
-        CallTarget target = function.getTarget();
-        if (target instanceof DefaultCallTarget) {
-            RootNode root = ((DefaultCallTarget) target).getRootNode();
-            if (verbose == RRuntime.LOGICAL_TRUE) {
-                return NodeUtil.printTreeToString(root);
-            } else {
-                return NodeUtil.printCompactTreeToString(root);
-            }
+        RootNode root = function.getTarget().getRootNode();
+        if (verbose == RRuntime.LOGICAL_TRUE) {
+            return NodeUtil.printTreeToString(root);
+        } else {
+            return NodeUtil.printCompactTreeToString(root);
         }
-        return RNull.instance;
     }
 
     @Specialization
