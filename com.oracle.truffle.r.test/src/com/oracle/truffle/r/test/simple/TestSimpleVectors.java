@@ -488,6 +488,12 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x <- c(\"a\", \"b\"); y<-NULL; y[integer()]<-x[integer()]; y }");
         assertEval("{ x <- c(\"a\", \"b\"); y<-c(\"c\",\"d\"); y[integer()]<-x[integer()]; y}");
+
+        assertEval("{ x<-c(1,2); y<-list(a=x); names(y[1])<-\"c\"; names(y[1]) }");
+        assertEval("{ x<-c(1,2); y<-list(a=x); names(y[1])<-\"c\"; names(y[[1]]) }");
+        assertEval("{ x<-c(1,2); y<-list(a=x); names(y[[1]])<-\"c\"; names(y[1]) }");
+        assertEval("{ x<-c(1,2); y<-list(a=x); names(y[[1]])<-\"c\"; names(y[[1]]) }");
+        assertEval("{ x<-c(1,2); y<-list(a=x); names(y$a)<-\"c\"; names(y$a) }");
     }
 
     @Test

@@ -8848,6 +8848,14 @@ Error: object 'x' not found
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSimpleRm
 #{ x <- 200 ; rm("x") }
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(1L,10L,2L)) }
+[1]  1  2 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSort
+#{ sort(c(3,10,2)) }
+[1]  2  3 10
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSprintf
 #{ sprintf("%03d", 1:3) }
 [1] "001" "002" "003"
@@ -48758,6 +48766,26 @@ Error in x[[c("a", "b")]] : attempt to select more than one element
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1,2); x[c("a", "b")] }
 [1] NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1,2); y<-list(a=x); names(y$a)<-"c"; names(y$a) }
+[1] "c" NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1,2); y<-list(a=x); names(y[1])<-"c"; names(y[1]) }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1,2); y<-list(a=x); names(y[1])<-"c"; names(y[[1]]) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1,2); y<-list(a=x); names(y[[1]])<-"c"; names(y[1]) }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
+#{ x<-c(1,2); y<-list(a=x); names(y[[1]])<-"c"; names(y[[1]]) }
+[1] "c" NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testMoreVectorsOther
 #{ x<-c(1,2,3); x[[-1]]<-7 }

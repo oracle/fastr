@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -47,6 +49,8 @@ public abstract class Order extends RBuiltinNode {
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
+
+    public abstract Object executeDoubleVector(VirtualFrame frame, RDoubleVector vec, RMissing tie);
 
     @Child protected BooleanOperation eq = BinaryCompare.EQUAL.create();
     @Child protected BooleanOperation lt = BinaryCompare.LESS_THAN.create();

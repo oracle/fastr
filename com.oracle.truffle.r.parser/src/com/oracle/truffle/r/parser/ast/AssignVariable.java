@@ -12,7 +12,7 @@ package com.oracle.truffle.r.parser.ast;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
 public abstract class AssignVariable extends ASTNode {
@@ -81,6 +81,10 @@ public abstract class AssignVariable extends ASTNode {
             UpdateVector update = new UpdateVector(isSuper, lhs, rhs);
             lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
             return update;
+        } else if (first instanceof FieldAccess) {
+            UpdateVector update = new UpdateVector(isSuper, lhs, rhs);
+            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
+            return update;
         } else if (first instanceof FunctionCall) {
             FunctionCall replacementFunc = (FunctionCall) first;
             FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.getLhs(), replacementFunc.getArgs());
@@ -113,6 +117,8 @@ public abstract class AssignVariable extends ASTNode {
             if (first instanceof SimpleAccessVariable) {
                 return new Replacement(src, isSuper, lhs, rhs);
             } else if (first instanceof AccessVector) {
+                return new Replacement(src, isSuper, lhs, rhs);
+            } else if (first instanceof FieldAccess) {
                 return new Replacement(src, isSuper, lhs, rhs);
             } else {
                 Utils.nyi(); // TODO here we need to flatten complex assignments

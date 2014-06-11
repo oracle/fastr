@@ -20,7 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import subprocess, tempfile, shutil, filecmp, platform
+import subprocess, tempfile, shutil, filecmp, platform, shlex
 from os.path import join, sep
 from argparse import ArgumentParser, REMAINDER
 import mx
@@ -29,7 +29,9 @@ import os
 
 _fastr_suite = None
 
-def _runR(args, className, nonZeroIsFatal=True):
+def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None):
+    # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
+    # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     os.environ['R_HOME'] = _fastr_suite.dir
     # Set up path for Lapack libraries
     osname = platform.system()
@@ -41,11 +43,14 @@ def _runR(args, className, nonZeroIsFatal=True):
     else:
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
-    return mx_graal.vm(['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell"), className] + args, nonZeroIsFatal=nonZeroIsFatal)
+    vmArgs = ['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    if extraVmArgs:
+        vmArgs = vmArgs + extraVmArgs
+    return mx_graal.vm(vmArgs + [className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
-def runRCommand(args, nonZeroIsFatal=True):
+def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R shell'''
-    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal)
+    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs)
 
 def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
@@ -191,6 +196,7 @@ def testgen(args):
 def rbench(args):
     '''run a one or more R benchmarks'''
     parser = ArgumentParser(prog='mx rbench')
+    parser.add_argument('--J', dest='extra_javavm_args', help='extra Java VM arguments', metavar='@<args>')
     parser.add_argument('--path', action='store_true', help='print path to benchmark')
     parser.add_argument('--gnur', action='store_true', help='run under GnuR')
     parser.add_argument('--gnur-path', action='store', metavar='<path>', help='specify path to GnuR', default='R')
@@ -199,6 +205,8 @@ def rbench(args):
     parser.add_argument('benchmarks', nargs=REMAINDER, metavar='benchmarkgroup.name', help='list of benchmarks to run')
     args = parser.parse_args(args)
 
+    if args.extra_javavm_args:
+        args.extra_javavm_args = shlex.split(args.extra_javavm_args.lstrip('@'))
     # dynamically load the benchmarks suite
     hg_base = mx.get_env('HG_BASE')
     alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
@@ -227,7 +235,7 @@ def rbench(args):
                 else:
                     # temporary: disable group generics as long as they impose a considerable performance overhead
                     command = ['--DisableGroupGenerics'] + command
-                    rc = runRCommand(command, nonZeroIsFatal=False)
+                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=args.extra_javavm_args)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'
                     emsg = rc
@@ -249,7 +257,10 @@ def _bench_harness_body(args, vmArgs):
              'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
              'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm',
              'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-3', 'b25.bench.prog-4', 'b25.bench.prog-5',
-             'b25.bench.matcal-1', 'b25.bench.matcal-2']
+             'b25.bench.matcal-1', 'b25.bench.matcal-2',
+             'b25.bench.matfunc-2', 'b25.bench.matfunc-4']
+    if vmArgs:
+        marks = ['--J', vmArgs] + marks
     return rbench(marks)
 
 def bench(args):

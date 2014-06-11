@@ -12,7 +12,7 @@ package com.oracle.truffle.r.parser;
 
 import org.antlr.runtime.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.parser.ast.*;
 

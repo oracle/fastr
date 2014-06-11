@@ -13,14 +13,19 @@ package com.oracle.truffle.r.parser.ast;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
 @Precedence(Precedence.MAX)
 public class Constant extends ASTNode {
 
     public enum ConstantType {
-        DOUBLE, COMPLEX, INT, BOOL, STRING, NULL
+        DOUBLE,
+        COMPLEX,
+        INT,
+        BOOL,
+        STRING,
+        NULL
     }
 
     final String[] values;
@@ -84,6 +89,10 @@ public class Constant extends ASTNode {
 
     public static Constant createStringConstant(SourceSection src, String... values) {
         return new Constant(values, ConstantType.STRING, src);
+    }
+
+    public static Constant createStringNA(SourceSection src) {
+        return new Constant(new String[]{RRuntime.STRING_NA}, ConstantType.STRING, src);
     }
 
     public void addNegativeSign() {

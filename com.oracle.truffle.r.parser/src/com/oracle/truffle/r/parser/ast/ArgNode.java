@@ -24,7 +24,7 @@ package com.oracle.truffle.r.parser.ast;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.source.*;
 
 public class ArgNode extends ASTNode {
 

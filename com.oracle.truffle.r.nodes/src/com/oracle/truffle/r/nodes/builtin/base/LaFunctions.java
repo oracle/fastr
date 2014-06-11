@@ -52,7 +52,8 @@ public class LaFunctions {
         }
 
         protected void lapackError(String func, int info) {
-            error("error code " + info + " from Lapack routine '" + func + "'");
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "error code " + info + " from Lapack routine '" + func + "'");
         }
     }
 
@@ -241,6 +242,122 @@ public class LaFunctions {
         @SlowPath
         private void errorFormat(String format, int a, int b) {
             error(String.format(format, a, b));
+        }
+    }
+
+    @RBuiltin(name = "det_ge_real", kind = INTERNAL)
+    public abstract static class DetGeReal extends LaHelper {
+
+        private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(new String[]{"modulus", "sign"}, RDataFactory.COMPLETE_VECTOR);
+        private static final RStringVector DET_CLASS = RDataFactory.createStringVector(new String[]{"det"}, RDataFactory.COMPLETE_VECTOR);
+
+        @Specialization
+        public RList doDetGeReal(RDoubleVector aIn, byte useLogIn) {
+            if (!aIn.isMatrix()) {
+                error("'a' must be a numeric matrix");
+            }
+            RDoubleVector a = (RDoubleVector) aIn.copy();
+            int[] aDims = aIn.getDimensions();
+            int n = aDims[0];
+            if (n != aDims[1]) {
+                error("'a' must be a square matrix");
+            }
+            int[] ipiv = new int[n];
+            double modulus = 0;
+            boolean useLog = RRuntime.fromLogical(useLogIn);
+            double[] aData = a.getDataWithoutCopying();
+            int info = RFFIFactory.getRFFI().getLapackRFFI().dgetrf(n, n, aData, n, ipiv);
+            if (info < 0) {
+                lapackError("dgetrf", info);
+            } else if (info > 0) {
+                modulus = useLog ? Double.NEGATIVE_INFINITY : 0;
+            }
+            int sign = -1;
+            for (int i = 0; i < n; i++) {
+                if (ipiv[i] != (i + 1)) {
+                    sign = -sign;
+                }
+            }
+            if (useLog) {
+                modulus = 0.0;
+                int n1 = n + 1;
+                for (int i = 0; i < n; i++) {
+                    double dii = aData[i * n1]; /* ith diagonal element */
+                    modulus += Math.log(dii < 0 ? -dii : dii);
+                    if (dii < 0) {
+                        sign = -sign;
+                    }
+                }
+            } else {
+                modulus = 1.0;
+                int n1 = n + 1;
+                for (int i = 0; i < n; i++) {
+                    modulus *= aData[i * n1];
+                }
+                if (modulus < 0) {
+                    modulus = -modulus;
+                    sign = -sign;
+                }
+            }
+            RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
+            modulusVec.setAttr("logarithm", useLogIn);
+            RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
+            RList.setClassAttr(result, DET_CLASS, null);
+            return result;
+        }
+    }
+
+    @RBuiltin(name = "La_chol", kind = INTERNAL)
+    public abstract static class LaChol extends LaHelper {
+        @Specialization
+        public RDoubleVector doDetGeReal(RDoubleVector aIn, byte pivot, double tol) {
+            RDoubleVector a = (RDoubleVector) aIn.copy();
+            int[] aDims = aIn.getDimensions();
+            int n = aDims[0];
+            int m = aDims[1];
+            if (n != m) {
+                error("'a' must be a square matrix");
+            }
+            if (m <= 0) {
+                error("'a' must have dims > 0");
+            }
+            double[] aData = a.getDataWithoutCopying();
+            /* zero the lower triangle */
+            for (int j = 0; j < n; j++) {
+                for (int i = j + 1; i < n; i++) {
+                    aData[i + n * j] = 0;
+                }
+            }
+            boolean piv = RRuntime.fromLogical(pivot);
+            int info;
+            if (!piv) {
+                info = RFFIFactory.getRFFI().getLapackRFFI().dpotrf('U', m, aData, m);
+                if (info != 0) {
+                    // TODO informative error message (aka GnuR)
+                    lapackError("dpotrf", info);
+                }
+            } else {
+                int[] ipiv = new int[m];
+                double[] work = new double[2 * m];
+                int[] rank = new int[1];
+                info = RFFIFactory.getRFFI().getLapackRFFI().dpstrf('U', n, aData, n, ipiv, rank, tol, work);
+                if (info != 0) {
+                    // TODO informative error message (aka GnuR)
+                    lapackError("dpotrf", info);
+                }
+                a.setAttr("pivot", pivot);
+                a.setAttr("rank", rank[0]);
+                RList dn = a.getDimNames();
+                if (dn != null && dn.getDataAt(0) != null) {
+                    Object[] dn2 = new Object[m];
+                    // need to pivot the colnames
+                    for (int i = 0; i < m; i++) {
+                        dn2[i] = dn.getDataAt(ipiv[i] - 1);
+                    }
+                    a.setDimNames(RDataFactory.createList(dn2));
+                }
+            }
+            return a;
         }
     }
 }

@@ -54,6 +54,7 @@ public class ParserGeneration {
         "more verbose debug output for source attribution",
         "adopt changed SourceSection creation API",
         "support NA_real_",
+        "support NA_character_",
     };
 
 }

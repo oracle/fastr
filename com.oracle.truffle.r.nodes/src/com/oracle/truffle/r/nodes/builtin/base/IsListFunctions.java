@@ -24,7 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,7 +36,32 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class IsListFunctions {
     @RBuiltin(name = "is.list", kind = PRIMITIVE)
     @SuppressWarnings("unused")
+    // TODO ideally this would inherit from isTypeNode,
+    // but issues around subclassing would need to be resolved
     public abstract static class IsList extends RBuiltinNode {
+
+        private static final String[] PARAMETER_NAMES = new String[]{"x"};
+
+        @Override
+        public Object[] getParameterNames() {
+            return PARAMETER_NAMES;
+        }
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        }
+
+        protected byte error() throws RError {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getZ1ArgumentsPassed(getEncapsulatingSourceSection(), getRBuiltin().name());
+        }
+
+        @Specialization
+        public byte isType(RMissing value) {
+            controlVisibility();
+            return error();
+        }
 
         @Specialization
         public byte isType(RList value) {
@@ -61,6 +89,12 @@ public class IsListFunctions {
 
         @Specialization(order = 11, guards = "!isList")
         public byte isType(RDataFrame value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Specialization(order = 12)
+        public byte isType(REnvironment env) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
