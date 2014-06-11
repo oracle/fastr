@@ -29,7 +29,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        if (targetFunction == null || !isFirst || !findFunction(targetFunctionName, callerFrame)) {
+        if (targetFunction == null || !isFirst) {
             findTargetFunction(callerFrame);
         }
         return executeHelper(frame, callerFrame);

@@ -16,6 +16,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -103,7 +104,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         }
         evaluatedArgs = new Object[]{args[0].execute(frame)};
         if ((this.type = getArgClass(evaluatedArgs[0])) != null) {
-            if (targetFunction != null && isEqualType(this.type, this.typeLast) && findFunction(targetFunctionName, frame) && isFirst) {
+            if (targetFunction != null && isEqualType(this.type, this.typeLast) && isFirst) {
                 return executeHelper();
             }
             findTargetFunction(frame);

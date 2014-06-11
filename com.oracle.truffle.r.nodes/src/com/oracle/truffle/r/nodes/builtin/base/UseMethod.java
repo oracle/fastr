@@ -30,8 +30,8 @@ public abstract class UseMethod extends RBuiltinNode {
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
-    @Child protected DispatchedCallNode dispatchedCallNode;
-    protected String lastGenericName;
+
+    @Child UseMethodRoot useMethodRoot;
 
     @Override
     public Object[] getParameterNames() {
@@ -44,93 +44,99 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, RAbstractContainer arg) {
+    public Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();
-        return useMethodHelper(frame, generic, arg.getClassHierarchy());
+        if (useMethodRoot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            useMethodRoot = insert(new UseMethodUninitialized());
+        }
+        return useMethodRoot.execute(frame, generic, arg);
+    }
+
+    private static final class UseMethodUninitialized extends UseMethodRoot {
+        @Override
+        public Object execute(VirtualFrame frame, final String generic, Object obj) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return specialize(obj).execute(frame, generic, obj);
+        }
+
+        private UseMethodRoot specialize(Object obj) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (obj instanceof RMissing) {
+                return this.replace(new UseMethodGenericOnly());
+            }
+            return this.replace(new UseMethodGenericNObject());
+        }
     }
 
     /*
      * If only one argument is passed to UseMethod, the first argument of enclosing function is used
      * to resolve the generic.
      */
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RMissing arg) {
-        controlVisibility();
-        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
+    private static final class UseMethodGenericOnly extends UseMethodRoot {
+
+        @Override
+        public Object execute(VirtualFrame frame, final String generic, Object obj) {
+            if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
+            }
+            Object enclosingArg = RArguments.getArgument(frame, 0);
+            initDispatchedCallNode(generic);
+            throw new ReturnException(dispatchedCallNode.execute(frame, getClassHierarchy(enclosingArg)));
         }
-        Object enclosingArg = RArguments.getArgument(frame, 0);
-        if (enclosingArg instanceof Byte) {
-            return useMethod(frame, generic, (byte) enclosingArg);
+    }
+
+    private static final class UseMethodGenericNObject extends UseMethodRoot {
+
+        @Override
+        public Object execute(VirtualFrame frame, final String generic, Object obj) {
+            initDispatchedCallNode(generic);
+            throw new ReturnException(dispatchedCallNode.execute(frame, getClassHierarchy(obj)));
         }
-        if (enclosingArg instanceof String) {
-            return useMethod(frame, generic, (String) enclosingArg);
+    }
+
+    private static abstract class UseMethodRoot extends RNode {
+
+        @Child protected DispatchedCallNode dispatchedCallNode;
+        protected String lastGenericName;
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            throw new AssertionError();
         }
-        if (enclosingArg instanceof Integer) {
-            return useMethod(frame, generic, (int) enclosingArg);
+
+        protected void initDispatchedCallNode(final String generic) {
+            if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
+                lastGenericName = generic;
+            }
         }
-        if (enclosingArg instanceof Double) {
-            return useMethod(frame, generic, (double) enclosingArg);
+
+        protected RStringVector getClassHierarchy(Object anObj) {
+            if (anObj instanceof RAbstractContainer) {
+                return ((RAbstractContainer) anObj).getClassHierarchy();
+            }
+            if (anObj instanceof Byte) {
+                return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
+            }
+            if (anObj instanceof String) {
+                return RDataFactory.createStringVector(RRuntime.TYPE_CHARACTER);
+            }
+            if (anObj instanceof Integer) {
+                return RDataFactory.createStringVector(RRuntime.TYPE_INTEGER);
+            }
+            if (anObj instanceof Double) {
+                return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
+            }
+            if (anObj instanceof RComplex) {
+                return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
+            }
+            throw new AssertionError();
         }
-        if (enclosingArg instanceof RComplex) {
-            return useMethod(frame, generic, (RComplex) enclosingArg);
-        }
-        return useMethod(frame, generic, (RAbstractContainer) enclosingArg);
-    }
 
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") byte arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.TYPE_LOGICAL);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") String arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.TYPE_CHARACTER);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") int arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.CLASS_INTEGER);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") double arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.CLASS_DOUBLE);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RComplex arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.TYPE_COMPLEX);
-    }
-
-    @Specialization
-    public Object useMethod(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object generic, @SuppressWarnings("unused") Object arg) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getNonStringGeneric(getEncapsulatingSourceSection());
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, String className) {
-        return useMethodHelper(frame, generic, RDataFactory.createStringVector(className));
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, String[] classNames) {
-        return useMethodHelper(frame, generic, RDataFactory.createStringVector(classNames, true));
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-            lastGenericName = generic;
-        }
-        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
+        public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
     }
 }
