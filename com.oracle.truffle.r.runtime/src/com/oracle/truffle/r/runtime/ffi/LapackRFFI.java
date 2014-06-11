@@ -34,20 +34,20 @@ public interface LapackRFFI extends RFFI {
     void ilaver(int[] version);
 
     /**
-     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeev.f">spec</a>.
+     * See <a href="http://www.netlib.org/lapack/explore-html/d9/d28/dgeev_8f.html">spec</a>.
      */
     // @formatter:off
     int dgeev(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl,
                     double[] vr, int ldvr, double[] work, int lwork);
 
     /**
-     * See <a href="http://www.netlib.no/netlib/lapack/double/dgeqp3.f">spec</a>.
+     * See <a href="http://www.netlib.org/lapack/explore-html/db/de5/dgeqp3_8f.html">spec</a>.
      */
     // @formatter:off
     int dgeqp3(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork);
 
     /**
-     * See <a href="http://www.netlib.no/netlib/lapack/double/dormqr.f">spec</a>.
+     * See <a href="http://www.netlib.org/lapack/explore-html/da/d82/dormqr_8f.html">spec</a>.
      */
     // @formatter:off
     int dormqr(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc,
@@ -55,8 +55,26 @@ public interface LapackRFFI extends RFFI {
 
 
     /**
-     * See <a href="http://www.netlib.no/netlib/lapack/double/dtrtrs.f">spec</a>.
+     * See <a href="http://www.netlib.org/lapack/explore-html/d6/d6f/dtrtrs_8f.html">spec</a>.
      */
     // @formatter:off
     int dtrtrs(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb);
+
+    /**
+     * See <a href="http://www.netlib.org/lapack/explore-html/d3/d6a/dgetrf_8f.html">spec</a>.
+     */
+    // @formatter:off
+    int dgetrf(int m, int n, double[] a, int lda, int[] ipiv);
+
+    /**
+     * See <a href="http://www.netlib.org/lapack/explore-html/d0/d8a/dpotrf_8f.html">spec</a>.
+     */
+    // @formatter:off
+    int dpotrf(char uplo, int n, double[] a, int lda);
+
+    /**
+     * See <a href="http://www.netlib.org/lapack/explore-html/dd/dad/dpstrf_8f.html">spec</a>.
+     */
+    // @formatter:off
+    int dpstrf(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work);
 }
