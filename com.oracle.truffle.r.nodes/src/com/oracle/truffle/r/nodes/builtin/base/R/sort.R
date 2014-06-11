@@ -30,10 +30,10 @@ sort <- function(x, method = c("shell", "quick"), decreasing = FALSE, ...)
 sort.default <- function(x, method = c("shell", "quick"), decreasing = FALSE, na.last = NA, ...)
 {
     ## The first case includes factors.
-# TODO: implement order	
+# TODO: implement order
 #    if(is.object(x)) x[order(x, na.last = na.last, decreasing = decreasing)]
 #    else sort.int(x, na.last = na.last, decreasing = decreasing, ...)
-	sort.int(x, na.last = na.last, decreasing = decreasing, ...)
+    sort.int(x, na.last = na.last, decreasing = decreasing, ...)
 }
 
 sort.int <-
@@ -44,12 +44,12 @@ sort.int <-
              index.return = FALSE)
 {
     if(isfact <- is.factor(x)) {
-		# TODO: implement factor
-		stop("factors not yet supported")		
+        # TODO: implement factor
+        stop("factors not yet supported")
         if(index.return) stop("'index.return' only for non-factors")
-	lev <- levels(x)
-	nlev <- nlevels(x)
- 	isord <- is.ordered(x)
+        lev <- levels(x)
+        nlev <- nlevels(x)
+        isord <- is.ordered(x)
         x <- c(x) # drop attributes
     } else if(!is.atomic(x))
         stop("'x' must be atomic")
@@ -61,10 +61,10 @@ sort.int <-
     if(index.return && !is.na(na.last))
         stop("'index.return' only for 'na.last = NA'")
     if(!is.null(partial)) {
-		stop("partial sort not yet supported")
-# TODO: implement proper qsort		
-#		if(index.return || decreasing || isfact || !missing(method))
-#	    stop("unsupported options for partial sorting")
+        stop("partial sort not yet supported")
+# TODO: implement proper qsort
+#        if(index.return || decreasing || isfact || !missing(method))
+#        stop("unsupported options for partial sorting")
 #        if(!all(is.finite(partial))) stop("non-finite 'partial'")
 #        y <- if(length(partial) <= 10L) {
 #            partial <- .Internal(qsort(partial, FALSE))
@@ -77,13 +77,13 @@ sort.int <-
     } else {
         nms <- names(x)
 # TODO: implement deparse in match.arg
-#		method <- if(is.numeric(x)) match.arg(method) else "shell"
-		method <- if(is.numeric(x)) match.arg(method, c("shell", "quick")) else "shell"
-# TODO: implement shell sort; there is also something wrong with this switch statement				   
-#		switch(method,
+#        method <- if(is.numeric(x)) match.arg(method) else "shell"
+        method <- if(is.numeric(x)) match.arg(method, c("shell", "quick")) else "shell"
+# TODO: implement shell sort; there is also something wrong with this switch statement
+#        switch(method,
 #               "quick" = {
                    if(!is.null(nms)) {
-					   # TODO: implement proper qsort
+                       # TODO: implement proper qsort
                        stop("vector names not currently supported with quicksort");
                        if(decreasing) x <- -x
                        y <- .Internal(qsort(x, TRUE))
@@ -95,14 +95,14 @@ sort.int <-
                        y <- .Internal(qsort(x, index.return))
                        if(decreasing) {
                            # TODO: implement proper qsort
-						   #                           if(index.return) y$x <- -y$x else y <- -y
-						   if(index.return) stop("index.return not currently supported with quicksort");
-						   y <- -y
-					   }
+                           #                           if(index.return) y$x <- -y$x else y <- -y
+                           if(index.return) stop("index.return not currently supported with quicksort");
+                           y <- -y
+                       }
                    }
 #               },
 #               "shell" = {
-#				   stop("shell sort not yet supported")
+#                   stop("shell sort not yet supported")
 #                   if(index.return || !is.null(nms)) {
 #                       o <- sort.list(x, decreasing = decreasing)
 #                       y <- if (index.return) list(x = x[o], ix = o) else x[o]
@@ -112,9 +112,9 @@ sort.int <-
 #               })
     }
     if(!is.na(na.last) && has.na)
-	y <- if(!na.last) c(nas, y) else c(y, nas)
-# TODO: implement function calling through results of an if statement		
-#    if(isfact)	
+        y <- if(!na.last) c(nas, y) else c(y, nas)
+# TODO: implement function calling through results of an if statement
+#    if(isfact)
 #        y <- (if (isord) ordered else factor)(y, levels = seq_len(nlev),
 #                                              labels = lev)
     y

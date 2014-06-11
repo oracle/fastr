@@ -20,12 +20,12 @@ chol <- function(x, ...) UseMethod("chol")
 
 chol.default <- function(x, pivot = FALSE, LINPACK = FALSE, tol = -1, ...)
 {
-	if (is.complex(x))
-		stop("complex matrices not permitted at present")
+    if (is.complex(x))
+        stop("complex matrices not permitted at present")
 
-	.Internal(La_chol(as.matrix(x), pivot, tol))
+    .Internal(La_chol(as.matrix(x), pivot, tol))
 }
 
 chol2inv <- function(x, size = NCOL(x), LINPACK = FALSE)
-	.Internal(La_chol2inv(x, size))
+    .Internal(La_chol2inv(x, size))
 
