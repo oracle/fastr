@@ -17,6 +17,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -42,6 +43,8 @@ public abstract class Inherits extends RBuiltinNode {
 
     public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what, byte which);
 
+    @SlowPath
+    // map operations lead to recursion resulting in compilation failure
     @Specialization(order = 0)
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
         controlVisibility();
