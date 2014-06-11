@@ -246,6 +246,7 @@ public final class Utils {
     /**
      * Retrieve the caller frame of the current frame.
      */
+    @SlowPath
     public static Frame getCallerFrame(FrameAccess fa) {
         return getStackFrame(fa, 1);
     }
