@@ -9959,6 +9959,10 @@ f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
 #{f <- function(x){ UseMethod("f",x); };f.first <- function(x){cat("f first",x)};f.second <- function(x){cat("f second",x)};obj <-1;attr(obj,"class")  <- "first";f(obj);attr(obj,"class")  <- "second";}
 f first 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
+#{f<-function(x){UseMethod("f")};f.logical<-function(x){print("logical")};f(TRUE)}
+[1] "logical"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVectorConstructor
 #{ vector("integer") }
 integer(0)
