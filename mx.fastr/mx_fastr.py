@@ -258,7 +258,7 @@ def _bench_harness_body(args, vmArgs):
              'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm',
              'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-3', 'b25.bench.prog-4', 'b25.bench.prog-5',
              'b25.bench.matcal-1', 'b25.bench.matcal-2',
-             'b25.bench.matfunc-2', 'b25.bench.matfunc-4']
+             'b25.bench.matfunc-2', 'b25.bench.matfunc-3', 'b25.bench.matfunc-4']
     if vmArgs:
         marks = ['--J', vmArgs] + marks
     return rbench(marks)

@@ -267,36 +267,37 @@ public class LaFunctions {
             boolean useLog = RRuntime.fromLogical(useLogIn);
             double[] aData = a.getDataWithoutCopying();
             int info = RFFIFactory.getRFFI().getLapackRFFI().dgetrf(n, n, aData, n, ipiv);
+            int sign = 1;
             if (info < 0) {
                 lapackError("dgetrf", info);
             } else if (info > 0) {
                 modulus = useLog ? Double.NEGATIVE_INFINITY : 0;
-            }
-            int sign = -1;
-            for (int i = 0; i < n; i++) {
-                if (ipiv[i] != (i + 1)) {
-                    sign = -sign;
-                }
-            }
-            if (useLog) {
-                modulus = 0.0;
-                int n1 = n + 1;
+            } else {
                 for (int i = 0; i < n; i++) {
-                    double dii = aData[i * n1]; /* ith diagonal element */
-                    modulus += Math.log(dii < 0 ? -dii : dii);
-                    if (dii < 0) {
+                    if (ipiv[i] != (i + 1)) {
                         sign = -sign;
                     }
                 }
-            } else {
-                modulus = 1.0;
-                int n1 = n + 1;
-                for (int i = 0; i < n; i++) {
-                    modulus *= aData[i * n1];
-                }
-                if (modulus < 0) {
-                    modulus = -modulus;
-                    sign = -sign;
+                if (useLog) {
+                    modulus = 0.0;
+                    int n1 = n + 1;
+                    for (int i = 0; i < n; i++) {
+                        double dii = aData[i * n1]; /* ith diagonal element */
+                        modulus += Math.log(dii < 0 ? -dii : dii);
+                        if (dii < 0) {
+                            sign = -sign;
+                        }
+                    }
+                } else {
+                    modulus = 1.0;
+                    int n1 = n + 1;
+                    for (int i = 0; i < n; i++) {
+                        modulus *= aData[i * n1];
+                    }
+                    if (modulus < 0) {
+                        modulus = -modulus;
+                        sign = -sign;
+                    }
                 }
             }
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);

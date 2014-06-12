@@ -170,11 +170,6 @@ public class GroupDispatchNode extends S3DispatchNode {
     }
 
     private void initFunCall(RFunction func) {
-        // this code, even if not used, seems to end up on the compilation path and triggers
-        // compilation errors, presumably to unguarded node creation; putting the interpreter
-        // callback here is clearly not a proper fix - the motivation is to enable efficient
-        // execution when group generics are disabled (and the implementation of group generics
-        // hopefully will get refactored soon anyway)
         // avoid re-evaluating arguments.
         if (evaluatedArgs != null) {
             RNode[] argArray = new RNode[callArgsNode.getArguments().length];

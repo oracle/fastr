@@ -24,13 +24,19 @@
 
 det <- function(x, ...)
 {
-  z <- determinant(x, logarithm = TRUE, ...)
+# TODO proper argument handling
+#  z <- determinant(x, logarithm = TRUE, ...)
+  z <- determinant(x, logarithm = TRUE)
   c(z$sign * exp(z$modulus))
 }
 
-determinant <- function(x, logarithm = TRUE, ...) UseMethod("determinant")
+# TODO proper argument handling
+#determinant <- function(x, logarithm = TRUE, ...) UseMethod("determinant")
+determinant <- function(x, logarithm = TRUE) UseMethod("determinant")
 
-determinant.matrix <- function(x, logarithm = TRUE, ...)
+# TODO proper argument handling
+#determinant.matrix <- function(x, logarithm = TRUE, ...)
+determinant.matrix <- function(x, logarithm = TRUE)
 {
   if ((n <- ncol(x)) != nrow(x))
     stop("'x' must be a square matrix")
