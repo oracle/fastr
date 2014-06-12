@@ -59,9 +59,13 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
         private static LibCX libcx;
 
         @SlowPath
+        private static LibCX createAndLoadLib() {
+            return LibraryLoader.create(LibCX.class).load("c");
+        }
+
         static LibCX libcx() {
             if (libcx == null) {
-                libcx = LibraryLoader.create(LibCX.class).load("c");
+                libcx = createAndLoadLib();
             }
             return libcx;
         }
@@ -195,9 +199,13 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
         private static Lapack lapack;
 
         @SlowPath
+        private static Lapack createAndLoadLib() {
+            return LibraryLoader.create(Lapack.class).load("Rlapack");
+        }
+
         static Lapack lapack() {
             if (lapack == null) {
-                lapack = LibraryLoader.create(Lapack.class).load("Rlapack");
+                lapack = createAndLoadLib();
             }
             return lapack;
         }
@@ -385,9 +393,13 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
        private static Linpack linpack;
 
        @SlowPath
+       private static Linpack createAndLoadLib() {
+           return LibraryLoader.create(Linpack.class).load("R");
+       }
+
        static Linpack linpack() {
            if (linpack == null) {
-               linpack = LibraryLoader.create(Linpack.class).load("R");
+               linpack = createAndLoadLib();
            }
            return linpack;
        }
@@ -453,9 +465,13 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
         }
 
         @SlowPath
+        private static UserRng createAndLoadLib() {
+            return LibraryLoader.create(UserRng.class).load(libPath);
+        }
+
         static UserRng userRng() {
             if (userRng == null) {
-                userRng = LibraryLoader.create(UserRng.class).load(libPath);
+                userRng = createAndLoadLib();
             }
             return userRng;
         }
