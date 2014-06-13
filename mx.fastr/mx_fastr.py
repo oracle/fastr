@@ -179,7 +179,7 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
+    return junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
 
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
@@ -324,7 +324,7 @@ def rbcheck(args):
 def rcmplib(args):
     '''compare FastR library R sources against GnuR'''
     parser = ArgumentParser(prog='mx cmplibr')
-    parser.add_argument('--gnurhome', action='store',  help='path to GnuR sources', required=True)
+    parser.add_argument('--gnurhome', action='store', help='path to GnuR sources', required=True)
     parser.add_argument('--lib', action='store', help='library to check', default="base")
     args = parser.parse_args(args)
     cmpArgs = []
