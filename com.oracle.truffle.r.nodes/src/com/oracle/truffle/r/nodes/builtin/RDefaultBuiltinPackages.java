@@ -44,7 +44,7 @@ public final class RDefaultBuiltinPackages extends RBuiltinPackages {
         return instance;
     }
 
-    public static void load(String name, VirtualFrame frame) {
+    public static void load(String name, VirtualFrame frame, REnvironment envForFrame) {
         RBuiltinPackage pkg = null;
         switch (name) {
             case "debug":
@@ -60,6 +60,6 @@ public final class RDefaultBuiltinPackages extends RBuiltinPackages {
                 Utils.fail("unknown builtin package: " + name);
         }
         instance.add(pkg);
-        pkg.loadSources(frame);
+        pkg.loadSources(frame, envForFrame);
     }
 }

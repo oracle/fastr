@@ -1049,23 +1049,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testEval_df5a9c0a0569879276fa81b87dddc5cf() {
-        assertEval("{ eval(quote(x+x), list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEval_046c5969a889af57d7ea19d1fba119d6() {
-        assertEval("{ y <- 2; eval(quote(x+y), list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEval_5b956e0508e3402588200db72e33861f() {
-        assertEval("{ y <- 2; x <- 4; eval(x + y, list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEval_b2e8a12bd61dc527a9bc79b8c43a380f() {
-        assertEval("{ y <- 2; x <- 2 ; eval(quote(x+y), -1) }");
+    public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
+        assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
 
     @Ignore

@@ -97,7 +97,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     @Specialization
     public String doSymbol(VirtualFrame frame, RSymbol value) {
         controlVisibility();
-        return value.getValue();
+        return value.getName();
     }
 
     @Specialization

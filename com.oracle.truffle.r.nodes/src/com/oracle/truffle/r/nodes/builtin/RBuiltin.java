@@ -27,14 +27,39 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RBuiltin {
 
+    /**
+     * The "kind" of the builtin.
+     */
     RBuiltinKind kind();
 
+    /**
+     * The name of the builtin function in the R language.
+     */
     String name();
 
+    /**
+     * A list of aliases for {@code name()}.
+     */
     String[] aliases() default {};
 
+    /**
+     * Some primitives do not evaluate one or more of their arguments. This is either a list of
+     * indices for the non-evaluated arguments (zero based) or {@code -1} to mean none are
+     * evaluated. An empty array means all arguments are evaluated. N.B. The indices identify the
+     * arguments in the order they appear in the specification, i.e., after the re-ordering of named
+     * arguments.
+     *
+     */
+    int[] nonEvalArgs() default {};
+
+    /**
+     * Special magic relating to "..." arguments. TODO Say more.
+     */
     boolean isCombine() default false;
 
+    /**
+     * How is the last parameter treated? TODO Say more.
+     */
     LastParameterKind lastParameterKind() default LastParameterKind.VALUE;
 
     public enum LastParameterKind {

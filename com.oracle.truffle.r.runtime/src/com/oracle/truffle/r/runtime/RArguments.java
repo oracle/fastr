@@ -59,6 +59,10 @@ import com.oracle.truffle.r.runtime.data.*;
  * All frame elements should <b>always</b> be accessed through the getter and setter functions
  * defined in this class, as they provide a means of accessing the frame contents that is
  * transparent to layout changes.
+ *
+ * The INDEX_ENVIRONMENT slot is typically not set for frames associated with function evaluations,
+ * because such environment instances are only created on demand. It is however, set for frames
+ * associated with packages and the global environment.
  */
 // @formatter:on
 public final class RArguments {

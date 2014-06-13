@@ -22,15 +22,70 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-public class RExpression {
-    private final Object astNode;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-    public RExpression(Object astNode) {
-        this.astNode = astNode;
+public class RExpression implements RAbstractContainer {
+
+    private final RList data;
+
+    public RExpression(RList data) {
+        this.data = data;
     }
 
-    public Object getASTNode() {
-        return astNode;
+    public RList getList() {
+        return data;
+    }
+
+    public Object getDataAt(int index) {
+        return data.getDataAt(index);
+    }
+
+    public RAttributes initAttributes() {
+        return data.initAttributes();
+    }
+
+    public RAttributes getAttributes() {
+        return data.getAttributes();
+    }
+
+    public int getLength() {
+        return data.getLength();
+    }
+
+    public int[] getDimensions() {
+        return data.getDimensions();
+    }
+
+    public Class<?> getElementClass() {
+        return null;
+    }
+
+    public RVector materializeNonSharedVector() {
+        return data.materializeNonSharedVector();
+    }
+
+    public Object getDataAtAsObject(int index) {
+        return data.getDataAtAsObject(index);
+    }
+
+    public Object getNames() {
+        return data.getNames();
+    }
+
+    public RList getDimNames() {
+        return data.getDimNames();
+    }
+
+    public Object getRowNames() {
+        return data.getRowNames();
+    }
+
+    public RStringVector getClassHierarchy() {
+        return data.getClassHierarchy();
+    }
+
+    public boolean isObject() {
+        return false;
     }
 
 }

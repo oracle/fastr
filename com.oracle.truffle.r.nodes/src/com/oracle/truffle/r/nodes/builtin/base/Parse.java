@@ -44,17 +44,54 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "parse", kind = INTERNAL)
 public abstract class Parse extends RInvisibleBuiltinNode {
 
+    private Object error(String msg) throws RError {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
+    }
+
     @SuppressWarnings("unused")
-    @Specialization
-    public Object parse(RConnection file, double n, RNull text, String prompt, RNull srcFile, String encoding) {
+    @Specialization(order = 0)
+    public Object parse(RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
-            String[] lines = file.readLines(0);
-            Object[] exprs = REngine.parse(coalesce(lines));
-            return RDataFactory.createList(exprs);
+            String[] lines = conn.readLines(0);
+            return doParse(coalesce(lines));
         } catch (IOException | ParseException ex) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 1)
+    public Object parse(RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
+        controlVisibility();
+        try {
+            String[] lines = conn.readLines((int) n);
+            return doParse(coalesce(lines));
+        } catch (IOException | ParseException ex) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 2, guards = "isText")
+    public Object parse(RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
+        controlVisibility();
+        try {
+            return doParse(text);
+        } catch (ParseException ex) {
+            return error("parse error");
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static boolean isText(RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
+        return text.length() > 0;
+    }
+
+    @SlowPath
+    private static RExpression doParse(String script) throws ParseException {
+        return REngine.parse(script);
     }
 
     @SlowPath
@@ -67,11 +104,4 @@ public abstract class Parse extends RInvisibleBuiltinNode {
         return sb.toString();
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(order = 100)
-    public Object parseGeneric(Object file, Object n, Object text, Object prompt, Object srcFile, Object encoding) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
-    }
 }

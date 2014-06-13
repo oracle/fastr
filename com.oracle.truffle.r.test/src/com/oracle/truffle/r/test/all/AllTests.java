@@ -6994,23 +6994,53 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEval_df5a9c0a0569879276fa81b87dddc5cf() {
-        assertEval("{ eval(quote(x+x), list(x=1)) }");
+    public void TestSimpleBuiltins_testEval_62d7082404e34bddeb5e12c06a26534d() {
+        assertEval("{ eval(2 ^ 2 ^ 3)}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEval_046c5969a889af57d7ea19d1fba119d6() {
-        assertEval("{ y <- 2; eval(quote(x+y), list(x=1)) }");
+    public void TestSimpleBuiltins_testEval_920f5515f98fd5c10461346e2a805d15() {
+        assertEval("{ a <- 1; eval(a) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEval_5b956e0508e3402588200db72e33861f() {
-        assertEval("{ y <- 2; x <- 4; eval(x + y, list(x=1)) }");
+    public void TestSimpleBuiltins_testEval_70c290279b8e4e173c5475c813a08ccf() {
+        assertEval("{ a <- 1; eval(a + 1) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testEval_b2e8a12bd61dc527a9bc79b8c43a380f() {
-        assertEval("{ y <- 2; x <- 2 ; eval(quote(x+y), -1) }");
+    public void TestSimpleBuiltins_testEval_a7934810753e30b16c1914a2b72ba6af() {
+        assertEval("{ a <- 1; eval(expression(a + 1)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_f3aa723185ed6d8b5841272ed37617fb() {
+        assertEval("{ f <- function(x) { eval(x) }; f(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_ee2b49685a936778137c42f4d4704c32() {
+        assertEval("{ eval(x <- 1); ls() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_986c43993435f0acec80a3ab9af828b4() {
+        assertEval("{ ne <- new.env(); eval(x <- 1, ne); ls() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_1b7023a1265b2b0e3e2a3be42e1b0835() {
+        assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEval_60c900fd0d555cd006601ea5616f7146() {
+        assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
+        assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
 
     @Test
@@ -7821,6 +7851,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testList_7f6e35d21661c8d2607996e34b736525() {
         assertEval("{ x<-list(y=1, 2);  c(a=x, c(y=7,z=42)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLocal_d50a7019d4d1ef55e7a8b31373b29f6f() {
+        assertEval("{ kk <- local({k <- function(x) {x*2}}); kk(8)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLocal_15b8e154cdc0ad21b82f8a6ca290dd48() {
+        assertEval("{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
     }
 
     @Test

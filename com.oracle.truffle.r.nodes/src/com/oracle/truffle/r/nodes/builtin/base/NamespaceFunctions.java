@@ -43,5 +43,10 @@ public class NamespaceFunctions {
             }
         }
 
+        @Specialization
+        public Object doGetRegisteredNamespace(RSymbol name) {
+            controlVisibility();
+            return doGetRegisteredNamespace(name.getName());
+        }
     }
 }

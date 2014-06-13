@@ -23,24 +23,19 @@
 package com.oracle.truffle.r.runtime.data;
 
 /**
- * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
- * Truffle sense.
+ * Denotes an (unevaluated) element of, e.g. an {@link RExpression}. The representation is not
+ * disclosed here, owing partly to import circularities, but it will typically be an {@code RNode}
+ * that captures the (unevaluated) AST for the element.
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
-public class RSymbol {
-    private final String name;
+public class RLanguage {
+    private final Object rep;
 
-    public RSymbol(String name) {
-        this.name = name;
+    public RLanguage(Object rep) {
+        this.rep = rep;
     }
 
-    public String getName() {
-        return name;
+    public Object getRep() {
+        return rep;
     }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-
 }

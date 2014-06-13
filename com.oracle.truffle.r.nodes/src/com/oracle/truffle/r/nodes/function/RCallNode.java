@@ -248,8 +248,11 @@ public abstract class RCallNode extends RNode {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.getUnusedArgument(getEncapsulatingSourceSection(), unusedArgNode.getSourceSection().getCode());
             }
+            RNode[] argumentNodes = arguments.getArguments();
+            RNode[] origArgumentNodes = argumentNodes;
+            // Handle named args and varargs
             if (arguments.getNameCount() != 0 || hasVarArgs) {
-                RNode[] permuted = permuteArguments(arguments.getArguments(), rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
+                RNode[] permuted = permuteArguments(argumentNodes, rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
                 if (!isBuiltin) {
                     for (int i = 0; i < permuted.length; i++) {
                         if (permuted[i] == null) {
@@ -257,9 +260,45 @@ public abstract class RCallNode extends RNode {
                         }
                     }
                 }
-                return CallArgumentsNode.create(permuted, arguments.getNames());
+                argumentNodes = permuted;
             }
-            return arguments;
+            /*
+             * This is a temporary fix to create promises just for builtin functions that do not
+             * evaluate their arguments, e.g. expression, eval. We have do the check after
+             * permutation to get the correct index position. Unfortunately, ... args have been
+             * swept up into an array, so it's a bit trickier.
+             */
+            if (isBuiltin && !((RBuiltinRootNode) rootNode).evaluatesArgs()) {
+                RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
+                RNode[] modifiedArgs = new RNode[argumentNodes.length];
+                int lix = 0; // logical index position
+                for (int i = 0; i < argumentNodes.length; i++) {
+                    RNode argumentNode = argumentNodes[i];
+                    if (argumentNode instanceof VarArgsAsObjectArrayNode) {
+                        VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) argumentNode;
+                        RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
+                        for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
+                            modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
+                            lix++;
+                        }
+                        modifiedArgs[i] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
+                    } else {
+                        modifiedArgs[i] = checkPromise(builtinRootNode, argumentNode, lix);
+                        lix++;
+                    }
+                }
+                argumentNodes = modifiedArgs;
+            }
+            return origArgumentNodes == argumentNodes ? arguments : CallArgumentsNode.create(argumentNodes, arguments.getNames());
+        }
+
+        private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int lix) {
+            if (!builtinRootNode.evalArg(lix)) {
+                return PromiseNode.create(new RPromise(argNode));
+            } else {
+                return argNode;
+            }
+
         }
     }
 

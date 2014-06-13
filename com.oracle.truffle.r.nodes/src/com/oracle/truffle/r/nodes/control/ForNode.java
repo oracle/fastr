@@ -103,6 +103,11 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
+    public Object doSequence(VirtualFrame frame, RExpression expr) {
+        return doSequence(frame, expr.getList());
+    }
+
+    @Specialization
     public Object doSequence(VirtualFrame frame, int x) {
         int count = 0;
         try {

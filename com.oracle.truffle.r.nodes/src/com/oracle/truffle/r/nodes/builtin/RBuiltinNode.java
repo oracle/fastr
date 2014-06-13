@@ -107,16 +107,20 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     }
 
     protected RBuiltin getRBuiltin() {
-        GeneratedBy generatedBy = getClass().getAnnotation(GeneratedBy.class);
-        return generatedBy.value().getAnnotation(RBuiltin.class);
+        return getRBuiltin(getClass());
+    }
+
+    private static RBuiltin getRBuiltin(Class<?> klass) {
+        GeneratedBy generatedBy = klass.getAnnotation(GeneratedBy.class);
+        if (generatedBy != null) {
+            return generatedBy.value().getAnnotation(RBuiltin.class);
+        } else {
+            return null;
+        }
     }
 
     private static RBuiltinNode createNode(RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {
-        RBuiltin rBuiltin = null;
-        GeneratedBy generatedBy = factory.getFactory().getClass().getAnnotation(GeneratedBy.class);
-        if (generatedBy != null) {
-            rBuiltin = generatedBy.value().getAnnotation(RBuiltin.class);
-        }
+        RBuiltin rBuiltin = getRBuiltin(factory.getFactory().getClass());
         boolean isCombine = rBuiltin == null ? false : rBuiltin.isCombine();
         Object[] args = new Object[(isCombine ? 3 : 2) + factory.getConstantArguments().length];
         int index = 0;
