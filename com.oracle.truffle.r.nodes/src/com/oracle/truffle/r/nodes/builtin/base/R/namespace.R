@@ -137,7 +137,7 @@ attachNamespace <- function(ns, pos = 2L, depends = NULL)
     }
     runUserHook <- function(pkgname, pkgpath) {
         hook <- getHook(packageEvent(pkgname, "attach")) # might be list()
-		debug.break(list(pkgname, hook))
+        debug.break(list(pkgname, hook))
         for(fun in hook) try(fun(pkgname, pkgpath))
     }
 

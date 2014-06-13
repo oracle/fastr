@@ -15,9 +15,9 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -43,6 +43,8 @@ public abstract class Inherits extends RBuiltinNode {
 
     public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what, byte which);
 
+    @SlowPath
+    // map operations lead to recursion resulting in compilation failure
     @Specialization(order = 0)
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
         controlVisibility();
@@ -76,26 +78,30 @@ public abstract class Inherits extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 3)
-    @SuppressWarnings("unused")
-    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, Object which) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getNotLengthOneLogicalVector(getEncapsulatingSourceSection(), RRuntime.WHICH);
-    }
+    // TODO: these generic specializations must go away - this simply does not work in general (e.g.
+    // inherits is used by implementation of is.factor, which means that arguments of different
+    // types can easily flow through the same node)
 
-    @Specialization(order = 4)
-    @SuppressWarnings("unused")
-    public Object doesInherit(RAbstractVector x, Object what, Object which) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getNotCharacterVector(getEncapsulatingSourceSection(), RRuntime.WHAT);
-    }
-
-    @Specialization(order = 6)
-    @SuppressWarnings("unused")
-    public Object doesInherit(Object x, Object what, Object which) {
-        controlVisibility();
-        throw new UnsupportedOperationException();
-    }
+// @Specialization(order = 3)
+// @SuppressWarnings("unused")
+// public Object doesInherit(RAbstractVector x, RAbstractStringVector what, Object which) {
+// controlVisibility();
+// CompilerDirectives.transferToInterpreter();
+// throw RError.getNotLengthOneLogicalVector(getEncapsulatingSourceSection(), RRuntime.WHICH);
+// }
+//
+// @Specialization(order = 4)
+// @SuppressWarnings("unused")
+// public Object doesInherit(RAbstractVector x, Object what, Object which) {
+// controlVisibility();
+// CompilerDirectives.transferToInterpreter();
+// throw RError.getNotCharacterVector(getEncapsulatingSourceSection(), RRuntime.WHAT);
+// }
+//
+// @Specialization(order = 6)
+// @SuppressWarnings("unused")
+// public Object doesInherit(Object x, Object what, Object which) {
+// controlVisibility();
+// throw new UnsupportedOperationException();
+// }
 }

@@ -23,15 +23,22 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
- * Temporary minimal implementation for eigen/b25. Eventually this should be combined with
+ * Temporary minimal implementation for b25 benchmarks. Eventually this should be combined with
  * {@link Order} and made consistent with {@code sort.R}.
  *
  */
@@ -40,19 +47,70 @@ public class SortFunctions {
     @RBuiltin(name = "sort.list", kind = SUBSTITUTE)
     // TODO Implement in R
     public abstract static class SortList extends RBuiltinNode {
+
+        private static final String[] PARAMETER_NAMES = new String[]{"x", "partial", "na.last", "decreasing", "method"};
+
+        @Override
+        public Object[] getParameterNames() {
+            return PARAMETER_NAMES;
+        }
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RMissing.instance)};
+        }
+
+        @Child Order doubleOrder;
+
+        @SuppressWarnings("unused")
         @Specialization
-        public RDoubleVector sortList(RDoubleVector vec, byte decreasing) {
+        public RIntVector sortList(VirtualFrame frame, RDoubleVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
             controlVisibility();
-            double[] data = vec.getDataCopy();
-            Arrays.sort(data);
-            if (decreasing == RRuntime.LOGICAL_TRUE) {
-                double[] rdata = new double[data.length];
+            if (doubleOrder == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin()));
+            }
+            RIntVector result = (RIntVector) doubleOrder.executeDoubleVector(frame, vec, RMissing.instance);
+            if (RRuntime.fromLogical(decreasing)) {
+                int[] data = result.getDataWithoutCopying();
+                int[] rdata = new int[data.length];
                 for (int i = 0; i < data.length; i++) {
                     rdata[i] = data[data.length - (i + 1)];
                 }
-                data = rdata;
+                result.resetData(rdata);
             }
-            return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
+            return result;
         }
     }
+
+    @RBuiltin(name = "qsort", kind = INTERNAL)
+    // TODO full implementation in Java handling NAs
+    public abstract static class QSort extends RBuiltinNode {
+
+        @SlowPath
+        private static void sort(double[] data) {
+            Arrays.sort(data);
+        }
+
+        @SlowPath
+        private static void sort(int[] data) {
+            Arrays.sort(data);
+        }
+
+        @Specialization
+        public RDoubleVector qsort(RAbstractDoubleVector vec, @SuppressWarnings("unused") Object indexReturn) {
+            double[] data = vec.materialize().getDataCopy();
+            sort(data);
+            return RDataFactory.createDoubleVector(data, vec.isComplete());
+        }
+
+        @Specialization
+        public RIntVector qsort(RAbstractIntVector vec, @SuppressWarnings("unused") Object indexReturn) {
+            int[] data = vec.materialize().getDataCopy();
+            sort(data);
+            return RDataFactory.createIntVector(data, vec.isComplete());
+        }
+    }
+
 }

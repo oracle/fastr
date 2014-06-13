@@ -1942,10 +1942,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSort() {
         assertEval("{ sort(c(1L,10L,2L)) }");
         assertEval("{ sort(c(3,10,2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSortIgnore() {
         assertEval("{ sort(c(1,2,0/0,NA)) }");
         assertEval("{ sort(c(2,1,0/0,NA), na.last=NA) }");
         assertEval("{ sort(c(3,0/0,2,NA), na.last=TRUE) }");

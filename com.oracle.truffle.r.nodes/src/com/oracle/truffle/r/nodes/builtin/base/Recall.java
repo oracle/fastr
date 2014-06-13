@@ -53,6 +53,11 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
+        // Recall is now only used in a massively recursive benchmark (b25.prog-3) and cannot be
+        // compiled (Truffle eventually barfs trying to inline that many calls). Possibilities for
+        // making this problem less severe is to perhaps inline only to a certain call depth and
+        // then go back to interpretation.
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         RFunction function = RArguments.getFunction(frame);
         if (function == null) {
             CompilerDirectives.transferToInterpreter();

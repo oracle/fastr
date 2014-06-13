@@ -2149,82 +2149,72 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_284b7e7d187c6ab2e4fa9e4409153a7b() {
-        assertEval("{ sort(c(1L,10L,2L)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSort_1fd4d093837b7d126d0ef7530e43c343() {
-        assertEval("{ sort(c(3,10,2)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSort_6a592c6f57c71c5d15a2ca0155fee884() {
+    public void TestSimpleBuiltins_testSortIgnore_6a592c6f57c71c5d15a2ca0155fee884() {
         assertEval("{ sort(c(1,2,0/0,NA)) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_5aa86dc4ae1bb25c682d61e872e9b040() {
+    public void TestSimpleBuiltins_testSortIgnore_5aa86dc4ae1bb25c682d61e872e9b040() {
         assertEval("{ sort(c(2,1,0/0,NA), na.last=NA) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_6a7ec5187507fa97abda94b64f5a079d() {
+    public void TestSimpleBuiltins_testSortIgnore_6a7ec5187507fa97abda94b64f5a079d() {
         assertEval("{ sort(c(3,0/0,2,NA), na.last=TRUE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_b5d4d0684b5f7ae93abbd963d09e2547() {
+    public void TestSimpleBuiltins_testSortIgnore_b5d4d0684b5f7ae93abbd963d09e2547() {
         assertEval("{ sort(c(3,NA,0/0,2), na.last=FALSE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_ccb733ea6a05ce0344a90278f6b60239() {
+    public void TestSimpleBuiltins_testSortIgnore_ccb733ea6a05ce0344a90278f6b60239() {
         assertEval("{ sort(c(3L,NA,2L)) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_894104e630b40ec41f7a3242c9dd48bb() {
+    public void TestSimpleBuiltins_testSortIgnore_894104e630b40ec41f7a3242c9dd48bb() {
         assertEval("{ sort(c(3L,NA,-2L), na.last=TRUE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_7371476317ce19939f96f4a8546a66ca() {
+    public void TestSimpleBuiltins_testSortIgnore_7371476317ce19939f96f4a8546a66ca() {
         assertEval("{ sort(c(3L,NA,-2L), na.last=FALSE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_b2088bf4f79792e07aeb1878814c42dd() {
+    public void TestSimpleBuiltins_testSortIgnore_b2088bf4f79792e07aeb1878814c42dd() {
         assertEval("{ sort(c(a=NA,b=NA,c=3,d=1),na.last=TRUE, decreasing=TRUE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_7cfdc805071697201c562b5f50ebd539() {
+    public void TestSimpleBuiltins_testSortIgnore_7cfdc805071697201c562b5f50ebd539() {
         assertEval("{ sort(c(a=NA,b=NA,c=3,d=1),na.last=FALSE, decreasing=FALSE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_ac8a4c1d13606a72e3e1b8c439efda29() {
+    public void TestSimpleBuiltins_testSortIgnore_ac8a4c1d13606a72e3e1b8c439efda29() {
         assertEval("{ sort(c(a=0/0,b=1/0,c=3,d=NA),na.last=TRUE, decreasing=FALSE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_519a0465d477a73e1db30d78e8776c1b() {
+    public void TestSimpleBuiltins_testSortIgnore_519a0465d477a73e1db30d78e8776c1b() {
         assertEval("{ sort(double()) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_df4ed76c79e6d77ac09a69738271e1fd() {
+    public void TestSimpleBuiltins_testSortIgnore_df4ed76c79e6d77ac09a69738271e1fd() {
         assertEval("{ sort(c(a=NA,b=NA,c=3L,d=-1L),na.last=TRUE, decreasing=FALSE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_2ce0809f50d42943354aa60d00cd1a90() {
+    public void TestSimpleBuiltins_testSortIgnore_2ce0809f50d42943354aa60d00cd1a90() {
         assertEval("{ sort(c(3,NA,1,d=10), decreasing=FALSE, index.return=TRUE) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSort_9f37df375d06bb45b37c5fe0fb3d1b54() {
+    public void TestSimpleBuiltins_testSortIgnore_9f37df375d06bb45b37c5fe0fb3d1b54() {
         assertEval("{ sort(3:1, index.return=TRUE) }");
     }
 
