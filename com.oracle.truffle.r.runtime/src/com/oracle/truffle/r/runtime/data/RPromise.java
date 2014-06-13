@@ -23,24 +23,47 @@
 package com.oracle.truffle.r.runtime.data;
 
 /**
- * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
- * Truffle sense.
+ * Denotes an R {@code promise}. It extends {@link RLanguage} with a (lazily) evaluated value.
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
-public class RSymbol {
-    private final String name;
+public class RPromise extends RLanguage {
+    /**
+     * Denotes a promise that raised an error during evaluation.
+     */
+    private static Object ERROR = new Object();
 
-    public RSymbol(String name) {
-        this.name = name;
+    private Object value;
+
+    /**
+     * Create the promise with a representation that allow evaluation later.
+     */
+    public RPromise(Object rep) {
+        super(rep);
     }
 
-    public String getName() {
-        return name;
+    /**
+     * This is a workaround for the fact that REngine can't be called from here (at the moment),
+     * otherwise the evaluation would be implicitly done in {@link #getValue}.
+     */
+    public Object setValue(Object newValue) {
+        if (value == null) {
+            if (newValue == null) {
+                this.value = ERROR;
+            } else {
+                this.value = newValue;
+            }
+        }
+        return this.value;
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public Object getValue() {
+        return value;
     }
 
+    /**
+     * Returns {@code true} if this promise has been evaluated?
+     */
+    public boolean hasValue() {
+        return value != null;
+    }
 }

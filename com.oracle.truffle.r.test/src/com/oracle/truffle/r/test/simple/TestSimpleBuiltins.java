@@ -2307,12 +2307,28 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testEval() {
-        assertEval("{ eval(quote(x+x), list(x=1)) }");
-        assertEval("{ y <- 2; eval(quote(x+y), list(x=1)) }");
-        assertEval("{ y <- 2; x <- 4; eval(x + y, list(x=1)) }");
-        assertEval("{ y <- 2; x <- 2 ; eval(quote(x+y), -1) }");
+        assertEval("{ eval(2 ^ 2 ^ 3)}");
+        assertEval("{ a <- 1; eval(a) }");
+        assertEval("{ a <- 1; eval(a + 1) }");
+        assertEval("{ a <- 1; eval(expression(a + 1)) }");
+        assertEval("{ f <- function(x) { eval(x) }; f(1) }");
+        assertEval("{ eval(x <- 1); ls() }");
+        assertEval("{ ne <- new.env(); eval(x <- 1, ne); ls() }");
+        assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
+        assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
+    }
+
+    @Test
+    @Ignore
+    public void testEvalIgnore() {
+        assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");  // should print two values, xx^2 and xx
+    }
+
+    @Test
+    public void testLocal() {
+        assertEval("{ kk <- local({k <- function(x) {x*2}}); kk(8)}");
+        assertEval("{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
     }
 
     @Test
@@ -2570,6 +2586,7 @@ public class TestSimpleBuiltins extends TestBase {
         // Basic UseMethod
         assertEval("{f <- function(x){ UseMethod(\"f\",x); };" + "f.first <- function(x){cat(\"f first\",x)};" + "f.second <- function(x){cat(\"f second\",x)};" + "obj <-1;"
                         + "attr(obj,\"class\")  <- \"first\";" + "f(obj);" + "attr(obj,\"class\")  <- \"second\";}");
+        assertEval("{f<-function(x){UseMethod(\"f\")};f.logical<-function(x){print(\"logical\")};f(TRUE)}");
     }
 
     @Test

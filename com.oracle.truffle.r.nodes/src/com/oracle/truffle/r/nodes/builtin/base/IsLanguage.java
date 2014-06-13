@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,40 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * Placeholder. {@code on.exit} is special (cf {@code .Internal} in that {@code expr} is not
- * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
- * evaluating function using a new slot in {@link RArguments} and run it on function exit.
- */
-@RBuiltin(name = "on.exit", nonEvalArgs = {0}, kind = PRIMITIVE)
-public abstract class OnExit extends RInvisibleBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"expr", "add"};
-
+@RBuiltin(name = "is.language", kind = RBuiltinKind.PRIMITIVE)
+public abstract class IsLanguage extends IsTypeNode {
     @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(false)};
-    }
-
     @Specialization
-    public Object onExit(@SuppressWarnings("unused") RLanguage expr, @SuppressWarnings("unused") RLanguage add) {
-        controlVisibility();
-        RContext.getInstance().setEvalWarning("on.exit ignored");
-        return RNull.instance;
+    public byte isType(RSymbol value) {
+        return RRuntime.LOGICAL_TRUE;
+    }
+
+    @Override
+    @Specialization
+    public byte isType(RExpression value) {
+        return RRuntime.LOGICAL_TRUE;
     }
 
 }

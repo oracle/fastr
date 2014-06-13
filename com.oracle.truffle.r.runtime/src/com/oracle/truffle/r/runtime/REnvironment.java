@@ -226,7 +226,7 @@ public abstract class REnvironment implements RAttributable {
         initSearchList();
 
         // load base package first
-        RPackages.loadBuiltin("base", baseFrame);
+        RPackages.loadBuiltin("base", baseFrame, baseEnv);
     }
 
     public static void packagesInitialize(ArrayList<RPackage> rPackages) {
@@ -234,8 +234,8 @@ public abstract class REnvironment implements RAttributable {
         REnvironment pkgParent = autoloadEnv;
         for (RPackage rPackage : rPackages) {
             VirtualFrame pkgFrame = RRuntime.createVirtualFrame();
-            RPackages.loadBuiltin(rPackage.name, pkgFrame);
             Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
+            RPackages.loadBuiltin(rPackage.name, pkgFrame, pkgEnv);
             attach(2, pkgEnv);
             pkgParent = pkgEnv;
         }
@@ -351,10 +351,7 @@ public abstract class REnvironment implements RAttributable {
         searchPath.add(bpos, env);
         // Now must adjust the Frame world so that unquoted variable lookup works
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
-        MaterializedFrame envFrame = env.frameAccess.getFrame();
-        if (envFrame == null) {
-            envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
-        }
+        MaterializedFrame envFrame = env.getFrame();
         RArguments.attachFrame(aboveFrame, envFrame);
     }
 
@@ -491,11 +488,17 @@ public abstract class REnvironment implements RAttributable {
     }
 
     /**
-     * Return the {@link MaterializedFrame} associated with this environment, or {@code null} if
-     * there is none.
+     * Return the {@link MaterializedFrame} associated with this environment, installing one if
+     * there is none in the case of {@link NewEnv} environments.
      */
     public MaterializedFrame getFrame() {
-        return frameAccess.getFrame();
+        MaterializedFrame envFrame = frameAccess.getFrame();
+        if (envFrame == null) {
+            if (this instanceof NewEnv) {
+                envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) frameAccess);
+            }
+        }
+        return envFrame;
     }
 
     public void lock(boolean bindings) {

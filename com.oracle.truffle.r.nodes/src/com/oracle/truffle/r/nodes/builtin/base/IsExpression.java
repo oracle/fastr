@@ -25,37 +25,16 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * Placeholder. {@code on.exit} is special (cf {@code .Internal} in that {@code expr} is not
- * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
- * evaluating function using a new slot in {@link RArguments} and run it on function exit.
- */
-@RBuiltin(name = "on.exit", nonEvalArgs = {0}, kind = PRIMITIVE)
-public abstract class OnExit extends RInvisibleBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"expr", "add"};
+@RBuiltin(name = "is.expression", kind = PRIMITIVE)
+public abstract class IsExpression extends IsTypeNode {
 
     @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(false)};
-    }
-
     @Specialization
-    public Object onExit(@SuppressWarnings("unused") RLanguage expr, @SuppressWarnings("unused") RLanguage add) {
-        controlVisibility();
-        RContext.getInstance().setEvalWarning("on.exit ignored");
-        return RNull.instance;
+    public byte isType(RExpression expr) {
+        return RRuntime.LOGICAL_TRUE;
     }
-
 }

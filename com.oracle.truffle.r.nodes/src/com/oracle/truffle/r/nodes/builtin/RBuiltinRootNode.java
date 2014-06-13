@@ -48,6 +48,28 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.inline(args);
     }
 
+    public boolean evaluatesArgs() {
+        RBuiltin rBuiltin = builtin.getRBuiltin();
+        return rBuiltin == null || rBuiltin.nonEvalArgs().length == 0;
+    }
+
+    public boolean evalArg(int index) {
+        RBuiltin rBuiltin = builtin.getRBuiltin();
+        if (rBuiltin == null) {
+            return true;
+        } else {
+            int[] nonEvalArgs = rBuiltin.nonEvalArgs();
+            for (int i = 0; i < nonEvalArgs.length; i++) {
+                int ix = nonEvalArgs[i];
+                if (ix < 0 || ix == index) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+    }
+
     @Override
     public String getSourceCode() {
         return builtin.getSourceCode();

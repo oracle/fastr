@@ -24,32 +24,30 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
+import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "eval", kind = INTERNAL)
-public abstract class Eval extends RBuiltinNode {
+@RBuiltin(name = "expression", kind = PRIMITIVE, nonEvalArgs = {-1}, lastParameterKind = LastParameterKind.VAR_ARGS_ALWAYS_ARRAY)
+public abstract class Expression extends RBuiltinNode {
+    private static final String[] PARAMETER_NAMES = new String[]{"..."};
 
-    @Specialization
-    public Object doEval(RExpression expr, REnvironment envir, REnvironment enclos) {
-        controlVisibility();
-        try {
-            return REngine.eval(expr, envir, enclos);
-        } catch (PutException x) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), x.getMessage());
-        }
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    public Object doEval(Object expr, Object envr, Object enclos) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
+    public Object doExpression(Object[] args) {
+        RList list = RDataFactory.createList(args);
+        return RDataFactory.createExpression(list);
+    }
+
+    @Specialization
+    public Object doExpression(RLanguage language) {
+        RList list = RDataFactory.createList(new Object[]{language});
+        return RDataFactory.createExpression(list);
     }
 
 }

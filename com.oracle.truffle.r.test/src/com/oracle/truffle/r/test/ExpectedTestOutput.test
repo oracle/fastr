@@ -6065,6 +6065,42 @@ Error in rm("foo", envir = baseenv()) :
 #{ x <- 1; ls(globalenv()) }
 [1] "x"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ a <- 1; eval(a + 1) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ a <- 1; eval(a) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ a <- 1; eval(expression(a + 1)) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ eval(2 ^ 2 ^ 3)}
+[1] 256
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ eval(x <- 1); ls() }
+[1] "x"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ f <- function(x) { eval(x) }; f(1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ ne <- new.env(); eval(x <- 1, ne); ls() }
+[1] "ne" "x"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }
+[1] "x"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }
+[1] "x"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFloor
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   0  -4  NA NaN Inf
@@ -6646,6 +6682,14 @@ $z
 [[4]]
 [1] 42
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLocal
+#{ kk <- local({k <- function(x) {x*2}}); kk(8)}
+[1] 16
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLocal
+#{ ne <- new.env(); local(a <- 1, ne); ls(ne) }
+[1] "a"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLog
 #{ log(0) }
@@ -9959,6 +10003,10 @@ f second 1
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
 #{f <- function(x){ UseMethod("f",x); };f.first <- function(x){cat("f first",x)};f.second <- function(x){cat("f second",x)};obj <-1;attr(obj,"class")  <- "first";f(obj);attr(obj,"class")  <- "second";}
 f first 1
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUseMethodSimple
+#{f<-function(x){UseMethod("f")};f.logical<-function(x){print("logical")};f(TRUE)}
+[1] "logical"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testVectorConstructor
 #{ vector("integer") }
 integer(0)

@@ -291,6 +291,10 @@ public final class RDataFactory {
         return traceDataCreated(new RDataFrame(vector));
     }
 
+    public static RExpression createExpression(RList list) {
+        return traceDataCreated(new RExpression(list));
+    }
+
     public static RVector createObjectVector(Object[] data, boolean completeVector) {
         if (data.length < 1) {
             return null;
@@ -308,4 +312,9 @@ public final class RDataFactory {
     public static RSymbol createSymbol(String name) {
         return new RSymbol(name);
     }
+
+    public static RLanguage createLanguage(Object rep) {
+        return new RLanguage(rep);
+    }
+
 }

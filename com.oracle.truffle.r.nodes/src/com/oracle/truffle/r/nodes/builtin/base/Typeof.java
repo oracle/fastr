@@ -140,6 +140,24 @@ public abstract class Typeof extends RBuiltinNode {
         return "symbol";
     }
 
+    @Specialization()
+    public String typeof(RLanguage language) {
+        controlVisibility();
+        return "language";
+    }
+
+    @Specialization()
+    public String typeof(RPromise promise) {
+        controlVisibility();
+        return "promise";
+    }
+
+    @Specialization()
+    public String typeof(RExpression symbol) {
+        controlVisibility();
+        return "expression";
+    }
+
     @Specialization(order = 100, guards = "isFunctionBuiltin")
     public String typeofBuiltin(RFunction obj) {
         controlVisibility();

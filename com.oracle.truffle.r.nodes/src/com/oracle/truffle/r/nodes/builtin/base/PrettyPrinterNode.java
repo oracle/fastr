@@ -168,10 +168,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return RRuntime.quoteString(operand);
     }
 
-    public static String prettyPrint(RSymbol operand) {
-        return operand.getValue();
-    }
-
     @Specialization(order = 50)
     public String prettyPrintVector(RRaw operand, Object listElementName) {
         return concat("[1] ", prettyPrint(operand));
@@ -181,12 +177,12 @@ public abstract class PrettyPrinterNode extends RNode {
         return operand.toString();
     }
 
-    @Specialization
+    @Specialization(order = 60)
     public String prettyPrint(RFunction operand, Object listElementName) {
         return ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
     }
 
-    @Specialization
+    @Specialization(order = 70)
     public String prettyPrint(VirtualFrame frame, REnvironment operand, Object listElementName) {
         RAttributes attributes = operand.getAttributes();
         if (attributes == null) {
@@ -198,6 +194,23 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             return builderToString(builder);
         }
+    }
+
+    @Specialization(order = 80)
+    public String prettyPrint(VirtualFrame frame, RExpression expr, Object listElementName) {
+        // TODO extract source of the elements
+        return "expression";
+    }
+
+    @Specialization(order = 85)
+    public String prettyPrintSymbol(RSymbol operand, Object listElementName) {
+        return operand.getName();
+    }
+
+    @Specialization(order = 86)
+    public String prettyPrint(VirtualFrame frame, RLanguage expr, Object listElementName) {
+        // TODO extract source of the element
+        return "language element";
     }
 
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, RAttributes attributes) {

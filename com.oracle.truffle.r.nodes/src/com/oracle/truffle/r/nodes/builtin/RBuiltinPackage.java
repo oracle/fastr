@@ -119,11 +119,11 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
-    public void loadSources(VirtualFrame frame) {
+    public void loadSources(VirtualFrame frame, REnvironment envForFrame) {
         List<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
-                REngine.parseAndEval(src.libContents, frame, false);
+                REngine.parseAndEval(src.libContents, frame, envForFrame, false);
             }
         }
     }

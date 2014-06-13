@@ -145,7 +145,7 @@ public class RCommand {
             String content = new String(bytes);
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.parseAndEval(content, frame, true);
+            REngine.parseAndEval(content, frame, REnvironment.globalEnv(), true);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
         }
@@ -168,7 +168,7 @@ public class RCommand {
                     continue;
                 }
 
-                REngine.parseAndEval(line, globalFrame, true);
+                REngine.parseAndEval(line, globalFrame, REnvironment.globalEnv(), true);
             }
         } catch (UserInterruptException e) {
             // interrupted
