@@ -197,10 +197,10 @@ public final class REngine implements RBuiltinLookupProvider {
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();
         // Copy existing bindings
-        try {
-            for (FrameSlot slot : envfd.getSlots()) {
-                FrameSlotKind slotKind = slot.getKind();
-                FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
+        for (FrameSlot slot : envfd.getSlots()) {
+            FrameSlotKind slotKind = slot.getKind();
+            FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
+            try {
                 switch (slotKind) {
                     case Byte:
                         vFrame.setByte(vFrameSlot, envFrame.getByte(slot));
@@ -214,12 +214,15 @@ public final class REngine implements RBuiltinLookupProvider {
                     case Object:
                         vFrame.setObject(vFrameSlot, envFrame.getObject(slot));
                         break;
+                    case Illegal:
+                        break;
                     default:
                         throw new FrameSlotTypeException();
                 }
+            } catch (FrameSlotTypeException ex) {
+                throw new RuntimeException("unexpected FrameSlot exception", ex);
             }
-        } catch (FrameSlotTypeException ex) {
-            Utils.fatalError("unexpected FrameSlot exception");
+
         }
         Object result = runCall(callTarget, vFrame, false);
         if (result != null) {
