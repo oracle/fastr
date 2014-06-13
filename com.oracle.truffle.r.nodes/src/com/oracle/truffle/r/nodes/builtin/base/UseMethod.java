@@ -18,7 +18,9 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.UseMethodFactory.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -48,25 +50,13 @@ public abstract class UseMethod extends RBuiltinNode {
         controlVisibility();
         if (useMethodNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            useMethodNode = insert(new UseMethodUninitializedNode());
-        }
-        return useMethodNode.execute(frame, generic, arg);
-    }
-
-    private static final class UseMethodUninitializedNode extends UseMethodNode {
-        @Override
-        public Object execute(VirtualFrame frame, final String generic, Object obj) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            return specialize(obj).execute(frame, generic, obj);
-        }
-
-        private UseMethodNode specialize(Object obj) {
-            CompilerAsserts.neverPartOfCompilation();
-            if (obj instanceof RMissing) {
-                return this.replace(new UseMethodGenericOnlyNode());
+            if (arg instanceof RMissing) {
+                useMethodNode = insert(new UseMethodGenericOnlyNode());
+            } else {
+                useMethodNode = insert(new UseMethodGenericAndObjectNode());
             }
-            return this.replace(new UseMethodGenericAndObjectNode());
         }
+        throw new ReturnException(useMethodNode.execute(frame, generic, arg));
     }
 
     /*
@@ -83,7 +73,7 @@ public abstract class UseMethod extends RBuiltinNode {
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
             initDispatchedCallNode(generic);
-            throw new ReturnException(dispatchedCallNode.execute(frame, getClassHierarchy(enclosingArg)));
+            return dispatchedCallNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
         }
     }
 
@@ -92,13 +82,14 @@ public abstract class UseMethod extends RBuiltinNode {
         @Override
         public Object execute(VirtualFrame frame, final String generic, Object obj) {
             initDispatchedCallNode(generic);
-            throw new ReturnException(dispatchedCallNode.execute(frame, getClassHierarchy(obj)));
+            return dispatchedCallNode.execute(frame, classHierarchyNode.execute(frame, obj));
         }
     }
 
     private abstract static class UseMethodNode extends RNode {
 
         @Child protected DispatchedCallNode dispatchedCallNode;
+        @Child ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
         protected String lastGenericName;
 
         @Override
@@ -115,28 +106,41 @@ public abstract class UseMethod extends RBuiltinNode {
             }
         }
 
-        protected RStringVector getClassHierarchy(Object anObj) {
-            if (anObj instanceof RAbstractContainer) {
-                return ((RAbstractContainer) anObj).getClassHierarchy();
-            }
-            if (anObj instanceof Byte) {
-                return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
-            }
-            if (anObj instanceof String) {
-                return RDataFactory.createStringVector(RRuntime.TYPE_CHARACTER);
-            }
-            if (anObj instanceof Integer) {
-                return RDataFactory.createStringVector(RRuntime.TYPE_INTEGER);
-            }
-            if (anObj instanceof Double) {
-                return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
-            }
-            if (anObj instanceof RComplex) {
-                return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
-            }
-            throw new AssertionError();
+        public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
+    }
+
+    protected abstract static class ClassHierarchyNode extends UnaryNode {
+
+        public abstract RStringVector execute(VirtualFrame frame, Object arg);
+
+        @Specialization(order = 0)
+        public RStringVector getClassHr(RAbstractContainer arg) {
+            return arg.getClassHierarchy();
         }
 
-        public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
+        @Specialization
+        public RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
+            return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
+        }
+
+        @Specialization
+        public RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
+            return RDataFactory.createStringVector(RRuntime.TYPE_CHARACTER);
+        }
+
+        @Specialization
+        public RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
+            return RDataFactory.createStringVector(RRuntime.TYPE_INTEGER);
+        }
+
+        @Specialization
+        public RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
+            return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @Specialization
+        public RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
+            return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
+        }
     }
 }

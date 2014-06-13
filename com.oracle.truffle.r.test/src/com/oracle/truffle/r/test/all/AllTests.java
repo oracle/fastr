@@ -12404,6 +12404,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUseMethodSimple_24e4b6579385856080f94ac48ee5406f() {
+        assertEval("{f<-function(x){UseMethod(\"f\")};f.logical<-function(x){print(\"logical\")};f(TRUE)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testVectorConstructor_629fc5f98d9d6659735740d0b0894210() {
         assertEval("{ vector() }");
     }
