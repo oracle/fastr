@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 /**
  * JNR-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, LinpackRFFI, LapackRFFI, UserRngRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDerivedRFFI, LapackRFFI, UserRngRFFI {
 
     // Base
 
@@ -375,10 +375,12 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
 
    /*
     * Linpack functions
+    *
+    * TODO In order to finesse a problem that "libR" does not exists separately on Linux, the Linpack functions should be amalgamated with FFT in RDerived.
     */
 
    @Override
-   public LinpackRFFI getLinpackRFFI() {
+   public RDerivedRFFI getRDerivedRFFI() {
        return this;
    }
 
@@ -437,6 +439,62 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
        RefScalars_dqrcf.ny[0] = ny;
        linpack().dqrcf_(x, RefScalars_dqrcf.n, RefScalars_dqrcf.k, qraux, y, RefScalars_dqrcf.ny, b, info);
    }
+
+   // fft functions
+
+   public interface FFT {
+       // TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is @Inout)
+
+       // @formatter:off
+       void fft_factor(@In int[] n, int[] pmaxf, int[] pmaxp);
+
+       int fft_work(double[] a, double[] b, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
+   }
+
+   private static class FFTProvider {
+       private static FFT fft;
+
+       @SlowPath
+       private static FFT createAndLoadLib() {
+           return LibraryLoader.create(FFT.class).load("RDerived");
+       }
+
+       static FFT fft() {
+           if (fft == null) {
+               fft = createAndLoadLib();
+           }
+           return fft;
+       }
+   }
+
+   private static FFT fft() {
+       return FFTProvider.fft();
+   }
+
+
+   private static class RefScalars_fft_factor {
+       static int[] n = new int[1];
+   }
+
+   public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
+       RefScalars_fft_factor.n[0] = n;
+       fft().fft_factor(RefScalars_fft_factor.n, pmaxf, pmaxp);
+   }
+
+   private static class RefScalars_fft_work extends RefScalars_fft_factor {
+       static int[] nseg = new int[1];
+       static int[] nspn = new int[1];
+       static int[] isn = new int[1];
+   }
+
+   public int fft_work(double[] a, double[] b, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
+       RefScalars_fft_work.n[0] = n;
+       RefScalars_fft_work.nseg[0] = nseg;
+       RefScalars_fft_work.nspn[0] = nspn;
+       RefScalars_fft_work.isn[0] = isn;
+       return fft().fft_work(a, b, RefScalars_fft_work.nseg, RefScalars_fft_work.n, RefScalars_fft_work.nspn, RefScalars_fft_work.isn, work, iwork);
+   }
+
 
     /*
      * UserRng.

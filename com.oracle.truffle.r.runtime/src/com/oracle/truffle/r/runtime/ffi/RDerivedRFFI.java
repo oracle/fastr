@@ -23,10 +23,18 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Collection of statically typed methods from Linpack that are built in to a GnuR implementation.
+ * Collection of statically typed methods (from Linpack and elsewhere) that are built in to a GnuR
+ * implementation and factored out into a separate library in FastR.
  */
-public interface LinpackRFFI {
+public interface RDerivedRFFI {
+    // Linpack
     void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
 
     void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
+
+    // fft
+    // Checkstyle: stop method name
+    void fft_factor(int n, int[] pmaxf, int[] pmaxp);
+
+    int fft_work(double[] a, double[] b, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
 }

@@ -104,7 +104,7 @@ public class ForeignFunctions {
                 int[] rank = rankVec.getDataCopy();
                 double[] qraux = qrauxVec.getDataCopy();
                 int[] pivot = pivotVec.getDataCopy();
-                RFFIFactory.getRFFI().getLinpackRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
+                RFFIFactory.getRFFI().getRDerivedRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, xVec.getDimensions()),
@@ -146,7 +146,7 @@ public class ForeignFunctions {
                 double[] y = yVec.getDataCopy();
                 double[] b = bVec.getDataCopy();
                 int[] info = infoVec.getDataCopy();
-                RFFIFactory.getRFFI().getLinpackRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
+                RFFIFactory.getRFFI().getRDerivedRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
                 coef.copyAttributesFrom(bVec);
                 // @formatter:off
