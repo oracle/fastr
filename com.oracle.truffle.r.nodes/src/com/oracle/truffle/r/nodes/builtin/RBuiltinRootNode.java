@@ -53,7 +53,7 @@ public final class RBuiltinRootNode extends RRootNode {
         return rBuiltin == null || rBuiltin.nonEvalArgs().length == 0;
     }
 
-    public boolean evalArg(int index) {
+    public boolean evaluatesArg(int index) {
         RBuiltin rBuiltin = builtin.getRBuiltin();
         if (rBuiltin == null) {
             return true;

@@ -23,10 +23,10 @@
 package com.oracle.truffle.r.runtime.data;
 
 /**
- * Denotes an R {@code promise}. It extends {@link RLanguage} with a (lazily) evaluated value.
+ * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
-public class RPromise extends RLanguage {
+public class RPromise extends RLanguageRep {
     /**
      * Denotes a promise that raised an error during evaluation.
      */
@@ -52,6 +52,8 @@ public class RPromise extends RLanguage {
             } else {
                 this.value = newValue;
             }
+        } else {
+            assert false : "promise already has a value";
         }
         return this.value;
     }

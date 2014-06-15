@@ -52,7 +52,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object onExit(@SuppressWarnings("unused") RLanguage expr, @SuppressWarnings("unused") RLanguage add) {
+    public Object onExit(@SuppressWarnings("unused") RPromise expr, @SuppressWarnings("unused") byte add) {
         controlVisibility();
         RContext.getInstance().setEvalWarning("on.exit ignored");
         return RNull.instance;

@@ -23,23 +23,29 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public final class PromiseNode extends RNode {
-    RPromise promise;
+    RLanguageRep languageRep;
 
-    private PromiseNode(RPromise promise) {
-        this.promise = promise;
+    private PromiseNode(RLanguageRep languageRep) {
+        this.languageRep = languageRep;
     }
 
-    public static PromiseNode create(RPromise promise) {
-        return new PromiseNode(promise);
+    public static PromiseNode create(SourceSection src, RLanguageRep language) {
+        PromiseNode pn = new PromiseNode(language);
+        pn.assignSourceSection(src);
+        return pn;
     }
 
+    /**
+     * {@link RPromise} values are assign once.
+     */
     @Override
     public Object execute(VirtualFrame frame) {
-        return promise;
+        return new RPromise(languageRep.getRep());
     }
 
 }

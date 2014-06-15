@@ -293,8 +293,8 @@ public abstract class RCallNode extends RNode {
         }
 
         private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int lix) {
-            if (!builtinRootNode.evalArg(lix)) {
-                return PromiseNode.create(new RPromise(argNode));
+            if (!builtinRootNode.evaluatesArg(lix)) {
+                return PromiseNode.create(argNode.getSourceSection(), new RLanguageRep(argNode));
             } else {
                 return argNode;
             }

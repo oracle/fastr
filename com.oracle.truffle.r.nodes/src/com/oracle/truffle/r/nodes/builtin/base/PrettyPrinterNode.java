@@ -198,8 +198,17 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @Specialization(order = 80)
     public String prettyPrint(VirtualFrame frame, RExpression expr, Object listElementName) {
-        // TODO extract source of the elements
-        return "expression";
+        StringBuilder builder = new StringBuilder();
+        builder.append("expression(");
+        RList exprs = expr.getList();
+        for (int i = 0; i < exprs.getLength(); i++) {
+            if (i != 0) {
+                builder.append(", ");
+            }
+            builder.append(prettyPrintLanguageRep((RLanguage) exprs.getDataAt(i), listElementName));
+        }
+        builder.append(')');
+        return builderToString(builder);
     }
 
     @Specialization(order = 85)
@@ -208,9 +217,19 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @Specialization(order = 86)
-    public String prettyPrint(VirtualFrame frame, RLanguage expr, Object listElementName) {
-        // TODO extract source of the element
-        return "language element";
+    public String prettyPrintPromise(VirtualFrame frame, RPromise promise, Object listElementName) {
+        return prettyPrintLanguageRep(promise, listElementName);
+    }
+
+    @Specialization(order = 87)
+    public String prettyPrintLanguage(VirtualFrame frame, RLanguage language, Object listElementName) {
+        return prettyPrintLanguageRep(language, listElementName);
+    }
+
+    public String prettyPrintLanguageRep(RLanguageRep languageRep, Object listElementName) {
+        RNode node = (RNode) languageRep.getRep();
+        String s = node.getSourceSection().getCode();
+        return s;
     }
 
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, RAttributes attributes) {
@@ -893,6 +912,17 @@ public abstract class PrettyPrinterNode extends RNode {
         public String prettyPrintListElement(VirtualFrame frame, RAbstractVector operand, Object listElementName) {
             return prettyPrintSingleElement(frame, operand, listElementName);
         }
+
+        @Specialization
+        public String prettyPrintListElement(VirtualFrame frame, RSymbol operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
+        @Specialization
+        public String prettyPrintListElement(VirtualFrame frame, RLanguage operand, Object listElementName) {
+            return prettyPrintSingleElement(frame, operand, listElementName);
+        }
+
     }
 
     @NodeChild(value = "operand", type = RNode.class)

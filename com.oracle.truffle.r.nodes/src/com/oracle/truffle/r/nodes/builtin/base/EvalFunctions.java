@@ -127,7 +127,7 @@ public class EvalFunctions {
              * evalq does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(expr, envir, enclos);
+            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
         }
 
     }
@@ -157,7 +157,7 @@ public class EvalFunctions {
              * local does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(expr, envir, enclos);
+            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
         }
 
     }

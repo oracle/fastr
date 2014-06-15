@@ -51,8 +51,8 @@ public abstract class Quote extends RBuiltinNode {
     }
 
     @Specialization
-    public RLanguage doQuote(RLanguage arg) {
+    public RLanguage doQuote(RPromise arg) {
         controlVisibility();
-        return arg;
+        return RDataFactory.createLanguage(arg.getRep());
     }
 }

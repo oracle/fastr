@@ -252,6 +252,7 @@ public abstract class RProxyNode extends RNode {
         return (RSymbol) proxyScalar(x);
     }
 
+    @Specialization
     public RLanguage wrap(RLanguage x) {
         return proxy(x);
     }

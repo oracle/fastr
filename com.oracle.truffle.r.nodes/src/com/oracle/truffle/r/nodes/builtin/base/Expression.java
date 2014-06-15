@@ -38,16 +38,29 @@ public abstract class Expression extends RBuiltinNode {
         return PARAMETER_NAMES;
     }
 
+    /*
+     * Owing to the nonEvalArgs, all arguments are RPromise, but an expression actually consists of
+     * RLanguage elements so we convert, even though an RPromise is a subclass.
+     */
+
     @Specialization
     public Object doExpression(Object[] args) {
-        RList list = RDataFactory.createList(args);
+        RLanguage[] data = new RLanguage[args.length];
+        for (int i = 0; i < args.length; i++) {
+            data[i] = convert((RPromise) args[i]);
+        }
+        RList list = RDataFactory.createList(data);
         return RDataFactory.createExpression(list);
     }
 
     @Specialization
-    public Object doExpression(RLanguage language) {
-        RList list = RDataFactory.createList(new Object[]{language});
+    public Object doExpression(RPromise language) {
+        RList list = RDataFactory.createList(new Object[]{convert(language)});
         return RDataFactory.createExpression(list);
+    }
+
+    private static RLanguage convert(RPromise promise) {
+        return RDataFactory.createLanguage(promise.getRep());
     }
 
 }

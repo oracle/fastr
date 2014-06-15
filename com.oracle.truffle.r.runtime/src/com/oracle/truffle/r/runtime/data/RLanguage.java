@@ -23,19 +23,13 @@
 package com.oracle.truffle.r.runtime.data;
 
 /**
- * Denotes an (unevaluated) element of, e.g. an {@link RExpression}. The representation is not
- * disclosed here, owing partly to import circularities, but it will typically be an {@code RNode}
- * that captures the (unevaluated) AST for the element.
+ * Denotes an (unevaluated) element of, e.g. an {@link RExpression}.
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
-public class RLanguage {
-    private final Object rep;
+public class RLanguage extends RLanguageRep {
 
     public RLanguage(Object rep) {
-        this.rep = rep;
+        super(rep);
     }
 
-    public Object getRep() {
-        return rep;
-    }
 }
