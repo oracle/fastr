@@ -112,7 +112,7 @@ public abstract class REnvironment implements RAttributable {
      */
     private static ArrayList<REnvironment> searchPath;
 
-    private REnvironment parent;
+    protected REnvironment parent;
     private final String name;
     final REnvFrameAccess frameAccess;
     private RAttributes attributes;
@@ -494,9 +494,22 @@ public abstract class REnvironment implements RAttributable {
     public MaterializedFrame getFrame() {
         MaterializedFrame envFrame = frameAccess.getFrame();
         if (envFrame == null) {
-            if (this instanceof NewEnv) {
-                envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) frameAccess);
-            }
+            envFrame = getMaterializedFrame(this);
+        }
+        return envFrame;
+    }
+
+    /**
+     * Ensures that {@code env} and all its parents have a {@link MaterializedFrame}. Used for
+     * {@link NewEnv} environments that only need frames when they are used in {@code eval} etc.
+     */
+    private static MaterializedFrame getMaterializedFrame(REnvironment env) {
+        MaterializedFrame envFrame = env.frameAccess.getFrame();
+        if (envFrame == null && env.parent != null) {
+            MaterializedFrame parentFrame = getMaterializedFrame(env.parent);
+            envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
+            RArguments.setEnclosingFrame(envFrame, parentFrame);
+            RArguments.setEnvironment(envFrame, env);
         }
         return envFrame;
     }
