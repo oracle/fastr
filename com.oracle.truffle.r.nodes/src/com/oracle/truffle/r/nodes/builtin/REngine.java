@@ -173,11 +173,13 @@ public final class REngine implements RBuiltinLookupProvider {
 
     /**
      * Support for the {@code eval} builtin using an {@link RExpression}.
+     *
+     * @param function TODO
      */
-    public static Object eval(RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
+    public static Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
-            result = eval((RLanguage) expr.getDataAt(i), envir, enclos);
+            result = eval(function, (RLanguage) expr.getDataAt(i), envir, enclos);
         }
         return result;
     }
@@ -187,13 +189,15 @@ public final class REngine implements RBuiltinLookupProvider {
      * with {@code envir} has been materialized so we can't evaluate in it directly. Instead we
      * create a new {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then
      * update "f" on return.
+     *
+     * @param function TODO
      */
-    public static Object eval(RLanguage expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
+    public static Object eval(RFunction function, RLanguage expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createVirtualFrame();
         RArguments.setEnclosingFrame(vFrame, envFrame);
-        RArguments.setEnvironment(vFrame, envir);
+        RArguments.setFunction(vFrame, function);
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();
         // Copy existing bindings
@@ -224,7 +228,7 @@ public final class REngine implements RBuiltinLookupProvider {
             }
 
         }
-        Object result = runCall(callTarget, vFrame, false);
+        Object result = runCall(callTarget, vFrame, false, false);
         if (result != null) {
             FrameDescriptor fd = vFrame.getFrameDescriptor();
             for (FrameSlot slot : fd.getSlots()) {
@@ -238,14 +242,14 @@ public final class REngine implements RBuiltinLookupProvider {
      * Evaluate a promise in the given frame (for a builtin, where we can use the
      * {@link VirtualFrame}) of the caller directly).
      */
-    public static Object evalPromise(RPromise expr, VirtualFrame frame) {
+    public static Object evalPromise(RPromise expr, VirtualFrame frame) throws RError {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
-        return expr.setValue(runCall(callTarget, frame, false));
+        return expr.setValue(runCall(callTarget, frame, false, false));
     }
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
         try {
-            return runCall(makeCallTarget(parseToRNode(stream, source), envForFrame), frame, printResult);
+            return runCall(makeCallTarget(parseToRNode(stream, source), envForFrame), frame, printResult, true);
         } catch (RecognitionException | RuntimeException e) {
             context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -301,7 +305,7 @@ public final class REngine implements RBuiltinLookupProvider {
      * {@code frame} will be accessible via {@code newFrame.getArguments()[0]}, and the execution
      * will continue using {@code frame}.
      */
-    private static Object runCall(RootCallTarget callTarget, VirtualFrame frame, boolean printResult) {
+    private static Object runCall(RootCallTarget callTarget, VirtualFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;
         try {
             try {
@@ -314,7 +318,11 @@ public final class REngine implements RBuiltinLookupProvider {
             }
             reportWarnings(false);
         } catch (RError e) {
-            reportRError(e);
+            if (topLevel) {
+                reportRError(e);
+            } else {
+                throw e;
+            }
         } catch (Throwable e) {
             reportImplementationError(e);
         }

@@ -48,13 +48,13 @@ public final class RDefaultBuiltinPackages extends RBuiltinPackages {
         RBuiltinPackage pkg = null;
         switch (name) {
             case "debug":
-                pkg = new DebugPackage();
+                pkg = new DebugPackage(envForFrame);
                 break;
             case "stats":
-                pkg = new StatsPackage();
+                pkg = new StatsPackage(envForFrame);
                 break;
             case "base":
-                pkg = new BasePackage();
+                pkg = new BasePackage(envForFrame);
                 break;
             default:
                 Utils.fail("unknown builtin package: " + name);

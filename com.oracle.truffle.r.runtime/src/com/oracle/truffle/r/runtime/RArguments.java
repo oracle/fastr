@@ -244,7 +244,13 @@ public final class RArguments {
     }
 
     public static RFunction getFunction(Frame frame) {
-        return (RFunction) frame.getArguments()[INDEX_FUNCTION];
+        // An eval can create a pseudo-call where arguments.length==1
+        // and the actual frame is stored in arguments[0]
+        Object[] arguments = frame.getArguments();
+        if (arguments.length == 1) {
+            return getFunction((Frame) arguments[0]);
+        }
+        return (RFunction) arguments[INDEX_FUNCTION];
     }
 
     public static void copyArgumentsInto(Frame frame, Object[] target) {
@@ -274,6 +280,13 @@ public final class RArguments {
 
     public static void setEnvironment(Frame frame, REnvironment env) {
         frame.getArguments()[INDEX_ENVIRONMENT] = env;
+    }
+
+    /**
+     * Explicitly set the function. Used by {@code REngine.eval}.
+     */
+    public static void setFunction(Frame frame, RFunction function) {
+        frame.getArguments()[INDEX_FUNCTION] = function;
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {

@@ -25,11 +25,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 public class BasePackage extends RBuiltinPackage {
 
-    public BasePackage() {
+    public BasePackage(REnvironment env) {
+        super(env);
         // primitive operations
         load(UnaryNotNode.class).names("!");
         load(BinaryArithmeticNode.class).names("+").arguments(BinaryArithmetic.ADD, null);

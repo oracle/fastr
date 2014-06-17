@@ -73,7 +73,10 @@ public abstract class RBuiltinPackage {
         builtins.put(name, factory);
     }
 
-    protected RBuiltinPackage() {
+    protected REnvironment env;
+
+    protected RBuiltinPackage(REnvironment env) {
+        this.env = env;
         try {
             InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "R");
             if (is == null) {
@@ -212,7 +215,7 @@ public abstract class RBuiltinPackage {
             }
             nodeFactory = new ReflectiveNodeFactory(clazz);
         }
-        RBuiltinFactory factory = new RBuiltinFactory(aliases, lastParameterKind, nodeFactory, new Object[0]);
+        RBuiltinFactory factory = new RBuiltinFactory(aliases, lastParameterKind, nodeFactory, new Object[0], env);
         for (String name : factory.getBuiltinNames()) {
             if (builtins.containsKey(name)) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");

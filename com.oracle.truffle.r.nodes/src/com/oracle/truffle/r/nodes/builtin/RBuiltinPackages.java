@@ -56,7 +56,7 @@ public abstract class RBuiltinPackages implements RBuiltinLookup {
 
     private static RFunction createFunction(RBuiltinFactory builtin, String methodName) {
         RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtin);
-        return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtin.getBuiltinNames()[0], callTarget, true));
+        return RContext.getInstance().putCachedFunction(methodName, new RFunction(builtin.getBuiltinNames()[0], callTarget, true, builtin.getEnv().getFrame()));
     }
 
     public static RBuiltinFactory lookupBuiltin(String name) {

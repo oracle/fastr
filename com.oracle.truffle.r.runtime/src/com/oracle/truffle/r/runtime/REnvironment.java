@@ -509,7 +509,6 @@ public abstract class REnvironment implements RAttributable {
             MaterializedFrame parentFrame = getMaterializedFrame(env.parent);
             envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
             RArguments.setEnclosingFrame(envFrame, parentFrame);
-            RArguments.setEnvironment(envFrame, env);
         }
         return envFrame;
     }

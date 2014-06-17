@@ -23,25 +23,18 @@
 package com.oracle.truffle.r.nodes.builtin.debug;
 
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 
 public class DebugPackage extends RBuiltinPackage {
 
-    public DebugPackage() {
+    public DebugPackage(REnvironment env) {
+        super(env);
         loadBuiltins();
     }
 
     @Override
     public String getName() {
         return "debug";
-    }
-
-    private static DebugPackage instance;
-
-    public static DebugPackage getInstance() {
-        if (instance == null) {
-            instance = new DebugPackage();
-        }
-        return instance;
     }
 
 }

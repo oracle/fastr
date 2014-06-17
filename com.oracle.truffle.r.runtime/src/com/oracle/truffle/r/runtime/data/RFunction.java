@@ -51,10 +51,6 @@ public final class RFunction extends RScalar {
         this.enclosingFrame = enclosingFrame;
     }
 
-    public RFunction(String name, RootCallTarget target, boolean builtin) {
-        this(name, target, builtin, null);
-    }
-
     public boolean isBuiltin() {
         return builtin;
     }

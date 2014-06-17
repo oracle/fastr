@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -42,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.*;
 public class EvalFunctions {
     public abstract static class EvalAdapter extends RBuiltinNode {
         protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir", "enclosing"};
+
+        @CompilationFinal private RFunction function;
 
         @Override
         public Object[] getParameterNames() {
@@ -68,13 +71,9 @@ public class EvalFunctions {
                 try {
                     Object result;
                     if (expr instanceof RExpression) {
-                        result = REngine.eval((RExpression) expr, envir, REnvironment.emptyEnv());
+                        result = REngine.eval(getFunction(), (RExpression) expr, envir, REnvironment.emptyEnv());
                     } else {
-                        result = REngine.eval((RLanguage) expr, envir, REnvironment.emptyEnv());
-                    }
-                    if (result == null) {
-                        RContext.setVisible(false);
-                        result = RNull.instance;
+                        result = REngine.eval(getFunction(), (RLanguage) expr, envir, REnvironment.emptyEnv());
                     }
                     return result;
                 } catch (PutException x) {
@@ -85,6 +84,13 @@ public class EvalFunctions {
                 // just return value
                 return expr;
             }
+        }
+
+        protected RFunction getFunction() {
+            if (function == null) {
+                function = RContext.getLookup().lookup(getRBuiltin().name());
+            }
+            return function;
         }
     }
 
@@ -116,6 +122,7 @@ public class EvalFunctions {
 
     @RBuiltin(name = "evalq", nonEvalArgs = {0}, kind = SUBSTITUTE)
     public abstract static class EvalQuote extends EvalAdapter {
+
         @Specialization
         public Object doEval(RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
             return doEval(expr, REnvironment.globalEnv(), enclos);
