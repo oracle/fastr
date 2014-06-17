@@ -100,11 +100,9 @@ public final class RArguments {
     /**
      * Get the {@code arguments} checking for an "eval" frame. An eval can create a pseudo-call
      * where {@code arguments.length == 1} and the real {@code arguments} are at
-     * {@code arguments[0]}.
-     * 
-     * @param frame
+     * {@code arguments[0]}. See {@code REngine}.
      */
-    private static Object[] getArgumentWithEvalCheck(Frame frame) {
+    private static Object[] getArgumentsWithEvalCheck(Frame frame) {
         Object[] arguments = frame.getArguments();
         if (arguments.length == 1) {
             return ((Frame) arguments[0]).getArguments();
@@ -115,11 +113,11 @@ public final class RArguments {
     }
 
     private static int getNArgs(Frame frame) {
-        return (int) getArgumentWithEvalCheck(frame)[INDEX_N_ARGS];
+        return (int) getArgumentsWithEvalCheck(frame)[INDEX_N_ARGS];
     }
 
     private static int getNNames(Frame frame) {
-        return (int) getArgumentWithEvalCheck(frame)[INDEX_N_NAMES];
+        return (int) getArgumentsWithEvalCheck(frame)[INDEX_N_NAMES];
     }
 
     private static int getS3StartIndex(Object[] args) {
@@ -173,104 +171,104 @@ public final class RArguments {
     }
 
     public static String getS3Generic(Frame frame) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         return (String) args[s3StartIndex + S3_INDEX_GENERIC];
     }
 
     public static void setS3Generic(Frame frame, final String generic) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_GENERIC] = generic;
     }
 
     public static RStringVector getS3Class(Frame frame) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         return (RStringVector) args[s3StartIndex + S3_INDEX_CLASS];
     }
 
     public static void setS3Class(Frame frame, final RStringVector klass) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_CLASS] = klass;
     }
 
     public static String getS3Method(Frame frame) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         return (String) args[s3StartIndex + S3_INDEX_METHOD];
     }
 
     public static void setS3Method(Frame frame, final String method) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_METHOD] = method;
     }
 
     public static Frame getS3DefEnv(Frame frame) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         return (Frame) args[s3StartIndex + S3_INDEX_DEF_ENV];
     }
 
     public static void setS3DefEnv(Frame frame, Frame defEnv) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_DEF_ENV] = defEnv;
     }
 
     public static Frame getS3CallEnv(Frame frame) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         return (Frame) args[s3StartIndex + S3_INDEX_CALL_ENV];
     }
 
     public static void setS3CallEnv(Frame frame, Frame callEnv) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_CALL_ENV] = callEnv;
     }
 
     public static String getS3Group(Frame frame) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         return (String) args[s3StartIndex + S3_INDEX_GROUP];
     }
 
     public static void setS3Group(Frame frame, final String group) {
-        Object[] args = getArgumentWithEvalCheck(frame);
+        Object[] args = getArgumentsWithEvalCheck(frame);
         int s3StartIndex = getS3StartIndex(args);
         assert (args.length > s3StartIndex);
         args[s3StartIndex + S3_INDEX_GROUP] = group;
     }
 
     public static REnvironment getEnvironment(Frame frame) {
-        return (REnvironment) getArgumentWithEvalCheck(frame)[INDEX_ENVIRONMENT];
+        return (REnvironment) getArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT];
     }
 
     public static RFunction getFunction(Frame frame) {
-        return (RFunction) getArgumentWithEvalCheck(frame)[INDEX_FUNCTION];
+        return (RFunction) getArgumentsWithEvalCheck(frame)[INDEX_FUNCTION];
     }
 
     public static void copyArgumentsInto(Frame frame, Object[] target) {
-        System.arraycopy(getArgumentWithEvalCheck(frame), INDEX_ARGUMENTS, target, 0, getNArgs(frame));
+        System.arraycopy(getArgumentsWithEvalCheck(frame), INDEX_ARGUMENTS, target, 0, getNArgs(frame));
     }
 
     public static Object getArgument(Frame frame, int argIndex) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        return getArgumentWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
+        return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
     }
 
     public static int getArgumentsLength(Frame frame) {
@@ -278,11 +276,11 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
-        return (MaterializedFrame) getArgumentWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
+        return (MaterializedFrame) getArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
     }
 
     public static Object getName(Frame frame, int nameIndex) {
-        return getArgumentWithEvalCheck(frame)[INDEX_ARGUMENTS + getNArgs(frame) + nameIndex];
+        return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + getNArgs(frame) + nameIndex];
     }
 
     public static int getNamesLength(Frame frame) {
@@ -290,18 +288,18 @@ public final class RArguments {
     }
 
     public static void setEnvironment(Frame frame, REnvironment env) {
-        getArgumentWithEvalCheck(frame)[INDEX_ENVIRONMENT] = env;
+        getArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT] = env;
     }
 
     /**
      * Explicitly set the function. Used by {@code REngine.eval}.
      */
     public static void setFunction(Frame frame, RFunction function) {
-        getArgumentWithEvalCheck(frame)[INDEX_FUNCTION] = function;
+        getArgumentsWithEvalCheck(frame)[INDEX_FUNCTION] = function;
     }
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
-        Object[] arguments = getArgumentWithEvalCheck(frame);
+        Object[] arguments = getArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;
         if (arguments[INDEX_FUNCTION] != null) {
             ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
@@ -314,7 +312,7 @@ public final class RArguments {
      * for {@code frame}. assert {@code} does not denote a function.
      */
     public static void attachFrame(Frame frame, MaterializedFrame newEncl) {
-        Object[] arguments = getArgumentWithEvalCheck(frame);
+        Object[] arguments = getArgumentsWithEvalCheck(frame);
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] newArguments = newEncl.getArguments();
         newArguments[INDEX_ENCLOSING_FRAME] = encl;
@@ -326,7 +324,7 @@ public final class RArguments {
      * enclosing frame of its current enclosing frame. assert {@code} does not denote a function.
      */
     public static void detachFrame(Frame frame) {
-        Object[] arguments = getArgumentWithEvalCheck(frame);
+        Object[] arguments = getArgumentsWithEvalCheck(frame);
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] enclArguments = encl.getArguments();
         arguments[INDEX_ENCLOSING_FRAME] = enclArguments[INDEX_ENCLOSING_FRAME];
