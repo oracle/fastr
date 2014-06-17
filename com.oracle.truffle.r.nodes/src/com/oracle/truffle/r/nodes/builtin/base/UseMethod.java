@@ -109,7 +109,7 @@ public abstract class UseMethod extends RBuiltinNode {
         public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
     }
 
-    protected abstract static class ClassHierarchyNode extends UnaryNode {
+    public abstract static class ClassHierarchyNode extends UnaryNode {
 
         public abstract RStringVector execute(VirtualFrame frame, Object arg);
 
