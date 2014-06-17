@@ -509,6 +509,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testAsSymbol() {
+        assertEval("{ as.symbol(\"name\") }");
+        assertEval("{ as.symbol(123) }");
+        assertEval("{ as.symbol(as.symbol(123)) }");
+    }
+
+    @Test
     public void testMatrix() {
         assertEval("{ matrix(c(1,2,3,4),2,2) }");
         assertEval("{ matrix(as.double(NA),2,2) }");
