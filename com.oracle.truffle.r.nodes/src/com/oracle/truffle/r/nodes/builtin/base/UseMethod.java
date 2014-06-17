@@ -18,12 +18,9 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.UseMethodFactory.*;
 import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "UseMethod", kind = PRIMITIVE)
 public abstract class UseMethod extends RBuiltinNode {
@@ -89,7 +86,7 @@ public abstract class UseMethod extends RBuiltinNode {
     private abstract static class UseMethodNode extends RNode {
 
         @Child protected DispatchedCallNode dispatchedCallNode;
-        @Child ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
+        @Child UseMethod_ClassHierarchyNode classHierarchyNode = UseMethod_ClassHierarchyNodeFactory.create(null);
         protected String lastGenericName;
 
         @Override
@@ -107,40 +104,5 @@ public abstract class UseMethod extends RBuiltinNode {
         }
 
         public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
-    }
-
-    public abstract static class ClassHierarchyNode extends UnaryNode {
-
-        public abstract RStringVector execute(VirtualFrame frame, Object arg);
-
-        @Specialization(order = 0)
-        public RStringVector getClassHr(RAbstractContainer arg) {
-            return arg.getClassHierarchy();
-        }
-
-        @Specialization
-        public RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-            return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
-        }
-
-        @Specialization
-        public RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-            return RDataFactory.createStringVector(RRuntime.TYPE_CHARACTER);
-        }
-
-        @Specialization
-        public RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-            return RDataFactory.createStringVector(RRuntime.TYPE_INTEGER);
-        }
-
-        @Specialization
-        public RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
-            return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
-        }
-
-        @Specialization
-        public RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
-            return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
-        }
     }
 }
