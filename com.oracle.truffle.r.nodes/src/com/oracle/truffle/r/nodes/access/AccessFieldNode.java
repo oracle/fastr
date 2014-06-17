@@ -56,6 +56,12 @@ public abstract class AccessFieldNode extends RNode {
         return RNull.instance;
     }
 
+    @Specialization(order = 3)
+    public Object accessField(REnvironment env) {
+        Object obj = env.get(getField());
+        return obj == null ? RNull.instance : obj;
+    }
+
     @Specialization(order = 1000)
     public Object accessField(@SuppressWarnings("unused") RAbstractVector object) {
         CompilerDirectives.transferToInterpreter();
