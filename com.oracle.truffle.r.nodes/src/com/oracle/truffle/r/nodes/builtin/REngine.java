@@ -190,13 +190,15 @@ public final class REngine implements RBuiltinLookupProvider {
      * create a new {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then
      * update "f" on return.
      *
-     * @param function TODO
+     * @param function the actual function that invoked the "eval", e.g. {@code eval}, {@code evalq}
+     *            , {@code local}.
      */
     public static Object eval(RFunction function, RLanguage expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createVirtualFrame();
-        RArguments.setEnclosingFrame(vFrame, envFrame);
+        // We make the new frame look like it was a real call to "function".
+        RArguments.setEnclosingFrame(vFrame, function.getEnclosingFrame());
         RArguments.setFunction(vFrame, function);
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();

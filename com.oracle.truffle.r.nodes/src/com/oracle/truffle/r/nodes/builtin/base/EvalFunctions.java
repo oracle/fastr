@@ -124,8 +124,8 @@ public class EvalFunctions {
     public abstract static class EvalQuote extends EvalAdapter {
 
         @Specialization
-        public Object doEval(RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(expr, REnvironment.globalEnv(), enclos);
+        public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
+            return doEval(expr, EnvFunctions.frameToEnvironment(frame), enclos);
         }
 
         @Specialization
