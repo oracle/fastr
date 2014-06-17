@@ -105,6 +105,9 @@ public class RRuntime {
 
     public static final String NAMES_ATTR_KEY = new String("names");
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
+    
+    public static final String LEVELS_ATTR_KEY = new String("levels");
+    public static final String LEVELS_ATTR_EMPTY_VALUE = "";
 
     public static final String NA_HEADER = "<NA>";
 

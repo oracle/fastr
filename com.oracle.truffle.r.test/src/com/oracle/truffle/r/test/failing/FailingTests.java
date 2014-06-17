@@ -1949,6 +1949,41 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_ff42abcbf4f968c27e32a7dd28eda044() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_c0abb95d78ba54d518dba3716e78f683() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_b703c1a90d66f9baf7ccbe08919f69d1() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(\"Heads\", \"Tails\") ; prob <- c(.3, .7) ; sample(x, 10, TRUE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_c90feee3f3b3a20606e1b43eab8afb31() {
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_18482bc15a1e30cd46e5be81317a3374() {
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_38b963b6f50f4a4d9e1250d1df321b43() {
+        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_2935bb73d988381d4ae52f265101577a() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testSapplyIgnore_e30b8dbeaaac291438d9893765622dcc() {
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
     }
@@ -2146,6 +2181,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_6e790dfb1de4a070282c353b0be255bd() {
         assertEval("{ seq(along=c(10,11,12)) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSetAttr_4c035922fa30fd65161fe53e1af97368() {
+        assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSetAttr_d3a803a8bcf4ca34f3f28cc87c530aef() {
+        assertEval("{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
     }
 
     @Ignore
