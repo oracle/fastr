@@ -23,23 +23,20 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "paste", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
-// TODO INTERNAL
+@RBuiltin(name = "paste", kind = INTERNAL)
 public abstract class Paste extends RBuiltinNode {
 
-    public abstract Object executeObject(VirtualFrame frame, Object value, String sep, Object collapse);
+    public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
     @Child CastStringNode castCharacterNode;
 
@@ -64,125 +61,17 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"...", "sep", "collapse"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{null, ConstantNode.create(" "), ConstantNode.create(RNull.instance)};
-    }
-
     @Specialization
-    @SuppressWarnings("unused")
-    public RStringVector paste(RMissing value, Object sep, Object collapse) {
+    public RStringVector pasteList(VirtualFrame frame, RList values, String sep, Object collapse) {
         controlVisibility();
-        return RDataFactory.createEmptyStringVector();
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    public RStringVector paste(RNull value, Object sep, Object collapse) {
-        controlVisibility();
-        return RDataFactory.createEmptyStringVector();
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    @SlowPath
-    public String paste(int value, Object sep, Object collapse) {
-        controlVisibility();
-        return String.valueOf(value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    @SlowPath
-    public String paste(double value, Object sep, Object collapse) {
-        controlVisibility();
-        return String.valueOf(value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public String paste(byte value, Object sep, Object collapse) {
-        controlVisibility();
-        return RRuntime.logicalToString(value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public String paste(String value, Object sep, Object collapse) {
-        controlVisibility();
-        return value;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public String paste(RComplex value, Object sep, Object collapse) {
-        controlVisibility();
-        return RRuntime.toString(value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(RStringVector vector, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(vector, collapse);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, RIntVector vector, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(castCharacterVector(frame, vector), collapse);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, RDoubleVector vector, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(castCharacterVector(frame, vector), collapse);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, RIntSequence sequence, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(castCharacterVector(frame, sequence), collapse);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, RDoubleSequence sequence, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(castCharacterVector(frame, sequence), collapse);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, RLogicalVector vector, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(castCharacterVector(frame, vector), collapse);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, RList list, Object sep, Object collapse) {
-        controlVisibility();
-        return checkCollapse(castCharacterVector(frame, list), collapse);
-    }
-
-    @Specialization
-    public RStringVector paste(VirtualFrame frame, Object[] args, Object sep, Object collapse) {
-        controlVisibility();
-        Object[] converted = new Object[args.length];
+        if (isEmptyOrNull(values)) {
+            return RDataFactory.createEmptyStringVector();
+        }
+        int length = values.getLength();
+        Object[] converted = new Object[length];
         int maxLength = 1;
-        for (int i = 0; i < args.length; i++) {
-            Object element = args[i];
+        for (int i = 0; i < length; i++) {
+            Object element = values.getDataAt(i);
             if (element instanceof RVector || element instanceof RSequence) {
                 converted[i] = castCharacterVector(frame, element);
                 int len = ((RStringVector) converted[i]).getLength();
@@ -197,7 +86,7 @@ public abstract class Paste extends RBuiltinNode {
         String[] result = new String[maxLength];
         for (int i = 0; i < maxLength; i++) {
             StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < args.length; j++) {
+            for (int j = 0; j < length; j++) {
                 if (j != 0) {
                     builder.append(sep);
                 }
@@ -214,13 +103,8 @@ public abstract class Paste extends RBuiltinNode {
         }
     }
 
-    private static RStringVector checkCollapse(RStringVector result, Object collapse) {
-        if (collapse != RNull.instance) {
-            String collapseString = RRuntime.toString(collapse);
-            return buildString(result, collapseString);
-        } else {
-            return result;
-        }
+    public boolean isEmptyOrNull(RList values) {
+        return values.getLength() == 0 || (values.getLength() == 1 && values.getDataAt(0) == RNull.instance);
     }
 
     private static RStringVector buildString(String[] value, String collapseString) {
@@ -230,17 +114,6 @@ public abstract class Paste extends RBuiltinNode {
                 sb.append(collapseString);
             }
             sb.append(value[i]);
-        }
-        return RDataFactory.createStringVector(new String[]{buildStringToString(sb)}, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    private static RStringVector buildString(RStringVector vector, String collapseString) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < vector.getLength(); i++) {
-            if (i > 0) {
-                sb.append(collapseString);
-            }
-            sb.append(vector.getDataAt(i));
         }
         return RDataFactory.createStringVector(new String[]{buildStringToString(sb)}, RDataFactory.COMPLETE_VECTOR);
     }

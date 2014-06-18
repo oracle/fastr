@@ -4739,6 +4739,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsSymbol_aca87179ddc66bf6ffd0cf9dda6f1b36() {
+        assertEval("{ as.symbol(\"name\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsSymbol_164a2c36b5727656c46e5eb5fcafbf17() {
+        assertEval("{ as.symbol(123) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsSymbol_26d263746bdf130a45fbd5505a64422e() {
+        assertEval("{ as.symbol(as.symbol(123)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsVector_e84fd1b27fd6570ddd6a53234fde0ba0() {
         assertEval("{ as.vector(\"foo\", \"logical\") }");
     }
