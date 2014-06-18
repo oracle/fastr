@@ -26,7 +26,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -42,12 +41,12 @@ public final class FunctionDefinitionNode extends RRootNode {
     private final String description;
 
     /**
-     * An instance of this node may be called from {@link REngine#runCall} with the intention to
-     * have its execution leave a footprint behind in a specific frame/environment, e.g., during
-     * library loading, commands from the shell, or R's {@code eval} and its friends. In that case,
-     * {@code substituteFrame} is {@code true}, and the {@link #execute(VirtualFrame)} method must
-     * be invoked with one argument, namely the {@link VirtualFrame} to be side-effected. Execution
-     * will then proceed in the context of that frame.
+     * An instance of this node may be called from with the intention to have its execution leave a
+     * footprint behind in a specific frame/environment, e.g., during library loading, commands from
+     * the shell, or R's {@code eval} and its friends. In that case, {@code substituteFrame} is
+     * {@code true}, and the {@link #execute(VirtualFrame)} method must be invoked with one
+     * argument, namely the {@link VirtualFrame} to be side-effected. Execution will then proceed in
+     * the context of that frame.
      */
     private final boolean substituteFrame;
 

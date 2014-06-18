@@ -228,7 +228,7 @@ public abstract class REnvironment implements RAttributable {
         initSearchList();
 
         // load base package first
-        RPackages.loadBuiltin("base", baseFrame, baseEnv);
+        RContext.getEngine().loadDefaultPackage("base", baseFrame, baseEnv);
     }
 
     public static void packagesInitialize(ArrayList<RPackage> rPackages) {
@@ -237,7 +237,7 @@ public abstract class REnvironment implements RAttributable {
         for (RPackage rPackage : rPackages) {
             VirtualFrame pkgFrame = RRuntime.createVirtualFrame();
             Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
-            RPackages.loadBuiltin(rPackage.name, pkgFrame, pkgEnv);
+            RContext.getEngine().loadDefaultPackage(rPackage.name, pkgFrame, pkgEnv);
             attach(2, pkgEnv);
             pkgParent = pkgEnv;
         }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 
 import java.io.*;
 
@@ -30,7 +31,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.REngine.ParseException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -91,7 +91,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SlowPath
     private static RExpression doParse(String script) throws ParseException {
-        return REngine.parse(script);
+        return RContext.getEngine().parse(script);
     }
 
     @SlowPath

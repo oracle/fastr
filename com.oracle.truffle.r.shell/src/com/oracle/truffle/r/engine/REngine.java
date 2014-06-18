@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.engine;
 
 import java.io.*;
 import java.util.*;
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
@@ -45,19 +46,16 @@ import com.oracle.truffle.r.runtime.rng.*;
  * The engine for the FastR implementation. Handles parsing and evaluation. There is exactly one
  * instance of this class, stored in {link #singleton}.
  */
-public final class REngine implements RBuiltinLookupProvider {
+public final class REngine implements RContext.Engine {
 
     private static REngine singleton = new REngine();
-    private static final RContext context = RContext.linkRBuiltinLookupProvider(singleton);
     private static boolean crashOnFatalError;
     private static long startTime;
     private static long[] childTimes;
+    private static RContext context;
+    private static RBuiltinLookup builtinLookup;
 
     private REngine() {
-    }
-
-    public RBuiltinLookup getRBuiltinLookup() {
-        return RDefaultBuiltinPackages.getInstance();
     }
 
     /**
@@ -76,7 +74,8 @@ public final class REngine implements RBuiltinLookupProvider {
         Locale.setDefault(Locale.ROOT);
         RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
-        RContext.setRuntimeState(commandArgs, consoleHandler, headless);
+        builtinLookup = RDefaultBuiltinPackages.getInstance();
+        context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, headless);
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
         VirtualFrame baseFrame = RRuntime.createVirtualFrame();
         REnvironment.baseInitialize(globalFrame, baseFrame);
@@ -88,64 +87,51 @@ public final class REngine implements RBuiltinLookupProvider {
         ROptions.initialize();
         RProfile.initialize();
         // eval the system profile
-        REngine.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false);
+        singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false);
         REnvironment.packagesInitialize(RPackages.initialize());
         RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {
-            REngine.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false);
+            singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false);
         }
         String userProfile = RProfile.userProfile();
         if (userProfile != null) {
-            REngine.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false);
+            singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false);
         }
         return globalFrame;
     }
 
-    /**
-     * Elapsed time of process.
-     *
-     * @return elapsed time in nanosecs.
-     */
-    public static long elapsedTimeInNanos() {
+    public static REngine getInstance() {
+        return singleton;
+    }
+
+    public void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame) {
+        RDefaultBuiltinPackages.load(name, frame, envForFrame);
+    }
+
+    public RFunction lookupBuiltin(String name) {
+        return builtinLookup.lookup(name);
+    }
+
+    public long elapsedTimeInNanos() {
         return System.nanoTime() - startTime;
     }
 
-    /**
-     * Return user and system times for any spawned child processes in nanosecs, < 0 means not
-     * available (Windows).
-     */
-    public static long[] childTimesInNanos() {
+    public long[] childTimesInNanos() {
         return childTimes;
     }
 
-    public static RContext getContext() {
-        return context;
-    }
-
-    /**
-     * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the result
-     * of the evaluation is printed to the console.
-     *
-     * @param envForFrame the environment that {@code frame} is bound to.
-     * @return the object returned by the evaluation or {@code null} if an error occurred.
-     */
-    public static Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
+    public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, envForFrame, printResult);
     }
 
-    /**
-     *
-     * This is intended for use by the unit test environment, where a "fresh" global environment is
-     * desired for each evaluation.
-     */
-    public static Object parseAndEvalTest(String rscript, boolean printResult) {
+    public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createVirtualFrame();
         REnvironment.resetForTest(frame);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, REnvironment.globalEnv(), printResult);
     }
 
-    public static class ParseException extends Exception {
+    public class ParseException extends Exception {
         private static final long serialVersionUID = 1L;
 
         public ParseException(String msg) {
@@ -153,11 +139,7 @@ public final class REngine implements RBuiltinLookupProvider {
         }
     }
 
-    /**
-     * Parse an R expression and return an {@link RExpression} object representing the Truffle ASTs
-     * for the components.
-     */
-    public static RExpression parse(String rscript) throws ParseException {
+    public RExpression parse(String rscript) throws RContext.Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
             ASTNode[] exprs = seq.getExprs();
@@ -167,16 +149,11 @@ public final class REngine implements RBuiltinLookupProvider {
             }
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {
-            throw new ParseException(ex.getMessage());
+            throw new RContext.Engine.ParseException(ex.getMessage());
         }
     }
 
-    /**
-     * Support for the {@code eval} builtin using an {@link RExpression}.
-     *
-     * @param function TODO
-     */
-    public static Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
+    public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
             result = eval(function, (RLanguage) expr.getDataAt(i), envir, enclos);
@@ -184,16 +161,7 @@ public final class REngine implements RBuiltinLookupProvider {
         return result;
     }
 
-    /**
-     * Support for the {@code eval} builtin. This is tricky because the {@link Frame} "f" associated
-     * with {@code envir} has been materialized so we can't evaluate in it directly. Instead we
-     * create a new {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then
-     * update "f" on return.
-     *
-     * @param function the actual function that invoked the "eval", e.g. {@code eval}, {@code evalq}
-     *            , {@code local}.
-     */
-    public static Object eval(RFunction function, RLanguage expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
+    public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createVirtualFrame();
@@ -240,11 +208,7 @@ public final class REngine implements RBuiltinLookupProvider {
         return result;
     }
 
-    /**
-     * Evaluate a promise in the given frame (for a builtin, where we can use the
-     * {@link VirtualFrame}) of the caller directly).
-     */
-    public static Object evalPromise(RPromise expr, VirtualFrame frame) throws RError {
+    public Object evalPromise(RPromise expr, VirtualFrame frame) throws RError {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
         return expr.setValue(runCall(callTarget, frame, false, false));
     }
@@ -333,7 +297,8 @@ public final class REngine implements RBuiltinLookupProvider {
 
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
-            RFunction function = RContext.getLookup().lookup("print");
+            // TODO cache this
+            RFunction function = builtinLookup.lookup("print");
             function.getTarget().call(RArguments.create(function, new Object[]{result}));
         }
     }

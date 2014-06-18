@@ -25,12 +25,18 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Helper class carrying state for an {@code REngine}. As per {@code REngine}, there is exactly one
- * instance of this class, which is tied to the {@code REngine}. It has a separate existence to
- * solve circularities in the current project structure.
+ * Provides access to the runtime state ("context") without being tied statically to a particular
+ * implementation of the runtime.
+ *
+ * The context provides two sub-interfaces {@link ConsoleHandler} and {@link Engine}that are
+ * (typically) implemented elsewhere, but accessed through {@link #getConsoleHandler()} and {@loink
+ * #getEngine()}, respectively.
+ *
  */
 public final class RContext {
 
@@ -86,6 +92,92 @@ public final class RContext {
         int getWidth();
     }
 
+    public interface Engine {
+        /**
+         * Elapsed time of runtime.
+         *
+         * @return elapsed time in nanosecs.
+         */
+        public long elapsedTimeInNanos();
+
+        /**
+         * Return user and system times for any spawned child processes in nanosecs, < 0 means not
+         * available (Windows).
+         */
+        public long[] childTimesInNanos();
+
+        public static class ParseException extends Exception {
+            private static final long serialVersionUID = 1L;
+
+            public ParseException(String msg) {
+                super(msg);
+            }
+        }
+
+        /**
+         * Load a package from the default set of packages identified at startup.
+         *
+         * @param name name of the package, e.g. {@code base}, {@code stats}.
+         * @param frame for evaluating any associated R code
+         * @param envForFrame the namespace environment associated with the package.
+         */
+        public void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame);
+
+        /**
+         * Return the {@link RFunction} for the builtin {@code name}.
+         *
+         */
+        public RFunction lookupBuiltin(String name);
+
+        /**
+         * Parse an R expression and return an {@link RExpression} object representing the Truffle
+         * ASTs for the components.
+         */
+        public RExpression parse(String rscript) throws ParseException;
+
+        /**
+         * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the
+         * result of the evaluation is printed to the console.
+         *
+         * @param envForFrame the environment that {@code frame} is bound to.
+         * @return the object returned by the evaluation or {@code null} if an error occurred.
+         */
+        public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult);
+
+        /**
+         *
+         * This is intended for use by the unit test environment, where a "fresh" global environment
+         * is desired for each evaluation.
+         */
+        public Object parseAndEvalTest(String rscript, boolean printResult);
+
+        /**
+         * Support for the {@code eval} builtin using an {@link RExpression}.
+         *
+         * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
+         *            {@code evalq} being invoked.
+         */
+        public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
+
+        /**
+         * Support for the {@code eval} builtin. This is tricky because the {@link Frame} "f"
+         * associated with {@code envir} has been materialized so we can't evaluate in it directly.
+         * Instead we create a new {@link VirtualFrame}, that is a logical clone of "f", evaluate in
+         * that, and then update "f" on return.
+         *
+         * @param function the actual function that invoked the "eval", e.g. {@code eval},
+         *            {@code evalq} , {@code local}.
+         */
+        public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+
+        /**
+         * Evaluate a promise in the given frame (for a builtin, where we can use the
+         * {@link VirtualFrame}) of the caller directly).
+         */
+        public Object evalPromise(RPromise expr, VirtualFrame frame) throws RError;
+
+    }
+
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
     private LinkedList<String> evalWarnings;
@@ -101,10 +193,9 @@ public final class RContext {
      */
     @CompilationFinal private boolean headless;
 
-    private static RBuiltinLookup lookup;
-
-    private ConsoleHandler consoleHandler;
-    private String[] commandArgs;
+    @CompilationFinal private ConsoleHandler consoleHandler;
+    @CompilationFinal private String[] commandArgs;
+    @CompilationFinal private Engine engine;
 
     private static final RContext singleton = new RContext();
 
@@ -115,13 +206,12 @@ public final class RContext {
         return globalAssumptions;
     }
 
-    public static RContext linkRBuiltinLookupProvider(RBuiltinLookupProvider rbp) {
-        lookup = rbp.getRBuiltinLookup();
+    public static RContext getInstance() {
         return singleton;
     }
 
-    public static RContext getInstance() {
-        return singleton;
+    public static Engine getEngine() {
+        return singleton.engine;
     }
 
     /**
@@ -131,10 +221,12 @@ public final class RContext {
      * @param commandArgs
      * @param consoleHandler
      */
-    public static void setRuntimeState(String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
+    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, boolean headless) {
+        singleton.engine = engine;
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
         singleton.headless = headless;
+        return singleton;
     }
 
     public static boolean isVisible() {
@@ -147,13 +239,6 @@ public final class RContext {
 
     public static boolean isHeadless() {
         return singleton.headless;
-    }
-
-    public static RBuiltinLookup getLookup() {
-        if (lookup == null) {
-            Utils.fail("no builtin lookup set");
-        }
-        return lookup;
     }
 
     public ConsoleHandler getConsoleHandler() {

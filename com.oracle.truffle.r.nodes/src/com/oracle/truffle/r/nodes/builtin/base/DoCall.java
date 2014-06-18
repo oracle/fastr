@@ -41,7 +41,7 @@ public abstract class DoCall extends RBuiltinNode {
 
     @Specialization(guards = "lengthOne")
     public Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
-        RFunction func = RContext.getLookup().lookup(fname.getDataAt(0));
+        RFunction func = RContext.getEngine().lookupBuiltin(fname.getDataAt(0));
         if (func == null) {
             throw RError.getGenericError(getEncapsulatingSourceSection(), "could not find function " + fname);
         }

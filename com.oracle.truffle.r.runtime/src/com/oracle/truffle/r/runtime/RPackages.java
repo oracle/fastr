@@ -66,19 +66,4 @@ public class RPackages {
         return packages;
     }
 
-    /**
-     * Purely a workaround for project circularity between nodes and runtime.
-     * 
-     * @param envForFrame TODO
-     */
-    public static void loadBuiltin(String name, VirtualFrame frame, REnvironment envForFrame) {
-        try {
-            Method loadMethod = Class.forName("com.oracle.truffle.r.nodes.builtin.RDefaultBuiltinPackages").getDeclaredMethod("load", String.class, VirtualFrame.class, REnvironment.class);
-            loadMethod.invoke(null, new Object[]{name, frame, envForFrame});
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Utils.fail("failed to load builtin package: " + name + ": " + ex);
-        }
-    }
-
 }

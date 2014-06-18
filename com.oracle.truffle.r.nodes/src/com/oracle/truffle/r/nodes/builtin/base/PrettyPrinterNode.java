@@ -629,7 +629,6 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            RBuiltinPackages packages = (RBuiltinPackages) RContext.getLookup();
             re = insert(ReFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Re")));
             im = insert(ImFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Im")));
         }
@@ -665,7 +664,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (operand.getRowNames() == RNull.instance || ((RAbstractVector) operand.getRowNames()).getLength() == 0) {
             return "NULL\n<0 rows> (or 0-length row.names)";
         }
-        RFunction getFunction = RContext.getLookup().lookup("get");
+        RFunction getFunction = RContext.getEngine().lookupBuiltin("get");
         RFunction formatFunction = (RFunction) indirectCall.call(frame, getFunction.getTarget(), RArguments.create(getFunction, REnvironment.globalEnv().getFrame(), new Object[]{"format.data.frame"}));
         return RRuntime.toString(indirectCall.call(frame, formatFunction.getTarget(), RArguments.create(formatFunction, new Object[]{operand})));
     }
