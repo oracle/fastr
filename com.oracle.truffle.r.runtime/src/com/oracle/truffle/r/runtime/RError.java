@@ -235,6 +235,13 @@ public abstract class RError extends RuntimeException {
     private static final String USE_DEFUNCT = "use of '%s' is defunct: use %s instead";
     private static final String NCOL_ZERO = "nc = 0 for non-null data";
     private static final String NROW_ZERO = "nr = 0 for non-null data";
+    private static final String SAMPLE_LARGER_THAN_POPULATION = "cannot take a sample larger than the population when 'replace = FALSE'\n";
+    private static final String SAMPLE_OBJECT_NOT_FOUND = "object '%s' not found";
+    private static final String ERROR_IN_SAMPLE = "Error in sample.int(x, size, replace, prob) :  ";
+    private static final String INCORRECT_NUM_PROB = "incorrect number of probabilities";
+    private static final String NA_IN_PROB_VECTOR = "NA in probability vector";
+    private static final String NEGATIVE_PROBABILITY = "non-positive probability";
+    private static final String TOO_FEW_POSITIVE_PROBABILITY = "too few positive probabilities";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -2146,7 +2153,35 @@ public abstract class RError extends RuntimeException {
         return getGenericError(encapsulatingSourceSection, NCOL_ZERO);
     }
 
+    public static RError getLargerPopu(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, SAMPLE_LARGER_THAN_POPULATION);
+    }
+
+    public static RError getErrorInSample(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, ERROR_IN_SAMPLE);
+    }
+
+    public static RError get(SourceSection ast, String argName) {
+        return getGenericError(ast, stringFormat(RError.SAMPLE_OBJECT_NOT_FOUND, argName));
+    }
+
+    public static RError getIncorrectNumProb(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, INCORRECT_NUM_PROB);
+    }
+
     public static RError getNrowZero(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, NROW_ZERO);
+    }
+
+    public static RError getNAInProbVector(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NA_IN_PROB_VECTOR);
+    }
+
+    public static RError getNegativeProbability(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NEGATIVE_PROBABILITY);
+    }
+
+    public static RError getTooFewPositiveProbability(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, TOO_FEW_POSITIVE_PROBABILITY);
     }
 }

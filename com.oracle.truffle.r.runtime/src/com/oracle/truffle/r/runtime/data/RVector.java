@@ -206,6 +206,16 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         }
     }
 
+    public void setLevels(Object newLevels) {
+        if (attributes != null && newLevels == null) {
+            // whether it's one dimensional array or not, assigning null always removes the "Levels"
+            // attribute
+            removeAttributeMapping(RRuntime.LEVELS_ATTR_KEY);
+        } else if (newLevels != null && newLevels != RNull.instance) {
+            putAttribute(RRuntime.LEVELS_ATTR_KEY, newLevels);
+        }
+    }
+
     public final void setNames(Object newNames) {
         setNames(newNames, null);
     }
