@@ -271,6 +271,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    public RPairList wrap(RPairList x) {
+        return proxy(x);
+    }
+
+    protected RPairList proxy(RPairList x) {
+        return (RPairList) proxyScalar(x);
+    }
+
+    @Specialization
     public Object[] wrap(Object[] x) {
         return proxy(x);
     }

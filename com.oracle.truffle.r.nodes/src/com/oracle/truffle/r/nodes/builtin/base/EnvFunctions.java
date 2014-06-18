@@ -28,11 +28,8 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -60,7 +57,7 @@ public class EnvFunctions {
         public REnvironment asEnvironment(int pos) {
             controlVisibility();
             if (pos == -1) {
-                Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+                Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
@@ -195,7 +192,7 @@ public class EnvFunctions {
         @Specialization(order = 0)
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
-            Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+            Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
             return frameToEnvironment(callerFrame);
         }
 

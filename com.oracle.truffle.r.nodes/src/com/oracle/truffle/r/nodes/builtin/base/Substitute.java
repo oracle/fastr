@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.*;
+import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 
-/**
- * Denotes an R {@code connection} instance used in the {@code base} I/O library.
- */
-public abstract class RConnection {
-    /**
-     * Read (n > 0 up to n else unlimited) lines on the connection.
-     */
-    public abstract String[] readLines(int n) throws IOException;
+// TODO Implement properly
+@RBuiltin(name = "substitute", kind = PRIMITIVE)
+public abstract class Substitute extends RBuiltinNode {
 
-    /**
-     * Return the underlying input stream.
-     */
-    public abstract InputStream getInputStream() throws IOException;
-
+    @Specialization
+    public String doSubstitute(String x) {
+        controlVisibility();
+        return x;
+    }
 }

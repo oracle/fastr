@@ -27,9 +27,13 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.util.*;
+import java.util.regex.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -70,6 +74,44 @@ public class FileFunctions {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+        }
+    }
+
+    @RBuiltin(name = "file.info", kind = INTERNAL)
+    public abstract static class FileInfo extends RBuiltinNode {
+        private static final String[] NAMES = new String[]{"size", "isdir", "mode", "mtime", "ctime", "atime", "uid", "gid", "uname", "grname"};
+        private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
+
+        @SuppressWarnings("unused")
+        @Specialization
+        public RList doFileInfo(RAbstractStringVector vec) {
+            // TODO fill out all fields, create data frame, handle multiple files
+            controlVisibility();
+            int vecLength = vec.getLength();
+            Object[] data = new Object[vecLength * NAMES.length];
+            String[] rowNames = new String[vecLength];
+            for (int i = 0; i < vecLength; i++) {
+                int j = i * NAMES.length;
+                for (int k = 0; k < NAMES.length; k++) {
+                    data[j + k] = RRuntime.INT_NA;
+                }
+                String path = vec.getDataAt(i);
+                File f = new File(Utils.tildeExpand(path));
+                if (f.exists()) {
+                    data[j] = (int) f.length();
+                    data[j + 1] = RRuntime.asLogical(f.isDirectory());
+                }
+                rowNames[i] = path;
+                // just 1 for now
+                break;
+            }
+            RList list = RDataFactory.createList(data, new int[]{vecLength, NAMES.length});
+            Object[] dimNamesData = new Object[]{RDataFactory.createStringVector(rowNames, vec.isComplete()), NAMES_VECTOR};
+            list.setDimNames(RDataFactory.createList(dimNamesData));
+            if (vecLength > 0) {
+                list.setNames(NAMES_VECTOR);
+            }
+            return list;
         }
     }
 
@@ -238,6 +280,188 @@ public class FileFunctions {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
             throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+        }
+    }
+
+    @RBuiltin(name = "list.files", kind = INTERNAL)
+    public abstract static class ListFiles extends RBuiltinNode {
+
+        // @formatter:off
+        @SuppressWarnings("unused")
+        @Specialization
+        public RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive,
+                        byte ignoreCase, byte includeDirs, byte noDotDot) {
+            // pattern in first element of vector, remaining elements are ignored (as per GnuR).
+            String patternString = patternVec.getLength() == 0 ? "" : patternVec.getDataAt(0);
+            final Pattern pattern = Pattern.compile(patternString);
+            DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
+                public boolean accept(Path file) throws IOException {
+                    return pattern.matcher(file.getFileName().toString()).matches();
+                }
+            };
+
+            // @formatter:on
+            controlVisibility();
+            // Curiously the result is not a vector of same length as the input,
+            // as typical for R, but a single vector, which means duplicates may occur
+            ArrayList<String> files = new ArrayList<>();
+            for (int i = 0; i < vec.getLength(); i++) {
+                String path = Utils.tildeExpand(vec.getDataAt(i));
+                File dir = new File(path);
+                if (!dir.exists()) {
+                    continue;
+                }
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath(), filter)) {
+                    for (Path entry : stream) {
+                        files.add(fullNames == RRuntime.LOGICAL_TRUE ? entry.toString() : entry.getFileName().toString());
+                    }
+                } catch (IOException ex) {
+                    System.console();
+                }
+            }
+            if (files.size() == 0) {
+                return RDataFactory.createStringVectorFromScalar("");
+            } else {
+                String[] data = new String[files.size()];
+                files.toArray(data);
+                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            }
+        }
+    }
+
+    // TODO make .Internal, when resolving .Platform in files.R is fixed
+    // TODO handle the general case, which is similar to paste
+    @RBuiltin(name = "file.path", kind = SUBSTITUTE)
+    public abstract static class FilePath extends RBuiltinNode {
+        private static final Object[] PARAMETER_NAMES = new Object[]{"...", "fsep"};
+
+        @Override
+        public Object[] getParameterNames() {
+            return PARAMETER_NAMES;
+        }
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{null, ConstantNode.create(File.separator)};
+        }
+
+        @Specialization(guards = "simpleArgs")
+        public RStringVector doFilePath(Object[] args, String fsep) {
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < args.length; i++) {
+                Object elem = args[i];
+                String elemAsString;
+                if (elem instanceof RStringVector) {
+                    elemAsString = ((RStringVector) elem).getDataAt(0);
+                } else if (elem instanceof Object[]) {
+                    Object[] elemArray = (Object[]) elem;
+                    for (int j = 0; j < elemArray.length - 1; j++) {
+                        if (i != 0) {
+                            sb.append(fsep);
+                        }
+                        sb.append(elemArray[j]);
+                    }
+                    elemAsString = (String) elemArray[elemArray.length - 1];
+                } else {
+                    elemAsString = (String) elem;
+                }
+                if (i != 0) {
+                    sb.append(fsep);
+                }
+                sb.append(elemAsString);
+            }
+            return RDataFactory.createStringVectorFromScalar(sb.toString());
+        }
+
+        public static boolean simpleArgs(Object[] args, String fsep) {
+            for (Object arg : args) {
+                if (arg instanceof RStringVector) {
+                    if (((RStringVector) arg).getLength() != 1) {
+                        return false;
+                    }
+                } else {
+                    if (arg instanceof String) {
+                        continue;
+                    } else if (arg instanceof Object[]) {
+                        if (!simpleArgs((Object[]) arg, fsep)) {
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+    }
+
+    private abstract static class XyzNameAdapter extends RBuiltinNode {
+        abstract static class PathFunction {
+            abstract String invoke(FileSystem fileSystem, String name);
+        }
+
+        protected RStringVector doXyzName(RAbstractStringVector vec, PathFunction fun) {
+            FileSystem fileSystem = FileSystems.getDefault();
+            boolean complete = RDataFactory.COMPLETE_VECTOR;
+            String[] data = new String[vec.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                String name = vec.getDataAt(i);
+                if (name == RRuntime.STRING_NA) {
+                    data[i] = name;
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                } else if (name.length() == 0) {
+                    data[i] = name;
+                } else {
+                    data[i] = fun.invoke(fileSystem, name);
+
+                }
+
+            }
+            return RDataFactory.createStringVector(data, complete);
+
+        }
+    }
+
+    @RBuiltin(name = "dirname", kind = INTERNAL)
+    public abstract static class DirName extends XyzNameAdapter {
+        private static class ParentPathFunction extends XyzNameAdapter.PathFunction {
+
+            @Override
+            String invoke(FileSystem fileSystem, String name) {
+                Path path = fileSystem.getPath(Utils.tildeExpand(name));
+                Path parent = path.getParent();
+                return parent != null ? parent.toString() : name;
+            }
+
+        }
+
+        private static final ParentPathFunction parentPathFunction = new ParentPathFunction();
+
+        @Specialization
+        public RStringVector doDirName(RAbstractStringVector vec) {
+            return doXyzName(vec, parentPathFunction);
+        }
+    }
+
+    @RBuiltin(name = "basename", kind = INTERNAL)
+    public abstract static class BaseName extends XyzNameAdapter {
+        private static class BasePathFunction extends XyzNameAdapter.PathFunction {
+
+            @Override
+            String invoke(FileSystem fileSystem, String name) {
+                Path path = fileSystem.getPath(name);
+                Path parent = path.getFileName();
+                return parent != null ? parent.toString() : name;
+            }
+
+        }
+
+        private static final BasePathFunction basePathFunction = new BasePathFunction();
+
+        @Specialization
+        public RStringVector doDirName(RAbstractStringVector vec) {
+            return doXyzName(vec, basePathFunction);
         }
     }
 }

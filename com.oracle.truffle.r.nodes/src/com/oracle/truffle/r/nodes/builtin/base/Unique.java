@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,29 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-/**
- * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
- * efficient.
- */
-@RBuiltin(name = "paste0", kind = INTERNAL)
-public abstract class Paste0 extends RBuiltinNode {
+@RBuiltin(name = "unique", kind = INTERNAL)
+// TODO Implement general case
+public abstract class Unique extends RBuiltinNode {
 
-    @Child Paste pasteNode;
-
-    private Object paste(VirtualFrame frame, RList values, Object collapse) {
-        if (pasteNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin()));
-        }
-        return pasteNode.executeList(frame, values, "", collapse);
-    }
-
+    @SuppressWarnings("unused")
     @Specialization
-    public Object paste0(VirtualFrame frame, RList values, Object collapse) {
-        controlVisibility();
-        return paste(frame, values, collapse);
+    public RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax) {
+        ArrayList<String> dataList = new ArrayList<>(vec.getLength());
+        for (int i = 0; i < vec.getLength(); i++) {
+            String s = vec.getDataAt(i);
+            if (!dataList.contains(s)) {
+                dataList.add(s);
+            }
+        }
+        String[] data = new String[dataList.size()];
+        dataList.toArray(data);
+        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

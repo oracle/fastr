@@ -305,7 +305,14 @@ public final class RDataFactory {
                 result[i] = (double) data[i];
             }
             return RDataFactory.createDoubleVector(result, completeVector);
+        } else if (data[0] instanceof Byte) {
+            byte[] result = new byte[data.length];
+            for (int i = 0; i < data.length; ++i) {
+                result[i] = (byte) data[i];
+            }
+            return RDataFactory.createLogicalVector(result, completeVector);
         }
+        Utils.fail("unimplemented object vector type: " + data[0].getClass().getSimpleName());
         return null;
     }
 

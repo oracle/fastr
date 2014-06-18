@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,33 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import java.io.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
- * efficient.
- */
-@RBuiltin(name = "paste0", kind = INTERNAL)
-public abstract class Paste0 extends RBuiltinNode {
+public class SerializeFunctions {
 
-    @Child Paste pasteNode;
+    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL)
+    public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
+        @Specialization
+        public Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+            controlVisibility();
+            try {
+                Object result = RSerialize.unserialize(conn);
+                return result;
+            } catch (IOException ex) {
+                throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+            }
 
-    private Object paste(VirtualFrame frame, RList values, Object collapse) {
-        if (pasteNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin()));
         }
-        return pasteNode.executeList(frame, values, "", collapse);
-    }
 
-    @Specialization
-    public Object paste0(VirtualFrame frame, RList values, Object collapse) {
-        controlVisibility();
-        return paste(frame, values, collapse);
+        @Specialization
+        public Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
+            // TODO figure out what this really means?
+            return doUnserializeFromConn(conn, RNull.instance);
+        }
     }
-
 }

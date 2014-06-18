@@ -106,6 +106,7 @@ public abstract class REnvironment implements RAttributable {
     private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
     private static Autoload autoloadEnv;
+    private static REnvironment namespaceRegistry;
 
     /**
      * The environments returned by the R {@code search} function.
@@ -218,6 +219,7 @@ public abstract class REnvironment implements RAttributable {
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
+        namespaceRegistry = new NewEnv(null);
         baseEnv = new Base(baseFrame);
 
         // autoload always next, has no R state
@@ -314,15 +316,23 @@ public abstract class REnvironment implements RAttributable {
         return 0;
     }
 
+    public static REnvironment getNamespaceRegistry() {
+        return namespaceRegistry;
+    }
+
+    public static void registerNamespace(String name, REnvironment env) {
+        namespaceRegistry.safePut(name, env);
+    }
+
     /**
-     * Get the registered {@link Namespace} environment {@code name}, or {@code null} if not found.
-     * TODO this only searches the search path; it seems namespaces can also be registered without
-     * attaching first.
+     * Get the registered {@code namespace} environment {@code name}, or {@code null} if not found.
+     * N.B. The package loading code in {@code namespace.R} uses a {code new.env} environment for a
+     * namespace.
      */
-    public static Namespace getRegisteredNamespace(String name) {
+    public static REnvironment getRegisteredNamespace(String name) {
         Package pkgEnv = (Package) lookupOnSearchPath("package:" + name);
         if (pkgEnv == null) {
-            return null;
+            return (REnvironment) namespaceRegistry.get(name);
         } else {
             return pkgEnv.getNamespace();
         }
@@ -392,6 +402,27 @@ public abstract class REnvironment implements RAttributable {
             ((REnvMapFrameAccess) envToRemove.frameAccess).detach();
         }
         return envToRemove;
+    }
+
+    private static final String NAMESPACE_KEY = ".__NAMESPACE__.";
+
+    /**
+     * GnuR creates {@code Namespace} environments in {@code namespace.R} using {@code new.env} and
+     * identifies them with the special element {@code .__NAMESPACE__.} which points to another
+     * environment with a {@code spec} element.
+     */
+    public boolean isNamespaceEnv() {
+        if (this == baseEnv) {
+            return true;
+        } else {
+            Object value = frameAccess.get(NAMESPACE_KEY);
+            if (value != null && value instanceof REnvironment) {
+                REnvironment info = (REnvironment) value;
+                Object spec = info.frameAccess.get("spec");
+                return (spec != null) && spec instanceof RStringVector && ((RStringVector) spec).getLength() > 0;
+            }
+            return false;
+        }
     }
 
     @SlowPath
@@ -596,6 +627,7 @@ public abstract class REnvironment implements RAttributable {
     private static class Namespace extends REnvironment {
         Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
+            namespaceRegistry.safePut(name, this);
         }
 
         @Override

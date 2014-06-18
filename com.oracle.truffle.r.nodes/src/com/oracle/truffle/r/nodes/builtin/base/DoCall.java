@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,30 +26,34 @@ import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "path.expand", kind = INTERNAL)
-public abstract class PathExpand extends RBuiltinNode {
+// TODO Implement properly, this is a simple implementation that works when the function is a builtin,
+// the environment doesn't matter, and named argument matching isn't required
+@RBuiltin(name = "do.call", kind = INTERNAL)
+public abstract class DoCall extends RBuiltinNode {
+    @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
-    @Specialization
-    public Object doPathExpand(RAbstractStringVector vec) {
-        controlVisibility();
-        String[] results = new String[vec.getLength()];
-        for (int i = 0; i < results.length; i++) {
-            String path = Utils.tildeExpand(vec.getDataAt(i));
-            results[i] = path;
+    @Specialization(guards = "lengthOne")
+    public Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
+        RFunction func = RContext.getLookup().lookup(fname.getDataAt(0));
+        if (func == null) {
+            throw RError.getGenericError(getEncapsulatingSourceSection(), "could not find function " + fname);
         }
-        return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
+        Object[] args = new Object[argsAsList.getLength()];
+        for (int i = 0; i < args.length; i++) {
+            args[i] = argsAsList.getDataAt(i);
+        }
+        Object[] callArgs = RArguments.create(func, args);
+        return funCall.call(frame, func.getTarget(), callArgs);
     }
 
-    @Specialization(order = 100)
-    public Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
+    public static boolean lengthOne(RAbstractStringVector vec) {
+        return vec.getLength() == 1;
     }
-
 }

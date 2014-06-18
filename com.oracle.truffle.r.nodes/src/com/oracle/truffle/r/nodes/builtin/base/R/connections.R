@@ -36,3 +36,7 @@ readLines <- function(con = stdin(), n = -1L, ok = TRUE, warn = TRUE,
     .Internal(readLines(con, n, ok, warn, encoding))
 }
 
+gzfile <- function(description, open = "",
+        encoding = getOption("encoding"), compression = 6)
+    .Internal(gzfile(description, open, encoding, compression))
+

@@ -25,8 +25,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "inherits", kind = SUBSTITUTE)
-// TODO INTERNAL
+@RBuiltin(name = "inherits", kind = INTERNAL)
 public abstract class Inherits extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "what", "which"};

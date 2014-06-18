@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "apply", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+// TODO Rewrite to accept any vector type but ideally not by simply repeating the code
 public abstract class Apply extends RBuiltinNode {
 
     @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
@@ -90,9 +91,33 @@ public abstract class Apply extends RBuiltinNode {
         return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @Specialization(order = 3, guards = "rowMarginInt")
+    @SuppressWarnings("unused")
+    public Object applyRows(VirtualFrame frame, RLogicalVector x, int margin, RFunction fun, Object args) {
+        controlVisibility();
+        int[] xdim = x.getDimensions();
+        final int rows = xdim == null ? x.getLength() : xdim[0];
+        final int cols = xdim == null ? 1 : xdim[1];
+        Object[] result = new Object[rows];
+        for (int row = 0; row < rows; ++row) {
+            byte[] rowData = new byte[cols];
+            for (int i = 0; i < cols; ++i) {
+                rowData[i] = x.getDataAt(i * rows + row);
+            }
+            RLogicalVector rowVec = RDataFactory.createLogicalVector(rowData, RDataFactory.COMPLETE_VECTOR);
+            result[row] = callFunction(frame, fun, RDataFactory.createLogicalVector(rowData, RDataFactory.COMPLETE_VECTOR));
+        }
+        return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
+    }
+
     @SuppressWarnings("unused")
     protected static boolean rowMargin(RAbstractVector x, double margin, RFunction fun, Object args) {
         return margin == 1.0;
+    }
+
+    @SuppressWarnings("unused")
+    protected static boolean rowMarginInt(RAbstractVector x, int margin, RFunction fun, Object args) {
+        return margin == 1;
     }
 
     @SuppressWarnings("unused")

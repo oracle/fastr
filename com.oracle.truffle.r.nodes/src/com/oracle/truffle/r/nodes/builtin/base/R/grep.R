@@ -120,92 +120,92 @@ agrepl <-
                                         useBytes, fixed))
 }
 
-#.amatch_bounds <-
-#                function(x = 0.1)
-#{
-#        ## Expand max match distance argument for agrep() et al into bounds
-#        ## for the TRE regaparams struct.
-#
-#        ## Note that TRE allows for possibly different (integer) costs for
-#        ## insertions, deletions and substitions, and allows for specifying
-#        ## separate bounds for these numbers as well as the total number of
-#        ## "errors" (transformations) and the total cost.
-#        ##
-#        ## When using unit costs (and older versions of agrep() did not
-#        ## allow otherwise), the total number of errors is the same as the
-#        ## total cost, and bounds on the total number of errors imply the
-#        ## same bounds for the individual transformation counts.  This no
-#        ## longer holds when using possibly different costs.
-#        ##
-#        ## See ? agrep for details on handling the match distance argument.
-#        ##
-#        ## Older versions of agrep() expanded fractions (of the pattern
-#        ## length) in R code: but as the C code determines whether matching
-#        ## used bytes or characters, only the C code can determine the
-#        ## pattern length and hence expand fractions.
-#        ##
-#        ## Unspecified bounds are taken as NA_real_, and set to INT_MAX by
-#        ## the C code.
-#
-#        if(!is.list(x)) {
-#                ## Sanity checks.
-#                if(!is.numeric(x) || (x < 0))
-#                        stop("match distance components must be non-negative")
-#                bounds <- c(as.double(x), rep.int(NA_real_, 4L))
-#        } else {
-#                table <-
-#                                c("cost", "insertions", "deletions", "substitutions", "all")
-#                ## Partial matching.
-#                pos <- pmatch(names(x), table)
-#                if(anyNA(pos)) {
-#                        warning("unknown match distance components ignored")
-#                        x <- x[!is.na(pos)]
-#                }
-#                names(x) <- table[pos]
-#                ## Sanity checks.
-#                x <- unlist(x)
-#                if(!all(is.numeric(x)) || any(x < 0))
-#                        stop("match distance components must be non-negative")
-#                ## Defaults.
-#                if(!is.na(x["cost"])) {
-#                        bounds <- rep.int(NA_real_, 5L)
-#                } else {
-#                        ## If 'cost' is missing: if 'all' is missing it is set to
-#                        ## 0.1, and the other transformation number bounds default
-#                        ## to 'all'.
-#                        if(is.na(x["all"]))
-#                                x["all"] <- 0.1
-#                        bounds <- c(NA_real_, rep.int(x["all"], 4L))
-#                }
-#                names(bounds) <- table
-#                bounds[names(x)] <- x
-#        }
-#
-#        bounds
-#}
-#
-#.amatch_costs <-
-#                function(x = NULL)
-#{
-#        costs <- c(insertions = 1, deletions = 1, substitutions = 1)
-#        if(!is.null(x)) {
-#                x <- as.list(x)
-#                ## Partial matching.
-#                pos <- pmatch(names(x), names(costs))
-#                if(anyNA(pos)) {
-#                        warning("unknown cost components ignored")
-#                        x <- x[!is.na(pos)]
-#                }
-#                ## Sanity checks.
-#                x <- unlist(x)
-#                if(!all(is.numeric(x)) || any(x < 0))
-#                        stop("cost components must be non-negative")
-#                costs[pos] <- x
-#        }
-#
-#        costs
-#}
-#
+.amatch_bounds <-
+                function(x = 0.1)
+{
+        ## Expand max match distance argument for agrep() et al into bounds
+        ## for the TRE regaparams struct.
+
+        ## Note that TRE allows for possibly different (integer) costs for
+        ## insertions, deletions and substitions, and allows for specifying
+        ## separate bounds for these numbers as well as the total number of
+        ## "errors" (transformations) and the total cost.
+        ##
+        ## When using unit costs (and older versions of agrep() did not
+        ## allow otherwise), the total number of errors is the same as the
+        ## total cost, and bounds on the total number of errors imply the
+        ## same bounds for the individual transformation counts.  This no
+        ## longer holds when using possibly different costs.
+        ##
+        ## See ? agrep for details on handling the match distance argument.
+        ##
+        ## Older versions of agrep() expanded fractions (of the pattern
+        ## length) in R code: but as the C code determines whether matching
+        ## used bytes or characters, only the C code can determine the
+        ## pattern length and hence expand fractions.
+        ##
+        ## Unspecified bounds are taken as NA_real_, and set to INT_MAX by
+        ## the C code.
+
+        if(!is.list(x)) {
+                ## Sanity checks.
+                if(!is.numeric(x) || (x < 0))
+                        stop("match distance components must be non-negative")
+                bounds <- c(as.double(x), rep.int(NA_real_, 4L))
+        } else {
+                table <-
+                                c("cost", "insertions", "deletions", "substitutions", "all")
+                ## Partial matching.
+                pos <- pmatch(names(x), table)
+                if(anyNA(pos)) {
+                        warning("unknown match distance components ignored")
+                        x <- x[!is.na(pos)]
+                }
+                names(x) <- table[pos]
+                ## Sanity checks.
+                x <- unlist(x)
+                if(!all(is.numeric(x)) || any(x < 0))
+                        stop("match distance components must be non-negative")
+                ## Defaults.
+                if(!is.na(x["cost"])) {
+                        bounds <- rep.int(NA_real_, 5L)
+                } else {
+                        ## If 'cost' is missing: if 'all' is missing it is set to
+                        ## 0.1, and the other transformation number bounds default
+                        ## to 'all'.
+                        if(is.na(x["all"]))
+                                x["all"] <- 0.1
+                        bounds <- c(NA_real_, rep.int(x["all"], 4L))
+                }
+                names(bounds) <- table
+                bounds[names(x)] <- x
+        }
+
+        bounds
+}
+
+.amatch_costs <-
+                function(x = NULL)
+{
+        costs <- c(insertions = 1, deletions = 1, substitutions = 1)
+        if(!is.null(x)) {
+                x <- as.list(x)
+                ## Partial matching.
+                pos <- pmatch(names(x), names(costs))
+                if(anyNA(pos)) {
+                        warning("unknown cost components ignored")
+                        x <- x[!is.na(pos)]
+                }
+                ## Sanity checks.
+                x <- unlist(x)
+                if(!all(is.numeric(x)) || any(x < 0))
+                        stop("cost components must be non-negative")
+                costs[pos] <- x
+        }
+
+        costs
+}
+
 #regmatches <-
 #                function(x, m, invert = FALSE)
 #{

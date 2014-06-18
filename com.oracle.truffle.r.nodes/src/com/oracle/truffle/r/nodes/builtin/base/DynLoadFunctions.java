@@ -73,7 +73,8 @@ public class DynLoadFunctions {
 
     }
 
-    @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL)
+    // TODO remove .dynLibs when missing functionality (local) is available
+    @RBuiltin(name = "getLoadedDLLs", aliases = {".dynlibs"}, kind = INTERNAL)
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
         @Specialization
         public RList doGetLoadedDLLs() {

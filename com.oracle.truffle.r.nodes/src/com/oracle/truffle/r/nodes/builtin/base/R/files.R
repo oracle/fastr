@@ -90,7 +90,7 @@ list.dirs <- function(path = ".", full.names = TRUE, recursive = TRUE)
     .Internal(list.dirs(path, full.names, recursive))
 
 
-# No $ support
+# .Platform not found?
 #file.path <-
 #function(..., fsep=.Platform$file.sep)
 #    .Internal(file.path(list(...), fsep))
@@ -153,17 +153,16 @@ file.link <- function(from, to) {
     .Internal(file.link(from, to))
 }
 
-# No $ support
-#file.info <- function(...)
-#{
-#    res <- .Internal(file.info(fn <- c(...)))
+file.info <- function(...)
+{
+    res <- .Internal(file.info(fn <- c(...)))
 #    res$mtime <- .POSIXct(res$mtime)
 #    res$ctime <- .POSIXct(res$ctime)
 #    res$atime <- .POSIXct(res$atime)
 #    class(res) <- "data.frame"
 #    attr(res, "row.names") <- fn # not row.names<- as that does a length check
-#    res
-#}
+    res
+}
 
 file.access <- function(names, mode = 0)
 {

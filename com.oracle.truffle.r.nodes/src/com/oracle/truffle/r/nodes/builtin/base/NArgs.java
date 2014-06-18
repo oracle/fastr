@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,28 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
-
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-/**
- * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
- * efficient.
- */
-@RBuiltin(name = "paste0", kind = INTERNAL)
-public abstract class Paste0 extends RBuiltinNode {
-
-    @Child Paste pasteNode;
-
-    private Object paste(VirtualFrame frame, RList values, Object collapse) {
-        if (pasteNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin()));
-        }
-        return pasteNode.executeList(frame, values, "", collapse);
-    }
-
+// TODO Figure out how to distinguish f(,,a) from f(a) - RMissing is used in both contexts
+@RBuiltin(name = "nargs", kind = PRIMITIVE)
+public abstract class NArgs extends RBuiltinNode {
     @Specialization
-    public Object paste0(VirtualFrame frame, RList values, Object collapse) {
-        controlVisibility();
-        return paste(frame, values, collapse);
+    public int doNArgs(VirtualFrame frame) {
+        int result = 0;
+        if (RArguments.getFunction(frame) == null) {
+            return RRuntime.INT_NA;
+        }
+        int l = RArguments.getArgumentsLength(frame);
+        for (int i = 0; i < l; i++) {
+            Object arg = RArguments.getArgument(frame, i);
+            if (!(arg instanceof RMissing)) {
+                result++;
+            }
+        }
+        return result;
     }
-
 }
