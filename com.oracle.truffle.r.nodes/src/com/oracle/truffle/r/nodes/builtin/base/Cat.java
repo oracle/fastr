@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -93,16 +95,24 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             if (args[i] instanceof Object[]) {
                 // in case cat is called with a ... parameter, it is passed as an array within the
                 // args array
-                cat(frame, (Object[]) args[i], file, sep, fill, labels, append);
+                Object[] wrappedArgs = (Object[]) args[i];
+                for (int j = 0; j < wrappedArgs.length; ++j) {
+                    catIntl(toString.executeString(frame, wrappedArgs[j]));
+                    catSep(sep, wrappedArgs, j);
+                }
             } else {
                 catIntl(toString.executeString(frame, args[i]));
             }
-            if (i < args.length - 1 || sep.contains("\n")) {
-                catIntl(sep);
-            }
+            catSep(sep, args, i);
         }
         controlVisibility();
         return RNull.instance;
+    }
+
+    private static void catSep(String sep, Object[] os, int j) {
+        if (j < os.length - 1 || sep.contains("\n")) {
+            catIntl(sep);
+        }
     }
 
     @SlowPath
