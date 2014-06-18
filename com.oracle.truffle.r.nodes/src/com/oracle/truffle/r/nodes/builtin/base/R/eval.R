@@ -37,9 +37,10 @@ eval.parent <- function(expr, n = 1) {
 #    is.pairlist(envir)) parent.frame() else baseenv())
 #      .Internal(eval(substitute(expr), envir, enclos))
 
-# currently implemented as a direct builtin
+# slightly customized to avoid lack of promises
 #new.env <- function (hash = TRUE, parent = parent.frame(), size = 29L)
-#    .Internal(new.env(hash, parent, size))
+new.env <- function (hash = TRUE, parent = NULL, size = 29L)
+    .Internal(new.env(hash, parent, size))
 
 parent.env <- function(env)
     .Internal(parent.env(env))
