@@ -161,6 +161,15 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    /**
+     * This is tricky because the {@link Frame} "f" associated with {@code envir} has been
+     * materialized so we can't evaluate in it directly. Instead we create a new
+     * {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then update "f"
+     * on return.
+     *
+     * @param function the actual function that invoked the "eval", e.g. {@code eval}, {@code evalq}
+     *            , {@code local}.
+     */
     public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();

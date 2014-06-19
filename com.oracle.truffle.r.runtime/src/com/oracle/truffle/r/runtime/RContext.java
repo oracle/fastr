@@ -154,7 +154,7 @@ public final class RContext extends ExecutionContext {
         Object parseAndEvalTest(String rscript, boolean printResult);
 
         /**
-         * Support for the {@code eval} builtin using an {@link RExpression}.
+         * Evaluate an {@link RExpression} in a given environment {@code envir}.
          *
          * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
          *            {@code evalq} being invoked.
@@ -162,13 +162,8 @@ public final class RContext extends ExecutionContext {
         Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
 
         /**
-         * Support for the {@code eval} builtin. This is tricky because the {@link Frame} "f"
-         * associated with {@code envir} has been materialized so we can't evaluate in it directly.
-         * Instead we create a new {@link VirtualFrame}, that is a logical clone of "f", evaluate in
-         * that, and then update "f" on return.
-         *
-         * @param function the actual function that invoked the "eval", e.g. {@code eval},
-         *            {@code evalq} , {@code local}.
+         * Similar to {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} but for a
+         * single langugge element.
          */
         Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
 
