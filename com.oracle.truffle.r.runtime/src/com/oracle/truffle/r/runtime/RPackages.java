@@ -22,13 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.truffle.api.frame.*;
-
 /**
- * Support for loading of R packages.
+ * Support for recording the set of default R packages.
  */
 public class RPackages {
     public static class RPackage {

@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 
 public final class RBuiltinBuilder {
 
@@ -34,9 +35,14 @@ public final class RBuiltinBuilder {
         this.pack = pack;
     }
 
-    public RBuiltinBuilder names(String... names) {
+    public RBuiltinBuilder setRBuiltin(Class<?> clazz) {
+        RBuiltin builtin = clazz.getAnnotation(RBuiltin.class);
+        assert builtin != null;
+        assert builtin.aliases().length == 0; // no aliases for these classes
+        String[] names = new String[]{builtin.name()};
         pack.updateNames(factory, factory.getBuiltinNames(), names);
         factory.setBuiltinNames(names);
+        factory.setRBuiltin(builtin);
         return this;
     }
 

@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "ceiling", kind = PRIMITIVE)

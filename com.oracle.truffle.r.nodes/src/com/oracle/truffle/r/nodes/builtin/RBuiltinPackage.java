@@ -30,9 +30,9 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 
 /**
  * Denotes an R package that is built-in to the implementation. It consists of two parts:
@@ -169,7 +169,7 @@ public abstract class RBuiltinPackage {
             }
             lastParameterKind = builtin.lastParameterKind();
         }
-        return loadImpl(clazz, names, lastParameterKind);
+        return loadImpl(clazz, names, builtin, lastParameterKind);
     }
 
     void updateNames(RBuiltinFactory builtin, String[] oldNames, String[] newNames) {
@@ -187,7 +187,7 @@ public abstract class RBuiltinPackage {
     }
 
     @SuppressWarnings("unchecked")
-    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, LastParameterKind lastParameterKind) {
+    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, RBuiltin builtin, LastParameterKind lastParameterKind) {
         if (!RBuiltinNode.class.isAssignableFrom(clazz)) {
             throw new RuntimeException(clazz.getName() + " is must be assignable to " + RBuiltinNode.class);
         }
@@ -215,7 +215,7 @@ public abstract class RBuiltinPackage {
             }
             nodeFactory = new ReflectiveNodeFactory(clazz);
         }
-        RBuiltinFactory factory = new RBuiltinFactory(aliases, lastParameterKind, nodeFactory, new Object[0], env);
+        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, lastParameterKind, nodeFactory, new Object[0], env);
         for (String name : factory.getBuiltinNames()) {
             if (builtins.containsKey(name)) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");
