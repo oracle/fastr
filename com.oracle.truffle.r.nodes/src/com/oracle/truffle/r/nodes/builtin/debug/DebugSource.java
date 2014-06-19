@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "debug.source", kind = PRIMITIVE)

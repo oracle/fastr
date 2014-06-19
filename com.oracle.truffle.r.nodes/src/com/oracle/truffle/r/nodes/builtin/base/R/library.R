@@ -76,7 +76,7 @@ library <-
     }
     ## warn if installed under a later version of R
 # Suppress check to workaround numeric_version generic comparison
-#	if(R_version_built_under > current)
+#    if(R_version_built_under > current)
 #      warning(gettextf("package %s was built under R version %s",
 #              sQuote(pkgname), as.character(built$R)),
 #          call. = FALSE, domain = NA)

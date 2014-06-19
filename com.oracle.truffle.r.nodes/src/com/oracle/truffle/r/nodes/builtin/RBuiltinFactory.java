@@ -23,20 +23,22 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 
 public class RBuiltinFactory {
 
     private final NodeFactory<RBuiltinNode> factory;
     private String[] builtinNames;
+    private RBuiltin builtin;
     private LastParameterKind lastParameterKind;
     private Object[] constantArguments;
     private final REnvironment env;
 
-    public RBuiltinFactory(String[] names, LastParameterKind lastParameterKind, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, REnvironment env) {
-        this.lastParameterKind = lastParameterKind;
+    public RBuiltinFactory(String[] names, RBuiltin builtin, LastParameterKind lastParameterKind, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, REnvironment env) {
         this.builtinNames = names;
+        this.builtin = builtin;
+        this.lastParameterKind = lastParameterKind;
         this.factory = factory;
         this.constantArguments = constantArguments;
         this.env = env;
@@ -60,6 +62,15 @@ public class RBuiltinFactory {
 
     public LastParameterKind getLastParameterKind() {
         return lastParameterKind;
+    }
+
+    void setRBuiltin(RBuiltin builtin) {
+        assert this.builtin == null;
+        this.builtin = builtin;
+    }
+
+    public RBuiltin getRBuiltin() {
+        return builtin;
     }
 
     public String[] getBuiltinNames() {

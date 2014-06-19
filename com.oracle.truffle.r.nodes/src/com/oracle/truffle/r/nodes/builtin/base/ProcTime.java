@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.lang.management.*;
 
@@ -43,7 +43,7 @@ public abstract class ProcTime extends RBuiltinNode {
     public RDoubleVector procTime() {
         controlVisibility();
         double[] data = new double[5];
-        long nowInNanos = REngine.elapsedTimeInNanos();
+        long nowInNanos = RContext.getEngine().elapsedTimeInNanos();
         if (bean == null) {
             bean = ManagementFactory.getThreadMXBean();
         }
@@ -52,7 +52,7 @@ public abstract class ProcTime extends RBuiltinNode {
         data[0] = asDoubleSecs(userTimeInNanos);
         data[1] = asDoubleSecs(sysTimeInNanos);
         data[2] = asDoubleSecs(nowInNanos);
-        long[] childTimes = REngine.childTimesInNanos();
+        long[] childTimes = RContext.getEngine().childTimesInNanos();
         boolean na = childTimes[0] < 0 || childTimes[1] < 0;
         boolean complete = na ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR;
         data[3] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[0]);

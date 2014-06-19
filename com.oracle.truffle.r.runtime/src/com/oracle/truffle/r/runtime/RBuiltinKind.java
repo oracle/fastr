@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,21 @@
  */
 package com.oracle.truffle.r.runtime;
 
-public interface RBuiltinLookupProvider {
-    RBuiltinLookup getRBuiltinLookup();
+/**
+ * The {@link RBuiltin} "kinds".
+ */
+public enum RBuiltinKind {
+    /**
+     * A "primitive" function built into the implementation and called directly by name.
+     */
+    PRIMITIVE,
+    /**
+     * A function built into the implement and called by {@code .Internal(name(args)}.
+     */
+    INTERNAL,
+    /**
+     * A function that, in GnuR, is defined in R (possibly calling an {@code .Internal}), but is
+     * built into the implementation (and called directly) in FastR.
+     */
+    SUBSTITUTE,
 }

@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -71,9 +71,9 @@ public class EvalFunctions {
                 try {
                     Object result;
                     if (expr instanceof RExpression) {
-                        result = REngine.eval(getFunction(), (RExpression) expr, envir, REnvironment.emptyEnv());
+                        result = RContext.getEngine().eval(getFunction(), (RExpression) expr, envir, REnvironment.emptyEnv());
                     } else {
-                        result = REngine.eval(getFunction(), (RLanguage) expr, envir, REnvironment.emptyEnv());
+                        result = RContext.getEngine().eval(getFunction(), (RLanguage) expr, envir, REnvironment.emptyEnv());
                     }
                     return result;
                 } catch (PutException x) {
@@ -88,7 +88,7 @@ public class EvalFunctions {
 
         protected RFunction getFunction() {
             if (function == null) {
-                function = RContext.getLookup().lookup(getRBuiltin().name());
+                function = RContext.getEngine().lookupBuiltin(getRBuiltin().name());
             }
             return function;
         }
@@ -114,7 +114,7 @@ public class EvalFunctions {
              * caller, so we can evaluate the promise using frame.
              */
             controlVisibility();
-            Object exprVal = REngine.evalPromise(expr, frame);
+            Object exprVal = RContext.getEngine().evalPromise(expr, frame);
             return doEvalBody(exprVal, envir, enclos);
         }
 

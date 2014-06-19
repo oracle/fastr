@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -102,7 +102,7 @@ public abstract class Exists extends RBuiltinNode {
         if (!name.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastName = name;
-            lastLookup = RContext.getLookup().lookup(name) != null;
+            lastLookup = RContext.getEngine().lookupBuiltin(name) != null;
         }
         // FIXME deal with changes in packages due to deleting symbols
         return lastLookup;

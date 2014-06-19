@@ -28,7 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 
 import jline.console.*;
@@ -145,7 +145,7 @@ public class RCommand {
             String content = new String(bytes);
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.parseAndEval(content, frame, REnvironment.globalEnv(), true);
+            REngine.getInstance().parseAndEval(content, frame, REnvironment.globalEnv(), true);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
         }
@@ -168,7 +168,7 @@ public class RCommand {
                     continue;
                 }
 
-                REngine.parseAndEval(line, globalFrame, REnvironment.globalEnv(), true);
+                REngine.getInstance().parseAndEval(line, globalFrame, REnvironment.globalEnv(), true);
             }
         } catch (UserInterruptException e) {
             // interrupted
