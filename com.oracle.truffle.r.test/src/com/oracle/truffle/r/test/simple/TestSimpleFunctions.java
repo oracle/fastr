@@ -228,4 +228,14 @@ public class TestSimpleFunctions extends TestBase {
         assertEvalError("{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
     }
 
+    @Test
+    public void testInvokeIndirectly() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; h <- function(v) if (v==1) f else g ; h(1)(1) }");
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; h <- function(v) if (v==1) f else g ; h(2)(1) }");
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; v <- 1 ; (if (v==1) f else g)(1) }");
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; v <- 2 ; (if (v==1) f else g)(1) }");
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[1]](1) }");
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[2]](1) }");
+    }
+
 }

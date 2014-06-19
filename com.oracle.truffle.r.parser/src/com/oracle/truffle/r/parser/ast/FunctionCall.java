@@ -57,6 +57,11 @@ public class FunctionCall extends Call {
         return (FunctionCall) lhs;
     }
 
+    public ASTNode getLhsNode() {
+        assert lhs instanceof ASTNode;
+        return (ASTNode) lhs;
+    }
+
     public boolean isSuper() {
         return isSuper;
     }

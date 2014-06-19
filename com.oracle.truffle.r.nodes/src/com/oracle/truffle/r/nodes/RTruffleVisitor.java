@@ -135,7 +135,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             }
             return RCallNode.createCall(callSource, ReadVariableNode.create(callName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
         } else {
-            RNode lhs = call.getFunctionCall().accept(this);
+            RNode lhs = call.getLhsNode().accept(this);
             return RCallNode.createCall(callSource, lhs, aCallArgNode);
         }
     }
