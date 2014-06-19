@@ -51,10 +51,10 @@ public abstract class FFTFunctions {
     @RBuiltin(name = "fft", kind = RBuiltinKind.SUBSTITUTE)
     public abstract static class FFT extends FFTAdapter {
         @Specialization
+        @SuppressWarnings("unused")
         public Object doFFT(RAbstractVector zIn, byte inverse) {
-            @SuppressWarnings("unused")
             RDerivedRFFI ffi = RFFIFactory.getRFFI().getRDerivedRFFI();
-// ffi.fft_work(a, b, nseg, n, nspn, isn, work, iwork)
+            // ffi.fft_work(a, b, nseg, n, nspn, isn, work, iwork)
             return RNull.instance;
         }
     }
