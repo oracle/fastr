@@ -448,7 +448,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
        // @formatter:off
        void fft_factor(@In int[] n, int[] pmaxf, int[] pmaxp);
 
-       int fft_work(double[] a, double[] b, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
+       int fft_work(double[] a, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
    }
 
    private static class FFTProvider {
@@ -487,12 +487,12 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
        static int[] isn = new int[1];
    }
 
-   public int fft_work(double[] a, double[] b, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
+   public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
        RefScalars_fft_work.n[0] = n;
        RefScalars_fft_work.nseg[0] = nseg;
        RefScalars_fft_work.nspn[0] = nspn;
        RefScalars_fft_work.isn[0] = isn;
-       return fft().fft_work(a, b, RefScalars_fft_work.nseg, RefScalars_fft_work.n, RefScalars_fft_work.nspn, RefScalars_fft_work.isn, work, iwork);
+       return fft().fft_work(a, RefScalars_fft_work.nseg, RefScalars_fft_work.n, RefScalars_fft_work.nspn, RefScalars_fft_work.isn, work, iwork);
    }
 
 

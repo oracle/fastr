@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.*;
 import java.util.*;
 
 /**

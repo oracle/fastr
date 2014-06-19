@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -19,18 +18,6 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#
 
-all:
-ifneq ($(shell uname), Darwin)
-	gcc -fPIC -shared -o ./lib/linux/libRDerived.so ./src/fft.c 
-else
-	gcc -fPIC -dynamiclib -o ./lib/darwin/libRDerived.dylib ./src/fft.c 
-endif
-
-clean:
-ifneq ($(shell uname), Darwin)
-	rm -f ./lib/linux/libRDerived.*
-else
-	rm -f ./lib/darwin/libRDerived.*
-endif
+# object defined in the stats package describing native fft function
+C_fft <- list(name="fft")

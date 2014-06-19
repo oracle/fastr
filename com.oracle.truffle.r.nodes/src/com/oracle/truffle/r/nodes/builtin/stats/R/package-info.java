@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
-
 /**
- * Collection of statically typed methods (from Linpack and elsewhere) that are built in to a GnuR
- * implementation and factored out into a separate library in FastR.
+ * This "package" contains R sources that correspond to (some of) the R functions
+ * in the "stats" package. They are loaded using the {@link java.lang.Class#getResource}
+ * mechanism on system startup.
  */
-public interface RDerivedRFFI {
-    // Linpack
-    void dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
-
-    void dqrcf(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
-
-    // fft
-    // Checkstyle: stop method name
-    void fft_factor(int n, int[] pmaxf, int[] pmaxp);
-
-    int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
-}
+package com.oracle.truffle.r.nodes.builtin.stats.R;

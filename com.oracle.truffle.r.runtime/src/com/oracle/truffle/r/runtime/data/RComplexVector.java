@@ -84,6 +84,14 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return copy;
     }
 
+    /**
+     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
+     * this method rather than {@link #getDataCopy()}.
+     */
+    public double[] getDataWithoutCopying() {
+        return data;
+    }
+
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }
