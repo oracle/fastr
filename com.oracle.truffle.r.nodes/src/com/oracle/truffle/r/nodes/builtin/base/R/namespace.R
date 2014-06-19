@@ -301,7 +301,7 @@ loadNamespace <- function (package, lib.loc = NULL,
             }
 
             symNames <- nativeRoutines$symbolNames
-			if(length(symNames) == 0L) return(NULL)
+            if(length(symNames) == 0L) return(NULL)
 
             symbols <- getNativeSymbolInfo(symNames, dll, unlist = FALSE,
                     withRegistrationInfo = TRUE)
@@ -329,12 +329,12 @@ loadNamespace <- function (package, lib.loc = NULL,
         }
 
         ## find package and check it has a namespace
-		pkgpath <- find.package(package, lib.loc, quiet = TRUE)
+        pkgpath <- find.package(package, lib.loc, quiet = TRUE)
         if (length(pkgpath) == 0L)
             stop(gettextf("there is no package called %s", sQuote(package)),
                     domain = NA)
         bindTranslations(package, pkgpath)
-		package.lib <- dirname(pkgpath)
+        package.lib <- dirname(pkgpath)
         package <- basename(pkgpath) # need the versioned name
         if (! packageHasNamespace(package, package.lib)) {
             hasNoNamespaceError <-
@@ -355,7 +355,7 @@ loadNamespace <- function (package, lib.loc = NULL,
         ## No, not during builds of standard packages
         ## stats4 depends on methods, but exports do not matter
         ## whilst it is being built
-		nsInfoFilePath <- file.path(pkgpath, "Meta", "nsInfo.rds")
+        nsInfoFilePath <- file.path(pkgpath, "Meta", "nsInfo.rds")
         nsInfo <- if(file.exists(nsInfoFilePath)) readRDS(nsInfoFilePath)
                 else parseNamespaceFile(package, package.lib, mustExist = FALSE)
 
@@ -370,7 +370,7 @@ loadNamespace <- function (package, lib.loc = NULL,
                         call. = FALSE, domain = NA)
             R_version_built_under <- as.numeric_version(built$R)
 # can't do.call generics
-#			if(R_version_built_under < "3.0.0")
+#            if(R_version_built_under < "3.0.0")
 #                stop(gettextf("package %s was built before R 3.0.0: please re-install it",
 #                                sQuote(basename(pkgpath))),
 #                        call. = FALSE, domain = NA)
@@ -416,20 +416,20 @@ loadNamespace <- function (package, lib.loc = NULL,
         "__LoadingNamespaceInfo__" <- list(libname = package.lib,
                 pkgname = package)
 
-		env <- asNamespace(ns)
+        env <- asNamespace(ns)
         ## save the package name in the environment
         assign(".packageName", package, envir = env)
 
         ## load the code
         codename <- strsplit(package, "_", fixed = TRUE)[[1L]][1L]
         codeFile <- file.path(pkgpath, "R", codename)
-		if (file.exists(codeFile)) {
+        if (file.exists(codeFile)) {
             res <- try(sys.source(codeFile, env, keep.source = keep.source))
             if(inherits(res, "try-error"))
                 stop(gettextf("unable to load R code in package %s",
                                 sQuote(package)), call. = FALSE, domain = NA)
         }
-		# a package without R code currently is required to have a namespace
+        # a package without R code currently is required to have a namespace
         # else warning(gettextf("package %s contains no R code",
         #                        sQuote(package)), call. = FALSE, domain = NA)
 
@@ -439,11 +439,11 @@ loadNamespace <- function (package, lib.loc = NULL,
 
         ## lazy-load any sysdata
         dbbase <- file.path(pkgpath, "R", "sysdata")
-		if (file.exists(paste0(dbbase, ".rdb"))) lazyLoad(dbbase, env)
+        if (file.exists(paste0(dbbase, ".rdb"))) lazyLoad(dbbase, env)
 
         ## load any lazydata into a separate environment
         dbbase <- file.path(pkgpath, "data", "Rdata")
-		if(file.exists(paste0(dbbase, ".rdb")))
+        if(file.exists(paste0(dbbase, ".rdb")))
             lazyLoad(dbbase, getNamespaceInfo(ns, "lazydata"))
 
         ## register any S3 methods
@@ -452,7 +452,7 @@ loadNamespace <- function (package, lib.loc = NULL,
         ## load any dynamic libraries
         dlls <- list()
         dynLibs <- nsInfo$dynlibs
-		for (i in seq_along(dynLibs)) {
+        for (i in seq_along(dynLibs)) {
             lib <- dynLibs[i]
             dlls[[lib]]  <- library.dynam(lib, package, package.lib)
             assignNativeRoutines(dlls[[lib]], lib, env,
@@ -468,7 +468,7 @@ loadNamespace <- function (package, lib.loc = NULL,
                 assign(names(nsInfo$dynlibs)[i], dlls[[lib]], envir = env)
             setNamespaceInfo(env, "DLLs", dlls)
         }
-		addNamespaceDynLibs(env, nsInfo$dynlibs)
+        addNamespaceDynLibs(env, nsInfo$dynlibs)
 
 
         ## used in e.g. utils::assignInNamespace
@@ -679,7 +679,7 @@ loadingNamespaceInfo <- function() {
     dynGet <- function(name,
 #            notFound = stop(gettextf("%s not found", sQuote(name)),
             notFound = gettextf("%s not found", sQuote(name),
-			domain = NA))
+            domain = NA))
     {
         n <- sys.nframe()
         while (n > 1) {
@@ -690,9 +690,9 @@ loadingNamespaceInfo <- function() {
         }
 #        notFound
         stop(notFound)
-	}
+    }
 #    dynGet("__LoadingNamespaceInfo__", stop("not loading a namespace"))
-	dynGet("__LoadingNamespaceInfo__", "not loading a namespace")
+    dynGet("__LoadingNamespaceInfo__", "not loading a namespace")
 }
 
 topenv <- function(envir = parent.frame(),
@@ -771,7 +771,7 @@ asNamespace <- function(ns, base.OK = TRUE) {
         ns <- getNamespace(ns)
     if (! isNamespace(ns)) {
         stop("not a namespace")
-	}
+    }
     else if (! base.OK && isBaseNamespace(ns))
         stop("operation not allowed on base namespace")
     else ns

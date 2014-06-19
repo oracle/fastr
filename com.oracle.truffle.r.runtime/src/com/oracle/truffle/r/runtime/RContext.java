@@ -25,7 +25,9 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -34,11 +36,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * implementation of the runtime.
  *
  * The context provides two sub-interfaces {@link ConsoleHandler} and {@link Engine}that are
- * (typically) implemented elsewhere, but accessed through {@link #getConsoleHandler()} and {@loink
- * #getEngine()}, respectively.
+ * (typically) implemented elsewhere, and accessed through {@link #getConsoleHandler()} and
+ * {@link #getEngine()}, respectively.
  *
  */
-public final class RContext {
+public final class RContext extends ExecutionContext {
 
     public static final int CONSOLE_WIDTH = 80;
 
@@ -98,13 +100,13 @@ public final class RContext {
          *
          * @return elapsed time in nanosecs.
          */
-        public long elapsedTimeInNanos();
+        long elapsedTimeInNanos();
 
         /**
          * Return user and system times for any spawned child processes in nanosecs, < 0 means not
          * available (Windows).
          */
-        public long[] childTimesInNanos();
+        long[] childTimesInNanos();
 
         public static class ParseException extends Exception {
             private static final long serialVersionUID = 1L;
@@ -121,19 +123,19 @@ public final class RContext {
          * @param frame for evaluating any associated R code
          * @param envForFrame the namespace environment associated with the package.
          */
-        public void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame);
+        void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame);
 
         /**
          * Return the {@link RFunction} for the builtin {@code name}.
          *
          */
-        public RFunction lookupBuiltin(String name);
+        RFunction lookupBuiltin(String name);
 
         /**
          * Parse an R expression and return an {@link RExpression} object representing the Truffle
          * ASTs for the components.
          */
-        public RExpression parse(String rscript) throws ParseException;
+        RExpression parse(String rscript) throws ParseException;
 
         /**
          * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the
@@ -142,14 +144,14 @@ public final class RContext {
          * @param envForFrame the environment that {@code frame} is bound to.
          * @return the object returned by the evaluation or {@code null} if an error occurred.
          */
-        public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult);
+        Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult);
 
         /**
          *
          * This is intended for use by the unit test environment, where a "fresh" global environment
          * is desired for each evaluation.
          */
-        public Object parseAndEvalTest(String rscript, boolean printResult);
+        Object parseAndEvalTest(String rscript, boolean printResult);
 
         /**
          * Support for the {@code eval} builtin using an {@link RExpression}.
@@ -157,7 +159,7 @@ public final class RContext {
          * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
          *            {@code evalq} being invoked.
          */
-        public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
+        Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
 
         /**
          * Support for the {@code eval} builtin. This is tricky because the {@link Frame} "f"
@@ -168,13 +170,13 @@ public final class RContext {
          * @param function the actual function that invoked the "eval", e.g. {@code eval},
          *            {@code evalq} , {@code local}.
          */
-        public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+        Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
 
         /**
          * Evaluate a promise in the given frame (for a builtin, where we can use the
          * {@link VirtualFrame}) of the caller directly).
          */
-        public Object evalPromise(RPromise expr, VirtualFrame frame) throws RError;
+        Object evalPromise(RPromise expr, VirtualFrame frame) throws RError;
 
     }
 
@@ -275,5 +277,15 @@ public final class RContext {
             evalWarnings = new LinkedList<>();
         }
         evalWarnings.add(s);
+    }
+
+    @Override
+    public String getLanguageShortName() {
+        return "R";
+    }
+
+    @Override
+    protected void setSourceCallback(SourceCallback sourceCallback) {
+        // TODO Auto-generated method stub
     }
 }

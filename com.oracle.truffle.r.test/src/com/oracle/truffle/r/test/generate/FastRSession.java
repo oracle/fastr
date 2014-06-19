@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.shell.*;
 
 public class FastRSession implements RSession {
 

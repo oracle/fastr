@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 
 import jline.console.*;
