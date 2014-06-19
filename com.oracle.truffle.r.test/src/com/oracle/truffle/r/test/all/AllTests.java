@@ -14624,6 +14624,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testInvokeIndirectly_249a400b35f2f0c3cc210c2719eadf10() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; h <- function(v) if (v==1) f else g ; h(1)(1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testInvokeIndirectly_eba1980fa779ba82a6d33dd930b37480() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; h <- function(v) if (v==1) f else g ; h(2)(1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testInvokeIndirectly_c69f1367fbb3330e6e446038532361d0() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; v <- 1 ; (if (v==1) f else g)(1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testInvokeIndirectly_0426e7a36eb62ebaece970a5f8adb8c3() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; v <- 2 ; (if (v==1) f else g)(1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testInvokeIndirectly_6b4d9a5443d0ef4f0adb1985be5be697() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[1]](1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testInvokeIndirectly_70237bb41c7522a4a2a4a4bab29d79a6() {
+        assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[2]](1) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testMatching_c272d90b4e2480f9f6fc9b6bfcc79e74() {
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }");
     }
