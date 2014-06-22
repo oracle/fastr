@@ -396,7 +396,9 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
 
        @SlowPath
        private static Linpack createAndLoadLib() {
-           return LibraryLoader.create(Linpack.class).load("R");
+           // need to load blas lib as Fortran functions in RDerived lib need it
+           LibraryLoader.create(Linpack.class).load("Rblas");
+           return LibraryLoader.create(Linpack.class).load("RDerived");
        }
 
        static Linpack linpack() {

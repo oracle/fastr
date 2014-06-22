@@ -21,16 +21,38 @@
 # questions.
 #
 
-all:
 ifneq ($(shell uname), Darwin)
-	gcc -fPIC -shared -o ./lib/linux/libRDerived.so ./src/fft.c 
+OS_DIR=linux
 else
-	gcc -fPIC -dynamiclib -o ./lib/darwin/libRDerived.dylib ./src/fft.c 
+OS_DIR=darwin
 endif
 
-clean:
+SRC = src
+OBJ = lib/$(OS_DIR)
+
+C_SOURCES := $(wildcard $(SRC)/*.c)
+F_SOURCES := $(wildcard $(SRC)/*.f)
+
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
+
+all: $(C_OBJECTS) $(F_OBJECTS)
 ifneq ($(shell uname), Darwin)
-	rm -f ./lib/linux/libRDerived.*
+	gcc -fPIC -shared -o ./lib/linux/libRDerived.so $(C_OBJECTS) $(F_OBJECTS)
 else
-	rm -f ./lib/darwin/libRDerived.*
+	gcc -dynamiclib -undefined dynamic_lookup -o ./lib/darwin/libRDerived.dylib $(C_OBJECTS) $(F_OBJECTS)
 endif
+
+$(OBJ)/%.o: $(SRC)/%.c
+	gcc -fPIC -O2 -c $< -o $@
+
+$(OBJ)/%.o: $(SRC)/%.f
+	gfortran -fPIC -O2 -c $< -o $@
+
+
+clean:
+	rm -f ./lib/$(OS_DIR)/libRDerived.*
+	rm -f ./lib/$(OS_DIR)/*.o
+
+cleanobj:
+	rm -f ./lib/$(OS_DIR)/*.o
