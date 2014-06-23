@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.debug;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -61,7 +60,7 @@ public abstract class DebugDumpBuiltin extends RBuiltinNode {
     @Specialization
     public Object dump(RFunction function) {
         controlVisibility();
-        String source = ((RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode()).getSourceCode();
+        String source = ((RRootNode) function.getTarget().getRootNode()).getSourceCode();
         Utils.dumpFunction("dump: " + (source.length() <= FUNCTION_LENGTH_LIMIT ? source : source.substring(0, FUNCTION_LENGTH_LIMIT) + "..."), function);
         return RNull.instance;
     }
