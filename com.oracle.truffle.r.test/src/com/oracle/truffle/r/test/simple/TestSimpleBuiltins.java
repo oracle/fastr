@@ -2482,6 +2482,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCall() {
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
+        // Arguments are being passed incorrectly in RCallNode
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
     }
 
     @Test
@@ -3077,4 +3079,59 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1 ; levels(x)<-c(1, \"cat\", 4.5, \"3\"); levels(x);}");
     }
 
+    @Test
+    @Ignore
+    public void testAnyDuplicatedIgnore() {
+        // Error message mismatch.
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+    }
+
+    @Test
+    public void testAnyDuplicated() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables=FALSE,fromLast = TRUE)}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE, TRUE)}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), TRUE )}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE )}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L)) }");
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = TRUE) }");
+
+        // strings
+        assertEval("{anyDuplicated(c(\"abc\"))}");
+        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"abc\"))}");
+        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"ghi\", \"jkl\"))}");
+
+        // boolean
+        assertEval("{anyDuplicated(c(FALSE))}");
+        assertEval("{anyDuplicated(c(FALSE, TRUE))}");
+        assertEval("{anyDuplicated(c(FALSE, TRUE, FALSE))}");
+
+        // complex
+        assertEval("{anyDuplicated(c(2+2i)) }");
+        assertEval("{anyDuplicated(c(2+2i, 3+3i, 2+2i)) }");
+        assertEval("{anyDuplicated(c(2+2i, 3+3i, 4+4i, 5+5i)) }");
+
+        // Double Vector
+        assertEval("{ anyDuplicated(c(27.2, 68.4, 94.3, 22.2)) }");
+        assertEval("{ anyDuplicated(c(1, 1, 4, 5, 4), TRUE, TRUE) }");
+        assertEval("{ anyDuplicated(c(1,2,1)) }");
+        assertEval("{ anyDuplicated(c(1)) }");
+        assertEval("{ anyDuplicated(c(1,2,3,4)) }");
+        assertEval("{ anyDuplicated(list(76.5, 5L, 5L, 76.5, 5, 5), incomparables = c(5L, 76.5)) }");
+
+        // Logical Vector
+        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE) }");
+        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE, fromLast = 1) }");
+
+        // String Vector
+        assertEval("{ anyDuplicated(c(\"abc\", \"good\", \"hello\", \"hello\", \"abc\")) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), FALSE) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), TRUE) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), 1) }");
+
+        // Complex Vector
+        assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
+        assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
+        assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
+    }
 }

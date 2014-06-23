@@ -461,6 +461,7 @@ public abstract class RCallNode extends RNode {
         T[] resultArgs = (T[]) Array.newInstance(arguments.getClass().getComponentType(), hasVarArgs ? parameterNames.length : Math.max(parameterNames.length, arguments.length));
         BitSet matchedNames = new BitSet(actualNames.length);
         int unmatchedNameCount = 0;
+        int varArgMatches = 0;
         boolean[] matchedArgs = new boolean[parameterNames.length];
         for (int i = 0; i < actualNames.length; i++) {
             if (actualNames[i] != null) {
@@ -468,8 +469,12 @@ public abstract class RCallNode extends RNode {
                 if (hasArgNodes) {
                     argNode = (RNode) arguments[i];
                 }
+
                 int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, hasVarArgs, argNode);
                 if (parameterPosition >= 0) {
+                    if (parameterPosition >= varArgIndex) {
+                        ++varArgMatches;
+                    }
                     resultArgs[parameterPosition] = arguments[i];
                     matchedNames.set(i);
                 } else {
@@ -477,7 +482,7 @@ public abstract class RCallNode extends RNode {
                 }
             }
         }
-        int varArgCount = arguments.length - varArgIndex - matchedNames.cardinality();
+        int varArgCount = arguments.length - (varArgIndex + varArgMatches);
         if (varArgIndex >= 0 && varArgCount >= 0) {
             T[] varArgsArray = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgCount);
             String[] namesArray = null;

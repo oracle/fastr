@@ -250,6 +250,7 @@ public abstract class RError extends RuntimeException {
     public static final String INVALID_FORMAT_LOGICAL = "invalid format '%s'; use format %%d or %%i for logical objects";
     public static final String INVALID_FORMAT_INTEGER = "invalid format '%s'; use format %%d, %%i, %%o, %%x or %%X for integer objects";
     public static final String INVALID_FORMAT_DOUBLE = "invalid format '%s'; use format %%f, %%e, %%g or %%a for numeric objects"; // the
+    public static final String INVALID_TYPE_FROMLAST = "'fromLast' must be TRUE or FALSE";
     // list is incomplete (but like GNU-R)
     public static final String INVALID_FORMAT_STRING = "invalid format '%s'; use format %%s for character objects";
     public static final String MUST_BE_CHARACTER = "'%s' must be of mode character";
@@ -2171,6 +2172,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getNrowZero(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, NROW_ZERO);
+    }
+    
+    public static RError getFromLastNotTrueFalse(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, INVALID_TYPE_FROMLAST);
     }
 
     public static RError getNAInProbVector(SourceSection encapsulatingSourceSection) {
