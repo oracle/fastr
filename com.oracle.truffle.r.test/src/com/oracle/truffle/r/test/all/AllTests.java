@@ -6259,6 +6259,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testDiagonal_9cb3220fb3faaad158f7abb0ae4e7182() {
+        assertEval("{ diag(1, 7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiagonal_0498e7222eaf7f5ed45106437bf388b8() {
+        assertEval("{ diag(1, 7, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDiagonal_a9bf06d5c912ac94c5cccba05d2f40ce() {
+        assertEval("{ diag(1, 2, 7) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testDimensions_0c23ecb60a78eddaab4dced71193f975() {
         assertEval("{ dim(1) }");
     }
