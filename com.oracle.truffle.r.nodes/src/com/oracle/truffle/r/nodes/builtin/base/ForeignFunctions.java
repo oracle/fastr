@@ -103,10 +103,10 @@ public class ForeignFunctions {
                 RDoubleVector qrauxVec = (RDoubleVector) args[6];
                 RIntVector pivotVec = (RIntVector) args[7];
                 RDoubleVector workVec = (RDoubleVector) args[8];
-                double[] x = xVec.getDataCopy();
-                int[] rank = rankVec.getDataCopy();
-                double[] qraux = qrauxVec.getDataCopy();
-                int[] pivot = pivotVec.getDataCopy();
+                double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
+                int[] rank = rankVec.isTemporary() ? rankVec.getDataWithoutCopying() : rankVec.getDataCopy();
+                double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
+                int[] pivot = pivotVec.isTemporary() ? pivotVec.getDataWithoutCopying() : pivotVec.getDataCopy();
                 RFFIFactory.getRFFI().getRDerivedRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
                 // @formatter:off
                 Object[] data = new Object[]{
@@ -144,11 +144,11 @@ public class ForeignFunctions {
                 int ny = (int) args[5];
                 RDoubleVector bVec = (RDoubleVector) args[6];
                 RIntVector infoVec = (RIntVector) args[7];
-                double[] x = xVec.getDataCopy();
-                double[] qraux = qrauxVec.getDataCopy();
-                double[] y = yVec.getDataCopy();
-                double[] b = bVec.getDataCopy();
-                int[] info = infoVec.getDataCopy();
+                double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
+                double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
+                double[] y = yVec.isTemporary() ? yVec.getDataWithoutCopying() : yVec.getDataCopy();
+                double[] b = bVec.isTemporary() ? bVec.getDataWithoutCopying() : bVec.getDataCopy();
+                int[] info = infoVec.isTemporary() ? infoVec.getDataWithoutCopying() : infoVec.getDataCopy();
                 RFFIFactory.getRFFI().getRDerivedRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
                 coef.copyAttributesFrom(bVec);
@@ -332,17 +332,14 @@ public class ForeignFunctions {
         @Specialization(order = 1, guards = "fft")
         public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
             controlVisibility();
-            RComplexVector z = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
-            RComplexVector res = z;
-            if (res.isShared()) {
-                res = (RComplexVector) z.copy();
-            }
+            RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
+            double[] z = zVec.isTemporary() ? zVec.getDataWithoutCopying() : zVec.getDataCopy();
             RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, args[1]));
             int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;
-            if (res.getLength() > 1) {
-                if (z.getDimensions() == null) {
-                    int n = res.getLength();
+            if (zVec.getLength() > 1) {
+                if (zVec.getDimensions() == null) {
+                    int n = zVec.getLength();
                     int[] maxf = new int[1];
                     int[] maxp = new int[1];
                     RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
@@ -351,11 +348,11 @@ public class ForeignFunctions {
                     }
                     double[] work = new double[4 * maxf[0]];
                     int[] iwork = new int[maxp[0]];
-                    retCode = RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(res.getDataWithoutCopying(), 1, n, 1, inv, work, iwork);
+                    retCode = RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(z, 1, n, 1, inv, work, iwork);
                 }
             }
 
-            return res;
+            return RDataFactory.createComplexVector(z, zVec.isComplete());
         }
 
         public boolean fft(RList f) {
