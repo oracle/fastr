@@ -92,8 +92,7 @@ public abstract class DispatchedCallNode extends RNode {
             if (this.dispatchType == RRuntime.NEXT_METHOD) {
                 return new NextMethodDispatchNode(this.genericName, type, this.args);
             }
-            // TODO: throw error
-            return null;
+            throw new AssertionError();
         }
     }
 

@@ -823,6 +823,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; diag(m) }");
         assertEval("{ m <- matrix(1:9, nrow=3) ; diag(m) }");
+
+        assertEval("{ diag(1, 7) }");
+        assertEval("{ diag(1, 7, 2) }");
+        assertEval("{ diag(1, 2, 7) }");
     }
 
     @Test

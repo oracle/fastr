@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * Refactored out of {@link UseMethod} to avoid Eclipse annotation processor circularity.
  */
-public abstract class UseMethod_ClassHierarchyNode extends UnaryNode {
+public abstract class ClassHierarchyNode extends UnaryNode {
 
     public abstract RStringVector execute(VirtualFrame frame, Object arg);
 

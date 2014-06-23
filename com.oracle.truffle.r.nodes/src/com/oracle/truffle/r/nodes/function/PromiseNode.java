@@ -45,7 +45,7 @@ public final class PromiseNode extends RNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        return new RPromise(languageRep.getRep());
+        return RDataFactory.createPromise(languageRep.getRep());
     }
 
 }
