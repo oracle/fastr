@@ -168,10 +168,16 @@ public final class RContext extends ExecutionContext {
         Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
 
         /**
-         * Evaluate a promise in the given frame (for a builtin, where we can use the
-         * {@link VirtualFrame}) of the caller directly).
+         * Evaluate a promise in the given frame, where we can use the {@link VirtualFrame}) of the
+         * caller directly). This should <b>only</b> be called by the {@link RPromise} class.
          */
         Object evalPromise(RPromise expr, VirtualFrame frame) throws RError;
+
+        /**
+         * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should
+         * <b>only</b> be called by the {@link RPromise} class.
+         */
+        Object evalPromise(RPromise expr) throws RError;
 
     }
 

@@ -168,10 +168,14 @@ public final class REngine implements RContext.Engine {
      * on return.
      *
      * @param function the actual function that invoked the "eval", e.g. {@code eval}, {@code evalq}
-     *            , {@code local}.
+     *            , {@code local}, or {@code null} if identification isn't important.
      */
     public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
-        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.globalEnv());
+        return eval(function, (RNode) expr.getRep(), envir, enclos);
+    }
+
+    private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
+        RootCallTarget callTarget = makeCallTarget(exprRep, REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createVirtualFrame();
         // We make the new frame look like it was a real call to "function".
@@ -219,7 +223,18 @@ public final class REngine implements RContext.Engine {
 
     public Object evalPromise(RPromise expr, VirtualFrame frame) throws RError {
         RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
-        return expr.setValue(runCall(callTarget, frame, false, false));
+        return runCall(callTarget, frame, false, false);
+    }
+
+    public Object evalPromise(RPromise promise) throws RError {
+        // have to do the full out eval
+        try {
+            return eval(lookupBuiltin("eval"), (RNode) promise.getRep(), promise.getEnv(), null);
+        } catch (PutException ex) {
+            // TODO a new, rather unlikely, error
+            assert false;
+            return null;
+        }
     }
 
     private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {

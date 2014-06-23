@@ -317,11 +317,19 @@ public final class RDataFactory {
     }
 
     public static RSymbol createSymbol(String name) {
-        return new RSymbol(name);
+        return traceDataCreated(new RSymbol(name));
     }
 
     public static RLanguage createLanguage(Object rep) {
-        return new RLanguage(rep);
+        return traceDataCreated(new RLanguage(rep));
+    }
+
+    public static RPromise createPromise(Object rep, REnvironment env) {
+        return traceDataCreated(new RPromise(rep, env));
+    }
+
+    public static RPromise createPromise(Object rep) {
+        return createPromise(rep, null);
     }
 
 }

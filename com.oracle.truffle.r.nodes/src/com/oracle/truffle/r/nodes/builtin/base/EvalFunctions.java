@@ -97,6 +97,8 @@ public class EvalFunctions {
     @RBuiltin(name = "eval", nonEvalArgs = {0}, kind = SUBSTITUTE)
     public abstract static class Eval extends EvalAdapter {
 
+        public abstract Object execute(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos);
+
         @Specialization
         public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
             return doEval(frame, expr, REnvironment.globalEnv(), enclos);
@@ -114,7 +116,7 @@ public class EvalFunctions {
              * caller, so we can evaluate the promise using frame.
              */
             controlVisibility();
-            Object exprVal = RContext.getEngine().evalPromise(expr, frame);
+            Object exprVal = expr.getValue(frame);
             return doEvalBody(exprVal, envir, enclos);
         }
 
