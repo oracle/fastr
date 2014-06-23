@@ -14,17 +14,17 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL)
 public abstract class AnyDuplicated extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
@@ -82,6 +82,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
+    @SlowPath
     private static int getIndexFromStart(RAbstractVector x, RAbstractVector incomparables) {
         HashSet<Object> incompContents = new HashSet<>();
         HashSet<Object> vectorContents = new HashSet<>();
@@ -101,6 +102,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
+    @SlowPath
     private static int getIndexFromStart(RAbstractVector x) {
         HashSet<Object> vectorContents = new HashSet<>();
         vectorContents.add(x.getDataAtAsObject(0));
@@ -114,6 +116,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
+    @SlowPath
     public static int getIndexFromLast(RAbstractVector x, RAbstractVector incomparables) {
         HashSet<Object> incompContents = new HashSet<>();
         HashSet<Object> vectorContents = new HashSet<>();
@@ -133,6 +136,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return 0;
     }
 
+    @SlowPath
     private static int getIndexFromLast(RAbstractVector x) {
         HashSet<Object> vectorContents = new HashSet<>();
         vectorContents.add(x.getDataAtAsObject(x.getLength() - 1));

@@ -469,10 +469,12 @@ public abstract class RCallNode extends RNode {
                 if (hasArgNodes) {
                     argNode = (RNode) arguments[i];
                 }
-
                 int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, hasVarArgs, argNode);
                 if (parameterPosition >= 0) {
                     if (parameterPosition >= varArgIndex) {
+                        /*
+                         * This argument matches to ...
+                         */
                         ++varArgMatches;
                     }
                     resultArgs[parameterPosition] = arguments[i];
@@ -482,6 +484,11 @@ public abstract class RCallNode extends RNode {
                 }
             }
         }
+        /*
+         * To find the remaining arguments that can match to ... we should subtract sum of
+         * varArgIndex and number of variable arguments already matched from total number of
+         * arguments.
+         */
         int varArgCount = arguments.length - (varArgIndex + varArgMatches);
         if (varArgIndex >= 0 && varArgCount >= 0) {
             T[] varArgsArray = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgCount);
