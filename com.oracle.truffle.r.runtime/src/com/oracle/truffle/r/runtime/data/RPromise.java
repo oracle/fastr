@@ -22,43 +22,73 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.*;
+
 /**
  * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
 public class RPromise extends RLanguageRep {
     /**
-     * Denotes a promise that raised an error during evaluation.
+     * For promises associated with environments (frames) that are not top-level.
      */
-    private static Object ERROR = new Object();
-
+    private REnvironment env;
+    /**
+     * When {@code null} the promise has not been evaluated.
+     */
     private Object value;
 
     /**
-     * Create the promise with a representation that allow evaluation later.
+     * Create the promise with a representation that allows evaluation later in the "current" frame.
+     * The frame may need to be set if the promise is passed as an argument to another function.
      */
-    public RPromise(Object rep) {
-        super(rep);
+    RPromise(Object rep) {
+        this(rep, null);
     }
 
     /**
-     * This is a workaround for the fact that REngine can't be called from here (at the moment),
-     * otherwise the evaluation would be implicitly done in {@link #getValue}.
+     * Create the promise with a representation that allows evaluation later in a given frame.
      */
-    public Object setValue(Object newValue) {
-        if (value == null) {
-            if (newValue == null) {
-                this.value = ERROR;
-            } else {
-                this.value = newValue;
-            }
-        } else {
-            assert false : "promise already has a value";
-        }
-        return this.value;
+    RPromise(Object rep, REnvironment env) {
+        super(rep);
+        this.env = env;
     }
 
+    public REnvironment getEnv() {
+        return env;
+    }
+
+    /**
+     * Get the value of the promise, evaluating it if necessary in the associated environment. A
+     * promise is evaluate-once.
+     */
     public Object getValue() {
+        if (value == null) {
+            assert env != null;
+            try {
+                value = RContext.getEngine().evalPromise(this);
+            } catch (RError e) {
+                value = e;
+                throw e;
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Get the value of the promise, evaluating it if necessary in the given {@link VirtualFrame}. A
+     * promise is evaluate-once.
+     */
+    public Object getValue(VirtualFrame frame) {
+        if (value == null) {
+            try {
+                value = RContext.getEngine().evalPromise(this, frame);
+            } catch (RError e) {
+                value = e;
+                throw e;
+            }
+        }
         return value;
     }
 
