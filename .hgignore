@@ -81,3 +81,4 @@ agent/make/sa17.tar.gz
 .Rhistory
 R.tokens
 .tmp.unit.knucleotide.input
+*.o
