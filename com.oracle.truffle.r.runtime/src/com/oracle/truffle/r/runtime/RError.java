@@ -272,12 +272,31 @@ public abstract class RError extends RuntimeException {
     private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
     private static final String SET_ROWNAMES_NO_DIMS = "attempt to set 'rownames' on an object with no dimensions";
 
-    public static void warning(SourceSection source, String message) {
-        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
+    @SlowPath
+    private static String stringFormat(String format, Object... args) {
+        return String.format(format, args);
     }
 
+    @SlowPath
+    private static String wrapMessage(String preamble, String message) {
+        // TODO find out about R's line-wrap policy
+        // (is 74 a given percentage of console width?)
+        if (preamble.length() + 1 + message.length() >= 74) {
+            // +1 is for the extra space following the colon
+            return preamble + "\n  " + message;
+        } else {
+            return preamble + " " + message;
+        }
+    }
+
+    @SlowPath
+    public static void warning(SourceSection source, String message) {
+        RContext.getInstance().setEvalWarning(wrapMessage("In " + source.getCode() + " :", message));
+    }
+
+    @SlowPath
     public static void warning(SourceSection source, String message, Object... args) {
-        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + stringFormat(message, args));
+        RContext.getInstance().setEvalWarning(wrapMessage("In " + source.getCode() + " :", stringFormat(message, args)));
     }
 
     public abstract static class RNYIError extends RError {
@@ -1753,15 +1772,7 @@ public abstract class RError extends RuntimeException {
         @Override
         public String toString() {
             if (source != null) {
-                String preamble = "Error in " + source.getCode() + " :";
-                // TODO find out about R's line-wrap policy
-                // (is 74 a given percentage of console width?)
-                if (preamble.length() + 1 + getMessage().length() >= 74) {
-                    // +1 is for the extra space following the colon
-                    return preamble + "\n  " + getMessage();
-                } else {
-                    return preamble + " " + getMessage();
-                }
+                return wrapMessage("Error in " + source.getCode() + " :", getMessage());
             } else {
                 return "Error: " + getMessage();
             }
@@ -2081,11 +2092,6 @@ public abstract class RError extends RuntimeException {
         return getGenericError(ast, RError.SET_INVALID_CLASS_ATTR);
     }
 
-    @SlowPath
-    private static String stringFormat(String format, Object... args) {
-        return String.format(format, args);
-    }
-
     public static RError getNotLengthOneLogicalVector(SourceSection sourceSection, final String arg) {
         return getGenericError(sourceSection, stringFormat(NOT_LEN_ONE_LOGICAL_VECTOR, arg));
     }
@@ -2173,7 +2179,7 @@ public abstract class RError extends RuntimeException {
     public static RError getNrowZero(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, NROW_ZERO);
     }
-    
+
     public static RError getFromLastNotTrueFalse(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, INVALID_TYPE_FROMLAST);
     }
