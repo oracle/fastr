@@ -21,11 +21,21 @@
 # questions.
 #
 
+#
+# This Makefile contains the recipe for creating libRDerived. However, it is distributed
+# as a "source" in the repository file to avoid users having to have gfortran installed.
+# Use "make cleanlib; make force" to force a rebuild.
+#
+
 ifneq ($(shell uname), Darwin)
 OS_DIR=linux
+LIB_DERIVED=lib/$(OS_DIR)/libRDerived.so 
 else
 OS_DIR=darwin
+LIB_DERIVED=lib/$(OS_DIR)/libRDerived.dylib
 endif
+
+.PHONY: all clean cleanlib cleanobj force
 
 SRC = src
 OBJ = lib/$(OS_DIR)
@@ -36,7 +46,13 @@ F_SOURCES := $(wildcard $(SRC)/*.f)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
 
-all: $(C_OBJECTS) $(F_OBJECTS)
+
+all:
+	echo $(LIB_DERIVED) is up to date
+
+force: $(LIB_DERIVED)
+
+$(LIB_DERIVED): $(C_OBJECTS) $(F_OBJECTS)
 ifneq ($(shell uname), Darwin)
 	gcc -fPIC -shared -o ./lib/linux/libRDerived.so $(C_OBJECTS) $(F_OBJECTS)
 else
@@ -50,9 +66,10 @@ $(OBJ)/%.o: $(SRC)/%.f
 	gfortran -fPIC -O2 -c $< -o $@
 
 
-clean:
+cleanlib:
 	rm -f ./lib/$(OS_DIR)/libRDerived.*
-	rm -f ./lib/$(OS_DIR)/*.o
+
+clean: cleanobj
 
 cleanobj:
 	rm -f ./lib/$(OS_DIR)/*.o
