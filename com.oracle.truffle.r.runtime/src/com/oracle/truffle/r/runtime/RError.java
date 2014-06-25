@@ -272,6 +272,8 @@ public abstract class RError extends RuntimeException {
     private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
     private static final String SET_ROWNAMES_NO_DIMS = "attempt to set 'rownames' on an object with no dimensions";
 
+    public static final String RBIND_COLUMNS_NOT_MULTIPLE = "number of columns of result is not a multiple of vector length (arg 1)";
+
     @SlowPath
     private static String stringFormat(String format, Object... args) {
         return String.format(format, args);
