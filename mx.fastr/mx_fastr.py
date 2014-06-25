@@ -235,7 +235,11 @@ def rbench(args):
                 else:
                     # temporary: disable group generics as long as they impose a considerable performance overhead
                     command = ['--DisableGroupGenerics'] + command
-                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=args.extra_javavm_args)
+                    extraVmArgs = args.extra_javavm_args
+                    if not any("TruffleCompilationThreshold" in x for x in extraVmArgs):
+                        # set compilation threshold to 10
+                        extraVmArgs.append('-G:TruffleCompilationThreshold=10')
+                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'
                     emsg = rc

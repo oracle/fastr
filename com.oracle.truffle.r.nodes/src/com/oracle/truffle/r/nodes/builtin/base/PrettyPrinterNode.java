@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrettyPrinterSingleListElementNodeFactory;
@@ -228,8 +229,12 @@ public abstract class PrettyPrinterNode extends RNode {
 
     public String prettyPrintLanguageRep(RLanguageRep languageRep, Object listElementName) {
         RNode node = (RNode) languageRep.getRep();
-        String s = node.getSourceSection().getCode();
-        return s;
+        SourceSection ss = node.getSourceSection();
+        if (ss == null) {
+            return "<no source available>";
+        } else {
+            return ss.getCode();
+        }
     }
 
     private String printAttributes(VirtualFrame frame, RAbstractVector vector, RAttributes attributes) {
