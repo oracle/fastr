@@ -10184,8 +10184,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testRbindIgnore_be158803468f8099cec173e61a9c21e2() {
+    public void TestSimpleBuiltins_testRbind_be158803468f8099cec173e61a9c21e2() {
         assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRbindIgnore_53509c8f581c1a9947804e87f0a3580f() {
+        assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
     }
 
     @Test

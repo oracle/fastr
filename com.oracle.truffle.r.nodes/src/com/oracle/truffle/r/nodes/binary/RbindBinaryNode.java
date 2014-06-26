@@ -66,6 +66,10 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
         RVector result = left.createEmptySameType(rows * cols, left.isComplete() && right.isComplete());
         boolean notEqualCols = leftDimensions[1] != rightDimensions[1];
 
+        if (cols > leftLength && cols % leftLength != 0) {
+            RError.warning(getEncapsulatingSourceSection(), RError.RBIND_COLUMNS_NOT_MULTIPLE);
+        }
+
         // initial copy of left to result
         int rRow = 0;
         int rCol = 0;
