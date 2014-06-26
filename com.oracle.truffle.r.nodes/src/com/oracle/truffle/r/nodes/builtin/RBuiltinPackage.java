@@ -48,6 +48,10 @@ import com.oracle.truffle.r.runtime.RBuiltin.*;
  * The R code is expected to be found (as resources) in the 'R' sub-package (directory) associated
  * with the subclass package, e.g., {@code com.oracle.truffle.r.nodes.builtin.base.R}. For debugging
  * parsing errors we retain the R source code, although this is not functionally necessary.
+ * <p>
+ * <p>
+ * To cope with a possible lack of reflection capability in an AOT compiled VM, initialization is
+ * two phase, with all reflective code executed in code reachable only from static initializers.
  */
 public abstract class RBuiltinPackage {
 
@@ -75,8 +79,7 @@ public abstract class RBuiltinPackage {
 
     protected REnvironment env;
 
-    protected RBuiltinPackage(REnvironment env) {
-        this.env = env;
+    protected RBuiltinPackage() {
         try {
             InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "R");
             if (is == null) {
@@ -122,7 +125,16 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
+    /**
+     * Runtime component of the package initialization process.
+     */
     public void loadSources(VirtualFrame frame, REnvironment envForFrame) {
+        this.env = envForFrame;
+        for (RBuiltinFactory factory : builtins.values()) {
+            if (factory.getPackage() == this) {
+                factory.setEnv(env);
+            }
+        }
         List<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
@@ -215,7 +227,7 @@ public abstract class RBuiltinPackage {
             }
             nodeFactory = new ReflectiveNodeFactory(clazz);
         }
-        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, lastParameterKind, nodeFactory, new Object[0], env);
+        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, lastParameterKind, nodeFactory, new Object[0], this);
         for (String name : factory.getBuiltinNames()) {
             if (builtins.containsKey(name)) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");

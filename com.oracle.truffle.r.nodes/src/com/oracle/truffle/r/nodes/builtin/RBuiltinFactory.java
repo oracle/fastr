@@ -33,15 +33,16 @@ public class RBuiltinFactory {
     private RBuiltin builtin;
     private LastParameterKind lastParameterKind;
     private Object[] constantArguments;
-    private final REnvironment env;
+    private RBuiltinPackage pkg;
+    private REnvironment env;
 
-    public RBuiltinFactory(String[] names, RBuiltin builtin, LastParameterKind lastParameterKind, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, REnvironment env) {
+    public RBuiltinFactory(String[] names, RBuiltin builtin, LastParameterKind lastParameterKind, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, RBuiltinPackage pkg) {
         this.builtinNames = names;
         this.builtin = builtin;
         this.lastParameterKind = lastParameterKind;
         this.factory = factory;
         this.constantArguments = constantArguments;
-        this.env = env;
+        this.pkg = pkg;
     }
 
     void setBuiltinNames(String[] builtinNames) {
@@ -77,7 +78,16 @@ public class RBuiltinFactory {
         return builtinNames;
     }
 
+    RBuiltinPackage getPackage() {
+        return pkg;
+    }
+
+    void setEnv(REnvironment env) {
+        this.env = env;
+    }
+
     public REnvironment getEnv() {
+        assert env != null;
         return env;
     }
 
