@@ -117,8 +117,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return this;
     }
 
-    private double[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
+    private double[] copyResizedData(int size, boolean fillNA) {
         int csize = size << 1;
         double[] newData = Arrays.copyOf(data, csize);
         if (csize > this.getLength()) {
@@ -136,10 +135,15 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return newData;
     }
 
+    private double[] createResizedData(int size, boolean fillNA) {
+        assert !this.isShared();
+        return copyResizedData(size, fillNA);
+    }
+
     @Override
     public RComplexVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
-        return RDataFactory.createComplexVector(createResizedData(size, fillNA), isComplete);
+        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
     }
 
     @Override

@@ -63,7 +63,7 @@ public class Recall extends RCustomBuiltinNode {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
-            args = insert(CallArgumentsNode.createUnnamed(createArgs(arguments[0])));
+            args = insert(CallArgumentsNode.createUnnamed(true, false, createArgs(arguments[0])));
             arguments[0] = null;
         }
         Object[] argsObject = RArguments.create(function, args.executeArray(frame));

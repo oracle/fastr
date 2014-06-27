@@ -85,6 +85,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public RVector materializeNonSharedVector() {
         if (isShared()) {
             vector = vector.copy();
+            vector.markNonTemporary();
         }
         return vector;
     }

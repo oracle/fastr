@@ -632,7 +632,9 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
     @Override
     public RVector materializeNonSharedVector() {
         if (this.isShared()) {
-            return this.copy();
+            RVector res = this.copy();
+            res.markNonTemporary();
+            return res;
         } else {
             return this;
         }

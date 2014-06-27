@@ -97,8 +97,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return this;
     }
 
-    private String[] createResizedData(int size, String fill) {
-        assert !this.isShared();
+    private String[] copyResizedData(int size, String fill) {
         String[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {
             if (fill != null) {
@@ -114,10 +113,15 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return newData;
     }
 
+    private String[] createResizedData(int size, String fill) {
+        assert !this.isShared();
+        return copyResizedData(size, fill);
+    }
+
     @Override
     public RStringVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
-        return RDataFactory.createStringVector(createResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
+        return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
     }
 
     @Override

@@ -90,8 +90,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return this;
     }
 
-    private byte[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
+    private byte[] copyResizedData(int size, boolean fillNA) {
         byte[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {
             if (fillNA) {
@@ -107,10 +106,15 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return newData;
     }
 
+    private byte[] createResizedData(int size, boolean fillNA) {
+        assert !this.isShared();
+        return copyResizedData(size, fillNA);
+    }
+
     @Override
     public RLogicalVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
-        return RDataFactory.createLogicalVector(createResizedData(size, fillNA), isComplete);
+        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete);
     }
 
     @Override
