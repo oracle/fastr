@@ -111,4 +111,9 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.materializeNonSharedVector();
     }
 
+    @Override
+    public RShareable materializeToShareable() {
+        return vector.materialize();
+    }
+
 }

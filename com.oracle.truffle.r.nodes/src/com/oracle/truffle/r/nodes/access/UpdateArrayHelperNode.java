@@ -666,9 +666,23 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return resultVector;
     }
 
+    // this is similar to what happens on "regular" (non-vector) assignment - the state has to
+    // change to avoid erroneous sharing
+    private static RShareable adjustRhsStateOnAssignment(RAbstractContainer value) {
+        RShareable val = value.materializeToShareable();
+        if (val.isShared()) {
+            val = val.copy();
+        } else if (!val.isTemporary()) {
+            val.makeShared();
+        } else if (val.isTemporary()) {
+            val.markNonTemporary();
+        }
+        return val;
+    }
+
     private RList updateSingleDimRec(RAbstractContainer value, RList resultVector, RIntVector p, int recLevel) {
         int position = getPositionInRecursion(resultVector, p.getDataAt(0), recLevel, true);
-        resultVector.updateDataAt(position - 1, value, null);
+        resultVector.updateDataAt(position - 1, adjustRhsStateOnAssignment(value), null);
         updateNames(resultVector, p);
         return resultVector;
     }
@@ -770,7 +784,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 113, guards = {"!isSubset", "!isPosNA", "!isPosZero", "!isPositionNegative"})
     RList updateTooManyValuesSubscript(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
         RList resultVector = getResultVector(vector, position, false);
-        resultVector.updateDataAt(position - 1, value, null);
+        resultVector.updateDataAt(position - 1, adjustRhsStateOnAssignment(value), null);
         return resultVector;
     }
 

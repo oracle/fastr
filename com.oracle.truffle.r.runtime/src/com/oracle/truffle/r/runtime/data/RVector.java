@@ -639,4 +639,10 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
             return this;
         }
     }
+
+    @Override
+    public RShareable materializeToShareable() {
+        return materialize();
+    }
+
 }

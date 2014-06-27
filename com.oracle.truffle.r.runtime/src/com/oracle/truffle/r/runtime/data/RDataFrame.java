@@ -123,4 +123,9 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public RAttributes initAttributes() {
         return vector.initAttributes();
     }
+
+    @Override
+    public RShareable materializeToShareable() {
+        return this;
+    }
 }
