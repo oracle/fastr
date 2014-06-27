@@ -2008,12 +2008,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rbind(1:3,1:3) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
     }
 
     @Test
     @Ignore
     public void testRbindIgnore() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+        assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
     }
 
     @Test
