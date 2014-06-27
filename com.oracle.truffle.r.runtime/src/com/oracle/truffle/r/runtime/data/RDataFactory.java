@@ -291,6 +291,10 @@ public final class RDataFactory {
         return traceDataCreated(new RDataFrame(vector));
     }
 
+    public static RExpression createExpression(RList list) {
+        return traceDataCreated(new RExpression(list));
+    }
+
     public static RVector createObjectVector(Object[] data, boolean completeVector) {
         if (data.length < 1) {
             return null;
@@ -301,11 +305,31 @@ public final class RDataFactory {
                 result[i] = (double) data[i];
             }
             return RDataFactory.createDoubleVector(result, completeVector);
+        } else if (data[0] instanceof Byte) {
+            byte[] result = new byte[data.length];
+            for (int i = 0; i < data.length; ++i) {
+                result[i] = (byte) data[i];
+            }
+            return RDataFactory.createLogicalVector(result, completeVector);
         }
+        Utils.fail("unimplemented object vector type: " + data[0].getClass().getSimpleName());
         return null;
     }
 
     public static RSymbol createSymbol(String name) {
-        return new RSymbol(name);
+        return traceDataCreated(new RSymbol(name));
     }
+
+    public static RLanguage createLanguage(Object rep) {
+        return traceDataCreated(new RLanguage(rep));
+    }
+
+    public static RPromise createPromise(Object rep, REnvironment env) {
+        return traceDataCreated(new RPromise(rep, env));
+    }
+
+    public static RPromise createPromise(Object rep) {
+        return createPromise(rep, null);
+    }
+
 }

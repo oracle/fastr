@@ -22,16 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "Recall", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
@@ -44,7 +45,8 @@ public class Recall extends RCustomBuiltinNode {
         return PARAMETER_NAMES;
     }
 
-    @Child private RCallNode callNode;
+    @Child protected CallArgumentsNode args;
+    @Child private DirectCallNode callNode;
 
     public Recall(RBuiltinNode prev) {
         super(prev);
@@ -60,10 +62,12 @@ public class Recall extends RCustomBuiltinNode {
         }
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(createArgs(arguments[0]))));
+            callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
+            args = insert(CallArgumentsNode.createUnnamed(true, false, createArgs(arguments[0])));
             arguments[0] = null;
         }
-        return callNode.execute(frame, function);
+        Object[] argsObject = RArguments.create(function, args.executeArray(frame));
+        return callNode.call(frame, argsObject);
     }
 
     private static RNode[] createArgs(RNode argNode) {

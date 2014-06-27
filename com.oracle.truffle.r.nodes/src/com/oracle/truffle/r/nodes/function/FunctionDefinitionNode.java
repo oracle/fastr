@@ -41,21 +41,22 @@ public final class FunctionDefinitionNode extends RRootNode {
     private final String description;
 
     /**
-     * An instance of this node may be called from a global scope with the intention to have its
-     * execution leave a footprint behind in that scope, e.g., during library loading. In that case,
-     * {@code forGlobal} is {@code true}, and the {@link #execute(VirtualFrame)} method must be
-     * invoked with one argument, namely the {@link VirtualFrame} representing the global scope.
-     * Execution will then proceed in the context of that frame.
+     * An instance of this node may be called from with the intention to have its execution leave a
+     * footprint behind in a specific frame/environment, e.g., during library loading, commands from
+     * the shell, or R's {@code eval} and its friends. In that case, {@code substituteFrame} is
+     * {@code true}, and the {@link #execute(VirtualFrame)} method must be invoked with one
+     * argument, namely the {@link VirtualFrame} to be side-effected. Execution will then proceed in
+     * the context of that frame.
      */
-    private final boolean forGlobal;
+    private final boolean substituteFrame;
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description, boolean forGlobal) {
+    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description, boolean substituteFrame) {
         super(src, parameterNames, descriptor.getDescriptor());
         this.descriptor = descriptor;
         this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
         this.description = description;
-        this.forGlobal = forGlobal;
+        this.substituteFrame = substituteFrame;
     }
 
     public REnvironment getDescriptor() {
@@ -65,7 +66,7 @@ public final class FunctionDefinitionNode extends RRootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         try {
-            if (forGlobal) {
+            if (substituteFrame) {
                 VirtualFrame vf = (VirtualFrame) frame.getArguments()[0];
                 Object result = body.execute(vf);
                 return result;
@@ -85,7 +86,7 @@ public final class FunctionDefinitionNode extends RRootNode {
     @Override
     public boolean isSplittable() {
         // don't bother splitting library-loading nodes
-        return !forGlobal;
+        return !substituteFrame;
     }
 
     @Override

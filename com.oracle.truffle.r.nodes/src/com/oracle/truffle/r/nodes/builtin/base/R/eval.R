@@ -19,25 +19,28 @@
 .GlobalEnv <- environment()
 parent.frame <- function(n = 1) .Internal(parent.frame(n))
 
-eval <-
-    function(expr, envir = parent.frame(),
-      enclos = if(is.list(envir) || is.pairlist(envir))
-                       parent.frame() else baseenv())
-    .Internal(eval(expr, envir, enclos))
+# currently implemented as a direct builtin
+#eval <-
+#    function(expr, envir = parent.frame(),
+#      enclos = if(is.list(envir) || is.pairlist(envir))
+#                       parent.frame() else baseenv())
+#    .Internal(eval(expr, envir, enclos))
 
 eval.parent <- function(expr, n = 1) {
     p <- parent.frame(n + 1)
     eval(expr, p)
 }
 
-evalq <-
-    function (expr, envir = parent.frame(), enclos = if (is.list(envir) ||
-    is.pairlist(envir)) parent.frame() else baseenv())
-      .Internal(eval(substitute(expr), envir, enclos))
-
 # currently implemented as a direct builtin
+#evalq <-
+#    function (expr, envir = parent.frame(), enclos = if (is.list(envir) ||
+#    is.pairlist(envir)) parent.frame() else baseenv())
+#      .Internal(eval(substitute(expr), envir, enclos))
+
+# slightly customized to avoid lack of promises
 #new.env <- function (hash = TRUE, parent = parent.frame(), size = 29L)
-#    .Internal(new.env(hash, parent, size))
+new.env <- function (hash = TRUE, parent = NULL, size = 29L)
+    .Internal(new.env(hash, parent, size))
 
 parent.env <- function(env)
     .Internal(parent.env(env))
@@ -45,9 +48,10 @@ parent.env <- function(env)
 `parent.env<-` <- function(env, value)
     .Internal("parent.env<-"(env, value))
 
-local <-
-    function (expr, envir = new.env())
-    eval.parent(substitute(eval(quote(expr), envir)))
+# currently implemented as a direct builtin
+#local <-
+#    function (expr, envir = new.env())
+#    eval.parent(substitute(eval(quote(expr), envir)))
 
 # Implemented as direct builtin
 #Recall <- function(...) .Internal(Recall(...))

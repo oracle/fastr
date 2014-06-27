@@ -97,13 +97,14 @@ public class GroupDispatchNode extends S3DispatchNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         RNode[] args = callArgsNode.getArguments();
         if (args == null || args.length < 1) {
             return callBuiltin(frame);
         }
         evaluatedArgs = new Object[]{args[0].execute(frame)};
         if ((this.type = getArgClass(evaluatedArgs[0])) != null) {
-            if (targetFunction != null && isEqualType(this.type, this.typeLast) && findFunction(targetFunctionName, frame) && isFirst) {
+            if (targetFunction != null && isEqualType(this.type, this.typeLast) && isFirst) {
                 return executeHelper();
             }
             findTargetFunction(frame);
@@ -179,7 +180,7 @@ public class GroupDispatchNode extends S3DispatchNode {
                     argArray[i] = ConstantNode.create(evaluatedArgs[i]);
                 }
             }
-            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(argArray, callArgsNode.getNames()));
+            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(callArgsNode.modeChange(), callArgsNode.modeChangeForAll(), argArray, callArgsNode.getNames()));
         }
         if (this.funCall == null) {
             this.funCall = new DispatchNode.FunctionCall(func, callArgsNode);

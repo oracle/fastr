@@ -11,12 +11,13 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -24,8 +25,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "inherits", kind = SUBSTITUTE)
-// TODO INTERNAL
+@RBuiltin(name = "inherits", kind = INTERNAL)
 public abstract class Inherits extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "what", "which"};
@@ -42,6 +42,8 @@ public abstract class Inherits extends RBuiltinNode {
 
     public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what, byte which);
 
+    @SlowPath
+    // map operations lead to recursion resulting in compilation failure
     @Specialization(order = 0)
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what, byte which) {
         controlVisibility();

@@ -139,7 +139,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
 
         private ReadVariableNode resolveNonFrame() {
-            RFunction lookupResult = RContext.getLookup().lookup(RRuntime.toString(symbol));
+            RFunction lookupResult = RContext.getEngine().lookupBuiltin(RRuntime.toString(symbol));
             if (lookupResult != null) {
                 return BuiltinFunctionVariableNodeFactory.create(lookupResult);
             } else {

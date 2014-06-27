@@ -22,16 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public class NamespaceFunctions {
 
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL)
-    public abstract static class GetRegisteredNamespace extends RInvisibleBuiltinNode {
+    public abstract static class GetRegisteredNamespace extends RBuiltinNode {
         @Specialization
         public Object doGetRegisteredNamespace(String name) {
             controlVisibility();
@@ -43,5 +45,50 @@ public class NamespaceFunctions {
             }
         }
 
+        @Specialization
+        public Object doGetRegisteredNamespace(RSymbol name) {
+            controlVisibility();
+            return doGetRegisteredNamespace(name.getName());
+        }
+    }
+
+    @RBuiltin(name = "isNamespaceEnv", kind = INTERNAL)
+    public abstract static class IsNamespaceEnv extends RBuiltinNode {
+        @Specialization
+        public byte doIsNamespaceEnv(REnvironment env) {
+            return RRuntime.asLogical(env.isNamespaceEnv());
+        }
+    }
+
+    @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL)
+    public abstract static class GetNamespaceRegistry extends RBuiltinNode {
+        @Specialization
+        public REnvironment doGetNamespaceRegistry(@SuppressWarnings("unused") RMissing missing) {
+            return REnvironment.getNamespaceRegistry();
+        }
+    }
+
+    @RBuiltin(name = "registerNamespace", kind = INTERNAL)
+    public abstract static class RegisterNamespace extends RBuiltinNode {
+        @Specialization
+        public RNull registerNamespace(String name, REnvironment env) {
+            REnvironment.registerNamespace(name, env);
+            return RNull.instance;
+        }
+    }
+
+    @RBuiltin(name = "unregisterNamespace", kind = INTERNAL)
+    public abstract static class UnregisterNamespace extends RBuiltinNode {
+        @Specialization
+        public RNull unregisterNamespace(@SuppressWarnings("unused") RAbstractStringVector name) {
+            // REnvironment.unregisterNamespace(name, env);
+            return RNull.instance;
+        }
+
+        @Specialization
+        public Object doGetRegisteredNamespace(RSymbol name) {
+            controlVisibility();
+            return doGetRegisteredNamespace(name);
+        }
     }
 }

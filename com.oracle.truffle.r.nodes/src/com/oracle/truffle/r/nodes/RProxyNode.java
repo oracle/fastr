@@ -217,7 +217,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    protected REnvironment wrap(REnvironment x) {
+    public REnvironment wrap(REnvironment x) {
         return proxy(x);
     }
 
@@ -226,7 +226,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    protected RConnection wrap(RConnection x) {
+    public RConnection wrap(RConnection x) {
         return proxy(x);
     }
 
@@ -235,7 +235,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    protected RExpression wrap(RExpression x) {
+    public RExpression wrap(RExpression x) {
         return proxy(x);
     }
 
@@ -244,7 +244,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    protected RSymbol wrap(RSymbol x) {
+    public RSymbol wrap(RSymbol x) {
         return proxy(x);
     }
 
@@ -253,7 +253,34 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    protected Object[] wrap(Object[] x) {
+    public RLanguage wrap(RLanguage x) {
+        return proxy(x);
+    }
+
+    protected RLanguage proxy(RLanguage x) {
+        return (RLanguage) proxyScalar(x);
+    }
+
+    @Specialization
+    public RPromise wrap(RPromise x) {
+        return proxy(x);
+    }
+
+    protected RPromise proxy(RPromise x) {
+        return (RPromise) proxyScalar(x);
+    }
+
+    @Specialization
+    public RPairList wrap(RPairList x) {
+        return proxy(x);
+    }
+
+    protected RPairList proxy(RPairList x) {
+        return (RPairList) proxyScalar(x);
+    }
+
+    @Specialization
+    public Object[] wrap(Object[] x) {
         return proxy(x);
     }
 

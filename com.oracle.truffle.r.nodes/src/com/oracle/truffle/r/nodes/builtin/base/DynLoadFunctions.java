@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -73,7 +73,8 @@ public class DynLoadFunctions {
 
     }
 
-    @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL)
+    // TODO remove .dynLibs when missing functionality (local) is available
+    @RBuiltin(name = "getLoadedDLLs", aliases = {".dynlibs"}, kind = INTERNAL)
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
         @Specialization
         public RList doGetLoadedDLLs() {

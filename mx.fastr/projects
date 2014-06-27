@@ -1,5 +1,5 @@
 suite=fastr
-mxversion=2.3.0
+mxversion=2.3.4
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 
@@ -92,15 +92,22 @@ project@com.oracle.truffle.r.test.ignore.processor@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.test
 project@com.oracle.truffle.r.test@sourceDirs=src
-project@com.oracle.truffle.r.test@dependencies=com.oracle.truffle.r.nodes,JUNIT
+project@com.oracle.truffle.r.test@dependencies=JUNIT,com.oracle.truffle.r.engine
 project@com.oracle.truffle.r.test@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.test@javaCompliance=1.8
 project@com.oracle.truffle.r.test@annotationProcessors=com.oracle.truffle.r.test.ignore.processor
 project@com.oracle.truffle.r.test@workingSets=Truffle,FastR,Test
 
+# com.oracle.truffle.r.engine
+project@com.oracle.truffle.r.engine@sourceDirs=src
+project@com.oracle.truffle.r.engine@dependencies=com.oracle.truffle.r.nodes
+project@com.oracle.truffle.r.engine@checkstyle=com.oracle.truffle.r.runtime
+project@com.oracle.truffle.r.engine@javaCompliance=1.8
+project@com.oracle.truffle.r.engine@workingSets=Truffle,FastR
+
 # com.oracle.truffle.r.shell
 project@com.oracle.truffle.r.shell@sourceDirs=src
-project@com.oracle.truffle.r.shell@dependencies=com.oracle.truffle.r.nodes,JLINE
+project@com.oracle.truffle.r.shell@dependencies=com.oracle.truffle.r.engine,JLINE
 project@com.oracle.truffle.r.shell@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.shell@javaCompliance=1.8
 project@com.oracle.truffle.r.shell@workingSets=Truffle,FastR

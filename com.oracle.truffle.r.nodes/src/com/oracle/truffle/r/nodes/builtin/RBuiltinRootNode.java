@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.runtime.*;
 
 public final class RBuiltinRootNode extends RRootNode {
 
@@ -46,6 +47,28 @@ public final class RBuiltinRootNode extends RRootNode {
 
     public RCallNode inline(CallArgumentsNode args) {
         return builtin.inline(args);
+    }
+
+    public boolean evaluatesArgs() {
+        RBuiltin rBuiltin = builtin.getRBuiltin();
+        return rBuiltin == null || rBuiltin.nonEvalArgs().length == 0;
+    }
+
+    public boolean evaluatesArg(int index) {
+        RBuiltin rBuiltin = builtin.getRBuiltin();
+        if (rBuiltin == null) {
+            return true;
+        } else {
+            int[] nonEvalArgs = rBuiltin.nonEvalArgs();
+            for (int i = 0; i < nonEvalArgs.length; i++) {
+                int ix = nonEvalArgs[i];
+                if (ix < 0 || ix == index) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
     }
 
     @Override

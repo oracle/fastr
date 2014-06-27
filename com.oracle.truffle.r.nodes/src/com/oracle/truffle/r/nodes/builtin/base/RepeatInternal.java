@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
@@ -103,4 +104,17 @@ public abstract class RepeatInternal extends RBuiltinNode {
         return RDataFactory.createStringVector(array, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @Specialization
+    public RList repList(RList value, int times) {
+        controlVisibility();
+        int oldLength = value.getLength();
+        int length = value.getLength() * times;
+        Object[] array = new Object[length];
+        for (int i = 0; i < times; i++) {
+            for (int j = 0; j < oldLength; ++j) {
+                array[i * oldLength + j] = value.getDataAt(j);
+            }
+        }
+        return RDataFactory.createList(array);
+    }
 }

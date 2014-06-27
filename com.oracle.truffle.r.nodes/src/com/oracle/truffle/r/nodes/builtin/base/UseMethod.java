@@ -10,7 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -21,17 +21,19 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "UseMethod", kind = PRIMITIVE)
 public abstract class UseMethod extends RBuiltinNode {
+
+    private static final int INLINE_CACHE_SIZE = 4;
+
     /*
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
-    @Child protected DispatchedCallNode dispatchedCallNode;
-    protected String lastGenericName;
+
+    @Child UseMethodNode useMethodNode = new UninitializedUseMethodNode(0);
 
     @Override
     public Object[] getParameterNames() {
@@ -44,93 +46,131 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, RAbstractContainer arg) {
+    public Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();
-        return useMethodHelper(frame, generic, arg.getClassHierarchy());
+        throw new ReturnException(useMethodNode.execute(frame, generic, arg));
+    }
+
+    private abstract static class UseMethodNode extends RNode {
+
+        @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            throw new AssertionError();
+        }
+
+        public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
+    }
+
+    private static final class UninitializedUseMethodNode extends UseMethodNode {
+
+        protected final int depth;
+
+        protected UninitializedUseMethodNode(int depth) {
+            this.depth = depth;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, String generic, Object o) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return specialize(generic, o).execute(frame, generic, o);
+        }
+
+        private UseMethodNode specialize(String generic, Object o) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (depth < INLINE_CACHE_SIZE) {
+                if (o == RMissing.instance) {
+                    return replace(new UseMethodGenericOnlyNode(generic, depth));
+                } else {
+                    return replace(new UseMethodGenericAndObjectNode(generic, depth));
+                }
+            }
+            return replace(new UseMethodFallbackNode());
+        }
+
+    }
+
+    private abstract static class UseMethodCachedNode extends UseMethodNode {
+
+        @Child protected UseMethodNode nextNode;
+        @Child protected DispatchedCallNode currentNode;
+
+        private final String generic;
+
+        protected UseMethodCachedNode(String generic, int depth) {
+            this.generic = generic;
+            nextNode = new UninitializedUseMethodNode(depth + 1);
+            currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+        }
+
+        protected abstract Object executeDispatch(VirtualFrame frame, String gen, Object o);
+
+        @Override
+        public final Object execute(VirtualFrame frame, String gen, Object o) {
+            if (generic.equals(gen)) {
+                return executeDispatch(frame, gen, o);
+            } else {
+                return nextNode.execute(frame, gen, o);
+            }
+        }
+
     }
 
     /*
      * If only one argument is passed to UseMethod, the first argument of enclosing function is used
      * to resolve the generic.
      */
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RMissing arg) {
-        controlVisibility();
-        if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
+    private static final class UseMethodGenericOnlyNode extends UseMethodCachedNode {
+
+        protected UseMethodGenericOnlyNode(String generic, int depth) {
+            super(generic, depth);
         }
-        Object enclosingArg = RArguments.getArgument(frame, 0);
-        if (enclosingArg instanceof Byte) {
-            return useMethod(frame, generic, (byte) enclosingArg);
+
+        @Override
+        public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
+            if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), gen, RNull.instance.toString());
+            }
+            Object enclosingArg = RArguments.getArgument(frame, 0);
+            return currentNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
         }
-        if (enclosingArg instanceof String) {
-            return useMethod(frame, generic, (String) enclosingArg);
+    }
+
+    private static final class UseMethodGenericAndObjectNode extends UseMethodCachedNode {
+
+        protected UseMethodGenericAndObjectNode(String generic, int depth) {
+            super(generic, depth);
         }
-        if (enclosingArg instanceof Integer) {
-            return useMethod(frame, generic, (int) enclosingArg);
+
+        @Override
+        public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
+            return currentNode.execute(frame, classHierarchyNode.execute(frame, obj));
         }
-        if (enclosingArg instanceof Double) {
-            return useMethod(frame, generic, (double) enclosingArg);
+    }
+
+    private static final class UseMethodFallbackNode extends UseMethodNode {
+
+        @Override
+        public Object execute(VirtualFrame frame, String generic, Object o) {
+            // TODO restructure UseMethodDispatchNode to expose generic case
+            // (This will prevent this fallback from being uncompilable.)
+            CompilerAsserts.neverPartOfCompilation();
+            if (o == RMissing.instance) {
+                if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
+                }
+                Object enclosingArg = RArguments.getArgument(frame, 0);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
+            } else {
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                return dcn.execute(frame, classHierarchyNode.execute(frame, o));
+            }
         }
-        if (enclosingArg instanceof RComplex) {
-            return useMethod(frame, generic, (RComplex) enclosingArg);
-        }
-        return useMethod(frame, generic, (RAbstractContainer) enclosingArg);
+
     }
 
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") byte arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.TYPE_LOGICAL);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") String arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.TYPE_CHARACTER);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") int arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.CLASS_INTEGER);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") double arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.CLASS_DOUBLE);
-    }
-
-    @Specialization
-    public Object useMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") RComplex arg) {
-        controlVisibility();
-        return useMethodHelper(frame, generic, RRuntime.TYPE_COMPLEX);
-    }
-
-    @Specialization
-    public Object useMethod(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object generic, @SuppressWarnings("unused") Object arg) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getNonStringGeneric(getEncapsulatingSourceSection());
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, String className) {
-        return useMethodHelper(frame, generic, RDataFactory.createStringVector(className));
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, String[] classNames) {
-        return useMethodHelper(frame, generic, RDataFactory.createStringVector(classNames, true));
-    }
-
-    private Object useMethodHelper(VirtualFrame frame, String generic, RStringVector classNames) {
-        if (dispatchedCallNode == null || !lastGenericName.equals(generic)) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
-            dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
-            lastGenericName = generic;
-        }
-        throw new ReturnException(dispatchedCallNode.execute(frame, classNames));
-    }
 }

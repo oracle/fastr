@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.SUBSTITUTE;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -48,6 +48,7 @@ public abstract class AsVector extends RBuiltinNode {
     @Child private CastStringNode castString;
     @Child private CastRawNode castRaw;
     @Child private CastListNode castList;
+    @Child private CastSymbolNode castSymbol;
 
     private RIntVector castInteger(VirtualFrame frame, Object operand) {
         if (castInteger == null) {
@@ -89,6 +90,14 @@ public abstract class AsVector extends RBuiltinNode {
         return (RStringVector) castString.executeString(frame, operand);
     }
 
+    private RSymbol castSymbol(VirtualFrame frame, Object operand) {
+        if (castSymbol == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castSymbol = insert(CastSymbolNodeFactory.create(null, false, false, false, false));
+        }
+        return (RSymbol) castSymbol.executeSymbol(frame, operand);
+    }
+
     private RRawVector castRaw(VirtualFrame frame, Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -103,11 +112,6 @@ public abstract class AsVector extends RBuiltinNode {
             castList = insert(CastListNodeFactory.create(null, true, false, false));
         }
         return castList.executeList(frame, operand);
-    }
-
-    private RSymbol castSymbol(VirtualFrame frame, Object operand) {
-        RStringVector vec = castString(frame, operand);
-        return RDataFactory.createSymbol(vec.getDataAt(0));
     }
 
     @Override
@@ -172,6 +176,16 @@ public abstract class AsVector extends RBuiltinNode {
     public RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castSymbol(frame, x);
+    }
+
+    @Specialization(order = 900, guards = "isSymbol")
+    public RSymbol asVectorSymbol(RSymbol x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return RDataFactory.createSymbol(x.getName());
+    }
+
+    protected boolean isSymbol(@SuppressWarnings("unused") RSymbol x, String mode) {
+        return mode.equals("symbol");
     }
 
     @Specialization(order = 1000)

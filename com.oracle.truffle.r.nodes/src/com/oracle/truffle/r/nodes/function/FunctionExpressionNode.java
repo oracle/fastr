@@ -73,7 +73,7 @@ public abstract class FunctionExpressionNode extends RNode {
 
         @Override
         public RFunction executeFunction(VirtualFrame frame) {
-            return new RFunction("", callTarget, false, frame.materialize());
+            return new RFunction("", callTarget, frame.materialize());
         }
 
         public RootCallTarget getCallTarget() {

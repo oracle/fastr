@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -81,9 +81,9 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.frame", kind = INTERNAL)
     public abstract static class SysFrame extends FrameHelper {
         @Specialization()
-        public REnvironment sysFrame(double nd) {
+        public REnvironment sysFrame(int nd) {
             controlVisibility();
-            int n = (int) nd;
+            int n = nd;
             if (n == 0) {
                 // TODO Strictly this should be the value of .GlobalEnv
                 // (which may differ from globalenv() during startup)
@@ -93,14 +93,19 @@ public class FrameFunctions {
                 return EnvFunctions.frameToEnvironment(callerFrame);
             }
         }
+
+        @Specialization()
+        public REnvironment sysFrame(double nd) {
+            return sysFrame((int) nd);
+        }
     }
 
     @RBuiltin(name = "sys.parent", kind = INTERNAL)
     public abstract static class SysParent extends RBuiltinNode {
         @Specialization()
-        public int sysFunction(double nd) {
+        public int sysParent(int nd) {
             controlVisibility();
-            int n = (int) nd;
+            int n = nd;
             int d = Utils.stackDepth();
             if (n > d) {
                 return 0;
@@ -108,14 +113,19 @@ public class FrameFunctions {
                 return d - n;
             }
         }
+
+        @Specialization()
+        public int sysParent(double nd) {
+            return sysParent((int) nd);
+        }
     }
 
     @RBuiltin(name = "sys.function", kind = INTERNAL)
     public abstract static class SysFunction extends FrameHelper {
         @Specialization()
-        public Object sysFunction(double nd) {
+        public Object sysFunction(int nd) {
             controlVisibility();
-            int n = (int) nd;
+            int n = nd;
             // N.B. Despite the spec, n==0 is treated as the current function
             Frame callerFrame = getFrame(n);
             RFunction func = RArguments.getFunction(callerFrame);
@@ -124,6 +134,11 @@ public class FrameFunctions {
             } else {
                 return func;
             }
+        }
+
+        @Specialization()
+        public Object sysFunction(double nd) {
+            return sysFunction((int) nd);
         }
     }
 

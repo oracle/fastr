@@ -49,9 +49,9 @@ public abstract class Call extends ASTNode {
             return create(src, Symbol.getSymbol(c.getValues()[0]), args);
         } else if (call instanceof FunctionCall) {
             return new FunctionCall(src, (FunctionCall) call, args);
+        } else {
+            return new FunctionCall(src, call, args, false);
         }
-        assert false;
-        return null;
     }
 
     public static ASTNode create(SourceSection src, Symbol funName, List<ArgNode> args) {

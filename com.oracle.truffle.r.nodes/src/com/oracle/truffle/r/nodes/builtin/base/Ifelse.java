@@ -22,13 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
@@ -43,39 +45,48 @@ public abstract class Ifelse extends RBuiltinNode {
         return na.check(test);
     }
 
-    @Specialization(guards = "isNA")
+    @Specialization(order = 0, guards = "isNA")
     public byte ifelseNA(byte test, double yes, double no) {
         controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
-    @Specialization(guards = "!isNA")
+    @Specialization(order = 1, guards = "!isNA")
     public double ifelse(byte test, double yes, double no) {
         controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
-    @Specialization(guards = "isNA")
+    @Specialization(order = 2, guards = "isNA")
     public byte ifelseNA(byte test, int yes, int no) {
         controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
-    @Specialization(guards = "!isNA")
+    @Specialization(order = 3, guards = "!isNA")
     public int ifelse(byte test, int yes, int no) {
         controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
-    @Specialization(guards = "isNA")
+    @Specialization(order = 4, guards = "isNA")
     public byte ifelseNA(byte test, String yes, String no) {
         controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
-    @Specialization(guards = "!isNA")
+    @Specialization(order = 5, guards = "!isNA")
     public String ifelse(byte test, String yes, String no) {
         controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
+
+    @Specialization(order = 100)
+    public RDoubleVector ifelse(RLogicalVector lvec, RDoubleVector dvec, double no) {
+        // just one special case for version.R
+        assert lvec.getLength() == 1;
+        double[] data = new double[]{lvec.getDataAt(0) == RRuntime.LOGICAL_TRUE ? dvec.getDataAt(0) : no};
+        return RDataFactory.createDoubleVector(data, data[0] != RRuntime.DOUBLE_NA);
+    }
+
 }

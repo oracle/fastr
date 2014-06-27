@@ -22,46 +22,37 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "paste0", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
-// TODO INTERNAL
+/**
+ * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
+ * efficient.
+ */
+@RBuiltin(name = "paste0", kind = INTERNAL)
 public abstract class Paste0 extends RBuiltinNode {
 
     @Child Paste pasteNode;
 
-    private Object paste(VirtualFrame frame, Object value, Object collapse) {
+    private Object paste(VirtualFrame frame, RList values, Object collapse) {
         if (pasteNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin()));
         }
-        return pasteNode.executeObject(frame, value, "", collapse);
-    }
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"...", "collapse"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{null, ConstantNode.create(RNull.instance)};
+        return pasteNode.executeList(frame, values, "", collapse);
     }
 
     @Specialization
-    public Object paste0(VirtualFrame frame, Object value, Object collapse) {
+    public Object paste0(VirtualFrame frame, RList values, Object collapse) {
         controlVisibility();
-        return paste(frame, value, collapse);
+        return paste(frame, values, collapse);
     }
+
 }

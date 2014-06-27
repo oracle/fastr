@@ -30,9 +30,9 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 
 /**
  * Denotes an R package that is built-in to the implementation. It consists of two parts:
@@ -48,6 +48,10 @@ import com.oracle.truffle.r.runtime.*;
  * The R code is expected to be found (as resources) in the 'R' sub-package (directory) associated
  * with the subclass package, e.g., {@code com.oracle.truffle.r.nodes.builtin.base.R}. For debugging
  * parsing errors we retain the R source code, although this is not functionally necessary.
+ * <p>
+ * <p>
+ * To cope with a possible lack of reflection capability in an AOT compiled VM, initialization is
+ * two phase, with all reflective code executed in code reachable only from static initializers.
  */
 public abstract class RBuiltinPackage {
 
@@ -72,6 +76,8 @@ public abstract class RBuiltinPackage {
     private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
     }
+
+    protected REnvironment env;
 
     protected RBuiltinPackage() {
         try {
@@ -119,11 +125,20 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
-    public void loadSources(VirtualFrame frame) {
+    /**
+     * Runtime component of the package initialization process.
+     */
+    public void loadSources(VirtualFrame frame, REnvironment envForFrame) {
+        this.env = envForFrame;
+        for (RBuiltinFactory factory : builtins.values()) {
+            if (factory.getPackage() == this) {
+                factory.setEnv(env);
+            }
+        }
         List<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
-                REngine.parseAndEval(src.libContents, frame, false);
+                RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false);
             }
         }
     }
@@ -166,7 +181,7 @@ public abstract class RBuiltinPackage {
             }
             lastParameterKind = builtin.lastParameterKind();
         }
-        return loadImpl(clazz, names, lastParameterKind);
+        return loadImpl(clazz, names, builtin, lastParameterKind);
     }
 
     void updateNames(RBuiltinFactory builtin, String[] oldNames, String[] newNames) {
@@ -184,7 +199,7 @@ public abstract class RBuiltinPackage {
     }
 
     @SuppressWarnings("unchecked")
-    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, LastParameterKind lastParameterKind) {
+    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, RBuiltin builtin, LastParameterKind lastParameterKind) {
         if (!RBuiltinNode.class.isAssignableFrom(clazz)) {
             throw new RuntimeException(clazz.getName() + " is must be assignable to " + RBuiltinNode.class);
         }
@@ -212,7 +227,7 @@ public abstract class RBuiltinPackage {
             }
             nodeFactory = new ReflectiveNodeFactory(clazz);
         }
-        RBuiltinFactory factory = new RBuiltinFactory(aliases, lastParameterKind, nodeFactory, new Object[0]);
+        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, lastParameterKind, nodeFactory, new Object[0], this);
         for (String name : factory.getBuiltinNames()) {
             if (builtins.containsKey(name)) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");

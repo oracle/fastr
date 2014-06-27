@@ -27,12 +27,11 @@ import java.nio.charset.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.*;
-import com.oracle.truffle.api.impl.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public final class Utils {
@@ -118,7 +117,7 @@ public final class Utils {
 
     public static void dumpFunction(String groupName, RFunction function) {
         GraphPrintVisitor graphPrinter = new GraphPrintVisitor();
-        DefaultCallTarget callTarget = (DefaultCallTarget) function.getTarget();
+        RootCallTarget callTarget = function.getTarget();
         if (callTarget != null) {
             graphPrinter.beginGroup(groupName);
             graphPrinter.beginGraph(RRuntime.toString(function)).visit(callTarget.getRootNode());
@@ -246,6 +245,7 @@ public final class Utils {
     /**
      * Retrieve the caller frame of the current frame.
      */
+    @SlowPath
     public static Frame getCallerFrame(FrameAccess fa) {
         return getStackFrame(fa, 1);
     }

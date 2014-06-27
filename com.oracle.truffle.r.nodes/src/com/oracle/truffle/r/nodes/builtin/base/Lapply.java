@@ -11,7 +11,8 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -19,8 +20,8 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -63,6 +64,11 @@ public abstract class Lapply extends RBuiltinNode {
     private Object lapplyHelper(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] combinedArgs) {
         controlVisibility();
         RVector xMat = x.materialize();
+        Object[] callResult = applyHelper(frame, funCall, xMat, fun, combinedArgs);
+        return RDataFactory.createList(callResult, xMat.getNames());
+    }
+
+    static Object[] applyHelper(VirtualFrame frame, IndirectCallNode funCall, RVector xMat, RFunction fun, Object[] combinedArgs) {
         /* TODO: R switches to double if x.getLength() is greater than 2^31-1 */
         Object[] result = new Object[xMat.getLength()];
         Object[] arguments = RArguments.create(fun, combinedArgs);
@@ -72,6 +78,6 @@ public abstract class Lapply extends RBuiltinNode {
             arguments[firstArgOffset] = xMat.getDataAtAsObject(i);
             result[i] = funCall.call(frame, fun.getTarget(), arguments);
         }
-        return RDataFactory.createList(result, xMat.getNames());
+        return result;
     }
 }

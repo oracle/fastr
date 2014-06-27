@@ -454,6 +454,16 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testAnyDuplicatedIgnore_dcc2ba95aa8608d62368b2c9886bb0ba() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testAnyDuplicatedIgnore_58cdce8ea781c0cdf349b42069b16727() {
+        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testAnyIgnore_a5514afb3c27ad5fad71696cb1db96a9() {
         assertEval("{ any(FALSE, NA,  na.rm=TRUE) }");
     }
@@ -616,6 +626,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testCall_ac5601b7f27d60cead4d93b849fd38ca() {
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testCall_7c2048e48cfa4b8a27e274503d2d28f2() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
     }
 
     @Ignore
@@ -1049,23 +1064,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testEval_df5a9c0a0569879276fa81b87dddc5cf() {
-        assertEval("{ eval(quote(x+x), list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEval_046c5969a889af57d7ea19d1fba119d6() {
-        assertEval("{ y <- 2; eval(quote(x+y), list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEval_5b956e0508e3402588200db72e33861f() {
-        assertEval("{ y <- 2; x <- 4; eval(x + y, list(x=1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testEval_b2e8a12bd61dc527a9bc79b8c43a380f() {
-        assertEval("{ y <- 2; x <- 2 ; eval(quote(x+y), -1) }");
+    public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
+        assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
 
     @Ignore
@@ -1859,8 +1859,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testRbindIgnore_be158803468f8099cec173e61a9c21e2() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+    public void TestSimpleBuiltins_testRbindIgnore_53509c8f581c1a9947804e87f0a3580f() {
+        assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
     }
 
     @Ignore
@@ -1961,6 +1961,41 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testRowStatsArray_0963abebe9629587b68d742c268c67e5() {
         assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_ff42abcbf4f968c27e32a7dd28eda044() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_c0abb95d78ba54d518dba3716e78f683() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_b703c1a90d66f9baf7ccbe08919f69d1() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(\"Heads\", \"Tails\") ; prob <- c(.3, .7) ; sample(x, 10, TRUE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_c90feee3f3b3a20606e1b43eab8afb31() {
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_18482bc15a1e30cd46e5be81317a3374() {
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_38b963b6f50f4a4d9e1250d1df321b43() {
+        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSampleIgnore_2935bb73d988381d4ae52f265101577a() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
     }
 
     @Ignore
@@ -2161,6 +2196,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_6e790dfb1de4a070282c353b0be255bd() {
         assertEval("{ seq(along=c(10,11,12)) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSetAttr_4c035922fa30fd65161fe53e1af97368() {
+        assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSetAttr_d3a803a8bcf4ca34f3f28cc87c530aef() {
+        assertEval("{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
     }
 
     @Ignore

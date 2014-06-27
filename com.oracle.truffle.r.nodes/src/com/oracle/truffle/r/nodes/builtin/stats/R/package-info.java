@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+/**
+ * This "package" contains R sources that correspond to (some of) the R functions
+ * in the "stats" package. They are loaded using the {@link java.lang.Class#getResource}
+ * mechanism on system startup.
+ */
+package com.oracle.truffle.r.nodes.builtin.stats.R;
 
-import java.lang.annotation.*;
-
-@Retention(RetentionPolicy.RUNTIME)
-public @interface RBuiltin {
-
-    RBuiltinKind kind();
-
-    String name();
-
-    String[] aliases() default {};
-
-    boolean isCombine() default false;
-
-    LastParameterKind lastParameterKind() default LastParameterKind.VALUE;
-
-    public enum LastParameterKind {
-        VALUE,
-        VAR_ARGS_SPECIALIZE,
-        VAR_ARGS_ALWAYS_ARRAY;
-
-        public boolean isVarArgs() {
-            return this != VALUE;
-        }
-    }
-
-}

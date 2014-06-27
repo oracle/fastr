@@ -73,4 +73,9 @@ public abstract class CastToContainerNode extends CastNode {
         return dataFrame;
     }
 
+    @Specialization
+    public RExpression cast(RExpression expression) {
+        return expression;
+    }
+
 }

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -31,8 +32,8 @@ import com.oracle.truffle.api.frame.*;
  * <ul>
  * <li>The {@link #name} is optional. It is given only for builtins.
  * <li>The {@link #target} represents the actually callable entry point to the function.
- * <li>Functions may represent builtins; this is indicated by the {@link #builtin} flag set to
- * {@code true}.
+ * <li>Functions may represent builtins; this is indicated by the {@link #builtin} flag set to the
+ * associated {@link RBuiltin} instance.
  * <li>The lexically enclosing environment of this function's definition is referenced by
  * {@link #enclosingFrame}.
  * </ul>
@@ -41,22 +42,22 @@ public final class RFunction extends RScalar {
 
     private final String name;
     private final RootCallTarget target;
-    private final boolean builtin;
+    private final RBuiltin builtin;
     private MaterializedFrame enclosingFrame;
 
-    public RFunction(String name, RootCallTarget target, boolean builtin, MaterializedFrame enclosingFrame) {
+    public RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
         this.enclosingFrame = enclosingFrame;
     }
 
-    public RFunction(String name, RootCallTarget target, boolean builtin) {
-        this(name, target, builtin, null);
+    public RFunction(String name, RootCallTarget target, MaterializedFrame enclosingFrame) {
+        this(name, target, null, enclosingFrame);
     }
 
     public boolean isBuiltin() {
-        return builtin;
+        return builtin != null;
     }
 
     public String getName() {

@@ -29,6 +29,24 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class BinaryLogic extends BooleanOperation {
 
+    /* Fake RBuiltins to unify the binary operations */
+
+    @RBuiltin(name = "&&", kind = RBuiltinKind.PRIMITIVE)
+    public static class NonVectorAndBuiltin {
+    }
+
+    @RBuiltin(name = "||", kind = RBuiltinKind.PRIMITIVE)
+    public static class NonVectorOrBuiltin {
+    }
+
+    @RBuiltin(name = "&", kind = RBuiltinKind.PRIMITIVE)
+    public static class AndBuiltin {
+    }
+
+    @RBuiltin(name = "|", kind = RBuiltinKind.PRIMITIVE)
+    public static class OrBuiltin {
+    }
+
     protected NACheck nan = NACheck.create();
 
     public static final BooleanOperationFactory NON_VECTOR_AND = new BooleanOperationFactory() {

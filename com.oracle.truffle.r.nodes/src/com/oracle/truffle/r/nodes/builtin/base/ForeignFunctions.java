@@ -24,11 +24,14 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.*;
 
@@ -100,11 +103,11 @@ public class ForeignFunctions {
                 RDoubleVector qrauxVec = (RDoubleVector) args[6];
                 RIntVector pivotVec = (RIntVector) args[7];
                 RDoubleVector workVec = (RDoubleVector) args[8];
-                double[] x = xVec.getDataCopy();
-                int[] rank = rankVec.getDataCopy();
-                double[] qraux = qrauxVec.getDataCopy();
-                int[] pivot = pivotVec.getDataCopy();
-                RFFIFactory.getRFFI().getLinpackRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
+                double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
+                int[] rank = rankVec.isTemporary() ? rankVec.getDataWithoutCopying() : rankVec.getDataCopy();
+                double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
+                int[] pivot = pivotVec.isTemporary() ? pivotVec.getDataWithoutCopying() : pivotVec.getDataCopy();
+                RFFIFactory.getRFFI().getRDerivedRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, xVec.getDimensions()),
@@ -141,12 +144,12 @@ public class ForeignFunctions {
                 int ny = (int) args[5];
                 RDoubleVector bVec = (RDoubleVector) args[6];
                 RIntVector infoVec = (RIntVector) args[7];
-                double[] x = xVec.getDataCopy();
-                double[] qraux = qrauxVec.getDataCopy();
-                double[] y = yVec.getDataCopy();
-                double[] b = bVec.getDataCopy();
-                int[] info = infoVec.getDataCopy();
-                RFFIFactory.getRFFI().getLinpackRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
+                double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
+                double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
+                double[] y = yVec.isTemporary() ? yVec.getDataWithoutCopying() : yVec.getDataCopy();
+                double[] b = bVec.isTemporary() ? bVec.getDataWithoutCopying() : bVec.getDataCopy();
+                int[] info = infoVec.isTemporary() ? infoVec.getDataWithoutCopying() : infoVec.getDataCopy();
+                RFFIFactory.getRFFI().getRDerivedRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
                 coef.copyAttributesFrom(bVec);
                 // @formatter:off
@@ -285,6 +288,84 @@ public class ForeignFunctions {
                 listArgNames[i] = name;
             }
             return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
+        }
+
+    }
+
+    /**
+     * For now, just some special case functions that are built in to the implementation.
+     */
+    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
+    @NodeField(name = "argNames", type = String[].class)
+    public abstract static class Call extends Adapter {
+
+        @Child private CastComplexNode castComplex;
+        @Child private CastLogicalNode castLogical;
+        @Child private CastToVectorNode castVector;
+
+        private Object castComplex(VirtualFrame frame, Object operand) {
+            if (castComplex == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castComplex = insert(CastComplexNodeFactory.create(null, true, false, false));
+            }
+            return castComplex.executeCast(frame, operand);
+        }
+
+        private Object castLogical(VirtualFrame frame, Object operand) {
+            if (castLogical == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castLogical = insert(CastLogicalNodeFactory.create(null, true, false, false));
+            }
+            return castLogical.executeCast(frame, operand);
+        }
+
+        private RAbstractVector castVector(VirtualFrame frame, Object value) {
+            if (castVector == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+            }
+            return castVector.executeRAbstractVector(frame, value);
+        }
+
+        // TODO: handle more argumet types (this is sufficient to run the b25-matfunc1 benchmark
+        @SuppressWarnings("unused")
+        @Specialization(order = 1, guards = "fft")
+        public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
+            controlVisibility();
+            RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
+            double[] z = zVec.isTemporary() ? zVec.getDataWithoutCopying() : zVec.getDataCopy();
+            RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, args[1]));
+            int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
+            int retCode = 7;
+            if (zVec.getLength() > 1) {
+                if (zVec.getDimensions() == null) {
+                    int n = zVec.getLength();
+                    int[] maxf = new int[1];
+                    int[] maxp = new int[1];
+                    RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
+                    if (maxf[0] == 0) {
+                        throw RError.getGenericError(getEncapsulatingSourceSection(), "fft factorization error");
+                    }
+                    double[] work = new double[4 * maxf[0]];
+                    int[] iwork = new int[maxp[0]];
+                    retCode = RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(z, 1, n, 1, inv, work, iwork);
+                }
+            }
+
+            return RDataFactory.createComplexVector(z, zVec.isComplete());
+        }
+
+        public boolean fft(RList f) {
+            if (f.getNames() == RNull.instance) {
+                return false;
+            }
+            RStringVector names = (RStringVector) f.getNames();
+            for (int i = 0; i < names.getLength(); i++) {
+                if (names.getDataAt(i).equals("name")) {
+                    return f.getDataAt(i).equals("fft") ? true : false;
+                }
+            }
+            return false;
         }
 
     }

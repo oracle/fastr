@@ -137,7 +137,6 @@ attachNamespace <- function(ns, pos = 2L, depends = NULL)
     }
     runUserHook <- function(pkgname, pkgpath) {
         hook <- getHook(packageEvent(pkgname, "attach")) # might be list()
-		debug.break(list(pkgname, hook))
         for(fun in hook) try(fun(pkgname, pkgpath))
     }
 
@@ -370,10 +369,11 @@ loadNamespace <- function (package, lib.loc = NULL,
                                 sQuote(basename(pkgpath))),
                         call. = FALSE, domain = NA)
             R_version_built_under <- as.numeric_version(built$R)
-            if(R_version_built_under < "3.0.0")
-                stop(gettextf("package %s was built before R 3.0.0: please re-install it",
-                                sQuote(basename(pkgpath))),
-                        call. = FALSE, domain = NA)
+# can't do.call generics
+#            if(R_version_built_under < "3.0.0")
+#                stop(gettextf("package %s was built before R 3.0.0: please re-install it",
+#                                sQuote(basename(pkgpath))),
+#                        call. = FALSE, domain = NA)
             ## we need to ensure that S4 dispatch is on now if the package
             ## will require it, or the exports will be incomplete.
             dependsMethods <- "methods" %in% names(pkgInfo$Depends)
@@ -674,10 +674,12 @@ requireNamespace <- function (package, ..., quietly = FALSE)
     invisible(res)
 }
 
+# changes due to lack of promises
 loadingNamespaceInfo <- function() {
     dynGet <- function(name,
-            notFound = stop(gettextf("%s not found", sQuote(name)),
-                    domain = NA))
+#            notFound = stop(gettextf("%s not found", sQuote(name)),
+            notFound = gettextf("%s not found", sQuote(name),
+            domain = NA))
     {
         n <- sys.nframe()
         while (n > 1) {
@@ -686,9 +688,11 @@ loadingNamespaceInfo <- function() {
             if (exists(name, envir = env, inherits = FALSE))
                 return(get(name, envir = env, inherits = FALSE))
         }
-        notFound
+#        notFound
+        stop(notFound)
     }
-    dynGet("__LoadingNamespaceInfo__", stop("not loading a namespace"))
+#    dynGet("__LoadingNamespaceInfo__", stop("not loading a namespace"))
+    dynGet("__LoadingNamespaceInfo__", "not loading a namespace")
 }
 
 topenv <- function(envir = parent.frame(),
@@ -765,8 +769,9 @@ setNamespaceInfo <- function(ns, which, val) {
 asNamespace <- function(ns, base.OK = TRUE) {
     if (is.character(ns) || is.name(ns))
         ns <- getNamespace(ns)
-    if (! isNamespace(ns))
+    if (! isNamespace(ns)) {
         stop("not a namespace")
+    }
     else if (! base.OK && isBaseNamespace(ns))
         stop("operation not allowed on base namespace")
     else ns

@@ -66,6 +66,10 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
         RVector result = left.createEmptySameType(rows * cols, left.isComplete() && right.isComplete());
         boolean notEqualCols = leftDimensions[1] != rightDimensions[1];
 
+        if (cols > leftLength && cols % leftLength != 0) {
+            RError.warning(getEncapsulatingSourceSection(), RError.RBIND_COLUMNS_NOT_MULTIPLE);
+        }
+
         // initial copy of left to result
         int rRow = 0;
         int rCol = 0;
@@ -132,6 +136,15 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
     private static int[] rbindDimensions(int[] leftDimensions, int[] rightDimensions) {
         assert leftDimensions != null && leftDimensions.length == 2;
         assert rightDimensions != null && rightDimensions.length == 2;
-        return new int[]{leftDimensions[0] + rightDimensions[0], Math.max(leftDimensions[1], rightDimensions[1])};
+        return new int[]{effectiveDimension(leftDimensions, 0) + effectiveDimension(rightDimensions, 0), Math.max(leftDimensions[1], rightDimensions[1])};
+    }
+
+    private static int effectiveDimension(int[] dimensions, int index) {
+        for (int i = 0; i < dimensions.length; i++) {
+            if (dimensions[i] == 0) {
+                return 0;
+            }
+        }
+        return dimensions[index];
     }
 }

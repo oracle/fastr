@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.zip.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -56,6 +57,11 @@ public abstract class ConnectionFunctions {
             String[] result = new String[lines.size()];
             lines.toArray(result);
             return result;
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            throw new IOException();
         }
 
     }
@@ -96,24 +102,48 @@ public abstract class ConnectionFunctions {
             lines.toArray(result);
             return result;
         }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            throw new IOException();
+        }
+    }
+
+    public static class GZIPInputRConnection extends RConnection {
+        private GZIPInputStream stream;
+
+        GZIPInputRConnection(String path) throws IOException {
+            stream = new GZIPInputStream(new FileInputStream(path));
+        }
+
+        @Override
+        public String[] readLines(int n) throws IOException {
+            throw new IOException("TODO");
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return stream;
+        }
+
     }
 
     @RBuiltin(name = "file", kind = INTERNAL)
     public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
-        public Object file(String description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
+        public Object file(RAbstractStringVector description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!open.equals("r")) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented open mode:" + open);
             }
-            String ePath = Utils.tildeExpand(description);
+            String ePath = Utils.tildeExpand(description.getDataAt(0));
             try {
                 // temporarily return invisible to avoid missing print support
                 return new FileReadRConnection(ePath);
             } catch (IOException ex) {
-                RContext.getInstance().setEvalWarning("cannot open file '" + description + "': " + ex.getMessage());
+                RContext.getInstance().setEvalWarning("cannot open file '" + description.getDataAt(0) + "': " + ex.getMessage());
                 throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot open connection");
             }
         }
@@ -127,7 +157,25 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", kind = INTERNAL)
+    @RBuiltin(name = "gzfile", kind = INTERNAL)
+    public abstract static class GZFile extends RInvisibleBuiltinNode {
+        @Specialization
+        @SuppressWarnings("unused")
+        public Object gzFile(RAbstractStringVector description, String open, RAbstractStringVector encoding, double compression) {
+            controlVisibility();
+            String ePath = Utils.tildeExpand(description.getDataAt(0));
+            try {
+                // temporarily return invisible to avoid missing print support
+                return new GZIPInputRConnection(ePath);
+            } catch (IOException ex) {
+                RContext.getInstance().setEvalWarning("cannot open file '" + description.getDataAt(0) + "': " + ex.getMessage());
+                throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot open connection");
+            }
+        }
+    }
+
+    @RBuiltin(name = "close", kind = PRIMITIVE)
+    // TODO Internal
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
         public Object close(@SuppressWarnings("unused") Object con) {

@@ -87,7 +87,7 @@ public abstract class AssignVariable extends ASTNode {
             return update;
         } else if (first instanceof FunctionCall) {
             FunctionCall replacementFunc = (FunctionCall) first;
-            FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.getLhs(), replacementFunc.getArgs());
+            FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.getLhs(), replacementFunc.getArgs(), false);
             AccessVector newLhs = new AccessVector(func.getSource(), func, lhs.getArgs(), lhs.isSubset());
             UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
             lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));

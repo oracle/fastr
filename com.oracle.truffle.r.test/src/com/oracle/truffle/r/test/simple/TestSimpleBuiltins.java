@@ -19,6 +19,14 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    @Ignore
+    public void testSetAttr() {
+        assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
+        assertEval("{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
+
+    }
+
+    @Test
     public void testSequence() {
         assertEval("{ 5L:10L }");
         assertEval("{ 5L:(0L-5L) }");
@@ -509,6 +517,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testAsSymbol() {
+        assertEval("{ as.symbol(\"name\") }");
+        assertEval("{ as.symbol(123) }");
+        assertEval("{ as.symbol(as.symbol(123)) }");
+    }
+
+    @Test
     public void testMatrix() {
         assertEval("{ matrix(c(1,2,3,4),2,2) }");
         assertEval("{ matrix(as.double(NA),2,2) }");
@@ -808,6 +823,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; diag(m) }");
         assertEval("{ m <- matrix(1:9, nrow=3) ; diag(m) }");
+
+        assertEval("{ diag(1, 7) }");
+        assertEval("{ diag(1, 7, 2) }");
+        assertEval("{ diag(1, 2, 7) }");
     }
 
     @Test
@@ -1989,12 +2008,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rbind(1:3,1:3) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
         assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
     }
 
     @Test
     @Ignore
     public void testRbindIgnore() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+        assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
     }
 
     @Test
@@ -2307,12 +2327,28 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testEval() {
-        assertEval("{ eval(quote(x+x), list(x=1)) }");
-        assertEval("{ y <- 2; eval(quote(x+y), list(x=1)) }");
-        assertEval("{ y <- 2; x <- 4; eval(x + y, list(x=1)) }");
-        assertEval("{ y <- 2; x <- 2 ; eval(quote(x+y), -1) }");
+        assertEval("{ eval(2 ^ 2 ^ 3)}");
+        assertEval("{ a <- 1; eval(a) }");
+        assertEval("{ a <- 1; eval(a + 1) }");
+        assertEval("{ a <- 1; eval(expression(a + 1)) }");
+        assertEval("{ f <- function(x) { eval(x) }; f(1) }");
+        assertEval("{ eval(x <- 1); ls() }");
+        assertEval("{ ne <- new.env(); eval(x <- 1, ne); ls() }");
+        assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
+        assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
+    }
+
+    @Test
+    @Ignore
+    public void testEvalIgnore() {
+        assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");  // should print two values, xx^2 and xx
+    }
+
+    @Test
+    public void testLocal() {
+        assertEval("{ kk <- local({k <- function(x) {x*2}}); kk(8)}");
+        assertEval("{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
     }
 
     @Test
@@ -2451,6 +2487,8 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCall() {
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
+        // Arguments are being passed incorrectly in RCallNode
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
     }
 
     @Test
@@ -2570,6 +2608,7 @@ public class TestSimpleBuiltins extends TestBase {
         // Basic UseMethod
         assertEval("{f <- function(x){ UseMethod(\"f\",x); };" + "f.first <- function(x){cat(\"f first\",x)};" + "f.second <- function(x){cat(\"f second\",x)};" + "obj <-1;"
                         + "attr(obj,\"class\")  <- \"first\";" + "f(obj);" + "attr(obj,\"class\")  <- \"second\";}");
+        assertEval("{f<-function(x){UseMethod(\"f\")};f.logical<-function(x){print(\"logical\")};f(TRUE)}");
     }
 
     @Test
@@ -2989,5 +3028,115 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ which.max(c(1:5))}");
         assertEval("{ which.max(c(5:1))}");
         assertEval("{ which.max(c(1:10000))}");
+    }
+
+    @Test
+    public void testSample() {
+        assertEval("{  set.seed(4357, \"default\"); x <- 5 ; sample(x, 5, TRUE, NULL) ;}");
+        assertEval("{  set.seed(4357, \"default\"); x <- 5 ; sample(x, 5, FALSE, NULL) ;}");
+
+        assertEval("{ set.seed(4357, \"default\");  x <- c(5, \"cat\"); sample(x, 2, TRUE, NULL) ;}");
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5, \"cat\"); sample(x, 2, FALSE, NULL) ;}");
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5, \"cat\"); sample(x, 3, TRUE, NULL) ;}");
+
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5; sample(x, 5, TRUE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5; sample(x, 5, FALSE, NULL) ;}");
+
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 2, TRUE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 2, FALSE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 3, TRUE, NULL) ;}");
+
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; prob <- c(.1, .2, .3, .2, .1) ; sample(x, 10, TRUE, prob) ; }");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; prob <- c(.5, .5, .5, .5, .5) ; sample(x, 5, FALSE, prob) ; }");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; prob <- c(.2, .2, .2, .2, .2 ) ; sample(x, 5, FALSE, prob) ; }");
+
+        assertEval("{ set.seed(4357, \"default\"); x <- c(\"Heads\", \"Tails\"); prob <- c(.3, .7) ; sample(x, 10, TRUE, prob) ; }");
+        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; prob <- c(.1, .2, .3, .2, .1); sample(x, 10, TRUE, prob) ; }");
+        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; prob <- c(.5, .5, .5, .5, .5); sample(x, 5, FALSE, prob) ; }");
+        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; prob <- c(.2, .2, .2, .2, .2 ); sample(x, 5, FALSE, prob) ; }");
+    }
+
+    @Test
+    @Ignore
+    public void testSampleIgnore() {
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(\"Heads\", \"Tails\") ; prob <- c(.3, .7) ; sample(x, 10, TRUE, prob) ; }");
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+
+        // Fails because of error message mismatch.
+        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+    }
+
+    @Test
+    public void testLevels() {
+        assertEval("{ x <- 1 ; levels(x)<-\"a\"; levels(x);}");
+        assertEval("{ x <- 5 ; levels(x)<-\"catdog\"; levels(x);}");
+        assertEval("{ x <- 1 ; levels(x)<-NULL; levels(x)}");
+        assertEval("{ x <- 1 ; levels(x)<-1; levels(x);}");
+        assertEval("{ x <- 1 ; levels(x)<-4.5; levels(x);}");
+        assertEval("{ x <- 1 ; levels(x)<-c(1); levels(x);}");
+        assertEval("{ x <- 5 ; levels(x)<-c(1,2,3); levels(x);}");
+        assertEval("{ x <- 1 ; levels(x)<-c(\"cat\", \"dog\"); levels(x)}");
+        assertEval("{ x <- 1 ; levels(x)<-c(3, \"cat\"); levels(x);}");
+        assertEval("{ x <- 1 ; levels(x)<-c(1, \"cat\", 4.5, \"3\"); levels(x);}");
+    }
+
+    @Test
+    @Ignore
+    public void testAnyDuplicatedIgnore() {
+        // Error message mismatch.
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+    }
+
+    @Test
+    public void testAnyDuplicated() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables=FALSE,fromLast = TRUE)}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE, TRUE)}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), TRUE )}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE )}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L)) }");
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = TRUE) }");
+
+        // strings
+        assertEval("{anyDuplicated(c(\"abc\"))}");
+        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"abc\"))}");
+        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"ghi\", \"jkl\"))}");
+
+        // boolean
+        assertEval("{anyDuplicated(c(FALSE))}");
+        assertEval("{anyDuplicated(c(FALSE, TRUE))}");
+        assertEval("{anyDuplicated(c(FALSE, TRUE, FALSE))}");
+
+        // complex
+        assertEval("{anyDuplicated(c(2+2i)) }");
+        assertEval("{anyDuplicated(c(2+2i, 3+3i, 2+2i)) }");
+        assertEval("{anyDuplicated(c(2+2i, 3+3i, 4+4i, 5+5i)) }");
+
+        // Double Vector
+        assertEval("{ anyDuplicated(c(27.2, 68.4, 94.3, 22.2)) }");
+        assertEval("{ anyDuplicated(c(1, 1, 4, 5, 4), TRUE, TRUE) }");
+        assertEval("{ anyDuplicated(c(1,2,1)) }");
+        assertEval("{ anyDuplicated(c(1)) }");
+        assertEval("{ anyDuplicated(c(1,2,3,4)) }");
+        assertEval("{ anyDuplicated(list(76.5, 5L, 5L, 76.5, 5, 5), incomparables = c(5L, 76.5)) }");
+
+        // Logical Vector
+        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE) }");
+        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE, fromLast = 1) }");
+
+        // String Vector
+        assertEval("{ anyDuplicated(c(\"abc\", \"good\", \"hello\", \"hello\", \"abc\")) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), FALSE) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), TRUE) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), 1) }");
+
+        // Complex Vector
+        assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
+        assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
+        assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
     }
 }

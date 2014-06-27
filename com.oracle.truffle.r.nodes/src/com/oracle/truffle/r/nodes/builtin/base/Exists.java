@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "exists", kind = SUBSTITUTE)
-// TODO INTERNAL
+// TODO INTERNAL, interpret mode parameter
 public abstract class Exists extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "where", "envir", "frame", "mode", "inherits"};
@@ -91,11 +92,17 @@ public abstract class Exists extends RBuiltinNode {
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
     }
 
+    @Specialization(order = 13)
+    public byte existsStringEnv(String name, @SuppressWarnings("unused") int where, REnvironment envir, Object frame, String mode, byte inherits) {
+        controlVisibility();
+        return existsStringEnv(name, envir, RMissing.instance, frame, mode, inherits);
+    }
+
     private boolean packageLookup(String name) {
         if (!name.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastName = name;
-            lastLookup = RContext.getLookup().lookup(name) != null;
+            lastLookup = RContext.getEngine().lookupBuiltin(name) != null;
         }
         // FIXME deal with changes in packages due to deleting symbols
         return lastLookup;

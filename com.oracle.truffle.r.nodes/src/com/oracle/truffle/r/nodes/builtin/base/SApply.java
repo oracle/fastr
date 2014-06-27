@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -294,7 +294,7 @@ public abstract class SApply extends RBuiltinNode {
     private void ensureCallNode() {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(ReadVariableNode.create(temporaryVariableSymbol, false))));
+            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(true, false, ReadVariableNode.create(temporaryVariableSymbol, false))));
         }
     }
 

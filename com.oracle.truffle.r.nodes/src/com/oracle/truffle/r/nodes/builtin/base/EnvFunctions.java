@@ -22,17 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -60,7 +57,7 @@ public class EnvFunctions {
         public REnvironment asEnvironment(int pos) {
             controlVisibility();
             if (pos == -1) {
-                Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+                Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
@@ -195,7 +192,7 @@ public class EnvFunctions {
         @Specialization(order = 0)
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
-            Frame callerFrame = Utils.getCallerFrame(FrameAccess.READ_ONLY);
+            Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
             return frameToEnvironment(callerFrame);
         }
 
@@ -235,7 +232,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "new.env", kind = SUBSTITUTE)
+    @RBuiltin(name = "new.env", kind = INTERNAL)
     // TOOD INTERNAL
     public abstract static class NewEnv extends RBuiltinNode {
 
@@ -246,30 +243,19 @@ public class EnvFunctions {
             return PARAMETER_NAMES;
         }
 
-        @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RMissing.instance), ConstantNode.create(29)};
-        }
-
-        @CreateCast("arguments")
-        protected RNode[] castStatusArgument(RNode[] arguments) {
-            // size argument is at index 2, and an int
-            arguments[2] = CastIntegerNodeFactory.create(arguments[2], true, false, false);
-            return arguments;
-        }
-
         @Specialization
         @SuppressWarnings("unused")
-        public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
+        public REnvironment newEnv(VirtualFrame frame, byte hash, RNull parent, int size) {
+            // TODO this will eventually go away when R code fixed when promises available
             controlVisibility();
-            // FIXME don't ignore hash parameter
+            // FIXME what if hash == FALSE?
             return new REnvironment.NewEnv(frameToEnvironment(frame), size);
         }
 
         @Specialization
         public REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
-            // FIXME don't ignore hash parameter
+            // FIXME what if hash == FALSE?
             return new REnvironment.NewEnv(parent, size);
         }
     }

@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -86,17 +87,28 @@ public class SortFunctions {
     @RBuiltin(name = "qsort", kind = INTERNAL)
     // TODO full implementation in Java handling NAs
     public abstract static class QSort extends RBuiltinNode {
+
+        @SlowPath
+        private static void sort(double[] data) {
+            Arrays.sort(data);
+        }
+
+        @SlowPath
+        private static void sort(int[] data) {
+            Arrays.sort(data);
+        }
+
         @Specialization
         public RDoubleVector qsort(RAbstractDoubleVector vec, @SuppressWarnings("unused") Object indexReturn) {
             double[] data = vec.materialize().getDataCopy();
-            Arrays.sort(data);
+            sort(data);
             return RDataFactory.createDoubleVector(data, vec.isComplete());
         }
 
         @Specialization
         public RIntVector qsort(RAbstractIntVector vec, @SuppressWarnings("unused") Object indexReturn) {
             int[] data = vec.materialize().getDataCopy();
-            Arrays.sort(data);
+            sort(data);
             return RDataFactory.createIntVector(data, vec.isComplete());
         }
     }

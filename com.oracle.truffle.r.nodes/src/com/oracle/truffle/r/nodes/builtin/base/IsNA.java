@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -60,7 +60,7 @@ public abstract class IsNA extends RBuiltinNode {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
+            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
         }
         return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
     }
@@ -76,7 +76,7 @@ public abstract class IsNA extends RBuiltinNode {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
+            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
         }
         return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
     }
@@ -84,14 +84,17 @@ public abstract class IsNA extends RBuiltinNode {
     @Specialization
     public byte isNA(String value) {
         controlVisibility();
-        // FIXME NA for Strings
-        return RRuntime.LOGICAL_FALSE;
+        return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public byte isNA(RStringVector value) {
+    public RLogicalVector isNA(RStringVector vector) {
         controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
+        byte[] resultVector = new byte[vector.getLength()];
+        for (int i = 0; i < vector.getLength(); i++) {
+            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
+        }
+        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
     }
 
     @Specialization

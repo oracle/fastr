@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+/**
+ * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
+ * Truffle sense.
+ */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
 public class RSymbol {
     private final String name;
 
-    RSymbol(String value) {
-        this.name = value;
+    public RSymbol(String name) {
+        this.name = name;
     }
 
-    public String getValue() {
+    public String getName() {
         return name;
     }
 

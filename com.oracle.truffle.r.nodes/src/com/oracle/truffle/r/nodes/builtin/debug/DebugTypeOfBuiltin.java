@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 
 @RBuiltin(name = "debug.typeof", kind = PRIMITIVE)
 @RBuiltinComment("Returns a simple string representation of the internal runtime type of a value.")

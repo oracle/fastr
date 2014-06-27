@@ -248,8 +248,11 @@ public abstract class RCallNode extends RNode {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.getUnusedArgument(getEncapsulatingSourceSection(), unusedArgNode.getSourceSection().getCode());
             }
+            RNode[] argumentNodes = arguments.getArguments();
+            RNode[] origArgumentNodes = argumentNodes;
+            // Handle named args and varargs
             if (arguments.getNameCount() != 0 || hasVarArgs) {
-                RNode[] permuted = permuteArguments(arguments.getArguments(), rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
+                RNode[] permuted = permuteArguments(argumentNodes, rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
                 if (!isBuiltin) {
                     for (int i = 0; i < permuted.length; i++) {
                         if (permuted[i] == null) {
@@ -257,9 +260,45 @@ public abstract class RCallNode extends RNode {
                         }
                     }
                 }
-                return CallArgumentsNode.create(permuted, arguments.getNames());
+                argumentNodes = permuted;
             }
-            return arguments;
+            /*
+             * This is a temporary fix to create promises just for builtin functions that do not
+             * evaluate their arguments, e.g. expression, eval. We have do the check after
+             * permutation to get the correct index position. Unfortunately, ... args have been
+             * swept up into an array, so it's a bit trickier.
+             */
+            if (isBuiltin && !((RBuiltinRootNode) rootNode).evaluatesArgs()) {
+                RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
+                RNode[] modifiedArgs = new RNode[argumentNodes.length];
+                int lix = 0; // logical index position
+                for (int i = 0; i < argumentNodes.length; i++) {
+                    RNode argumentNode = argumentNodes[i];
+                    if (argumentNode instanceof VarArgsAsObjectArrayNode) {
+                        VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) argumentNode;
+                        RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
+                        for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
+                            modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
+                            lix++;
+                        }
+                        modifiedArgs[i] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
+                    } else {
+                        modifiedArgs[i] = checkPromise(builtinRootNode, argumentNode, lix);
+                        lix++;
+                    }
+                }
+                argumentNodes = modifiedArgs;
+            }
+            return origArgumentNodes == argumentNodes ? arguments : CallArgumentsNode.create(arguments.modeChange(), arguments.modeChangeForAll(), argumentNodes, arguments.getNames());
+        }
+
+        private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int lix) {
+            if (!builtinRootNode.evaluatesArg(lix)) {
+                return PromiseNode.create(argNode.getSourceSection(), new RLanguageRep(argNode));
+            } else {
+                return argNode;
+            }
+
         }
     }
 
@@ -422,6 +461,7 @@ public abstract class RCallNode extends RNode {
         T[] resultArgs = (T[]) Array.newInstance(arguments.getClass().getComponentType(), hasVarArgs ? parameterNames.length : Math.max(parameterNames.length, arguments.length));
         BitSet matchedNames = new BitSet(actualNames.length);
         int unmatchedNameCount = 0;
+        int varArgMatches = 0;
         boolean[] matchedArgs = new boolean[parameterNames.length];
         for (int i = 0; i < actualNames.length; i++) {
             if (actualNames[i] != null) {
@@ -431,6 +471,12 @@ public abstract class RCallNode extends RNode {
                 }
                 int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, hasVarArgs, argNode);
                 if (parameterPosition >= 0) {
+                    if (parameterPosition >= varArgIndex) {
+                        /*
+                         * This argument matches to ...
+                         */
+                        ++varArgMatches;
+                    }
                     resultArgs[parameterPosition] = arguments[i];
                     matchedNames.set(i);
                 } else {
@@ -438,7 +484,12 @@ public abstract class RCallNode extends RNode {
                 }
             }
         }
-        int varArgCount = arguments.length - varArgIndex - matchedNames.cardinality();
+        /*
+         * To find the remaining arguments that can match to ... we should subtract sum of
+         * varArgIndex and number of variable arguments already matched from total number of
+         * arguments.
+         */
+        int varArgCount = arguments.length - (varArgIndex + varArgMatches);
         if (varArgIndex >= 0 && varArgCount >= 0) {
             T[] varArgsArray = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgCount);
             String[] namesArray = null;

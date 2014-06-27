@@ -106,13 +106,14 @@ public abstract class REnvironment implements RAttributable {
     private static REnvironment initialGlobalEnvParent;
     private static Base baseEnv;
     private static Autoload autoloadEnv;
+    private static REnvironment namespaceRegistry;
 
     /**
      * The environments returned by the R {@code search} function.
      */
     private static ArrayList<REnvironment> searchPath;
 
-    private REnvironment parent;
+    protected REnvironment parent;
     private final String name;
     final REnvFrameAccess frameAccess;
     private RAttributes attributes;
@@ -218,6 +219,7 @@ public abstract class REnvironment implements RAttributable {
         // The base "package" is special, it has no "imports" and
         // its "namespace" parent is globalenv
 
+        namespaceRegistry = new NewEnv(null);
         baseEnv = new Base(baseFrame);
 
         // autoload always next, has no R state
@@ -226,7 +228,7 @@ public abstract class REnvironment implements RAttributable {
         initSearchList();
 
         // load base package first
-        RPackages.loadBuiltin("base", baseFrame);
+        RContext.getEngine().loadDefaultPackage("base", baseFrame, baseEnv);
     }
 
     public static void packagesInitialize(ArrayList<RPackage> rPackages) {
@@ -234,8 +236,8 @@ public abstract class REnvironment implements RAttributable {
         REnvironment pkgParent = autoloadEnv;
         for (RPackage rPackage : rPackages) {
             VirtualFrame pkgFrame = RRuntime.createVirtualFrame();
-            RPackages.loadBuiltin(rPackage.name, pkgFrame);
             Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
+            RContext.getEngine().loadDefaultPackage(rPackage.name, pkgFrame, pkgEnv);
             attach(2, pkgEnv);
             pkgParent = pkgEnv;
         }
@@ -314,15 +316,23 @@ public abstract class REnvironment implements RAttributable {
         return 0;
     }
 
+    public static REnvironment getNamespaceRegistry() {
+        return namespaceRegistry;
+    }
+
+    public static void registerNamespace(String name, REnvironment env) {
+        namespaceRegistry.safePut(name, env);
+    }
+
     /**
-     * Get the registered {@link Namespace} environment {@code name}, or {@code null} if not found.
-     * TODO this only searches the search path; it seems namespaces can also be registered without
-     * attaching first.
+     * Get the registered {@code namespace} environment {@code name}, or {@code null} if not found.
+     * N.B. The package loading code in {@code namespace.R} uses a {code new.env} environment for a
+     * namespace.
      */
-    public static Namespace getRegisteredNamespace(String name) {
+    public static REnvironment getRegisteredNamespace(String name) {
         Package pkgEnv = (Package) lookupOnSearchPath("package:" + name);
         if (pkgEnv == null) {
-            return null;
+            return (REnvironment) namespaceRegistry.get(name);
         } else {
             return pkgEnv.getNamespace();
         }
@@ -351,10 +361,7 @@ public abstract class REnvironment implements RAttributable {
         searchPath.add(bpos, env);
         // Now must adjust the Frame world so that unquoted variable lookup works
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
-        MaterializedFrame envFrame = env.frameAccess.getFrame();
-        if (envFrame == null) {
-            envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
-        }
+        MaterializedFrame envFrame = env.getFrame();
         RArguments.attachFrame(aboveFrame, envFrame);
     }
 
@@ -395,6 +402,27 @@ public abstract class REnvironment implements RAttributable {
             ((REnvMapFrameAccess) envToRemove.frameAccess).detach();
         }
         return envToRemove;
+    }
+
+    private static final String NAMESPACE_KEY = ".__NAMESPACE__.";
+
+    /**
+     * GnuR creates {@code Namespace} environments in {@code namespace.R} using {@code new.env} and
+     * identifies them with the special element {@code .__NAMESPACE__.} which points to another
+     * environment with a {@code spec} element.
+     */
+    public boolean isNamespaceEnv() {
+        if (this == baseEnv) {
+            return true;
+        } else {
+            Object value = frameAccess.get(NAMESPACE_KEY);
+            if (value != null && value instanceof REnvironment) {
+                REnvironment info = (REnvironment) value;
+                Object spec = info.frameAccess.get("spec");
+                return (spec != null) && spec instanceof RStringVector && ((RStringVector) spec).getLength() > 0;
+            }
+            return false;
+        }
     }
 
     @SlowPath
@@ -491,11 +519,29 @@ public abstract class REnvironment implements RAttributable {
     }
 
     /**
-     * Return the {@link MaterializedFrame} associated with this environment, or {@code null} if
-     * there is none.
+     * Return the {@link MaterializedFrame} associated with this environment, installing one if
+     * there is none in the case of {@link NewEnv} environments.
      */
     public MaterializedFrame getFrame() {
-        return frameAccess.getFrame();
+        MaterializedFrame envFrame = frameAccess.getFrame();
+        if (envFrame == null) {
+            envFrame = getMaterializedFrame(this);
+        }
+        return envFrame;
+    }
+
+    /**
+     * Ensures that {@code env} and all its parents have a {@link MaterializedFrame}. Used for
+     * {@link NewEnv} environments that only need frames when they are used in {@code eval} etc.
+     */
+    private static MaterializedFrame getMaterializedFrame(REnvironment env) {
+        MaterializedFrame envFrame = env.frameAccess.getFrame();
+        if (envFrame == null && env.parent != null) {
+            MaterializedFrame parentFrame = getMaterializedFrame(env.parent);
+            envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
+            RArguments.setEnclosingFrame(envFrame, parentFrame);
+        }
+        return envFrame;
     }
 
     public void lock(boolean bindings) {
@@ -581,6 +627,7 @@ public abstract class REnvironment implements RAttributable {
     private static class Namespace extends REnvironment {
         Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
+            namespaceRegistry.safePut(name, this);
         }
 
         @Override

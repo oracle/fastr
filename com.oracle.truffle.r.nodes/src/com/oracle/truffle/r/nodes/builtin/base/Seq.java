@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -30,8 +31,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "seq", kind = SUBSTITUTE)
-// Implement in R
+@RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE)
+// Implement in R, but seq.int is PRIMITIVE
 @SuppressWarnings("unused")
 public abstract class Seq extends RBuiltinNode {
 
@@ -123,6 +124,12 @@ public abstract class Seq extends RBuiltinNode {
     public RIntSequence seq(RMissing start, RMissing to, RMissing stride, double lengthOut) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, (int) lengthOut);
+    }
+
+    @Specialization(order = 160)
+    public RDoubleSequence seq(double start, RMissing to, RMissing stride, int lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start, 1, lengthOut);
     }
 
     protected static boolean ascending(int start, int to) {

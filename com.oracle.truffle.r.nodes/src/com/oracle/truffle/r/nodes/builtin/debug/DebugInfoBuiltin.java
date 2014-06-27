@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.debug;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
@@ -40,9 +40,8 @@ public abstract class DebugInfoBuiltin extends RBuiltinNode {
     public Object printTree() {
         controlVisibility();
         RContext.getInstance();
-        RBuiltinPackages packages = (RBuiltinPackages) RContext.getLookup();
         StringBuilder b = new StringBuilder();
-        for (RBuiltinPackage pack : packages.getPackages()) {
+        for (RBuiltinPackage pack : RBuiltinPackages.getPackages().values()) {
             b.append(createPackageString(pack));
         }
         return b.toString();

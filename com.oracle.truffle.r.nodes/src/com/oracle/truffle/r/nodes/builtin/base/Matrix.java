@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -73,7 +73,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
@@ -83,7 +83,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
@@ -93,7 +93,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
@@ -103,7 +103,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
@@ -113,7 +113,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
@@ -122,7 +122,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
@@ -131,7 +131,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
@@ -140,7 +140,7 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize().copy();
+        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }

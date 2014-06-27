@@ -22,34 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
+import java.io.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "eval", kind = INTERNAL)
-public abstract class Eval extends RBuiltinNode {
+public class SerializeFunctions {
 
-    @Specialization
-    public Object doEval(RExpression expr, REnvironment envir, REnvironment enclos) {
-        controlVisibility();
-        try {
-            return REngine.eval(expr, envir, enclos);
-        } catch (PutException x) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), x.getMessage());
+    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL)
+    public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
+        @Specialization
+        public Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+            controlVisibility();
+            try {
+                Object result = RSerialize.unserialize(conn);
+                return result;
+            } catch (IOException ex) {
+                throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+            }
+
+        }
+
+        @Specialization
+        public Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
+            // TODO figure out what this really means?
+            return doUnserializeFromConn(conn, RNull.instance);
         }
     }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public Object doEval(Object expr, Object envr, Object enclos) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
-    }
-
 }

@@ -33,10 +33,13 @@ import com.oracle.truffle.r.runtime.ffi.*;
  * {@link #userProfile()}.
  */
 public class RProfile {
-    public static void initialize() {
-        // The system profile location is hard-wired relative to this class.
-        systemProfile = Utils.getResourceAsString(RProfile.class, "R/Rprofile.R", true);
+    /**
+     * The system profile location is hard-wired relative to this class and loaded statically for
+     * AOT VMs.
+     */
+    private static String systemProfile = Utils.getResourceAsString(RProfile.class, "R/Rprofile.R", true);
 
+    public static void initialize() {
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
 
@@ -74,7 +77,6 @@ public class RProfile {
         }
     }
 
-    private static String systemProfile;
     private static String siteProfile;
     private static String userProfile;
 

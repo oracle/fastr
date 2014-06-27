@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 import java.util.regex.*;
@@ -43,60 +43,38 @@ public class GrepFunctions {
     public abstract static class ExtraArgsChecker extends RBuiltinNode {
         protected void checkExtraArgs(byte ignoreCase, byte perl, byte fixed, byte useBytes, byte invert) {
             if (RRuntime.fromLogical(ignoreCase)) {
-                notImplemented("ignoreCase");
+                notImplemented("ignoreCase", true);
             }
             if (RRuntime.fromLogical(perl)) {
-                notImplemented("perl");
+                notImplemented("perl", true);
             }
             if (RRuntime.fromLogical(fixed)) {
-                notImplemented("fixed");
+                notImplemented("fixed", true);
             }
             if (RRuntime.fromLogical(useBytes)) {
-                notImplemented("useBytes");
+                notImplemented("useBytes", true);
             }
             if (RRuntime.fromLogical(invert)) {
-                notImplemented("invert");
+                notImplemented("invert", true);
             }
         }
 
-        private void notImplemented(String arg) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), arg + " arg not implemented");
-        }
-    }
-
-    @RBuiltin(name = "grep", kind = INTERNAL)
-    public abstract static class Grep extends ExtraArgsChecker {
-
-        @Specialization
-        public RIntVector grep(String pattern, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
-            controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, invert);
+        protected void valueCheck(byte value) throws RError {
             if (RRuntime.fromLogical(value)) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "value == TRUE is not implemented");
-            }
-            int[] result = findAllIndexes(pattern, vector);
-            if (result == null) {
-                return RDataFactory.createEmptyIntVector();
-            } else {
-                return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+                throw RError.getGenericError(getEncapsulatingSourceSection(), "value == true is not implemented");
             }
         }
 
-        protected static int[] findAllIndexes(String pattern, RAbstractStringVector vector) {
-            int[] tmp = new int[vector.getLength()];
-            int numMatches = 0;
-            int ind = 0;
-            for (int i = 0; i < vector.getLength(); i++) {
-                if (findIndex(pattern, vector.getDataAt(i))) {
-                    numMatches++;
-                    tmp[ind++] = i + 1;
-                }
-            }
+        protected void notImplemented(String arg, boolean b) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.getGenericError(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
+        }
+
+        protected int[] trimResult(int[] tmp, int numMatches, int vecLength) {
             if (numMatches == 0) {
                 return null;
-            } else if (numMatches == vector.getLength()) {
+            } else if (numMatches == vecLength) {
                 return tmp;
             } else {
                 // trim array to the appropriate size
@@ -106,6 +84,37 @@ public class GrepFunctions {
                 }
                 return result;
             }
+        }
+    }
+
+    @RBuiltin(name = "grep", kind = INTERNAL)
+    public abstract static class Grep extends ExtraArgsChecker {
+
+        @Specialization
+        public RIntVector grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+            controlVisibility();
+            checkExtraArgs(ignoreCase, perl, fixed, useBytes, invert);
+            valueCheck(value);
+            String pattern = checkPreDefinedClasses(patternArg);
+            int[] result = findAllIndexes(pattern, vector);
+            if (result == null) {
+                return RDataFactory.createEmptyIntVector();
+            } else {
+                return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+            }
+        }
+
+        protected int[] findAllIndexes(String pattern, RAbstractStringVector vector) {
+            int[] tmp = new int[vector.getLength()];
+            int numMatches = 0;
+            int ind = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                if (findIndex(pattern, vector.getDataAt(i))) {
+                    numMatches++;
+                    tmp[ind++] = i + 1;
+                }
+            }
+            return trimResult(tmp, numMatches, vector.getLength());
         }
 
         @SlowPath
@@ -123,9 +132,10 @@ public class GrepFunctions {
     public abstract static class GrepL extends ExtraArgsChecker {
 
         @Specialization
-        public Object grep(String pattern, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg);
             byte[] data = new byte[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 data[i] = RRuntime.asLogical(Grep.findIndex(pattern, vector.getDataAt(i)));
@@ -138,32 +148,36 @@ public class GrepFunctions {
     public abstract static class Sub extends ExtraArgsChecker {
 
         @Specialization(order = 1)
-        public String sub(String pattern, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg);
             return replaceMatch(pattern, replacement, x);
         }
 
         @Specialization(order = 10)
-        public RStringVector sub(String pattern, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg);
             return doSub(pattern, replacement, vector);
         }
 
         @Specialization(order = 12)
-        public RStringVector sub(RStringVector pattern, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public RStringVector sub(RStringVector patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             // FIXME print a warning that only pattern[1] is used
-            return doSub(pattern.getDataAt(0), replacement, vector);
+            String pattern = checkPreDefinedClasses(patternArg.getDataAt(0));
+            return doSub(pattern, replacement, vector);
         }
 
         @Specialization(order = 13)
-        public RStringVector sub(String pattern, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public RStringVector sub(String patternArg, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             // FIXME print a warning that only replacement[1] is used
+            String pattern = checkPreDefinedClasses(patternArg);
             return doSub(pattern, replacement.getDataAt(0), vector);
         }
 
@@ -187,18 +201,20 @@ public class GrepFunctions {
 
         @Specialization(order = 1)
         @Override
-        public String sub(String pattern, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg);
             return replaceMatch(pattern, replacement, x);
         }
 
         @Specialization(order = 2)
-        public String sub(RAbstractStringVector pattern, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg.getDataAt(0));
             // TODO print warnings that only the first element of each is used
-            return replaceMatch(pattern.getDataAt(0), replacement.getDataAt(0), x.getDataAt(0));
+            return replaceMatch(pattern, replacement.getDataAt(0), x.getDataAt(0));
         }
 
         @Override
@@ -212,9 +228,10 @@ public class GrepFunctions {
     public abstract static class Regexp extends ExtraArgsChecker {
 
         @Specialization
-        public Object regexp(String pattern, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg);
             int[] result = new int[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 result[i] = findIndex(pattern, vector.getDataAt(i)).get(0);
@@ -247,9 +264,10 @@ public class GrepFunctions {
 
         @Specialization
         @Override
-        public Object regexp(String pattern, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            String pattern = checkPreDefinedClasses(patternArg);
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i)));
@@ -264,6 +282,77 @@ public class GrepFunctions {
                 arr[i] = list.get(i);
             }
             return arr;
+        }
+    }
+
+    private static final String[] preDefinedClassesFrom = new String[]{"[:alpha:]", "[:alnum:]", "[:digit:]"};
+    private static final String[] preDefinedClassesTo = new String[]{"a-zA-Z", "0-9A-Za-z", "0-9"};
+
+    /**
+     * R defines some short forms of character classes. E.g. {@code [[:alnum:]]} means
+     * {@code [0-9A-Za-z]} but independent of locale and character encoding. So we have to translate
+     * these for use with Java regexp. TODO handle the complete set and do locale and character
+     * encoding
+     */
+    private static String checkPreDefinedClasses(String pattern) {
+        String result = pattern;
+        boolean none = false;
+        while (!none && result.indexOf("[[") >= 0) {
+            none = true;
+            for (int i = 0; i < preDefinedClassesFrom.length; i++) {
+                int ix = result.indexOf(preDefinedClassesFrom[i]);
+                if (ix >= 0) {
+                    result = result.substring(0, ix) + preDefinedClassesTo[i] + result.substring(ix + preDefinedClassesFrom[i].length());
+                    none = false;
+                }
+            }
+            // if none is still true, we didn't find any so we are done.
+        }
+        return result;
+    }
+
+    @RBuiltin(name = "agrep", kind = INTERNAL)
+    public abstract static class AGrep extends ExtraArgsChecker {
+        @SuppressWarnings("unused")
+        @Specialization
+        public Object aGrep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+            // TODO implement properly, this only supports strict equality!
+            controlVisibility();
+            checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
+            valueCheck(value);
+            if (!RRuntime.fromLogical(fixed)) {
+                notImplemented("fixed", false);
+            }
+            int[] tmp = new int[vector.getLength()];
+            int numMatches = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                if (patternArg.equals(vector.getDataAt(i))) {
+                    tmp[i] = i + 1;
+                    numMatches++;
+                }
+            }
+            tmp = trimResult(tmp, numMatches, tmp.length);
+            if (tmp == null) {
+                return RDataFactory.createEmptyIntVector();
+            } else {
+                return RDataFactory.createIntVector(tmp, RDataFactory.COMPLETE_VECTOR);
+            }
+        }
+    }
+
+    @RBuiltin(name = "agrepl", kind = INTERNAL)
+    public abstract static class AGrepL extends ExtraArgsChecker {
+        @SuppressWarnings("unused")
+        @Specialization
+        public Object aGrep(String patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+            // TODO implement properly, this only supports strict equality!
+            controlVisibility();
+            checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
+            byte[] data = new byte[vector.getLength()];
+            for (int i = 0; i < vector.getLength(); i++) {
+                data[i] = RRuntime.asLogical(patternArg.equals(vector.getDataAt(i)));
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
     }
 

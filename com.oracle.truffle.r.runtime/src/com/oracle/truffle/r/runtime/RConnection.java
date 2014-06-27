@@ -32,4 +32,10 @@ public abstract class RConnection {
      * Read (n > 0 up to n else unlimited) lines on the connection.
      */
     public abstract String[] readLines(int n) throws IOException;
+
+    /**
+     * Return the underlying input stream.
+     */
+    public abstract InputStream getInputStream() throws IOException;
+
 }

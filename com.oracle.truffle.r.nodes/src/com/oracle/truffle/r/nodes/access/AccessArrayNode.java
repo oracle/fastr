@@ -1312,6 +1312,11 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.getGenericError(getEncapsulatingSourceSection(), "data frames subset access not supported");
     }
 
+    @Specialization(order = 1010)
+    Object access(VirtualFrame frame, RExpression expression, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        return accessRecursive(frame, expression.getList(), position, recLevel, dropDim);
+    }
+
     protected boolean outOfBounds(RList vector, @SuppressWarnings("unused") int recLevel, int position) {
         return position > vector.getLength();
     }

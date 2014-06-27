@@ -20,19 +20,21 @@ public class FunctionCall extends Call {
     private Object lhs;
     boolean isAssignment;
     boolean isSuper;
+    boolean isReplacement;
 
-    public FunctionCall(SourceSection src, Object lhsNode, List<ArgNode> args) {
+    public FunctionCall(SourceSection source, Object lhs, List<ArgNode> args, boolean isReplacement) {
         super(args);
-        source = src;
-        lhs = lhsNode;
+        this.source = source;
+        this.lhs = lhs;
+        this.isReplacement = isReplacement;
     }
 
     public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> args) {
-        this(src, (Object) funName, args);
+        this(src, funName, args, false);
     }
 
     public FunctionCall(SourceSection src, FunctionCall funCall, List<ArgNode> args) {
-        this(src, (Object) funCall, args);
+        this(src, funCall, args, false);
     }
 
     public Object getLhs() {
@@ -57,6 +59,11 @@ public class FunctionCall extends Call {
         return (FunctionCall) lhs;
     }
 
+    public ASTNode getLhsNode() {
+        assert lhs instanceof ASTNode;
+        return (ASTNode) lhs;
+    }
+
     public boolean isSuper() {
         return isSuper;
     }
@@ -71,6 +78,10 @@ public class FunctionCall extends Call {
 
     public void setAssignment(boolean value) {
         this.isAssignment = value;
+    }
+
+    public boolean isReplacement() {
+        return this.isReplacement;
     }
 
     @Override

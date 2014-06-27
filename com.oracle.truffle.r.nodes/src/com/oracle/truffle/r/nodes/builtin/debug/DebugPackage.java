@@ -35,13 +35,4 @@ public class DebugPackage extends RBuiltinPackage {
         return "debug";
     }
 
-    private static DebugPackage instance;
-
-    public static DebugPackage getInstance() {
-        if (instance == null) {
-            instance = new DebugPackage();
-        }
-        return instance;
-    }
-
 }

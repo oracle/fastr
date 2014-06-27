@@ -235,6 +235,13 @@ public abstract class RError extends RuntimeException {
     private static final String USE_DEFUNCT = "use of '%s' is defunct: use %s instead";
     private static final String NCOL_ZERO = "nc = 0 for non-null data";
     private static final String NROW_ZERO = "nr = 0 for non-null data";
+    private static final String SAMPLE_LARGER_THAN_POPULATION = "cannot take a sample larger than the population when 'replace = FALSE'\n";
+    private static final String SAMPLE_OBJECT_NOT_FOUND = "object '%s' not found";
+    private static final String ERROR_IN_SAMPLE = "Error in sample.int(x, size, replace, prob) :  ";
+    private static final String INCORRECT_NUM_PROB = "incorrect number of probabilities";
+    private static final String NA_IN_PROB_VECTOR = "NA in probability vector";
+    private static final String NEGATIVE_PROBABILITY = "non-positive probability";
+    private static final String TOO_FEW_POSITIVE_PROBABILITY = "too few positive probabilities";
     // not exactly
     // GNU-R message
     public static final String DOTS_BOUNDS = "The ... list does not contain %s elements";
@@ -243,6 +250,7 @@ public abstract class RError extends RuntimeException {
     public static final String INVALID_FORMAT_LOGICAL = "invalid format '%s'; use format %%d or %%i for logical objects";
     public static final String INVALID_FORMAT_INTEGER = "invalid format '%s'; use format %%d, %%i, %%o, %%x or %%X for integer objects";
     public static final String INVALID_FORMAT_DOUBLE = "invalid format '%s'; use format %%f, %%e, %%g or %%a for numeric objects"; // the
+    public static final String INVALID_TYPE_FROMLAST = "'fromLast' must be TRUE or FALSE";
     // list is incomplete (but like GNU-R)
     public static final String INVALID_FORMAT_STRING = "invalid format '%s'; use format %%s for character objects";
     public static final String MUST_BE_CHARACTER = "'%s' must be of mode character";
@@ -264,12 +272,33 @@ public abstract class RError extends RuntimeException {
     private static final String CANNOT_MAKE_VECTOR_OF_MODE = "vector: cannot make a vector of mode '%s'";
     private static final String SET_ROWNAMES_NO_DIMS = "attempt to set 'rownames' on an object with no dimensions";
 
-    public static void warning(SourceSection source, String message) {
-        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + message);
+    public static final String RBIND_COLUMNS_NOT_MULTIPLE = "number of columns of result is not a multiple of vector length (arg 1)";
+
+    @SlowPath
+    private static String stringFormat(String format, Object... args) {
+        return String.format(format, args);
     }
 
+    @SlowPath
+    private static String wrapMessage(String preamble, String message) {
+        // TODO find out about R's line-wrap policy
+        // (is 74 a given percentage of console width?)
+        if (preamble.length() + 1 + message.length() >= 74) {
+            // +1 is for the extra space following the colon
+            return preamble + "\n  " + message;
+        } else {
+            return preamble + " " + message;
+        }
+    }
+
+    @SlowPath
+    public static void warning(SourceSection source, String message) {
+        RContext.getInstance().setEvalWarning(wrapMessage("In " + source.getCode() + " :", message));
+    }
+
+    @SlowPath
     public static void warning(SourceSection source, String message, Object... args) {
-        RContext.getInstance().setEvalWarning("In " + source.getCode() + " : " + stringFormat(message, args));
+        RContext.getInstance().setEvalWarning(wrapMessage("In " + source.getCode() + " :", stringFormat(message, args)));
     }
 
     public abstract static class RNYIError extends RError {
@@ -1745,15 +1774,7 @@ public abstract class RError extends RuntimeException {
         @Override
         public String toString() {
             if (source != null) {
-                String preamble = "Error in " + source.getCode() + " :";
-                // TODO find out about R's line-wrap policy
-                // (is 74 a given percentage of console width?)
-                if (preamble.length() + 1 + getMessage().length() >= 74) {
-                    // +1 is for the extra space following the colon
-                    return preamble + "\n  " + getMessage();
-                } else {
-                    return preamble + " " + getMessage();
-                }
+                return wrapMessage("Error in " + source.getCode() + " :", getMessage());
             } else {
                 return "Error: " + getMessage();
             }
@@ -2073,11 +2094,6 @@ public abstract class RError extends RuntimeException {
         return getGenericError(ast, RError.SET_INVALID_CLASS_ATTR);
     }
 
-    @SlowPath
-    private static String stringFormat(String format, Object... args) {
-        return String.format(format, args);
-    }
-
     public static RError getNotLengthOneLogicalVector(SourceSection sourceSection, final String arg) {
         return getGenericError(sourceSection, stringFormat(NOT_LEN_ONE_LOGICAL_VECTOR, arg));
     }
@@ -2146,7 +2162,39 @@ public abstract class RError extends RuntimeException {
         return getGenericError(encapsulatingSourceSection, NCOL_ZERO);
     }
 
+    public static RError getLargerPopu(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, SAMPLE_LARGER_THAN_POPULATION);
+    }
+
+    public static RError getErrorInSample(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, ERROR_IN_SAMPLE);
+    }
+
+    public static RError get(SourceSection ast, String argName) {
+        return getGenericError(ast, stringFormat(RError.SAMPLE_OBJECT_NOT_FOUND, argName));
+    }
+
+    public static RError getIncorrectNumProb(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, INCORRECT_NUM_PROB);
+    }
+
     public static RError getNrowZero(SourceSection encapsulatingSourceSection) {
         return getGenericError(encapsulatingSourceSection, NROW_ZERO);
+    }
+
+    public static RError getFromLastNotTrueFalse(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, INVALID_TYPE_FROMLAST);
+    }
+
+    public static RError getNAInProbVector(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NA_IN_PROB_VECTOR);
+    }
+
+    public static RError getNegativeProbability(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, NEGATIVE_PROBABILITY);
+    }
+
+    public static RError getTooFewPositiveProbability(SourceSection encapsulatingSourceSection) {
+        return getGenericError(encapsulatingSourceSection, TOO_FEW_POSITIVE_PROBABILITY);
     }
 }

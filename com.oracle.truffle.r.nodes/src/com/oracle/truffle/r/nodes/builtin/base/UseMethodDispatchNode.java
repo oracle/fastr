@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.runtime.*;
@@ -29,7 +30,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        if (targetFunction == null || !isFirst || !findFunction(targetFunctionName, callerFrame)) {
+        if (targetFunction == null || !isFirst) {
             findTargetFunction(callerFrame);
         }
         return executeHelper(frame, callerFrame);
@@ -55,6 +56,12 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argList.add(arg);
             }
         }
+
+        return executeHelper2(callerFrame, argList);
+    }
+
+    @SlowPath
+    private Object executeHelper2(Frame callerFrame, List<Object> argList) {
         Object[] argObject = RArguments.createS3Args(targetFunction, argList.toArray());
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
@@ -63,6 +70,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 
+    @SlowPath
     private void findTargetFunction(Frame callerFrame) {
         for (int i = 0; i < this.type.getLength(); ++i) {
             findFunction(this.genericName, this.type.getDataAt(i), callerFrame);

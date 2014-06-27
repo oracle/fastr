@@ -25,6 +25,36 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public abstract class BinaryArithmetic extends Operation {
 
+    /* Fake RBuiltins to unify the binary operations */
+
+    @RBuiltin(name = "+", kind = RBuiltinKind.PRIMITIVE)
+    public static class AddBuiltin {
+    }
+
+    @RBuiltin(name = "-", kind = RBuiltinKind.PRIMITIVE)
+    public static class SubtractBuiltin {
+    }
+
+    @RBuiltin(name = "/", kind = RBuiltinKind.PRIMITIVE)
+    public static class DivBuiltin {
+    }
+
+    @RBuiltin(name = "%/%", kind = RBuiltinKind.PRIMITIVE)
+    public static class IntegerDivBuiltin {
+    }
+
+    @RBuiltin(name = "%%", kind = RBuiltinKind.PRIMITIVE)
+    public static class ModBuiltin {
+    }
+
+    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE)
+    public static class MultiplyBuiltin {
+    }
+
+    @RBuiltin(name = "^", kind = RBuiltinKind.PRIMITIVE)
+    public static class PowBuiltin {
+    }
+
     public static final BinaryArithmeticFactory ADD = new BinaryArithmeticFactory() {
 
         @Override
@@ -139,6 +169,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
+    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE)
     public static class Add extends BinaryArithmetic {
 
         public Add() {

@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -59,6 +59,12 @@ public abstract class Match extends RBuiltinNode {
     @Child protected BooleanOperation eq = BinaryCompare.EQUAL.create();
 
     // FIXME deal incomparables parameter
+
+    @Specialization(order = 0)
+    @SuppressWarnings("unused")
+    public RIntVector match(VirtualFrame frame, RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+        return RDataFactory.createIntVector(0);
+    }
 
     @Specialization(order = 1)
     @SuppressWarnings("unused")

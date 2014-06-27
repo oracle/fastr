@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * Variant of {@link REnvFrameAccess} environments where the "frame" is a {@link LinkedHashMap},
  * e.g, for {link NewEnv}. By default there is no Truffle connection, i.e. {@link #getFrame()}
- * returns null. However, if the owning environment is "attach"ed, then an
+ * returns null. However, if the owning environment is "attach"ed, or used in an "eval", then an
  * {@link REnvMaterializedFrame} is created.
  */
 public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {

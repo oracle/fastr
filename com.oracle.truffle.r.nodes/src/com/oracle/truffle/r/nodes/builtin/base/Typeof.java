@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -138,6 +138,24 @@ public abstract class Typeof extends RBuiltinNode {
     public String typeof(RSymbol symbol) {
         controlVisibility();
         return "symbol";
+    }
+
+    @Specialization()
+    public String typeof(RLanguage language) {
+        controlVisibility();
+        return "language";
+    }
+
+    @Specialization()
+    public String typeof(RPromise promise) {
+        controlVisibility();
+        return "promise";
+    }
+
+    @Specialization()
+    public String typeof(RExpression symbol) {
+        controlVisibility();
+        return "expression";
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")

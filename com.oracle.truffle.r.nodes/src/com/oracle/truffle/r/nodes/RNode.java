@@ -162,8 +162,20 @@ public abstract class RNode extends Node {
         return RTypesGen.RTYPES.expectRSymbol(execute(frame));
     }
 
+    public RLanguage executeRLanguage(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRLanguage(execute(frame));
+    }
+
+    public RPromise executeRPromise(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRPromise(execute(frame));
+    }
+
     public RAbstractContainer executeRAbstractContainer(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.RTYPES.expectRAbstractContainer(execute(frame));
+    }
+
+    public RPairList executeRPairList(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.RTYPES.expectRPairList(execute(frame));
     }
 
     public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {

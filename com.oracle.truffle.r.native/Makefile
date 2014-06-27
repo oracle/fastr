@@ -20,9 +20,56 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-# A placeholder to keep mx happy
-# The only native code at this stage is in the form of binary Lapack/Blas libraries copied from GnuR
+
+#
+# This Makefile contains the recipe for creating libRDerived. However, it is distributed
+# as a "source" in the repository file to avoid users having to have gfortran installed.
+# Use "make cleanlib; make force" to force a rebuild.
+#
+
+ifneq ($(shell uname), Darwin)
+OS_DIR=linux
+LIB_DERIVED=lib/$(OS_DIR)/libRDerived.so 
+else
+OS_DIR=darwin
+LIB_DERIVED=lib/$(OS_DIR)/libRDerived.dylib
+endif
+
+.PHONY: all clean cleanlib cleanobj force
+
+SRC = src
+OBJ = lib/$(OS_DIR)
+
+C_SOURCES := $(wildcard $(SRC)/*.c)
+F_SOURCES := $(wildcard $(SRC)/*.f)
+
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
+
 
 all:
+	echo $(LIB_DERIVED) is up to date
 
-clean:
+force: $(LIB_DERIVED)
+
+$(LIB_DERIVED): $(C_OBJECTS) $(F_OBJECTS)
+ifneq ($(shell uname), Darwin)
+	gcc -fPIC -shared -o ./lib/linux/libRDerived.so $(C_OBJECTS) $(F_OBJECTS)
+else
+	gcc -dynamiclib -undefined dynamic_lookup -o ./lib/darwin/libRDerived.dylib $(C_OBJECTS) $(F_OBJECTS)
+endif
+
+$(OBJ)/%.o: $(SRC)/%.c
+	gcc -fPIC -O2 -c $< -o $@
+
+$(OBJ)/%.o: $(SRC)/%.f
+	gfortran -fPIC -O2 -c $< -o $@
+
+
+cleanlib:
+	rm -f ./lib/$(OS_DIR)/libRDerived.*
+
+clean: cleanobj
+
+cleanobj:
+	rm -f ./lib/$(OS_DIR)/*.o

@@ -22,13 +22,10 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.truffle.api.frame.*;
-
 /**
- * Support for loading of R packages.
+ * Support for recording the set of default R packages.
  */
 public class RPackages {
     public static class RPackage {
@@ -64,19 +61,6 @@ public class RPackages {
             packages.add(new RPackage(pkg, REnvVars.rHome()));
         }
         return packages;
-    }
-
-    /**
-     * Purely a workaround for project circularity between nodes and runtime.
-     */
-    public static void loadBuiltin(String name, VirtualFrame frame) {
-        try {
-            Method loadMethod = Class.forName("com.oracle.truffle.r.nodes.builtin.RDefaultBuiltinPackages").getDeclaredMethod("load", String.class, VirtualFrame.class);
-            loadMethod.invoke(null, new Object[]{name, frame});
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Utils.fail("failed to load builtin package: " + name + ": " + ex);
-        }
     }
 
 }

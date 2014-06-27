@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 
 public class FastRSession implements RSession {
@@ -87,7 +87,7 @@ public class FastRSession implements RSession {
 
     public String eval(String expression) {
         consoleHandler.reset();
-        REngine.parseAndEvalTest(expression, true);
+        REngine.getInstance().parseAndEvalTest(expression, true);
         return consoleHandler.buffer.toString();
     }
 

@@ -179,7 +179,7 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
+    return junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
 
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
@@ -235,7 +235,11 @@ def rbench(args):
                 else:
                     # temporary: disable group generics as long as they impose a considerable performance overhead
                     command = ['--DisableGroupGenerics'] + command
-                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=args.extra_javavm_args)
+                    extraVmArgs = args.extra_javavm_args
+                    if not any("TruffleCompilationThreshold" in x for x in extraVmArgs):
+                        # set compilation threshold to 10
+                        extraVmArgs.append('-G:TruffleCompilationThreshold=10')
+                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'
                     emsg = rc
@@ -257,7 +261,8 @@ def _bench_harness_body(args, vmArgs):
              'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
              'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm',
              'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-3', 'b25.bench.prog-4', 'b25.bench.prog-5',
-             'b25.bench.matcal-1', 'b25.bench.matcal-2']
+             'b25.bench.matcal-1', 'b25.bench.matcal-2', 'b25.bench.matcal-3', 'b25.bench.matcal-5',
+             'b25.bench.matfunc-1', 'b25.bench.matfunc-2', 'b25.bench.matfunc-3', 'b25.bench.matfunc-5']
     if vmArgs:
         marks = ['--J', vmArgs] + marks
     return rbench(marks)
@@ -323,7 +328,7 @@ def rbcheck(args):
 def rcmplib(args):
     '''compare FastR library R sources against GnuR'''
     parser = ArgumentParser(prog='mx cmplibr')
-    parser.add_argument('--gnurhome', action='store',  help='path to GnuR sources', required=True)
+    parser.add_argument('--gnurhome', action='store', help='path to GnuR sources', required=True)
     parser.add_argument('--lib', action='store', help='library to check', default="base")
     args = parser.parse_args(args)
     cmpArgs = []

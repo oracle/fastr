@@ -31,12 +31,13 @@ import jnr.posix.*;
 import jnr.constants.platform.Errno;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
  * JNR-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, LinpackRFFI, LapackRFFI, UserRngRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDerivedRFFI, LapackRFFI, UserRngRFFI {
 
     // Base
 
@@ -57,9 +58,14 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
     private static class LibCXProvider {
         private static LibCX libcx;
 
+        @SlowPath
+        private static LibCX createAndLoadLib() {
+            return LibraryLoader.create(LibCX.class).load("c");
+        }
+
         static LibCX libcx() {
             if (libcx == null) {
-                libcx = LibraryLoader.create(LibCX.class).load("c");
+                libcx = createAndLoadLib();
             }
             return libcx;
         }
@@ -164,37 +170,42 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
      */
     public interface Lapack {
         // Checkstyle: stop method name
+        // @formatter:off
         void ilaver_(@Out int[] major, @Out int[] minor, @Out int[] patch);
 
-        // @formatter:off
-        // Checkstyle: stop method name
         void dgeev_(@In byte[] jobVL, @In byte[] jobVR, @In int[] n, @In double[] a, @In int[] lda, @Out double[] wr, @Out double[] wi,
                         @Out double[] vl, @In int[] ldvl, @Out double[] vr, @In int[] ldvr,
                         @Out double[] work, @In int[] lwork, @Out int[] info);
 
-        // @formatter:off
-        // Checkstyle: stop method name
         void dgeqp3_(@In int[] m, @In int[] n, double[] a, @In int[] lda, int[] jpvt, @Out double[] tau, @Out double[] work,
                         @In int[] lwork, @Out int[] info);
 
-        // @formatter:off
-        // Checkstyle: stop method name
-        int dormqr_(@In byte[] side, @In byte[] trans, @In int[] m, @In int[] n, @In int[] k, @In double[] a, @In int[] lda,
+        void dormqr_(@In byte[] side, @In byte[] trans, @In int[] m, @In int[] n, @In int[] k, @In double[] a, @In int[] lda,
                         @In double[] tau, double[] c, @In int[] ldc, @Out double[] work, @In int[] lwork, @Out int[] info);
 
-        // @formatter:off
-        // Checkstyle: stop method name
-       int dtrtrs_(@In byte[] uplo, @In byte[] trans, @In byte[] diag, @In int[] n, @In int[] nrhs, @In double[] a, @In int[] lda,
+       void dtrtrs_(@In byte[] uplo, @In byte[] trans, @In byte[] diag, @In int[] n, @In int[] nrhs, @In double[] a, @In int[] lda,
                        double[] b, @In int[] ldb, @Out int[] info);
 
-}
+       void dgetrf_(@In int[] m, @In int[] n, double[] a, @In int[] lda, @Out int[] ipiv, @Out int[] info);
+
+       void dpotrf_(@In byte[] uplo, @In int[] n, double[] a, @In int[] lda, @Out int[] info);
+
+       void dpstrf_(@In byte[] uplo, @In int[] n, double[] a, @In int[] lda, @Out int[] piv, @Out int[] rank, @In double[] tol, @Out double[] work, @Out int[] info);
+    }
+
+    // @formatter:on
 
     private static class LapackProvider {
         private static Lapack lapack;
 
+        @SlowPath
+        private static Lapack createAndLoadLib() {
+            return LibraryLoader.create(Lapack.class).load("Rlapack");
+        }
+
         static Lapack lapack() {
             if (lapack == null) {
-                lapack = LibraryLoader.create(Lapack.class).load("Rlapack");
+                lapack = createAndLoadLib();
             }
             return lapack;
         }
@@ -317,12 +328,59 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
        return RefScalars_dtrtrs.info[0];
    }
 
+   private static class RefScalars_dgetrf {
+       static int[] m = new int[1];
+       static int[] n = new int[1];
+       static int[] lda = new int[1];
+       static int[] info = new int[1];
+   }
+
+   public int dgetrf(int m, int n, double[] a, int lda, int[] ipiv) {
+       RefScalars_dgetrf.m[0] = m;
+       RefScalars_dgetrf.n[0] = n;
+       RefScalars_dgetrf.lda[0] = lda;
+       lapack().dgetrf_(RefScalars_dgetrf.m, RefScalars_dgetrf.n, a, RefScalars_dgetrf.lda, ipiv, RefScalars_dgetrf.info);
+       return RefScalars_dgetrf.info[0];
+   }
+
+   private static class RefScalars_dpotrf {
+       static byte[] uplo = new byte[1];
+       static int[] n = new int[1];
+       static int[] lda = new int[1];
+       static int[] info = new int[1];
+   }
+
+
+   public int dpotrf(char uplo, int n, double[] a, int lda) {
+       RefScalars_dpotrf.uplo[0] = (byte) uplo;
+       RefScalars_dpotrf.n[0] = n;
+       RefScalars_dpotrf.lda[0] = lda;
+       lapack().dpotrf_(RefScalars_dpotrf.uplo, RefScalars_dpotrf.n, a, RefScalars_dpotrf.lda, RefScalars_dpotrf.info);
+       return RefScalars_dpotrf.info[0];
+   }
+
+   private static class RefScalars_dpstrf extends RefScalars_dpotrf {
+       static double[] tol = new double[1];
+   }
+
+   public int dpstrf(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
+       RefScalars_dpstrf.uplo[0] = (byte) uplo;
+       RefScalars_dpstrf.n[0] = n;
+       RefScalars_dpstrf.lda[0] = lda;
+       RefScalars_dpstrf.tol[0] = tol;
+       lapack().dpstrf_(RefScalars_dpstrf.uplo, RefScalars_dpstrf.n, a, RefScalars_dpstrf.lda, piv, rank, RefScalars_dpstrf.tol, work, RefScalars_dpstrf.info);
+       return RefScalars_dpstrf.info[0];
+   }
+
+
    /*
     * Linpack functions
+    *
+    * TODO In order to finesse a problem that "libR" does not exists separately on Linux, the Linpack functions should be amalgamated with FFT in RDerived.
     */
 
    @Override
-   public LinpackRFFI getLinpackRFFI() {
+   public RDerivedRFFI getRDerivedRFFI() {
        return this;
    }
 
@@ -336,9 +394,16 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
    private static class LinpackProvider {
        private static Linpack linpack;
 
+       @SlowPath
+       private static Linpack createAndLoadLib() {
+           // need to load blas lib as Fortran functions in RDerived lib need it
+           LibraryLoader.create(Linpack.class).load("Rblas");
+           return LibraryLoader.create(Linpack.class).load("RDerived");
+       }
+
        static Linpack linpack() {
            if (linpack == null) {
-               linpack = LibraryLoader.create(Linpack.class).load("R");
+               linpack = createAndLoadLib();
            }
            return linpack;
        }
@@ -377,6 +442,62 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
        linpack().dqrcf_(x, RefScalars_dqrcf.n, RefScalars_dqrcf.k, qraux, y, RefScalars_dqrcf.ny, b, info);
    }
 
+   // fft functions
+
+   public interface FFT {
+       // TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is @Inout)
+
+       // @formatter:off
+       void fft_factor(@In int[] n, int[] pmaxf, int[] pmaxp);
+
+       int fft_work(double[] a, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
+   }
+
+   private static class FFTProvider {
+       private static FFT fft;
+
+       @SlowPath
+       private static FFT createAndLoadLib() {
+           return LibraryLoader.create(FFT.class).load("RDerived");
+       }
+
+       static FFT fft() {
+           if (fft == null) {
+               fft = createAndLoadLib();
+           }
+           return fft;
+       }
+   }
+
+   private static FFT fft() {
+       return FFTProvider.fft();
+   }
+
+
+   private static class RefScalars_fft_factor {
+       static int[] n = new int[1];
+   }
+
+   public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
+       RefScalars_fft_factor.n[0] = n;
+       fft().fft_factor(RefScalars_fft_factor.n, pmaxf, pmaxp);
+   }
+
+   private static class RefScalars_fft_work extends RefScalars_fft_factor {
+       static int[] nseg = new int[1];
+       static int[] nspn = new int[1];
+       static int[] isn = new int[1];
+   }
+
+   public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
+       RefScalars_fft_work.n[0] = n;
+       RefScalars_fft_work.nseg[0] = nseg;
+       RefScalars_fft_work.nspn[0] = nspn;
+       RefScalars_fft_work.isn[0] = isn;
+       return fft().fft_work(a, RefScalars_fft_work.nseg, RefScalars_fft_work.n, RefScalars_fft_work.nspn, RefScalars_fft_work.isn, work, iwork);
+   }
+
+
     /*
      * UserRng.
      * This is a singleton instance, although the actual library may vary from run to run.
@@ -403,9 +524,14 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
             UserRngProvider.libPath = libPath;
         }
 
+        @SlowPath
+        private static UserRng createAndLoadLib() {
+            return LibraryLoader.create(UserRng.class).load(libPath);
+        }
+
         static UserRng userRng() {
             if (userRng == null) {
-                userRng = LibraryLoader.create(UserRng.class).load(libPath);
+                userRng = createAndLoadLib();
             }
             return userRng;
         }
@@ -454,6 +580,5 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Linp
         }
         return cRFFI;
     }
-
 
 }

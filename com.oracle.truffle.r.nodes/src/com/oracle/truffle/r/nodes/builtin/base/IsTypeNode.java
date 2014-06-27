@@ -159,6 +159,21 @@ public abstract class IsTypeNode extends RBuiltinNode {
     }
 
     @Specialization
+    public byte isType(RLanguage value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    public byte isType(RPromise value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    public byte isType(RExpression value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
     public byte isType(Object value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
