@@ -289,7 +289,7 @@ public abstract class RCallNode extends RNode {
                 }
                 argumentNodes = modifiedArgs;
             }
-            return origArgumentNodes == argumentNodes ? arguments : CallArgumentsNode.create(argumentNodes, arguments.getNames());
+            return origArgumentNodes == argumentNodes ? arguments : CallArgumentsNode.create(arguments.modeChange(), arguments.modeChangeForAll(), argumentNodes, arguments.getNames());
         }
 
         private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int lix) {

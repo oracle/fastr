@@ -180,7 +180,7 @@ public class GroupDispatchNode extends S3DispatchNode {
                     argArray[i] = ConstantNode.create(evaluatedArgs[i]);
                 }
             }
-            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(argArray, callArgsNode.getNames()));
+            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(callArgsNode.modeChange(), callArgsNode.modeChangeForAll(), argArray, callArgsNode.getNames()));
         }
         if (this.funCall == null) {
             this.funCall = new DispatchNode.FunctionCall(func, callArgsNode);

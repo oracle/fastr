@@ -50,7 +50,7 @@ public abstract class Call extends ASTNode {
         } else if (call instanceof FunctionCall) {
             return new FunctionCall(src, (FunctionCall) call, args);
         } else {
-            return new FunctionCall(src, call, args);
+            return new FunctionCall(src, call, args, false);
         }
     }
 

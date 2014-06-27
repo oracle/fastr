@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
-
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -37,15 +35,19 @@ public final class CallArgumentsNode extends RNode {
 
     private final String[] names;
     private final int nameCount;
+    private final boolean modeChange;
+    private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] args, String[] names) {
+    private CallArgumentsNode(RNode[] args, String[] names, boolean modeChange, boolean modeChangeForAll) {
         this.arguments = args;
         this.names = names;
         this.nameCount = countNonNull(names);
+        this.modeChange = modeChange;
+        this.modeChangeForAll = modeChangeForAll;
     }
 
-    private CallArgumentsNode(SourceSection src, RNode[] args, String[] names) {
-        this(args, names);
+    private CallArgumentsNode(SourceSection src, RNode[] args, String[] names, boolean modeChange, boolean modeChangeForAll) {
+        this(args, names, modeChange, modeChangeForAll);
         assignSourceSection(src);
     }
 
@@ -71,6 +73,14 @@ public final class CallArgumentsNode extends RNode {
         return nameCount;
     }
 
+    public boolean modeChange() {
+        return modeChange;
+    }
+
+    public boolean modeChangeForAll() {
+        return modeChangeForAll;
+    }
+
     @Override
     public Object execute(VirtualFrame frame) {
         return executeArray(frame);
@@ -87,27 +97,21 @@ public final class CallArgumentsNode extends RNode {
         return values;
     }
 
-    public CallArgumentsNode copyOfRange(int startIndex, int endIndex) {
-        RNode[] args = Arrays.copyOfRange(arguments, startIndex, endIndex);
-        String[] newNames = Arrays.copyOfRange(names, startIndex, endIndex);
-        return new CallArgumentsNode(Utils.sourceBoundingBox(args), args, newNames);
-    }
-
-    public static CallArgumentsNode createUnnamed(RNode... args) {
-        return create(args, null);
+    public static CallArgumentsNode createUnnamed(boolean modeChange, boolean modeChangeForAll, RNode... args) {
+        return create(modeChange, modeChangeForAll, args, null);
     }
 
     private static final String[] NO_NAMES = new String[0];
 
-    public static CallArgumentsNode create(RNode[] args, String[] names) {
+    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
         RNode[] wrappedArgs = new RNode[args.length];
         for (int i = 0; i < wrappedArgs.length; ++i) {
-            wrappedArgs[i] = args[i] == null ? null : WrapArgumentNode.create(args[i]);
+            wrappedArgs[i] = args[i] == null ? null : WrapArgumentNode.create(args[i], i == 0 || modeChangeForAll ? modeChange : true);
         }
         String[] resolvedNames = names;
         if (resolvedNames == null) {
             resolvedNames = NO_NAMES;
         }
-        return new CallArgumentsNode(Utils.sourceBoundingBox(wrappedArgs), wrappedArgs, resolvedNames);
+        return new CallArgumentsNode(Utils.sourceBoundingBox(wrappedArgs), wrappedArgs, resolvedNames, modeChange, modeChangeForAll);
     }
 }
