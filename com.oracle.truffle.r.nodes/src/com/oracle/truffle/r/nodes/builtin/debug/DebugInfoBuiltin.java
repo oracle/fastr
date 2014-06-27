@@ -40,9 +40,8 @@ public abstract class DebugInfoBuiltin extends RBuiltinNode {
     public Object printTree() {
         controlVisibility();
         RContext.getInstance();
-        RBuiltinPackages packages = RDefaultBuiltinPackages.getInstance();
         StringBuilder b = new StringBuilder();
-        for (RBuiltinPackage pack : packages.getPackages()) {
+        for (RBuiltinPackage pack : RBuiltinPackages.getPackages().values()) {
             b.append(createPackageString(pack));
         }
         return b.toString();

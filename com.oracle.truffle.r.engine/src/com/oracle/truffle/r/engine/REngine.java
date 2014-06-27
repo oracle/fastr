@@ -74,7 +74,7 @@ public final class REngine implements RContext.Engine {
         Locale.setDefault(Locale.ROOT);
         RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
-        builtinLookup = RDefaultBuiltinPackages.getInstance();
+        builtinLookup = RBuiltinPackages.getInstance();
         context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, headless);
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
         VirtualFrame baseFrame = RRuntime.createVirtualFrame();
@@ -106,7 +106,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public void loadDefaultPackage(String name, VirtualFrame frame, REnvironment envForFrame) {
-        RDefaultBuiltinPackages.load(name, frame, envForFrame);
+        RBuiltinPackages.load(name, frame, envForFrame);
     }
 
     public RFunction lookupBuiltin(String name) {

@@ -25,19 +25,50 @@ package com.oracle.truffle.r.nodes.builtin;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.builtin.base.*;
+import com.oracle.truffle.r.nodes.builtin.debug.*;
+import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class RBuiltinPackages implements RBuiltinLookup {
+/**
+ * Support for the default set of packages in an R session. Setup is a two-phase process. The
+ * meta-data for the possible set of default packages (which is a known set) is established
+ * statically (to support an AOT-based VM without runtime reflection), and then the dynamic state is
+ * established for a given subset of the packages at runtime, through the {@link #load} method.
+ */
+public final class RBuiltinPackages implements RBuiltinLookup {
 
-    private static final List<RBuiltinPackage> packages = new ArrayList<>();
+    private static final Map<String, RBuiltinPackage> packages = new HashMap<>(5);
 
-    protected void add(RBuiltinPackage builtins) {
-        packages.add(builtins);
+    private static final RBuiltinPackages instance = new RBuiltinPackages();
+
+    static {
+        RBuiltinPackages.add(new BasePackage());
+        RBuiltinPackages.add(new DebugPackage());
+        RBuiltinPackages.add(new StatsPackage());
     }
 
-    public List<RBuiltinPackage> getPackages() {
+    protected static void add(RBuiltinPackage builtins) {
+        packages.put(builtins.getName(), builtins);
+    }
+
+    public static RBuiltinPackages getInstance() {
+        return instance;
+    }
+
+    public static Map<String, RBuiltinPackage> getPackages() {
         return packages;
+    }
+
+    public static void load(String name, VirtualFrame frame, REnvironment envForFrame) {
+        RBuiltinPackage pkg = packages.get(name);
+        if (pkg == null) {
+            Utils.fail("unknown default package: " + name);
+        } else {
+            pkg.loadSources(frame, envForFrame);
+        }
     }
 
     @Override

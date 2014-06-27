@@ -23,12 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.stats;
 
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 
 public class StatsPackage extends RBuiltinPackage {
 
-    public StatsPackage(REnvironment env) {
-        super(env);
+    public StatsPackage() {
         loadBuiltins();
     }
 
