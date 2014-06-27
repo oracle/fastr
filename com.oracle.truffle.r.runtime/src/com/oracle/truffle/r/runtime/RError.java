@@ -171,6 +171,7 @@ public abstract class RError extends RuntimeException {
     public static final String INVALID_ARGUMENTS_NO_QUOTE = "invalid %s arguments";
     public static final String INVALID_SUBSCRIPT_TYPE = "invalid subscript type '%s'";
     public static final String ARGUMENT_NOT_VECTOR = "argument %d is not a vector";
+    public static final String ARGUMENT_NOT_ARRAY = "argument %d is not an array";
     public static final String CANNOT_COERCE = "cannot coerce type '%s' to vector of type '%s'";
     public static final String ARGUMENT_ONLY_FIRST = "argument '%s' has length > 1 and only the first element will be used";
     public static final String CANNOT_OPEN_FILE = "cannot open file '%s': %s";
@@ -1811,6 +1812,10 @@ public abstract class RError extends RuntimeException {
 
     public static RError getArgumentNotVector(SourceSection ast, int i) {
         return getGenericError(ast, stringFormat(RError.ARGUMENT_NOT_VECTOR, i));
+    }
+
+    public static RError getArgumentNotArray(SourceSection ast, int i) {
+        return getGenericError(ast, stringFormat(RError.ARGUMENT_NOT_ARRAY, i));
     }
 
     public static RError getCannotCoerce(SourceSection ast, String srcType, String dstType) {

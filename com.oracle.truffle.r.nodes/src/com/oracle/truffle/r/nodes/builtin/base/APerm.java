@@ -10,7 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
@@ -234,7 +234,7 @@ public abstract class APerm extends RBuiltinNode {
                     visited[arrayPerm[i]] = true;
                 } else {
                     // Duplicate dimension mapping in permute
-                    throw RError.getArgumentInvalid(getEncapsulatingSourceSection(), "perm");
+                    throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "perm");
                 }
             }
         } else {
