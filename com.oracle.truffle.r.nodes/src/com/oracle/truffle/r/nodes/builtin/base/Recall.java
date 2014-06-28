@@ -55,6 +55,8 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
+        // for now, make sure that it's not compiled at all
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         RFunction function = RArguments.getFunction(frame);
         if (function == null) {
             CompilerDirectives.transferToInterpreter();
