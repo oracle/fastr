@@ -87,7 +87,7 @@ public abstract class UpdateFieldNode extends RNode {
         try {
             env.put(getField(), value);
         } catch (PutException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
         }
         return env;
     }
@@ -98,7 +98,7 @@ public abstract class UpdateFieldNode extends RNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, true, false));
         }
-        RError.warning(getEncapsulatingSourceSection(), RError.COERCING_LHS_TO_LIST);
+        RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
         return updateField(castList.executeList(frame, object), value);
     }
 

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
@@ -93,15 +92,13 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 10, guards = {"!emptyArg", "!wrongParams"})
     public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidUnnamedValue(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 11, guards = {"!emptyArg", "!wrongParams", "wrongValue"})
     public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidUnnamedValue(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @Specialization(order = 12, guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
@@ -121,8 +118,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     protected boolean wrongParams(@SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgumentsNoQuote(getEncapsulatingSourceSection(), "substring");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }
         return false;
     }

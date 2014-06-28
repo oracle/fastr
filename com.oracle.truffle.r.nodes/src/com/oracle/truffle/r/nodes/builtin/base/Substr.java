@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -96,8 +95,7 @@ public abstract class Substr extends RBuiltinNode {
 
     protected boolean wrongParams(@SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgumentsNoQuote(getEncapsulatingSourceSection(), "substring");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }
         return false;
     }

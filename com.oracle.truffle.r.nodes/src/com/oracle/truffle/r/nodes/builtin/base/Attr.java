@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -100,8 +99,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(order = 12, guards = "emptyName")
     public Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getExactlyOneWhich(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
     }
 
     protected boolean isRowNamesAttr(@SuppressWarnings("unused") RAbstractContainer container, String name) {

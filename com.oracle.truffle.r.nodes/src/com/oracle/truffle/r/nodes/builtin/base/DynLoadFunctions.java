@@ -24,13 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 public class DynLoadFunctions {
 
@@ -47,8 +47,7 @@ public class DynLoadFunctions {
                 RList result = createDLLInfoList(info.toRValues());
                 return result;
             } catch (DLLException ex) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
             }
         }
 
@@ -65,8 +64,7 @@ public class DynLoadFunctions {
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
             }
             return RNull.instance;
         }

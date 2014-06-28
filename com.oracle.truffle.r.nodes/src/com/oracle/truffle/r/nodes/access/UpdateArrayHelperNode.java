@@ -175,31 +175,27 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 return vector;
             }
         }
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
     }
 
     @Specialization(order = 7)
     RNull accessFunction(Object v, Object value, int recLevel, Object position, RFunction vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getObjectNotSubsettable(getEncapsulatingSourceSection(), "closure");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SUBSETTABLE, "closure");
     }
 
     @Specialization(order = 8)
     RAbstractVector update(Object v, RNull value, int recLevel, Object[] positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
         if (isSubset) {
-            throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else {
-            throw RError.getSubscriptTypes(getEncapsulatingSourceSection(), "NULL", "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_TYPES, "NULL", "list");
         }
     }
 
     @Specialization(order = 9, guards = "isPosZero")
     RAbstractVector updateNAOrZero(Object v, RNull value, int recLevel, int position, RList vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return vector;
         }
@@ -207,52 +203,45 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 11)
     RAbstractVector update(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (isSubset) {
-            throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
     }
 
     @Specialization(order = 12, guards = {"emptyValue", "isPosZero"})
     RAbstractVector updatePosZero(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
         return vector;
     }
 
     @Specialization(order = 13, guards = {"emptyValue", "!isPosZero", "!isPosNA", "!isVectorList"})
     RAbstractVector update(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
     }
 
     @Specialization(order = 14, guards = "!isVectorLongerThanOne")
     RAbstractVector updateVectorLongerThanOne(Object v, RNull value, int recLevel, RNull position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @Specialization(order = 15, guards = "isVectorLongerThanOne")
     RAbstractVector update(Object v, RNull value, int recLevel, RNull position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 16)
     RAbstractVector update(Object v, RAbstractVector value, int recLevel, RNull position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 17, guards = {"isPosNA", "isValueLengthOne", "isVectorLongerThanOne"})
     RAbstractVector updateNAValueLengthOneLongVector(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
             return vector;
         }
@@ -261,8 +250,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 18, guards = {"isPosNA", "isValueLengthOne", "!isVectorLongerThanOne"})
     RAbstractVector updateNAValueLengthOne(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return vector;
         }
@@ -270,19 +258,17 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 19, guards = {"isPosNA", "!isValueLengthOne"})
     RAbstractVector updateNA(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (isSubset) {
-            throw RError.getNASubscripted(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
         } else {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
     }
 
     @Specialization(order = 20, guards = {"isPosZero", "isValueLengthOne"})
     RAbstractVector updateZeroValueLengthOne(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return vector;
         }
@@ -291,8 +277,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 21, guards = {"isPosZero", "!isValueLengthOne"})
     RAbstractVector updateZero(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return vector;
         }
@@ -301,8 +286,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 22, guards = "isPosZero")
     RAbstractVector updateZero(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return vector;
         }
@@ -310,8 +294,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private int getSrcArrayBase(int pos, int accSrcDimensions) {
         if (posNACheck.check(pos)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNASubscripted(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
         } else {
             return accSrcDimensions * (pos - 1);
         }
@@ -346,8 +329,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (valueLength != 0 && length != 0 && length % valueLength != 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNotMultipleReplacement(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else if (seenNA) {
             seenNAMultiDim(true, value, isList, isSubset, getEncapsulatingSourceSection());
         }
@@ -418,8 +400,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 48, guards = "emptyValue")
     RNull updatePosZero(Object v, RAbstractVector value, int recLevel, int position, RNull vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
         return vector;
     }
@@ -427,8 +408,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 49, guards = "emptyValue")
     RNull updatePosZero(Object v, RAbstractVector value, int recLevel, RIntVector positions, RNull vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
         return vector;
     }
@@ -548,44 +528,37 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 80, guards = {"!isPosNA", "isPositionNegative", "!isVectorList"})
     RList updateNegativeNull(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
     }
 
     @Specialization(order = 81, guards = {"!isPosNA", "isPositionNegative", "!outOfBoundsNegative"})
     RList updateNegativeNull(Object v, RNull value, int recLevel, int position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 82, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "oneElemVector"})
     RList updateNegativeOutOfBoundsOneElemNull(Object v, RNull value, int recLevel, int position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @Specialization(order = 83, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "!oneElemVector"})
     RList updateNegativeOutOfBoundsNull(Object v, RNull value, int recLevel, int position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 85, guards = {"!isPosNA", "isPositionNegative", "!outOfBoundsNegative"})
     RList updateNegative(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 86, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "oneElemVector"})
     RList updateNegativeOneElem(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @Specialization(order = 87, guards = {"!isPosNA", "isPositionNegative", "outOfBoundsNegative", "!oneElemVector"})
     RList updateOutOfBoundsNegative(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     // list
@@ -642,21 +615,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (RRuntime.isNA(position)) {
             CompilerDirectives.transferToInterpreter();
             if (lastPos && recLevel > 0) {
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (recLevel == 0) {
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             } else {
-                throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
             }
         } else if (!lastPos && position > vector.getLength()) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNoSuchIndexAtLevel(getEncapsulatingSourceSection(), recLevel + 1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
         } else if (position < 0) {
             CompilerDirectives.transferToInterpreter();
             return AccessArrayNode.getPositionFromNegative(vector, position, getEncapsulatingSourceSection());
         } else if (position == 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         return position;
     }
@@ -675,8 +646,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RList updateSingleDimVector(RAbstractContainer value, int orgVectorLength, RList resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
@@ -693,7 +663,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -704,8 +674,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         Object el;
         RList resultList = vector;
@@ -758,7 +727,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 111, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero", "!isPositionNegative"})
     RList updateTooManyValuesSubset(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position, false), position);
     }
 
@@ -840,8 +809,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 122, guards = {"isSubset", "!noPosition"})
     RList update(Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
 
         RList list = vector;
@@ -907,8 +875,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         RList resultList = vector;
         if (recLevel == 0) {
@@ -941,8 +908,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 160, guards = {"!isSubset", "inRecursion", "multiPos"})
     Object accessRecFailed(Object v, RAbstractContainer value, int recLevel, RIntVector p, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getRecursiveIndexingFailed(getEncapsulatingSourceSection(), recLevel + 1);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECURSIVE_INDEXING_FAILED, recLevel + 1);
     }
 
     @Specialization(order = 170, guards = {"!isSubset", "!multiPos"})
@@ -971,8 +937,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 180, guards = {"!isValueLengthOne", "!emptyValue", "!isSubset", "!isPosNA", "!isPosZero"})
     RAbstractVector updateTooManyValues(Object v, RAbstractContainer value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
     }
 
     // null value (with vectors)
@@ -980,19 +945,17 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Specialization(order = 185, guards = {"isPosZero", "!isVectorList"})
     RAbstractVector updatePosZero(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
         if (!isSubset) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
         return vector;
     }
 
     @Specialization(order = 186, guards = {"!isPosZero", "!isPosNA", "!isVectorList"})
     RAbstractVector update(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
     }
 
@@ -1003,38 +966,32 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 189, guards = {"isSubset", "!isVectorList", "!noPosition"})
     RAbstractVector updateNullSubset(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getReplacementZero(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
     }
 
     @Specialization(order = 190, guards = {"!isSubset", "!isVectorList", "noPosition"})
     RAbstractVector updateNullNoPos(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
     }
 
     @Specialization(order = 191, guards = {"!isSubset", "!isVectorList", "onePosition"})
     RAbstractVector updateNullOnePos(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
     }
 
     @Specialization(order = 192, guards = {"!isSubset", "!isVectorList", "twoPositions", "firstPosZero"})
     RAbstractVector updateNullTwoElemsZero(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @Specialization(order = 193, guards = {"!isSubset", "!isVectorList", "twoPositions", "!firstPosZero"})
     RAbstractVector updateNullTwoElems(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 194, guards = {"!isSubset", "!isVectorList", "multiPos"})
     RAbstractVector updateNull(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     // int vector
@@ -1092,8 +1049,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (value.getLength() == 1) {
                 return true;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getNASubscripted(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
             }
         } else {
             return false;
@@ -1104,8 +1060,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (isPosNA) {
             if (value.getLength() == 1) {
                 if (!isSubset) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getSubscriptBoundsSub(sourceSection);
+                    throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
                 } else {
                     return true;
                 }
@@ -1113,12 +1068,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
                 CompilerDirectives.transferToInterpreter();
                 if (!isSubset) {
                     if (isList) {
-                        throw RError.getSubscriptBoundsSub(sourceSection);
+                        throw RError.error(sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);
                     } else {
-                        throw RError.getMoreElementsSupplied(sourceSection);
+                        throw RError.error(sourceSection, RError.Message.MORE_SUPPLIED_REPLACE);
                     }
                 } else {
-                    throw RError.getNASubscripted(sourceSection);
+                    throw RError.error(sourceSection, RError.Message.NA_SUBSCRIPTED);
                 }
             }
         } else {
@@ -1129,8 +1084,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RIntVector updateSingleDimVector(RAbstractIntVector value, int orgVectorLength, RIntVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         elementNACheck.enable(value);
         for (int i = 0; i < positions.getLength(); i++) {
@@ -1148,7 +1102,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -1156,20 +1110,17 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 195, guards = {"!isSubset", "!isVectorList", "!posNames", "!twoPositions"})
     Object update(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 196, guards = {"!isSubset", "!isVectorList", "!posNames", "twoPositions", "firstPosZero"})
     RList updateTwoElemsZero(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @Specialization(order = 197, guards = {"!isSubset", "!isVectorList", "!posNames", "twoPositions", "!firstPosZero"})
     RList updateTwoElems(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 200, guards = {"multiDim", "!wrongDimensionsMatrix", "!wrongDimensions"})
@@ -1204,7 +1155,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 224, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RIntVector updateTooManyValuesSubset(Object v, RAbstractIntVector value, int recLevel, int position, RAbstractIntVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1235,7 +1186,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 244, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RIntVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RAbstractIntVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RIntVector) castInteger(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1296,8 +1247,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RDoubleVector updateSingleDimVector(RAbstractDoubleVector value, int orgVectorLength, RDoubleVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
@@ -1317,7 +1267,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             Utils.nyi();
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -1360,7 +1310,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 324, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RDoubleVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, int position, RAbstractDoubleVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RDoubleVector) castDouble(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1391,7 +1341,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 334, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RDoubleVector updateTooManyValuesSubset(Object v, RAbstractDoubleVector value, int recLevel, int position, RAbstractDoubleVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1422,7 +1372,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 344, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RDoubleVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RAbstractDoubleVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RDoubleVector) castDouble(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1483,8 +1433,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RLogicalVector updateSingleDimVector(RAbstractLogicalVector value, int orgVectorLength, RLogicalVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
@@ -1501,7 +1450,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -1534,7 +1483,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 444, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RLogicalVector updateTooManyValuesSubset(Object v, RAbstractLogicalVector value, int recLevel, int position, RLogicalVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1595,8 +1544,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RStringVector updateSingleDimVector(RAbstractStringVector value, int orgVectorLength, RStringVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
@@ -1613,7 +1561,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -1651,7 +1599,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 554, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RStringVector updateTooManyValuesSubset(Object v, RAbstractStringVector value, int recLevel, int position, RStringVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1682,7 +1630,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 594, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RStringVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, int position, RStringVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RStringVector) castString(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1743,8 +1691,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RComplexVector updateSingleDimVector(RAbstractComplexVector value, int orgVectorLength, RComplexVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
@@ -1761,7 +1708,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -1809,7 +1756,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 624, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, int position, RComplexVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RComplexVector) castComplex(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1840,7 +1787,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 634, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, int position, RComplexVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RComplexVector) castComplex(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1871,7 +1818,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 644, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RComplexVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim((RComplexVector) castComplex(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1902,7 +1849,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 654, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RComplexVector updateTooManyValuesSubset(Object v, RAbstractComplexVector value, int recLevel, int position, RComplexVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1961,8 +1908,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private RRawVector updateSingleDimVector(RAbstractRawVector value, int orgVectorLength, RRawVector resultVector, RIntVector positions) {
         if (positions.getLength() == 1 && value.getLength() > 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
         for (int i = 0; i < positions.getLength(); i++) {
             int p = positions.getDataAt(i);
@@ -1979,7 +1925,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (positions.getLength() % value.getLength() != 0) {
-            RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+            RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         }
         updateNames(resultVector, positions);
         return resultVector;
@@ -2012,7 +1958,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 784, guards = {"!isValueLengthOne", "isSubset", "!isPosNA", "!isPosZero"})
     RRawVector updateTooManyValuesSubset(Object v, RAbstractRawVector value, int recLevel, int position, RRawVector vector) {
-        RContext.getInstance().setEvalWarning(RError.NOT_MULTIPLE_REPLACEMENT);
+        RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -2023,276 +1969,243 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(order = 1000, guards = {"noPosition", "emptyValue"})
     Object accessListEmptyPosEmptyValueList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1001, guards = {"noPosition", "emptyValue", "!isVectorList"})
     Object accessListEmptyPosEmptyValue(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1002, guards = {"noPosition", "valueLengthOne"})
     Object accessListEmptyPosValueLengthOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1003, guards = {"noPosition", "valueLongerThanOne"})
     Object accessListEmptyPosValueLongerThanOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1004, guards = "noPosition")
     Object accessListEmptyPosValueNullList(Object v, RNull value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1005, guards = {"noPosition", "!isVectorList"})
     Object accessListEmptyPosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1010, guards = {"onePosition", "emptyValue"})
     Object accessListOnePosEmptyValueList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1011, guards = {"onePosition", "emptyValue", "!isVectorList"})
     Object accessListOnePosEmptyValue(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1012, guards = {"onePosition", "valueLengthOne"})
     Object accessListOnePosValueLengthOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1013, guards = {"onePosition", "valueLongerThanOne"})
     Object accessListOnePosValueLongerThanTwo(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1014, guards = "onePosition")
     Object accessListOnePosValueNullList(Object v, RNull value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1015, guards = {"onePosition", "!isVectorList"})
     Object accessListOnePosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1020, guards = "twoPositions")
     Object accessListTwoPos(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1021, guards = "twoPositions")
     Object accessListTwoPosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1030, guards = {"moreThanTwoPos", "emptyValue"})
     Object accessListMultiPosEmptyValueList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1031, guards = {"moreThanTwoPos", "emptyValue", "!isVectorList"})
     Object accessListMultiPosEmptyValue(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1032, guards = {"moreThanTwoPos", "valueLengthOne"})
     Object accessListMultiPosValueLengthOneList(Object v, RAbstractVector value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1033, guards = {"moreThanTwoPos", "valueLengthOne", "!isVectorList"})
     Object accessListMultiPosValueLengthOne(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1034, guards = {"moreThanTwoPos", "valueLongerThanOne"})
     Object accessListMultiPos(Object v, RAbstractVector value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1035, guards = "moreThanTwoPos")
     Object accessListMultiPosValueNullList(Object v, RNull value, int recLevel, RList positions, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @Specialization(order = 1036, guards = {"moreThanTwoPos", "!isVectorList"})
     Object accessListMultiPosValueNull(Object v, RNull value, int recLevel, RList positions, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @Specialization(order = 1100, guards = {"emptyValue", "!isVectorList"})
     Object accessComplexEmptyValue(Object v, RAbstractVector value, int recLevel, RComplex position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
     @Specialization(order = 1101, guards = {"valueLongerThanOne", "!isVectorList"})
     Object accessComplexValueLongerThanOne(Object v, RAbstractVector value, int recLevel, RComplex position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
     @Specialization(order = 1102, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
     Object accessComplex(Object v, RAbstractVector value, int recLevel, RComplex position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @Specialization(order = 1103)
     Object accessComplexList(Object v, RAbstractVector value, int recLevel, RComplex position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @Specialization(order = 1104, guards = "!isVectorList")
     Object accessComplex(Object v, RNull value, int recLevel, RComplex position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
     @Specialization(order = 1105)
     Object accessComplexList(Object v, RNull value, int recLevel, RComplex position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @Specialization(order = 1200, guards = {"emptyValue", "!isVectorList"})
     Object accessRawEmptyValue(Object v, RAbstractVector value, int recLevel, RRaw position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getReplacementZero(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
     @Specialization(order = 1201, guards = {"valueLongerThanOne", "!isVectorList"})
     Object accessRawValueLongerThanOne(Object v, RAbstractVector value, int recLevel, RRaw position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
     @Specialization(order = 1202, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
     Object accessRaw(Object v, RAbstractVector value, int recLevel, RRaw position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @Specialization(order = 1203)
     Object accessRawList(Object v, RAbstractVector value, int recLevel, RRaw position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @Specialization(order = 1204, guards = "!isVectorList")
     Object accessRaw(Object v, RNull value, int recLevel, RRaw position, RAbstractVector vector) {
-        CompilerDirectives.transferToInterpreter();
         if (!isSubset) {
-            throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
     @Specialization(order = 1205)
     Object accessRawList(Object v, RNull value, int recLevel, RRaw position, RList vector) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     protected boolean firstPosZero(Object v, RAbstractContainer value, int recLevel, RIntVector positions) {
@@ -2361,11 +2274,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
-            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
-                throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
             } else {
-                throw RError.getImproperSubscript(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
             }
         }
         return false;
@@ -2373,11 +2285,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length == 2) {
-            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
-                throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
             } else {
-                throw RError.getImproperSubscript(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
             }
         }
         return false;
@@ -2385,11 +2296,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensionsMatrix(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (positions.length == 2 && (vector.getDimensions() == null || vector.getDimensions().length != positions.length)) {
-            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
-                throw RError.getIncorrectSubscriptsMatrix(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
             } else {
-                throw RError.getImproperSubscript(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
             }
         }
         return false;
@@ -2397,11 +2307,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
-            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
-                throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
             } else {
-                throw RError.getImproperSubscript(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
             }
         }
         return false;
@@ -2409,11 +2318,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RAbstractContainer value, int recLevel, Object[] positions, RNull vector) {
         if (positions.length > 2) {
-            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
-                throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
             } else {
-                throw RError.getImproperSubscript(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
             }
         }
         return false;
@@ -2421,11 +2329,10 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     protected boolean wrongDimensions(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
         if (!((vector.getDimensions() == null && positions.length == 1) || vector.getDimensions().length == positions.length)) {
-            CompilerDirectives.transferToInterpreter();
             if (isSubset) {
-                throw RError.getIncorrectSubscripts(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
             } else {
-                throw RError.getImproperSubscript(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
             }
         }
         return false;
@@ -2785,8 +2692,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         private int getNewArrayBase(int srcArrayBase, int pos, int newAccSrcDimensions) {
             int newSrcArrayBase;
             if (posNACheck.check(pos)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getNASubscripted(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
             } else {
                 newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
             }
@@ -2795,8 +2701,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         private int getSrcIndex(int srcArrayBase, int pos, int newAccSrcDimensions) {
             if (posNACheck.check(pos)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getNASubscripted(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
             } else {
                 return srcArrayBase + newAccSrcDimensions * (pos - 1);
             }
@@ -2834,8 +2739,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             }
         }
 
@@ -2844,8 +2748,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             }
         }
 
@@ -2864,8 +2767,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             }
         }
 
@@ -2874,22 +2776,19 @@ public abstract class UpdateArrayHelperNode extends RNode {
             if (isSubset) {
                 return positions;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             }
         }
 
         @Specialization(order = 9, guards = {"!emptyValue", "singlePosNegative"})
         public RAbstractIntVector doIntVectorNegative(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
 
         @Specialization(order = 10, guards = "emptyValue")
         public RAbstractVector doIntVectorEmptyValue(RNull vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else {
                 return positions;
             }
@@ -2898,106 +2797,93 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 20, guards = {"emptyValue", "!isVectorList"})
         Object accessComplexEmptyValue(RAbstractVector vector, RAbstractVector value, RComplex position) {
             if (!isSubset) {
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
             }
         }
 
         @Specialization(order = 21, guards = {"valueLongerThanOne", "!isVectorList"})
         Object accessComplexValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RComplex position) {
-            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
             }
         }
 
         @Specialization(order = 22, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
         Object accessComplex(RAbstractVector vector, RAbstractVector value, RComplex position) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
 
         @Specialization(order = 23)
         Object accessComplexList(RList vector, RAbstractVector value, RComplex position) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
 
         @Specialization(order = 24)
         Object accessComplexList(RList vector, RNull value, RComplex position) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
 
         @Specialization(order = 25, guards = "!isVectorList")
         Object accessComplex(RAbstractVector vector, RNull value, RComplex position) {
-            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "complex");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
             }
         }
 
         @Specialization(order = 30, guards = {"emptyValue", "!isVectorList"})
         Object accessRawEmptyValue(RAbstractVector vector, RAbstractVector value, RRaw position) {
-            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
             }
         }
 
         @Specialization(order = 31, guards = {"valueLongerThanOne", "!isVectorList"})
         Object accessRawValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RRaw position) {
-            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
             }
         }
 
         @Specialization(order = 32, guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
         Object accessRaw(RAbstractVector vector, RAbstractVector value, RRaw position) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
 
         @Specialization(order = 33)
         Object accessRawList(RList vector, RAbstractVector value, RRaw position) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
 
         @Specialization(order = 34)
         Object accessRawList(RList vector, RNull value, RRaw position) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
 
         @Specialization(order = 35, guards = "!isVectorList")
         Object accessRaw(RAbstractVector vector, RNull value, RRaw position) {
-            CompilerDirectives.transferToInterpreter();
             if (!isSubset) {
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "raw");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
             }
         }
 
         @Specialization(order = 100, guards = {"noPosition", "emptyValue"})
         RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3006,11 +2892,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 101, guards = {"noPosition", "emptyValue", "!isVectorList"})
         RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3019,11 +2903,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 102, guards = {"noPosition", "valueLengthOne"})
         RAbstractVector accessListEmptyPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3032,11 +2914,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 103, guards = {"noPosition", "valueLongerThanOne"})
         RAbstractVector accessListEmptyPosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3045,11 +2925,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 104, guards = {"noPosition", "valueLongerThanOne", "!isVectorList"})
         RAbstractVector accessListEmptyPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3058,11 +2936,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 105, guards = "noPosition")
         RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3071,11 +2947,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 106, guards = {"noPosition", "!isVectorList"})
         RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3084,8 +2958,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 110, guards = {"onePosition", "emptyValue", "!isPosVectorInt"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3094,8 +2967,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 111, guards = {"onePosition", "emptyValue", "!firstPosZero"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3104,8 +2976,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 112, guards = {"onePosition", "emptyValue", "firstPosZero"})
         RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else {
                 return positions;
             }
@@ -3114,11 +2985,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 113, guards = {"onePosition", "emptyValue", "!isVectorList", "!isPosVectorInt"})
         RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3127,8 +2996,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 114, guards = {"onePosition", "emptyValue", "!isVectorList", "!firstPosZero"})
         RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else {
                 return positions;
             }
@@ -3137,8 +3005,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 115, guards = {"onePosition", "emptyValue", "!isVectorList", "firstPosZero"})
         RAbstractVector accessListOnePosZeroEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else {
                 return positions;
             }
@@ -3147,8 +3014,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 116, guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3162,8 +3028,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 118, guards = {"onePosition", "valueLengthOne", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else {
                 return positions;
             }
@@ -3172,8 +3037,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 119, guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3182,8 +3046,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 120, guards = {"onePosition", "valueLongerThanOne", "!firstPosZero"})
         RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3192,8 +3055,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 121, guards = {"onePosition", "valueLongerThanOne", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else {
                 return positions;
             }
@@ -3202,11 +3064,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 122, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3215,8 +3075,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 123, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!firstPosZero"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
                 return positions;
             }
@@ -3225,8 +3084,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 124, guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
                 return positions;
             }
@@ -3235,8 +3093,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 125, guards = {"onePosition", "!isPosVectorInt"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3245,8 +3102,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 126, guards = {"onePosition", "!firstPosZero"})
         RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
             if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3255,8 +3111,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 127, guards = {"onePosition", "firstPosZero"})
         RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectLessThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else {
                 return positions;
             }
@@ -3265,11 +3120,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 128, guards = {"onePosition", "!isVectorList", "!isPosVectorInt"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3278,8 +3131,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 129, guards = {"onePosition", "!isVectorList", "!firstPosZero"})
         RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
                 return positions;
             }
@@ -3288,8 +3140,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 130, guards = {"onePosition", "!isVectorList", "firstPosZero"})
         RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else {
                 return positions;
             }
@@ -3298,11 +3149,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 140, guards = "multiPos")
         RAbstractVector accessListTwoPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3311,11 +3160,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 141, guards = {"multiPos", "emptyValue", "!isVectorList"})
         RAbstractVector accessListTwoPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getReplacementZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3324,11 +3171,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 142, guards = {"multiPos", "valueLengthOne", "!isVectorList"})
         RAbstractVector accessListTwoPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3337,11 +3182,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 143, guards = {"multiPos", "valueLongerThanOne", "!isVectorList"})
         RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3350,11 +3193,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 144, guards = "multiPos")
         RAbstractVector accessListTwoPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getSelectMoreThanOne(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3363,11 +3204,9 @@ public abstract class UpdateArrayHelperNode extends RNode {
         @Specialization(order = 145, guards = {"multiPos", "!isVectorList"})
         RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
             if (!isSubset) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getMoreElementsSupplied(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
             } else if (positions.getElementClass() == Object.class) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidSubscriptType(getEncapsulatingSourceSection(), "list");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             } else {
                 return positions;
             }
@@ -3570,8 +3409,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 105)
         RIntVector coerce(VirtualFrame frame, RAbstractIntVector value, RAbstractRawVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "integer", "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "integer", "raw");
         }
 
         @Specialization(order = 107)
@@ -3608,8 +3446,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 205)
         RDoubleVector coerce(VirtualFrame frame, RAbstractDoubleVector value, RAbstractRawVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "double", "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "double", "raw");
         }
 
         @Specialization(order = 207)
@@ -3646,8 +3483,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 305)
         RLogicalVector coerce(VirtualFrame frame, RAbstractLogicalVector value, RAbstractRawVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "logical", "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "logical", "raw");
         }
 
         @Specialization(order = 307)
@@ -3684,8 +3520,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 405)
         RStringVector coerce(VirtualFrame frame, RAbstractStringVector value, RAbstractRawVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "character", "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "character", "raw");
         }
 
         @Specialization(order = 407)
@@ -3722,8 +3557,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 505)
         RComplexVector coerce(VirtualFrame frame, RAbstractComplexVector value, RAbstractRawVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "complex", "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "complex", "raw");
         }
 
         @Specialization(order = 507)
@@ -3740,8 +3574,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 606, guards = "!isVectorList")
         RRawVector coerce(VirtualFrame frame, RAbstractRawVector value, RAbstractVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "raw", RRuntime.classToString(vector.getElementClass(), false));
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "raw", RRuntime.classToString(vector.getElementClass(), false));
         }
 
         @Specialization(order = 607)
@@ -3772,8 +3605,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
         @Specialization(order = 906)
         RFunction coerce(VirtualFrame frame, RFunction value, RAbstractVector vector, Object operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getSubassignTypeFix(getEncapsulatingSourceSection(), "closure", RRuntime.classToString(vector.getElementClass(), false));
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "closure", RRuntime.classToString(vector.getElementClass(), false));
         }
 
         // in all other cases, simply return the vector (no coercion)

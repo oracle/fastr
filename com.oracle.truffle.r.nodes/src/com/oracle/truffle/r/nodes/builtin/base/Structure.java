@@ -24,11 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
+import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -52,9 +51,7 @@ public abstract class Structure extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     public Object structure(RMissing obj, RMissing args) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "argument \".Data\" is missing, with no default");
-
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
     }
 
     @Specialization
@@ -88,8 +85,7 @@ public abstract class Structure extends RBuiltinNode {
             }
         }
         if (!ok) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "attributes must be named");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
     }
 }

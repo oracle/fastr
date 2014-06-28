@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -143,8 +142,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "&&");
         }
 
         @Override
@@ -157,15 +155,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "&&");
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "&&");
         }
 
         @Override
@@ -173,39 +169,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0.0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "&&");
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "&&");
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "&&");
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "&&");
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "&&");
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "&&");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "&&");
         }
     }
 
@@ -267,8 +257,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "||");
         }
 
         @Override
@@ -281,15 +270,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "||");
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "||");
         }
 
         @Override
@@ -297,39 +284,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0.0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "||");
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "||");
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "||");
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "||");
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", "||");
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", "||");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", "||");
         }
     }
 
@@ -382,8 +363,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
@@ -401,15 +381,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
@@ -417,39 +395,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left == 0.0) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
     }
 
@@ -502,8 +474,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
@@ -521,15 +492,13 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
             }
         }
 
         @Override
         public byte op(String left, int right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
@@ -537,39 +506,33 @@ public abstract class BinaryLogic extends BooleanOperation {
             if (left != 0.0) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
             }
         }
 
         @Override
         public byte op(String left, double right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(RNull left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(Object left, RNull right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(RRaw left, Object right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
         public byte op(Object left, RRaw right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getOperationsNumericLogicalComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
     }
 }

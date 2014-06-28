@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -81,7 +81,7 @@ public abstract class CastComplexNode extends CastNode {
         naCheck.enable(operand);
         RComplex result = naCheck.convertStringToComplex(operand);
         if (RRuntime.isNA(result)) {
-            RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -106,7 +106,7 @@ public abstract class CastComplexNode extends CastNode {
             String value = operand.getDataAt(i);
             RComplex complexValue = naCheck.convertStringToComplex(value);
             if (RRuntime.isNA(complexValue)) {
-                RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+                RError.warning(RError.Message.NA_INTRODUCED_COERCION);
             }
             int index = i << 1;
             ddata[index] = complexValue.getRealPart();

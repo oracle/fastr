@@ -67,7 +67,7 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
         boolean notEqualCols = leftDimensions[1] != rightDimensions[1];
 
         if (cols > leftLength && cols % leftLength != 0) {
-            RError.warning(getEncapsulatingSourceSection(), RError.RBIND_COLUMNS_NOT_MULTIPLE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.RBIND_COLUMNS_NOT_MULTIPLE);
         }
 
         // initial copy of left to result

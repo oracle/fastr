@@ -30,7 +30,6 @@ import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class FileFunctions {
-    private static final String INVALID_FILE_ARGUMENT = "invalid 'file' argument";
 
     @RBuiltin(name = "file.create", kind = INTERNAL)
     public abstract static class FileCreate extends RBuiltinNode {
@@ -72,8 +70,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -120,8 +117,7 @@ public class FileFunctions {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
             if (lenFrom < 1) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "nothing to link");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOTHING_TO_LINK);
             }
             if (lenTo < 1) {
                 return RDataFactory.createLogicalVector(0);
@@ -165,8 +161,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -181,8 +176,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -212,8 +206,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -224,8 +217,7 @@ public class FileFunctions {
             controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "'from' and 'to' are of different lengths");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FROM_TO_DIFFERENT);
             }
             byte[] status = new byte[len];
             for (int i = 0; i < len; i++) {
@@ -249,8 +241,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -278,8 +269,7 @@ public class FileFunctions {
         @Specialization(order = 100)
         public Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), INVALID_FILE_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 

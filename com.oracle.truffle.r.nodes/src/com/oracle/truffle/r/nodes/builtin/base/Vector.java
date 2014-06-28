@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -63,8 +62,7 @@ public abstract class Vector extends RBuiltinNode {
                 Arrays.fill(data, RNull.instance);
                 return RDataFactory.createList(data);
             default:
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getCannotMakeVectorOfMode(getEncapsulatingSourceSection(), mode);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
     }
 

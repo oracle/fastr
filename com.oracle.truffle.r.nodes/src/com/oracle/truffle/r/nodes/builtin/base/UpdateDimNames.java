@@ -99,8 +99,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Specialization
     public RAbstractVector updateDimnamesError(VirtualFrame frame, Object vector, Object list) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getDimnamesList(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
     protected boolean isZeroLength(VirtualFrame frame, RAbstractVector vector, RList list) {

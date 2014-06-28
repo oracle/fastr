@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -33,11 +32,6 @@ import com.oracle.truffle.r.runtime.data.*;
 @SuppressWarnings("unused")
 public abstract class IsTypeNode extends RBuiltinNode {
     private static final String[] PARAMETER_NAMES = new String[]{"x"};
-
-    protected byte error() throws RError {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getZ1ArgumentsPassed(getEncapsulatingSourceSection(), getRBuiltin().name());
-    }
 
     @Override
     public Object[] getParameterNames() {
@@ -52,7 +46,7 @@ public abstract class IsTypeNode extends RBuiltinNode {
     @Specialization
     public byte isType(RMissing value) {
         controlVisibility();
-        return error();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization

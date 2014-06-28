@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -56,11 +55,6 @@ public class EvalFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        protected Object error(String msg) throws RError {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
-        }
-
         protected Object doEvalBody(Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
             Object expr = exprArg;
             if (expr instanceof RSymbol) {
@@ -77,8 +71,7 @@ public class EvalFunctions {
                     }
                     return result;
                 } catch (PutException x) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), x.getMessage());
+                    throw RError.error(getEncapsulatingSourceSection(), x.getMessage());
                 }
             } else {
                 // just return value

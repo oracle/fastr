@@ -24,13 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -46,8 +43,7 @@ public abstract class NGetText extends RBuiltinNode {
 
     @Specialization(order = 1, guards = "wrongNVector")
     public String getTextEmpty(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "n");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "n");
     }
 
     @Specialization(order = 2, guards = "!wrongNVector")
@@ -58,38 +54,32 @@ public abstract class NGetText extends RBuiltinNode {
 
     @Specialization(order = 10, guards = "!wrongNVector")
     public String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RNull msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMustBeString(getEncapsulatingSourceSection(), "msg1");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(order = 11, guards = "!wrongNVector")
     public String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RAbstractVector msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMustBeString(getEncapsulatingSourceSection(), "msg1");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(order = 12, guards = {"!wrongNVector", "!msg1StringVectorOneElem"})
     public String getTextMsg1WrongMsg2Null(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMustBeString(getEncapsulatingSourceSection(), "msg1");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(order = 13, guards = {"!wrongNVector", "!msg1StringVectorOneElem"})
     public String getTextMsg1Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMustBeString(getEncapsulatingSourceSection(), "msg1");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(order = 20, guards = {"!wrongNVector", "msg1StringVectorOneElem"})
     public String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMustBeString(getEncapsulatingSourceSection(), "msg2");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
     }
 
     @Specialization(order = 21, guards = {"!wrongNVector", "msg1StringVectorOneElem", "!msg2StringVectorOneElem"})
     public String getTextMsg2Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getMustBeString(getEncapsulatingSourceSection(), "msg2");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
     }
 
     @Specialization(order = 30, guards = {"!wrongNVector", "msg1StringVectorOneElem", "msg2StringVectorOneElem"})

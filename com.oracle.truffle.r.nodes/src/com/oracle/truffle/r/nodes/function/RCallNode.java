@@ -245,8 +245,7 @@ public abstract class RCallNode extends RNode {
             final boolean hasVarArgs = Arrays.asList(rootNode.getParameterNames()).contains("...");
             if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount()) {
                 RNode unusedArgNode = arguments.getArguments()[rootNode.getParameterCount()];
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getUnusedArgument(getEncapsulatingSourceSection(), unusedArgNode.getSourceSection().getCode());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNUSED_ARGUMENT, unusedArgNode.getSourceSection().getCode());
             }
             RNode[] argumentNodes = arguments.getArguments();
             RNode[] origArgumentNodes = argumentNodes;
@@ -531,20 +530,17 @@ public abstract class RCallNode extends RNode {
                 if (pn.equals(name)) {
                     found = i;
                     if (matchedArgs[found]) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw RError.getFormalMatchedMultiple(getEncapsulatingSourceSection(), pn);
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FORMAL_MATCHED_MULTIPLE, pn);
                     }
                     matchedArgs[found] = true;
                     break;
                 } else if (pn.startsWith(name)) {
                     if (found >= 0) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw RError.getArgumentMatchesMultiple(getEncapsulatingSourceSection(), 1 + argPos);
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + argPos);
                     }
                     found = i;
                     if (matchedArgs[found]) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw RError.getFormalMatchedMultiple(getEncapsulatingSourceSection(), pn);
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FORMAL_MATCHED_MULTIPLE, pn);
                     }
                     matchedArgs[found] = true;
                 }
@@ -553,7 +549,6 @@ public abstract class RCallNode extends RNode {
         if (found >= 0 || varArgs) {
             return found;
         }
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getUnusedArgument(getEncapsulatingSourceSection(), argNode != null ? argNode.getSourceSection().getCode() : name);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNUSED_ARGUMENT, argNode != null ? argNode.getSourceSection().getCode() : name);
     }
 }

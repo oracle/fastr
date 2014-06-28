@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -149,21 +148,19 @@ public class AttachFunctions {
             controlVisibility();
             int ix = REnvironment.lookupIndexOnSearchPath(name);
             if (ix <= 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'name' argument");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "name");
             }
             return doDetach(ix, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
         }
 
         REnvironment doDetach(int pos, boolean unload, boolean force) {
             if (pos == 1) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), " invalid 'pos' argument");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             }
             try {
                 return REnvironment.detach(pos, unload, force);
             } catch (DetachException ex) {
-                throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
             }
         }
     }

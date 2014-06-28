@@ -62,8 +62,7 @@ public class ForeignFunctions {
         protected int[] checkNAs(int argIndex, int[] data) throws RError {
             for (int i = 0; i < data.length; i++) {
                 if (RRuntime.isNA(data[i])) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "NAs in foreign function call (arg " + argIndex + ")");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
@@ -72,8 +71,7 @@ public class ForeignFunctions {
         protected double[] checkNAs(int argIndex, double[] data) throws RError {
             for (int i = 0; i < data.length; i++) {
                 if (!RRuntime.isFinite(data[i])) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "NA/NaN/Inf in foreign function call (arg " + argIndex + ")");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
@@ -120,8 +118,7 @@ public class ForeignFunctions {
                 // @formatter:on
                 return RDataFactory.createList(data, DQRDC2_NAMES);
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "incorrect arguments to dqrdc2");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
             }
         }
 
@@ -167,8 +164,7 @@ public class ForeignFunctions {
                 return RDataFactory.createList(data, DQRCF_NAMES);
 
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "incorrect arguments to dqrcf");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
             }
         }
 
@@ -197,8 +193,7 @@ public class ForeignFunctions {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "symbol " + f + " not in load table");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
             }
             boolean dupArgs = RRuntime.fromLogical(dup);
             boolean checkNA = RRuntime.fromLogical(naok);
@@ -233,15 +228,13 @@ public class ForeignFunctions {
                     argTypes[i] = SCALAR_LOGICAL;
                     nativeArgs[i] = checkNAs(i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
                 } else {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument type (arg " + (i + 1) + ")");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
             try {
                 RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
             } catch (Throwable t) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "native call failed: " + t.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
             RStringVector listNames = validateArgNames(args.length, getArgNames());
@@ -344,7 +337,7 @@ public class ForeignFunctions {
                     int[] maxp = new int[1];
                     RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
                     if (maxf[0] == 0) {
-                        throw RError.getGenericError(getEncapsulatingSourceSection(), "fft factorization error");
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                     }
                     double[] work = new double[4 * maxf[0]];
                     int[] iwork = new int[maxp[0]];

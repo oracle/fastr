@@ -301,7 +301,7 @@ public final class REngine implements RContext.Engine {
             try {
                 result = callTarget.call(frame);
             } catch (ControlFlowException cfe) {
-                throw RError.getNoLoopForBreakNext(null);
+                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
             if (printResult) {
                 printResult(result);

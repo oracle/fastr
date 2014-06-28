@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -42,10 +41,6 @@ import com.oracle.truffle.r.runtime.data.*;
 public class FrameFunctions {
 
     public abstract static class FrameHelper extends RBuiltinNode {
-        protected void error(String msg) throws RError {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
-        }
 
         /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
@@ -55,7 +50,7 @@ public class FrameFunctions {
             if (n > 0) {
                 int d = Utils.stackDepth();
                 if (n > d) {
-                    error("not that many frames on the stack");
+                    RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 n = d - n;
             } else {
@@ -63,7 +58,7 @@ public class FrameFunctions {
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n);
             if (callerFrame == null) {
-                error("not that many frames on the stack");
+                RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
             }
             return callerFrame;
         }
@@ -160,8 +155,7 @@ public class FrameFunctions {
     public abstract static class SysFrames extends FrameHelper {
         @Specialization()
         public Object sysFrames() {
-            error("sys.frames is not implemented");
-            return RNull.instance;
+            throw RError.nyi(null, "sys.frames is not implemented");
         }
     }
 
@@ -175,7 +169,7 @@ public class FrameFunctions {
             controlVisibility();
             int n = (int) nd;
             if (n == 0) {
-                error("invalid 'n' value");
+                RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n + 1);
             if (callerFrame == null) {

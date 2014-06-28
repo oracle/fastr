@@ -26,8 +26,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -51,8 +51,7 @@ public abstract class NormalizePath extends RBuiltinNode {
                 if (mustWork != RRuntime.LOGICAL_FALSE) {
                     String msg = e instanceof NoSuchFileException ? "No such file or directory: " + path : e.toString();
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
+                        throw RError.error(getEncapsulatingSourceSection(), msg);
                     } else {
                         RContext.getInstance().setEvalWarning(msg);
                     }
@@ -67,7 +66,6 @@ public abstract class NormalizePath extends RBuiltinNode {
     @Specialization(order = 100)
     public Object doNormalizePath(Object path, Object winslash, Object mustWork) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
     }
 }

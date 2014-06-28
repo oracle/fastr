@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -297,8 +296,7 @@ public abstract class Repeat extends RBuiltinNode {
     public RAbstractVector repeatTV(RAbstractVector value, RIntVector times, RMissing lengthOut, Object each) {
         controlVisibility();
         if (value.getLength() != times.getLength()) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTimes(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES);
         }
         RVector valueMaterialized = value.materialize();
         RVector result = valueMaterialized.createEmptySameType(resultLength(times), valueMaterialized.isComplete());

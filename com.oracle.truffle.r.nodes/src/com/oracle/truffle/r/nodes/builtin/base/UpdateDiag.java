@@ -64,16 +64,14 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @Specialization(order = 0, guards = "!isMatrix")
     public RIntVector updateDiagNoMatrix(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getOnlyMatrixDiagonals(this.getEncapsulatingSourceSection());
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.ONLY_MATRIX_DIAGONALS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 1, guards = {"isMatrix", "!correctReplacementLength"})
     public RIntVector updateDiagReplacementDiagonalLength(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getReplacementDiagonalLength(this.getEncapsulatingSourceSection());
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_DIAGONAL_LENGTH);
     }
 
     @Specialization(order = 11, guards = {"isMatrix", "correctReplacementLength"})

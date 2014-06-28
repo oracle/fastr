@@ -78,7 +78,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
-                throw RError.getGenericError(getEncapsulatingSourceSection(), e.toString());
+                throw RError.error(getEncapsulatingSourceSection(), e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;
@@ -87,7 +87,6 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
     @Specialization
     public byte compileFunction(@SuppressWarnings("unused") Object arg) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'function' argument");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
     }
 }

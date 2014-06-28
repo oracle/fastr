@@ -57,7 +57,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization(order = 1, guards = "isNullInt")
     public int doInt(@SuppressWarnings("unused") RNull operand) {
         if (semantics.getEmptyWarning() != null) {
-            warning(semantics.emptyWarning);
+            RError.warning(semantics.emptyWarning);
         }
         return semantics.getIntStart();
     }
@@ -65,7 +65,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization(order = 2, guards = "!isNullInt")
     public double doDouble(@SuppressWarnings("unused") RNull operand) {
         if (semantics.getEmptyWarning() != null) {
-            warning(semantics.emptyWarning);
+            RError.warning(semantics.emptyWarning);
         }
         return semantics.getDoubleStart();
     }
@@ -180,9 +180,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         private final int intStart;
         private final double doubleStart;
         private final boolean nullInt;
-        private final String emptyWarning;
+        private final RError.Message emptyWarning;
 
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, String emptyWarning) {
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
@@ -201,7 +201,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             return nullInt;
         }
 
-        public String getEmptyWarning() {
+        public RError.Message getEmptyWarning() {
             return emptyWarning;
         }
 

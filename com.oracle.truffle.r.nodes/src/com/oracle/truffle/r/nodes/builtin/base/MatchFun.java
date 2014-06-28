@@ -73,8 +73,7 @@ public abstract class MatchFun extends RBuiltinNode {
         }
         Object r = lookup.execute(frame);
         if (r == null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getUnknownFunction(getEncapsulatingSourceSection(), fun);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION, fun);
         } else {
             return r;
         }

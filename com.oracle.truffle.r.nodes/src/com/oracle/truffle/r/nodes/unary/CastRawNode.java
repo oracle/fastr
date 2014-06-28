@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -49,7 +49,7 @@ public abstract class CastRawNode extends CastNode {
     public RRaw doInt(int operand) {
         int intResult = RRuntime.int2rawIntValue(operand);
         if (intResult != operand) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return RDataFactory.createRaw((byte) intResult);
     }
@@ -58,7 +58,7 @@ public abstract class CastRawNode extends CastNode {
     public RRaw doDouble(double operand) {
         int intResult = RRuntime.double2rawIntValue(operand);
         if (intResult != (int) operand) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return RDataFactory.createRaw((byte) intResult);
     }
@@ -67,10 +67,10 @@ public abstract class CastRawNode extends CastNode {
     public RRaw doComplex(RComplex operand) {
         int intResult = RRuntime.complex2rawIntValue(operand);
         if (operand.getImaginaryPart() != 0) {
-            RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         if (intResult != (int) operand.getRealPart()) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return RDataFactory.createRaw((byte) intResult);
     }
@@ -92,7 +92,7 @@ public abstract class CastRawNode extends CastNode {
         // need to cast to int to catch conversion warnings
         int intVal = RRuntime.string2int(operand);
         if (RRuntime.isNA(intVal)) {
-            RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return doInt(intVal);
     }
@@ -113,10 +113,10 @@ public abstract class CastRawNode extends CastNode {
             bdata[i] = (byte) intRawValue;
         }
         if (imaginaryDiscardedWarning) {
-            RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         if (outOfRangeWarning) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return bdata;
     }
@@ -133,7 +133,7 @@ public abstract class CastRawNode extends CastNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return bdata;
     }
@@ -154,10 +154,10 @@ public abstract class CastRawNode extends CastNode {
             bdata[i] = (byte) intRawValue;
         }
         if (naCoercionWarning) {
-            RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         if (outOfRangeWarning) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return bdata;
     }
@@ -326,7 +326,7 @@ public abstract class CastRawNode extends CastNode {
             array[i] = (byte) intRawValue;
         }
         if (warning) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         RRawVector ret;
         if (preserveDimensions() && preserveNames()) {
@@ -357,7 +357,7 @@ public abstract class CastRawNode extends CastNode {
             array[i] = (byte) intRawValue;
         }
         if (warning) {
-            RContext.getInstance().setEvalWarning(RError.OUT_OF_RANGE);
+            RError.warning(RError.Message.OUT_OF_RANGE);
         }
         RRawVector ret;
         if (preserveDimensions() && preserveNames()) {

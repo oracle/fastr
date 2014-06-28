@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -40,8 +39,7 @@ public abstract class CastSymbolNode extends CastNode {
     @SuppressWarnings("unused")
     @Specialization
     public RSymbol doNull(VirtualFrame frame, RNull value) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid type/length (symbol/0) in vector allocation");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
     }
 
     @Specialization
