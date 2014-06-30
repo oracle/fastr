@@ -88,6 +88,7 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
             note("Test output processor cannot run in Eclipse");
             inEclipse = true;
         } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException ex) {
+            inEclipse = true;
             error("error creating/invoking Trees.instance");
         }
     }
