@@ -34,6 +34,8 @@ public interface RAbstractContainer extends RAttributable {
 
     RVector materializeNonSharedVector();
 
+    RShareable materializeToShareable();
+
     Object getDataAtAsObject(int index);
 
     Object getNames();

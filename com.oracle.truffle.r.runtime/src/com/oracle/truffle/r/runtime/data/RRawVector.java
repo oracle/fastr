@@ -103,8 +103,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return this;
     }
 
-    private byte[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
+    private byte[] copyResizedData(int size, boolean fillNA) {
         byte[] newData = Arrays.copyOf(data, size);
         if (!fillNA) {
             // NA is 00 for raw
@@ -115,9 +114,14 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return newData;
     }
 
+    private byte[] createResizedData(int size, boolean fillNA) {
+        assert !this.isShared();
+        return copyResizedData(size, fillNA);
+    }
+
     @Override
     public RRawVector copyResized(int size, boolean fillNA) {
-        return RDataFactory.createRawVector(createResizedData(size, fillNA));
+        return RDataFactory.createRawVector(copyResizedData(size, fillNA));
     }
 
     @Override

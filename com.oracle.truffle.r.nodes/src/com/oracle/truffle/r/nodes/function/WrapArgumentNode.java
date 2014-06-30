@@ -34,19 +34,33 @@ public abstract class WrapArgumentNode extends RProxyNode {
     private BranchProfile everSeenTemporary = new BranchProfile();
     private BranchProfile everSeenNonTemporary = new BranchProfile();
 
+    private final boolean modeChange;
+
+    public WrapArgumentNode(boolean modeChange) {
+        this.modeChange = modeChange;
+    }
+
+    public WrapArgumentNode(WrapArgumentNode other) {
+        this.modeChange = other.modeChange;
+    }
+
     @Override
     protected RVector proxyVector(RVector vector) {
-        if (vector.isShared()) {
-            everSeenShared.enter();
-            return vector;
+        if (modeChange) {
+            // mark vector as wrapped only if changing its mode to shared; otherwise make sure that
+            // it can be seen as "truly" shared by marking vector unwrapped
+            if (vector.isShared()) {
+                everSeenShared.enter();
+                return vector;
+            }
+            if (vector.isTemporary()) {
+                everSeenTemporary.enter();
+                vector.markNonTemporary();
+                return vector;
+            }
+            everSeenNonTemporary.enter();
+            vector.makeShared();
         }
-        if (vector.isTemporary()) {
-            everSeenTemporary.enter();
-            vector.markNonTemporary();
-            return vector;
-        }
-        everSeenNonTemporary.enter();
-        vector.makeShared();
         return vector;
     }
 
@@ -58,11 +72,11 @@ public abstract class WrapArgumentNode extends RProxyNode {
 
     public abstract RNode getOperand();
 
-    public static WrapArgumentNode create(RNode operand) {
+    public static WrapArgumentNode create(RNode operand, boolean modeChange) {
         if (operand instanceof WrapArgumentNode) {
             return (WrapArgumentNode) operand;
         } else {
-            WrapArgumentNode wan = WrapArgumentNodeFactory.create(operand);
+            WrapArgumentNode wan = WrapArgumentNodeFactory.create(modeChange, operand);
             wan.assignSourceSection(operand.getSourceSection());
             return wan;
         }

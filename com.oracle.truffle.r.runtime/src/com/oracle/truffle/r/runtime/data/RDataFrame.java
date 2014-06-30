@@ -85,6 +85,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     public RVector materializeNonSharedVector() {
         if (isShared()) {
             vector = vector.copy();
+            vector.markNonTemporary();
         }
         return vector;
     }
@@ -121,5 +122,10 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     public RAttributes initAttributes() {
         return vector.initAttributes();
+    }
+
+    @Override
+    public RShareable materializeToShareable() {
+        return this;
     }
 }

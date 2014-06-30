@@ -55,6 +55,8 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
+        // for now, make sure that it's not compiled at all
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         RFunction function = RArguments.getFunction(frame);
         if (function == null) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
@@ -62,7 +64,7 @@ public class Recall extends RCustomBuiltinNode {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
-            args = insert(CallArgumentsNode.createUnnamed(createArgs(arguments[0])));
+            args = insert(CallArgumentsNode.createUnnamed(true, false, createArgs(arguments[0])));
             arguments[0] = null;
         }
         Object[] argsObject = RArguments.create(function, args.executeArray(frame));
