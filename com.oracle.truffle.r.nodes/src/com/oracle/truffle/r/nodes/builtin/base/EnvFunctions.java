@@ -145,7 +145,6 @@ public class EnvFunctions {
         public REnvironment setParentenv(REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                CompilerDirectives.transferToInterpreter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
