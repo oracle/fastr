@@ -178,16 +178,15 @@ public abstract class ConvertBooleanNode extends UnaryNode {
 
     @Generic
     public byte doInvalid(@SuppressWarnings("unused") Object value) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getArgumentNotInterpretableLogical(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
     }
 
     private RError unexpectedNAError() {
-        return RError.getUnexpectedNA(getEncapsulatingSourceSection());
+        return RError.error(getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
     }
 
     private RError lengthZeroError() {
-        return RError.getLengthZero(getEncapsulatingSourceSection());
+        return RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
     }
 
     public static ConvertBooleanNode create(RNode node) {

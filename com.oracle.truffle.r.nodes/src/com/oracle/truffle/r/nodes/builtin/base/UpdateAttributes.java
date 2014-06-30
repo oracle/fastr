@@ -92,8 +92,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         controlVisibility();
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getAttributesNamed(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
         int numAttributes = list.getLength();
@@ -108,14 +107,13 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 for (int i = 1; i < numAttributes; i++) {
                     String attrName = listNames.getDataAt(i);
                     if (attrName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                        throw RError.getAllAttributesNames(getEncapsulatingSourceSection(), i + 1);
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
                     }
                 }
             }
             // has to be reported if no other name is undefined
             if (listNames.getDataAt(0).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getZeroLengthVariable(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ZERO_LENGTH_VARIABLE);
             }
             // set the dim attribute first
             for (int i = 0; i < numAttributes; i++) {
@@ -127,8 +125,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     } else {
                         RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
                         if (dimsVector.getLength() == 0) {
-                            CompilerDirectives.transferToInterpreter();
-                            throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
+                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
                         }
                         resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
                     }
@@ -175,8 +172,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @Generic
     public RList doOther(VirtualFrame frame, Object vector, Object operand) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getAttributesListOrNull(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_LIST_OR_NULL);
     }
 
 }

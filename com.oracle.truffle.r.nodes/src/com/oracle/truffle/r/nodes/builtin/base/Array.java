@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -63,11 +62,9 @@ public abstract class Array extends RBuiltinNode {
             totalLength *= dimData[i];
         }
         if (seenNegative == dim.getLength() && seenNegative != 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getDimsContainNegativeValues(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
         } else if (seenNegative > 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNegativeLengthVectorsNotAllowed(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
         }
         return totalLength;
     }

@@ -495,8 +495,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getUnimplementedComplex(this.getEncapsulatingSourceSection());
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
     }
 

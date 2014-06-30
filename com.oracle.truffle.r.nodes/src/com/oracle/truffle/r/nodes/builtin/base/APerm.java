@@ -222,7 +222,7 @@ public abstract class APerm extends RBuiltinNode {
         } else if (perm.getLength() == dim.length) {
             for (int i = 0; i < perm.getLength(); i++) {
                 if (perm.getDataAt(i) > perm.getLength() || perm.getDataAt(i) < 1) {
-                    throw RError.getValueOutOfRange(getEncapsulatingSourceSection(), "perm");
+                    throw RError.error(RError.Message.VALUE_OUT_OF_RANGE, "perm");
                 }
                 arrayPerm[i] = perm.getDataAt(i) - 1; // Adjust to zero based permute.
             }
@@ -234,12 +234,12 @@ public abstract class APerm extends RBuiltinNode {
                     visited[arrayPerm[i]] = true;
                 } else {
                     // Duplicate dimension mapping in permute
-                    throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "perm");
+                    throw RError.error(RError.Message.INVALID_ARGUMENT, "perm");
                 }
             }
         } else {
             // perm size error
-            throw RError.getValueIsOfWrongLength(getEncapsulatingSourceSection(), "perm");
+            throw RError.error(RError.Message.INVALID_ARGUMENT, "perm");
         }
 
         return arrayPerm;
@@ -247,7 +247,7 @@ public abstract class APerm extends RBuiltinNode {
 
     private int[] getDimensions(RAbstractVector v) {
         if (!v.isArray()) {
-            throw RError.getArgumentNotArray(getEncapsulatingSourceSection(), 1);
+            throw RError.error(RError.Message.ARGUMENT_NOT_ARRAY, "perm");
         }
 
         // Get dimensions move to int array

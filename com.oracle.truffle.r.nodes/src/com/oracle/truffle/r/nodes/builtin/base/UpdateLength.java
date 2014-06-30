@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -60,16 +59,14 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     @Specialization(order = 2, guards = "!isLengthOne")
     public RAbstractVector updateLengthError(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidUnnamedValue(this.getEncapsulatingSourceSection());
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public Object updateLengthError(Object vector, Object lengthVector) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidUnnamedValue(this.getEncapsulatingSourceSection());
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     protected static boolean isLengthOne(@SuppressWarnings("unused") RAbstractVector vector, RAbstractIntVector length) {

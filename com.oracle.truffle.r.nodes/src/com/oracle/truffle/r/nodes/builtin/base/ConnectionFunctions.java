@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -135,16 +134,15 @@ public abstract class ConnectionFunctions {
         public Object file(RAbstractStringVector description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!open.equals("r")) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented open mode:" + open);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_OPEN_MODE, open);
             }
             String ePath = Utils.tildeExpand(description.getDataAt(0));
             try {
                 // temporarily return invisible to avoid missing print support
                 return new FileReadRConnection(ePath);
             } catch (IOException ex) {
-                RContext.getInstance().setEvalWarning("cannot open file '" + description.getDataAt(0) + "': " + ex.getMessage());
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot open connection");
+                RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
 
@@ -152,8 +150,7 @@ public abstract class ConnectionFunctions {
         @Specialization(order = 100)
         public Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
@@ -168,8 +165,8 @@ public abstract class ConnectionFunctions {
                 // temporarily return invisible to avoid missing print support
                 return new GZIPInputRConnection(ePath);
             } catch (IOException ex) {
-                RContext.getInstance().setEvalWarning("cannot open file '" + description.getDataAt(0) + "': " + ex.getMessage());
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot open connection");
+                RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -193,12 +190,11 @@ public abstract class ConnectionFunctions {
             try {
                 String[] lines = con.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "too few lines read in readLines");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
                 }
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "error reading connection: " + x.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
 
@@ -206,8 +202,7 @@ public abstract class ConnectionFunctions {
         @Specialization(order = 100)
         public Object readLines(Object con, Object n, Object ok, Object warn, Object encoding) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid arguments");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 

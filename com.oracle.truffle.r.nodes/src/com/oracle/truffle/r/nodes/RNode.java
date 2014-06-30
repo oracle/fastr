@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -180,11 +179,6 @@ public abstract class RNode extends Node {
 
     public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
         return a.getLength() == b.getLength();
-    }
-
-    @SlowPath
-    public static final void warning(String warning) {
-        RContext.getInstance().setEvalWarning(warning);
     }
 
 }

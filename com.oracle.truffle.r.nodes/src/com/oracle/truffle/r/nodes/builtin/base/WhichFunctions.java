@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -86,8 +85,7 @@ public class WhichFunctions {
         @Specialization
         public int which(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
         }
     }
 
@@ -117,8 +115,7 @@ public class WhichFunctions {
         @Specialization
         public int which(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNonNumericMath(this.getEncapsulatingSourceSection());
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
         }
     }
 }

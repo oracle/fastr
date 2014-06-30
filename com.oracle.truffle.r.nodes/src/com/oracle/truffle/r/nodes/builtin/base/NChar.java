@@ -48,8 +48,7 @@ public abstract class NChar extends RBuiltinNode {
         try {
             return (String) convertString.executeCast(frame, content);
         } catch (ConversionFailedException e) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getCharacterExpected(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
         }
     }
 

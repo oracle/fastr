@@ -107,13 +107,12 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     public Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         if (pos == REnvironment.emptyEnv()) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot assign values in the empty environment");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
         }
         try {
             pos.put(x, value);
         } catch (PutException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
         }
         return value;
     }
@@ -142,7 +141,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 REnvironment.globalEnv().put(x, value);
             }
         } catch (PutException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
         }
         return value;
     }

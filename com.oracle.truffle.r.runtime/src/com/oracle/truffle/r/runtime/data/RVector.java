@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -228,8 +227,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
             this.names = null;
         } else if (newNames != null && newNames != RNull.instance) {
             if (newNames != RNull.instance && ((RStringVector) newNames).getLength() > this.getLength()) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getAttributeVectorSameLength(sourceSection, RRuntime.NAMES_ATTR_KEY, ((RStringVector) newNames).getLength(), this.getLength());
+                throw RError.error(sourceSection, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, ((RStringVector) newNames).getLength(), this.getLength());
             }
             if (this.dimensions != null && dimensions.length == 1) {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R documentation
@@ -259,13 +257,11 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
             this.matrixDimension = 0;
         } else if (newDimNames != null) {
             if (dimensions == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getDimnamesNonarray(sourceSection);
+                throw RError.error(sourceSection, RError.Message.DIMNAMES_NONARRAY);
             }
             int newDimNamesLength = newDimNames.getLength();
             if (newDimNamesLength > dimensions.length) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getDimNamesDontMatchDims(sourceSection, newDimNamesLength, dimensions.length);
+                throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
             }
             for (int i = 0; i < newDimNamesLength; i++) {
                 Object dimObject = newDimNames.getDataAt(i);
@@ -274,8 +270,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
                     if (dimVector.getLength() == 0) {
                         newDimNames.updateDataAt(i, RNull.instance, null);
                     } else if (dimVector.getLength() != dimensions[i]) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw RError.getDimNamesDontMatchExtent(sourceSection, i + 1);
+                        throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                     }
                 }
             }

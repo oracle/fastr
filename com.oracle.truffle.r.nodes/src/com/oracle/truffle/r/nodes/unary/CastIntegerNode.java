@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -94,7 +94,7 @@ public abstract class CastIntegerNode extends CastNode {
         check.enable(operand);
         int result = check.convertComplexToInt(operand);
         if (operand.getImaginaryPart() != 0.0) {
-            RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return result;
     }
@@ -104,7 +104,7 @@ public abstract class CastIntegerNode extends CastNode {
         check.enable(operand);
         int result = check.convertStringToInt(operand);
         if (isNA(result)) {
-            RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -133,7 +133,7 @@ public abstract class CastIntegerNode extends CastNode {
             }
         }
         if (warning) {
-            RContext.getInstance().setEvalWarning(RError.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return idata;
     }
@@ -150,7 +150,7 @@ public abstract class CastIntegerNode extends CastNode {
             }
         }
         if (warning) {
-            RContext.getInstance().setEvalWarning(RError.NA_INTRODUCED_COERCION);
+            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return idata;
     }
@@ -412,8 +412,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     private RIntVector cannotCoerceListError() {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getListCoercion(this.getSourceSection(), "integer");
+        throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "integer");
     }
 
     @Generic

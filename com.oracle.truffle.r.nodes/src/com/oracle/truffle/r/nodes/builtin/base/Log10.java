@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,8 +36,7 @@ public abstract class Log10 extends RBuiltinNode {
     @Specialization
     public RNull log(RNull x) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getNonNumericArgumentFunction(this.getEncapsulatingSourceSection());
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization

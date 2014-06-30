@@ -193,8 +193,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
     private void checkUnary() {
         if (unary == null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getArgumentEmpty(getSourceSection(), 2);
+            throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
         }
     }
 
@@ -1061,8 +1060,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 return RDataFactory.createComplexRealOne();
             } else if (this.binary instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getUnimplementedComplex(this.getEncapsulatingSourceSection());
+                throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
@@ -1072,8 +1070,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);
             } else if (this.binary instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getUnimplementedComplex(this.getEncapsulatingSourceSection());
+                throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
@@ -1251,14 +1248,12 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
         @Specialization
         public Object doStringVector(RStringVector operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNonNumericBinary(this.getSourceSection());
+            throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
         }
 
         @Specialization
         public Object doRawVector(RRawVector operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNonNumericBinary(this.getSourceSection());
+            throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
         }
 
         private RIntVector logicalToInt(RLogicalVector operand) {

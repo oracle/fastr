@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -105,8 +104,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "lists not supported in 'identical'");
+        throw RError.nyi(getEncapsulatingSourceSection(), "lists not supported in 'identical'");
     }
 
     @Specialization(order = 101)
@@ -116,8 +114,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "data frames not supported in 'identical'");
+        throw RError.nyi(getEncapsulatingSourceSection(), "data frames not supported in 'identical'");
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {

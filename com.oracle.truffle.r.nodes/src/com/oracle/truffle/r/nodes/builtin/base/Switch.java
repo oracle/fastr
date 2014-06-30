@@ -66,8 +66,7 @@ public abstract class Switch extends RBuiltinNode {
             }
             if (argName == null) {
                 if (currentDefaultValue != null) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getDuplicateSwitchDefaults(getEncapsulatingSourceSection(), currentDefaultValue.toString(), value.toString());
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, currentDefaultValue.toString(), value.toString());
                 }
                 currentDefaultValue = value;
             }
@@ -101,8 +100,7 @@ public abstract class Switch extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(order = 3)
     public Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getExprMissing(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }
 
     private Object doSwitchInt(int index, Object[] optionalArgs) {
@@ -111,8 +109,7 @@ public abstract class Switch extends RBuiltinNode {
             if (value != null) {
                 return returnNonNull(value);
             }
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNoAlertnativeInSwitch(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ALTERNATIVE_IN_SWITCH);
         }
         return returnNull();
     }

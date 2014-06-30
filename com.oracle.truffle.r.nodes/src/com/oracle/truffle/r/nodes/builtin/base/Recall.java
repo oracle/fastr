@@ -29,10 +29,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
+import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "Recall", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
@@ -55,10 +55,11 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
+        // for now, make sure that it's not compiled at all
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         RFunction function = RArguments.getFunction(frame);
         if (function == null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getRecallCalledOutsideClosure(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

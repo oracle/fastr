@@ -173,8 +173,7 @@ public abstract class SApply extends RBuiltinNode {
                 if (v.getLength() != 1) {
                     // TODO: the whole implementation must be re-done, but for now this is required
                     // to support the format function
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
+                    throw RError.nyi(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
                 }
                 result[i] = v.getDataAt(0);
             } catch (UnexpectedResultException e) {
@@ -225,8 +224,7 @@ public abstract class SApply extends RBuiltinNode {
                 if (v.getLength() != 1) {
                     // TODO: the whole implementation must be re-done, but for now this is required
                     // to support the format function
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
+                    throw RError.nyi(getEncapsulatingSourceSection(), "lapply currently only handles string vectors of length 1");
                 }
                 result[i] = v.getDataAt(0);
             }

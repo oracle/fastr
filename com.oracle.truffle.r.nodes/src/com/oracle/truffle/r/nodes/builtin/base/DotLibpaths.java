@@ -29,7 +29,6 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -97,8 +96,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
     @Specialization(order = 100)
     public Object libPathsGeneric(@SuppressWarnings("unused") Object x) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'path' argument");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
     }
 
 }

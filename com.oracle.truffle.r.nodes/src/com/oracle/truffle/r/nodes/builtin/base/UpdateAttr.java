@@ -24,12 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.Node.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -116,8 +113,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         if (value instanceof String) {
             return RVector.setClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RVector.class ? container : null);
         }
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidClassAttr(sourceSection);
+        throw RError.error(sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
     }
 
     @Specialization(order = 1, guards = "!nullValue")
@@ -127,8 +123,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
             if (dimsVector.getLength() == 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getLengthZeroDimInvalid(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
             resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.NAMES_ATTR_KEY)) {

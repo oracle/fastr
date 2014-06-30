@@ -27,8 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -61,14 +60,13 @@ public class GrepFunctions {
 
         protected void valueCheck(byte value) throws RError {
             if (RRuntime.fromLogical(value)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "value == true is not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), "value == true is not implemented");
             }
         }
 
+        @SlowPath
         protected void notImplemented(String arg, boolean b) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
+            throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
         }
 
         protected int[] trimResult(int[] tmp, int numMatches, int vecLength) {
