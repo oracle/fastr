@@ -134,8 +134,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return this;
     }
 
-    private double[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
+    private double[] copyResizedData(int size, boolean fillNA) {
         double[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {
             if (fillNA) {
@@ -151,10 +150,15 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return newData;
     }
 
+    private double[] createResizedData(int size, boolean fillNA) {
+        assert !this.isShared();
+        return copyResizedData(size, fillNA);
+    }
+
     @Override
     public RDoubleVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length <= size) || !fillNA);
-        return RDataFactory.createDoubleVector(createResizedData(size, fillNA), isComplete);
+        return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
     }
 
     @Override

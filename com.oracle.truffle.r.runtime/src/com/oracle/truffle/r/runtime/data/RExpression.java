@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public class RExpression implements RAbstractContainer {
+public class RExpression implements RShareable, RAbstractContainer {
 
     private final RList data;
 
@@ -86,6 +86,36 @@ public class RExpression implements RAbstractContainer {
 
     public boolean isObject() {
         return false;
+    }
+
+    @Override
+    public void markNonTemporary() {
+        data.markNonTemporary();
+    }
+
+    @Override
+    public boolean isTemporary() {
+        return data.isTemporary();
+    }
+
+    @Override
+    public boolean isShared() {
+        return data.isShared();
+    }
+
+    @Override
+    public RVector makeShared() {
+        return data.makeShared();
+    }
+
+    @Override
+    public RExpression copy() {
+        return RDataFactory.createExpression((RList) data.copy());
+    }
+
+    @Override
+    public RShareable materializeToShareable() {
+        return this;
     }
 
 }

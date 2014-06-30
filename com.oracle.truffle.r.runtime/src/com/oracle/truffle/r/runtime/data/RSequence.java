@@ -116,4 +116,9 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         return resultVector;
     }
 
+    @Override
+    public RShareable materializeToShareable() {
+        return this.materialize();
+    }
+
 }

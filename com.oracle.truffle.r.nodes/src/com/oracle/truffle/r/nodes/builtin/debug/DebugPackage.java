@@ -23,12 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.debug;
 
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
 
 public class DebugPackage extends RBuiltinPackage {
 
-    public DebugPackage(REnvironment env) {
-        super(env);
+    public DebugPackage() {
         loadBuiltins();
     }
 
