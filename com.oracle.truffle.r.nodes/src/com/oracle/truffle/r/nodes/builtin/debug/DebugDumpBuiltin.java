@@ -108,6 +108,7 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
         private static final int INVALID_ID = -1;
         private static final String ROW_START = "<TR><TD>";
         private static final String ROW_END = "</TD></TR>";
+        private static final String FIELD_SOURCE_SECTION = "sourceSection";
 
         private final PrintWriter pw;
         private final boolean verbose;
@@ -172,6 +173,25 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
                     label.append(valStr);
                     label.append(ROW_END);
                 }
+            } else {
+                // If not being verbose, print at least "sourceSection"s content
+                for (NodeField field : fields) {
+                    if (FIELD_SOURCE_SECTION.equals(field.getName())) {
+                        Object value = field.loadValue(node);
+                        if (value == null) {
+                            // If null just skip
+                            break;
+                        }
+
+                        label.append(ROW_START);
+
+                        String valStr = escapeHTMLCharacters(String.valueOf(value));
+                        label.append(valStr);
+
+                        label.append(ROW_END);
+                        break;
+                    }
+                }
             }
 
             // Child and children, however, get their name and port inside the record.
@@ -212,6 +232,19 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
             printNodeChildren(node, nodeId);
 
             return nodeId;
+        }
+
+        protected static void printNameAndValue(Node node, StringBuilder label, NodeField field) {
+            label.append(ROW_START);
+            // Name..
+            label.append(field.getName());
+            label.append(" = ");
+
+            // ..and value
+            Object value = field.loadValue(node);
+            String valStr = escapeHTMLCharacters(String.valueOf(value));
+            label.append(valStr);
+            label.append(ROW_END);
         }
 
         /**
