@@ -46,15 +46,18 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         return stride;
     }
 
-    @Override
-    protected RDoubleVector internalCreateVector() {
-        double[] result = new double[getLength()];
+    protected RDoubleVector populateVectorData(double[] result) {
         double current = start;
         for (int i = 0; i < getLength(); ++i) {
             result[i] = current;
             current += stride;
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Override
+    protected RDoubleVector internalCreateVector() {
+        return populateVectorData(new double[getLength()]);
     }
 
     @Override
@@ -97,4 +100,13 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     public RStringVector getClassHierarchy() {
         return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, true);
     }
+
+    @Override
+    public RAbstractVector copyResized(int size, boolean fillNA) {
+        double[] data = new double[size];
+        populateVectorData(data);
+        RDoubleVector.resizeData(data, data, getLength(), fillNA);
+        return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()));
+    }
+
 }

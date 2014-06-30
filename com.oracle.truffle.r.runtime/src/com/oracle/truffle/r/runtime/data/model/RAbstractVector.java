@@ -35,6 +35,8 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RAbstractVector copy();
 
+    RAbstractVector copyResized(int size, boolean fillNA);
+
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
     RAbstractVector copyDropAttributes();

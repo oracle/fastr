@@ -82,7 +82,12 @@ public abstract class RToVectorClosure implements RAbstractVector {
 
     @Override
     public RAbstractVector copy() {
-        return copyWithNewDimensions(getDimensions());
+        return vector.copy();
+    }
+
+    @Override
+    public RAbstractVector copyResized(int size, boolean fillNA) {
+        return vector.copyResized(size, fillNA);
     }
 
     @Override

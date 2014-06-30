@@ -452,8 +452,6 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         return internalVerify();
     }
 
-    public abstract RVector copyResized(int size, boolean fillNA);
-
     protected abstract void resizeInternal(int size);
 
     protected abstract String getDataAtAsString(int index);

@@ -239,6 +239,8 @@ def rbench(args):
                     if not any("TruffleCompilationThreshold" in x for x in extraVmArgs):
                         # set compilation threshold to 10
                         extraVmArgs.append('-G:TruffleCompilationThreshold=10')
+                    if (bm.startswith("b25")):
+                        extraVmArgs.append('-G:-TruffleBackgroundCompilation')
                     rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'
@@ -260,9 +262,9 @@ def _bench_harness_body(args, vmArgs):
     marks = ['shootout.binarytrees', 'shootout.fannkuchredux', 'shootout.fasta', 'shootout.fastaredux',
              'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
              'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm',
-             'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-3', 'b25.bench.prog-4', 'b25.bench.prog-5',
-             'b25.bench.matcal-1', 'b25.bench.matcal-2', 'b25.bench.matcal-3', 'b25.bench.matcal-5',
-             'b25.bench.matfunc-1', 'b25.bench.matfunc-2', 'b25.bench.matfunc-3', 'b25.bench.matfunc-5']
+             'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-4', 'b25.bench.prog-5',
+             'b25.bench.matcal-1', 'b25.bench.matcal-2', 'b25.bench.matcal-3', 'b25.bench.matcal-4', 'b25.bench.matcal-5',
+             'b25.bench.matfunc-1', 'b25.bench.matfunc-2', 'b25.bench.matfunc-3', 'b25.bench.matfunc-4', 'b25.bench.matfunc-5']
     if vmArgs:
         marks = ['--J', vmArgs] + marks
     return rbench(marks)

@@ -35,6 +35,13 @@ public final class CallArgumentsNode extends RNode {
 
     private final String[] names;
     private final int nameCount;
+    // the two flags below are used in cases when we know that either a builtin is not going to
+    // modify the arguments which are not meant to be modified (like in the case of binary
+    // operators) or that its intention is to actually update the argument (as in the case of
+    // replacement forms, such as dim(x)<-1; in these cases the mode change
+    // (temporary->non-temporary->shared) does not need to happen, which is what the first flag
+    // determines, with the second flat telling the runtime if this affects only the first argument
+    // (replacement functions) or all arguments (binary operators).
     private final boolean modeChange;
     private final boolean modeChangeForAll;
 
