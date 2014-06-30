@@ -67,7 +67,7 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
         RootNode root = function.getTarget().getRootNode();
         if (igvDump == RRuntime.LOGICAL_FALSE) {
             // Use .dot dump instead
-            writeDotTreeToFile(root, verbose == RRuntime.LOGICAL_TRUE ? true : false);
+            writeDotTreeToFile(root, verbose == RRuntime.LOGICAL_TRUE);
             // User gets no feedback about the output file; should 'debug.deump' be visible?
             return RNull.instance;
         }
