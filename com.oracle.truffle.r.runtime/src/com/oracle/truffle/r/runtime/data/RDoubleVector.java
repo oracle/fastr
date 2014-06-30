@@ -134,20 +134,24 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return this;
     }
 
-    private double[] copyResizedData(int size, boolean fillNA) {
-        double[] newData = Arrays.copyOf(data, size);
-        if (size > this.getLength()) {
+    public static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = data.length; i < size; ++i) {
+                for (int i = oldDataLength; i < newData.length; ++i) {
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
-                for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
-                    newData[i] = data[j];
+                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                    newData[i] = oldData[j];
                 }
             }
         }
         return newData;
+    }
+
+    private double[] copyResizedData(int size, boolean fillNA) {
+        double[] newData = Arrays.copyOf(data, size);
+        return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     private double[] createResizedData(int size, boolean fillNA) {

@@ -103,46 +103,41 @@ public abstract class Matrix extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
-        return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
+        return transpose.execute(frame, data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
     }
 
     @Specialization(guards = "!isByRow", order = 4)
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
+        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
     @Specialization(guards = "!isByRow", order = 2)
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
+        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
     @Specialization(guards = "!isByRow", order = 1)
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
+        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
     @Specialization(guards = "!isByRow", order = 0)
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
-        RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
-        return vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
+        return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
     @SuppressWarnings("unused")

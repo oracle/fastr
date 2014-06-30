@@ -122,20 +122,24 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return this;
     }
 
-    private int[] copyResizedData(int size, boolean fillNA) {
-        int[] newData = Arrays.copyOf(data, size);
-        if (size > this.getLength()) {
+    public static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = data.length; i < size; ++i) {
+                for (int i = oldDataLength; i < newData.length; ++i) {
                     newData[i] = RRuntime.INT_NA;
                 }
             } else {
-                for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
-                    newData[i] = data[j];
+                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                    newData[i] = oldData[j];
                 }
             }
         }
         return newData;
+    }
+
+    private int[] copyResizedData(int size, boolean fillNA) {
+        int[] newData = Arrays.copyOf(data, size);
+        return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     private int[] createResizedData(int size, boolean fillNA) {

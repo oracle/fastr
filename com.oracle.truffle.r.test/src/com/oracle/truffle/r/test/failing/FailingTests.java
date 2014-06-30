@@ -1034,6 +1034,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testEnvironmentIgnore_14d25c1c38347070f388d2f433245dab() {
+        assertEvalError("{ as.environment(as.environment) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }

@@ -7134,11 +7134,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testEnvironment_14d25c1c38347070f388d2f433245dab() {
-        assertEvalError("{ as.environment(as.environment) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testEnvironment_ce252c65c0262f6fbb8778c80f154db0() {
         assertEvalError("{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
     }
@@ -7191,6 +7186,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironment_60bf41382750ac0f4de965f761a2fcf7() {
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironmentIgnore_14d25c1c38347070f388d2f433245dab() {
+        assertEvalError("{ as.environment(as.environment) }");
     }
 
     @Test

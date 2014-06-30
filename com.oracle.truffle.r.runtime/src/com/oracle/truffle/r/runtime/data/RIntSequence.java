@@ -46,15 +46,18 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return stride;
     }
 
-    @Override
-    protected RIntVector internalCreateVector() {
-        int[] result = new int[getLength()];
+    protected RIntVector populateVectorData(int[] result) {
         int current = start;
         for (int i = 0; i < getLength(); ++i) {
             result[i] = current;
             current += stride;
         }
         return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Override
+    protected RIntVector internalCreateVector() {
+        return populateVectorData(new int[getLength()]);
     }
 
     @Override
@@ -97,5 +100,13 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
 
     public RStringVector getClassHierarchy() {
         return RDataFactory.createStringVector(RRuntime.CLASS_INTEGER, true);
+    }
+
+    @Override
+    public RAbstractVector copyResized(int size, boolean fillNA) {
+        int[] data = new int[size];
+        populateVectorData(data);
+        RIntVector.resizeData(data, data, getLength(), fillNA);
+        return RDataFactory.createIntVector(data, !(fillNA && size > getLength()));
     }
 }
