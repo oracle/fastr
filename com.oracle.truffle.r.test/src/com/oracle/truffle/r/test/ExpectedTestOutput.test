@@ -5963,11 +5963,6 @@ Error in as.environment(0) : invalid 'pos' argument
 <environment: R_GlobalEnv>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
-#{ as.environment(as.environment) }
-Error in as.environment(as.environment) :
-  invalid object for 'as.environment'
-
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEnvironment
 #{ as.environment(length(search()) + 1) }
 <environment: R_EmptyEnv>
 
