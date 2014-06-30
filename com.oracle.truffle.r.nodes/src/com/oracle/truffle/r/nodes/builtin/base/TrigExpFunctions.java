@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -42,11 +41,6 @@ public class TrigExpFunctions {
     public static abstract class Adapter extends RBuiltinNode {
         private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
-        byte error() throws RError {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getZ1ArgumentsPassed(getEncapsulatingSourceSection(), getRBuiltin().name());
-        }
-
         @Override
         public Object[] getParameterNames() {
             return PARAMETER_NAMES;
@@ -60,7 +54,7 @@ public class TrigExpFunctions {
         @Specialization
         public byte isType(@SuppressWarnings("unused") RMissing value) {
             controlVisibility();
-            return error();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
     }
@@ -364,11 +358,6 @@ public class TrigExpFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        byte errorArg(String arg) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument \"" + arg + "\" is missing, with no default");
-        }
-
         private static RNode castArgument(RNode node) {
             if (!(node instanceof ConstantMissingNode)) {
                 return CastDoubleNodeFactory.create(node, false, false, false);
@@ -385,12 +374,12 @@ public class TrigExpFunctions {
 
         @Specialization(order = 10)
         public Object atan(@SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
-            return errorArg(PARAMETER_NAMES[0]);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, PARAMETER_NAMES[0]);
         }
 
         @Specialization(order = 11)
         public Object atan(@SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
-            return errorArg(PARAMETER_NAMES[1]);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, PARAMETER_NAMES[1]);
         }
 
         @Specialization(order = 0)

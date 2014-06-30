@@ -19,7 +19,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
+import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -49,8 +49,7 @@ public abstract class NextMethod extends RBuiltinNode {
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
         if (genericName == null) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getUnspecifiedGenFunction(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -75,13 +74,11 @@ public abstract class NextMethod extends RBuiltinNode {
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getObjectNotSpecified(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getObjectNotSpecified(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         return enclosingArg.getClassHierarchy();
     }

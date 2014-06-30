@@ -222,8 +222,7 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
 
     @Specialization(order = 31, guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(Object left, boolean needsRightOperand, RAbstractRawVector right) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "y", logic.opName());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", logic.opName());
     }
 
     @Specialization(order = 32, guards = "!needsRightOperand")
@@ -273,20 +272,17 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
 
         @Specialization
         public byte doLogical(String operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", getOpName());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
         public byte doLogical(RRaw operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", getOpName());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
         public byte doLogical(RNull operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", getOpName());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization(guards = "isZeroLength")
@@ -311,14 +307,12 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
 
         @Specialization
         public byte doLogical(RAbstractStringVector operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", getOpName());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
         public byte doLogical(RAbstractRawVector operand) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidTypeIn(getEncapsulatingSourceSection(), "x", getOpName());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization(guards = "!isZeroLength")

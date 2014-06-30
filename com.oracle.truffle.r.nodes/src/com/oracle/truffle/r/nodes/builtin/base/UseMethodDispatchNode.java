@@ -13,8 +13,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.runtime.*;
@@ -91,8 +91,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findFunction(this.genericName, RRuntime.DEFAULT, callerFrame);
             if (targetFunction == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), this.genericName, RRuntime.toString(this.type));
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
             }
         }
     }

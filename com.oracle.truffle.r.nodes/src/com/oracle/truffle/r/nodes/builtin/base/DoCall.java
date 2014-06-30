@@ -43,7 +43,7 @@ public abstract class DoCall extends RBuiltinNode {
     public Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         RFunction func = RContext.getEngine().lookupBuiltin(fname.getDataAt(0));
         if (func == null) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "could not find function " + fname);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION, fname);
         }
         Object[] args = new Object[argsAsList.getLength()];
         for (int i = 0; i < args.length; i++) {

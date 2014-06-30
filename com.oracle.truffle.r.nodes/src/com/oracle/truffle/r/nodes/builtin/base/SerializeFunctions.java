@@ -42,7 +42,7 @@ public class SerializeFunctions {
                 Object result = RSerialize.unserialize(conn);
                 return result;
             } catch (IOException ex) {
-                throw RError.getGenericError(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
             }
 
         }

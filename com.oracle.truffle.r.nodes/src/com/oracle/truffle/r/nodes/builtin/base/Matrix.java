@@ -162,8 +162,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     private int getValue(VirtualFrame frame, RAbstractVector arg) {
         if (isNumeric.execute(frame, arg) == RRuntime.LOGICAL_FALSE) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNonNumericMatrixExtent(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATRIX_EXTENT);
         }
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -185,12 +184,10 @@ public abstract class Matrix extends RBuiltinNode {
     private int getNrow(VirtualFrame frame, RAbstractVector vecRow) {
         int nRow = getValue(frame, vecRow);
         if (nRow == RRuntime.INT_NA) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidNRow(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_NROW);
         }
         if (nRow < 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNegativeNRow(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NROW);
         }
         return nRow;
     }
@@ -198,12 +195,10 @@ public abstract class Matrix extends RBuiltinNode {
     private int getNcol(VirtualFrame frame, RAbstractVector vecCol) {
         int nCol = getValue(frame, vecCol);
         if (nCol == RRuntime.INT_NA) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidNCol(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_NCOL);
         }
         if (nCol < 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNegativeNCol(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NCOL);
         }
         return nCol;
     }
@@ -215,8 +210,7 @@ public abstract class Matrix extends RBuiltinNode {
         int nCol = getNcol(frame, ncolp);
         if (nCol == 0) {
             if (xLen > 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getNcolZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
             } else {
                 nRow = 0;
             }
@@ -233,8 +227,7 @@ public abstract class Matrix extends RBuiltinNode {
         int nRow = getNrow(frame, nrowp);
         if (nRow == 0) {
             if (xLen > 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getNrowZero(getEncapsulatingSourceSection());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
             } else {
                 nCol = 0;
             }

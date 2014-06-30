@@ -130,8 +130,7 @@ public abstract class UseMethod extends RBuiltinNode {
         @Override
         public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), gen, RNull.instance.toString());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
             return currentNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
@@ -159,8 +158,7 @@ public abstract class UseMethod extends RBuiltinNode {
             CompilerAsserts.neverPartOfCompilation();
             if (o == RMissing.instance) {
                 if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getUnknownFunctionUseMethod(getEncapsulatingSourceSection(), generic, RNull.instance.toString());
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
                 Object enclosingArg = RArguments.getArgument(frame, 0);
                 DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);

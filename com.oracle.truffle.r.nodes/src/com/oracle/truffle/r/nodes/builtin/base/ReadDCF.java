@@ -41,7 +41,7 @@ public abstract class ReadDCF extends RBuiltinNode {
         try {
             DCF dcf = DCF.read(conn.readLines(0));
             if (dcf == null) {
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid connection");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
             }
             String[] data = new String[fields.getLength()];
             String[] names = new String[data.length];
@@ -62,7 +62,7 @@ public abstract class ReadDCF extends RBuiltinNode {
             }
             return RDataFactory.createStringVector(data, complete, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } catch (IOException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "error reading connection");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION);
         }
 
     }

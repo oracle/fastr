@@ -86,15 +86,13 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             if (dimensions != null) {
                 dimLength = dimensions.length;
             }
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNotMatixUpdateClass(getEncapsulatingSourceSection(), dimLength);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
             if (arg.isArray()) {
                 return setClass(arg, RNull.instance);
             }
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getNotArrayUpdateClass(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
         RVector resultVector = arg.materializeNonSharedVector();

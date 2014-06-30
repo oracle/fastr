@@ -102,7 +102,7 @@ public abstract class Covcor extends RBuiltinNode {
         }
 
         if (sd0) { /* only in cor() */
-            RError.warning(this.getEncapsulatingSourceSection(), RError.SD_ZERO);
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.SD_ZERO);
         }
 
         RDoubleVector ans = null;

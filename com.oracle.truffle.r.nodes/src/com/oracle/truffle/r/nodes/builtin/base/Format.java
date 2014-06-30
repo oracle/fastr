@@ -76,8 +76,7 @@ public abstract class Format extends RBuiltinNode {
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
         if (children.length != PARAMETER_NAMES.length) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getArgumentsPassed(getEncapsulatingSourceSection(), children.length, ".Internal(format)", PARAMETER_NAMES.length);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(format)", PARAMETER_NAMES.length);
         }
         RNode[] newChildren = new RNode[children.length];
         // cast to vector as appropriate to eliminate NULL values
@@ -247,32 +246,25 @@ public abstract class Format extends RBuiltinNode {
     protected boolean wrongArgsObject(@SuppressWarnings("unused") Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "trim");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "trim");
         }
         if (digitsVec.getLength() > 0 && (RRuntime.isNA(digitsVec.getDataAt(0)) || digitsVec.getDataAt(0) < R_MIN_DIGITS_OPT || digitsVec.getDataAt(0) > R_MAX_DIGITS_OPT)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "digits");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "digits");
         }
         if (nsmallVec.getLength() > 0 && (RRuntime.isNA(nsmallVec.getDataAt(0)) || nsmallVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 20)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "nsmall");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "nsmall");
         }
         if (widthVec.getLength() > 0 && RRuntime.isNA(widthVec.getDataAt(0))) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "width");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "width");
         }
         if (justifyVec.getLength() > 0 && (RRuntime.isNA(justifyVec.getDataAt(0)) || justifyVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 3)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "justify");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "justify");
         }
         if (naEncodeVec.getLength() > 0 && RRuntime.isNA(naEncodeVec.getDataAt(0))) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "na.encode");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "na.encode");
         }
         if (sciVec.getLength() != 1 || (sciVec.getElementClass() != RLogical.class && sciVec.getElementClass() != RInt.class && sciVec.getElementClass() != RDouble.class)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidArgument(getEncapsulatingSourceSection(), "scientific");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "scientific");
         }
         return false;
     }

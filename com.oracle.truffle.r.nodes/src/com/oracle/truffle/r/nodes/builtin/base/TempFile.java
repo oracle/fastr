@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -110,8 +109,7 @@ public abstract class TempFile extends RBuiltinNode {
         } else if (obj instanceof String) {
             return RDataFactory.createStringVector((String) obj);
         }
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
+        throw RError.error(getEncapsulatingSourceSection(), msg);
     }
 
     private static String createFile(String pattern, String tempDir, String fileExt) {

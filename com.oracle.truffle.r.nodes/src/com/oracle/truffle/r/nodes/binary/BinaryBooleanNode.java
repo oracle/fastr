@@ -684,8 +684,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
 
     @Specialization(order = 1000, guards = "differentDimensions")
     public RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getNonConformableArrays(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
     protected boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
@@ -1474,7 +1473,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
-            RContext.getInstance().setEvalWarning(RError.LENGTH_NOT_MULTI);
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
@@ -1519,7 +1518,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
-            RContext.getInstance().setEvalWarning(RError.LENGTH_NOT_MULTI);
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
@@ -1564,7 +1563,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
-            RContext.getInstance().setEvalWarning(RError.LENGTH_NOT_MULTI);
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
@@ -1609,7 +1608,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
-            RContext.getInstance().setEvalWarning(RError.LENGTH_NOT_MULTI);
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA());
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
@@ -1650,7 +1649,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         }
         boolean notMultiple = l != 0 || r != 0;
         if (notMultiple) {
-            RContext.getInstance().setEvalWarning(RError.LENGTH_NOT_MULTI);
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
         RRawVector ret = RDataFactory.createRawVector(result);
         ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());

@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.nio.file.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -56,15 +55,14 @@ public abstract class Rhome extends RBuiltinNode {
     public Object doRhome(String component) {
         controlVisibility();
         String rHome = REnvVars.rHome();
-        String result = component.equals("home") ? rHome : FileSystems.getDefault().getPath(rHome, component).toAbsolutePath().toString();
+        String result = component.equals("home") ? rHome : RRuntime.toString(FileSystems.getDefault().getPath(rHome, component).toAbsolutePath());
         return RDataFactory.createStringVector(result);
     }
 
     @Specialization(order = 100)
     public Object doRhomeGeneric(@SuppressWarnings("unused") Object x) {
         controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getWrongTypeOfArgument(getEncapsulatingSourceSection());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
     }
 
 }

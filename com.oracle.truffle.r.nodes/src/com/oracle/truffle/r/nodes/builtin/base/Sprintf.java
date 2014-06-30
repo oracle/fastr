@@ -33,7 +33,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
+import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -98,8 +98,7 @@ public abstract class Sprintf extends RBuiltinNode {
             if (Math.floor(x) == x) {
                 return format(fmt, (long) x);
             }
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getInvalidFormatDouble(getEncapsulatingSourceSection(), fmt);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
         }
         return format(fmt, x);
     }

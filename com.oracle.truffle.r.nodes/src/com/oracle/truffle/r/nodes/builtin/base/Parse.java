@@ -23,15 +23,14 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-import static com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 
 import java.io.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -44,11 +43,6 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "parse", kind = INTERNAL)
 public abstract class Parse extends RInvisibleBuiltinNode {
 
-    private Object error(String msg) throws RError {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), msg);
-    }
-
     @SuppressWarnings("unused")
     @Specialization(order = 0)
     public Object parse(RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
@@ -57,7 +51,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
             String[] lines = conn.readLines(0);
             return doParse(coalesce(lines));
         } catch (IOException | ParseException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 
@@ -69,7 +63,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
             String[] lines = conn.readLines((int) n);
             return doParse(coalesce(lines));
         } catch (IOException | ParseException ex) {
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "parse error");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 
@@ -80,7 +74,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
         try {
             return doParse(text);
         } catch (ParseException ex) {
-            return error("parse error");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 

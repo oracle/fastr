@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -240,8 +239,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
     }
 
@@ -285,8 +283,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
     }
 
@@ -330,8 +327,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
     }
 
@@ -375,8 +371,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getComparisonComplex(getEncapsulatingSourceSection());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
 
     }

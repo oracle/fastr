@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -52,15 +51,10 @@ public class IsListFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
 
-        protected byte error() throws RError {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getZ1ArgumentsPassed(getEncapsulatingSourceSection(), getRBuiltin().name());
-        }
-
         @Specialization
         public byte isType(RMissing value) {
             controlVisibility();
-            return error();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
         @Specialization

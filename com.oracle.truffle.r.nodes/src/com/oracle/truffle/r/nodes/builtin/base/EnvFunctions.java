@@ -59,8 +59,7 @@ public class EnvFunctions {
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.getGenericError(getEncapsulatingSourceSection(), "no enclosing environment");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
                     return frameToEnvironment(callerFrame);
                 }
@@ -72,8 +71,7 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid 'pos' argument");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
             }
@@ -88,14 +86,12 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "no item named '" + name + "' on the search list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
         }
 
         @Specialization(order = 100)
         public REnvironment asEnvironment(@SuppressWarnings("unused") Object x) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), " invalid object for 'as.environment'");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OBJECT);
         }
 
     }
@@ -140,8 +136,7 @@ public class EnvFunctions {
         public REnvironment parentenv(REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "the empty environment has no parent");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
         }
@@ -149,8 +144,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_AN_ENVIRONMENT);
         }
     }
 
@@ -162,7 +156,7 @@ public class EnvFunctions {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.getGenericError(getEncapsulatingSourceSection(), "cannot set the parent of the empty environment");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
             return env;
@@ -171,8 +165,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public REnvironment setParentenv(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "argument is not an environment");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_AN_ENVIRONMENT);
         }
     }
 
@@ -316,8 +309,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object lockBinding(Object x, Object y) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -334,8 +326,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object unlockBinding(Object x, Object y) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -351,8 +342,7 @@ public class EnvFunctions {
         @Specialization(order = 100)
         public Object bindingIsLocked(Object x, Object y) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "invalid or unimplemented arguments");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -363,8 +353,7 @@ public class EnvFunctions {
         public Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw RError.getGenericError(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
+            throw RError.nyi(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
         }
     }
 
@@ -427,7 +416,7 @@ public class EnvFunctions {
     }
 
     private static RError notAnEnvironment(RBuiltinNode node) {
-        return RError.getGenericError(node.getEncapsulatingSourceSection(), "not an envionment");
+        return RError.error(node.getEncapsulatingSourceSection(), RError.Message.NOT_AN_ENVIRONMENT);
     }
 
 }

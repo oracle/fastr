@@ -48,6 +48,6 @@ public abstract class IsFinite extends RBuiltinNode {
     public Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.getGenericError(getEncapsulatingSourceSection(), "unimplemented argument type");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARGUMENT_TYPE);
     }
 }
