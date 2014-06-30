@@ -89,11 +89,6 @@ public class EnvFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
         }
 
-        @Specialization(order = 100)
-        public REnvironment asEnvironment(@SuppressWarnings("unused") Object x) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OBJECT);
-        }
-
     }
 
     @RBuiltin(name = "emptyenv", kind = PRIMITIVE)
@@ -141,11 +136,6 @@ public class EnvFunctions {
             return env.getParent();
         }
 
-        @Specialization(order = 100)
-        public REnvironment parentenv(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_AN_ENVIRONMENT);
-        }
     }
 
     @RBuiltin(name = "parent.env<-", kind = INTERNAL)
@@ -162,11 +152,6 @@ public class EnvFunctions {
             return env;
         }
 
-        @Specialization(order = 100)
-        public REnvironment setParentenv(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_AN_ENVIRONMENT);
-        }
     }
 
     @RBuiltin(name = "is.environment", kind = PRIMITIVE)
@@ -271,13 +256,6 @@ public class EnvFunctions {
             return RNull.instance;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(order = 100)
-        public Object lockEnvironment(Object x, byte y) {
-            controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw notAnEnvironment(this);
-        }
     }
 
     @RBuiltin(name = "environmentIsLocked", kind = INTERNAL)
@@ -288,12 +266,6 @@ public class EnvFunctions {
             return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
         }
 
-        @Specialization(order = 100)
-        public Object lockEnvironment(@SuppressWarnings("unused") Object env) {
-            controlVisibility();
-            CompilerDirectives.transferToInterpreter();
-            throw notAnEnvironment(this);
-        }
     }
 
     @RBuiltin(name = "lockBinding", kind = INTERNAL)
@@ -305,12 +277,6 @@ public class EnvFunctions {
             return RNull.instance;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(order = 100)
-        public Object lockBinding(Object x, Object y) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-        }
     }
 
     @RBuiltin(name = "unlockBinding", kind = INTERNAL)
@@ -322,12 +288,6 @@ public class EnvFunctions {
             return RNull.instance;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(order = 100)
-        public Object unlockBinding(Object x, Object y) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-        }
     }
 
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL)
@@ -338,12 +298,6 @@ public class EnvFunctions {
             return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym));
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(order = 100)
-        public Object bindingIsLocked(Object x, Object y) {
-            controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-        }
     }
 
     @RBuiltin(name = "makeActiveBinding", kind = INTERNAL)
@@ -413,10 +367,6 @@ public class EnvFunctions {
             env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame.materialize());
         }
         return env;
-    }
-
-    private static RError notAnEnvironment(RBuiltinNode node) {
-        return RError.error(node.getEncapsulatingSourceSection(), RError.Message.NOT_AN_ENVIRONMENT);
     }
 
 }
