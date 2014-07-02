@@ -239,16 +239,13 @@ public abstract class APerm extends RBuiltinNode {
             }
         } else {
             // perm size error
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "perm");
+            throw RError.error(RError.Message.IS_OF_WRONG_LENGTH, "perm");
         }
 
         return arrayPerm;
     }
 
     private int[] getDimensions(RAbstractVector v) {
-        if (!v.isArray()) {
-            throw RError.error(RError.Message.ARGUMENT_NOT_ARRAY, "perm");
-        }
 
         // Get dimensions move to int array
         RIntVector dimV = RDataFactory.createIntVector(v.getDimensions(), RDataFactory.COMPLETE_VECTOR);
