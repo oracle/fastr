@@ -27,7 +27,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 //TODO: Implement permuting with DimNames
 @RBuiltin(name = "aperm", kind = INTERNAL)
 public abstract class APerm extends RBuiltinNode {
-
     @CreateCast("arguments")
     public RNode[] createCastPermute(RNode[] arguments) {
         RNode permVector = CastToVectorNodeFactory.create(arguments[1], false, false, false, false);
@@ -35,181 +34,38 @@ public abstract class APerm extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector aPerm(RAbstractIntVector vector, RAbstractIntVector permVector, byte resize) {
+    public RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
         controlVisibility();
 
-        int[] dim = getDimensions(vector);
-        int[] perm = getPermute(dim, permVector);
-
-        int[] posV = new int[dim.length]; // Position vector for each dimension
-        int[] newDim = applyPermute(dim, perm, false); // Position vector for striding
-        int[] result = new int[vector.getLength()];
-
-        // Move along the old array
-        for (int i = 0; i < result.length; i++) {
-            int posOld = toPos(applyPermute(posV, perm, true), dim);
-            result[i] = vector.getDataAt(posOld);
-
-            posV = incArray(posV, newDim);
-
-            // System.out.println("[" + i + "] = pos:" + posOld);
+        if (!vector.isArray()) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
         }
-        RIntVector r = RDataFactory.createIntVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
-
-        if (resize == 0) {
-            r.setDimensions(dim);
-        } else {
-            r.setDimensions(newDim);
-        }
-
-        return r;
-    }
-
-    @Specialization
-    public RDoubleVector aPerm(RAbstractDoubleVector vector, RAbstractIntVector permVector, byte resize) {
-        controlVisibility();
 
         int[] dim = getDimensions(vector);
         int[] perm = getPermute(dim, permVector);
 
         int[] posV = new int[dim.length];
-        int[] newDim = applyPermute(dim, perm, false);
-        double[] result = new double[vector.getLength()];
+        int[] pDim = applyPermute(dim, perm, false);
 
-        for (int i = 0; i < result.length; i++) {
-            int posOld = toPos(applyPermute(posV, perm, true), dim);
-            result[i] = vector.getDataAt(posOld);
-            posV = incArray(posV, newDim);
+        RVector realVector = vector.materialize();
+        RVector result = realVector.createEmptySameType(vector.getLength(), vector.isComplete());
+        result.copyAttributesFrom(vector);
+
+        if (resize == RRuntime.LOGICAL_NA) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
+        } else if (resize == RRuntime.LOGICAL_TRUE) {
+            result.setDimensions(pDim);
         }
 
-        RDoubleVector r = RDataFactory.createDoubleVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
+        // Move along the old array using stride
+        for (int i = 0; i < result.getLength(); i++) {
+            int pos = toPos(applyPermute(posV, perm, true), dim);
+            result.transferElementSameType(i, realVector, pos);
 
-        if (resize == 0) {
-            r.setDimensions(dim);
-        } else {
-            r.setDimensions(newDim);
+            posV = incArray(posV, pDim);
         }
 
-        return r;
-    }
-
-    @Specialization
-    public RLogicalVector aPerm(RAbstractLogicalVector vector, RAbstractIntVector permVector, byte resize) {
-        controlVisibility();
-
-        int[] dim = getDimensions(vector);
-        int[] perm = getPermute(dim, permVector);
-
-        int[] posV = new int[dim.length];
-        int[] newDim = applyPermute(dim, perm, false);
-        byte[] result = new byte[vector.getLength()];
-
-        for (int i = 0; i < result.length; i++) {
-            int posOld = toPos(applyPermute(posV, perm, true), dim);
-            result[i] = vector.getDataAt(posOld);
-            posV = incArray(posV, newDim);
-        }
-
-        RLogicalVector r = RDataFactory.createLogicalVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
-
-        if (resize == 0) {
-            r.setDimensions(dim);
-        } else {
-            r.setDimensions(newDim);
-        }
-
-        return r;
-    }
-
-    @Specialization
-    public RComplexVector aPerm(RAbstractComplexVector vector, RAbstractIntVector permVector, byte resize) {
-        controlVisibility();
-
-        int[] dim = getDimensions(vector);
-        int[] perm = getPermute(dim, permVector);
-
-        int[] posV = new int[dim.length];
-        int[] newDim = applyPermute(dim, perm, false);
-        double[] result = new double[vector.getLength() * 2];
-
-        for (int i = 0; i < result.length; i++) {
-            int posOld = toPos(applyPermute(posV, perm, true), dim);
-            result[2 * i] = vector.getDataAt(posOld).getRealPart();
-            result[2 * i + 1] = vector.getDataAt(i).getImaginaryPart();
-            posV = incArray(posV, newDim);
-        }
-
-        RComplexVector r = RDataFactory.createComplexVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
-
-        if (resize == 0) {
-            r.setDimensions(dim);
-        } else {
-            r.setDimensions(newDim);
-        }
-
-        return r;
-    }
-
-    @Specialization
-    public RStringVector aPerm(RAbstractStringVector vector, RAbstractIntVector permVector, byte resize) {
-        controlVisibility();
-
-        int[] dim = getDimensions(vector);
-        int[] perm = getPermute(dim, permVector);
-
-        int[] posV = new int[dim.length];
-        int[] newDim = applyPermute(dim, perm, false);
-        String[] result = new String[vector.getLength()];
-
-        for (int i = 0; i < result.length; i++) {
-            int posOld = toPos(applyPermute(posV, perm, true), dim);
-            result[i] = vector.getDataAt(i);
-            posV = incArray(posV, newDim);
-        }
-
-        RStringVector r = RDataFactory.createStringVector(result, vector.isComplete());
-        r.copyAttributesFrom(vector);
-
-        if (resize == 0) {
-            r.setDimensions(dim);
-        } else {
-            r.setDimensions(newDim);
-        }
-
-        return r;
-    }
-
-    @Specialization
-    public RRawVector aPerm(RAbstractRawVector vector, RAbstractIntVector permVector, byte resize) {
-        controlVisibility();
-
-        int[] dim = getDimensions(vector);
-        int[] perm = getPermute(dim, permVector);
-
-        int[] posV = new int[dim.length];
-        int[] newDim = applyPermute(dim, perm, false);
-        byte[] result = new byte[vector.getLength()];
-
-        for (int i = 0; i < result.length; i++) {
-            int posOld = toPos(applyPermute(posV, perm, true), dim);
-            result[i] = vector.getDataAt(i).getValue();
-            posV = incArray(posV, newDim);
-        }
-
-        RRawVector r = RDataFactory.createRawVector(result);
-        r.copyAttributesFrom(vector);
-
-        if (resize == 0) {
-            r.setDimensions(dim);
-        } else {
-            r.setDimensions(newDim);
-        }
-
-        return r;
+        return result;
     }
 
     private int[] getPermute(int[] dim, RAbstractIntVector perm) {
@@ -222,7 +78,7 @@ public abstract class APerm extends RBuiltinNode {
         } else if (perm.getLength() == dim.length) {
             for (int i = 0; i < perm.getLength(); i++) {
                 if (perm.getDataAt(i) > perm.getLength() || perm.getDataAt(i) < 1) {
-                    throw RError.error(RError.Message.VALUE_OUT_OF_RANGE, "perm");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.VALUE_OUT_OF_RANGE, "perm");
                 }
                 arrayPerm[i] = perm.getDataAt(i) - 1; // Adjust to zero based permute.
             }
@@ -234,12 +90,12 @@ public abstract class APerm extends RBuiltinNode {
                     visited[arrayPerm[i]] = true;
                 } else {
                     // Duplicate dimension mapping in permute
-                    throw RError.error(RError.Message.INVALID_ARGUMENT, "perm");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "perm");
                 }
             }
         } else {
             // perm size error
-            throw RError.error(RError.Message.IS_OF_WRONG_LENGTH, "perm");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm");
         }
 
         return arrayPerm;

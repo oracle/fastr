@@ -1879,14 +1879,18 @@ public class TestSimpleBuiltins extends TestBase {
 
         // correct structure without resize
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1), resize = FALSE); a[1,2,3] == b[2,1,2] }");
+
+        // no resize does not change the dimensions
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        assertEval("{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }");
+        assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
     }
 
     @Test
     @Ignore
     public void testApermBroken() {
-        // Unsupported two parameter aperm
-        // no resize does not change the dimensions
-        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
 
         // // The rest of these work but produce a slightly different output than R itself
         // first argument not an array
@@ -1896,13 +1900,16 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
 
         // perm is not a permutation vector
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,1)); }");
+        assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
 
         // perm value out of bounds
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
 
         // perm specified in complex numbers produces warning
         assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
+
+        // Invalid first argument, not array
+        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
     }
 
     @Test

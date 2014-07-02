@@ -319,7 +319,7 @@ public final class RError extends RuntimeException {
         INVALID_FORMAT_INTEGER("invalid format '%s'; use format %%d, %%i, %%o, %%x or %%X for integer objects"),
         // the following list is incomplete (but like GNU-R)
         INVALID_FORMAT_DOUBLE("invalid format '%s'; use format %%f, %%e, %%g or %%a for numeric objects"),
-        INVALID_TYPE_FROMLAST("'fromLast' must be TRUE or FALSE"),
+        INVALID_LOGICAL("'%s' must be TRUE or FALSE"),
         INVALID_FORMAT_STRING("invalid format '%s'; use format %%s for character objects"),
         MUST_BE_CHARACTER("'%s' must be of mode character"),
         ALL_ATTRIBUTES_NAMES("all attributes must have names [%d does not]"),

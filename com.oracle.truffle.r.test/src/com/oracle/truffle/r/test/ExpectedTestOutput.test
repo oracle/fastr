@@ -3685,6 +3685,10 @@ $a
 [1] 2 3 4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }
+[1] 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
 #{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1)); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }
 [1] TRUE TRUE TRUE
 
@@ -3695,6 +3699,42 @@ $a
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
 #{ a = array(1:4,c(2,2)); b = aperm(a); c(a[1,1] == b[1,1], a[1,2] == b[2,1], a[2,1] == b[1,2], a[2,2] == b[2,2]) }
 [1] TRUE TRUE TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }
+, , 1
+
+     [,1]
+[1,] "FASTR"
+[2,] "FAST"
+
+, , 2
+
+     [,1]
+[1,] "IS"
+[2,] "FASTR"
+
+, , 3
+
+     [,1]
+[1,] "SO"
+[2,] "IS"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }
+, , 1
+
+     [,1] [,2]  [,3]  [,4] [,5]
+[1,] TRUE TRUE FALSE FALSE TRUE
+[2,] TRUE TRUE FALSE FALSE TRUE
+
+, , 2
+
+      [,1] [,2] [,3] [,4]  [,5]
+[1,] FALSE TRUE TRUE TRUE FALSE
+[2,] FALSE TRUE TRUE TRUE FALSE
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testApply
 #{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,1,sum) }
