@@ -320,11 +320,11 @@ tilde_expr returns [ASTNode v]
         }
     }
     : l=utilde_expr { $v = $l.v; }
-      ( ((TILDE) => t=TILDE n_ r=utilde_expr { hasTilde = true; $v = BinaryOperation.create(sourceSection("tilde_expr/binop", $t, $r.stop), BinaryOperator.ADD, $tilde_expr.v, $r.v); }) )*
+      ( ((TILDE) => t=TILDE n_ r=utilde_expr { hasTilde = true; $v = Formula.create(sourceSection("tilde_expr/tilde", $start, $r.stop), $tilde_expr.v, $r.v); }) )*
     ;
 
 utilde_expr returns [ASTNode v]
-    : t=TILDE n_ l=or_expr { $v = UnaryOperation.create(sourceSection("utilde_expr", $t, $l.stop), UnaryOperator.MODEL, $l.v); }
+    : t=TILDE n_ l=or_expr { $v = Formula.create(sourceSection("utilde_expr", $t, $l.stop), null, $l.v); }
     | l=or_expr            { $v = $l.v; }
     ;
 

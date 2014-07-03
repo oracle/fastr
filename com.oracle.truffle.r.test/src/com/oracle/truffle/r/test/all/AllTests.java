@@ -14234,6 +14234,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFormulae_testCreation_d6caf1a9c57ca6d9122b4228102f7a0f() {
+        assertEval("{ typeof(a~b) }");
+    }
+
+    @Test
+    public void TestSimpleFormulae_testCreation_910cbc81b9bfab583f5c654f652b5340() {
+        assertEval("{ class(a~b) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testBinding_08912db0fc81d6f3582a954d1f9c1fa5() {
         assertEval("{ myapp <- function(f, x, y) { f(x,y) } ; myapp(function(x,y) { x + y }, 1, 2) ; myapp(sum, 1, 2) }");
     }

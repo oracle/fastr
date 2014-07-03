@@ -33,10 +33,8 @@ public abstract class UnaryOperation extends Operation {
 
     public enum UnaryOperator {
         REPEAT,
-
         PLUS,
         MINUS,
-        NOT,
-        MODEL
+        NOT
     }
 }

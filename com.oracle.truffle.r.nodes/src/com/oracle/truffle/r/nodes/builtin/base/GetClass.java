@@ -41,5 +41,11 @@ public abstract class GetClass extends RBuiltinNode {
         return RRuntime.TYPE_FUNCTION;
     }
 
+    @Specialization
+    public Object getClass(@SuppressWarnings("unused") RFormula arg) {
+        controlVisibility();
+        return RRuntime.TYPE_FORMULA;
+    }
+
     public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }
