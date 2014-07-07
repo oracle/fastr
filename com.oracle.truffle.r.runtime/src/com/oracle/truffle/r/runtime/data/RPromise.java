@@ -59,6 +59,10 @@ public class RPromise extends RLanguageRep {
         return env;
     }
 
+    public Object force() {
+        return getValue();
+    }
+
     /**
      * Get the value of the promise, evaluating it if necessary in the associated environment. A
      * promise is evaluate-once.

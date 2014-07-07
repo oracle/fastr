@@ -31,12 +31,13 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode.AbsentFrameSlotNode;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,43 +46,87 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(Object symbol, boolean shouldCopyValue) {
         return create(symbol, RRuntime.TYPE_ANY, shouldCopyValue);
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(Object symbol, boolean shouldCopyValue, boolean isSuper) {
         return create(symbol, RRuntime.TYPE_ANY, shouldCopyValue, isSuper);
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(SourceSection src, Object symbol, boolean shouldCopyValue) {
         return create(src, symbol, RRuntime.TYPE_ANY, shouldCopyValue);
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(SourceSection src, Object symbol, boolean shouldCopyValue, boolean isSuper) {
         return create(src, symbol, RRuntime.TYPE_ANY, shouldCopyValue, isSuper);
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(Object symbol, String mode, boolean shouldCopyValue) {
         return create(symbol, mode, shouldCopyValue, true);
     }
 
-    public static ReadVariableNode create(Object symbol, String mode, boolean shouldCopyValue, boolean isSuper) {
-        if (isSuper) {
-            return new UnresolvedReadVariableNode(symbol, mode, shouldCopyValue);
-        }
-        return new UnResolvedReadLocalVariableNode(symbol, mode);
-    }
-
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(SourceSection src, Object symbol, String mode, boolean shouldCopyValue) {
         ReadVariableNode rvn = create(symbol, mode, shouldCopyValue);
         rvn.assignSourceSection(src);
         return rvn;
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(Object, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(SourceSection src, Object symbol, String mode, boolean shouldCopyValue, boolean isSuper) {
         ReadVariableNode rvn = create(symbol, mode, shouldCopyValue, isSuper);
         rvn.assignSourceSection(src);
         return rvn;
+    }
+
+    /**
+     * Creates every {@link ReadVariableNode} out there
+     *
+     * @param symbol The symbol the {@link ReadVariableNode} is meant to resolve
+     * @param mode The mode of the variable
+     * @param shouldCopyValue Copy semantics
+     * @param isSuper Whether the variable resides in the local frame or not
+     * @return The appropriate implementation of {@link ReadVariableNode}
+     */
+    public static ReadVariableNode create(Object symbol, String mode, boolean shouldCopyValue, boolean isSuper) {
+        if (isSuper) {
+            return new UnresolvedReadVariableNode(symbol, mode, shouldCopyValue);
+        }
+        return new UnResolvedReadLocalVariableNode(symbol, mode);
     }
 
     protected boolean checkType(Object obj, String type) {
@@ -101,6 +146,78 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             return obj instanceof Integer || obj instanceof Double;
         }
         return false;
+    }
+
+    /**
+     * Checks every value read from a variable whether it is a {@link PromiseNode} or not. If yes,
+     * it replaces itself with a {@link ReadPromiseNode}, else with a standard
+     * {@link ReadVariableNode}
+     */
+    public static class ReadCheckPromiseNode extends ReadVariableNode {
+
+        @Child private ReadVariableNode readNode;
+
+        public ReadCheckPromiseNode(ReadVariableNode readNode) {
+            super();
+            this.readNode = readNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+
+            Object value = readNode.execute(frame, enclosingFrame);
+            return handlePromise(value, frame);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+
+            Object value = readNode.execute(frame);
+            return handlePromise(value, frame);
+        }
+
+        private Object handlePromise(Object value, VirtualFrame frame) {
+            CompilerAsserts.neverPartOfCompilation();
+
+            if (value != null && value instanceof RPromise) {
+                // Force promise execution to get (back to) the future! ;)
+                RPromise promise = (RPromise) value;
+                promise.force();
+
+                // Replace with ReadFutureNode and execute it!
+                return replace(new ReadPromiseNode(promise)).execute(frame);
+            }
+
+            // Value is no promise: Replace with ReadVariableNode...
+            this.replace(readNode);
+            return value;   // ...and return it, as its already there.
+        }
+    }
+
+    /**
+     * Simply longs for its {@link RPromise} and retrieves the already calculated value
+     */
+    public static class ReadPromiseNode extends ReadVariableNode {
+
+        private final RPromise promise;
+
+        public ReadPromiseNode(RPromise promise) {
+            super();
+            this.promise = promise;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            return promise.getValue();
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return promise.getValue();
+        }
+
     }
 
     public static final class UnresolvedReadVariableNode extends ReadVariableNode {
