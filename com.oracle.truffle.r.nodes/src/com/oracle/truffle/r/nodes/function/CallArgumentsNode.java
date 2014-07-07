@@ -24,25 +24,48 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * This class denotes a list of {@link #arguments} together with their {@link #names} given to a
+ * specific function call. The arguments' order is the same as given at the call.<br/>
+ * It additionally holds usage hints that are use for
+ */
 public final class CallArgumentsNode extends RNode {
 
+    private static final String[] NO_NAMES = new String[0];
+
+    /**
+     * The {@link RNode}s of the arguments given to a function call, in the same order. A single
+     * argument being <code>null</code> means 'argument not provided.
+     */
     @Children private final RNode[] arguments;
 
+    /**
+     * The names of the {@link #arguments}, in the same order. <code>null</code> means 'no name
+     * given'
+     */
     private final String[] names;
+    /**
+     * The number of {@link #names} given (i.e., not <code>null</code>)
+     */
     private final int nameCount;
-    // the two flags below are used in cases when we know that either a builtin is not going to
-    // modify the arguments which are not meant to be modified (like in the case of binary
-    // operators) or that its intention is to actually update the argument (as in the case of
-    // replacement forms, such as dim(x)<-1; in these cases the mode change
-    // (temporary->non-temporary->shared) does not need to happen, which is what the first flag
-    // determines, with the second flat telling the runtime if this affects only the first argument
-    // (replacement functions) or all arguments (binary operators).
+    /**
+     * the two flags below are used in cases when we know that either a builtin is not going to
+     * modify the arguments which are not meant to be modified (like in the case of binary
+     * operators) or that its intention is to actually update the argument (as in the case of
+     * replacement forms, such as dim(x)<-1; in these cases the mode change
+     * (temporary->non-temporary->shared) does not need to happen, which is what the first flag (
+     * {@link #modeChange}) determines, with the second ({@link #modeChangeForAll}) flat telling the
+     * runtime if this affects only the first argument (replacement functions) or all arguments
+     * (binary operators).
+     */
     private final boolean modeChange;
+    /**
+     * @see #modeChange
+     */
     private final boolean modeChangeForAll;
 
     private CallArgumentsNode(RNode[] args, String[] names, boolean modeChange, boolean modeChangeForAll) {
@@ -53,9 +76,59 @@ public final class CallArgumentsNode extends RNode {
         this.modeChangeForAll = modeChangeForAll;
     }
 
-    private CallArgumentsNode(SourceSection src, RNode[] args, String[] names, boolean modeChange, boolean modeChangeForAll) {
-        this(args, names, modeChange, modeChangeForAll);
-        assignSourceSection(src);
+    /**
+     * @return {@link #create(boolean, boolean, RNode[], String[])} with <code>null</code> as last
+     *         argument
+     */
+    public static CallArgumentsNode createUnnamed(boolean modeChange, boolean modeChangeForAll, RNode... args) {
+        return create(modeChange, modeChangeForAll, args, null);
+    }
+
+    /**
+     * @param modeChange {@link #modeChange}
+     * @param modeChangeForAll {@link #modeChangeForAll}
+     * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
+     *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
+     * @param names {@link #names}, set directly. If <code>null</code>, {@link #NO_NAMES} is used.
+     * @return A fresh {@link CallArgumentsNode}
+     */
+    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
+        // Prepare arguments: wrap in WrapArgumentNode
+        RNode[] wrappedArgs = new RNode[args.length];
+        for (int i = 0; i < wrappedArgs.length; ++i) {
+            wrappedArgs[i] = args[i] == null ? null : WrapArgumentNode.create(args[i], i == 0 || modeChangeForAll ? modeChange : true);
+        }
+        String[] resolvedNames = names;
+        if (resolvedNames == null) {
+            resolvedNames = NO_NAMES;
+        }
+
+        // Setup and return
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, modeChange, modeChangeForAll);
+        callArgs.assignSourceSection(Utils.sourceBoundingBox(wrappedArgs));
+        return callArgs;
+    }
+
+    /**
+     * Calls {@link RNode#execute(VirtualFrame)} on every {@link #arguments}; if one is
+     * <code>null</code>, {@link RMissing#instance} is returned.
+     *
+     * @see com.oracle.truffle.r.nodes.RNode#executeArray(com.oracle.truffle.api.frame.VirtualFrame)
+     */
+    @Override
+    @ExplodeLoop
+    public Object[] executeArray(VirtualFrame frame) {
+        Object[] values = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            RNode arg = arguments[i];
+            values[i] = arg == null ? RMissing.instance : arg.execute(frame);
+        }
+        return values;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return executeArray(frame);
     }
 
     private static int countNonNull(String[] names) {
@@ -68,57 +141,38 @@ public final class CallArgumentsNode extends RNode {
         return count;
     }
 
+    /**
+     * @return {@link #arguments}
+     */
     public RNode[] getArguments() {
         return arguments;
     }
 
+    /**
+     * @return {@link #names}
+     */
     public String[] getNames() {
         return names;
     }
 
+    /**
+     * @return {@link #nameCount}
+     */
     public int getNameCount() {
         return nameCount;
     }
 
+    /**
+     * @return {@link #modeChange}
+     */
     public boolean modeChange() {
         return modeChange;
     }
 
+    /**
+     * @return {@link #modeChangeForAll}
+     */
     public boolean modeChangeForAll() {
         return modeChangeForAll;
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        return executeArray(frame);
-    }
-
-    @Override
-    @ExplodeLoop
-    public Object[] executeArray(VirtualFrame frame) {
-        Object[] values = new Object[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            RNode arg = arguments[i];
-            values[i] = arg == null ? RMissing.instance : arg.execute(frame);
-        }
-        return values;
-    }
-
-    public static CallArgumentsNode createUnnamed(boolean modeChange, boolean modeChangeForAll, RNode... args) {
-        return create(modeChange, modeChangeForAll, args, null);
-    }
-
-    private static final String[] NO_NAMES = new String[0];
-
-    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
-        RNode[] wrappedArgs = new RNode[args.length];
-        for (int i = 0; i < wrappedArgs.length; ++i) {
-            wrappedArgs[i] = args[i] == null ? null : WrapArgumentNode.create(args[i], i == 0 || modeChangeForAll ? modeChange : true);
-        }
-        String[] resolvedNames = names;
-        if (resolvedNames == null) {
-            resolvedNames = NO_NAMES;
-        }
-        return new CallArgumentsNode(Utils.sourceBoundingBox(wrappedArgs), wrappedArgs, resolvedNames, modeChange, modeChangeForAll);
     }
 }

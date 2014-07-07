@@ -22,8 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+/**
+ * See singleton {@link #instance}
+ */
 public final class RMissing extends RScalar {
 
+    /**
+     * This object denotes a missing argument in a function call
+     */
     public static final RMissing instance = new RMissing();
 
     private RMissing() {
