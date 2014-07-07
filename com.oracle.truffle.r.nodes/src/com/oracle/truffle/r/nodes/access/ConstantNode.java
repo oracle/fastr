@@ -65,6 +65,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantRawNode((RRaw) value);
         } else if (value instanceof RFunction) {
             return new ConstantFunctionNode((RFunction) value);
+        } else if (value instanceof RFormula) {
+            return new ConstantFormulaNode((RFormula) value);
         }
         CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException(value.getClass().getName());
@@ -367,6 +369,27 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             return function;
+        }
+    }
+
+    private static final class ConstantFormulaNode extends ConstantNode {
+
+        private final RFormula formula;
+
+        public ConstantFormulaNode(RFormula formula) {
+            this.formula = formula;
+        }
+
+        @Override
+        public RFormula executeFormula(VirtualFrame frame) {
+            controlVisibility();
+            return formula;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return formula;
         }
     }
 }

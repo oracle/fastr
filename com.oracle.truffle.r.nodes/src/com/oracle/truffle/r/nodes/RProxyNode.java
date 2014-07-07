@@ -287,4 +287,13 @@ public abstract class RProxyNode extends RNode {
     protected Object[] proxy(Object[] x) {
         return (Object[]) proxyScalar(x);
     }
+
+    @Specialization
+    public RFormula wrap(RFormula x) {
+        return proxy(x);
+    }
+
+    protected RFormula proxy(RFormula x) {
+        return (RFormula) proxyScalar(x);
+    }
 }

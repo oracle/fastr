@@ -170,6 +170,12 @@ public abstract class Typeof extends RBuiltinNode {
         return "closure";
     }
 
+    @Specialization
+    public String typeofFormula(RFormula f) {
+        controlVisibility();
+        return "language";
+    }
+
     public static boolean isFunctionBuiltin(RFunction fun) {
         return fun.isBuiltin();
     }

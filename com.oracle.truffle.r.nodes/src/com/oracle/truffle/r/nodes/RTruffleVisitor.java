@@ -95,6 +95,11 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     }
 
     @Override
+    public RNode visit(Formula formula) {
+        return ConstantNode.create(new RFormula(formula.getSource(), formula.getResponse().accept(this), formula.getModel().accept(this)));
+    }
+
+    @Override
     public RNode visit(FunctionCall callParam) {
         FunctionCall call = callParam;
         Symbol callName = call.isSymbol() ? call.getName() : null;

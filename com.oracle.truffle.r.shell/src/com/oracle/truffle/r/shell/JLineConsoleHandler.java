@@ -73,6 +73,10 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     public void redirectError() {
     }
 
+    public String getPrompt() {
+        return console.getPrompt();
+    }
+
     public void setPrompt(String prompt) {
         console.setPrompt(prompt);
     }

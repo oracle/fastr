@@ -256,6 +256,12 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
+    @Specialization(order = 90)
+    public String prettyPrintFormula(RFormula formula, Object listElementName) {
+        return formula.getSource().getCode();
+    }
+
     private String printAttributes(RAbstractVector vector, RAttributes attributes) {
         StringBuilder builder = new StringBuilder();
         for (RAttribute attr : attributes) {

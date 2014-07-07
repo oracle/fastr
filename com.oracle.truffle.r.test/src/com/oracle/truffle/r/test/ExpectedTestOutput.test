@@ -11599,6 +11599,14 @@ $row.names
 [1] 1 2 3
 
 
+##com.oracle.truffle.r.test.simple.TestSimpleFormulae.testCreation
+#{ class(a~b) }
+[1] "formula"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFormulae.testCreation
+#{ typeof(a~b) }
+[1] "language"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testBinding
 #{ f <- function(func, a) { func(a) && TRUE } ; g <- function(x) {TRUE} ; f(g, 5) ; f(is.na, 4)  }
 [1] FALSE

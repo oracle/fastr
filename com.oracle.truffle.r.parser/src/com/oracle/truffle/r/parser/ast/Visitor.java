@@ -95,4 +95,6 @@ public interface Visitor<R> {
     R visit(AccessVector accessVector);
 
     R visit(ArgNode arg);
+
+    R visit(Formula arg);
 }

@@ -101,7 +101,7 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
     }
 
     /**
-     * Written based on {@link NodeUtil#printTree(OutputStream, Node)}
+     * Written based on {@link NodeUtil#printTree(OutputStream, Node)}.
      */
     private static class DotTreePrinter {
 
@@ -234,21 +234,8 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
             return nodeId;
         }
 
-        protected static void printNameAndValue(Node node, StringBuilder label, NodeField field) {
-            label.append(ROW_START);
-            // Name..
-            label.append(field.getName());
-            label.append(" = ");
-
-            // ..and value
-            Object value = field.loadValue(node);
-            String valStr = escapeHTMLCharacters(String.valueOf(value));
-            label.append(valStr);
-            label.append(ROW_END);
-        }
-
         /**
-         * Replaces the characters ", &, <, > by their corresponding HTML escape sequence
+         * Replaces the characters ", &, <, > by their corresponding HTML escape sequence.
          *
          * @param unescapedStr
          * @return String with characters escaped
@@ -311,7 +298,7 @@ public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
         }
 
         /**
-         * Prepares the {@link PrintWriter} for
+         * Shuts down the {@link PrintWriter}.
          */
         public void finish() {
             this.pw.println();

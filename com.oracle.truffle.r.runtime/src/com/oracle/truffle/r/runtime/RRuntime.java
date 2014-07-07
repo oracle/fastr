@@ -80,6 +80,7 @@ public class RRuntime {
     public static final String TYPE_LOGICAL = new String("logical");
     public static final String TYPE_RAW = new String("raw");
     public static final String TYPE_LIST = new String("list");
+    public static final String TYPE_FORMULA = new String("formula");
     public static final String TYPE_FUNCTION = new String("function");
     public static final String TYPE_MATRIX = new String("matrix");
     public static final String TYPE_ARRAY = new String("array");

@@ -253,4 +253,9 @@ public class BasicVisitor<R> implements Visitor<R> {
         return visit((ASTNode) n);
     }
 
+    @Override
+    public R visit(Formula n) {
+        return visit((ASTNode) n);
+    }
+
 }
