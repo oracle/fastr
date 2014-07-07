@@ -84,6 +84,11 @@ public final class RContext extends ExecutionContext {
         void redirectError();
 
         /**
+         * Get the current prompt.
+         */
+        String getPrompt();
+
+        /**
          * Set the R prompt.
          */
         void setPrompt(String prompt);

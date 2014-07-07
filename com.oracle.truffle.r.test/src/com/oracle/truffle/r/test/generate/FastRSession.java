@@ -63,6 +63,10 @@ public class FastRSession implements RSession {
             // always
         }
 
+        public String getPrompt() {
+            return null;
+        }
+
         public void setPrompt(String prompt) {
             // ignore
         }
