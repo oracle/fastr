@@ -34,8 +34,8 @@ public final class RBuiltinRootNode extends RRootNode {
 
     private final RBuiltinNode uninitializedBuiltin;
 
-    public RBuiltinRootNode(RBuiltinNode builtin, Object[] parameterNames, FrameDescriptor frameDescriptor) {
-        super(builtin.getSourceSection(), parameterNames, frameDescriptor);
+    public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
+        super(builtin.getSourceSection(), formalArguments, frameDescriptor);
         this.builtin = builtin;
         this.uninitializedBuiltin = NodeUtil.cloneNode(builtin);
     }
@@ -78,7 +78,7 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public RootNode split() {
-        return new RBuiltinRootNode(NodeUtil.cloneNode(uninitializedBuiltin), getParameterNames(), getFrameDescriptor().shallowCopy());
+        return new RBuiltinRootNode(NodeUtil.cloneNode(uninitializedBuiltin), getFormalArguments(), getFrameDescriptor().shallowCopy());
     }
 
 }

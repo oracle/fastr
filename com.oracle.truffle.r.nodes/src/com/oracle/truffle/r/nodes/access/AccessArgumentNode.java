@@ -25,28 +25,21 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * Simple {@link RNode} that returns a function argument specified by its formal index. Used to
+ * populate a function's environment.
+ */
 public class AccessArgumentNode extends RNode {
 
     private final int index;
-    @Child private RNode defaultValue;
-    private final boolean defaultValueIsMissing;
 
-    public AccessArgumentNode(int index, RNode defaultValue) {
+    public AccessArgumentNode(int index) {
         this.index = index;
-        this.defaultValue = defaultValue;
-        this.defaultValueIsMissing = (defaultValue instanceof ConstantNode && ((ConstantNode) defaultValue).getValue() == RMissing.instance);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        if (index < RArguments.getArgumentsLength(frame)) {
-            Object argument = RArguments.getArgument(frame, index);
-            if (defaultValueIsMissing || argument != RMissing.instance) {
-                return argument;
-            }
-        }
-        return defaultValue.execute(frame);
+        return RArguments.getArgument(frame, index);
     }
 }

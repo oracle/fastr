@@ -282,7 +282,7 @@ public final class REngine implements RContext.Engine {
      */
     private static RootCallTarget makeCallTarget(RNode node, REnvironment enclosing) {
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(enclosing);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>", true);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, FormalArguments.NO_ARGS, "<main>", true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }

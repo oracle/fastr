@@ -26,22 +26,27 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.function.*;
 
 public abstract class RRootNode extends RootNode {
 
-    private final Object[] parameterNames;
+    private final FormalArguments formalArguments;
 
-    protected RRootNode(SourceSection src, Object[] parameterNames, FrameDescriptor frameDescriptor) {
+    protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(src, frameDescriptor);
-        this.parameterNames = parameterNames;
+        this.formalArguments = formalArguments;
     }
 
     public Object[] getParameterNames() {
-        return parameterNames;
+        return formalArguments.getNamesArray();
     }
 
     public int getParameterCount() {
-        return parameterNames.length;
+        return formalArguments.getNrOfArgs();
+    }
+
+    public FormalArguments getFormalArguments() {
+        return formalArguments;
     }
 
     @SlowPath

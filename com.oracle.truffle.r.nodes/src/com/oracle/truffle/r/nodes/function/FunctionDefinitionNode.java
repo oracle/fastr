@@ -50,8 +50,8 @@ public final class FunctionDefinitionNode extends RRootNode {
      */
     private final boolean substituteFrame;
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description, boolean substituteFrame) {
-        super(src, parameterNames, descriptor.getDescriptor());
+    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
+        super(src, formals, descriptor.getDescriptor());
         this.descriptor = descriptor;
         this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
@@ -91,7 +91,7 @@ public final class FunctionDefinitionNode extends RRootNode {
 
     @Override
     public RootNode split() {
-        return new FunctionDefinitionNode(getSourceSection(), descriptor, NodeUtil.cloneNode(uninitializedBody), getParameterNames(), description, false);
+        return new FunctionDefinitionNode(getSourceSection(), descriptor, NodeUtil.cloneNode(uninitializedBody), getFormalArguments(), description, false);
     }
 
 }

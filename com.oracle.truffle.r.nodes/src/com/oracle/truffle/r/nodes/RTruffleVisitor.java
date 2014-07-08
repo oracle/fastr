@@ -27,20 +27,20 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadVariableSuperMaterializedNode;
-import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceVector;
-import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceVectorFactory;
-import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
-import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.access.AccessArrayNode.MultiDimPosConverterNode;
 import com.oracle.truffle.r.nodes.access.AccessArrayNodeFactory.MultiDimPosConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
+import com.oracle.truffle.r.nodes.access.ArrayPositionCastFactory.OperatorConverterNodeFactory;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.ReadVariableSuperMaterializedNode;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.CoerceVector;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.MultiDimPosConverterValueNode;
+import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.CoerceVectorFactory;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNodeFactory.MultiDimPosConverterValueNodeFactory;
 import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.ast.Repeat;
@@ -147,15 +147,14 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
     @Override
     public RNode visit(Function func) {
-        List<ArgNode> argumentsList = func.getSignature();
-
+        // Introduce new environment for this function
         REnvironment.FunctionDefinition funcEnvironment = new REnvironment.FunctionDefinition(environment);
-        this.environment = funcEnvironment;
+        this.environment = funcEnvironment; // Update the visitors state...
+
         RootCallTarget callTarget;
         try {
-
+            // Parse function body
             ASTNode astBody = func.getBody();
-
             RNode body;
             if (astBody != null) {
                 body = astBody.accept(this);
@@ -163,29 +162,49 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 body = new SequenceNode(RNode.EMTPY_RNODE_ARRAY);
             }
 
-            Object[] parameterNames = new Object[argumentsList.size()];
+            // Parse argument list
+            List<ArgNode> argumentsList = func.getSignature();
+            String[] argumentNames = new String[argumentsList.size()];
+            RNode[] defaultValues = new RNode[argumentsList.size()];
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size() + 1];
                 int index = 0;
                 for (ArgNode arg : argumentsList) {
-                    RNode defaultValue = arg.getValue() != null ? arg.getValue().accept(this) : ConstantNode.create(RMissing.instance);
-                    init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index, defaultValue), true, false);
-                    parameterNames[index] = RRuntime.toString(arg.getName());
+                    // Parse argument's default value
+                    RNode defaultValue;
+                    ASTNode defaultValNode = arg.getValue();
+                    if (defaultValNode != null) {
+                        defaultValue = arg.getValue().accept(this);
+                    } else {
+                        defaultValue = ConstantNode.create(RMissing.instance);
+                    }
+
+                    // Create an initialization statement
+                    init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index), true, false);
+
+                    // Store formal arguments
+                    argumentNames[index] = RRuntime.toString(arg.getName());
+                    defaultValues[index] = defaultValue;
+
                     index++;
                 }
-                init[index] = body;
+
+                // Set the initialization part in front of body
+                init[index] = body; // Body is the last block in the sequence
                 body = new SequenceNode(init);
             }
 
+            // Maintain SourceSection
             if (astBody != null && body.getSourceSection() == null) {
                 body.assignSourceSection(astBody.getSource());
             }
+            FormalArguments formals = new FormalArguments(argumentNames, defaultValues);
 
             String functionBody = func.getSource().getCode();
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, parameterNames, functionBody.substring(0, Math.min(functionBody.length(), 50)), false);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, formals, functionBody.substring(0, Math.min(functionBody.length(), 50)), false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         } finally {
-            this.environment = environment.getParent();
+            this.environment = environment.getParent(); // ... and be sure to reset it!
         }
         return FunctionExpressionNode.create(callTarget);
     }

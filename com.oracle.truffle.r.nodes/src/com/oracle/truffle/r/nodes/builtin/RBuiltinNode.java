@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -67,34 +69,30 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return executeDouble(frame);
     }
 
-    private static RNode[] createCallArguments(RBuiltinFactory builtin) {
-        RNode[] args = new RNode[builtin.getFactory().getExecutionSignature().size()];
+    private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {
+        int total = builtin.getFactory().getExecutionSignature().size();
+        RNode[] args = new RNode[total];
         int index = 0;
         int argIndex = 0;
-        int total = builtin.getFactory().getExecutionSignature().size();
         for (int i = index; i < total; i++) {
-            args[i] = new AccessArgumentNode(argIndex++, ConstantNode.create(RMissing.instance));
+            args[i] = new AccessArgumentNode(argIndex++);
         }
         return args;
     }
 
     static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
-        RNode[] args = createCallArguments(builtin);
-        RBuiltinNode node = createNode(builtin, args, null);
-        injectParameterDefaultValues(node);
-        RBuiltinRootNode root = new RBuiltinRootNode(node, node.getParameterNames(), new FrameDescriptor());
+        // Create function initialization
+        RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
+        RBuiltinNode node = createNode(builtin, argAccessNodes, null);
+
+        // Create formal arguments
+        String[] names = Arrays.copyOf(node.getParameterNames(), node.getParameterNames().length, String[].class);
+        FormalArguments formals = FormalArguments.createHandleNullArgs(names, node.getParameterValues());
+
+        // Setup
+        RBuiltinRootNode root = new RBuiltinRootNode(node, formals, new FrameDescriptor());
         node.onCreate();
         return Truffle.getRuntime().createCallTarget(root);
-    }
-
-    private static void injectParameterDefaultValues(RBuiltinNode node) {
-        RNode[] parameterValues = node.getParameterValues();
-        RNode[] callArguments = node.getArguments();
-        for (int i = 0; i < parameterValues.length; i++) {
-            if (parameterValues[i] != null && i < callArguments.length && callArguments[i] instanceof AccessArgumentNode) {
-                callArguments[i] = new AccessArgumentNode(i, parameterValues[i]);
-            }
-        }
     }
 
     public RCallNode inline(CallArgumentsNode args) {
