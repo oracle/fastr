@@ -29,7 +29,7 @@ import os
 
 _fastr_suite = None
 
-def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None):
+def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     os.environ['R_HOME'] = _fastr_suite.dir
@@ -43,14 +43,16 @@ def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None):
     else:
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
-    vmArgs = ['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    if runBench == False:
+        vmArgs = vmArgs + ['-ea', '-esa']
     if extraVmArgs:
         vmArgs = vmArgs + extraVmArgs
     return mx_graal.vm(vmArgs + [className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
-def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None):
+def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
-    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs)
+    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
 
 def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
@@ -241,7 +243,7 @@ def rbench(args):
                         extraVmArgs.append('-G:TruffleCompilationThreshold=10')
 #                    if (bm.startswith("b25")):
 #                        extraVmArgs.append('-G:-TruffleBackgroundCompilation')
-                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs)
+                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs, runBench=True)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'
                     emsg = rc
