@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public class BrowserFunctions {
 
     @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE)
-    public abstract static class Browser extends RBuiltinNode {
+    public abstract static class Browser extends RInvisibleBuiltinNode {
 
         private static final String[] PARAMETER_NAMES = new String[]{"text", "condition", "expr", "skipCalls"};
 
@@ -50,22 +51,22 @@ public class BrowserFunctions {
         }
 
         @Specialization
-        public Object browser(VirtualFrame frame, @SuppressWarnings("unused") String x) {
+        public RNull browser(VirtualFrame frame, @SuppressWarnings("unused") String x) {
             controlVisibility();
-            return doBrowser(frame);
+            doBrowser(frame);
+            return RNull.instance;
         }
 
         @SuppressWarnings("static-method")
         @SlowPath
-        private Object doBrowser(VirtualFrame frame) {
+        private void doBrowser(VirtualFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             REnvironment callerEnv = EnvFunctions.frameToEnvironment(frame);
             ch.println("Called from: " + (callerEnv == REnvironment.globalEnv() ? "top level" : "function"));
             String savedPrompt = ch.getPrompt();
             ch.setPrompt("Browse[1]> ");
-            Object result = RNull.instance;
             try {
-                while (true) {
+                LW: while (true) {
                     String input = ch.readLine();
                     if (input.length() == 0) {
                         RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");
@@ -78,23 +79,35 @@ public class BrowserFunctions {
                     switch (input) {
                         case "c":
                         case "cont":
-                            break;
+                            break LW;
 
                         case "s":
                         case "f":
                         case "n":
-                        case "where":
                             throw RError.nyi(null, input);
 
+                        case "where": {
+                            int ix = 1;
+                            Frame stackFrame;
+                            while ((stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
+                                RFunction fun = RArguments.getFunction(stackFrame);
+                                if (fun != null) {
+                                    ch.println("where " + ix + ": " + fun.getTarget());
+                                }
+                                ix++;
+                            }
+                            ch.println("");
+                            break;
+                        }
+
                         default:
-                            result = RContext.getEngine().parseAndEval(input, frame, callerEnv, true);
+                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true);
                             break;
                     }
                 }
             } finally {
                 ch.setPrompt(savedPrompt);
             }
-            return result;
         }
 
     }
