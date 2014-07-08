@@ -58,8 +58,9 @@ public class EvalFunctions {
         protected Object doEvalBody(Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
             Object expr = exprArg;
             if (expr instanceof RSymbol) {
+                String symbolName = ((RSymbol) expr).getName();
                 // We have to turn the string value back into a RLanguage object
-                expr = RDataFactory.createLanguage(ReadVariableNode.create(((RSymbol) expr).getName(), false));
+                expr = RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
             }
             if (expr instanceof RExpression || expr instanceof RLanguage) {
                 try {
