@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import java.util.*;
+
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -34,6 +37,18 @@ import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class BrowserFunctions {
+
+    private static final class HelperState {
+        String text;
+        Object condition;
+
+        HelperState(String text, Object condition) {
+            this.text = text;
+            this.condition = condition;
+        }
+    }
+
+    private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
     @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Browser extends RInvisibleBuiltinNode {
@@ -50,21 +65,27 @@ public class BrowserFunctions {
             return new RNode[]{ConstantNode.create(""), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(0)};
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        public RNull browser(VirtualFrame frame, @SuppressWarnings("unused") String x) {
+        public RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
             controlVisibility();
-            doBrowser(frame);
+            if (RRuntime.fromLogical(expr)) {
+                try {
+                    helperState.add(new HelperState(text, condition));
+                    doBrowser(frame);
+                } finally {
+                    helperState.remove(helperState.size() - 1);
+                }
+            }
             return RNull.instance;
         }
 
-        @SuppressWarnings("static-method")
-        @SlowPath
-        private void doBrowser(VirtualFrame frame) {
+        private static void doBrowser(VirtualFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
             REnvironment callerEnv = EnvFunctions.frameToEnvironment(frame);
-            ch.println("Called from: " + (callerEnv == REnvironment.globalEnv() ? "top level" : "function"));
+            ch.printf("Called from: %s%n", callerEnv == REnvironment.globalEnv() ? "top level" : RArguments.getFunction(frame).getTarget());
             String savedPrompt = ch.getPrompt();
-            ch.setPrompt("Browse[1]> ");
+            ch.setPrompt(browserPrompt());
             try {
                 LW: while (true) {
                     String input = ch.readLine();
@@ -92,7 +113,7 @@ public class BrowserFunctions {
                             while ((stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
                                 RFunction fun = RArguments.getFunction(stackFrame);
                                 if (fun != null) {
-                                    ch.println("where " + ix + ": " + fun.getTarget());
+                                    ch.printf("where %d: ", ix, fun.getTarget());
                                 }
                                 ix++;
                             }
@@ -110,35 +131,85 @@ public class BrowserFunctions {
             }
         }
 
+        @SlowPath
+        private static String browserPrompt() {
+            return "Browse[" + (helperState.size()) + "]> ";
+        }
+
+    }
+
+    private abstract static class RetrieveAdapter extends RBuiltinNode {
+        private static final String[] PARAMETER_NAMES = new String[]{"n"};
+
+        @Override
+        public Object[] getParameterNames() {
+            return PARAMETER_NAMES;
+        }
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(1)};
+        }
+
+        /**
+         * GnuR objects to indices <= 0 but allows positive indices that are out of range.
+         */
+        protected HelperState getHelperState(int n) {
+            if (n <= 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(getEncapsulatingSourceSection(), "number of contexts must be positive");
+            }
+            int nn = n;
+            if (nn > helperState.size()) {
+                nn = helperState.size();
+            }
+            return helperState.get(nn - 1);
+        }
+
     }
 
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL)
-    public abstract static class BrowserText extends RBuiltinNode {
+    public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
-        public String browserText(@SuppressWarnings("unused") int n) {
-            // TODO implement
+        public String browserText(int n) {
             controlVisibility();
-            return null;
+            return getHelperState(n).text;
+        }
+
+        @Specialization
+        public String browserText(double n) {
+            controlVisibility();
+            return getHelperState((int) n).text;
         }
     }
 
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL)
-    public abstract static class BrowserCondition extends RBuiltinNode {
+    public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
-        public String browserCondition(@SuppressWarnings("unused") int n) {
-            // TODO implement
+        public Object browserCondition(int n) {
             controlVisibility();
-            return null;
+            return getHelperState(n).condition;
+        }
+
+        @Specialization
+        public Object browserCondition(double n) {
+            controlVisibility();
+            return getHelperState((int) n).condition;
         }
     }
 
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL)
-    public abstract static class BrowserSetDebug extends RInvisibleBuiltinNode {
+    public abstract static class BrowserSetDebug extends RetrieveAdapter {
         @Specialization
         public RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
             controlVisibility();
             return RNull.instance;
+        }
+
+        @Override
+        public final boolean getVisibility() {
+            return false;
         }
     }
 }

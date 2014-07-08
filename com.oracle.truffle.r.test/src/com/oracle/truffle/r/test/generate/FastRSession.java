@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -34,13 +35,20 @@ public class FastRSession implements RSession {
     private static class ConsoleHandler implements RContext.ConsoleHandler {
         private StringBuilder buffer = new StringBuilder();
 
+        @SlowPath
         public void println(String s) {
             buffer.append(s);
             buffer.append('\n');
         }
 
+        @SlowPath
         public void print(String s) {
             buffer.append(s);
+        }
+
+        @SlowPath
+        public void printf(String format, Object... args) {
+            buffer.append(String.format(format, args));
         }
 
         public String readLine() {
@@ -51,10 +59,12 @@ public class FastRSession implements RSession {
             return false;
         }
 
+        @SlowPath
         public void printErrorln(String s) {
             println(s);
         }
 
+        @SlowPath
         public void printError(String s) {
             print(s);
         }
@@ -71,6 +81,7 @@ public class FastRSession implements RSession {
             // ignore
         }
 
+        @SlowPath
         void reset() {
             buffer.delete(0, buffer.length());
         }
