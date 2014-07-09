@@ -8834,6 +8834,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testLsRegExp_ea6259b64ec7536a38aff447c4ac85cf() {
+        assertEval("{ abc <- 1; ls(pattern=\"a.*\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLsRegExp_fd737bf8646330dd096a1481e626813b() {
+        assertEval("{ .abc <- 1; ls(pattern=\"\\.a.*\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLsRegExp_46cfbee16d1469bcf94e8f6c445587e1() {
+        assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\.a.*\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLsRegExp_aa73d43ff12912fb7bbac53a3c60e4aa() {
+        assertEval("{ abc <- 1; ls(pattern=\"[[:alpha:]]*\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLsRegExp_b636b2bf5292cac1ed708fea3076eb38() {
+        assertEval("{ f <- function(abc) { ls(pattern=\"[a-z]*\") }; f(1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatMult_c8d5c07bcbeefe8fbf58f325e98839ea() {
         assertEval("{ matrix(c(1,2,3,4), 2) %*% matrix(c(5,6,7,8), 2) }");
     }

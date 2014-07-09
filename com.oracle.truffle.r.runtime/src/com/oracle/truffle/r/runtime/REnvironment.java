@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+import java.util.regex.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -586,7 +587,7 @@ public abstract class REnvironment implements RAttributable {
         frameAccess.rm(key);
     }
 
-    public RStringVector ls(boolean allNames, String pattern) {
+    public RStringVector ls(boolean allNames, Pattern pattern) {
         return frameAccess.ls(allNames, pattern);
     }
 
@@ -805,26 +806,17 @@ public abstract class REnvironment implements RAttributable {
 
     }
 
-    public static String[] removeHiddenNames(String[] names) {
-        int hiddenCount = 0;
-        for (String name : names) {
-            if (name.charAt(0) == '.') {
-                hiddenCount++;
-            }
+    /**
+     * Helper function for implementations of {@link REnvFrameAccess#ls}.
+     */
+    public static boolean includeName(String nameToMatch, boolean allNames, Pattern pattern) {
+        if (!allNames && nameToMatch.charAt(0) == '.') {
+            return false;
         }
-        if (hiddenCount > 0) {
-            String[] newNames = new String[names.length - hiddenCount];
-            int i = 0;
-            for (String name : names) {
-                if (name.charAt(0) == '.') {
-                    continue;
-                } else {
-                    newNames[i++] = name;
-                }
-            }
-            return newNames;
+        if (pattern != null && !pattern.matcher(nameToMatch).matches()) {
+            return false;
         }
-        return names;
+        return true;
     }
 
     /**

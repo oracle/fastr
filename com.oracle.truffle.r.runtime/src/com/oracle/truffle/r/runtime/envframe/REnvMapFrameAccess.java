@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.envframe;
 
 import java.util.*;
+import java.util.regex.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
@@ -78,12 +79,19 @@ public class REnvMapFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    public RStringVector ls(boolean allNames, String pattern) {
-        String[] names = map.keySet().toArray(RRuntime.STRING_ARRAY_SENTINEL);
-        if (!allNames) {
-            names = REnvironment.removeHiddenNames(names);
+    public RStringVector ls(boolean allNames, Pattern pattern) {
+        if (allNames && pattern == null) {
+            return RDataFactory.createStringVector(map.keySet().toArray(RRuntime.STRING_ARRAY_SENTINEL), RDataFactory.COMPLETE_VECTOR);
+        } else {
+            ArrayList<String> matchedNamesList = new ArrayList<>(map.size());
+            for (String name : map.keySet()) {
+                if (REnvironment.includeName(name, allNames, pattern)) {
+                    matchedNamesList.add(name);
+                }
+            }
+            String[] names = new String[matchedNamesList.size()];
+            return RDataFactory.createStringVector(matchedNamesList.toArray(names), RDataFactory.COMPLETE_VECTOR);
         }
-        return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Override

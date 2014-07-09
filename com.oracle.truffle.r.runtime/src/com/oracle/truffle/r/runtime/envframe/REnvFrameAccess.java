@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.envframe;
 
+import java.util.regex.*;
+
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.*;
@@ -66,8 +68,13 @@ public class REnvFrameAccess {
         throw notImplemented("rm");
     }
 
-    @SuppressWarnings("unused")
-    public RStringVector ls(boolean allNames, String pattern) {
+    /**
+     * Return the names in the environment that match {@code pattern}.
+     * 
+     * @param allNames if {@code false} ignore names beginning with ".".
+     * @param pattern if not {@code null} only include names matching {@code pattern}.
+     */
+    public RStringVector ls(boolean allNames, Pattern pattern) {
         throw notImplemented("ls");
     }
 
