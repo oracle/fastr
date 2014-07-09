@@ -292,7 +292,10 @@ public abstract class SApply extends RBuiltinNode {
     private void ensureCallNode() {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            callNode = insert(RCallNode.createCall(null, CallArgumentsNode.createUnnamed(true, false, ReadVariableNode.create(temporaryVariableSymbol, false))));
+            String temporaryVariableString = RRuntime.toString(temporaryVariableSymbol);
+            ReadVariableNode temporaryVariableNode = ReadVariableNode.create(temporaryVariableString, false);
+            CallArgumentsNode unnamedCallArgsNode = CallArgumentsNode.createUnnamed(true, false, temporaryVariableNode);
+            callNode = insert(RCallNode.createCall(null, unnamedCallArgsNode));
         }
     }
 

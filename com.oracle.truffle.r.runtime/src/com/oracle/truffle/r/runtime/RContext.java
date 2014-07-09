@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.runtime.REnvironment.*;
@@ -44,58 +45,79 @@ public final class RContext extends ExecutionContext {
 
     public static final int CONSOLE_WIDTH = 80;
 
+    /**
+     * The interface to the R console, which may have different implementations for different
+     * environments, but only one in any given VM execution. Since I/O is involved, all methods are
+     * tagged with {@link SlowPath}, as should the appropriate implementation methods.
+     */
     public interface ConsoleHandler {
         /**
          * Normal output with a new line.
          */
+        @SlowPath
         void println(String s);
 
         /**
          * Normal output without a newline.
          */
+        @SlowPath
         void print(String s);
+
+        /**
+         * Formatted output.
+         */
+        @SlowPath
+        void printf(String format, Object... args);
 
         /**
          * Error output with a newline.
          *
          * @param s
          */
+        @SlowPath
         void printErrorln(String s);
 
         /**
          * Error output without a newline.
          */
+        @SlowPath
         void printError(String s);
 
         /**
          * Read a line of input, newline omitted in result. Returns null if {@link #isInteractive()
          * == false}.
          */
+        @SlowPath
         String readLine();
 
         /**
          * Return {@code true} if and only if this console is interactive.
          */
+        @SlowPath
         boolean isInteractive();
 
         /**
          * Redirect error output to the normal output.
          */
+        @SlowPath
         void redirectError();
 
         /**
          * Get the current prompt.
          */
+        @SlowPath
         String getPrompt();
 
         /**
          * Set the R prompt.
          */
+        @SlowPath
         void setPrompt(String prompt);
 
         /**
          * Get the console width.
          */
+        @SlowPath
         int getWidth();
     }
 

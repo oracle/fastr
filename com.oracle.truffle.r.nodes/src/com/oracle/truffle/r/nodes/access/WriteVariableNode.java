@@ -281,10 +281,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     public static final class UnresolvedWriteSuperVariableNode extends AbstractWriteSuperVariableNode {
 
         @Child private RNode rhs;
-        private final Object symbol;
+        private final String symbol;
         private final WriteVariableNode.Mode mode;
 
-        public UnresolvedWriteSuperVariableNode(RNode rhs, Object symbol, WriteVariableNode.Mode mode) {
+        public UnresolvedWriteSuperVariableNode(RNode rhs, String symbol, WriteVariableNode.Mode mode) {
             this.rhs = rhs;
             this.symbol = symbol;
             this.mode = mode;

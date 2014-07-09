@@ -1388,6 +1388,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testLsRegExp() {
+        assertEval("{ abc <- 1; ls(pattern=\"a.*\")}");
+        assertEval("{ .abc <- 1; ls(pattern=\"\\\\.a.*\")}");
+        assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\\\.a.*\")}");
+        assertEval("{ abc <- 1; ls(pattern=\"[[:alpha:]]*\")}");
+        assertEval("{ f <- function(abc) { ls(pattern=\"[a-z]*\") }; f(1) }");
+    }
+
+    @Test
     public void testLength() {
         assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
         assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
