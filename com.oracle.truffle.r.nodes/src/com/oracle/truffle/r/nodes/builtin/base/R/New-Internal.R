@@ -162,10 +162,10 @@ drop <- function(x) .Internal(drop(x))
 #    x <- x[!ii]
 #  .Internal(is.unsorted(x, strictly))
 #}
-#
-#nchar <- function(x, type = "chars", allowNA = FALSE)
-#  .Internal(nchar(x, type, allowNA))
-#
+
+nchar <- function(x, type = "chars", allowNA = FALSE)
+  .Internal(nchar(x, type, allowNA))
+
 #polyroot <- function(z) .Internal(polyroot(z))
 #
 #readline <- function(prompt = "") .Internal(readline(prompt))
