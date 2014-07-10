@@ -22,6 +22,25 @@ public final class RError extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * This exception should be subclassed by subsystems that need to throw subsystem-specific
+     * exceptions to be caught by builtin implementations, which can then invoke
+     * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
+     * object and any arguments. E.g. see {@link REnvironment.PutException}.
+     */
+    public abstract static class RErrorException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        private RError.Message msg;
+        private Object[] args;
+
+        protected RErrorException(RError.Message msg, Object[] args) {
+            super(RError.formatMessage(msg, args));
+            this.msg = msg;
+            this.args = args;
+        }
+    }
+
     private SourceSection source;
 
     private RError(SourceSection src, String msg) {
@@ -52,14 +71,8 @@ public final class RError extends RuntimeException {
         }
     }
 
-    public static RError error(SourceSection src, String msg) {
-        // TODO remove this after refactoring its clients to use RError messages
-        CompilerDirectives.transferToInterpreter();
-        if (src != null) {
-            return new RError(src, wrapMessage("Error in " + src.getCode() + " :", msg));
-        } else {
-            return new RError(null, "Error: " + msg);
-        }
+    public static RError error(SourceSection src, RErrorException ex) {
+        return error(src, ex.msg, ex.args);
     }
 
     public static RError nyi(SourceSection src, String msg) {
@@ -77,7 +90,7 @@ public final class RError extends RuntimeException {
         RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
     }
 
-    private static String formatMessage(Message msg, Object... args) {
+    public static String formatMessage(Message msg, Object... args) {
         return msg.hasArgs ? String.format(msg.message, args) : msg.message;
     }
 
@@ -93,6 +106,11 @@ public final class RError extends RuntimeException {
     }
 
     public static enum Message {
+        /**
+         * {@code GENERIC} should only be used in the rare case where a known error is not
+         * available.
+         */
+        GENERIC("%s"),
         LENGTH_GT_1("the condition has length > 1 and only the first element will be used"),
         LENGTH_ZERO("argument is of length zero"),
         NA_UNEXP("missing value where TRUE/FALSE needed"),
@@ -363,7 +381,22 @@ public final class RError extends RuntimeException {
         MUST_BE_SQUARE_NUMERIC("'%s' must be a square numeric matrix"),
         MUST_BE_NUMERIC_MATRIX("'%s' must be a numeric matrix"),
         PARSE_ERROR("parse error"),
-        SEED_NOT_VALID_INT("supplied seed is not a valid integer");
+        SEED_NOT_VALID_INT("supplied seed is not a valid integer"),
+        POSITIVE_CONTEXTS("number of contexts must be positive"),
+        NORMALIZE_PATH_NOSUCH("path[%d]=\"%s\": No such file or directory"),
+        ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),
+        ENV_REMOVE_BINDINGS("cannot remove bindings from a locked environment"),
+        ENV_REMOVE_VARIABLES("cannot remove variables from the %s environment"),
+        ENV_CHANGE_BINDING("cannot change value of locked binding for '%s'"),
+        ENV_ASSIGN_EMPTY("cannot assign values in the empty environment"),
+        ENV_DETACH_BASE("detaching \"package:base\" is not allowed"),
+        ENV_SUBSCRIPT("subscript out of range"),
+        DLL_LOAD_ERROR("unable to load shared object '%s'\n  %s"),
+        DLL_NOT_LOADED("shared object '%s' was not loaded"),
+        RNG_BAD_KIND("RNG kind %s is not available"),
+        RNG_NOT_IMPL_KIND("unimplemented RNG kind %d"),
+        RNG_READ_SEEDS("cannot read seeds unless 'user_unif_nseed' is supplied"),
+        RNG_SYMBOL("%s not found in user rng library");
 
         private final String message;
         private final boolean hasArgs;

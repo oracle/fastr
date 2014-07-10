@@ -28,6 +28,7 @@ import java.util.regex.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RPackages.RPackage;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.envframe.*;
@@ -87,12 +88,13 @@ public abstract class REnvironment implements RAttributable {
 
     }
 
-    public static class PutException extends Exception {
+    public static class PutException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
-        public PutException(String message) {
-            super(message);
+        public PutException(RError.Message msg, Object... args) {
+            super(msg, args);
         }
+
     }
 
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
@@ -366,11 +368,11 @@ public abstract class REnvironment implements RAttributable {
         RArguments.attachFrame(aboveFrame, envFrame);
     }
 
-    public static class DetachException extends Exception {
+    public static class DetachException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
-        DetachException(String msg) {
-            super(msg);
+        DetachException(RError.Message msg, Object... args) {
+            super(msg, args);
         }
     }
 
@@ -384,11 +386,11 @@ public abstract class REnvironment implements RAttributable {
     public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
         if (pos == searchPath.size()) {
             CompilerDirectives.transferToInterpreter();
-            throw new DetachException("detaching \"package:base\" is not allowed");
+            throw new DetachException(RError.Message.ENV_DETACH_BASE);
         }
         if (pos <= 0 || pos >= searchPath.size()) {
             CompilerDirectives.transferToInterpreter();
-            throw new DetachException("subscript out of range");
+            throw new DetachException(RError.Message.ENV_SUBSCRIPT);
         }
         assert pos != 1; // explicitly checked in caller
         // N.B. pos is 1-based
@@ -564,8 +566,7 @@ public abstract class REnvironment implements RAttributable {
         if (locked) {
             // if the binding exists already, can try to update it
             if (frameAccess.get(key) == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw new PutException("cannot add bindings to a locked environment");
+                throw new PutException(RError.Message.ENV_ADD_BINDINGS);
             }
         }
         frameAccess.put(key, value);
@@ -581,8 +582,7 @@ public abstract class REnvironment implements RAttributable {
 
     public void rm(String key) throws PutException {
         if (locked) {
-            CompilerDirectives.transferToInterpreter();
-            throw new PutException("cannot remove bindings from a locked environment");
+            throw new PutException(RError.Message.ENV_REMOVE_BINDINGS);
         }
         frameAccess.rm(key);
     }
@@ -697,8 +697,7 @@ public abstract class REnvironment implements RAttributable {
 
         @Override
         public void rm(String key) throws PutException {
-            CompilerDirectives.transferToInterpreter();
-            throw new PutException("cannot remove variables from the " + getPrintNameHelper() + " environment");
+            throw new PutException(RError.Message.ENV_REMOVE_VARIABLES, getPrintNameHelper());
         }
 
         @Override
@@ -843,8 +842,7 @@ public abstract class REnvironment implements RAttributable {
 
         @Override
         public void put(String key, Object value) throws PutException {
-            CompilerDirectives.transferToInterpreter();
-            throw new PutException("cannot assign values in the empty environment");
+            throw new PutException(RError.Message.ENV_ASSIGN_EMPTY);
         }
 
     }

@@ -71,8 +71,8 @@ public class EvalFunctions {
                         result = RContext.getEngine().eval(getFunction(), (RLanguage) expr, envir, REnvironment.emptyEnv());
                     }
                     return result;
-                } catch (PutException x) {
-                    throw RError.error(getEncapsulatingSourceSection(), x.getMessage());
+                } catch (PutException ex) {
+                    throw RError.error(getEncapsulatingSourceSection(), ex);
                 }
             } else {
                 // just return value

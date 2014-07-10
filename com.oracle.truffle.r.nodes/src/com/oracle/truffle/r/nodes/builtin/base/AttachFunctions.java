@@ -160,7 +160,7 @@ public class AttachFunctions {
             try {
                 return REnvironment.detach(pos, unload, force);
             } catch (DetachException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
         }
     }

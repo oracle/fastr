@@ -112,7 +112,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         try {
             pos.put(x, value);
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return value;
     }
@@ -141,7 +141,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 REnvironment.globalEnv().put(x, value);
             }
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return value;
     }

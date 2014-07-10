@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.RErrorException;
 
 /**
  * Support for Dynamically Loaded Libraries.
@@ -59,11 +60,11 @@ public class DLL {
         }
     }
 
-    public static class DLLException extends Exception {
+    public static class DLLException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
-        DLLException(String msg) {
-            super(msg);
+        DLLException(RError.Message msg, Object... args) {
+            super(msg, args);
         }
     }
 
@@ -75,7 +76,7 @@ public class DLL {
         Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
         if (handle == null) {
             String dlError = RFFIFactory.getRFFI().getBaseRFFI().dlerror();
-            throw new DLLException("unable to load shared object '" + path + "'\n  " + dlError);
+            throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
         }
         String name = file.getName();
         int dx = name.lastIndexOf('.');
@@ -93,12 +94,12 @@ public class DLL {
             if (info.path.equals(absPath)) {
                 int rc = RFFIFactory.getRFFI().getBaseRFFI().dlclose(info.handle);
                 if (rc != 0) {
-                    throw new DLLException("unable to unload shared object '" + path + "'");
+                    throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
                 }
                 return;
             }
         }
-        throw new DLLException("shared object '" + path + "' was not loaded");
+        throw new DLLException(RError.Message.DLL_NOT_LOADED, path);
     }
 
     public static Object[][] getLoadedDLLs() {

@@ -47,7 +47,7 @@ public class DynLoadFunctions {
                 RList result = createDLLInfoList(info.toRValues());
                 return result;
             } catch (DLLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
         }
 
@@ -64,7 +64,7 @@ public class DynLoadFunctions {
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
             return RNull.instance;
         }

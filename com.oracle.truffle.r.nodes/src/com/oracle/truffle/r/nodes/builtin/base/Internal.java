@@ -39,6 +39,6 @@ public abstract class Internal extends RBuiltinNode {
     @Specialization
     public Object doInternal(@SuppressWarnings("unused") Object x) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), "invalid .Internal() argument");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "invalid .Internal() argument");
     }
 }
