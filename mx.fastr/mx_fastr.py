@@ -209,6 +209,8 @@ def rbench(args):
 
     if args.extra_javavm_args:
         args.extra_javavm_args = shlex.split(args.extra_javavm_args.lstrip('@'))
+    else:
+        args.extra_javavm_args = []
     # dynamically load the benchmarks suite
     hg_base = mx.get_env('HG_BASE')
     alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
