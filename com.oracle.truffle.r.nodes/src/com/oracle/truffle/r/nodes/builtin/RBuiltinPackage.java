@@ -171,10 +171,6 @@ public abstract class RBuiltinPackage {
             int al = builtin.aliases().length;
             names = new String[1 + al];
             String name = builtin.name();
-            if (builtin.kind() == RBuiltinKind.INTERNAL) {
-                // change the name to match the AST rewrite
-                name = ".Internal." + name;
-            }
             names[0] = name;
             if (al > 0) {
                 System.arraycopy(builtin.aliases(), 0, names, 1, al);

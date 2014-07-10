@@ -36,20 +36,13 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Currently all (syntactically valid) {@code .Internal(f(args))} calls are rewritten as
- * {@code .Internal.f(args)}. So this builtin will only ever be invoked for an invalid argument,
- * i.e., not a function call, e.g. {@code .Internal(f)}.
- *
- * This is an experimental version of the correct semantics for {@code .Internal(f)} using runtime
- * AST replacement.
- *
- * In {@code .InternalX(func(args))} we have an AST where the RCallNode.Uninitialized and the
- * function child should be a {@link ReadVariableNode} node with symbol {@code func}. We could just
- * eval this, but eval has a lot of unnecessary overhead given that we know that {@code func} is
- * either a builtin or it's an error. We want to rewrite the AST as if the {@code func} had been
- * called directly.
+ * The {@code .Internal} builtin. In {@code .InternalX(func(args))} we have an AST where the
+ * RCallNode.Uninitialized and the function child should be a {@link ReadVariableNode} node with
+ * symbol {@code func}. We could just eval this, but eval has a lot of unnecessary overhead given
+ * that we know that {@code func} is either a builtin or it's an error. We want to rewrite the AST
+ * as if the {@code func} had been called directly.
  */
-@RBuiltin(name = ".InternalX", kind = PRIMITIVE, nonEvalArgs = {0})
+@RBuiltin(name = ".Internal", kind = PRIMITIVE, nonEvalArgs = {0})
 public abstract class Internal extends RBuiltinNode {
 
     @Specialization
@@ -74,7 +67,7 @@ public abstract class Internal extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
         }
         // TODO remove prefix for real use
-        RFunction function = RContext.getEngine().lookupBuiltin(".Internal." + name);
+        RFunction function = RContext.getEngine().lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, name);
         }

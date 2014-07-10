@@ -104,17 +104,6 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         Symbol callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
 
-        if (callName != null && callName.toString().equals(".Internal")) {
-            // A call .Internal(f(args)) is rewritten as .Internal.f(args).
-            // If the first arg is not a function call, then it will be an error,
-            // but we must not crash here.
-            ASTNode callArg1 = call.getArgs().get(0).getValue();
-            if (callArg1 instanceof FunctionCall) {
-                FunctionCall internalCall = (FunctionCall) callArg1;
-                callName = Symbol.getSymbol(".Internal." + internalCall.getName().toString());
-                call = internalCall;
-            }
-        }
         int index = 0;
         String[] argumentNames = new String[call.getArgs().size()];
         RNode[] nodes = new RNode[call.getArgs().size()];
@@ -531,15 +520,13 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
     }
 
-    private ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable,
-                                                               String variableSymbol, Replacement replacement) {
+    private ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable, String variableSymbol, Replacement replacement) {
         SourceSection argSourceSection = simpleAccessVariable.getSource();
         boolean replacementInSuperEnvironment = replacement.isSuper();
         if (replacementInSuperEnvironment) {
             return ReadVariableSuperMaterializedNode.create(argSourceSection, variableSymbol, RRuntime.TYPE_ANY);
         } else {
-            return ReadVariableNode.create(argSourceSection, variableSymbol, RRuntime.TYPE_ANY,
-                    simpleAccessVariable.shouldCopyValue());
+            return ReadVariableNode.create(argSourceSection, variableSymbol, RRuntime.TYPE_ANY, simpleAccessVariable.shouldCopyValue());
         }
     }
 
