@@ -384,6 +384,8 @@ public final class RError extends RuntimeException {
         SEED_NOT_VALID_INT("supplied seed is not a valid integer"),
         POSITIVE_CONTEXTS("number of contexts must be positive"),
         NORMALIZE_PATH_NOSUCH("path[%d]=\"%s\": No such file or directory"),
+        INVALID_INTERNAL("invalid .Internal() argument"),
+        NO_SUCH_INTERNAL("there is no .Internal function '%s'"),
         ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),
         ENV_REMOVE_BINDINGS("cannot remove bindings from a locked environment"),
         ENV_REMOVE_VARIABLES("cannot remove variables from the %s environment"),

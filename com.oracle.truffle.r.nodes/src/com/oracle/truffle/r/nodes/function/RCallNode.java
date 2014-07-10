@@ -32,6 +32,8 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.*;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -72,6 +74,24 @@ public abstract class RCallNode extends RNode {
         return cn;
     }
 
+    /**
+     * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
+     * original call.
+     *
+     * @param src source section to use (from original call)
+     * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
+     *            {code .Internal}.
+     * @param function the resolved {@link RFunction}.
+     */
+    public static RCallNode createInternalCall(SourceSection src, RCallNode internalCallArg, RFunction function) {
+        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function);
+        assert internalCallArg instanceof UninitializedCallNode;
+        UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
+        RCallNode result = current.createCacheNode(function);
+        result.assignSourceSection(src);
+        return result;
+    }
+
     public static RCallNode createCall(RNode function, CallArgumentsNode arguments) {
         return new UninitializedCallNode(function, arguments);
     }
@@ -90,12 +110,16 @@ public abstract class RCallNode extends RNode {
         return null;
     }
 
-    private abstract static class RootCallNode extends RCallNode {
+    public abstract static class RootCallNode extends RCallNode {
 
         @Child protected RNode functionNode;
 
         public RootCallNode(RNode function) {
             this.functionNode = function;
+        }
+
+        public RNode getFunctionNode() {
+            return functionNode;
         }
 
         private RFunction executeFunctionNode(VirtualFrame frame) {

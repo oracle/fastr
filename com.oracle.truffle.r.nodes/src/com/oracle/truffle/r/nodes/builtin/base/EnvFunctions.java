@@ -209,7 +209,6 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "new.env", kind = INTERNAL)
-    // TOOD INTERNAL
     public abstract static class NewEnv extends RBuiltinNode {
 
         private static final Object[] PARAMETER_NAMES = new Object[]{"hash", "parent", "size"};
