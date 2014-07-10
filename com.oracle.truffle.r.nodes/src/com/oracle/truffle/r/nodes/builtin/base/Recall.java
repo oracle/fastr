@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
@@ -67,7 +68,9 @@ public class Recall extends RCustomBuiltinNode {
             args = insert(CallArgumentsNode.createUnnamed(true, false, createArgs(arguments[0])));
             arguments[0] = null;
         }
-        Object[] argsObject = RArguments.create(function, args.executeArray(frame));
+        // FIXME Gero, this is trash!
+        MatchedArgumentsNode matchedArgs = ArgumentMatcher.pseudoMatch(args);
+        Object[] argsObject = RArguments.create(function, matchedArgs.executeArrayRaw(frame));
         return callNode.call(frame, argsObject);
     }
 

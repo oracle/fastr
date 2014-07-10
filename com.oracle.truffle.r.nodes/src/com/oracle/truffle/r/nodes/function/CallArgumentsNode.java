@@ -24,34 +24,19 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * This class denotes a list of {@link #arguments} together with their {@link #names} given to a
- * specific function call. The arguments' order is the same as given at the call.<br/>
- * It additionally holds usage hints that are use for
+ * This class denotes a list of {@link #getArguments()} together with their {@link #getNames()}
+ * given to a specific function call. The arguments' order is the same as given at the call.<br/>
+ * It additionally holds usage hints.
  */
-public final class CallArgumentsNode extends RNode {
+public final class CallArgumentsNode extends ArgumentsNode {
 
     private static final String[] NO_NAMES = new String[0];
 
-    /**
-     * The {@link RNode}s of the arguments given to a function call, in the same order. A single
-     * argument being <code>null</code> means 'argument not provided.
-     */
-    @Children private final RNode[] arguments;
-
-    /**
-     * The names of the {@link #arguments}, in the same order. <code>null</code> means 'no name
-     * given'
-     */
-    private final String[] names;
-    /**
-     * The number of {@link #names} given (i.e., not <code>null</code>)
-     */
-    private final int nameCount;
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
      * modify the arguments which are not meant to be modified (like in the case of binary
@@ -63,15 +48,14 @@ public final class CallArgumentsNode extends RNode {
      * (binary operators).
      */
     private final boolean modeChange;
+
     /**
      * @see #modeChange
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] args, String[] names, boolean modeChange, boolean modeChangeForAll) {
-        this.arguments = args;
-        this.names = names;
-        this.nameCount = countNonNull(names);
+    private CallArgumentsNode(RNode[] arguments, String[] names, boolean modeChange, boolean modeChangeForAll) {
+        super(arguments, names);
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
     }
@@ -104,62 +88,40 @@ public final class CallArgumentsNode extends RNode {
         }
 
         // Setup and return
+        SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
         CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, modeChange, modeChangeForAll);
-        callArgs.assignSourceSection(Utils.sourceBoundingBox(wrappedArgs));
+        callArgs.assignSourceSection(src);
         return callArgs;
-    }
-
-    /**
-     * Calls {@link RNode#execute(VirtualFrame)} on every {@link #arguments}; if one is
-     * <code>null</code>, {@link RMissing#instance} is returned.
-     *
-     * @see com.oracle.truffle.r.nodes.RNode#executeArray(com.oracle.truffle.api.frame.VirtualFrame)
-     */
-    @Override
-    @ExplodeLoop
-    public Object[] executeArray(VirtualFrame frame) {
-        Object[] values = new Object[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            RNode arg = arguments[i];
-            values[i] = arg == null ? RMissing.instance : arg.execute(frame);
-        }
-        return values;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return executeArray(frame);
+        // Execute has not semantic meaning for CallArgumentsNode
+        throw new AssertionError();
     }
 
-    private static int countNonNull(String[] names) {
-        int count = 0;
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] != null) {
-                count++;
-            }
-        }
-        return count;
+    @Override
+    public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
+        // Execute has not semantic meaning for CallArgumentsNode
+        throw new AssertionError();
     }
 
     /**
-     * @return {@link #arguments}
+     * @return The {@link RNode}s of the arguments given to a function call, in the same order. A
+     *         single argument being <code>null</code> means 'argument not provided'.
      */
+    @Override
     public RNode[] getArguments() {
         return arguments;
     }
 
     /**
-     * @return {@link #names}
+     * @return The names of the {@link #arguments}, in the same order. <code>null</code> means 'no
+     *         name given'
      */
+    @Override
     public String[] getNames() {
         return names;
-    }
-
-    /**
-     * @return {@link #nameCount}
-     */
-    public int getNameCount() {
-        return nameCount;
     }
 
     /**

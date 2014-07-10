@@ -22,14 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
-
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * This class denotes a list of {@link FormalArgument}s which consist of the triple
+ * This class denotes a list of formal arguments which consist of the triple
  * <ul>
  * <li>argument name (String, {@link #argumentsNames})</li>
  * <li>expression ({@link RNode}, {@link #defaultArguments})</li>
@@ -40,31 +38,29 @@ import com.oracle.truffle.r.runtime.data.*;
 public class FormalArguments {
 
     public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
+    public static final String VARARG_NAME = "...";
+    public static final int NO_VARARG = -1;
 
     /**
      * The list of argument names a function definition specifies
      */
     private final String[] argumentsNames;
+
     /**
      * The list of default arguments a function body specifies. 'No default value' is denoted by
-     * {@link RMissing#instance}.
+     * <code>null</code>
      */
-    @SuppressWarnings("unused") private final RNode[] defaultArguments;
-    private final ArrayList<FormalArgument> formals;
+    private final RNode[] defaultArguments;
 
     /**
      * @param argumentsNames {@link #argumentsNames}
      * @param defaultArguments {@link #defaultArguments}
      */
-    public FormalArguments(String[] argumentsNames, RNode[] defaultArguments) {
+    private FormalArguments(String[] argumentsNames, RNode[] defaultArguments) {
+        // TODO Does this assertion hold in case of "..."??
         assert argumentsNames.length == defaultArguments.length;
         this.argumentsNames = argumentsNames;
         this.defaultArguments = defaultArguments;
-
-        this.formals = new ArrayList<>(argumentsNames.length);
-        for (int i = 0; i < argumentsNames.length; i++) {
-            formals.add(new FormalArgument(i, defaultArguments[i], argumentsNames[i]));
-        }
     }
 
     /**
@@ -72,7 +68,7 @@ public class FormalArguments {
      * @param defaultArguments {@link #defaultArguments}, but handles <code>null</code>
      * @return A fresh {@link FormalArguments}
      */
-    public static FormalArguments createHandleNullArgs(String[] argumentsNames, RNode[] defaultArguments) {
+    public static FormalArguments create(String[] argumentsNames, RNode[] defaultArguments) {
         RNode[] newDefaults = new RNode[defaultArguments.length];
         for (int i = 0; i < newDefaults.length; i++) {
             RNode defArg = defaultArguments[i];
@@ -84,52 +80,50 @@ public class FormalArguments {
     /**
      * @return {@link #argumentsNames}
      */
-    public Object[] getNamesArray() {
+    public String[] getNames() {
         return argumentsNames;
     }
 
     /**
-     * @return {@link #formals}
+     * @return {@link #defaultArguments}
      */
-    public List<FormalArgument> getDefaultValues() {
-        return formals;
+    public RNode[] getDefaultArgs() {
+        return defaultArguments;
     }
 
     /**
-     * @return The number of {@link FormalArgument}s in {link #formals}
+     * @return The number of arguments
      */
     public int getNrOfArgs() {
-        return formals.size();
+        return argumentsNames.length;
     }
 
     /**
      * @return Whether this function has arguments or not
      */
     public boolean hasArguments() {
-        return formals.size() > 0;
+        return argumentsNames.length > 0;
     }
 
-    public static class FormalArgument {
-        private final int index;
-        private final RNode expr;
-        private final String name;
+    /**
+     * @return Whether one of {@link #argumentsNames} matches {@link #VARARG_NAME} (
+     *         {@value #VARARG_NAME})
+     */
+    public boolean hasVarArgs() {
+        return getVarArgIndex() != NO_VARARG;
+    }
 
-        public FormalArgument(int index, RNode expr, String name) {
-            this.index = index;
-            this.expr = expr;
-            this.name = name;
+    /**
+     * @return The index of {@link #VARARG_NAME} ({@value #VARARG_NAME}), or {@link #NO_VARARG} (
+     *         {@value #NO_VARARG}) if there is none
+     */
+    public int getVarArgIndex() {
+        for (int i = 0; i < argumentsNames.length; i++) {
+            String name = argumentsNames[i];
+            if (VARARG_NAME.equals(name)) {
+                return i;
+            }
         }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public RNode getExpr() {
-            return expr;
-        }
-
-        public String getName() {
-            return name;
-        }
+        return NO_VARARG;
     }
 }

@@ -176,7 +176,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     if (defaultValNode != null) {
                         defaultValue = arg.getValue().accept(this);
                     } else {
-                        defaultValue = ConstantNode.create(RMissing.instance);
+                        defaultValue = null;
                     }
 
                     // Create an initialization statement
@@ -198,7 +198,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (astBody != null && body.getSourceSection() == null) {
                 body.assignSourceSection(astBody.getSource());
             }
-            FormalArguments formals = new FormalArguments(argumentNames, defaultValues);
+            FormalArguments formals = FormalArguments.create(argumentNames, defaultValues);
 
             String functionBody = func.getSource().getCode();
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), funcEnvironment, body, formals, functionBody.substring(0, Math.min(functionBody.length(), 50)), false);

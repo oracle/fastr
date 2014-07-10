@@ -87,7 +87,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
         // Create formal arguments
         String[] names = Arrays.copyOf(node.getParameterNames(), node.getParameterNames().length, String[].class);
-        FormalArguments formals = FormalArguments.createHandleNullArgs(names, node.getParameterValues());
+        FormalArguments formals = FormalArguments.create(names, node.getParameterValues());
 
         // Setup
         RBuiltinRootNode root = new RBuiltinRootNode(node, formals, new FrameDescriptor());
@@ -95,7 +95,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public RCallNode inline(CallArgumentsNode args) {
+    public RCallNode inline(MatchedArgumentsNode args) {
         RNode[] builtinArguments;
         // static number of arguments
         builtinArguments = inlineStaticArguments(args);
@@ -135,7 +135,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return factory.getFactory().createNode(args);
     }
 
-    protected RNode[] inlineStaticArguments(CallArgumentsNode args) {
+    protected RNode[] inlineStaticArguments(MatchedArgumentsNode args) {
         int signatureSize = getBuiltin().getFactory().getExecutionSignature().size();
         RNode[] children = new RNode[signatureSize];
         int index = 0;

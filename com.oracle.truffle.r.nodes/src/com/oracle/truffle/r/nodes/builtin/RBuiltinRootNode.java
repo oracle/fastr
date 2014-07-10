@@ -45,7 +45,7 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.execute(frame);
     }
 
-    public RCallNode inline(CallArgumentsNode args) {
+    public RCallNode inline(MatchedArgumentsNode args) {
         return builtin.inline(args);
     }
 
