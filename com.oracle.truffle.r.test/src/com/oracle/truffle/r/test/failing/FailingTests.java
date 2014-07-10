@@ -664,6 +664,21 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testCbindIgnore_24a51282927ba915c3ebc8717b71c58a() {
+        assertEval("{ cbind(2,3, complex(3,3,2));}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testCbindIgnore_ad3549732fce5b2ee1cd8a4b9996d797() {
+        assertEval("{ cbind(2,3, c(1,1,1))");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testCbindIgnore_eac42e3620663dabb16389ef366ddb5e() {
+        assertEval("{ cbind(2.1:10,32.2)");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testCharUtilsIgnore_864e89c688384c8cc67d1b4676ff314d() {
         assertEval("{ tolower(1E100) }");
     }
@@ -1354,6 +1369,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testMatrixIgnore_1fb1b5745bcee5d420963eac101e5666() {
+        assertEval("{ matrix(TRUE,FALSE,FALSE,TRUE)}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
     }
@@ -1939,6 +1959,21 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testRowMeansIgnore_ee1961081fcfca53ea506fa81009d5b5() {
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testRowMeansIgnore_1d83557bfc6a9792419b6f87c844133e() {
+        assertEval("{rowMeans(matrix(NA,NA,NA),TRUE)}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testRowMeansIgnore_80aaaab0a28cbb6472de7b973b40187b() {
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testRowStats_80140817c8e933718f596cc1e3fbdfd6() {
         assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
     }
@@ -1966,6 +2001,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testRowStatsArray_0963abebe9629587b68d742c268c67e5() {
         assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testRowSumsIgnore_fc993b3be8ff0e09bc78bbb22bcf0aec() {
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
     }
 
     @Ignore

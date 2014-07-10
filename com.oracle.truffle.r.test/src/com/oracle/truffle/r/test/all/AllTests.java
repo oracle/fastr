@@ -5574,6 +5574,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCbindIgnore_24a51282927ba915c3ebc8717b71c58a() {
+        assertEval("{ cbind(2,3, complex(3,3,2));}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbindIgnore_ad3549732fce5b2ee1cd8a4b9996d797() {
+        assertEval("{ cbind(2,3, c(1,1,1))");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCbindIgnore_eac42e3620663dabb16389ef366ddb5e() {
+        assertEval("{ cbind(2.1:10,32.2)");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCeiling_7283237f5a0aa7db1d95780ead2af87f() {
         assertEval("{ ceiling(c(0.2,-3.4,NA,0/0,1/0)) }");
     }
@@ -9064,6 +9079,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMatrixIgnore_1fb1b5745bcee5d420963eac101e5666() {
+        assertEval("{ matrix(TRUE,FALSE,FALSE,TRUE)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatrixIgnore_f5dba0a59ab80b80d211e6e6fee198de() {
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
     }
@@ -10569,6 +10589,101 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRowMeans_a9d2ae014a395633e667ee280920f95c() {
+        assertEval("{rowMeans(matrix(c(3,4,2,5)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_9ca18f7870cbb920dee99385fac80db5() {
+        assertEval("{rowMeans(matrix(c(3L,4L,2L,5L)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_ef3d540c7e588cf7b68c15fd2ff870f0() {
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_37c19d85d7fb7a36939c658b2a9ff5d5() {
+        assertEval("{rowMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_5686edb3785b505afbcd157770d5d9c8() {
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_b26019def290c72bfa2e503480fb26d1() {
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_6988222e88914a3575927c6c5cc88f15() {
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_5f97043471aa58607a9627e8a8881260() {
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_51d85950f9bd81a169bdb5492b51e5cb() {
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_60a4f27def2bea97cbe90a4d635e4716() {
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_bd154e80e3eeeeb1defa8b8ef3705c34() {
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_97cdd7c5d45554ff955f27dd786ae741() {
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_abeb57d056650016301c16dca94884c8() {
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_81a50a6f78a5a0e400c8193d427d0d34() {
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_73dc275b91786b952014453cbb8ccad5() {
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeans_1971a7088774446d1515bc3b3ddeed3f() {
+        assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeansIgnore_ee1961081fcfca53ea506fa81009d5b5() {
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeansIgnore_1d83557bfc6a9792419b6f87c844133e() {
+        assertEval("{rowMeans(matrix(NA,NA,NA),TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowMeansIgnore_80aaaab0a28cbb6472de7b973b40187b() {
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRowStats_80140817c8e933718f596cc1e3fbdfd6() {
         assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
     }
@@ -10596,6 +10711,76 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testRowStatsArray_0963abebe9629587b68d742c268c67e5() {
         assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_2aea5a368dd96ae78cf6c291d8093825() {
+        assertEval("{x<-cbind(1:3, 4:6, 7:9); rowSums(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_3b556305d409bf0cfabab83c2c7e761e() {
+        assertEval("{x<-cbind(1:3, NA, 7:9); rowSums(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_b0f5834a4107dbbf8e8322bfda9f68dd() {
+        assertEval("{x<-cbind(1:3, NaN, 7:9); rowSums(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_44bc0cb66b10b0f886929a3edbeaeb4a() {
+        assertEval("{x<-cbind(1:3, NaN, 7:9, 10:12); rowSums(x, na.rm=TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_c1d457fbbed5c20ef15bba61cd56e2ec() {
+        assertEval("{x<-cbind(1:4, NA, NaN, 9:12); rowSums(x, na.rm=TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_bfdfa47f89b869065d5be0c9ecb14d68() {
+        assertEval("{x<-cbind(2L:10L,3L); rowSums(x)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_fab758908c0caaa7339d786e9c1684d6() {
+        assertEval("{rowSums(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_c4911f49ac6d6625bda6cdb02478550a() {
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_c4e44dabe0b8241e5771ad2794ba4d8a() {
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_90a13b885dadb5366d7d7cfd3cbe1b34() {
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_31878f9d587862187bdbcccf0a40a3b7() {
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_4968490fa6e0d47210c915d5913c82cf() {
+        assertEval("{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSums_13c6b7a0732e5265c2a6dbdb261ccea7() {
+        assertEval("{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRowSumsIgnore_fc993b3be8ff0e09bc78bbb22bcf0aec() {
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
     }
 
     @Test

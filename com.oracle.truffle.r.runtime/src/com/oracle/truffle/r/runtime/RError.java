@@ -373,5 +373,4 @@ public final class RError extends RuntimeException {
             hasArgs = message.indexOf('%') >= 0;
         }
     }
-
 }

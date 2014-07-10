@@ -549,6 +549,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testMatrixIgnore() {
+        assertEval("{ matrix(TRUE,FALSE,FALSE,TRUE)}");
         // FIXME missing warning
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
         assertEvalWarning("{ matrix(1:4,3,2) }");
@@ -2013,6 +2014,9 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCbindIgnore() {
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
         assertEval("{ cbind(1:3,1:2) }");
+        assertEval("{ cbind(2,3, complex(3,3,2));}");
+        assertEval("{ cbind(2,3, c(1,1,1))");
+        assertEval("{ cbind(2.1:10,32.2)");
     }
 
     @Test
@@ -3153,5 +3157,64 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
         assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testRowMeansIgnore() {
+        // Error in multiplying complex number to double vector.
+        // FastR prints "[1] NaN+NaNi   4.5+  7.5i"
+        // R prints "[1]       NA 4.5+7.5i"
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+        // Error message mismatch
+        assertEval("{rowMeans(matrix(NA,NA,NA),TRUE)}");
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
+    }
+
+    @Test
+    public void testRowMeans() {
+        assertEval("{rowMeans(matrix(c(3,4,2,5)))}");
+        assertEval("{rowMeans(matrix(c(3L,4L,2L,5L)))}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+        assertEval("{rowMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+
+    }
+
+    @Test
+    @Ignore
+    public void testRowSumsIgnore() {
+        // Error message mismatch
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
+    }
+
+    @Test
+    public void testRowSums() {
+        assertEval("{x<-cbind(1:3, 4:6, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NA, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NaN, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NaN, 7:9, 10:12); rowSums(x, na.rm=TRUE)}");
+        assertEval("{x<-cbind(1:4, NA, NaN, 9:12); rowSums(x, na.rm=TRUE)}");
+        assertEval("{x<-cbind(2L:10L,3L); rowSums(x)}");
+        assertEval("{rowSums(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
     }
 }
