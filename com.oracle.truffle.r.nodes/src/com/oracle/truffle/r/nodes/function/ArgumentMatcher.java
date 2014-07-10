@@ -172,9 +172,7 @@ public class ArgumentMatcher {
             resultArgs[varArgIndex] = listFactory.makeList(varArgsArray, namesArray);
         }
 
-        // TODO Is this correct???
         // Now fill arguments that have not been set 'by name' by order of their appearance
-        // (or default values!)
         int cursor = 0;
         for (int fi = 0; fi < resultArgs.length && (!hasVarArgs || fi < varArgIndex); fi++) {
             if (resultArgs[fi] == null) {
@@ -182,34 +180,20 @@ public class ArgumentMatcher {
                     cursor++;
                 }
                 if (cursor < suppliedArgs.length) {
-                    resultArgs[fi] = getArg(suppliedArgs[cursor++], defaultArgs, fi);
+                    resultArgs[fi] = suppliedArgs[cursor++];
                 } else {
-                    // If argument is not set and there are no more arguments supplied:
-                    // Fill up with default values! (in case there are some)
-                    if (fi < defaultArgs.length) {
-                        resultArgs[fi] = defaultArgs[fi];
-                    }
+                    break;  // TODO Correct?
                 }
             }
         }
+
+        // Now fill remaining missing fields with default values
+        for (int fi = 0; fi < resultArgs.length && fi < defaultArgs.length; fi++) {
+            if (resultArgs[fi] == null) {
+                resultArgs[fi] = defaultArgs[fi];
+            }
+        }
         return resultArgs;
-    }
-
-    /**
-     * @param suppliedArg
-     * @param defaultArgs
-     * @param formalIndex
-     * @return If suppliedArg == <code>null</code> it's superseded by defaultArg
-     */
-    private static RNode getArg(RNode suppliedArg, RNode[] defaultArgs, int formalIndex) {
-        if (suppliedArg != null) {
-            return suppliedArg;
-        }
-
-        if (formalIndex < defaultArgs.length) {
-            return defaultArgs[formalIndex];
-        }
-        return null;
     }
 
     /**
