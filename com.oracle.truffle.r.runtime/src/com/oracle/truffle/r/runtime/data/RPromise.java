@@ -43,14 +43,14 @@ public class RPromise extends RLanguageRep {
      * Create the promise with a representation that allows evaluation later in the "current" frame.
      * The frame may need to be set if the promise is passed as an argument to another function.
      */
-    RPromise(Object rep) {
+    public RPromise(Object rep) {
         this(rep, null);
     }
 
     /**
      * Create the promise with a representation that allows evaluation later in a given frame.
      */
-    RPromise(Object rep, REnvironment env) {
+    public RPromise(Object rep, REnvironment env) {
         super(rep);
         this.env = env;
     }

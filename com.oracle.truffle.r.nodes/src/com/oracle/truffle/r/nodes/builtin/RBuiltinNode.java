@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -86,7 +84,10 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         RBuiltinNode node = createNode(builtin, argAccessNodes, null);
 
         // Create formal arguments
-        String[] names = Arrays.copyOf(node.getParameterNames(), node.getParameterNames().length, String[].class);
+        String[] names = new String[node.getParameterNames().length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = RRuntime.toString(node.getParameterNames()[i]);
+        }
         FormalArguments formals = FormalArguments.create(names, node.getParameterValues());
 
         // Setup
@@ -96,9 +97,9 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     }
 
     public RCallNode inline(MatchedArgumentsNode args) {
-        RNode[] builtinArguments;
         // static number of arguments
-        builtinArguments = inlineStaticArguments(args);
+        RNode[] builtinArguments = inlineStaticArguments(args);
+        // TODO Gero: Is use of getNameCount correct?
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
         builtin.onCreate();
         return builtin;
@@ -138,18 +139,34 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     protected RNode[] inlineStaticArguments(MatchedArgumentsNode args) {
         int signatureSize = getBuiltin().getFactory().getExecutionSignature().size();
         RNode[] children = new RNode[signatureSize];
-        int index = 0;
-        int argIndex = 0;
 
-        RNode[] arguments = args.getArguments();
-        RNode[] defaultValues = getParameterValues();
-        for (int i = index; i < signatureSize; i++, argIndex++) {
-            if (argIndex < arguments.length && arguments[argIndex] != null) {
-                children[i] = arguments[argIndex];
-            } else {
-                children[i] = argIndex < defaultValues.length ? defaultValues[argIndex] : ConstantNode.create(RMissing.instance);
-            }
+        // Fill with already determined arguments..
+        int argsSize = args.getNrOfArgs();
+        System.arraycopy(args.getArgumentsDenullified(), 0, children, 0, Math.min(argsSize, signatureSize));
+
+        // ...and the rest with RMissing
+        for (int i = argsSize; i < signatureSize; i++) {
+            children[i] = ConstantNode.create(RMissing.instance);
         }
+// protected RNode[] inlineStaticArguments(CallArgumentsNode args) {
+// int signatureSize = getBuiltin().getFactory().getExecutionSignature().size();
+// RNode[] children = new RNode[signatureSize];
+// int index = 0;
+// int argIndex = 0;
+//
+// RNode[] arguments = args.getArguments();
+// RNode[] defaultValues = getParameterValues();
+// for (int i = index; i < signatureSize; i++, argIndex++) {
+// if (argIndex < arguments.length && arguments[argIndex] != null) {
+// children[i] = arguments[argIndex];
+// } else {
+// children[i] = argIndex < defaultValues.length ? defaultValues[argIndex] :
+// ConstantNode.create(RMissing.instance);
+// }
+// }
+// return children;
+// }
+
         return children;
     }
 

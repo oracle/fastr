@@ -27,6 +27,8 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsAsObjectArrayNode;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -44,7 +46,8 @@ public class MatchedArgumentsNode extends ArgumentsNode {
 
     public enum EOutput {
         /**
-         * Arguments are processed as is, not {@link RPromise} created (legacy!)
+         * Arguments are processed as is, {@link RPromise} are only created for certain builins
+         * (legacy!)
          */
         RAW,
 
@@ -117,29 +120,182 @@ public class MatchedArgumentsNode extends ArgumentsNode {
      * @return The wrapped arguments
      */
     @ExplodeLoop
-    public Object[] executeArray(VirtualFrame frame, @SuppressWarnings("unused") RFunction function, EOutput type) {
-        Object[] wrappedArguments = new Object[arguments.length];
+    public Object[] executeArray(VirtualFrame frame, RFunction function, EOutput type) {
+        RNode[] wrappedArguments = getWrappedArguments(function, type);
 
-        for (int i = 0; i < arguments.length; i++) {
-            wrappedArguments[i] = wrapArgument(arguments[i], frame, type);
+        Object[] evaluatedArguments = new Object[wrappedArguments.length];
+        for (int i = 0; i < evaluatedArguments.length; i++) {
+            RNode wrappedArg = wrappedArguments[i];
+            if (wrappedArg != null) {
+                evaluatedArguments[i] = wrappedArg.execute(frame);
+            } else {
+                evaluatedArguments[i] = RNull.instance;
+            }
+        }
+
+        return evaluatedArguments;
+    }
+
+    public RNode[] getWrappedArguments() {
+        return getWrappedArguments(null, EOutput.RAW);
+    }
+
+    private RNode[] getWrappedArguments(RFunction function, EOutput type) {
+        RNode[] wrappedArguments = new RNode[arguments.length];
+
+        int lix = 0;    // logical index
+        for (int fi = 0; fi < arguments.length; fi++) {
+            RNode arg = arguments[fi];
+            RNode result = null;
+
+// if (type == EOutput.RAW) {
+            RRootNode rootNode = null;
+            boolean isBuiltin = false;
+            if (function == null) {
+                isBuiltin = true;
+            } else {
+                rootNode = (RRootNode) function.getTarget().getRootNode();
+                isBuiltin = rootNode instanceof RBuiltinRootNode;
+            }
+
+            if (arg == null) {
+                result = ConstantNode.create(RMissing.instance);
+                lix++;
+            } else if (isBuiltin && (type == EOutput.RAW || !((RBuiltinRootNode) rootNode).evaluatesArgs())) {
+                RNode argOrPromise = null;
+                RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
+                if (arg instanceof VarArgsAsObjectArrayNode) {
+                    VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) arg;
+                    RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
+                    for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
+                        modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
+                        lix++;
+                    }
+                    argOrPromise = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
+                } else {
+                    argOrPromise = checkPromise(builtinRootNode, arg, lix);
+                    lix++;
+                }
+                result = argOrPromise;
+            } else {
+                result = arg;
+                lix++;
+            }
+// }
+
+            wrappedArguments[fi] = result;
         }
 
         return wrappedArguments;
     }
 
-    private static Object wrapArgument(RNode arg, VirtualFrame frame, EOutput type) {
-        Object result = null;
-        if (type == EOutput.RAW) {
-            if (arg == null) {
-                result = ConstantNode.create(RMissing.instance);
-            } else {
-                result = arg.execute(frame);
-            }
+    private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int formalIndex) {
+        if (builtinRootNode != null && !builtinRootNode.evaluatesArg(formalIndex)) {
+            return PromiseNode.create(argNode.getSourceSection(), new RPromise(argNode));
+        } else {
+            return argNode;
         }
 
-        assert result != null : "Arguments may never be <null>!";
-        return result;
     }
+
+// private static Object wrapArgument(RFunction function, RNode arg, int formalIndex, VirtualFrame
+// frame, EOutput type) {
+// Object result = null;
+// if (type == EOutput.RAW) {
+// RRootNode rootNode = null;
+// boolean isBuiltin = false;
+// if (function == null) {
+// isBuiltin = false;
+// } else {
+// rootNode = (RRootNode) function.getTarget().getRootNode();
+// isBuiltin = rootNode instanceof RBuiltinRootNode;
+// }
+//
+// if (arg == null && !isBuiltin) {
+// result = RMissing.instance;
+// } else if (isBuiltin && !((RBuiltinRootNode) rootNode).evaluatesArgs()) {
+// RNode argOrPromise = null;
+// RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
+// if (arg instanceof VarArgsAsObjectArrayNode) {
+// VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) arg;
+// RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
+// for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
+// modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j],
+// formalIndex);
+// }
+// argOrPromise = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
+// } else {
+// argOrPromise = checkPromise(builtinRootNode, arg, formalIndex);
+// }
+// result = argOrPromise.execute(frame);
+// } else {
+// result = arg.execute(frame);
+// }
+// }
+//
+// return result;
+// }
+
+// private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments,
+// Object[] actualNames, SourceSection encapsulatingSrc) {
+// RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+// final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
+// final boolean hasVarArgs = formals.hasVarArgs();
+//
+// // Error: Unused argument
+// if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount())
+// {
+// RNode unusedArgNode = arguments.getArguments()[rootNode.getParameterCount()];
+// throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENT,
+// unusedArgNode.getSourceSection().getCode());
+// }
+//
+// // Handle named args and varargs
+// RNode[] argumentNodes = arguments.getArguments();
+// RNode[] origArgumentNodes = argumentNodes;
+// if (arguments.getNameCount() != 0 || hasVarArgs) {
+// RNode[] permuted = permuteArguments(arguments, new VarArgsAsObjectArrayNodeFactory(),
+// encapsulatingSrc);
+// if (!isBuiltin) {
+// for (int i = 0; i < permuted.length; i++) {
+// if (permuted[i] == null) {
+// permuted[i] = ConstantNode.create(RMissing.instance);
+// }
+// }
+// }
+// argumentNodes = permuted;
+// }
+// /*
+// * This is a temporary fix to create promises just for builtin functions that do not
+// * evaluate their arguments, e.g. expression, eval. We have do the check after permutation
+// * to get the correct index position. Unfortunately, ... args have been swept up into an
+// * array, so it's a bit trickier.
+// */
+// if (isBuiltin && !((RBuiltinRootNode) rootNode).evaluatesArgs()) {
+// RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
+// RNode[] modifiedArgs = new RNode[argumentNodes.length];
+// int lix = 0; // logical index position
+// for (int i = 0; i < argumentNodes.length; i++) {
+// RNode argumentNode = argumentNodes[i];
+// if (argumentNode instanceof VarArgsAsObjectArrayNode) {
+// VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) argumentNode;
+// RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
+// for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
+// modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
+// lix++;
+// }
+// modifiedArgs[i] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
+// } else {
+// modifiedArgs[i] = checkPromise(builtinRootNode, argumentNode, lix);
+// lix++;
+// }
+// }
+// argumentNodes = modifiedArgs;
+// }
+// return origArgumentNodes == argumentNodes ? arguments :
+// CallArgumentsNode.create(arguments.modeChange(), arguments.modeChangeForAll(), argumentNodes,
+// arguments.getNames());
+// }
 
     /**
      * @return The consolidated list of arguments that should be passed to a function.
@@ -148,6 +304,14 @@ public class MatchedArgumentsNode extends ArgumentsNode {
     @Override
     public RNode[] getArguments() {
         return arguments;
+    }
+
+    public RNode[] getArgumentsDenullified() {
+        RNode[] notNullArgs = new RNode[arguments.length];
+        for (int i = 0; i < notNullArgs.length; i++) {
+            notNullArgs[i] = arguments[i] != null ? arguments[i] : ConstantNode.create(RMissing.instance);
+        }
+        return notNullArgs;
     }
 
     /**

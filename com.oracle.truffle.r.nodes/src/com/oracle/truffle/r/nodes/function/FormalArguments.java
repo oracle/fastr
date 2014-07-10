@@ -57,8 +57,6 @@ public class FormalArguments {
      * @param defaultArguments {@link #defaultArguments}
      */
     private FormalArguments(String[] argumentsNames, RNode[] defaultArguments) {
-        // TODO Does this assertion hold in case of "..."??
-        assert argumentsNames.length == defaultArguments.length;
         this.argumentsNames = argumentsNames;
         this.defaultArguments = defaultArguments;
     }
@@ -125,5 +123,15 @@ public class FormalArguments {
             }
         }
         return NO_VARARG;
+    }
+
+    public int getNameCount() {
+        int count = 0;
+        for (int i = 0; i < argumentsNames.length; i++) {
+            if (argumentsNames[i] != null) {
+                count++;
+            }
+        }
+        return count;
     }
 }

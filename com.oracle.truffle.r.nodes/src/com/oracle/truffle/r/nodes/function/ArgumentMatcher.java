@@ -74,7 +74,7 @@ public class ArgumentMatcher {
      *         the order of the {@link FormalArguments}
      */
     public MatchedArgumentsNode match(RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
-        if (suppliedArgs.getNameCount() == 0) {
+        if (formals.getNameCount() == 0) {
             // If there are no names used: Create new arrays and we're done
             RNode[] args = Arrays.copyOf(suppliedArgs.getArguments(), suppliedArgs.getArguments().length);
             String[] names = Arrays.copyOf(suppliedArgs.getNames(), suppliedArgs.getNames().length);
@@ -83,7 +83,7 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, new VarArgsAsObjectArrayNodeFactory(), encapsulatingSrc);
-        return MatchedArgumentsNode.create(resultArgs, formals.getNames(), suppliedArgs.getSourceSection());
+        return MatchedArgumentsNode.create(resultArgs, suppliedArgs.getNames(), suppliedArgs.getSourceSection());
     }
 
     /**
@@ -182,11 +182,13 @@ public class ArgumentMatcher {
                     cursor++;
                 }
                 if (cursor < suppliedArgs.length) {
-                    resultArgs[fi] = getArg(suppliedArgs[cursor++], defaultArgs[fi]);
+                    resultArgs[fi] = getArg(suppliedArgs[cursor++], defaultArgs, fi);
                 } else {
                     // If argument is not set and there are no more arguments supplied:
-                    // Fill up with default values!
-                    resultArgs[fi] = defaultArgs[fi];
+                    // Fill up with default values! (in case there are some)
+                    if (fi < defaultArgs.length) {
+                        resultArgs[fi] = defaultArgs[fi];
+                    }
                 }
             }
         }
@@ -195,11 +197,19 @@ public class ArgumentMatcher {
 
     /**
      * @param suppliedArg
-     * @param defaultArg
+     * @param defaultArgs
+     * @param formalIndex
      * @return If suppliedArg == <code>null</code> it's superseded by defaultArg
      */
-    private static RNode getArg(RNode suppliedArg, RNode defaultArg) {
-        return suppliedArg != null ? suppliedArg : defaultArg;
+    private static RNode getArg(RNode suppliedArg, RNode[] defaultArgs, int formalIndex) {
+        if (suppliedArg != null) {
+            return suppliedArg;
+        }
+
+        if (formalIndex < defaultArgs.length) {
+            return defaultArgs[formalIndex];
+        }
+        return null;
     }
 
     /**
@@ -248,76 +258,6 @@ public class ArgumentMatcher {
         }
         throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, debugArgNode != null ? debugArgNode.getSourceSection().getCode() : suppliedName);
     }
-
-// private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments,
-// Object[] actualNames, SourceSection encapsulatingSrc) {
-// RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-// final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
-// final boolean hasVarArgs = formals.hasVarArgs();
-//
-// // Error: Unused argument
-// if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount())
-// {
-// RNode unusedArgNode = arguments.getArguments()[rootNode.getParameterCount()];
-// throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENT,
-// unusedArgNode.getSourceSection().getCode());
-// }
-//
-// // Handle named args and varargs
-// RNode[] argumentNodes = arguments.getArguments();
-// RNode[] origArgumentNodes = argumentNodes;
-// if (arguments.getNameCount() != 0 || hasVarArgs) {
-// RNode[] permuted = permuteArguments(arguments, new VarArgsAsObjectArrayNodeFactory(),
-// encapsulatingSrc);
-// if (!isBuiltin) {
-// for (int i = 0; i < permuted.length; i++) {
-// if (permuted[i] == null) {
-// permuted[i] = ConstantNode.create(RMissing.instance);
-// }
-// }
-// }
-// argumentNodes = permuted;
-// }
-// /*
-// * This is a temporary fix to create promises just for builtin functions that do not
-// * evaluate their arguments, e.g. expression, eval. We have do the check after permutation
-// * to get the correct index position. Unfortunately, ... args have been swept up into an
-// * array, so it's a bit trickier.
-// */
-// if (isBuiltin && !((RBuiltinRootNode) rootNode).evaluatesArgs()) {
-// RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
-// RNode[] modifiedArgs = new RNode[argumentNodes.length];
-// int lix = 0; // logical index position
-// for (int i = 0; i < argumentNodes.length; i++) {
-// RNode argumentNode = argumentNodes[i];
-// if (argumentNode instanceof VarArgsAsObjectArrayNode) {
-// VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) argumentNode;
-// RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
-// for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
-// modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
-// lix++;
-// }
-// modifiedArgs[i] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
-// } else {
-// modifiedArgs[i] = checkPromise(builtinRootNode, argumentNode, lix);
-// lix++;
-// }
-// }
-// argumentNodes = modifiedArgs;
-// }
-// return origArgumentNodes == argumentNodes ? arguments :
-// CallArgumentsNode.create(arguments.modeChange(), arguments.modeChangeForAll(), argumentNodes,
-// arguments.getNames());
-// }
-//
-// private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int lix) {
-// if (!builtinRootNode.evaluatesArg(lix)) {
-// return PromiseNode.create(argNode.getSourceSection(), new RLanguageRep(argNode));
-// } else {
-// return argNode;
-// }
-//
-// }
 
     public interface VarArgsFactory<T> {
         T makeList(T[] elements, String[] names);
@@ -369,7 +309,7 @@ public class ArgumentMatcher {
         }
     }
 
-    private static final class VarArgsAsListNode extends VarArgsNode {
+    public static final class VarArgsAsListNode extends VarArgsNode {
         private final String[] names;
 
         private VarArgsAsListNode(RNode[] elements, String[] names) {
@@ -403,7 +343,7 @@ public class ArgumentMatcher {
         }
     }
 
-    private static final class VarArgsAsObjectArrayNode extends VarArgsNode {
+    public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
         protected VarArgsAsObjectArrayNode(RNode[] elements) {
             super(elements);
         }
