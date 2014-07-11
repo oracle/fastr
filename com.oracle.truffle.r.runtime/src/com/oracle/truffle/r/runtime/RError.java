@@ -13,7 +13,10 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * The error messages have been copied from GNU R.
@@ -57,18 +60,29 @@ public final class RError extends RuntimeException {
         return getMessage();
     }
 
-    public static RError error(Message msg, Object... args) {
-        CompilerDirectives.transferToInterpreter();
-        return new RError(null, "Error: " + formatMessage(msg, args));
-    }
-
     public static RError error(SourceSection src, Message msg, Object... args) {
         CompilerDirectives.transferToInterpreter();
+        RError rError;
         if (src != null) {
-            return new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
+            rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
         } else {
-            return new RError(null, "Error: " + formatMessage(msg, args));
+            rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
+        Object errorExpr = ROptions.getValue("error");
+        if (errorExpr != RNull.instance) {
+            // Errors and warnings are output before the expression is evaluated
+            RContext.getEngine().printRError(rError);
+            // TODO figure out to evaluate the expression
+            // Likely need the VirtualFrame to be passed in
+            // control, transfer to top level, but suppress print
+            throw new RError(null, "");
+        } else {
+            throw rError;
+        }
+    }
+
+    public static RError error(Message msg, Object... args) {
+        return error(null, msg, args);
     }
 
     public static RError error(SourceSection src, RErrorException ex) {
@@ -383,7 +397,9 @@ public final class RError extends RuntimeException {
         PARSE_ERROR("parse error"),
         SEED_NOT_VALID_INT("supplied seed is not a valid integer"),
         POSITIVE_CONTEXTS("number of contexts must be positive"),
+        INVALID_TIMES_ARG("invalid 'times' value"),
         NORMALIZE_PATH_NOSUCH("path[%d]=\"%s\": No such file or directory"),
+        ARGS_MUST_BE_NAMED("all arguments must be named"),
         INVALID_INTERNAL("invalid .Internal() argument"),
         NO_SUCH_INTERNAL("there is no .Internal function '%s'"),
         ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),

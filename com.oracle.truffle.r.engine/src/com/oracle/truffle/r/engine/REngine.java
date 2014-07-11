@@ -309,7 +309,7 @@ public final class REngine implements RContext.Engine {
             reportWarnings(false);
         } catch (RError e) {
             if (topLevel) {
-                reportRError(e);
+                singleton.printRError(e);
             } else {
                 throw e;
             }
@@ -327,7 +327,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static void reportRError(RError e) {
+    public void printRError(RError e) {
         context.getConsoleHandler().printErrorln(e.toString());
         reportWarnings(true);
     }

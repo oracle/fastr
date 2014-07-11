@@ -206,6 +206,13 @@ public final class RContext extends ExecutionContext {
          */
         Object evalPromise(RPromise expr) throws RError;
 
+        /**
+         * Print 'e' and any associated warnings.
+         * 
+         * @param e
+         */
+        void printRError(RError e);
+
     }
 
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
