@@ -54,6 +54,7 @@ public abstract class Options extends RBuiltinNode {
 
     // @Specialization
     private RList options(@SuppressWarnings("unused") RMissing x) {
+        controlVisibility();
         Set<Map.Entry<String, Object>> optionSettings = ROptions.getValues();
         Object[] data = new Object[optionSettings.size()];
         String[] names = new String[data.length];
@@ -68,6 +69,7 @@ public abstract class Options extends RBuiltinNode {
 
     @Specialization
     public Object options(Object args) {
+        controlVisibility();
         if (args instanceof RMissing) {
             return options((RMissing) args);
         } else {
@@ -98,6 +100,8 @@ public abstract class Options extends RBuiltinNode {
                     data[i] = previousVal == null ? RNull.instance : previousVal;
                     names[i] = argName;
                     ROptions.setValue(argName, value);
+                    // any settings means result is invisible
+                    RContext.setVisible(false);
                 }
             }
             return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
