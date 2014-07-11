@@ -13,8 +13,6 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -72,9 +70,9 @@ public final class RError extends RuntimeException {
         if (errorExpr != RNull.instance) {
             // Errors and warnings are output before the expression is evaluated
             RContext.getEngine().printRError(rError);
-            // TODO figure out to evaluate the expression
-            // Likely need the VirtualFrame to be passed in
-            // control, transfer to top level, but suppress print
+            // TODO figure out how to evaluate the expression
+            // Likely need the VirtualFrame to be passed in.
+            // Control, transfer to top level, but suppress print
             throw new RError(null, "");
         } else {
             throw rError;
