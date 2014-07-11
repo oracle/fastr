@@ -17,9 +17,9 @@
 #  http://www.r-project.org/Licenses/
 
 debug <- function(fun, text="", condition=NULL)
-	.Internal(debug(fun, text, condition))
+        .Internal(debug(fun, text, condition))
 debugonce <- function(fun, text="", condition=NULL)
-	.Internal(debugonce(fun, text, condition))
+        .Internal(debugonce(fun, text, condition))
 undebug <- function(fun) .Internal(undebug(fun))
 isdebugged <- function(fun) .Internal(isdebugged(fun))
 

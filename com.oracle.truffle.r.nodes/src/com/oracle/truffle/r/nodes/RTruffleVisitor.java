@@ -100,7 +100,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     }
 
     @Override
-    public RNode visit(FunctionCall call) {
+    public RNode visit(FunctionCall callParam) {
+        FunctionCall call = callParam;
         Symbol callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
 
@@ -520,7 +521,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
     }
 
-    private ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable, String variableSymbol, Replacement replacement) {
+    private static ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable, String variableSymbol, Replacement replacement) {
         SourceSection argSourceSection = simpleAccessVariable.getSource();
         boolean replacementInSuperEnvironment = replacement.isSuper();
         if (replacementInSuperEnvironment) {
