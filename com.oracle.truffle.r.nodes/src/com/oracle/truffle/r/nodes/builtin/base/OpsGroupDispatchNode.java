@@ -30,7 +30,7 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     private void initDispatchTypes(VirtualFrame frame) {
         // TODO Gero: Args are in correct order
         MatchedArgumentsNode matchedArgs = ArgumentMatcher.pseudoMatch(callArgsNode);
-        evaluatedArgs = matchedArgs.executeArrayRaw(frame);
+        evaluatedArgs = matchedArgs.executeArray(frame, null);
         if (evaluatedArgs.length > 0) {
             this.typeL = getArgClass(evaluatedArgs[0]);
         }

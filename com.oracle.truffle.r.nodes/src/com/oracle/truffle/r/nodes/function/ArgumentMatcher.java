@@ -59,8 +59,7 @@ public class ArgumentMatcher {
      *         {@link CallArgumentsNode#getNames()}
      */
     public static MatchedArgumentsNode pseudoMatch(CallArgumentsNode suppliedArgs) {
-        //
-        return MatchedArgumentsNode.create(suppliedArgs.getArguments(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+        return MatchedArgumentsNode.create(suppliedArgs.getArguments(), suppliedArgs.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
     }
 
     /**
@@ -76,14 +75,12 @@ public class ArgumentMatcher {
     public MatchedArgumentsNode match(RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
         if (formals.getNameCount() == 0) {
             // If there are no names used: Create new arrays and we're done
-            RNode[] args = Arrays.copyOf(suppliedArgs.getArguments(), suppliedArgs.getArguments().length);
-            String[] names = Arrays.copyOf(suppliedArgs.getNames(), suppliedArgs.getNames().length);
-            return MatchedArgumentsNode.create(args, names, suppliedArgs.getSourceSection());
+            return MatchedArgumentsNode.create(suppliedArgs.getArguments(), formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
         }
 
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, new VarArgsAsObjectArrayNodeFactory(), encapsulatingSrc);
-        return MatchedArgumentsNode.create(resultArgs, suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+        return MatchedArgumentsNode.create(resultArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
     }
 
     /**

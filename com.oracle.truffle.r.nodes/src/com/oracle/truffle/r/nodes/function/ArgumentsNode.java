@@ -2,14 +2,13 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
 
+import static com.oracle.truffle.r.nodes.function.Arguments.*;
+
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
  * of {@link #arguments} and {@link #names} have to be defined by subclasses!
  */
 public abstract class ArgumentsNode extends RNode {
-
-    public static final String VARARG_NAME = "...";
-    public static final int NO_VARARG = -1;
 
     /**
      * A list of arguments. Single arguments may be <code>null</code>
@@ -31,16 +30,6 @@ public abstract class ArgumentsNode extends RNode {
         this.arguments = arguments;
         this.names = names;
         this.nameCount = countNonNull(names);
-    }
-
-    private static int countNonNull(String[] names) {
-        int count = 0;
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] != null) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /**

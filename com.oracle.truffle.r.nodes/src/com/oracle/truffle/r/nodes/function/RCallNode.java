@@ -29,7 +29,6 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.MatchedArgumentsNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -193,14 +192,14 @@ public abstract class RCallNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return specialize(function).execute(frame, function);
+            return specialize(frame, function).execute(frame, function);
         }
 
-        private RCallNode specialize(RFunction function) {
+        private RCallNode specialize(VirtualFrame frame, RFunction function) {
             CompilerAsserts.neverPartOfCompilation();
 
             if (depth < INLINE_CACHE_SIZE) {
-                final RCallNode current = createCacheNode(function);
+                final RCallNode current = createCacheNode(frame, function);
                 final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
                 current.onCreate();
                 this.replace(cachedNode);
@@ -221,13 +220,14 @@ public abstract class RCallNode extends RNode {
             return parentNode;
         }
 
-        protected RCallNode createCacheNode(RFunction function) {
+        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
                     MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, args, getEncapsulatingSourceSection());
-                    return root.inline(matchedArgs);
+                    EvaluatedArguments evaluatedArgs = matchedArgs.getWrappedArguments(frame, function);
+                    return root.inline(evaluatedArgs);
                 }
             }
 
@@ -262,7 +262,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function, EOutput.RAW));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
             return call.call(frame, argsObject);
         }
     }
@@ -289,7 +289,7 @@ public abstract class RCallNode extends RNode {
             // Needs to be called because the arguments passed via vararg may change each call!
             MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, suppliedArgs, getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function, EOutput.RAW));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
             return call.call(frame, argsObject);
         }
     }
@@ -314,7 +314,7 @@ public abstract class RCallNode extends RNode {
             // may change each call
             MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, suppliedArgs, getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function, EOutput.RAW));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
             return indirectCall.call(frame, function.getTarget(), argsObject);
         }
     }
