@@ -112,7 +112,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     public RCallNode inline(EvaluatedArguments args) {
         // static number of arguments
         RNode[] builtinArguments = inlineStaticArguments(args);
-        // TODO Gero: Is use of getNames correct???
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
         builtin.onCreate();
         return builtin;

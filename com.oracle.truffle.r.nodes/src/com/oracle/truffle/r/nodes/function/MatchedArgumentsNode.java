@@ -47,37 +47,8 @@ import com.oracle.truffle.r.runtime.data.*;
 public class MatchedArgumentsNode extends ArgumentsNode {
 
     /**
-     * {@link EvalPolicy#RAW}<br/>
-     * {@link EvalPolicy#PROMISE}<br/>
-     * {@link EvalPolicy#FORCED}<br/>
-     */
-    public enum EvalPolicy {
-        /**
-         * Arguments are processed as is, {@link RPromise} are only created for certain builins
-         * (legacy!)
-         */
-        RAW,
-
-        /**
-         * {@link RPromise} are created for every argument. If function is a builtin, its argument
-         * semantics are maintained!
-         */
-        PROMISE,
-
-        /**
-         *
-         */
-        FORCED;
-    }
-
-    /**
-     * @see EvalPolicy
-     */
-    public static final EvalPolicy ARG_EVAL_POLICY = EvalPolicy.RAW;
-
-    /**
      * Holds the list of names for the supplied arguments this {@link MatchedArgumentsNode} was
-     * create with
+     * create with. Needed for combine!
      */
     private final String[] suppliedNames;
 
@@ -124,14 +95,14 @@ public class MatchedArgumentsNode extends ArgumentsNode {
     }
 
     /**
-     * This class does the heavy lifting in inspecting the
-     *
+     * This class does the heavy lifting in inspecting the TODO Add some comments!
+     * 
      * @param frame
      * @return The wrapped arguments
      */
     @ExplodeLoop
     public Object[] executeArray(VirtualFrame frame, RFunction function) {
-        RNode[] wrappedArguments = getWrappedArguments(frame, function, ARG_EVAL_POLICY);
+        RNode[] wrappedArguments = doGetWrappedArguments(frame, function);
 
         Object[] evaluatedArguments = new Object[wrappedArguments.length];
         for (int i = 0; i < evaluatedArguments.length; i++) {
@@ -139,7 +110,7 @@ public class MatchedArgumentsNode extends ArgumentsNode {
             if (wrappedArg != null) {
                 evaluatedArguments[i] = wrappedArg.execute(frame);
             } else {
-                evaluatedArguments[i] = RNull.instance;
+                throw new AssertionError();
             }
         }
 
@@ -147,10 +118,10 @@ public class MatchedArgumentsNode extends ArgumentsNode {
     }
 
     public EvaluatedArguments getWrappedArguments(VirtualFrame frame, RFunction function) {
-        return new EvaluatedArguments(getWrappedArguments(frame, function, ARG_EVAL_POLICY), suppliedNames);
+        return new EvaluatedArguments(doGetWrappedArguments(frame, function), suppliedNames);
     }
 
-    private RNode[] getWrappedArguments(@SuppressWarnings("unused") VirtualFrame frame, RFunction function, EvalPolicy type) {
+    private RNode[] doGetWrappedArguments(@SuppressWarnings("unused") VirtualFrame frame, RFunction function) {
         RNode[] wrappedArguments = new RNode[arguments.length];
 
         int lix = 0;    // logical index
@@ -158,7 +129,6 @@ public class MatchedArgumentsNode extends ArgumentsNode {
             RNode arg = arguments[fi];
             RNode result = null;
 
-// if (type == EOutput.RAW) {
             RRootNode rootNode = null;
             boolean isBuiltin = false;
             if (function == null) {
@@ -171,7 +141,7 @@ public class MatchedArgumentsNode extends ArgumentsNode {
             if (arg == null) {
                 result = ConstantNode.create(RMissing.instance);
                 lix++;
-            } else if (isBuiltin && (type == EvalPolicy.RAW || !((RBuiltinRootNode) rootNode).evaluatesArgs())) {
+            } else if (isBuiltin && (rootNode == null || !((RBuiltinRootNode) rootNode).evaluatesArgs())) {
                 RNode argOrPromise = null;
                 RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
                 if (arg instanceof VarArgsAsObjectArrayNode) {
@@ -191,7 +161,6 @@ public class MatchedArgumentsNode extends ArgumentsNode {
                 result = arg;
                 lix++;
             }
-// }
 
             wrappedArguments[fi] = result;
         }

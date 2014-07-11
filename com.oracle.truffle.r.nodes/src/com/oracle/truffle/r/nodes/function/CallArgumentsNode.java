@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 /**
  * This class denotes a list of {@link #getArguments()} together with their {@link #getNames()}
  * given to a specific function call. The arguments' order is the same as given at the call.<br/>
- * It additionally holds usage hints.
+ * It additionally holds usage hints ({@link #modeChange}, {@link #modeChangeForAll}).
  */
 public final class CallArgumentsNode extends ArgumentsNode {
 
@@ -95,12 +95,14 @@ public final class CallArgumentsNode extends ArgumentsNode {
     }
 
     @Override
+    @Deprecated
     public Object execute(VirtualFrame frame) {
         // Execute has not semantic meaning for CallArgumentsNode
         throw new AssertionError();
     }
 
     @Override
+    @Deprecated
     public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
         // Execute has not semantic meaning for CallArgumentsNode
         throw new AssertionError();

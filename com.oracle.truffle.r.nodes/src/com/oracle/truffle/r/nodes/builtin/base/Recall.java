@@ -68,8 +68,9 @@ public class Recall extends RCustomBuiltinNode {
             args = insert(CallArgumentsNode.createUnnamed(true, false, createArgs(arguments[0])));
             arguments[0] = null;
         }
-        // FIXME Gero, this is trash!
-        MatchedArgumentsNode matchedArgs = ArgumentMatcher.pseudoMatch(args);
+
+        // Match arguments for function
+        MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, args, getEncapsulatingSourceSection());
         Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
         return callNode.call(frame, argsObject);
     }

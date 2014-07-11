@@ -28,7 +28,9 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     }
 
     private void initDispatchTypes(VirtualFrame frame) {
-        // TODO Gero: Args are in correct order
+        // This is kind of tricky. We want to evaluate args before we know the function for which
+        // arguments should be matched. But as OpsGroupDispatchNode is for BinaryOperators, we can
+        // assume that arguments are in correct order!
         MatchedArgumentsNode matchedArgs = ArgumentMatcher.pseudoMatch(callArgsNode);
         evaluatedArgs = matchedArgs.executeArray(frame, null);
         if (evaluatedArgs.length > 0) {

@@ -30,6 +30,32 @@ import com.oracle.truffle.r.runtime.*;
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
 public class RPromise extends RLanguageRep {
+
+    /**
+     * {@link EvalPolicy#RAW}<br/>
+     * {@link EvalPolicy#PROMISE}<br/>
+     * {@link EvalPolicy#FORCED}<br/>
+     */
+    public enum EvalPolicy {
+        /**
+         * Arguments are processed as is, {@link RPromise} are only created for certain builins
+         * (legacy!) TODO This is only needed while we'r trying to maintain 'strict' argument
+         * evaluation
+         */
+        RAW,
+
+        /**
+         * {@link RPromise} are created for every argument. If function is a builtin, its argument
+         * semantics are maintained!
+         */
+        PROMISE,
+
+        /**
+         *
+         */
+        FORCED;
+    }
+
     /**
      * For promises associated with environments (frames) that are not top-level.
      */
@@ -38,6 +64,8 @@ public class RPromise extends RLanguageRep {
      * When {@code null} the promise has not been evaluated.
      */
     private Object value;
+
+    private final EvalPolicy evalPolicy;
 
     /**
      * Create the promise with a representation that allows evaluation later in the "current" frame.
@@ -50,9 +78,14 @@ public class RPromise extends RLanguageRep {
     /**
      * Create the promise with a representation that allows evaluation later in a given frame.
      */
-    public RPromise(Object rep, REnvironment env) {
+    public RPromise(Object rep, REnvironment env, EvalPolicy evalPolicy) {
         super(rep);
         this.env = env;
+        this.evalPolicy = evalPolicy;
+    }
+
+    public RPromise(Object rep, REnvironment env) {
+        this(rep, env, EvalPolicy.RAW);
     }
 
     public REnvironment getEnv() {
@@ -97,5 +130,9 @@ public class RPromise extends RLanguageRep {
      */
     public boolean hasValue() {
         return value != null;
+    }
+
+    public EvalPolicy getEvalPolicy() {
+        return evalPolicy;
     }
 }
