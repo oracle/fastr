@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -59,6 +60,10 @@ public final class RError extends RuntimeException {
     }
 
     public static RError error(SourceSection src, Message msg, Object... args) {
+        return error(null, src, msg, args);
+    }
+
+    public static RError error(VirtualFrame frame, SourceSection src, Message msg, Object... args) {
         CompilerDirectives.transferToInterpreter();
         RError rError;
         if (src != null) {
@@ -67,11 +72,18 @@ public final class RError extends RuntimeException {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
         Object errorExpr = ROptions.getValue("error");
-        if (errorExpr != RNull.instance) {
+        if (errorExpr != RNull.instance && frame != null) {
             // Errors and warnings are output before the expression is evaluated
             RContext.getEngine().printRError(rError);
-            // TODO figure out how to evaluate the expression
-            // Likely need the VirtualFrame to be passed in.
+            // errorExpr can be anything, but not everything makes sense
+            if (errorExpr instanceof RLanguage) {
+                RContext.getEngine().eval((RLanguage) errorExpr, frame);
+            } else if (errorExpr instanceof RExpression) {
+                RContext.getEngine().eval((RExpression) errorExpr, frame);
+            } else {
+                // GnuR checks this earlier when the option is set
+                throw new RError(null, Message.INVALID_ERROR.message);
+            }
             // Control, transfer to top level, but suppress print
             throw new RError(null, "");
         } else {
@@ -80,11 +92,11 @@ public final class RError extends RuntimeException {
     }
 
     public static RError error(Message msg, Object... args) {
-        return error(null, msg, args);
+        return error(null, null, msg, args);
     }
 
     public static RError error(SourceSection src, RErrorException ex) {
-        return error(src, ex.msg, ex.args);
+        return error(null, src, ex.msg, ex.args);
     }
 
     public static RError nyi(SourceSection src, String msg) {
@@ -400,6 +412,8 @@ public final class RError extends RuntimeException {
         ARGS_MUST_BE_NAMED("all arguments must be named"),
         INVALID_INTERNAL("invalid .Internal() argument"),
         NO_SUCH_INTERNAL("there is no .Internal function '%s'"),
+        INVALID_ERROR("invalid value for 'error'"),
+        IMP_EXP_NAMES_MATCH("length of import and export names must match"),
         ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),
         ENV_REMOVE_BINDINGS("cannot remove bindings from a locked environment"),
         ENV_REMOVE_VARIABLES("cannot remove variables from the %s environment"),

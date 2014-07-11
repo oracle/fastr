@@ -320,7 +320,7 @@ public class ForeignFunctions {
             return castVector.executeRAbstractVector(frame, value);
         }
 
-        // TODO: handle more argumet types (this is sufficient to run the b25-matfunc1 benchmark
+        // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
         @Specialization(order = 1, guards = "fft")
         public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
@@ -348,17 +348,41 @@ public class ForeignFunctions {
             return RDataFactory.createComplexVector(z, zVec.isComplete());
         }
 
-        public boolean fft(RList f) {
+        private static boolean matchName(RList f, String name) {
             if (f.getNames() == RNull.instance) {
                 return false;
             }
             RStringVector names = (RStringVector) f.getNames();
             for (int i = 0; i < names.getLength(); i++) {
                 if (names.getDataAt(i).equals("name")) {
-                    return f.getDataAt(i).equals("fft") ? true : false;
+                    return f.getDataAt(i).equals(name) ? true : false;
                 }
             }
             return false;
+        }
+
+        public boolean fft(RList f) {
+            return matchName(f, "fft");
+        }
+
+        // Translated from GnuR: library/methods/src/methods_list_dispatch.c
+        @SuppressWarnings("unused")
+        @Specialization(order = 2, guards = "methodsPackageMetaName")
+        public String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args) {
+            controlVisibility();
+            // TODO proper error checks
+            String prefixString = (String) args[0];
+            String nameString = (String) args[1];
+            String pkgString = (String) args[2];
+            if (pkgString.length() == 0) {
+                return String.format(".__%s__%s", prefixString, nameString);
+            } else {
+                return String.format(".__%s__%s:%s", prefixString, nameString, pkgString);
+            }
+        }
+
+        public boolean methodsPackageMetaName(RList f) {
+            return matchName(f, "R_methodsPackageMetaName");
         }
 
     }

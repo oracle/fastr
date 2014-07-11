@@ -113,7 +113,7 @@ public class BrowserFunctions {
                             while ((stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
                                 RFunction fun = RArguments.getFunction(stackFrame);
                                 if (fun != null) {
-                                    ch.printf("where %d: ", ix, fun.getTarget());
+                                    ch.printf("where %d: %s%n", ix, fun.getTarget());
                                 }
                                 ix++;
                             }

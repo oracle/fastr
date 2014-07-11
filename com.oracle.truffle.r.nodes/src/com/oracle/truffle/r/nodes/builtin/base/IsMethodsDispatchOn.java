@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "return", kind = PRIMITIVE)
-public abstract class Return extends RBuiltinNode {
+@RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE)
+public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
     @Specialization
-    public Object returnFunction(Object value) {
-        // If evaluation of "value" was "invisible(value)", don't undo that!
-        throw new ReturnException(value);
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RNull.instance)};
+    public byte doIsMethodsDispatchOn(@SuppressWarnings("unused") RMissing x) {
+        controlVisibility();
+        return RRuntime.LOGICAL_TRUE;
     }
 }

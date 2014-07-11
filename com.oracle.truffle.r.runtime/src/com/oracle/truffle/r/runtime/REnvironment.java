@@ -333,11 +333,16 @@ public abstract class REnvironment implements RAttributable {
      * namespace.
      */
     public static REnvironment getRegisteredNamespace(String name) {
-        Package pkgEnv = (Package) lookupOnSearchPath("package:" + name);
+        REnvironment pkgEnv = lookupOnSearchPath("package:" + name);
         if (pkgEnv == null) {
             return (REnvironment) namespaceRegistry.get(name);
         } else {
-            return pkgEnv.getNamespace();
+            if (pkgEnv instanceof Package) {
+                return ((Package) pkgEnv).getNamespace();
+            } else {
+                // dynamically attached to search path
+                return (REnvironment) namespaceRegistry.get(name);
+            }
         }
     }
 
@@ -413,9 +418,13 @@ public abstract class REnvironment implements RAttributable {
      * GnuR creates {@code Namespace} environments in {@code namespace.R} using {@code new.env} and
      * identifies them with the special element {@code .__NAMESPACE__.} which points to another
      * environment with a {@code spec} element.
+     *
+     * The "built-in" packages are created as instances of {@link Namespace} without the
+     * {@code .__NAMESPACE__.} entry. It is not clear that this is sufficient (except perhaps for
+     * {@code base}.
      */
     public boolean isNamespaceEnv() {
-        if (this == baseEnv) {
+        if (this instanceof Namespace) {
             return true;
         } else {
             Object value = frameAccess.get(NAMESPACE_KEY);

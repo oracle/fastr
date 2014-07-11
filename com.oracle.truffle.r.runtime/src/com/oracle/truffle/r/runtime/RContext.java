@@ -181,7 +181,7 @@ public final class RContext extends ExecutionContext {
         Object parseAndEvalTest(String rscript, boolean printResult);
 
         /**
-         * Evaluate an {@link RExpression} in a given environment {@code envir}.
+         * Support for the {@code eval} family of builtin functions.
          *
          * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
          *            {@code evalq} being invoked.
@@ -189,10 +189,20 @@ public final class RContext extends ExecutionContext {
         Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
 
         /**
-         * Similar to {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} but for a
-         * single langugge element.
+         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} for a single
+         * language element.
          */
         Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+
+        /**
+         * Evaluate {@code expr} in {@code frame}.
+         */
+        Object eval(RExpression expr, VirtualFrame frame);
+
+        /**
+         * Variant of {@link #eval(RExpression, VirtualFrame)} for a single language element.
+         */
+        Object eval(RLanguage expr, VirtualFrame frame);
 
         /**
          * Evaluate a promise in the given frame, where we can use the {@link VirtualFrame}) of the
@@ -208,7 +218,7 @@ public final class RContext extends ExecutionContext {
 
         /**
          * Print 'e' and any associated warnings.
-         * 
+         *
          * @param e
          */
         void printRError(RError e);
