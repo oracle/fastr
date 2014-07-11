@@ -87,7 +87,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     public static final class UnresolvedReadVariableNode extends ReadVariableNode {
 
-
         private final String symbol;
         private final String mode;
 
@@ -106,6 +105,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             this.symbol = symbol;
             this.mode = mode;
             this.copyValue = copyValue;
+        }
+
+        public String getSymbol() {
+            return symbol;
         }
 
         @Override
