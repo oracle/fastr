@@ -33,6 +33,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
 @NodeField(name = "argNames", type = String[].class)
+// TODO Is it really worth having all the individual specializations given that we have to have one
+// for *every* type
+// and the code is essentially equivalent for each one?
 public abstract class ListBuiltin extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
@@ -101,6 +104,18 @@ public abstract class ListBuiltin extends RBuiltinNode {
 
     @Specialization
     public RList list(RNull value) {
+        controlVisibility();
+        return RDataFactory.createList(new Object[]{value}, argNameVector());
+    }
+
+    @Specialization
+    public RList list(REnvironment value) {
+        controlVisibility();
+        return RDataFactory.createList(new Object[]{value}, argNameVector());
+    }
+
+    @Specialization
+    public RList list(RFunction value) {
         controlVisibility();
         return RDataFactory.createList(new Object[]{value}, argNameVector());
     }

@@ -29,11 +29,19 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "options", kind = INTERNAL)
-// @NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "options", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
+@NodeField(name = "argNames", type = String[].class)
+/**
+ * N.B. In the general case of option assignment via parameter names, the value may be of any type (i.e. {@code Object},
+ * so we cannot (currently) specialize on any specific types, owing to the "stuck specialization" bug.
+ *
+ * TODO Revert to {@code INTERNAL} when argument names available.
+ */
 public abstract class Options extends RBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
 
@@ -42,10 +50,10 @@ public abstract class Options extends RBuiltinNode {
         return PARAMETER_NAMES;
     }
 
-// public abstract String[] getArgNames();
+    public abstract String[] getArgNames();
 
-    @Specialization
-    public RList options(@SuppressWarnings("unused") RMissing x) {
+    // @Specialization
+    private RList options(@SuppressWarnings("unused") RMissing x) {
         Set<Map.Entry<String, Object>> optionSettings = ROptions.getValues();
         Object[] data = new Object[optionSettings.size()];
         String[] names = new String[data.length];
@@ -59,6 +67,52 @@ public abstract class Options extends RBuiltinNode {
     }
 
     @Specialization
+    public Object options(Object args) {
+        if (args instanceof RMissing) {
+            return options((RMissing) args);
+        } else {
+            Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
+            String[] argNames = getArgNames();
+            Object[] data = new Object[values.length];
+            String[] names = new String[values.length];
+            // getting
+            for (int i = 0; i < values.length; i++) {
+                String argName = namedArgument(argNames, i);
+                Object value = values[i];
+                if (argName == null) {
+                    // getting
+                    String optionName = null;
+                    if (value instanceof RStringVector) {
+                        optionName = ((RStringVector) value).getDataAt(0); // ignore rest (cf GnuR)
+                    } else if (value instanceof String) {
+                        optionName = (String) value;
+                    } else {
+                        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
+                    }
+                    Object optionVal = ROptions.getValue(optionName);
+                    data[i] = optionVal == null ? RNull.instance : optionVal;
+                    names[i] = optionName;
+                } else {
+                    // setting
+                    Object previousVal = ROptions.getValue(argName);
+                    data[i] = previousVal == null ? RNull.instance : previousVal;
+                    names[i] = argName;
+                    ROptions.setValue(argName, value);
+                }
+            }
+            return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+        }
+    }
+
+    private static String namedArgument(String[] argNames, int i) {
+        if (argNames == null) {
+            return null;
+        } else {
+            return argNames[i];
+        }
+    }
+
+// @Specialization
     public RList options(RAbstractStringVector vec) {
         String key = vec.getDataAt(0);
         Object value = ROptions.getValue(key);
@@ -66,11 +120,20 @@ public abstract class Options extends RBuiltinNode {
         return RDataFactory.createList(new Object[]{rObject}, RDataFactory.createStringVectorFromScalar(key));
     }
 
-    @Specialization
+// @Specialization
     public Object options(@SuppressWarnings("unused") double d) {
         // HACK ALERT - just to allow b25 test, it doesn't do anything,
         // as that would require the option name
         controlVisibility();
         return RNull.instance;
     }
+
+// @Specialization
+    public Object options(@SuppressWarnings("unused") RFunction f) {
+        // HACK ALERT - just to allow b25 test, it doesn't do anything,
+        // as that would require the option name
+        controlVisibility();
+        return RNull.instance;
+    }
+
 }
