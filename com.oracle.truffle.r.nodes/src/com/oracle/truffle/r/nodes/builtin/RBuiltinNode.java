@@ -40,14 +40,29 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return "<builtin>";
     }
 
+    /**
+     * Accessor to the Truffle-generated 'arguments' field, used by binary operators and such.<br/>
+     * <strong>ATTENTION:</strong> For implementing default values, use
+     * {@link #getParameterValues()}!!!
+     *
+     * @return The arguments this builtin has received
+     */
     public abstract RNode[] getArguments();
 
     public abstract RBuiltinFactory getBuiltin();
 
+    /**
+     * @return The names of the builtin's formal arguments
+     * @see #getParameterValues()
+     */
     public Object[] getParameterNames() {
         return RArguments.EMPTY_OBJECT_ARRAY;
     }
 
+    /**
+     * @return The default values of the builin's formal arguments
+     * @see #getParameterNames()
+     */
     public RNode[] getParameterValues() {
         return RNode.EMTPY_RNODE_ARRAY;
     }
@@ -70,10 +85,8 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {
         int total = builtin.getFactory().getExecutionSignature().size();
         RNode[] args = new RNode[total];
-        int index = 0;
-        int argIndex = 0;
-        for (int i = index; i < total; i++) {
-            args[i] = new AccessArgumentNode(argIndex++);
+        for (int i = 0; i < total; i++) {
+            args[i] = new AccessArgumentNode(i);
         }
         return args;
     }
