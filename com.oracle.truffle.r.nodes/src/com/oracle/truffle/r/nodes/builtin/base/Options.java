@@ -53,7 +53,8 @@ public abstract class Options extends RBuiltinNode {
     public abstract String[] getArgNames();
 
     // @Specialization
-    private RList options(@SuppressWarnings("unused") RMissing x) {
+    @SuppressWarnings({"static-method", "unused"})
+    private RList options(RMissing x) {
         Set<Map.Entry<String, Object>> optionSettings = ROptions.getValues();
         Object[] data = new Object[optionSettings.size()];
         String[] names = new String[data.length];
