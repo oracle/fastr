@@ -14979,6 +14979,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testReturn_ea86042d5ec0a9de6c14aabc98049cf0() {
+        assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
+    }
+
+    @Test
     public void TestSimpleIfEvaluator_testCast_9199af29689a0510d0f2b7657d6f9656() {
         assertEvalError("{ if (integer()) { TRUE } }");
     }

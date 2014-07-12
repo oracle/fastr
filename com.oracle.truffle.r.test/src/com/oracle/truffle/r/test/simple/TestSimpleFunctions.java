@@ -34,6 +34,7 @@ public class TestSimpleFunctions extends TestBase {
     public void testReturn() {
         assertEval("{ f<-function() { return() } ; f() }");
         assertEval("{ f<-function() { return(2) ; 3 } ; f() }");
+        assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
     }
 
     @Test

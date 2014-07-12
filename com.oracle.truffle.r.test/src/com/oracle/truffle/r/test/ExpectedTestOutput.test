@@ -11949,6 +11949,9 @@ NULL
 #{ f<-function() { return(2) ; 3 } ; f() }
 [1] 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testReturn
+#{ f<-function() { return(invisible(2)) } ; f() }
+
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
 #{ f <- function(v) { if (FALSE==v) TRUE else FALSE } ; f(TRUE) ; f(1) }
 [1] FALSE
