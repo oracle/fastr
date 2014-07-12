@@ -44,6 +44,11 @@ public class RPackageVariables {
         map.put(name, handler);
     }
 
+    public static void initializeBase() {
+        Handler h = map.get("base");
+        h.initialize(REnvironment.baseEnv());
+    }
+
     public static void initialize() {
         for (Map.Entry<String, Handler> entry : map.entrySet()) {
             entry.getValue().initialize(REnvironment.lookupOnSearchPath(REnvironment.packageQualName(PackageKind.PACKAGE, entry.getKey())));

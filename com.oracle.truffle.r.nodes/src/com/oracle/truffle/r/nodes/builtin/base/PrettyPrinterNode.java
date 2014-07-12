@@ -966,6 +966,18 @@ public abstract class PrettyPrinterNode extends RNode {
             return prettyPrintSingleElement(operand, listElementName);
         }
 
+        @SlowPath
+        @Specialization
+        public String prettyPrintListElement(REnvironment operand, Object listElementName) {
+            return prettyPrintSingleElement(operand, listElementName);
+        }
+
+        @SlowPath
+        @Specialization
+        public String prettyPrintListElement(RFunction operand, Object listElementName) {
+            return prettyPrintSingleElement(operand, listElementName);
+        }
+
     }
 
     @NodeChild(value = "operand", type = RNode.class)

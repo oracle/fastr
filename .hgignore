@@ -13,6 +13,7 @@
 ^dist/
 ^java/
 ^lib/
+^library/
 ^jdk1.(7|8).0
 ^java64/
 ^work/

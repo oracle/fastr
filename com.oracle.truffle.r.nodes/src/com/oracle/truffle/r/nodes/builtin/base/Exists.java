@@ -98,6 +98,12 @@ public abstract class Exists extends RBuiltinNode {
         return existsStringEnv(name, envir, RMissing.instance, frame, mode, inherits);
     }
 
+    @Specialization(order = 14)
+    public byte existsStringEnv(RStringVector name, int where, REnvironment envir, Object frame, String mode, byte inherits) {
+        controlVisibility();
+        return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
+    }
+
     private boolean packageLookup(String name) {
         if (!name.equals(lastName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

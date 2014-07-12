@@ -95,7 +95,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
 
     @SlowPath
     public PutException createPutException(String key) {
-        return new PutException("cannot change value of locked binding for '" + key + "'");
+        return new PutException(RError.Message.ENV_CHANGE_BINDING, key);
     }
 
     @Override

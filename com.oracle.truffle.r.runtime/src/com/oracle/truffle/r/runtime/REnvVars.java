@@ -93,11 +93,18 @@ public class REnvVars {
     }
 
     public static String put(String key, String value) {
+        // TODO need to set value for sub-processes
         return checkEnvVars().put(key, value);
     }
 
     public static String get(String key) {
         return checkEnvVars().get(key);
+    }
+
+    public static boolean unset(String key) {
+        // TODO remove at the system level
+        checkEnvVars().remove(key);
+        return true;
     }
 
     public static Map<String, String> getMap() {

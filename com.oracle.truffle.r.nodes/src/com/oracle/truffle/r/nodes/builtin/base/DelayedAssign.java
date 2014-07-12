@@ -22,47 +22,41 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-/**
- * Placeholder. {@code on.exit} is special (cf {@code .Internal} in that {@code expr} is not
- * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
- * evaluating function using a new slot in {@link RArguments} and run it on function exit.
- */
-@RBuiltin(name = "on.exit", nonEvalArgs = {0}, kind = PRIMITIVE)
-public abstract class OnExit extends RInvisibleBuiltinNode {
+@RBuiltin(name = "delayedAssign", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {1})
+// TODO kind==INTERNAL when promises generally available
+public abstract class DelayedAssign extends RInvisibleBuiltinNode {
 
-    private static final String[] PARAMETER_NAMES = new String[]{"expr", "add"};
+    private static final String[] PARAMETER_NAMES = new String[]{"x", "value", "eval.env", "assign.env"};
 
     @Override
-    public Object[] getParameterNames() {
+    public String[] getParameterNames() {
         return PARAMETER_NAMES;
     }
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(false)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
     @Specialization
-    public Object onExit(@SuppressWarnings("unused") RPromise expr, @SuppressWarnings("unused") byte add) {
+    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
         controlVisibility();
-        RContext.getInstance().setEvalWarning("on.exit ignored");
-        return RNull.instance;
+        String name = nameVec.getDataAt(0);
+        try {
+            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), EnvFunctions.frameToEnvironment(frame)));
+            return RNull.instance;
+        } catch (PutException ex) {
+            throw RError.error(getEncapsulatingSourceSection(), ex);
+        }
     }
-
-    @Specialization
-    public Object onExit(@SuppressWarnings("unused") RNull expr, @SuppressWarnings("unused") byte add) {
-        controlVisibility();
-        RContext.getInstance().setEvalWarning("on.exit ignored");
-        return RNull.instance;
-    }
-
 }

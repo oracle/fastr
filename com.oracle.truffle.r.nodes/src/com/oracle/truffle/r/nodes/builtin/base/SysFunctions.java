@@ -30,6 +30,7 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -88,6 +89,64 @@ public class SysFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
         }
 
+    }
+
+    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_ALWAYS_ARRAY, isCombine = true)
+    @NodeField(name = "argNames", type = String[].class)
+    // TODO INTERNAL when argument names available in list(...)
+    public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
+        private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
+
+        public abstract String[] getArgNames();
+
+        @Override
+        public Object[] getParameterNames() {
+            return PARAMETER_NAMES;
+        }
+
+        @Specialization
+        public RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
+            return doSysSetEnv(new Object[]{argVec.getDataAt(0)});
+        }
+
+        @Specialization
+        public RLogicalVector doSysSetEnv(Object[] args) {
+            controlVisibility();
+            String[] argNames = getArgNames();
+            validateArgNames(argNames);
+            byte[] data = new byte[args.length];
+            for (int i = 0; i < args.length; i++) {
+                REnvVars.put(argNames[i], (String) args[i]);
+                data[i] = RRuntime.LOGICAL_TRUE;
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private void validateArgNames(String[] argNames) throws RError {
+            boolean ok = argNames != null;
+            if (argNames != null) {
+                for (int i = 0; i < argNames.length; i++) {
+                    if (argNames[i] == null) {
+                        ok = false;
+                    }
+                }
+            }
+            if (!ok) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
+            }
+        }
+    }
+
+    @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL)
+    public abstract static class SysUnSetEnv extends RInvisibleBuiltinNode {
+        @Specialization
+        public RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
+            byte[] data = new byte[argVec.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                data[i] = RRuntime.asLogical(REnvVars.unset(argVec.getDataAt(i)));
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
     }
 
     @RBuiltin(name = "Sys.sleep", kind = INTERNAL)

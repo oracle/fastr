@@ -41,7 +41,7 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Override
-    public RNode[] getArguments() {
+    public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 

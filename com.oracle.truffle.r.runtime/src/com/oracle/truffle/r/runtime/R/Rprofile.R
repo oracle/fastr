@@ -108,16 +108,17 @@ R.version.string <- R.version$version.string
 #invisible(.libPaths(c(unlist(strsplit(Sys.getenv("R_LIBS"), ":")),
 #                      unlist(strsplit(Sys.getenv("R_LIBS_USER"), ":")
 #                      ))))
-#local({
-#    popath <- Sys.getenv("R_TRANSLATIONS", "")
-#    if(!nzchar(popath)) {
-#        paths <- file.path(.libPaths(), "translations", "DESCRIPTION")
-#        popath <- dirname(paths[file.exists(paths)][1])
-#    }
+local({
+    popath <- Sys.getenv("R_TRANSLATIONS", "")
+    if(!nzchar(popath)) {
+        paths <- file.path(.libPaths(), "translations", "DESCRIPTION")
+        popath <- dirname(paths[file.exists(paths)][1])
+    } else {
+    }
 #    bindtextdomain("R", popath)
 #    bindtextdomain("R-base", popath)
-#    assign(".popath", popath, .BaseNamespaceEnv)
-#})
+    assign(".popath", popath, .BaseNamespaceEnv)
+})
 #local({
 ### we distinguish between R_PAPERSIZE as set by the user and by configure
 #papersize <- Sys.getenv("R_PAPERSIZE_USER")

@@ -34,9 +34,11 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "ls", aliases = {"objects"}, kind = SUBSTITUTE)
-// TODO INTERNAL, which would sanitize the way the environment is passed to a single argument
+// TODO INTERNAL, which would sanitize the way the environment is passed to a single REnvironment
+// argument
 public abstract class Ls extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"name", "pos", "envir", "all.names", "pattern"};
@@ -94,6 +96,15 @@ public abstract class Ls extends RBuiltinNode {
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, REnvironment envir, byte allNames, String pattern) {
         controlVisibility();
         return envir.ls(RRuntime.fromLogical(allNames), compile(pattern));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 6)
+    public RStringVector ls(VirtualFrame frame, RAbstractIntVector name, int pos, RMissing envir, byte allNames, RMissing pattern) {
+        controlVisibility();
+        String[] searchPath = REnvironment.searchPath();
+        REnvironment env = REnvironment.lookupOnSearchPath(searchPath[name.getDataAt(0) - 1]);
+        return env.ls(RRuntime.fromLogical(allNames), null);
     }
 
     @SlowPath

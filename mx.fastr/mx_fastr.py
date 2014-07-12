@@ -209,6 +209,8 @@ def rbench(args):
 
     if args.extra_javavm_args:
         args.extra_javavm_args = shlex.split(args.extra_javavm_args.lstrip('@'))
+    else:
+        args.extra_javavm_args = []
     # dynamically load the benchmarks suite
     hg_base = mx.get_env('HG_BASE')
     alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
@@ -238,11 +240,11 @@ def rbench(args):
                     # temporary: disable group generics as long as they impose a considerable performance overhead
                     command = ['--DisableGroupGenerics'] + command
                     extraVmArgs = args.extra_javavm_args
+                    # set compilation threshold to 10
                     if not any("TruffleCompilationThreshold" in x for x in extraVmArgs):
-                        # set compilation threshold to 10
                         extraVmArgs.append('-G:TruffleCompilationThreshold=10')
-                    if (bm.startswith("b25")):
-                        extraVmArgs.append('-G:-TruffleBackgroundCompilation')
+#                    if (bm.startswith("b25")):
+#                        extraVmArgs.append('-G:-TruffleBackgroundCompilation')
                     rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs, runBench=True)
                 if rc != 0:
                     print 'benchmark ' + bm + ' failed'
