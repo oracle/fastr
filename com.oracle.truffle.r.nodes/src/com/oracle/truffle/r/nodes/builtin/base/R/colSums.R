@@ -20,45 +20,45 @@
 ## NB: we now have  implicitGeneric() on these,
 ##     in ../../methods/R/makeBasicFunsList.R
 
-#colSums <- function(x, na.rm = FALSE, dims = 1L)
-#{
-#    if(is.data.frame(x)) x <- as.matrix(x)
-#    if(!is.array(x) || length(dn <- dim(x)) < 2L)
-#        stop("'x' must be an array of at least two dimensions")
-#    if(dims < 1L || dims > length(dn) - 1L)
-#        stop("invalid 'dims'")
-#    n <- prod(dn[1L:dims])
-#    dn <- dn[-(1L:dims)]
-#    z <- if(is.complex(x))
-#        .Internal(colSums(Re(x), n, prod(dn), na.rm)) +
-#            1i * .Internal(colSums(Im(x), n, prod(dn), na.rm))
-#    else .Internal(colSums(x, n, prod(dn), na.rm))
-#    if(length(dn) > 1L) {
-#        dim(z) <- dn
-#        dimnames(z) <- dimnames(x)[-(1L:dims)]
-#    } else names(z) <- dimnames(x)[[dims+1]]
-#    z
-#}
-#
-#colMeans <- function(x, na.rm = FALSE, dims = 1L)
-#{
-#    if(is.data.frame(x)) x <- as.matrix(x)
-#    if(!is.array(x) || length(dn <- dim(x)) < 2L)
-#        stop("'x' must be an array of at least two dimensions")
-#    if(dims < 1L || dims > length(dn) - 1L)
-#        stop("invalid 'dims'")
-#    n <- prod(dn[1L:dims])
-#    dn <- dn[-(1L:dims)]
-#    z <- if(is.complex(x))
-#        .Internal(colMeans(Re(x), n, prod(dn), na.rm)) +
-#            1i * .Internal(colMeans(Im(x), n, prod(dn), na.rm))
-#    else .Internal(colMeans(x, n, prod(dn), na.rm))
-#    if(length(dn) > 1L) {
-#        dim(z) <- dn
-#        dimnames(z) <- dimnames(x)[-(1L:dims)]
-#    } else names(z) <- dimnames(x)[[dims+1]]
-#    z
-#}
+colSums <- function(x, na.rm = FALSE, dims = 1L)
+{
+    if(is.data.frame(x)) x <- as.matrix(x)
+    if(!is.array(x) || length(dn <- dim(x)) < 2L)
+        stop("'x' must be an array of at least two dimensions")
+    if(dims < 1L || dims > length(dn) - 1L)
+        stop("invalid 'dims'")
+    n <- prod(dn[1L:dims])
+    dn <- dn[-(1L:dims)]
+    z <- if(is.complex(x))
+        .Internal(colSums(Re(x), n, prod(dn), na.rm)) +
+            1i * .Internal(colSums(Im(x), n, prod(dn), na.rm))
+    else .Internal(colSums(x, n, prod(dn), na.rm))
+    if(length(dn) > 1L) {
+        dim(z) <- dn
+        dimnames(z) <- dimnames(x)[-(1L:dims)]
+    } else names(z) <- dimnames(x)[[dims+1]]
+    z
+}
+
+colMeans <- function(x, na.rm = FALSE, dims = 1L)
+{
+    if(is.data.frame(x)) x <- as.matrix(x)
+    if(!is.array(x) || length(dn <- dim(x)) < 2L)
+        stop("'x' must be an array of at least two dimensions")
+    if(dims < 1L || dims > length(dn) - 1L)
+        stop("invalid 'dims'")
+    n <- prod(dn[1L:dims])
+    dn <- dn[-(1L:dims)]
+    z <- if(is.complex(x))
+        .Internal(colMeans(Re(x), n, prod(dn), na.rm)) +
+            1i * .Internal(colMeans(Im(x), n, prod(dn), na.rm))
+    else .Internal(colMeans(x, n, prod(dn), na.rm))
+    if(length(dn) > 1L) {
+        dim(z) <- dn
+        dimnames(z) <- dimnames(x)[-(1L:dims)]
+    } else names(z) <- dimnames(x)[[dims+1]]
+    z
+}
 
 rowSums <- function(x, na.rm = FALSE, dims = 1L)
 {
@@ -100,12 +100,12 @@ rowMeans <- function(x, na.rm = FALSE, dims = 1L)
     z
 }
 
-#.colSums <- function(X, m, n, na.rm = FALSE)
-#    .Internal(colSums(X, m, n, na.rm))
-#.colMeans <- function(X, m, n, na.rm = FALSE)
-#    .Internal(colMeans(X, m, n, na.rm))
-#
-#.rowSums <- function(X, m, n, na.rm = FALSE)
-#    .Internal(rowSums(X, m, n, na.rm))
-#.rowMeans <- function(X, m, n, na.rm = FALSE)
-#    .Internal(rowMeans(X, m, n, na.rm))
+.colSums <- function(X, m, n, na.rm = FALSE)
+    .Internal(colSums(X, m, n, na.rm))
+.colMeans <- function(X, m, n, na.rm = FALSE)
+    .Internal(colMeans(X, m, n, na.rm))
+
+.rowSums <- function(X, m, n, na.rm = FALSE)
+    .Internal(rowSums(X, m, n, na.rm))
+.rowMeans <- function(X, m, n, na.rm = FALSE)
+    .Internal(rowMeans(X, m, n, na.rm))

@@ -3,6 +3,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/AnyDuplic
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/binary/CastTypeNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Base.r,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Covcor.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/ColMeans.java,purdue.copyright 
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Date.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchedCallNode.java,purdue.copyright

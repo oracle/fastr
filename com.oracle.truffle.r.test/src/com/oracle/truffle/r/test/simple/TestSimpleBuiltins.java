@@ -549,6 +549,7 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testMatrixIgnore() {
+        assertEval("{ matrix(c(NaN,4+5i,2+0i,5+10i)} ");
         assertEval("{ matrix(TRUE,FALSE,FALSE,TRUE)}");
         // FIXME missing warning
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
@@ -1908,57 +1909,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    public void testColStatsMatrix() {
-        // colSums on matrix drop dimension
-        assertEval("{ a = colSums(matrix(1:12,3,4)); dim(a) }");
-
-        // colSums on matrix have correct length
-        assertEval("{ a = colSums(matrix(1:12,3,4)); length(a) }");
-
-        // colSums on matrix have correct values
-        assertEval("{ colSums(matrix(1:12,3,4)) }");
-    }
-
-    @Test
-    @Ignore
-    public void testColStatsArray() {
-        // colSums on array have correct dimension
-        assertEval("{ a = colSums(array(1:24,c(2,3,4))); d = dim(a); c(d[1],d[2]) }");
-
-        // colSums on array have correct length
-        assertEval("{ a = colSums(array(1:24,c(2,3,4))); length(a) }");
-
-        // colSums on array have correct values
-        assertEval("{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }");
-    }
-
-    @Test
-    @Ignore
-    public void testRowStats() {
-        // rowSums on matrix drop dimension
-        assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
-
-        // rowSums on matrix have correct length
-        assertEval("{ a = rowSums(matrix(1:12,3,4)); length(a) }");
-
-        // rowSums on matrix have correct values
-        assertEval("{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }");
-    }
-
-    @Test
-    @Ignore
-    public void testRowStatsArray() {
-        // rowSums on array have no dimension
-        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }");
-
-        // row on array have correct length
-        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); length(a) }");
-
-        // rowSums on array have correct values
-        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
-    }
-
-    @Test
     public void testRecall() {
         assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; f(10) }");
         assertEval("{ f<-function(i) { if(i<=1) 1 else i*Recall(i-1) } ; g <- f ; f <- sum ; g(10) }");
@@ -3214,7 +3164,75 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
         assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
         assertEval("{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+
         // Whichever value(NA or NaN) is first in the row will be returned for that row.
         assertEval("{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+
+        // rowSums on matrix drop dimension
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
+
+        // rowSums on matrix have correct length
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); length(a) }");
+
+        // rowSums on matrix have correct values
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }");
+
+        // rowSums on array have no dimension
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }");
+
+        // row on array have correct length
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // rowSums on array have correct values
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+
+    }
+
+    @Test
+    public void testColSums() {
+        // colSums on matrix drop dimension
+        assertEval("{ a = colSums(matrix(1:12,3,4)); dim(a) }");
+
+        // colSums on matrix have correct length
+        assertEval("{ a = colSums(matrix(1:12,3,4)); length(a) }");
+
+        // colSums on matrix have correct values
+        assertEval("{ colSums(matrix(1:12,3,4)) }");
+
+        // colSums on array have correct dimension
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); d = dim(a); c(d[1],d[2]) }");
+
+        // colSums on array have correct length
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // colSums on array have correct values
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }");
+    }
+
+    @Test
+    public void testColMeans() {
+        assertEval("{colMeans(matrix(c(3,4,2,5)))}");
+        assertEval("{colMeans(matrix(c(3L,4L,2L,5L)))}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+        assertEval("{colMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{colMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}");
+    }
+
+    @Test
+    @Ignore
+    public void testColMeansIgnore() {
+        assertEval("{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
     }
 }

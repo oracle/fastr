@@ -56,7 +56,7 @@ public abstract class RowMeans extends RBuiltinNode {
             }
             result[i] = sum / colNum;
         }
-        return RDataFactory.createDoubleVector(result, na.neverSeenNA() || isComplete);
+        return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
     @Specialization(guards = "isNaRm", order = 1)
