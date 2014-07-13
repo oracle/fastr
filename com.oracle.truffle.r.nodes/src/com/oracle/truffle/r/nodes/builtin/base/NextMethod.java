@@ -39,8 +39,8 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Override
-    public RNode[] getArguments() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
     }
 
     @Specialization(order = 0)
@@ -61,7 +61,7 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Specialization(order = 10)
-    public Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RMissing generic, @SuppressWarnings("unused") RMissing obj, @SuppressWarnings("unused") RMissing args) {
+    public Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, null, null, new Object[0]);
     }

@@ -87,7 +87,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         try {
             envir.rm(name);
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return RNull.instance;
     }
@@ -101,7 +101,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
                 envir.rm((String) (o));
             }
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return RNull.instance;
     }

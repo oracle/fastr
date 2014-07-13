@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "inherits", kind = INTERNAL)
+// TODO inherits is applicable to every type of object, if only because of "try-error".
 public abstract class Inherits extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "what", "which"};
@@ -41,6 +42,18 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     public abstract byte execute(VirtualFrame frame, Object x, RAbstractStringVector what, byte which);
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 1)
+    public Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 2)
+    public Object doesInherit(REnvironment x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
+    }
 
     @SlowPath
     // map operations lead to recursion resulting in compilation failure

@@ -306,7 +306,7 @@ public class FileFunctions {
                         files.add(fullNames == RRuntime.LOGICAL_TRUE ? entry.toString() : entry.getFileName().toString());
                     }
                 } catch (IOException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
                 }
             }
             if (files.size() == 0) {

@@ -781,133 +781,133 @@ namespaceImport <- function(self, ..., from = NULL)
     for (ns in list(...))
         namespaceImportFrom(self, asNamespace(ns), from = from)
 
-#namespaceImportFrom <- function(self, ns, vars, generics, packages, from = "non-package environment")
-#{
-#    addImports <- function(ns, from, what) {
-#        imp <- structure(list(what), names = getNamespaceName(from))
-#        imports <- getNamespaceImports(ns)
-#        setNamespaceInfo(ns, "imports", c(imports, imp))
-#    }
-#    namespaceIsSealed <- function(ns)
-#        environmentIsLocked(ns)
-#    makeImportExportNames <- function(spec) {
-#        old <- as.character(spec)
-#        new <- names(spec)
-#        if (is.null(new)) new <- old
-#        else {
-#            change <- !nzchar(new)
-#            new[change] <- old[change]
-#        }
-#        names(old) <- new
-#        old
-#    }
-#    whichMethodMetaNames <- function(impvars) {
-#        if(!.isMethodsDispatchOn())
-#            return(numeric())
-#        mm <- ".__T__"
-#        seq_along(impvars)[substr(impvars, 1L, nchar(mm, type = "c")) == mm]
-#    }
-#    genericPackage <- function(f) {
-#        if(methods::is(f, "genericFunction")) f@package
-#        else if(is.primitive(f)) "base"
-#        else "<unknown>"
-#    }
-#    if (is.character(self))
-#        self <- getNamespace(self)
-#    ns <- asNamespace(ns)
-#    nsname <- getNamespaceName(ns)
-#    impvars <- if (missing(vars)) {
-#                ## certain things should never be imported:
-#                ## but most of these are never exported (exception: .Last.lib)
-#                stoplist <- c(".__NAMESPACE__.", ".__S3MethodsTable__.",
-#                        ".packageName", ".First.lib", ".Last.lib",
-#                        ".onLoad", ".onAttach", ".onDetach",
-#                        ".conflicts.OK", ".noGenerics")
-#                vars <- getNamespaceExports(ns)
-#                vars <- vars[! vars %in% stoplist]
-#            } else vars
-#    impvars <- makeImportExportNames(impvars)
-#    impnames <- names(impvars)
-#    if (anyDuplicated(impnames)) {
-#        stop(gettextf("duplicate import names %s",
-#                        paste(sQuote(impnames[duplicated(impnames)]),
-#                                collapse = ", ")), domain = NA)
-#    }
-#    if (isNamespace(self) && isBaseNamespace(self)) {
-#        impenv <- self
-#        msg <- gettext("replacing local value with import %s when loading %s")
-#        register <- FALSE
-#    }
-#    else if (isNamespace(self)) {
-#        if (namespaceIsSealed(self))
-#            stop("cannot import into a sealed namespace")
-#        impenv <- parent.env(self)
-#        msg <- gettext("replacing previous import by %s when loading %s")
-#        register <- TRUE
-#    }
-#    else if (is.environment(self)) {
-#        impenv <- self
-#        msg <- gettext("replacing local value with import %s when loading %s")
-#        register <- FALSE
-#    }
-#    else stop("invalid import target")
-#    which <- whichMethodMetaNames(impvars)
-#    if(length(which)) {
-#        ## If methods are already in impenv, merge and don't import
-#        delete <- integer()
-#        for(i in which) {
-#            methodsTable <- .mergeImportMethods(impenv, ns, impvars[[i]])
-#            if(is.null(methodsTable))
-#            {} ## first encounter, just import it
-#            else { ##
-#                delete <- c(delete, i)
-#                if(!missing(generics)) {
-#                    genName <- generics[[i]]
-#                    ## if(i > length(generics) || !nzchar(genName))
-#                    ##   {warning("got invalid index for importing ",mlname); next}
-#                    fdef <- methods:::getGeneric(genName,
-#                            where = impenv,
-#                            package = packages[[i]])
-#                    if(is.null(fdef))
-#                        warning(gettextf("found methods to import for function %s but not the generic itself",
-#                                        sQuote(genName)),
-#                                call. = FALSE, domain = NA)
-#                    else
-#                        methods:::.updateMethodsInTable(fdef, ns, TRUE)
-#                }
-#            }
-#        }
-#        if(length(delete)) {
-#            impvars <- impvars[-delete]
-#            impnames <- impnames[-delete]
-#        }
-#    }
-#    for (n in impnames)
-#        if (exists(n, envir = impenv, inherits = FALSE)) {
-#            if (.isMethodsDispatchOn() && methods:::isGeneric(n, ns)) {
-#                ## warn only if generic overwrites a function which
-#                ## it was not derived from
-#                genNs <- genericPackage(get(n, envir = ns))
-#                genImp <- get(n, envir = impenv)
-#                if(identical(genNs, genericPackage(genImp))) next # same generic
-#                genImpenv <- environmentName(environment(genImp))
-#                ## May call environment() on a non-function--an undocumented
-#                ## "feature" of environment() is that it returns a special
-#                ## attribute for non-functions, usually NULL
-#                if (!identical(genNs, genImpenv) ||
-#                        methods:::isGeneric(n, impenv)) {}
-#                else next
-#            }
-#            ## this is always called from another function, so reporting call
-#            ## is unhelpful
-#            warning(sprintf(msg, sQuote(paste(nsname, n, sep = "::")),
-#                            sQuote(from)),
-#                    call. = FALSE, domain = NA)
-#        }
-#    importIntoEnv(impenv, impnames, ns, impvars)
-#    if (register)
-#        addImports(self, ns, if (missing(vars)) TRUE else impvars)
-#}
+namespaceImportFrom <- function(self, ns, vars, generics, packages, from = "non-package environment")
+{
+    addImports <- function(ns, from, what) {
+        imp <- structure(list(what), names = getNamespaceName(from))
+        imports <- getNamespaceImports(ns)
+        setNamespaceInfo(ns, "imports", c(imports, imp))
+    }
+    namespaceIsSealed <- function(ns)
+        environmentIsLocked(ns)
+    makeImportExportNames <- function(spec) {
+        old <- as.character(spec)
+        new <- names(spec)
+        if (is.null(new)) new <- old
+        else {
+            change <- !nzchar(new)
+            new[change] <- old[change]
+        }
+        names(old) <- new
+        old
+    }
+    whichMethodMetaNames <- function(impvars) {
+        if(!.isMethodsDispatchOn())
+            return(numeric())
+        mm <- ".__T__"
+        seq_along(impvars)[substr(impvars, 1L, nchar(mm, type = "c")) == mm]
+    }
+    genericPackage <- function(f) {
+        if(methods::is(f, "genericFunction")) f@package
+        else if(is.primitive(f)) "base"
+        else "<unknown>"
+    }
+    if (is.character(self))
+        self <- getNamespace(self)
+    ns <- asNamespace(ns)
+    nsname <- getNamespaceName(ns)
+    impvars <- if (missing(vars)) {
+                ## certain things should never be imported:
+                ## but most of these are never exported (exception: .Last.lib)
+                stoplist <- c(".__NAMESPACE__.", ".__S3MethodsTable__.",
+                        ".packageName", ".First.lib", ".Last.lib",
+                        ".onLoad", ".onAttach", ".onDetach",
+                        ".conflicts.OK", ".noGenerics")
+                vars <- getNamespaceExports(ns)
+                vars <- vars[! vars %in% stoplist]
+            } else vars
+    impvars <- makeImportExportNames(impvars)
+    impnames <- names(impvars)
+    if (anyDuplicated(impnames)) {
+        stop(gettextf("duplicate import names %s",
+                        paste(sQuote(impnames[duplicated(impnames)]),
+                                collapse = ", ")), domain = NA)
+    }
+    if (isNamespace(self) && isBaseNamespace(self)) {
+        impenv <- self
+        msg <- gettext("replacing local value with import %s when loading %s")
+        register <- FALSE
+    }
+    else if (isNamespace(self)) {
+        if (namespaceIsSealed(self))
+            stop("cannot import into a sealed namespace")
+        impenv <- parent.env(self)
+        msg <- gettext("replacing previous import by %s when loading %s")
+        register <- TRUE
+    }
+    else if (is.environment(self)) {
+        impenv <- self
+        msg <- gettext("replacing local value with import %s when loading %s")
+        register <- FALSE
+    }
+    else stop("invalid import target")
+    which <- whichMethodMetaNames(impvars)
+    if(length(which)) {
+        ## If methods are already in impenv, merge and don't import
+        delete <- integer()
+        for(i in which) {
+            methodsTable <- .mergeImportMethods(impenv, ns, impvars[[i]])
+            if(is.null(methodsTable))
+            {} ## first encounter, just import it
+            else { ##
+                delete <- c(delete, i)
+                if(!missing(generics)) {
+                    genName <- generics[[i]]
+                    ## if(i > length(generics) || !nzchar(genName))
+                    ##   {warning("got invalid index for importing ",mlname); next}
+                    fdef <- methods:::getGeneric(genName,
+                            where = impenv,
+                            package = packages[[i]])
+                    if(is.null(fdef))
+                        warning(gettextf("found methods to import for function %s but not the generic itself",
+                                        sQuote(genName)),
+                                call. = FALSE, domain = NA)
+                    else
+                        methods:::.updateMethodsInTable(fdef, ns, TRUE)
+                }
+            }
+        }
+        if(length(delete)) {
+            impvars <- impvars[-delete]
+            impnames <- impnames[-delete]
+        }
+    }
+    for (n in impnames)
+        if (exists(n, envir = impenv, inherits = FALSE)) {
+            if (.isMethodsDispatchOn() && methods:::isGeneric(n, ns)) {
+                ## warn only if generic overwrites a function which
+                ## it was not derived from
+                genNs <- genericPackage(get(n, envir = ns))
+                genImp <- get(n, envir = impenv)
+                if(identical(genNs, genericPackage(genImp))) next # same generic
+                genImpenv <- environmentName(environment(genImp))
+                ## May call environment() on a non-function--an undocumented
+                ## "feature" of environment() is that it returns a special
+                ## attribute for non-functions, usually NULL
+                if (!identical(genNs, genImpenv) ||
+                        methods:::isGeneric(n, impenv)) {}
+                else next
+            }
+            ## this is always called from another function, so reporting call
+            ## is unhelpful
+            warning(sprintf(msg, sQuote(paste(nsname, n, sep = "::")),
+                            sQuote(from)),
+                    call. = FALSE, domain = NA)
+        }
+    importIntoEnv(impenv, impnames, ns, impvars)
+    if (register)
+        addImports(self, ns, if (missing(vars)) TRUE else impvars)
+}
 
 #namespaceImportClasses <- function(self, ns, vars, from = NULL)
 #{
@@ -974,7 +974,9 @@ namespaceImport <- function(self, ..., from = NULL)
 #
 importIntoEnv <- function(impenv, impnames, expenv, expnames) {
     exports <- getNamespaceInfo(expenv, "exports")
-    ex <- .Internal(ls(exports, TRUE))
+#   ls is not yet .Internal
+#   ex <- .Internal(ls(exports, TRUE))
+    ex <- ls(exports, all.names=TRUE)
     if(!all(expnames %in% ex)) {
         miss <- expnames[! expnames %in% ex]
         ## if called (indirectly) for namespaceImportClasses
@@ -996,7 +998,9 @@ importIntoEnv <- function(impenv, impnames, expenv, expnames) {
                     call. = FALSE, domain = NA)
         }
     }
-    expnames <- unlist(lapply(expnames, get, envir = exports, inherits = FALSE))
+    # lapply does not handle named prameters properly so provide all params
+    #    expnames <- unlist(lapply(expnames, get, envir = exports, inherits = FALSE))
+    expnames <- unlist(lapply(expnames, get, pos = -1L, envir = exports, mode = "any", inherits = FALSE))
     if (is.null(impnames)) impnames <- character()
     if (is.null(expnames)) expnames <- character()
     .Internal(importIntoEnv(impenv, impnames, expenv, expnames))
@@ -1013,7 +1017,8 @@ namespaceExport <- function(ns, vars) {
             exports <- getNamespaceInfo(ns, "exports")
             expnames <- names(new)
             intnames <- new
-            objs <- .Internal(ls(exports, TRUE))
+#           objs <- .Internal(ls(exports, TRUE))
+           objs <- ls(exports, all.names=TRUE)
             ex <- expnames %in% objs
             if(any(ex))
                 warning(sprintf(ngettext(sum(ex),
@@ -1037,7 +1042,8 @@ namespaceExport <- function(ns, vars) {
         }
         new <- makeImportExportNames(unique(vars))
         ## calling exists each time is too slow, so do two phases
-        undef <- new[! new %in% .Internal(ls(ns, TRUE))]
+#       undef <- new[! new %in% .Internal(ls(ns, TRUE))]
+        undef <- new[! new %in% ls(ns, all.names=TRUE)]
         undef <- undef[! vapply(undef, exists, NA, envir = ns)]
         if (length(undef)) {
             undef <- do.call("paste", as.list(c(undef, sep = ", ")))
@@ -1048,19 +1054,19 @@ namespaceExport <- function(ns, vars) {
     }
 }
 
-#.mergeExportMethods <- function(new, ns) {
-#    ##    if(!.isMethodsDispatchOn()) return(FALSE)
-#    mm <- methods:::methodsPackageMetaName("M","")
-#    newMethods <- new[substr(new, 1L, nchar(mm, type = "c")) == mm]
-#    nsimports <- parent.env(ns)
-#    for(what in newMethods) {
-#        if(exists(what, envir = nsimports, inherits = FALSE)) {
-#            m1 <- get(what, envir = nsimports)
-#            m2 <- get(what, envir = ns)
-#            assign(what, envir = ns, methods:::mergeMethods(m1, m2))
-#        }
-#    }
-#}
+.mergeExportMethods <- function(new, ns) {
+    ##    if(!.isMethodsDispatchOn()) return(FALSE)
+    mm <- methods:::methodsPackageMetaName("M","")
+    newMethods <- new[substr(new, 1L, nchar(mm, type = "c")) == mm]
+    nsimports <- parent.env(ns)
+    for(what in newMethods) {
+        if(exists(what, envir = nsimports, inherits = FALSE)) {
+            m1 <- get(what, envir = nsimports)
+            m2 <- get(what, envir = ns)
+            assign(what, envir = ns, methods:::mergeMethods(m1, m2))
+        }
+    }
+}
 
 
 ## NB this needs a decorated name, foo_ver, if appropriate
@@ -1325,141 +1331,142 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
             S3methods = unique(S3methods[seq_len(nS3), , drop = FALSE]) )
 } ## end{parseNamespaceFile}
 
-#registerS3method <- function(genname, class, method, envir = parent.frame()) {
-#    addNamespaceS3method <- function(ns, generic, class, method) {
-#        regs <- getNamespaceInfo(ns, "S3methods")
-#        regs <- rbind(regs, c(generic, class, method))
-#        setNamespaceInfo(ns, "S3methods", regs)
-#    }
-#    groupGenerics <- c("Math", "Ops",  "Summary", "Complex")
-#    defenv <- if(genname %in% groupGenerics) .BaseNamespaceEnv
-#            else {
-#                genfun <- get(genname, envir = envir)
-#                if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction"))
-#                    genfun <- methods:::finalDefaultMethod(genfun@default)
-#                if (typeof(genfun) == "closure") environment(genfun)
-#                else .BaseNamespaceEnv
-#            }
-#    if (! exists(".__S3MethodsTable__.", envir = defenv, inherits = FALSE))
-#        assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
-#                envir = defenv)
-#    table <- get(".__S3MethodsTable__.", envir = defenv, inherits = FALSE)
-#    if (is.character(method)) {
-#        assignWrapped <- function(x, method, home, envir) {
-#            method <- method            # force evaluation
-#            home <- home                # force evaluation
-#            delayedAssign(x, get(method, envir = home), assign.env = envir)
-#        }
-#        if(!exists(method, envir = envir)) {
-#            ## need to avoid conflict with message at l.1298
-#            warning(gettextf("S3 method %s was declared but not found",
-#                            sQuote(method)), call. = FALSE)
-#        } else {
-#            assignWrapped(paste(genname, class, sep = "."), method, home = envir,
-#                    envir = table)
-#        }
-#    }
-#    else if (is.function(method))
-#        assign(paste(genname, class, sep = "."), method, envir = table)
-#    else stop("bad method")
-#    if (isNamespace(envir) && ! identical(envir, .BaseNamespaceEnv))
-#        addNamespaceS3method(envir, genname, class, method)
-#}
-#
+registerS3method <- function(genname, class, method, envir = parent.frame()) {
+    addNamespaceS3method <- function(ns, generic, class, method) {
+        regs <- getNamespaceInfo(ns, "S3methods")
+        regs <- rbind(regs, c(generic, class, method))
+        setNamespaceInfo(ns, "S3methods", regs)
+    }
+    groupGenerics <- c("Math", "Ops",  "Summary", "Complex")
+    defenv <- if(genname %in% groupGenerics) .BaseNamespaceEnv
+            else {
+                genfun <- get(genname, envir = envir)
+                if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction"))
+                    genfun <- methods:::finalDefaultMethod(genfun@default)
+                if (typeof(genfun) == "closure") environment(genfun)
+                else .BaseNamespaceEnv
+            }
+    if (! exists(".__S3MethodsTable__.", envir = defenv, inherits = FALSE))
+        assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
+                envir = defenv)
+    table <- get(".__S3MethodsTable__.", envir = defenv, inherits = FALSE)
+    if (is.character(method)) {
+        assignWrapped <- function(x, method, home, envir) {
+            method <- method            # force evaluation
+            home <- home                # force evaluation
+            delayedAssign(x, get(method, envir = home), assign.env = envir)
+        }
+        if(!exists(method, envir = envir)) {
+            ## need to avoid conflict with message at l.1298
+            warning(gettextf("S3 method %s was declared but not found",
+                            sQuote(method)), call. = FALSE)
+        } else {
+            assignWrapped(paste(genname, class, sep = "."), method, home = envir,
+                    envir = table)
+        }
+    }
+    else if (is.function(method))
+        assign(paste(genname, class, sep = "."), method, envir = table)
+    else stop("bad method")
+    if (isNamespace(envir) && ! identical(envir, .BaseNamespaceEnv))
+        addNamespaceS3method(envir, genname, class, method)
+}
 
-#registerS3methods <- function(info, package, env)
-#{
-#    n <- NROW(info)
-#    if(n == 0L) return()
-#
-#    assignWrapped <- function(x, method, home, envir) {
-#        method <- method            # force evaluation
-#        home <- home                # force evaluation
-#        delayedAssign(x, get(method, envir = home), assign.env = envir)
-#    }
-#    .registerS3method <- function(genname, class, method, nm, envir)
-#    {
-#        ## S3 generics should either be imported explicitly or be in
-#        ## the base namespace, so we start the search at the imports
-#        ## environment, parent.env(envir), which is followed by the
-#        ## base namespace.  (We have already looked in the namespace.)
-#        ## However, in case they have not been imported, we first
-#        ## look up where some commonly used generics are (including the
-#        ## group generics).
-#        defenv <- if(!is.na(w <- .knownS3Generics[genname])) asNamespace(w)
-#                else {
-#                    if(!exists(genname, envir = parent.env(envir)))
-#                        stop(gettextf("object '%s' not found whilst loading namespace '%s'",
-#                                        genname, package), call. = FALSE, domain = NA)
-#                    genfun <- get(genname, envir = parent.env(envir))
-#                    if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction"))
-#                        genfun <- genfun@default  # nearly always, the S3 generic
-#                    if (typeof(genfun) == "closure") environment(genfun)
-#                    else .BaseNamespaceEnv
-#                }
-#        if (! exists(".__S3MethodsTable__.", envir = defenv, inherits = FALSE))
-#            assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
-#                    envir = defenv)
-#        table <- get(".__S3MethodsTable__.", envir = defenv, inherits = FALSE)
-#        assignWrapped(nm, method, home = envir, envir = table)
-#    }
-#
-#    methname <- paste(info[,1], info[,2], sep = ".")
-#    z <- is.na(info[,3])
-#    info[z,3] <- methname[z]
-#    Info <- cbind(info, methname)
+
+registerS3methods <- function(info, package, env)
+{
+    n <- NROW(info)
+    if(n == 0L) return()
+
+    assignWrapped <- function(x, method, home, envir) {
+        method <- method            # force evaluation
+        home <- home                # force evaluation
+        delayedAssign(x, get(method, envir = home), assign.env = envir)
+    }
+    .registerS3method <- function(genname, class, method, nm, envir)
+    {
+        ## S3 generics should either be imported explicitly or be in
+        ## the base namespace, so we start the search at the imports
+        ## environment, parent.env(envir), which is followed by the
+        ## base namespace.  (We have already looked in the namespace.)
+        ## However, in case they have not been imported, we first
+        ## look up where some commonly used generics are (including the
+        ## group generics).
+        defenv <- if(!is.na(w <- .knownS3Generics[genname])) asNamespace(w)
+                else {
+                    if(!exists(genname, envir = parent.env(envir)))
+                        stop(gettextf("object '%s' not found whilst loading namespace '%s'",
+                                        genname, package), call. = FALSE, domain = NA)
+                    genfun <- get(genname, envir = parent.env(envir))
+                    if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction"))
+                        genfun <- genfun@default  # nearly always, the S3 generic
+                    if (typeof(genfun) == "closure") environment(genfun)
+                    else .BaseNamespaceEnv
+                }
+        if (! exists(".__S3MethodsTable__.", envir = defenv, inherits = FALSE))
+            assign(".__S3MethodsTable__.", new.env(hash = TRUE, parent = baseenv()),
+                    envir = defenv)
+        table <- get(".__S3MethodsTable__.", envir = defenv, inherits = FALSE)
+        assignWrapped(nm, method, home = envir, envir = table)
+    }
+
+    methname <- paste(info[,1], info[,2], sep = ".")
+    z <- is.na(info[,3])
+    info[z,3] <- methname[z]
+    Info <- cbind(info, methname)
 #    loc <- .Internal(ls(env, TRUE))
-#    notex <- !(info[,3] %in% loc)
-#    if(any(notex))
-#        warning(sprintf(ngettext(sum(notex),
-#                                "S3 method %s was declared in NAMESPACE but not found",
-#                                "S3 methods %s were declared in NAMESPACE but not found"),
-#                        paste(sQuote(info[notex, 3]), collapse = ", ")),
-#                call. = FALSE, domain = NA)
-#    Info <- Info[!notex, , drop = FALSE]
-#
-#    ## Do local generics first (this could be load-ed if pre-computed).
-#    ## However, the local generic could be an S4 takeover of a non-local
-#    ## (or local) S3 generic.  We can't just pass S4 generics on to
-#    ## .registerS3method as that only looks non-locally (for speed).
-#    l2 <- localGeneric <- Info[,1] %in% loc
-#    if(.isMethodsDispatchOn())
-#        for(i in which(localGeneric)) {
-#            genfun <- get(Info[i, 1], envir = env)
-#            if(methods:::is(genfun, "genericFunction")) {
-#                localGeneric[i] <- FALSE
-#                registerS3method(Info[i, 1], Info[i, 2], Info[i, 3], env)
-#            }
-#        }
-#    if(any(localGeneric)) {
-#        lin <- Info[localGeneric, , drop = FALSE]
-#        S3MethodsTable <-
-#                get(".__S3MethodsTable__.", envir = env, inherits = FALSE)
-#        ## we needed to move this to C for speed.
-#        ## for(i in seq_len(nrow(lin)))
-#        ##    assign(lin[i,4], get(lin[i,3], envir = env),
-#        ##           envir = S3MethodsTable)
-#        .Internal(importIntoEnv(S3MethodsTable, lin[,4], env, lin[,3]))
-#    }
-#
-#    ## now the rest
-#    fin <- Info[!l2, , drop = FALSE]
-#    for(i in seq_len(nrow(fin)))
-#        .registerS3method(fin[i, 1], fin[i, 2], fin[i, 3], fin[i, 4], env)
-#
-#    setNamespaceInfo(env, "S3methods",
-#            rbind(info, getNamespaceInfo(env, "S3methods")))
-#}
-#
-#.mergeImportMethods <- function(impenv, expenv, metaname)
-#{
-#    expMethods <- get(metaname, envir = expenv)
-#    if(exists(metaname, envir = impenv, inherits = FALSE)) {
-#        impMethods <- get(metaname, envir = impenv)
-#        assign(metaname,
-#                methods:::.mergeMethodsTable2(impMethods,
-#                        expMethods, expenv, metaname),
-#                envir = impenv)
-#        impMethods
-#    } else NULL
-#}
+    loc <- ls(env, all.names=TRUE)
+    notex <- !(info[,3] %in% loc)
+    if(any(notex))
+        warning(sprintf(ngettext(sum(notex),
+                                "S3 method %s was declared in NAMESPACE but not found",
+                                "S3 methods %s were declared in NAMESPACE but not found"),
+                        paste(sQuote(info[notex, 3]), collapse = ", ")),
+                call. = FALSE, domain = NA)
+    Info <- Info[!notex, , drop = FALSE]
+
+    ## Do local generics first (this could be load-ed if pre-computed).
+    ## However, the local generic could be an S4 takeover of a non-local
+    ## (or local) S3 generic.  We can't just pass S4 generics on to
+    ## .registerS3method as that only looks non-locally (for speed).
+    l2 <- localGeneric <- Info[,1] %in% loc
+    if(.isMethodsDispatchOn())
+        for(i in which(localGeneric)) {
+            genfun <- get(Info[i, 1], envir = env)
+            if(methods:::is(genfun, "genericFunction")) {
+                localGeneric[i] <- FALSE
+                registerS3method(Info[i, 1], Info[i, 2], Info[i, 3], env)
+            }
+        }
+    if(any(localGeneric)) {
+        lin <- Info[localGeneric, , drop = FALSE]
+        S3MethodsTable <-
+                get(".__S3MethodsTable__.", envir = env, inherits = FALSE)
+        ## we needed to move this to C for speed.
+        ## for(i in seq_len(nrow(lin)))
+        ##    assign(lin[i,4], get(lin[i,3], envir = env),
+        ##           envir = S3MethodsTable)
+        .Internal(importIntoEnv(S3MethodsTable, lin[,4], env, lin[,3]))
+    }
+
+    ## now the rest
+    fin <- Info[!l2, , drop = FALSE]
+    for(i in seq_len(nrow(fin)))
+        .registerS3method(fin[i, 1], fin[i, 2], fin[i, 3], fin[i, 4], env)
+
+    setNamespaceInfo(env, "S3methods",
+            rbind(info, getNamespaceInfo(env, "S3methods")))
+}
+
+.mergeImportMethods <- function(impenv, expenv, metaname)
+{
+    expMethods <- get(metaname, envir = expenv)
+    if(exists(metaname, envir = impenv, inherits = FALSE)) {
+        impMethods <- get(metaname, envir = impenv)
+        assign(metaname,
+                methods:::.mergeMethodsTable2(impMethods,
+                        expMethods, expenv, metaname),
+                envir = impenv)
+        impMethods
+    } else NULL
+}

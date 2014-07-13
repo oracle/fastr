@@ -46,7 +46,7 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
             RContext.getInstance().setEvalWarning(ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }
         return result;
     }

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -34,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class BrowserFunctions {
@@ -105,7 +105,7 @@ public class BrowserFunctions {
                         case "s":
                         case "f":
                         case "n":
-                            throw RError.nyi(null, input);
+                            throw RError.nyi(null, notImplemented(input));
 
                         case "where": {
                             int ix = 1;
@@ -113,7 +113,7 @@ public class BrowserFunctions {
                             while ((stackFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, ix)) != null) {
                                 RFunction fun = RArguments.getFunction(stackFrame);
                                 if (fun != null) {
-                                    ch.printf("where %d: ", ix, fun.getTarget());
+                                    ch.printf("where %d: %s%n", ix, fun.getTarget());
                                 }
                                 ix++;
                             }
@@ -136,6 +136,10 @@ public class BrowserFunctions {
             return "Browse[" + (helperState.size()) + "]> ";
         }
 
+        @SlowPath
+        private static String notImplemented(String command) {
+            return "browser command: '" + command + "'";
+        }
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
@@ -156,8 +160,7 @@ public class BrowserFunctions {
          */
         protected HelperState getHelperState(int n) {
             if (n <= 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(getEncapsulatingSourceSection(), "number of contexts must be positive");
+                throw RError.error(getEncapsulatingSourceSection(), Message.POSITIVE_CONTEXTS);
             }
             int nn = n;
             if (nn > helperState.size()) {

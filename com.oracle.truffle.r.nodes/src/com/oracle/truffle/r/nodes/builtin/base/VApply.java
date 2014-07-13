@@ -48,14 +48,22 @@ public abstract class VApply extends RBuiltinNode {
         Object[] combinedArgs = new Object[optionalArgsLength + 1];
         System.arraycopy(optionalArgs, 0, combinedArgs, 1, optionalArgsLength);
         RVector xMat = x.materialize();
-        Object[] applyResult = Lapply.applyHelper(frame, funCall, xMat, fun, combinedArgs);
+        Object[] applyResult;
+        if (x.getLength() > 0) {
+            applyResult = Lapply.applyHelper(frame, funCall, xMat, fun, combinedArgs);
+        } else {
+            applyResult = new Object[0];
+        }
         Object result = null;
         if (funValue instanceof Integer) {
-            int[] data = new int[]{(Integer) applyResult[0]};
+            int[] data = applyResult.length == 0 ? new int[0] : new int[]{(Integer) applyResult[0]};
             result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValue instanceof Double) {
-            double[] data = new double[]{(Double) applyResult[0]};
+            double[] data = applyResult.length == 0 ? new double[0] : new double[]{(Double) applyResult[0]};
             result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
+        } else if (funValue instanceof Byte) {
+            byte[] data = applyResult.length == 0 ? new byte[0] : new byte[]{(Byte) applyResult[0]};
+            result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             assert false;
         }

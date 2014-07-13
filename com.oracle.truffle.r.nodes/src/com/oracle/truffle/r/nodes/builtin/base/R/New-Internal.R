@@ -18,41 +18,41 @@
 
 #geterrmessage <- function() .Internal(geterrmessage())
 
-try <- function(expr, silent = FALSE) {
-  tryCatch(expr, error = function(e) {
-        call <- conditionCall(e)
-        if (! is.null(call)) {
-          ## Patch up the call to produce nicer result for testing as
-          ## try(stop(...)).  This will need adjusting if the
-          ## implementation of tryCatch changes.
-          ## Use identical() since call[[1L]] can be non-atomic.
-          if (identical(call[[1L]], quote(doTryCatch)))
-            call <- sys.call(-4L)
-          dcall <- deparse(call)[1L]
-          prefix <- paste("Error in", dcall, ": ")
-          LONG <- 75L # to match value in errors.c
-          msg <- conditionMessage(e)
-          sm <- strsplit(msg, "\n")[[1L]]
-          w <- 14L + nchar(dcall, type="w") + nchar(sm[1L], type="w")
-          ## this could be NA if any of this is invalid in a MBCS
-          if(is.na(w))
-            w <-  14L + nchar(dcall, type="b") + nchar(sm[1L], type="b")
-          if (w > LONG)
-            prefix <- paste0(prefix, "\n  ")
-        }
-        else prefix <- "Error : "
-        msg <- paste0(prefix, conditionMessage(e), "\n")
-        ## Store the error message for legacy uses of try() with
-        ## geterrmessage().
-        .Internal(seterrmessage(msg[1L]))
-        if (! silent && identical(getOption("show.error.messages"), TRUE)) {
-          cat(msg, file = stderr())
-          .Internal(printDeferredWarnings())
-        }
-        invisible(structure(msg, class = "try-error", condition = e))
-      })
-}
-
+#try <- function(expr, silent = FALSE) {
+#  tryCatch(expr, error = function(e) {
+#        call <- conditionCall(e)
+#        if (! is.null(call)) {
+#          ## Patch up the call to produce nicer result for testing as
+#          ## try(stop(...)).  This will need adjusting if the
+#          ## implementation of tryCatch changes.
+#          ## Use identical() since call[[1L]] can be non-atomic.
+#          if (identical(call[[1L]], quote(doTryCatch)))
+#            call <- sys.call(-4L)
+#          dcall <- deparse(call)[1L]
+#          prefix <- paste("Error in", dcall, ": ")
+#          LONG <- 75L # to match value in errors.c
+#          msg <- conditionMessage(e)
+#          sm <- strsplit(msg, "\n")[[1L]]
+#          w <- 14L + nchar(dcall, type="w") + nchar(sm[1L], type="w")
+#          ## this could be NA if any of this is invalid in a MBCS
+#          if(is.na(w))
+#            w <-  14L + nchar(dcall, type="b") + nchar(sm[1L], type="b")
+#          if (w > LONG)
+#            prefix <- paste0(prefix, "\n  ")
+#        }
+#        else prefix <- "Error : "
+#        msg <- paste0(prefix, conditionMessage(e), "\n")
+#        ## Store the error message for legacy uses of try() with
+#        ## geterrmessage().
+#        .Internal(seterrmessage(msg[1L]))
+#        if (! silent && identical(getOption("show.error.messages"), TRUE)) {
+#          cat(msg, file = stderr())
+#          .Internal(printDeferredWarnings())
+#        }
+#        invisible(structure(msg, class = "try-error", condition = e))
+#      })
+#}
+#
 #comment <- function(x) .Internal(comment(x))
 #`comment<-` <- function(x, value) .Internal("comment<-"(x, value))
 #
@@ -162,10 +162,10 @@ drop <- function(x) .Internal(drop(x))
 #    x <- x[!ii]
 #  .Internal(is.unsorted(x, strictly))
 #}
-#
-#nchar <- function(x, type = "chars", allowNA = FALSE)
-#  .Internal(nchar(x, type, allowNA))
-#
+
+nchar <- function(x, type = "chars", allowNA = FALSE)
+  .Internal(nchar(x, type, allowNA))
+
 #polyroot <- function(z) .Internal(polyroot(z))
 #
 #readline <- function(prompt = "") .Internal(readline(prompt))

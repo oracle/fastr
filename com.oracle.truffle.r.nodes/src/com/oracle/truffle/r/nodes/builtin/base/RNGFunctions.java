@@ -75,7 +75,7 @@ public class RNGFunctions {
                 RRNG.doSetSeed(frame, newSeed, kind, normKind);
             } catch (RNGException ex) {
                 if (ex.isError()) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                    throw RError.error(getEncapsulatingSourceSection(), ex);
                 } else {
                     RContext.getInstance().setEvalWarning(ex.getMessage());
                 }
@@ -102,7 +102,7 @@ public class RNGFunctions {
                 RRNG.doRNGKind(frame, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             } catch (RNGException ex) {
                 if (ex.isError()) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                    throw RError.error(getEncapsulatingSourceSection(), ex);
                 } else {
                     RContext.getInstance().setEvalWarning(ex.getMessage());
                 }
