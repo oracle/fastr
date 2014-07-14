@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -47,6 +48,8 @@ public class Recall extends RCustomBuiltinNode {
 
     @Child private IndirectCallNode callNode;
 
+    @CompilationFinal private RFunction function;
+
     public Recall(RBuiltinNode prev) {
         super(prev);
     }
@@ -54,16 +57,23 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
-        RFunction function = RArguments.getFunction(frame);
         if (function == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
-        }
-        if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            function = RArguments.getFunction(frame);
+            if (function == null) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+            }
             callNode = insert(Truffle.getRuntime().createIndirectCallNode());
         }
         Object[] argsObject = RArguments.create(function, createArgs(frame, arguments[0]));
         return callNode.call(frame, function.getTarget(), argsObject);
+    }
+
+    @ExplodeLoop
+    private static void executeArgs(VirtualFrame frame, RNode[] args, Object[] argValues) {
+        for (int i = 0; i < args.length; i++) {
+            argValues[i] = args[i].execute(frame);
+        }
     }
 
     private static Object[] createArgs(VirtualFrame frame, RNode argNode) {
@@ -71,9 +81,7 @@ public class Recall extends RCustomBuiltinNode {
         if (actualArgNode instanceof VarArgsNode) {
             RNode[] args = ((VarArgsNode) actualArgNode).getArgumentNodes();
             Object[] argValues = new Object[args.length];
-            for (int i = 0; i < args.length; i++) {
-                argValues[i] = args[i].execute(frame);
-            }
+            executeArgs(frame, args, argValues);
             return argValues;
         } else {
             return new Object[]{argNode.execute(frame)};

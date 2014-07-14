@@ -83,3 +83,4 @@ agent/make/sa17.tar.gz
 R.tokens
 .tmp.unit.knucleotide.input
 *.o
+findbugs.html

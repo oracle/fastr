@@ -147,7 +147,7 @@ public abstract class UnaryArithmetic extends Operation {
             double intx;
             int dig;
 
-            if (x == Double.NaN || digits == Double.NaN) {
+            if (Double.isNaN(x) || Double.isNaN(digits)) {
                 return x + digits;
             }
             if (!RRuntime.isFinite(x)) {
@@ -189,7 +189,7 @@ public abstract class UnaryArithmetic extends Operation {
         private double rpowdi(double x, int n) {
             double result = 1.0;
 
-            if (x == Double.NaN) {
+            if (Double.isNaN(x)) {
                 return x;
             }
             if (n != 0) {
@@ -238,7 +238,7 @@ public abstract class UnaryArithmetic extends Operation {
                 }
                 return pow.op(x, y);
             }
-            if (x == Double.NaN || y == Double.NaN) {
+            if (Double.isNaN(x) || Double.isNaN(y)) {
                 return x + y; // assuming IEEE 754; otherwise return NaN
             }
             if (!RRuntime.isFinite(x)) {
