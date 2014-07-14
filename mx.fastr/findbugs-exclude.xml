@@ -7,4 +7,8 @@
   <Match>
     <Class name="com.oracle.truffle.r.parser.RLexer"/>
   </Match>
+  <!-- exclude generated node factory classes -->
+  <Match>
+      <Class name="~com\.oracle\.truffle\.r\.nodes\..*Factory"/>
+  </Match>
 </FindBugsFilter>
