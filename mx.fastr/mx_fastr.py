@@ -82,17 +82,13 @@ def findbugs(args):
     assert exists(findbugsJar)
     nonTestProjects = [p for p in _fastr_suite.projects if not p.name.endswith('.test') and not p.native]
     outputDirs = [p.output_dir() for p in nonTestProjects]
-    findbugsResults = join(_fastr_suite.dir, 'findbugs.results')
+    findbugsResults = join(_fastr_suite.dir, 'findbugs.html')
 
-    cmd = ['-jar', findbugsJar, '-textui', '-low', '-maxRank', '15', '-exclude', join(_fastr_suite.mxDir, 'findbugs-exclude.xml')]
+    cmd = ['-jar', findbugsJar, '-low', '-maxRank', '15', '-exclude', join(_fastr_suite.mxDir, 'findbugs-exclude.xml'), '-html']
     if sys.stdout.isatty():
         cmd.append('-progress')
     cmd = cmd + ['-auxclasspath', mx.classpath([p.name for p in nonTestProjects]), '-output', findbugsResults, '-exitcode'] + args + outputDirs
     exitcode = mx.run_java(cmd, nonZeroIsFatal=False)
-    if exitcode != 0:
-        with open(findbugsResults) as fp:
-            mx.log(fp.read())
-    os.unlink(findbugsResults)
     return exitcode
 
 def _fastr_gate_body(args, tasks):
