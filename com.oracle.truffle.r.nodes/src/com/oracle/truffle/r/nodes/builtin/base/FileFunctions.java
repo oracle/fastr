@@ -335,14 +335,26 @@ public class FileFunctions {
             return new RNode[]{null, ConstantNode.create(File.separator)};
         }
 
-        @Specialization(guards = "simpleArgs")
+        @SuppressWarnings("unused")
+        @Specialization(order = 0, guards = "lengthZero")
+        public RStringVector doFilePathZero(RAbstractStringVector vec, String fsep) {
+            return RDataFactory.createEmptyStringVector();
+        }
+
+        @Specialization(order = 1, guards = "!lengthZero")
+        public RStringVector doFilePath(RAbstractStringVector vec, String fsep) {
+            return doFilePath(new Object[]{vec}, fsep);
+        }
+
+        @Specialization(order = 2, guards = "simpleArgs")
         public RStringVector doFilePath(Object[] args, String fsep) {
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < args.length; i++) {
                 Object elem = args[i];
                 String elemAsString;
                 if (elem instanceof RStringVector) {
-                    elemAsString = ((RStringVector) elem).getDataAt(0);
+                    RStringVector svec = (RStringVector) elem;
+                    elemAsString = svec.getLength() == 0 ? "" : svec.getDataAt(0);
                 } else if (elem instanceof Object[]) {
                     Object[] elemArray = (Object[]) elem;
                     for (int j = 0; j < elemArray.length - 1; j++) {
@@ -363,10 +375,14 @@ public class FileFunctions {
             return RDataFactory.createStringVectorFromScalar(sb.toString());
         }
 
+        public static boolean lengthZero(RAbstractStringVector vec, @SuppressWarnings("unused") String fsep) {
+            return vec.getLength() == 0;
+        }
+
         public static boolean simpleArgs(Object[] args, String fsep) {
             for (Object arg : args) {
                 if (arg instanceof RStringVector) {
-                    if (((RStringVector) arg).getLength() != 1) {
+                    if (((RStringVector) arg).getLength() > 1) {
                         return false;
                     }
                 } else {
