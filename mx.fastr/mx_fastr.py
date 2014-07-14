@@ -80,7 +80,7 @@ def findbugs(args):
                 shutil.rmtree(tmp)
         findbugsJar = join(findbugsLib, 'findbugs.jar')
     assert exists(findbugsJar)
-    nonTestProjects = [p for p in _fastr_suite.projects if not p.name.endswith('.test') and not p.native]
+    nonTestProjects = [p for p in _fastr_suite.projects if not p.name.endswith('.test') and not p.name.endswith('.processor') and not p.native]
     outputDirs = [p.output_dir() for p in nonTestProjects]
     findbugsResults = join(_fastr_suite.dir, 'findbugs.html')
 
