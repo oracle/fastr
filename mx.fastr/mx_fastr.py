@@ -84,7 +84,7 @@ def findbugs(args):
     outputDirs = [p.output_dir() for p in nonTestProjects]
     findbugsResults = join(_fastr_suite.dir, 'findbugs.results')
 
-    cmd = ['-jar', findbugsJar, '-textui', '-low', '-maxRank', '15']
+    cmd = ['-jar', findbugsJar, '-textui', '-low', '-maxRank', '15', '-exclude', join(_fastr_suite.mxDir, 'findbugs-exclude.xml')]
     if sys.stdout.isatty():
         cmd.append('-progress')
     cmd = cmd + ['-auxclasspath', mx.classpath([p.name for p in nonTestProjects]), '-output', findbugsResults, '-exitcode'] + args + outputDirs
