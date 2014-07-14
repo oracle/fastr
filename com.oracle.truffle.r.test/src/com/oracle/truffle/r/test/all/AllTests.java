@@ -6329,6 +6329,96 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCumulativeMax_f24679ed89ce0643bda3e9b915870973() {
+        assertEval("{ cummax(c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMax_519f991c3ba08aaf78ae189e36583e8c() {
+        assertEval("{ cummax(NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMax_3502e1000ebf8f134d70fe55079ea810() {
+        assertEval("{ cummax(c(2000000000L, NA, 2000000000L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMax_a4f7c6fd3c3feea652005536d9813eeb() {
+        assertEval("{ cummax(1:10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMax_31f06e54d563cc95fdd8582cdc3b8337() {
+        assertEval("{ cummax(c(TRUE,FALSE,TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMax_b555f028e659b112ae3b7cffcd3ed765() {
+        assertEval("{ cummax(c(TRUE,FALSE,NA,TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMax_7b46aa2028adeb41fe4a1c6cfd7ac6f3() {
+        assertEval("{ cummax(as.logical(-2:2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMaxIgnore_2f6f91ad8c5d7ca01467c196f33b080e() {
+        assertEval("{ cummax(c(1+1i,2-3i,4+5i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMaxIgnore_80eddc53556e008ace29ab00e165f768() {
+        assertEval("{ cummax(c(1+1i, NA, 2+3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_f1d53f930c40c18fe500d8cbc4f78b90() {
+        assertEval("{ cummin(c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_8f65ef3b05e7bad7b317f7daeb0ec135() {
+        assertEval("{ cummin(NA) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_8c4fe0580a652be78ef2df3d386b3b70() {
+        assertEval("{ cummin(1:10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_de1f7703cfaec822eb7e695cd9706066() {
+        assertEval("{ cummin(c(2000000000L, NA, 2000000000L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_b0d6b6beef9621696bddc26d20730249() {
+        assertEval("{ cummin(c(TRUE,FALSE,TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_74183dc97edc4995dc889c1de366861a() {
+        assertEval("{ cummin(c(TRUE,FALSE,NA,TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMin_a3c3fb503a43c4c8e5717da0d4923dbe() {
+        assertEval("{ cummin(as.logical(-2:2)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMinIgnore_b5b948bfcb858f80485301067b4a3cb5() {
+        assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCumulativeMinIgnore_9fe29fb5f8789df82d6740ac7b77830f() {
+        assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCumulativeSum_6d835b5903b7c57c797726b1610f5359() {
         assertEval("{ cumsum(1:10) }");
     }

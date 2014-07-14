@@ -3235,4 +3235,42 @@ public class TestSimpleBuiltins extends TestBase {
     public void testColMeansIgnore() {
         assertEval("{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
     }
+
+    @Test
+    public void testCumulativeMax() {
+        assertEval("{ cummax(c(1,2,3)) }");
+        assertEval("{ cummax(NA) }");
+        assertEval("{ cummax(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cummax(1:10) }");
+        assertEval("{ cummax(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cummax(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cummax(as.logical(-2:2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCumulativeMaxIgnore() {
+        assertEval("{ cummax(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cummax(c(1+1i, NA, 2+3i)) }");
+    }
+
+    @Test
+    public void testCumulativeMin() {
+        assertEval("{ cummin(c(1,2,3)) }");
+        assertEval("{ cummin(NA) }");
+        assertEval("{ cummin(1:10) }");
+        assertEval("{ cummin(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cummin(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cummin(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cummin(as.logical(-2:2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCumulativeMinIgnore() {
+        // Error message mismatch.
+        assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
+    }
+
 }
