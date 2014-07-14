@@ -426,7 +426,9 @@ public final class RError extends RuntimeException {
         RNG_BAD_KIND("RNG kind %s is not available"),
         RNG_NOT_IMPL_KIND("unimplemented RNG kind %d"),
         RNG_READ_SEEDS("cannot read seeds unless 'user_unif_nseed' is supplied"),
-        RNG_SYMBOL("%s not found in user rng library");
+        RNG_SYMBOL("%s not found in user rng library"),
+        CUMMAX_UNDEFINED_FOR_COMPLEX("'cummin' not defined for complex numbers"),
+        CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers");
 
         private final String message;
         private final boolean hasArgs;
@@ -436,5 +438,4 @@ public final class RError extends RuntimeException {
             hasArgs = message.indexOf('%') >= 0;
         }
     }
-
 }

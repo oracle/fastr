@@ -53,6 +53,7 @@ public class RRuntime {
     public static final int TRUE = 1;
     public static final int FALSE = 0;
     public static final String STRING_NA = new String("NA");
+    public static final String STRING_NaN = new String("NaN");
     public static final String STRING_TRUE = new String("TRUE");
     public static final String STRING_FALSE = new String("FALSE");
     public static final int INT_NA = Integer.MIN_VALUE;
@@ -473,7 +474,7 @@ public class RRuntime {
             return "-Inf";
         }
         if (Double.isNaN(operand)) {
-            return "NaN";
+            return STRING_NaN;
         }
 
         /*

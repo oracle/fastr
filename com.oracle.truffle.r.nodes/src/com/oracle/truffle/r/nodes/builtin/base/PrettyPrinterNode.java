@@ -813,7 +813,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
-            if (v == RRuntime.STRING_NA) {
+            if (v == RRuntime.STRING_NA || v == RRuntime.STRING_NaN) {
                 continue;
             }
             if (decimalPointOffsets[i] == -1) {
