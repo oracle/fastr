@@ -56,7 +56,7 @@ public abstract class RRootNode extends RootNode {
      * @return The number of parameters this functions expects
      */
     public int getParameterCount() {
-        return formalArguments.getNrOfArgs();
+        return formalArguments.getArgsCount();
     }
 
     /**

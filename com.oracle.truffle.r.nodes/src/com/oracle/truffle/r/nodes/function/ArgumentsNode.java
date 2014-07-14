@@ -33,17 +33,21 @@ import static com.oracle.truffle.r.nodes.function.Arguments.*;
 public abstract class ArgumentsNode extends RNode {
 
     /**
-     * A list of arguments. Single arguments may be <code>null</code>
+     * A list of arguments. Single arguments may be <code>null</code>; semantics have to be
+     * specified by implementing classes
      */
     @Children protected final RNode[] arguments;
 
     /**
-     * A list of arguments. Single names may be <code>null</code>
+     * A list of arguments. Single names may be <code>null</code>; semantics have to be specified by
+     * implementing classes
      */
     protected final String[] names;
 
     /**
      * The number of {@link #names} given (i.e., not <code>null</code>)
+     * 
+     * @see Arguments#countNonNull(String[])
      */
     private final int nameCount;
 

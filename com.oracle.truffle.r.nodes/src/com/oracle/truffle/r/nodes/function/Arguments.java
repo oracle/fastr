@@ -111,7 +111,7 @@ public class Arguments<T> {
     /**
      * @return The number of arguments
      */
-    public int getNrOfArgs() {
+    public int getArgsCount() {
         return arguments.length;
     }
 }
