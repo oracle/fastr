@@ -20,8 +20,8 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import subprocess, tempfile, shutil, filecmp, platform, shlex
-from os.path import join, sep
+import subprocess, tempfile, shutil, filecmp, platform, shlex, zipfile, sys
+from os.path import join, sep, exists
 from argparse import ArgumentParser, REMAINDER
 import mx
 import mx_graal
@@ -58,7 +58,44 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
     return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
 
-def _truffle_r_gate_body(args, tasks):
+def findbugs(args):
+    '''run FindBugs against non-test Java projects'''
+    findBugsHome = mx.get_env('FINDBUGS_HOME', None)
+    if findBugsHome:
+        findbugsJar = join(findBugsHome, 'lib', 'findbugs.jar')
+    else:
+        findbugsLib = join(_fastr_suite.dir, 'lib', 'findbugs-3.0.0')
+        if not exists(findbugsLib):
+            tmp = tempfile.mkdtemp(prefix='findbugs-download-tmp', dir=_fastr_suite.dir)
+            try:
+                findbugsDist = join(tmp, 'findbugs.zip')
+                mx.download(findbugsDist, ['http://lafo.ssw.uni-linz.ac.at/graal-external-deps/findbugs-3.0.0.zip', 'http://sourceforge.net/projects/findbugs/files/findbugs/3.0.0/findbugs-3.0.0.zip'])
+                with zipfile.ZipFile(findbugsDist) as zf:
+                    candidates = [e for e in zf.namelist() if e.endswith('/lib/findbugs.jar')]
+                    assert len(candidates) == 1, candidates
+                    libDirInZip = os.path.dirname(candidates[0])
+                    zf.extractall(tmp)
+                shutil.copytree(join(tmp, libDirInZip), findbugsLib)
+            finally:
+                shutil.rmtree(tmp)
+        findbugsJar = join(findbugsLib, 'findbugs.jar')
+    assert exists(findbugsJar)
+    nonTestProjects = [p for p in _fastr_suite.projects if not p.name.endswith('.test') and not p.native]
+    outputDirs = [p.output_dir() for p in nonTestProjects]
+    findbugsResults = join(_fastr_suite.dir, 'findbugs.results')
+
+    cmd = ['-jar', findbugsJar, '-textui', '-low', '-maxRank', '15']
+    if sys.stdout.isatty():
+        cmd.append('-progress')
+    cmd = cmd + ['-auxclasspath', mx.classpath([p.name for p in nonTestProjects]), '-output', findbugsResults, '-exitcode'] + args + outputDirs
+    exitcode = mx.run_java(cmd, nonZeroIsFatal=False)
+    if exitcode != 0:
+        with open(findbugsResults) as fp:
+            mx.log(fp.read())
+    os.unlink(findbugsResults)
+    return exitcode
+
+def _fastr_gate_body(args, tasks):
     _check_autogen_tests(False)
 
     # workaround for Hotspot Mac OS X build problem
@@ -86,14 +123,24 @@ def gate(args):
     '''Run the R gate'''
     # suppress the download meter
     mx._opts.no_download_progress = True
-    # ideally would be a standard gate task - we do it early
+
+    # ideally would be standard gate tasks - we do these early
+
     t = mx.GateTask('Copyright check')
     rc = mx.checkcopyrights(['--primary'])
     t.stop()
     if rc != 0:
         mx.abort('copyright errors')
+
+    # activate these to enable FindBugs in the gate
+    #t = mx.GateTask('FindBugs')
+    #rc = findbugs([])
+    #t.stop()
+    #if rc != 0:
+    #    mx.abort('FindBugs warnings were found')
+
     _check_autogen_tests(True)
-    mx.gate(args, _truffle_r_gate_body)
+    mx.gate(args, _fastr_gate_body)
 
 _tempdir = None
 
@@ -364,5 +411,6 @@ def mx_init(suite):
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],
+        'findbugs' : [findbugs, '']
     }
     mx.update_commands(suite, commands)
