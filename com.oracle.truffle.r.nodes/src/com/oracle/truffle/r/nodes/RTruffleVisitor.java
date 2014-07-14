@@ -100,13 +100,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     }
 
     @Override
-<<<<<<< local
-    public RNode visit(FunctionCall functionCall) {
-        FunctionCall call = functionCall;
-=======
     public RNode visit(FunctionCall callParam) {
         FunctionCall call = callParam;
->>>>>>> other
         Symbol callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
 
