@@ -37,7 +37,7 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     public Object returnFunction(Object value) {
-        // If evaluation of "value" was "invisible(value)", don't undo that!
+        controlVisibility();
         throw new ReturnException(value);
     }
 
