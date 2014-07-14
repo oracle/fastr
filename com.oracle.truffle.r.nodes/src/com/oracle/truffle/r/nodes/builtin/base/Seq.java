@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE)
 // Implement in R, but seq.int is PRIMITIVE
@@ -48,70 +49,100 @@ public abstract class Seq extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(order = 0, guards = "zero")
-    public int seq(int start, int to, Object stride, RMissing lengthOut) {
+    @Specialization(order = 0, guards = {"zero", "startLengthOne", "toLengthOne"})
+    public int seq(RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut) {
         controlVisibility();
         return 0;
     }
 
-    @Specialization(order = 1, guards = "ascending")
-    public RIntSequence seq(int start, int to, RMissing stride, RMissing lengthOut) {
+    @Specialization(order = 1, guards = {"ascending", "startLengthOne", "toLengthOne"})
+    public RIntSequence seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createIntSequence(start, 1, to - start + 1);
+        return RDataFactory.createIntSequence(start.getDataAt(0), 1, to.getDataAt(0) - start.getDataAt(0) + 1);
     }
 
-    @Specialization(order = 2, guards = "!ascending")
-    public RIntSequence seqIntDesc(int start, int to, RMissing stride, RMissing lengthOut) {
+    @Specialization(order = 2, guards = {"!ascending", "startLengthOne", "toLengthOne"})
+    public RIntSequence seqIntDesc(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createIntSequence(start, -1, start - to + 1);
+        return RDataFactory.createIntSequence(start.getDataAt(0), -1, start.getDataAt(0) - to.getDataAt(0) + 1);
     }
 
-    @Specialization(order = 10, guards = "ascending")
-    public RIntSequence seq(int start, int to, int stride, RMissing lengthOut) {
+    @Specialization(order = 10, guards = {"ascending", "startLengthOne", "toLengthOne"})
+    public RIntSequence seq(RAbstractIntVector start, RAbstractIntVector to, int stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createIntSequence(start, stride, (to - start + 1) / stride);
+        return RDataFactory.createIntSequence(start.getDataAt(0), stride, (to.getDataAt(0) - start.getDataAt(0) + 1) / stride);
     }
 
-    @Specialization(order = 11, guards = "!ascending")
-    public RIntSequence seqIntDesc(int start, int to, int stride, RMissing lengthOut) {
+    @Specialization(order = 11, guards = {"!ascending", "startLengthOne", "toLengthOne"})
+    public RIntSequence seqIntDesc(RAbstractIntVector start, RAbstractIntVector to, int stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createIntSequence(start, stride, (start - to + 1) / -stride);
+        return RDataFactory.createIntSequence(start.getDataAt(0), stride, (start.getDataAt(0) - to.getDataAt(0) + 1) / -stride);
     }
 
-    @Specialization(order = 100, guards = "zero")
-    public double seq(double start, double to, Object stride, RMissing lengthOut) {
+    @Specialization(order = 50, guards = {"zero", "startLengthOne", "toLengthOne"})
+    public double seq(RAbstractDoubleVector start, RAbstractIntVector to, Object stride, RMissing lengthOut) {
         controlVisibility();
         return 0;
     }
 
-    @Specialization(order = 101, guards = "ascending")
-    public RDoubleSequence seq(double start, double to, RMissing stride, RMissing lengthOut) {
+    @Specialization(order = 51, guards = {"ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start, 1, (int) (to - start + 1));
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, (int) (to.getDataAt(0) - start.getDataAt(0) + 1));
     }
 
-    @Specialization(order = 102, guards = "!ascending")
-    public RDoubleSequence seqIntDesc(double start, double to, RMissing stride, RMissing lengthOut) {
+    @Specialization(order = 52, guards = {"!ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seqIntDesc(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start, -1, (int) (start - to + 1));
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), -1, (int) (start.getDataAt(0) - to.getDataAt(0) + 1));
     }
 
-    @Specialization(order = 110, guards = "ascending")
-    public RDoubleSequence seq(double start, double to, double stride, RMissing lengthOut) {
+    @Specialization(order = 60, guards = {"ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, int stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start, stride, (int) ((to - start + 1) / stride));
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (to.getDataAt(0) - start.getDataAt(0) + 1) / stride);
     }
 
-    @Specialization(order = 111, guards = "!ascending")
-    public RDoubleSequence seqIntDesc(double start, double to, double stride, RMissing lengthOut) {
+    @Specialization(order = 61, guards = {"!ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seqIntDesc(RAbstractDoubleVector start, RAbstractIntVector to, int stride, RMissing lengthOut) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start, stride, (int) ((start - to + 1) / -stride));
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (start.getDataAt(0) - to.getDataAt(0) + 1) / -stride);
     }
 
-    @Specialization(order = 120)
-    public int seqFrom(double start, RMissing to, RMissing stride, RMissing lengthOut) {
+    @Specialization(order = 100, guards = {"zero", "startLengthOne", "toLengthOne"})
+    public double seq(RAbstractDoubleVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut) {
         controlVisibility();
-        return (int) start;
+        return 0;
+    }
+
+    @Specialization(order = 101, guards = {"ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, (int) (to.getDataAt(0) - start.getDataAt(0) + 1));
+    }
+
+    @Specialization(order = 102, guards = {"!ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seqIntDesc(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), -1, (int) (start.getDataAt(0) - to.getDataAt(0) + 1));
+    }
+
+    @Specialization(order = 110, guards = {"ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) ((to.getDataAt(0) - start.getDataAt(0) + 1) / stride));
+    }
+
+    @Specialization(order = 111, guards = {"!ascending", "startLengthOne", "toLengthOne"})
+    public RDoubleSequence seqIntDesc(RAbstractDoubleVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) ((start.getDataAt(0) - to.getDataAt(0) + 1) / -stride));
+    }
+
+    @Specialization(order = 120, guards = "startLengthOne")
+    public int seqFrom(RAbstractDoubleVector start, RMissing to, RMissing stride, RMissing lengthOut) {
+        controlVisibility();
+        return (int) start.getDataAt(0);
     }
 
     @Specialization(order = 150)
@@ -126,26 +157,41 @@ public abstract class Seq extends RBuiltinNode {
         return RDataFactory.createIntSequence(1, 1, (int) lengthOut);
     }
 
-    @Specialization(order = 160)
-    public RDoubleSequence seq(double start, RMissing to, RMissing stride, int lengthOut) {
+    @Specialization(order = 160, guards = {"startLengthOne", "startLengthOne"})
+    public RDoubleSequence seq(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut) {
         controlVisibility();
-        return RDataFactory.createDoubleSequence(start, 1, lengthOut);
+        return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, lengthOut);
     }
 
-    protected static boolean ascending(int start, int to) {
-        return to > start;
+    protected static boolean ascending(RAbstractIntVector start, RAbstractIntVector to) {
+        return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean ascending(double start, double to) {
-        return to > start;
+    protected static boolean ascending(RAbstractDoubleVector start, RAbstractIntVector to) {
+        return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean zero(int start, int to) {
-        return start == 0 && to == 0;
+    protected static boolean ascending(RAbstractDoubleVector start, RAbstractDoubleVector to) {
+        return to.getDataAt(0) > start.getDataAt(0);
     }
 
-    protected static boolean zero(double start, double to) {
-        return start == 0 && to == 0;
+    protected static boolean zero(RAbstractIntVector start, RAbstractIntVector to) {
+        return start.getDataAt(0) == 0 && to.getDataAt(0) == 0;
     }
 
+    protected static boolean zero(RAbstractDoubleVector start, RAbstractIntVector to) {
+        return start.getDataAt(0) == 0 && to.getDataAt(0) == 0;
+    }
+
+    protected static boolean zero(RAbstractDoubleVector start, RAbstractDoubleVector to) {
+        return start.getDataAt(0) == 0 && to.getDataAt(0) == 0;
+    }
+
+    protected static boolean startLengthOne(RAbstractVector start) {
+        return start.getLength() == 1;
+    }
+
+    protected static boolean toLengthOne(RAbstractVector start, RAbstractVector to) {
+        return to.getLength() == 1;
+    }
 }
