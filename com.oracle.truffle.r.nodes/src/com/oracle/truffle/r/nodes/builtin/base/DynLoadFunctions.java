@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -40,14 +41,21 @@ public class DynLoadFunctions {
     @RBuiltin(name = "dyn.load", kind = INTERNAL)
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
         @Specialization
-        public RList doDynLoad(String lib, byte local, byte now, @SuppressWarnings("unused") String unused) {
+        public RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
             controlVisibility();
+            // Length checked by GnuR
+            if (libVec.getLength() > 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
+            }
+            String lib = libVec.getDataAt(0);
+            // Length not checked by GnuR
+            byte local = localVec.getDataAt(0);
             try {
                 DLLInfo info = DLL.load(lib, asBoolean(local), asBoolean(now));
                 RList result = createDLLInfoList(info.toRValues());
                 return result;
             } catch (DLLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
         }
 
@@ -64,7 +72,7 @@ public class DynLoadFunctions {
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
             return RNull.instance;
         }

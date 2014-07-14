@@ -20,28 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.test.simple;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import org.junit.*;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.test.*;
 
-@RBuiltin(name = "debug.break", kind = PRIMITIVE)
-public abstract class DebugBreak extends RBuiltinNode {
+public class TestSimpleFormulae extends TestBase {
 
-    @SuppressWarnings("unused")
-    @Specialization
-    public RNull doBreak(VirtualFrame frame, RMissing arg) {
-        return RNull.instance;
-    }
-
-    @Specialization
-    public RNull doBreak(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
-        return RNull.instance;
+    @Test
+    public void testCreation() {
+        assertEval("{ typeof(a~b) }");
+        assertEval("{ class(a~b) }");
     }
 
 }

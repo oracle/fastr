@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.envframe;
 
 import java.util.*;
+import java.util.regex.*;
 import java.util.stream.*;
 
 import com.oracle.truffle.api.frame.*;
@@ -86,28 +87,21 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    public RStringVector ls(boolean allNames, String pattern) {
-        // TODO support pattern
+    public RStringVector ls(boolean allNames, Pattern pattern) {
         FrameDescriptor fd = frame.getFrameDescriptor();
         String[] names = getStringIdentifiers(fd);
-        int undefinedIdentifiers = 0;
+        ArrayList<String> matchedNamesList = new ArrayList<>(names.length);
         for (int i = 0; i < names.length; ++i) {
-            if (frame.getValue(fd.findFrameSlot(names[i])) == null) {
-                names[i] = null;
-                ++undefinedIdentifiers;
+            String name = names[i];
+            if (frame.getValue(fd.findFrameSlot(name)) == null) {
+                continue;
+            }
+            if (REnvironment.includeName(name, allNames, pattern)) {
+                matchedNamesList.add(name);
             }
         }
-        String[] definedNames = new String[names.length - undefinedIdentifiers];
-        int j = 0;
-        for (int i = 0; i < names.length; ++i) {
-            if (names[i] != null) {
-                definedNames[j++] = names[i];
-            }
-        }
-        if (!allNames) {
-            definedNames = REnvironment.removeHiddenNames(definedNames);
-        }
-        return RDataFactory.createStringVector(definedNames, RDataFactory.COMPLETE_VECTOR);
+        String[] data = new String[matchedNamesList.size()];
+        return RDataFactory.createStringVector(matchedNamesList.toArray(data), RDataFactory.COMPLETE_VECTOR);
     }
 
     @Override

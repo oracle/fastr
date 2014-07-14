@@ -31,6 +31,7 @@ import java.nio.file.FileSystem;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -44,16 +45,28 @@ public abstract class NormalizePath extends RBuiltinNode {
         FileSystem fileSystem = FileSystems.getDefault();
         for (int i = 0; i < results.length; i++) {
             String path = pathVec.getDataAt(i);
-            String normPath = Utils.tildeExpand(path);
+            String expandPath = Utils.tildeExpand(path);
+            String normPath = expandPath;
             try {
                 normPath = fileSystem.getPath(path).toRealPath().toString();
             } catch (IOException e) {
-                if (mustWork != RRuntime.LOGICAL_FALSE) {
-                    String msg = e instanceof NoSuchFileException ? "No such file or directory: " + path : e.toString();
-                    if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        throw RError.error(getEncapsulatingSourceSection(), msg);
+                if (mustWork == RRuntime.LOGICAL_FALSE) {
+                    // no error or warning
+                } else {
+                    Object[] errorArgs;
+                    Message msg;
+                    if (e instanceof NoSuchFileException) {
+                        errorArgs = new Object[]{i + 1, expandPath};
+                        msg = Message.NORMALIZE_PATH_NOSUCH;
                     } else {
-                        RContext.getInstance().setEvalWarning(msg);
+                        errorArgs = new Object[]{e.toString()};
+                        msg = Message.GENERIC;
+                    }
+                    if (mustWork == RRuntime.LOGICAL_TRUE) {
+                        throw RError.error(getEncapsulatingSourceSection(), msg, errorArgs);
+                    } else {
+                        // NA means warning
+                        RContext.getInstance().setEvalWarning(RError.formatMessage(msg, errorArgs));
                     }
                 }
             }

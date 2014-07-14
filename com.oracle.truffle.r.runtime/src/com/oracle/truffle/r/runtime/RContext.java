@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.runtime.REnvironment.*;
@@ -44,53 +45,79 @@ public final class RContext extends ExecutionContext {
 
     public static final int CONSOLE_WIDTH = 80;
 
+    /**
+     * The interface to the R console, which may have different implementations for different
+     * environments, but only one in any given VM execution. Since I/O is involved, all methods are
+     * tagged with {@link SlowPath}, as should the appropriate implementation methods.
+     */
     public interface ConsoleHandler {
         /**
          * Normal output with a new line.
          */
+        @SlowPath
         void println(String s);
 
         /**
          * Normal output without a newline.
          */
+        @SlowPath
         void print(String s);
+
+        /**
+         * Formatted output.
+         */
+        @SlowPath
+        void printf(String format, Object... args);
 
         /**
          * Error output with a newline.
          *
          * @param s
          */
+        @SlowPath
         void printErrorln(String s);
 
         /**
          * Error output without a newline.
          */
+        @SlowPath
         void printError(String s);
 
         /**
          * Read a line of input, newline omitted in result. Returns null if {@link #isInteractive()
          * == false}.
          */
+        @SlowPath
         String readLine();
 
         /**
          * Return {@code true} if and only if this console is interactive.
          */
+        @SlowPath
         boolean isInteractive();
 
         /**
          * Redirect error output to the normal output.
          */
+        @SlowPath
         void redirectError();
+
+        /**
+         * Get the current prompt.
+         */
+        @SlowPath
+        String getPrompt();
 
         /**
          * Set the R prompt.
          */
+        @SlowPath
         void setPrompt(String prompt);
 
         /**
          * Get the console width.
          */
+        @SlowPath
         int getWidth();
     }
 
@@ -154,7 +181,7 @@ public final class RContext extends ExecutionContext {
         Object parseAndEvalTest(String rscript, boolean printResult);
 
         /**
-         * Evaluate an {@link RExpression} in a given environment {@code envir}.
+         * Support for the {@code eval} family of builtin functions.
          *
          * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
          *            {@code evalq} being invoked.
@@ -162,10 +189,20 @@ public final class RContext extends ExecutionContext {
         Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
 
         /**
-         * Similar to {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} but for a
-         * single langugge element.
+         * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} for a single
+         * language element.
          */
         Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+
+        /**
+         * Evaluate {@code expr} in {@code frame}.
+         */
+        Object eval(RExpression expr, VirtualFrame frame);
+
+        /**
+         * Variant of {@link #eval(RExpression, VirtualFrame)} for a single language element.
+         */
+        Object eval(RLanguage expr, VirtualFrame frame);
 
         /**
          * Evaluate a promise in the given frame, where we can use the {@link VirtualFrame}) of the
@@ -178,6 +215,13 @@ public final class RContext extends ExecutionContext {
          * <b>only</b> be called by the {@link RPromise} class.
          */
         Object evalPromise(RPromise expr) throws RError;
+
+        /**
+         * Print 'e' and any associated warnings.
+         *
+         * @param e
+         */
+        void printRError(RError e);
 
     }
 

@@ -29,10 +29,10 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.DetachException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
- * TODO The specialization signatures are weird owing to issues with named parameter handling in
- * snippets.
+ * TODO The specialization signatures are weird owing to issues with named parameter handling.
  */
 public class AttachFunctions {
     @RBuiltin(name = "attach", kind = INTERNAL)
@@ -49,8 +49,8 @@ public class AttachFunctions {
         }
 
         @Specialization(order = 1)
-        public REnvironment doAttach(RNull what, double pos, String name) {
-            return doAttach(what, (int) pos, name);
+        public REnvironment doAttach(RNull what, double pos, RAbstractStringVector name) {
+            return doAttach(what, (int) pos, name.getDataAt(0));
         }
 
         @Specialization(order = 2)
@@ -160,7 +160,7 @@ public class AttachFunctions {
             try {
                 return REnvironment.detach(pos, unload, force);
             } catch (DetachException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
         }
     }

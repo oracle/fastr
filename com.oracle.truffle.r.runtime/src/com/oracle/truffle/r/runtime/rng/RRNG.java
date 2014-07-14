@@ -15,6 +15,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.mm.*;
@@ -124,12 +125,12 @@ public class RRNG {
      * R Errors and warnings are possible during operations like {@link #doSetSeed}, which are all
      * passed back to the associated builtin.
      */
-    public static class RNGException extends Exception {
+    public static class RNGException extends RErrorException {
         private static final long serialVersionUID = 1L;
         private boolean isError;
 
-        public RNGException(String msg, boolean isError) {
-            super(msg);
+        public RNGException(RError.Message msg, boolean isError, Object... args) {
+            super(msg, args);
             this.isError = isError;
         }
 
@@ -210,7 +211,7 @@ public class RRNG {
                 kind = setKind(kindAsInt);
                 if (!kind.available) {
                     CompilerDirectives.transferToInterpreter();
-                    throw new RNGException("RNG kind " + kind + " is not available", true);
+                    throw new RNGException(RError.Message.RNG_BAD_KIND, true, kind);
                 }
             }
         } else {
@@ -237,7 +238,7 @@ public class RRNG {
     private static Kind setKind(int kindAsInt) throws RNGException {
         if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length) {
             CompilerDirectives.transferToInterpreter();
-            throw new RNGException("unimplemented RNG kind " + kindAsInt, true);
+            throw new RNGException(RError.Message.RNG_NOT_IMPL_KIND, true, kindAsInt);
         }
         return Kind.VALUES[kindAsInt];
 

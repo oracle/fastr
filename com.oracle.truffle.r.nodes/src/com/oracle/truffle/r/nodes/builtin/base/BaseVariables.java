@@ -34,8 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * {@link RPackageVariables} class.
  *
  * N.B. Some variables are assigned explicitly in the R source files associated with the base
- * package. However, FastR does not evaluate those files in the same way as user code, so the
- * assignments are ignored. That might change at some point.
+ * package.
  */
 public class BaseVariables implements RPackageVariables.Handler {
     // @formatter:off
@@ -50,42 +49,64 @@ public class BaseVariables implements RPackageVariables.Handler {
     };
     // @formatter:on
 
+    private int initialized = -1;
+
     public BaseVariables() {
         RPackageVariables.registerHandler("base", this);
     }
 
     public void initialize(REnvironment env) {
-        for (String var : VARS) {
-            Object value = null;
-            switch (var) {
-                case ".GlobalEnv":
-                    value = REnvironment.globalEnv();
-                    break;
-                case ".BaseNamespaceEnv":
-                    value = REnvironment.baseNamespaceEnv();
-                    break;
-                case ".AutoloadEnv":
-                    value = REnvironment.autoloadEnv();
-                    break;
-                case ".Platform":
-                    // .Platform TODO be more accurate
-                    String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
-                    value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
-                    break;
-                case ".Library":
-                    value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrary());
-                    break;
-                case ".LibrarySite":
-                    value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrarySite(), RDataFactory.COMPLETE_VECTOR);
-                    break;
+        if (initialized > 0) {
+            return;
+        } else if (initialized < 0) {
+            for (String var : VARS) {
+                Object value = null;
+                switch (var) {
+                    case ".GlobalEnv":
+                        value = REnvironment.globalEnv();
+                        break;
+                    case ".BaseNamespaceEnv":
+                        value = REnvironment.baseNamespaceEnv();
+                        break;
+                    case ".AutoloadEnv":
+                        value = REnvironment.autoloadEnv();
+                        break;
+                    case ".Platform":
+                        // .Platform TODO be more accurate
+                        String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
+                        value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
+                        break;
+                    default:
+                        continue;
+                }
+                try {
+                    env.put(var, value);
+                } catch (PutException ex) {
+                    Utils.fail("error initializing base variables");
+                }
+            }
+        } else {
+            for (String var : VARS) {
+                Object value = null;
+                switch (var) {
+                    case ".Library":
+                        value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrary());
+                        break;
+                    case ".LibrarySite":
+                        value = RDataFactory.createStringVector(com.oracle.truffle.r.runtime.LibPaths.dotLibrarySite(), RDataFactory.COMPLETE_VECTOR);
+                        break;
+                    default:
+                        continue;
+                }
+                try {
+                    env.put(var, value);
+                } catch (PutException ex) {
+                    Utils.fail("error initializing base variables");
+                }
 
             }
-            try {
-                env.put(var, value);
-            } catch (PutException ex) {
-                Utils.fail("error initializing base variables");
-            }
         }
+        initialized++;
     }
 
 }

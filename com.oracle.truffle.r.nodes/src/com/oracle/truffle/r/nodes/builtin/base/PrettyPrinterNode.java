@@ -256,6 +256,12 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SlowPath
+    @Specialization(order = 90)
+    public String prettyPrintFormula(RFormula formula, Object listElementName) {
+        return formula.getSource().getCode();
+    }
+
     private String printAttributes(RAbstractVector vector, RAttributes attributes) {
         StringBuilder builder = new StringBuilder();
         for (RAttribute attr : attributes) {
@@ -807,7 +813,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
-            if (v == RRuntime.STRING_NA) {
+            if (v == RRuntime.STRING_NA || v == RRuntime.STRING_NaN) {
                 continue;
             }
             if (decimalPointOffsets[i] == -1) {
@@ -957,6 +963,18 @@ public abstract class PrettyPrinterNode extends RNode {
         @SlowPath
         @Specialization
         public String prettyPrintListElement(RLanguage operand, Object listElementName) {
+            return prettyPrintSingleElement(operand, listElementName);
+        }
+
+        @SlowPath
+        @Specialization
+        public String prettyPrintListElement(REnvironment operand, Object listElementName) {
+            return prettyPrintSingleElement(operand, listElementName);
+        }
+
+        @SlowPath
+        @Specialization
+        public String prettyPrintListElement(RFunction operand, Object listElementName) {
             return prettyPrintSingleElement(operand, listElementName);
         }
 

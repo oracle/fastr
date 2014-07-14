@@ -25,6 +25,7 @@ public class Constant extends ASTNode {
         INT,
         BOOL,
         STRING,
+        FORMULA,
         NULL
     }
 

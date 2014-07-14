@@ -53,6 +53,7 @@ public class RRuntime {
     public static final int TRUE = 1;
     public static final int FALSE = 0;
     public static final String STRING_NA = new String("NA");
+    public static final String STRING_NaN = new String("NaN");
     public static final String STRING_TRUE = new String("TRUE");
     public static final String STRING_FALSE = new String("FALSE");
     public static final int INT_NA = Integer.MIN_VALUE;
@@ -80,6 +81,7 @@ public class RRuntime {
     public static final String TYPE_LOGICAL = new String("logical");
     public static final String TYPE_RAW = new String("raw");
     public static final String TYPE_LIST = new String("list");
+    public static final String TYPE_FORMULA = new String("formula");
     public static final String TYPE_FUNCTION = new String("function");
     public static final String TYPE_MATRIX = new String("matrix");
     public static final String TYPE_ARRAY = new String("array");
@@ -472,7 +474,7 @@ public class RRuntime {
             return "-Inf";
         }
         if (Double.isNaN(operand)) {
-            return "NaN";
+            return STRING_NaN;
         }
 
         /*

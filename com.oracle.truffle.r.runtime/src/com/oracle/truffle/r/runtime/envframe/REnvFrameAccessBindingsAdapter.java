@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.envframe;
 
 import java.util.*;
+import java.util.regex.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
@@ -64,7 +65,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     }
 
     @Override
-    public RStringVector ls(boolean allNames, String pattern) {
+    public RStringVector ls(boolean allNames, Pattern pattern) {
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -94,7 +95,7 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
 
     @SlowPath
     public PutException createPutException(String key) {
-        return new PutException("cannot change value of locked binding for '" + key + "'");
+        return new PutException(RError.Message.ENV_CHANGE_BINDING, key);
     }
 
     @Override

@@ -26,6 +26,7 @@ import java.io.*;
 
 import jline.console.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 
 public class JLineConsoleHandler implements RContext.ConsoleHandler {
@@ -39,16 +40,24 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
         this.isInteractive = isInteractive;
     }
 
+    @SlowPath
     public void println(String s) {
         printWriter.println(s);
         printWriter.flush();
     }
 
+    @SlowPath
     public void print(String s) {
         printWriter.print(s);
         printWriter.flush();
     }
 
+    @SlowPath
+    public void printf(String format, Object... args) {
+        printWriter.format(format, args);
+    }
+
+    @SlowPath
     public String readLine() {
         try {
             return console.readLine();
@@ -62,10 +71,12 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
         return isInteractive;
     }
 
+    @SlowPath
     public void printErrorln(String s) {
         println(s);
     }
 
+    @SlowPath
     public void printError(String s) {
         print(s);
     }
@@ -73,6 +84,12 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     public void redirectError() {
     }
 
+    @SlowPath
+    public String getPrompt() {
+        return console.getPrompt();
+    }
+
+    @SlowPath
     public void setPrompt(String prompt) {
         console.setPrompt(prompt);
     }

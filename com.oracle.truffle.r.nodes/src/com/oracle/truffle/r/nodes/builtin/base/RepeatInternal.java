@@ -104,7 +104,42 @@ public abstract class RepeatInternal extends RBuiltinNode {
         return RDataFactory.createStringVector(array, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
+    @Specialization(order = 10)
+    public RStringVector repInt(RStringVector value, RIntVector timesVec) {
+        controlVisibility();
+        int valueLength = value.getLength();
+        int times = timesVec.getLength();
+        if (!(times == 1 || times == valueLength)) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
+        }
+        String[] array;
+        if (times == 1) {
+            int length = value.getLength() * times;
+            array = new String[length];
+            for (int i = 0; i < times; i++) {
+                for (int j = 0; j < valueLength; ++j) {
+                    array[i * valueLength + j] = value.getDataAt(j);
+                }
+            }
+        } else {
+            int length = 0;
+            for (int k = 0; k < times; k++) {
+                length = length + timesVec.getDataAt(k);
+            }
+            array = new String[length];
+            int arrayIndex = 0;
+            for (int i = 0; i < valueLength; i++) {
+                String s = value.getDataAt(i);
+                int timesLen = timesVec.getDataAt(i);
+                for (int k = 0; k < timesLen; k++) {
+                    array[arrayIndex++] = s;
+                }
+            }
+        }
+        return RDataFactory.createStringVector(array, value.isComplete());
+    }
+
+    @Specialization(order = 11)
     public RList repList(RList value, int times) {
         controlVisibility();
         int oldLength = value.getLength();
