@@ -53,6 +53,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(0L,0L,0L) }");
         assertEval("{ seq(0L,0L) }");
         assertEval("{ seq(0,0,1i) }");
+        assertEvalError("{ seq(integer(), 7) }");
+        assertEvalError("{ seq(c(1,2), 7) }");
+        assertEvalError("{ seq(7, integer()) }");
+        assertEvalError("{ seq(7, c(41,42)) }");
     }
 
     @Test
@@ -635,6 +639,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sum(1:6, 3, 4) }");
         assertEval("{ sum(1:6, 3L, TRUE) }");
         assertEval("{ `sum`(1:10) }");
+        assertEval("{ x<-c(FALSE, FALSE); is.double(sum(x)) }");
+        assertEval("{ x<-c(FALSE, FALSE); is.integer(sum(x)) }");
     }
 
     @Test

@@ -115,13 +115,13 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization(order = 7)
-    public double doLogicalVector(RLogicalVector operand) {
-        double result = semantics.getIntStart();
+    public int doLogicalVector(RLogicalVector operand) {
+        int result = semantics.getIntStart();
         na.enable(operand);
         for (int i = 0; i < operand.getLength(); i++) {
             byte d = operand.getDataAt(i);
             na.enable(d);
-            result = na.check(d) ? RRuntime.DOUBLE_NA : arithmetic.op(result, d);
+            result = na.check(d) ? RRuntime.INT_NA : arithmetic.op(result, d);
             na.enable(result);
             if (na.check(result)) {
                 return result;
