@@ -302,7 +302,7 @@ public abstract class PrettyPrinterNode extends RNode {
             if (printNamesHeader) {
                 for (int i = 0; i < names.getLength(); i++) {
                     String s = names.getDataAt(i);
-                    if (s == RRuntime.STRING_NA) {
+                    if (RRuntime.isNA(s)) {
                         s = RRuntime.NA_HEADER;
                     }
                     maxWidth = Math.max(maxWidth, s.length());
@@ -363,7 +363,7 @@ public abstract class PrettyPrinterNode extends RNode {
                             builder.append(' ');
                         }
                         String headerString = names.getDataAt(index);
-                        if (headerString == RRuntime.STRING_NA) {
+                        if (RRuntime.isNA(headerString)) {
                             headerString = RRuntime.NA_HEADER;
                         }
                         for (int k = 0; k < actualColumnWidth - headerString.length(); ++k) {
@@ -404,7 +404,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(1);
             String dimId = dimNamesVector.getDataAt(r - 1);
-            if (dimId == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(dimId)) {
                 dimId = RRuntime.NA_HEADER;
             }
             wdiff = dataColWidth - dimId.length();
@@ -430,7 +430,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(0);
             String dimId = dimNamesVector.getDataAt(c - 1);
-            if (dimId == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(dimId)) {
                 dimId = RRuntime.NA_HEADER;
             }
             return dimId;
@@ -813,7 +813,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
-            if (v == RRuntime.STRING_NA || v == RRuntime.STRING_NaN) {
+            if (RRuntime.isNA(v) || RRuntime.isNaN(v)) {
                 continue;
             }
             if (decimalPointOffsets[i] == -1) {
@@ -831,7 +831,7 @@ public abstract class PrettyPrinterNode extends RNode {
         int lastLen = 0;
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
-            if (v == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(v)) {
                 // do not use NA for deciding alignment
                 continue;
             }
@@ -1414,7 +1414,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             if (columnDimNames != null) {
                 String columnName = columnDimNames.getDataAt(c);
-                if (columnName == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(columnName)) {
                     columnName = RRuntime.NA_HEADER;
                 }
                 if (columnName.length() > dataColWidths[c]) {

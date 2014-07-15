@@ -50,7 +50,7 @@ public abstract class Attributes extends RBuiltinNode {
         int z = 0;
         for (RAttribute attr : attributes) {
             names[z] = attr.getName();
-            if (names[z] == RRuntime.ROWNAMES_ATTR_KEY) {
+            if (names[z].equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 values[z] = Attr.getFullRowNames(attr.getValue());
             } else {
                 values[z] = attr.getValue();
