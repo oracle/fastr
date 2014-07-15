@@ -15,9 +15,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -49,19 +47,19 @@ public abstract class APerm extends RBuiltinNode {
 
         RVector realVector = vector.materialize();
         RVector result = realVector.createEmptySameType(vector.getLength(), vector.isComplete());
-        result.copyAttributesFrom(vector);
 
         if (resize == RRuntime.LOGICAL_NA) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
         } else if (resize == RRuntime.LOGICAL_TRUE) {
             result.setDimensions(pDim);
+        } else {
+            result.setDimensions(vector.getDimensions());
         }
 
         // Move along the old array using stride
         for (int i = 0; i < result.getLength(); i++) {
             int pos = toPos(applyPermute(posV, perm, true), dim);
             result.transferElementSameType(i, realVector, pos);
-
             posV = incArray(posV, pDim);
         }
 
@@ -101,8 +99,7 @@ public abstract class APerm extends RBuiltinNode {
         return arrayPerm;
     }
 
-    private int[] getDimensions(RAbstractVector v) {
-
+    private static int[] getDimensions(RAbstractVector v) {
         // Get dimensions move to int array
         RIntVector dimV = RDataFactory.createIntVector(v.getDimensions(), RDataFactory.COMPLETE_VECTOR);
         int dim[] = new int[dimV.getLength()];
@@ -112,8 +109,10 @@ public abstract class APerm extends RBuiltinNode {
         return dim;
     }
 
-    // Apply permute to an equal sized array
-    private int[] applyPermute(int[] a, int[] perm, boolean reverse) {
+    /**
+     * Apply permute to an equal sized array.
+     */
+    private static int[] applyPermute(int[] a, int[] perm, boolean reverse) {
         int[] newA = a.clone();
         if (reverse) {
             for (int i = 0; i < newA.length; i++) {
@@ -128,8 +127,10 @@ public abstract class APerm extends RBuiltinNode {
         return newA;
     }
 
-    // Increment a stride array
-    private int[] incArray(int[] a, int[] dim) {
+    /**
+     * Increment a stride array.
+     */
+    private static int[] incArray(int[] a, int[] dim) {
         int[] newA = a.clone();
         for (int i = 0; i < newA.length; i++) {
             newA[i]++;
@@ -141,8 +142,10 @@ public abstract class APerm extends RBuiltinNode {
         return newA;
     }
 
-    // Stride array to a linear position
-    private int toPos(int[] a, int[] dim) {
+    /**
+     * Stride array to a linear position.
+     */
+    private static int toPos(int[] a, int[] dim) {
         int pos = a[0];
         for (int i = 1; i < a.length; i++) {
             int dimSizeBefore = 1; // Total size of dimensions before the ith dimension.
