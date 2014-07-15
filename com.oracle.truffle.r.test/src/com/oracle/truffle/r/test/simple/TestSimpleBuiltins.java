@@ -1875,7 +1875,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAperm() {
         // default argument for permutation is transpose
         assertEval("{ a = array(1:4,c(2,2)); b = aperm(a); c(a[1,1] == b[1,1], a[1,2] == b[2,1], a[2,1] == b[1,2], a[2,2] == b[2,2]) }");
@@ -1884,7 +1883,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
 
         // no resize does not change the dimensions
-        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(3,2,1), resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
 
         // correct structure with resize
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1)); a[1,2,3] == b[2,3,1] }");
@@ -1898,6 +1897,19 @@ public class TestSimpleBuiltins extends TestBase {
         // correct structure without resize
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1), resize = FALSE); a[1,2,3] == b[2,1,2] }");
 
+        // no resize does not change the dimensions
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        assertEval("{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }");
+        assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
+    }
+
+    @Test
+    @Ignore
+    public void testApermBroken() {
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
+
+        // // The rest of these work but produce a slightly different output than R itself
         // first argument not an array
         assertEvalError("{ aperm(c(1,2,3)); }");
 
@@ -1905,13 +1917,16 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
 
         // perm is not a permutation vector
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,1)); }");
+        assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
 
         // perm value out of bounds
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
 
         // perm specified in complex numbers produces warning
         assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
+
+        // Invalid first argument, not array
+        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
     }
 
     @Test
@@ -2813,25 +2828,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testBuiltinPropagationIgnore() {
-        // aperm not implemented
-        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  aperm(m) }");
-        // sapply implementation incomplete
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; sapply(1:2, function(z) {x}) }");
-        // lapply not implemented
-        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1 ; lapply(1:2, function(z) {x}) }");
-        // eigen implementation problem
-        assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
-        // exp not implemented
-        assertEval("{ x <- 1 ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
-        // rep implementation problem
-        assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
-        // seq implementation problem
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
-    }
-
-    @Test
     public void testDefaultArgs() {
         assertEvalError("{ array(dim=c(-2,2)); }");
         assertEvalError("{ array(dim=c(-2,-2)); }");
@@ -3113,6 +3109,24 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
         assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
+    }
+
+    @Test
+    public void testSweep() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1, 5) }");
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1, 1:4) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testSweepBroken() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1:2, 5) }");
+
+        // Correct output but warnings
+        assertEval("{ A <- matrix(1:15, ncol=5); sweep(A, 2, colSums(A), \"/\") }");
+        assertEval("{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
+        assertEval("{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
     }
 
     @Test

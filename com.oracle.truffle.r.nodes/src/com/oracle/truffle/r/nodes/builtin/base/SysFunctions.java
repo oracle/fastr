@@ -74,7 +74,7 @@ public class SysFunctions {
                         data[i] = value;
                     } else {
                         data[i] = unset;
-                        if (unset == RRuntime.STRING_NA) {
+                        if (RRuntime.isNA(unset)) {
                             complete = RDataFactory.INCOMPLETE_VECTOR;
                         }
                     }
@@ -225,12 +225,12 @@ public class SysFunctions {
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < paths.length; i++) {
                 String path = vector.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     paths[i] = path;
                 } else {
                     paths[i] = doSysReadLink(path);
                 }
-                if (paths[i] == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(paths[i])) {
                     complete = RDataFactory.INCOMPLETE_VECTOR;
                 }
             }

@@ -85,14 +85,15 @@ public class NamespaceFunctions {
         @Specialization
         public RNull unregisterNamespace(@SuppressWarnings("unused") RAbstractStringVector name) {
             controlVisibility();
-            // REnvironment.unregisterNamespace(name, env);
+            // TODO implement
             return RNull.instance;
         }
 
         @Specialization
-        public Object doGetRegisteredNamespace(RSymbol name) {
+        public Object unregisterNamespace(RSymbol name) {
             controlVisibility();
-            return doGetRegisteredNamespace(name);
+            // TODO implement
+            return RNull.instance;
         }
     }
 

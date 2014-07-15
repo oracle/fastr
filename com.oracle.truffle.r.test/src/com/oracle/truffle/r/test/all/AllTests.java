@@ -3829,6 +3829,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_d789eedbfc9166e0b7f70ef343f75e96() {
+        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1 ; lapply(1:2, function(z) {x}) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_48555b07b59d80c7b427d6f16acb129d() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ; mm <- aperm(m) ; dim(mm) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagation_815238e2a76d61eb69db36c00e322f34() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  aperm(m) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagationIgnore_d7181010a1cd39e67a56ceb71922fff9() {
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; sapply(1:2, function(z) {x}) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagationIgnore_df9b3724960b222fffd20b6a1ef94ed5() {
+        assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagationIgnore_34276682124e7b74954e779277f54a3f() {
+        assertEval("{ x <- 1 ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagationIgnore_dd00df1d23bd40731a3be30ec8fa4cbe() {
+        assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testBuiltinPropagationIgnore_1c5a0061ff8753565f24001f9747bc4e() {
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testCastsIgnore_7421f56a7aeb2d6ab6fb29c2bdb776f6() {
         assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; as.character(x) }");
     }
@@ -4374,8 +4414,8 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testAperm_f7e5d7608001661c62ccda8a927e658a() {
-        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+    public void TestSimpleBuiltins_testAperm_a44dcb12a161c80753a826c8cc64162f() {
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(3,2,1), resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
     }
 
     @Test
@@ -4399,27 +4439,52 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testAperm_fc6d4e2ce3038c9b44e62938ed037b59() {
+    public void TestSimpleBuiltins_testAperm_4add6598c117f23c8c1cb3d9b4563b83() {
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAperm_025f5f0ac98c21871856e4ccb8473fc6() {
+        assertEval("{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAperm_93787a031ea4647e8f956a92e160120b() {
+        assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testApermBroken_f54817b85a2f5e115a2abb393bbfc271() {
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testApermBroken_fc6d4e2ce3038c9b44e62938ed037b59() {
         assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAperm_f663b80fd121c4a4b2fe9d966eb3db55() {
+    public void TestSimpleBuiltins_testApermBroken_3d260fe7d682d16e5eabf013f369333f() {
+        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testApermBroken_f663b80fd121c4a4b2fe9d966eb3db55() {
         assertEvalError("{ aperm(c(1,2,3)); }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAperm_6a90b304900b2f56fb170f26490d9bca() {
+    public void TestSimpleBuiltins_testApermBroken_6a90b304900b2f56fb170f26490d9bca() {
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAperm_ad567449416f42ba7d5a044a3ee92935() {
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,1)); }");
+    public void TestSimpleBuiltins_testApermBroken_ced88e799f3281fae93e9a290dc0db54() {
+        assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testAperm_d452fc9657b296292ea89b31c89a766b() {
+    public void TestSimpleBuiltins_testApermBroken_d452fc9657b296292ea89b31c89a766b() {
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
     }
 
@@ -5141,41 +5206,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testAttributes_25c4c05e4a7dcd010c688402b165d623() {
         assertEvalError("{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_815238e2a76d61eb69db36c00e322f34() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  aperm(m) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_d7181010a1cd39e67a56ceb71922fff9() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; sapply(1:2, function(z) {x}) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_d789eedbfc9166e0b7f70ef343f75e96() {
-        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1 ; lapply(1:2, function(z) {x}) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_df9b3724960b222fffd20b6a1ef94ed5() {
-        assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_34276682124e7b74954e779277f54a3f() {
-        assertEval("{ x <- 1 ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_dd00df1d23bd40731a3be30ec8fa4cbe() {
-        assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testBuiltinPropagationIgnore_1c5a0061ff8753565f24001f9747bc4e() {
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
     }
 
     @Test
@@ -12279,6 +12309,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSweep_e24a1c4daaefe50141a40faf1a62fb5e() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1, 5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSweep_9e8a6ff0f6a0d04d2fcf91df2159b428() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1, 1:4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSweepBroken_922919324a346071a3eb17872bd65bfd() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1:2, 5) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSweepBroken_764897cc4d4562a31c107658a96cc3b2() {
+        assertEval("{ A <- matrix(1:15, ncol=5); sweep(A, 2, colSums(A), \"/\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSweepBroken_403bf44c1ac2aaf3d8cdb91d68b2345d() {
+        assertEval("{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSweepBroken_542d39a4358474b0ed5e7284b7652493() {
+        assertEval("{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSwitch_0ef1267c5231c8f77c6c70a3be60a626() {
         assertEval("{ test1 <- function(type) { switch(type, mean = 1, median = 2, trimmed = 3) };test1(\"median\")}");
     }
@@ -15344,7 +15404,7 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testReturn_ea86042d5ec0a9de6c14aabc98049cf0() {
+    public void TestSimpleFunctions_testReturnIgnore_ea86042d5ec0a9de6c14aabc98049cf0() {
         assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
     }
 

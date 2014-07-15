@@ -48,7 +48,7 @@ F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
 
 
 all:
-	echo $(LIB_DERIVED) is up to date
+	@echo $(LIB_DERIVED) is up to date
 
 force: $(LIB_DERIVED)
 
