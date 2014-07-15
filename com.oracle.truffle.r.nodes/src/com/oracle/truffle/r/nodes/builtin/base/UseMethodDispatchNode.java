@@ -17,6 +17,8 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -45,16 +47,37 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
-        List<Object> argList = new ArrayList<>();
-        for (int i = 0; i < RArguments.getArgumentsLength(frame); ++i) {
-            Object arg = RArguments.getArgument(frame, i);
+        FormalArguments formals = ((RRootNode) targetFunction.getTarget().getRootNode()).getFormalArguments();
+
+        int defaultCount = formals.getArgsCount();
+        int argCount = RArguments.getArgumentsLength(frame);
+        int argListSize = Math.max(argCount, defaultCount);
+        ArrayList<Object> argList = new ArrayList<>(argListSize);
+        int fi = 0;
+        for (; fi < argCount; ++fi) {
+            Object arg = RArguments.getArgument(frame, fi);
             if (arg instanceof Object[]) {
-                for (Object anArg : (Object[]) arg) {
+                Object[] arrayArg = (Object[]) arg;
+                argListSize += arrayArg.length;
+                argList.ensureCapacity(argListSize);
+
+                for (Object anArg : arrayArg) {
                     argList.add(anArg);
                 }
             } else {
-                argList.add(arg);
+                // TODO Gero: Replace with proper missing handling when available!
+                if (arg == RMissing.instance) {
+                    argList.add(formals.getDefaultArgs()[fi].execute(frame));
+                } else {
+                    argList.add(arg);
+                }
             }
+        }
+        // TODO Gero, move this to ArgumentsMatcher
+
+        while (fi < defaultCount) {
+            argList.add(formals.getDefaultArgs()[fi].execute(frame));
+            fi++;
         }
 
         return executeHelper2(callerFrame, argList);

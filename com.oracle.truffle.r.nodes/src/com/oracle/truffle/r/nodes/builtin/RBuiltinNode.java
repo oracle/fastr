@@ -99,7 +99,8 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         // Create formal arguments
         String[] names = new String[node.getParameterNames().length];
         for (int i = 0; i < names.length; i++) {
-            names[i] = RRuntime.toString(node.getParameterNames()[i]);
+            Object nameObj = node.getParameterNames()[i];
+            names[i] = nameObj == null ? "" : RRuntime.toString(nameObj);
         }
         FormalArguments formals = FormalArguments.create(names, node.getParameterValues());
 

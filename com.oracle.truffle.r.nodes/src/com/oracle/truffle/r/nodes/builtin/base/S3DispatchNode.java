@@ -15,7 +15,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -29,7 +28,6 @@ public abstract class S3DispatchNode extends DispatchNode {
     @Child protected WriteVariableNode wvnClass;
     @Child protected WriteVariableNode wvnMethod;
     @Child protected WriteVariableNode wvnDefEnv;
-    @Child protected RNode[] argNodes;
     @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;
