@@ -1,8 +1,10 @@
 com.oracle.truffle.r.native/src/fft.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/AnyDuplicated.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/APerm.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/binary/CastTypeNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Base.r,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Covcor.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/CumProd.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/ColMeans.java,purdue.copyright 
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/CumMax.java,purdue.copyright 
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/CumMin.java,purdue.copyright 
