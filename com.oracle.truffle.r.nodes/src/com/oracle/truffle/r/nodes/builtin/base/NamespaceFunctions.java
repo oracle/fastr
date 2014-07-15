@@ -90,7 +90,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        public Object unregisterNamespace(RSymbol name) {
+        public Object unregisterNamespace(@SuppressWarnings("unused") RSymbol name) {
             controlVisibility();
             // TODO implement
             return RNull.instance;

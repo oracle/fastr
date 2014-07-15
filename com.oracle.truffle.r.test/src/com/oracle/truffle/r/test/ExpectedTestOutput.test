@@ -9516,6 +9516,22 @@ list()
 #{ seq(1L,4L,2L) }
 [1] 1 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(7, c(41,42)) }
+Error in seq.default(7, c(41, 42)) : 'to' must be of length 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(7, integer()) }
+Error in seq.default(7, integer()) : 'to' must be of length 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(c(1,2), 7) }
+Error in seq.default(c(1, 2), 7) : 'from' must be of length 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(integer(), 7) }
+Error in seq.default(integer(), 7) : 'from' must be of length 1
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatementNamedParams
 #{ seq(from=-10,to=-5,by=2) }
 [1] -10  -8  -6
@@ -9901,6 +9917,14 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ sum(c(0, 1, 2, 3), 4) }
 [1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ x<-c(FALSE, FALSE); is.double(sum(x)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ x<-c(FALSE, FALSE); is.integer(sum(x)) }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSummaryGroupDispatch
 #{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};max(x)}

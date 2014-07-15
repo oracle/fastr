@@ -11379,6 +11379,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSequenceStatement_b940a1279877f01f5357ef57c949a8de() {
+        assertEvalError("{ seq(integer(), 7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_784211c4794312cf9de4332b21284e1a() {
+        assertEvalError("{ seq(c(1,2), 7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_3b53bae7d8fef5a75a6e7078ccf5ffd8() {
+        assertEvalError("{ seq(7, integer()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSequenceStatement_c16f183220096a8e3416e90afca5b4e3() {
+        assertEvalError("{ seq(7, c(41,42)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSequenceStatementIgnore_6e0da5f0115b849917bed14234134dd1() {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,3,10), seq(2L,4L,2L),c(TRUE,FALSE)) }");
     }
@@ -12261,6 +12281,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSum_7324adc5a5f1b8a978ff297c7cc86279() {
         assertEval("{ `sum`(1:10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_2c8403bf4699bb7d77a5cc1a5e7cf099() {
+        assertEval("{ x<-c(FALSE, FALSE); is.double(sum(x)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSum_17b5c1eee2de2427b9a9473d6187fd28() {
+        assertEval("{ x<-c(FALSE, FALSE); is.integer(sum(x)) }");
     }
 
     @Test
