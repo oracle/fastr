@@ -3069,6 +3069,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleFunctions_testReturnIgnore_ea86042d5ec0a9de6c14aabc98049cf0() {
+        assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
+    }
+
+    @Ignore
     public void TestSimpleIfEvaluator_testCast_9199af29689a0510d0f2b7657d6f9656() {
         assertEvalError("{ if (integer()) { TRUE } }");
     }
