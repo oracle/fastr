@@ -18,6 +18,8 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
@@ -32,6 +34,7 @@ public abstract class DispatchedCallNode extends RNode {
         return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
     }
 
+    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "RDotGroup is intended to be used as an identity")
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final CallArgumentsNode callArgsNode) {
         if (dispatchType == RGroupGenerics.RDotGroup) {
             return new ResolvedDispatchedCallNode(GroupDispatchNode.create(genericName, callArgsNode));

@@ -29,6 +29,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 /**
  * Base class for all vectors.
  *
@@ -530,6 +532,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         }
     }
 
+    @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "all three string constants below are supposed to be used as identities")
     public void copyRegAttributesFrom(RAbstractVector vector) {
         RAttributes orgAttributes = vector.getAttributes();
         if (orgAttributes == null) {

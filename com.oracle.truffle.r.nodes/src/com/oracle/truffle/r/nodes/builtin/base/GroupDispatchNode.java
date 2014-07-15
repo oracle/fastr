@@ -23,6 +23,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 public class GroupDispatchNode extends S3DispatchNode {
 
     @Child protected WriteVariableNode wvnGroup;
@@ -41,6 +43,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         this.callArgsNode = callArgNode;
     }
 
+    @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "GROUP_OPS is intended to be used as an identity")
     public static GroupDispatchNode create(final String aGenericName, final CallArgumentsNode callArgNode) {
         final String grpName = RGroupGenerics.getGroup(aGenericName);
         if (grpName == RGroupGenerics.GROUP_OPS) {
