@@ -128,12 +128,11 @@ def gate(args):
     if rc != 0:
         mx.abort('copyright errors')
 
-    # activate these to enable FindBugs in the gate
-    #t = mx.GateTask('FindBugs')
-    #rc = findbugs([])
-    #t.stop()
-    #if rc != 0:
-    #    mx.abort('FindBugs warnings were found')
+    t = mx.GateTask('FindBugs')
+    rc = findbugs([])
+    t.stop()
+    if rc != 0:
+        mx.abort('FindBugs warnings were found')
 
     _check_autogen_tests(True)
     mx.gate(args, _fastr_gate_body)
