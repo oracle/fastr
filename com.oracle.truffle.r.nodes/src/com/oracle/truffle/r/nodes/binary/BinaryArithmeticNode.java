@@ -190,7 +190,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         ret.copyNamesFrom(left);
         return ret;
     }
-    
+
     @Specialization(order = 56)
     public RIntVector doUnaryIntSequence(RIntSequence left, RMissing right) {
         checkUnary();
@@ -228,7 +228,6 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         ret.copyNamesFrom(left);
         return ret;
     }
-
 
     private void checkUnary() {
         if (unary == null) {
@@ -452,6 +451,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     @Specialization(order = 337)
     public RDoubleVector doDoubleSequenceDoubleOp(RDoubleSequence left, double right) {
         return performDoubleVectorOp(left, right);
+    }
+
+    @Specialization(order = 338)
+    public RDoubleVector doDoubleSequenceDoubleOp(RDoubleSequence left, int right) {
+        return performDoubleVectorOp(left, rightNACheck.convertIntToDouble(right));
     }
 
     public boolean canCreateSequenceResultWithRight(Object left, double right) {
