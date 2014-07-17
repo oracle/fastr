@@ -158,6 +158,12 @@ public abstract class Typeof extends RBuiltinNode {
         return "expression";
     }
 
+    @Specialization
+    public String typeof(RPairList pairlist) {
+        controlVisibility();
+        return "pairlist";
+    }
+
     @Specialization(order = 100, guards = "isFunctionBuiltin")
     public String typeofBuiltin(RFunction obj) {
         controlVisibility();
