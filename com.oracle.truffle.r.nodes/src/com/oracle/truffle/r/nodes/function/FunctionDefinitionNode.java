@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
@@ -50,6 +51,11 @@ public final class FunctionDefinitionNode extends RRootNode {
      */
     private final boolean substituteFrame;
 
+    /**
+     * Profiling for catching {@link ReturnException}s.
+     */
+    private final BranchProfile returnProfile = new BranchProfile();
+
     public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description, boolean substituteFrame) {
         super(src, parameterNames, descriptor.getDescriptor());
         this.descriptor = descriptor;
@@ -74,6 +80,7 @@ public final class FunctionDefinitionNode extends RRootNode {
                 return body.execute(frame);
             }
         } catch (ReturnException ex) {
+            returnProfile.enter();
             return ex.getResult();
         }
     }
