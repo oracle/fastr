@@ -1,15 +1,27 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ * 
+ * Copyright (c) 2014, Purdue University
+ * Copyright (c) 2014, Oracle and/or its affiliates
+ * All rights reserved.
+ */
 package com.oracle.truffle.r.test.testrgen;
 
-import java.util.*;
 import org.junit.*;
+
 import com.oracle.truffle.r.test.*;
-public class  TestrGenBuiltinstdin extends TestBase {
+
+public class TestrGenBuiltinstdin extends TestBase {
+
 	@Test
-		public void teststdin1(){
+	public void teststdin1(){
 		assertEval(" .Internal(stdin())");
 	}
+
 	@Test
-		public void teststdin2(){
+	public void teststdin2(){
 		assertEval(" .Internal(stdin())");
 	}
 }

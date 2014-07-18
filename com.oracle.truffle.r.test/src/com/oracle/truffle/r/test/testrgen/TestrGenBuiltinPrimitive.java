@@ -1,15 +1,27 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ * 
+ * Copyright (c) 2014, Purdue University
+ * Copyright (c) 2014, Oracle and/or its affiliates
+ * All rights reserved.
+ */
 package com.oracle.truffle.r.test.testrgen;
 
-import java.util.*;
 import org.junit.*;
+
 import com.oracle.truffle.r.test.*;
-public class  TestrGenBuiltinPrimitive extends TestBase {
+
+public class TestrGenBuiltinPrimitive extends TestBase {
+
 	@Test
-		public void testPrimitive1(){
+	public void testPrimitive1(){
 		assertEval("argv <- list(\'c\');.Primitive(argv[[1]]);");
 	}
+
 	@Test
-		public void testPrimitive2(){
+	public void testPrimitive2(){
 		assertEval("argv <- list(\'c\');.Primitive(argv[[1]]);");
 	}
 }

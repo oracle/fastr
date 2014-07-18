@@ -1,47 +1,67 @@
+/*
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ * 
+ * Copyright (c) 2014, Purdue University
+ * Copyright (c) 2014, Oracle and/or its affiliates
+ * All rights reserved.
+ */
 package com.oracle.truffle.r.test.testrgen;
 
-import java.util.*;
 import org.junit.*;
+
 import com.oracle.truffle.r.test.*;
-public class  TestrGenBuiltinvector extends TestBase {
+
+public class TestrGenBuiltinvector extends TestBase {
+
 	@Test
-		public void testvector1(){
+	public void testvector1(){
 		assertEval("argv <- list(\'integer\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector2(){
+	public void testvector2(){
 		assertEval("argv <- list(\'double\', 17.1); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector3(){
+	public void testvector3(){
 		assertEval("argv <- list(\'list\', 1L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector4(){
+	public void testvector4(){
 		assertEval("argv <- list(\'logical\', 15L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector5(){
+	public void testvector5(){
 		assertEval("argv <- list(\'double\', 2); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector6(){
+	public void testvector6(){
 		assertEval("argv <- list(\'integer\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector7(){
+	public void testvector7(){
 		assertEval("argv <- list(\'logical\', 15L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector8(){
+	public void testvector8(){
 		assertEval("argv <- list(\'double\', 2); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector9(){
+	public void testvector9(){
 		assertEval("argv <- list(\'raw\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
+
 	@Test
-		public void testvector10(){
+	public void testvector10(){
 		assertEval("argv <- list(\'list\', structure(1L, .Names = \'\\\\c\')); .Internal(vector(argv[[1]], argv[[2]]))");
 	}
 }
