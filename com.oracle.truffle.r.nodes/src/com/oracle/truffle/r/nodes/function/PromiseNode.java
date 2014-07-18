@@ -97,14 +97,24 @@ public class PromiseNode extends RNode {
      * @see EvalPolicy#RAW
      */
     private static class RawPromiseNode extends PromiseNode {
+        @Child private RNode suppliedArg;
+        @Child private RNode defaultArg;
+
         public RawPromiseNode(RPromise promise) {
             super(promise);
+            this.suppliedArg = (RNode) promise.getRep();
+            this.defaultArg = (RNode) promise.getDefaultRep().getRep();
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            // TODO Gero, WRONG! Normally take (null, frame), but env seems to be messes up... :-/
-            return promise.evaluate(frame, frame);
+            // TODO builtin.inline: We do re-evaluation every execute inside the caller frame, as we
+            // know that the evaluation of default values has no side effects (hopefully!)
+            Object obj = suppliedArg.execute(frame);
+            if (RPromise.isSymbolMissing(obj)) {
+                obj = defaultArg.execute(frame);
+            }
+            return obj;
         }
     }
 }

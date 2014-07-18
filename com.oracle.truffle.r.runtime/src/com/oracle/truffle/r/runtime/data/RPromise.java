@@ -154,7 +154,7 @@ public class RPromise extends RLanguageRep {
         return result;
     }
 
-    private static boolean isSymbolMissing(Object obj) {
+    public static boolean isSymbolMissing(Object obj) {
         // TODO Missing!
         return obj == RMissing.instance;
     }
