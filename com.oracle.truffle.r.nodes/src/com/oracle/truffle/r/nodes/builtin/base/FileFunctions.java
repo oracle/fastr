@@ -49,7 +49,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     boolean ok = true;
@@ -128,7 +128,7 @@ public class FileFunctions {
             for (int i = 0; i < len; i++) {
                 String from = vecFrom.getDataAt(i % lenFrom);
                 String to = vecTo.getDataAt(i % lenTo);
-                if (from == RRuntime.STRING_NA || to == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
@@ -189,7 +189,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     File f = new File(Utils.tildeExpand(path));
@@ -225,7 +225,7 @@ public class FileFunctions {
                 String to = vecTo.getDataAt(i);
                 // GnuR's behavior regarding NA is quite inconsistent (error, warning, ignored)
                 // we choose ignore
-                if (from == RRuntime.STRING_NA || to == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
@@ -254,7 +254,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     File f = new File(Utils.tildeExpand(path));
@@ -413,7 +413,7 @@ public class FileFunctions {
             String[] data = new String[vec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String name = vec.getDataAt(i);
-                if (name == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(name)) {
                     data[i] = name;
                     complete = RDataFactory.INCOMPLETE_VECTOR;
                 } else if (name.length() == 0) {
