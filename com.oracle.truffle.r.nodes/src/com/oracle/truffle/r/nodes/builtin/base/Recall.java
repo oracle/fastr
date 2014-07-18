@@ -46,7 +46,7 @@ public class Recall extends RCustomBuiltinNode {
         return PARAMETER_NAMES;
     }
 
-    @Child private IndirectCallNode callNode;
+    @Child private DirectCallNode callNode;
 
     @CompilationFinal private RFunction function;
 
@@ -63,10 +63,10 @@ public class Recall extends RCustomBuiltinNode {
             if (function == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
             }
-            callNode = insert(Truffle.getRuntime().createIndirectCallNode());
+            callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
         }
         Object[] argsObject = RArguments.create(function, createArgs(frame, arguments[0]));
-        return callNode.call(frame, function.getTarget(), argsObject);
+        return callNode.call(frame, argsObject);
     }
 
     @ExplodeLoop
