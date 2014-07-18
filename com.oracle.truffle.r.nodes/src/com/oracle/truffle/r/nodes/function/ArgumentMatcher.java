@@ -30,13 +30,15 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 
 /**
  * An {@link ArgumentMatcher} knows the {@link #formals} of a specific function and can
- * {@link #match(RFunction, CallArgumentsNode, SourceSection)} supplied arguments to the formal
- * ones.
+ * {@link #match(RFunction, REnvironment, CallArgumentsNode, SourceSection)} supplied arguments to
+ * the formal ones.
  */
 public class ArgumentMatcher {
 
@@ -65,11 +67,11 @@ public class ArgumentMatcher {
      * @param encapsulatingSrc For precise error reporting
      * @return A fresh instance of {@link MatchedArgumentsNode}
      */
-    public static MatchedArgumentsNode matchArguments(RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
+    public static MatchedArgumentsNode matchArguments(RFunction function, VirtualFrame frame, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         ArgumentMatcher matcher = ArgumentMatcher.create(formals);
-        MatchedArgumentsNode matchedArgs = matcher.match(function, suppliedArgs, encapsulatingSrc);
-        return matchedArgs;
+        REnvironment env = EnvFunctions.frameToEnvironment(frame);
+        return matcher.match(function, env, suppliedArgs, encapsulatingSrc);
     }
 
     /**
@@ -80,8 +82,8 @@ public class ArgumentMatcher {
      * @return A {@link MatchedArgumentsNode} filled with {@link CallArgumentsNode#getArguments()}/
      *         {@link CallArgumentsNode#getNames()}
      */
-    public static MatchedArgumentsNode pseudoMatch(CallArgumentsNode suppliedArgs) {
-        return MatchedArgumentsNode.create(suppliedArgs.getArguments(), suppliedArgs.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+    public static UnevaluatedArguments pseudoMatch(CallArgumentsNode suppliedArgs) {
+        return new UnevaluatedArguments(suppliedArgs.getArguments(), suppliedArgs.getNames());
     }
 
     /**
@@ -95,15 +97,44 @@ public class ArgumentMatcher {
      * @return A {@link MatchedArgumentsNode} which contains a consolidated list of arguments, in
      *         the order of the {@link FormalArguments}
      */
-    public MatchedArgumentsNode match(RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
-        if (formals.getNameCount() == 0) {
-            // If there are no names used: Create new arrays and we're done
-            return MatchedArgumentsNode.create(suppliedArgs.getArguments(), formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
-        }
-
+    public MatchedArgumentsNode match(RFunction function, REnvironment env, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, new VarArgsAsObjectArrayNodeFactory(), encapsulatingSrc);
-        return MatchedArgumentsNode.create(resultArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+        RNode[] wrappedArgs = wrapInPromises(resultArgs, function, env, new DefaultPromiseWrapper());
+        return MatchedArgumentsNode.create(wrappedArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+    }
+
+    /**
+     * Match supplied arguments to formal arguments
+     *
+     * @param function
+     * @param suppliedArgs
+     * @param encapsulatingSrc For precise error reporting
+     * @return A fresh instance of {@link MatchedArgumentsNode}
+     */
+    public static UnevaluatedArguments matchArgumentsUnevaluated(RFunction function, VirtualFrame frame, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
+        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
+        ArgumentMatcher matcher = ArgumentMatcher.create(formals);
+        REnvironment env = EnvFunctions.frameToEnvironment(frame);
+        return matcher.matchUnevaluated(function, env, suppliedArgs, encapsulatingSrc);
+    }
+
+    /**
+     * Matches the supplied arguments to the {@link #formals} and returns them as consolidated
+     * {@link MatchedArgumentsNode}.<br/>
+     * <strong>Does not</strong> alter the given {@link CallArgumentsNode}
+     *
+     * @param function
+     * @param suppliedArgs
+     * @param encapsulatingSrc For precise error reporting
+     * @return A {@link MatchedArgumentsNode} which contains a consolidated list of arguments, in
+     *         the order of the {@link FormalArguments}
+     */
+    public UnevaluatedArguments matchUnevaluated(RFunction function, REnvironment env, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
+        // Rearrange arguments
+        RNode[] resultArgs = permuteArguments(function, suppliedArgs, new VarArgsAsObjectArrayNodeFactory(), encapsulatingSrc);
+        RNode[] wrappedArgs = wrapInPromises(resultArgs, function, env, new BuiltinInitPromiseWrapper());
+        return new UnevaluatedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
     /**
@@ -113,13 +144,13 @@ public class ArgumentMatcher {
      * @param encapsulatingSrc For precise error reporting
      * @return A consolidated list of arguments in the order of the {@link #formals}. If there is
      *         neither a supplied arg nor a default one, the argument is <code>null</code>. Handles
-     *         named args and varargs.
+     *         named args and varargs, but does not insert default values! The resulting
+     *         <code>RNode[]</code> thus may contain <code>null</code>s.
      */
     protected RNode[] permuteArguments(RFunction function, CallArgumentsNode supplied, VarArgsFactory<RNode> listFactory, SourceSection encapsulatingSrc) {
         RNode[] suppliedArgs = supplied.getArguments();
         String[] suppliedNames = supplied.getNames();
         String[] formalNames = formals.getNames();
-        RNode[] defaultArgs = formals.getDefaultArgs();
 
         // Preparations
         int varArgIndex = formals.getVarArgIndex();
@@ -205,12 +236,6 @@ public class ArgumentMatcher {
             }
         }
 
-        // Now fill remaining missing fields with default values
-        for (int fi = 0; fi < resultArgs.length && fi < defaultArgs.length; fi++) {
-            if (resultArgs[fi] == null) {
-                resultArgs[fi] = defaultArgs[fi];
-            }
-        }
         return resultArgs;
     }
 
@@ -259,6 +284,86 @@ public class ArgumentMatcher {
             return found;
         }
         throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, debugArgNode != null ? debugArgNode.getSourceSection().getCode() : suppliedName);
+    }
+
+    /**
+     * @param arguments
+     * @param function
+     * @return A list of {@link RNode} wrapped in {@link PromiseNode}s
+     */
+    private RNode[] wrapInPromises(RNode[] arguments, RFunction function, REnvironment env, PromiseWrapper promiseWrapper) {
+        RNode[] defaultArgs = formals.getDefaultArgs();
+
+        // Check whether this is a builtin
+        RootNode rootNode = function.getTarget().getRootNode();
+        RBuiltinRootNode builtinRootNode = null;
+        if (rootNode instanceof RBuiltinRootNode) {
+            builtinRootNode = (RBuiltinRootNode) rootNode;
+        }
+
+        // Insert promises here!
+        int logicalIndex = 0;    // also counts arguments wrapped in vararg
+        for (int fi = 0; fi < arguments.length; fi++) {
+            RNode arg = arguments[fi];
+            if (arg == null) {
+                arg = ConstantNode.create(RMissing.instance);
+            } else if (arg instanceof VarArgsAsObjectArrayNode) {
+                VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
+                RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
+                for (int j = 0; j < varArgs.elementNodes.length; j++) {
+                    modifiedVArgumentNodes[j] = promiseWrapper.wrap(builtinRootNode, env, varArgs.elementNodes[j], null, logicalIndex);
+                    logicalIndex++;
+                }
+                arguments[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
+                continue;
+            }
+
+            RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
+            arguments[fi] = promiseWrapper.wrap(builtinRootNode, env, arg, defaultArg, logicalIndex);
+            logicalIndex++;
+        }
+        return arguments;
+    }
+
+    private interface PromiseWrapper {
+        /**
+         * @param builtinRootNode
+         * @param suppliedArg
+         * @param defaultValue
+         * @param logicalIndex
+         * @return TODO Gero, add comment!
+         */
+        RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex);
+    }
+
+    private static class DefaultPromiseWrapper implements PromiseWrapper {
+        /**
+         * TODO Gero, add comment!
+         */
+        public RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+            // This is for actual calls. However, if the arguments are meant for a builtin, we have
+            // to consider whether they should be forced or not!
+            // TODO Strict!
+            EvalPolicy policy = builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
+            RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
+            return PromiseNode.create(suppliedArg.getSourceSection(), new RPromise(suppliedArg, defaultValueNode, env, policy));
+        }
+    }
+
+    private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
+        /**
+         * TODO Gero, add comment!
+         */
+        public RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+            // This is for the initialization of builtins
+            assert builtinRootNode != null;
+            RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
+            if (!builtinRootNode.evaluatesArg(logicalIndex)) {
+                return PromiseNode.create(suppliedArg.getSourceSection(), new RPromise(suppliedArg, defaultValueNode, env, EvalPolicy.PROMISED));
+            } else {
+                return PromiseNode.create(suppliedArg.getSourceSection(), new RPromise(suppliedArg, defaultValueNode, env, EvalPolicy.RAW));
+            }
+        }
     }
 
     public interface VarArgsFactory<T> {
@@ -346,7 +451,7 @@ public class ArgumentMatcher {
     }
 
     public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
-        protected VarArgsAsObjectArrayNode(RNode[] elements) {
+        public VarArgsAsObjectArrayNode(RNode[] elements) {
             super(elements);
         }
 

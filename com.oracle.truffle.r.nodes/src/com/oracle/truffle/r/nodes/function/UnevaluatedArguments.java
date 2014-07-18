@@ -32,15 +32,15 @@ import com.oracle.truffle.r.runtime.*;
  *
  * @see #getNames()
  */
-public class EvaluatedArguments extends Arguments<RNode> {
+public class UnevaluatedArguments extends Arguments<RNode> {
 
-    EvaluatedArguments(RNode[] evaluatedArgs, String[] names) {
+    UnevaluatedArguments(RNode[] evaluatedArgs, String[] names) {
         super(evaluatedArgs, names);
     }
 
     /**
      * @return The argument array that contains the evaluated arguments
-     * @see EvaluatedArguments
+     * @see UnevaluatedArguments
      */
     public RNode[] getEvaluatedArgs() {
         return arguments;
@@ -49,7 +49,7 @@ public class EvaluatedArguments extends Arguments<RNode> {
     /**
      * @return The names of the arguments that where supplied for the function, in the order the
      *         function call specifies (NOT formal order)
-     * @see EvaluatedArguments
+     * @see UnevaluatedArguments
      */
     public String[] getNames() {
         return names;

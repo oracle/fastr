@@ -46,7 +46,7 @@ public class Recall extends RCustomBuiltinNode {
         return PARAMETER_NAMES;
     }
 
-    @Child protected CallArgumentsNode args;
+    @Child protected MatchedArgumentsNode matchedArgs;
     @Child private DirectCallNode callNode;
 
     public Recall(RBuiltinNode prev) {
@@ -65,13 +65,13 @@ public class Recall extends RCustomBuiltinNode {
         if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
-            args = insert(CallArgumentsNode.createUnnamed(true, false, createArgs(arguments[0])));
+            // Now we need to grap the arguments passed to this function and forward them to
+            matchedArgs = insert(MatchedArgumentsNode.createUnnamed(createArgs(arguments[0])));
             arguments[0] = null;
         }
 
         // Match arguments for function
-        MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, args, getEncapsulatingSourceSection());
-        Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
+        Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
         return callNode.call(frame, argsObject);
     }
 

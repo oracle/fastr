@@ -225,9 +225,9 @@ public abstract class RCallNode extends RNode {
                 RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
-                    MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, args, getEncapsulatingSourceSection());
-                    EvaluatedArguments evaluatedArgs = matchedArgs.getWrappedArguments(frame, function);
-                    return root.inline(evaluatedArgs);
+                    UnevaluatedArguments unevaluatedArgs = ArgumentMatcher.matchArgumentsUnevaluated(function, frame, args, getEncapsulatingSourceSection());
+                    // TODO Set proper parent <-> child relations for arguments!!
+                    return root.inline(unevaluatedArgs);
                 }
             }
 
@@ -238,7 +238,7 @@ public abstract class RCallNode extends RNode {
                 return new DispatchedVarArgsCallNode(function, args);
             } else {
                 // Nope! (peeewh)
-                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, args, getEncapsulatingSourceSection());
+                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, frame, args, getEncapsulatingSourceSection());
                 return new DispatchedCallNode(function, matchedArgs);
             }
         }
@@ -262,7 +262,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return call.call(frame, argsObject);
         }
     }
@@ -275,6 +275,7 @@ public abstract class RCallNode extends RNode {
 
         @Child protected CallArgumentsNode suppliedArgs;
         @Child protected DirectCallNode call;
+        @Child protected MatchedArgumentsNode matchedArgs;
 
         protected final RFunction function;
 
@@ -286,10 +287,13 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            // Needs to be called because the arguments passed via vararg may change each call!
-            MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, suppliedArgs, getEncapsulatingSourceSection());
+            // Needs to be created every time as function (and thus its arguments)
+            // may change each call
+            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(function, frame, suppliedArgs, getEncapsulatingSourceSection());
+            replaceChild(matchedArgs, newMatchedArgs);
+            matchedArgs = newMatchedArgs;
 
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return call.call(frame, argsObject);
         }
     }
@@ -302,6 +306,7 @@ public abstract class RCallNode extends RNode {
 
         @Child protected CallArgumentsNode suppliedArgs;
         @Child protected IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
+        @Child protected MatchedArgumentsNode matchedArgs;
 
         GenericCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
             super(functionNode);
@@ -312,9 +317,11 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction function) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, suppliedArgs, getEncapsulatingSourceSection());
+            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(function, frame, suppliedArgs, getEncapsulatingSourceSection());
+            replaceChild(matchedArgs, newMatchedArgs);
+            matchedArgs = newMatchedArgs;
 
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame, function));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return indirectCall.call(frame, function.getTarget(), argsObject);
         }
     }

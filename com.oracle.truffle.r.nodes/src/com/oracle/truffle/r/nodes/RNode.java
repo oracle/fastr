@@ -185,4 +185,11 @@ public abstract class RNode extends Node {
         return a.getLength() == b.getLength();
     }
 
+    public <T extends Node> T replaceChild(T oldChild, T newChild) {
+        if (oldChild == null) {
+            return insert(newChild);
+        } else {
+            return oldChild.replace(newChild);
+        }
+    }
 }

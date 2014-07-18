@@ -341,7 +341,7 @@ public class EnvFunctions {
     /**
      * Converts a {@link Frame} to an {@link REnvironment}.
      */
-    static REnvironment frameToEnvironment(Frame frame) {
+    public static REnvironment frameToEnvironment(Frame frame) {
         REnvironment env = checkNonFunctionFrame(frame);
         if (env == null) {
             env = lexicalChain(frame);

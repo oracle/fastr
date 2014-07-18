@@ -30,10 +30,7 @@ import com.oracle.truffle.r.nodes.*;
  *
  * @param <T> The type of {@link #arguments}
  */
-public class Arguments<T> {
-
-    public static final String VARARG_NAME = "...";
-    public static final int NO_VARARG = -1;
+public abstract class Arguments<T> implements ArgumentsTrait {
 
     /**
      * Array of arguments; semantics have to be specified by child classes
@@ -56,62 +53,12 @@ public class Arguments<T> {
     }
 
     /**
-     * @return {@link #getVarArgIndex(String[])}
-     */
-    public int getVarArgIndex() {
-        return getVarArgIndex(names);
-    }
-
-    /**
-     * @param names
-     * @return The index of {@link #VARARG_NAME} ({@value #VARARG_NAME}) inside names, or
-     *         {@link #NO_VARARG} ( {@value #NO_VARARG}) if there is none
-     */
-    static int getVarArgIndex(String[] names) {
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            if (VARARG_NAME.equals(name)) {
-                return i;
-            }
-        }
-        return NO_VARARG;
-    }
-
-    /**
-     * @return Whether one of {@link #names} matches {@link #VARARG_NAME} ( {@value #VARARG_NAME})
-     */
-    public boolean hasVarArgs() {
-        return getVarArgIndex() != NO_VARARG;
-    }
-
-    /**
-     * @return The number of {@link #names} that are not <code>null</code>
+     * @return See {@link ArgumentsTrait#getNameCount()}
      */
     public int getNameCount() {
         if (nameCountCache == null) {
-            nameCountCache = countNonNull(names);
+            nameCountCache = ArgumentsTrait.super.getNameCount();
         }
         return nameCountCache;
-    }
-
-    /**
-     * @param names
-     * @return The number of non-<code>null</code> values in the given String array
-     */
-    static int countNonNull(String[] names) {
-        int count = 0;
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] != null) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * @return The number of arguments
-     */
-    public int getArgsCount() {
-        return arguments.length;
     }
 }

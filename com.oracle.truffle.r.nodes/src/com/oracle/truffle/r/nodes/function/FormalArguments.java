@@ -74,4 +74,11 @@ public class FormalArguments extends Arguments<RNode> {
     public RNode[] getDefaultArgs() {
         return arguments;
     }
+
+    /**
+     * @return The length of the argument array
+     */
+    public int getArgsCount() {
+        return arguments.length;
+    }
 }

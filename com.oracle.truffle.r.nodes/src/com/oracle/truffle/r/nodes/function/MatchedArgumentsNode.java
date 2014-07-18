@@ -26,10 +26,9 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsNode;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsAsObjectArrayNode;
-import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * <p>
@@ -38,11 +37,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * supplied argument, the default argument or <code>null</code>, if neither is provided.
  * </p>
  * <p>
- * The {@link #executeArray(VirtualFrame, RFunction)} method converts these arguments into a form
- * that can be passed into functions. E.g., wraps arguments into Promises etc.
+ * The {@link #executeArray(VirtualFrame)} method converts these arguments into a form that can be
+ * passed into functions. E.g., wraps arguments into Promises etc.
  * </p>
  *
- * @see #suppliedNames
+ * //*@see #suppliedNames
  */
 public class MatchedArgumentsNode extends ArgumentsNode {
 
@@ -63,8 +62,20 @@ public class MatchedArgumentsNode extends ArgumentsNode {
 
     /**
      * @param arguments
-     * @param names
-     * @param suppliedNames
+     * @return ad
+     */
+    public static MatchedArgumentsNode createUnnamed(RNode[] arguments) {
+        String[] names = new String[arguments.length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = null;
+        }
+        SourceSection src = Utils.sourceBoundingBox(arguments);
+        return create(arguments, names, names, src);
+    }
+
+    /**
+     * @param arguments
+     * @param names //* @param suppliedNames
      * @param src
      * @return A fresh {@link MatchedArgumentsNode}; arguments may contain <code>null</code> iff
      *         there is neither a supplied argument nor a default argument
@@ -77,7 +88,7 @@ public class MatchedArgumentsNode extends ArgumentsNode {
 
     // Mark unusable
     /**
-     * Use {@link #executeArray(VirtualFrame, RFunction)} instead!
+     * Use {@link #executeArray(VirtualFrame)} instead!
      */
     @Override
     @Deprecated
@@ -85,96 +96,35 @@ public class MatchedArgumentsNode extends ArgumentsNode {
         throw new AssertionError();
     }
 
-    /**
-     * Use {@link #executeArray(VirtualFrame, RFunction)} instead!
-     */
     @Override
-    @Deprecated
     public Object[] executeArray(VirtualFrame frame) {
-        throw new AssertionError();
+        return doExecuteArray(frame);
     }
 
     /**
-     * This class does the heavy lifting in inspecting the TODO Add some comments!
-     * 
      * @param frame
-     * @return The wrapped arguments
+     * @return TODO Gero, add comment!
      */
     @ExplodeLoop
-    public Object[] executeArray(VirtualFrame frame, RFunction function) {
-        RNode[] wrappedArguments = doGetWrappedArguments(frame, function);
-
-        Object[] evaluatedArguments = new Object[wrappedArguments.length];
-        for (int i = 0; i < evaluatedArguments.length; i++) {
-            RNode wrappedArg = wrappedArguments[i];
-            if (wrappedArg != null) {
-                evaluatedArguments[i] = wrappedArg.execute(frame);
-            } else {
-                throw new AssertionError();
-            }
-        }
-
-        return evaluatedArguments;
-    }
-
-    public EvaluatedArguments getWrappedArguments(VirtualFrame frame, RFunction function) {
-        return new EvaluatedArguments(doGetWrappedArguments(frame, function), suppliedNames);
-    }
-
-    private RNode[] doGetWrappedArguments(@SuppressWarnings("unused") VirtualFrame frame, RFunction function) {
-        RNode[] wrappedArguments = new RNode[arguments.length];
-
-        int lix = 0;    // logical index
-        for (int fi = 0; fi < arguments.length; fi++) {
-            RNode arg = arguments[fi];
-            RNode result = null;
-
-            RRootNode rootNode = null;
-            boolean isBuiltin = false;
-            if (function == null) {
-                isBuiltin = true;
-            } else {
-                rootNode = (RRootNode) function.getTarget().getRootNode();
-                isBuiltin = rootNode instanceof RBuiltinRootNode;
-            }
-
-            if (arg == null) {
-                result = ConstantNode.create(RMissing.instance);
-                lix++;
-            } else if (isBuiltin && (rootNode == null || !((RBuiltinRootNode) rootNode).evaluatesArgs())) {
-                RNode argOrPromise = null;
-                RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
-                if (arg instanceof VarArgsAsObjectArrayNode) {
-                    VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) arg;
-                    RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
-                    for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
-                        modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
-                        lix++;
-                    }
-                    argOrPromise = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
-                } else {
-                    argOrPromise = checkPromise(builtinRootNode, arg, lix);
-                    lix++;
+    private Object[] doExecuteArray(VirtualFrame frame) {
+        Object[] result = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            RNode arg = arguments[i];
+            if (arg instanceof VarArgsNode) {
+                VarArgsNode varargs = (VarArgsNode) arg;
+                RNode[] newVarArgs = new RNode[varargs.elementNodes.length];
+                for (int vi = 0; vi < newVarArgs.length; vi++) {
+                    newVarArgs[vi] = (RNode) varargs.elementNodes[vi].execute(frame);
                 }
-                result = argOrPromise;
-            } else {
-                result = arg;
-                lix++;
+                result[i] = new VarArgsAsObjectArrayNode(newVarArgs);
+                continue;
             }
 
-            wrappedArguments[fi] = result;
+            // This cast is valid, because we know whats inside 'arguments': RNode wrapped inside
+            // Promises!
+            result[i] = arg.execute(frame);
         }
-
-        return wrappedArguments;
-    }
-
-    private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int formalIndex) {
-        if (builtinRootNode != null && !builtinRootNode.evaluatesArg(formalIndex)) {
-            return PromiseNode.create(argNode.getSourceSection(), new RPromise(argNode));
-        } else {
-            return argNode;
-        }
-
+        return result;
     }
 
     /**
@@ -200,5 +150,9 @@ public class MatchedArgumentsNode extends ArgumentsNode {
     @Override
     public String[] getNames() {
         return names;
+    }
+
+    public String[] getSuppliedNames() {
+        return suppliedNames;
     }
 }

@@ -33,37 +33,38 @@ public class RPromise extends RLanguageRep {
 
     /**
      * {@link EvalPolicy#RAW}<br/>
-     * {@link EvalPolicy#PROMISE}<br/>
-     * {@link EvalPolicy#FORCED}<br/>
+     * {@link EvalPolicy#PROMISED}<br/>
+     * {@link EvalPolicy#STRICT}<br/>
      */
     public enum EvalPolicy {
-        /**
-         * Arguments are processed as is, {@link RPromise} are only created for certain builins
-         * (legacy!) TODO This is only needed while we'r trying to maintain 'strict' argument
-         * evaluation
-         */
         RAW,
 
         /**
          * {@link RPromise} are created for every argument. If function is a builtin, its argument
          * semantics are maintained!
          */
-        PROMISE,
+        PROMISED,
 
         /**
          *
          */
-        FORCED;
+        STRICT;
     }
 
     /**
      * For promises associated with environments (frames) that are not top-level.
      */
     private REnvironment env;
+
     /**
      * When {@code null} the promise has not been evaluated.
      */
-    private Object value;
+    private Object value = null;
+    private boolean argIsEvaluated = false;
+    // TODO @CompilationFinal + invalidate??
+    private boolean promiseIsEvaluated = false;
+
+    private final RLanguageRep defaultRep;
 
     private final EvalPolicy evalPolicy;
 
@@ -71,21 +72,26 @@ public class RPromise extends RLanguageRep {
      * Create the promise with a representation that allows evaluation later in the "current" frame.
      * The frame may need to be set if the promise is passed as an argument to another function.
      */
-    public RPromise(Object rep) {
-        this(rep, null);
+    public RPromise(Object rep, REnvironment env) {
+        this(rep, null, env, EvalPolicy.PROMISED);
+    }
+
+    /**
+     * Create the promise with a representation that allows evaluation later in the "current" frame.
+     * The frame may need to be set if the promise is passed as an argument to another function.
+     */
+    public RPromise(Object rep, Object defaultRep, EvalPolicy evalPolicy) {
+        this(rep, defaultRep, null, evalPolicy);
     }
 
     /**
      * Create the promise with a representation that allows evaluation later in a given frame.
      */
-    public RPromise(Object rep, REnvironment env, EvalPolicy evalPolicy) {
+    public RPromise(Object rep, Object defaultRep, REnvironment env, EvalPolicy evalPolicy) {
         super(rep);
         this.env = env;
+        this.defaultRep = new RLanguageRep(defaultRep);
         this.evalPolicy = evalPolicy;
-    }
-
-    public RPromise(Object rep, REnvironment env) {
-        this(rep, env, EvalPolicy.RAW);
     }
 
     public REnvironment getEnv() {
@@ -93,46 +99,82 @@ public class RPromise extends RLanguageRep {
     }
 
     /**
-     * Get the value of the promise, evaluating it if necessary in the associated environment. A
-     * promise is evaluate-once.
+     * TODO Gero, add comment!
+     *
+     * @param value
      */
-    public Object getValue() {
-        if (value == null) {
-            assert env != null;
-            try {
-                value = RContext.getEngine().evalPromise(this);
-            } catch (RError e) {
-                value = e;
-                throw e;
-            }
+    public void setRawValue(Object value) {
+        this.value = value;
+        this.argIsEvaluated = true;
+    }
+
+    public Object getRawValue() {
+        return value;
+    }
+
+    public Object evaluate(VirtualFrame argFrame, VirtualFrame defFrame) {
+        return doGetValue(argFrame, defFrame);
+    }
+
+    private Object doGetValue(VirtualFrame argFrame, VirtualFrame defFrame) {
+        if (promiseIsEvaluated) {
+            return value;
         }
+
+        if (!argIsEvaluated) {
+            value = doEvalValue(argFrame);
+            argIsEvaluated = true;
+        }
+
+        if (isSymbolMissing(value)) {
+            value = doEvalValue(defFrame);
+        }
+        promiseIsEvaluated = true;
+
         return value;
     }
 
     /**
-     * Get the value of the promise, evaluating it if necessary in the given {@link VirtualFrame}. A
-     * promise is evaluate-once.
+     * @param frame
+     * @return TODO Gero, add comment!
      */
-    public Object getValue(VirtualFrame frame) {
-        if (value == null) {
-            try {
-                value = RContext.getEngine().evalPromise(this, frame);
-            } catch (RError e) {
-                value = e;
-                throw e;
+    private Object doEvalValue(VirtualFrame frame) {
+        Object result = null;
+        try {
+            if (frame == null) {
+                assert env != null;
+                result = RContext.getEngine().evalPromise(this);
+            } else {
+                result = RContext.getEngine().evalPromise(this, frame);
             }
+        } catch (RError e) {
+            result = e;
+            throw e;
         }
-        return value;
+        return result;
+    }
+
+    private static boolean isSymbolMissing(Object obj) {
+        // TODO Missing!
+        return obj == RMissing.instance;
     }
 
     /**
      * Returns {@code true} if this promise has been evaluated?
      */
-    public boolean hasValue() {
-        return value != null;
+    public boolean isEvaluated() {
+        return promiseIsEvaluated;
+    }
+
+    public boolean isArgumentEvaluated() {
+        return argIsEvaluated;
     }
 
     public EvalPolicy getEvalPolicy() {
         return evalPolicy;
+    }
+
+    public RLanguageRep getDefaultRep() {
+        return defaultRep;
     }
 }

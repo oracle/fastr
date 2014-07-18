@@ -22,20 +22,40 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 
-public final class PromiseNode extends RNode {
-    private final RPromise promise;
+public class PromiseNode extends RNode {
+    protected final RPromise promise;
 
     private PromiseNode(RPromise promise) {
         this.promise = promise;
     }
 
     public static PromiseNode create(SourceSection src, RPromise promise) {
-        PromiseNode pn = new PromiseNode(promise);
+        PromiseNode pn = null;
+        switch (promise.getEvalPolicy()) {
+            case RAW:
+                pn = new RawPromiseNode(promise);
+                break;
+
+            case STRICT:
+                pn = new StrictPromiseNode(promise);
+                break;
+
+            case PROMISED:
+                pn = new PromiseNode(promise);
+                break;
+
+            default:
+                throw new AssertionError();
+        }
+
         pn.assignSourceSection(src);
         return pn;
     }
@@ -48,4 +68,43 @@ public final class PromiseNode extends RNode {
         return promise;
     }
 
+    private static class StrictPromiseNode extends PromiseNode {
+        @Child private RNode suppliedArg;
+        @CompilationFinal private boolean hasArgValue;
+
+        public StrictPromiseNode(RPromise promise) {
+            super(promise);
+            this.suppliedArg = (RNode) promise.getRep();
+            this.hasArgValue = promise.isArgumentEvaluated();
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            if (!hasArgValue) {
+                Object obj = suppliedArg.execute(frame);
+                promise.setRawValue(obj);
+
+                hasArgValue = true;
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+            }
+            return promise;
+        }
+    }
+
+    /**
+     * TODO Gero: comment
+     *
+     * @see EvalPolicy#RAW
+     */
+    private static class RawPromiseNode extends PromiseNode {
+        public RawPromiseNode(RPromise promise) {
+            super(promise);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            // TODO Gero, WRONG! Normally take (null, frame), but env seems to be messes up... :-/
+            return promise.evaluate(frame, frame);
+        }
+    }
 }

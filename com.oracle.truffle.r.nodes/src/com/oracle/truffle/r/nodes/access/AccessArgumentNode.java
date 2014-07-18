@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * Simple {@link RNode} that returns a function argument specified by its formal index. Used to
@@ -40,6 +42,18 @@ public class AccessArgumentNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return RArguments.getArgument(frame, index);
+        Object obj = RArguments.getArgument(frame, index);
+        if (obj instanceof RPromise) {
+            RPromise promise = (RPromise) obj;
+            if (promise.getEvalPolicy() == EvalPolicy.RAW) {
+                throw new AssertionError("EvalPolicy == RAW in AAN!?!?");
+            }
+
+            // Now force evaluation for STRICT
+            if (promise.getEvalPolicy() == EvalPolicy.STRICT) {
+                obj = promise.evaluate(null, frame);
+            }
+        }
+        return obj;
     }
 }

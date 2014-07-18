@@ -72,6 +72,14 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return execute(frame);
     }
 
+    @ExplodeLoop
+    private void executeArguments(VirtualFrame frame) {
+        RNode[] unevaluatedArgs = getArguments();
+        for (int i = 0; i < unevaluatedArgs.length; i++) {
+            getArguments()[i] = (RNode) unevaluatedArgs[i].execute(frame);
+        }
+    }
+
     @Override
     public final int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         return executeInteger(frame);
@@ -110,7 +118,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public RCallNode inline(EvaluatedArguments args) {
+    public RCallNode inline(UnevaluatedArguments args) {
         // static number of arguments
         RNode[] builtinArguments = inlineStaticArguments(args);
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
@@ -131,7 +139,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         }
     }
 
-    private static RBuiltinNode createNode(RBuiltinFactory factory, Object[] builtinArguments, String[] argNames) {
+    private static RBuiltinNode createNode(RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {
         RBuiltin rBuiltin = getRBuiltin(factory.getFactory().getClass());
         boolean isCombine = rBuiltin == null ? false : rBuiltin.isCombine();
         Object[] args = new Object[(isCombine ? 3 : 2) + factory.getConstantArguments().length];
@@ -149,17 +157,18 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return factory.getFactory().createNode(args);
     }
 
-    protected RNode[] inlineStaticArguments(EvaluatedArguments args) {
+    protected RNode[] inlineStaticArguments(UnevaluatedArguments args) {
         int signatureSize = getBuiltin().getFactory().getExecutionSignature().size();
         RNode[] children = new RNode[signatureSize];
 
         // Fill with already determined arguments..
-        RNode[] evaledArgs = args.getEvaluatedArgs();
-        int argsSize = evaledArgs.length;
+        RNode[] pureArgs = args.getEvaluatedArgs();
+        int argsSize = pureArgs.length;
         int di = Math.min(argsSize, signatureSize);
         System.arraycopy(args.getEvaluatedArgs(), 0, children, 0, di);
 
         // ...and the rest with RMissing
+        // TODO Or default values???
         for (; di < signatureSize; di++) {
             children[di] = ConstantNode.create(RMissing.instance);
         }
