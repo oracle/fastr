@@ -187,4 +187,9 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
         return null;
     }
 
+    public int uncompress(byte[] dest, long[] destlen, byte[] source) {
+        Utils.fail("uncompress not implemented");
+        return 0;
+    }
+
 }

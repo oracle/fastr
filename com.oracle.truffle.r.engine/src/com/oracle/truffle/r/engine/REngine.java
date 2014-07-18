@@ -294,7 +294,8 @@ public final class REngine implements RContext.Engine {
      */
     private static RNode transform(ASTNode astNode, REnvironment environment) {
         RTruffleVisitor transform = new RTruffleVisitor(environment);
-        return transform.transform(astNode);
+        RNode result = transform.transform(astNode);
+        return result;
     }
 
     /**
