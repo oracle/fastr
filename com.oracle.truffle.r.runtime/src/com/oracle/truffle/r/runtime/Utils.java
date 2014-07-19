@@ -194,7 +194,7 @@ public final class Utils {
         }
     }
 
-    private static Charset UTF8;
+    private static volatile Charset UTF8;
 
     public static Charset getUTF8() {
         if (UTF8 == null) {

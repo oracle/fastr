@@ -7,6 +7,10 @@
   <Match>
     <Class name="com.oracle.truffle.r.parser.RLexer"/>
   </Match>
+  <!-- exclude RAccuracyInfo (translated from GnuR) -->
+  <Match>
+    <Class name="com.oracle.truffle.r.runtime.RAccuracyInfo"/>
+  </Match>
   <!-- exclude generated node factory classes -->
   <Match>
       <Class name="~com\.oracle\.truffle\.r\.nodes\..*Factory(\$.*)?"/>
