@@ -13,22 +13,52 @@ library@ANTLR-C@path=lib/antlr-complete-3.5.1.jar
 library@ANTLR-C@urls=http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar
 
 library@JLINE@path=lib/jline-2.11.jar
-library@JLINE@urls=http://repo1.maven.org/maven2/jline/jline/2.11/jline-2.11.jar
+library@JLINE@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jline-2.11.jar,http://repo1.maven.org/maven2/jline/jline/2.11/jline-2.11.jar
+library@JLINE@sha1=9504d5e2da5d78237239c5226e8200ec21182040
 
 library@JNR_POSIX@path=lib/jnr-posix-3.0.1.jar
-library@JNR_POSIX@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-posix/3.0.1/jnr-posix-3.0.1.jar
+library@JNR_POSIX@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-posix-3.0.1.jar,http://repo1.maven.org/maven2/com/github/jnr/jnr-posix/3.0.1/jnr-posix-3.0.1.jar
+library@JNR_POSIX@sha1=5ac18caed12108123c959c8acedef76ca4f28cb3
 
 library@JNR_CONSTANTS@path=lib/jnr-constants-0.8.5.jar
-library@JNR_CONSTANTS@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-constants/0.8.5/jnr-constants-0.8.5.jar
+library@JNR_CONSTANTS@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-constants-0.8.5.jar,http://repo1.maven.org/maven2/com/github/jnr/jnr-constants/0.8.5/jnr-constants-0.8.5.jar
+library@JNR_CONSTANTS@sha1=f84cca9e21f1f763a9eaf33de3d6a66a20ed7af0
 
 library@JNR_FFI@path=lib/jnr-ffi-1.0.10.jar
-library@JNR_FFI@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-ffi/1.0.10/jnr-ffi-1.0.10.jar
+library@JNR_FFI@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-ffi-1.0.10.jar,http://repo1.maven.org/maven2/com/github/jnr/jnr-ffi/1.0.10/jnr-ffi-1.0.10.jar
+library@JNR_FFI@sha1=646428e83a0e2ab4743091781ea98e3164c6d707
 
 library@JFFI@path=lib/jffi-1.2.7.jar
-library@JFFI@urls=http://repo1.maven.org/maven2/com/github/jnr/jffi/1.2.7/jffi-1.2.7.jar
+library@JFFI@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.7.jar,http://repo1.maven.org/maven2/com/github/jnr/jffi/1.2.7/jffi-1.2.7.jar
+library@JFFI@sha1=acda5c46140404e08b3526f39db1504874b34b4c
 
 library@JFFI_NATIVE@path=lib/jffi-1.2.7-native.jar
-library@JFFI_NATIVE@urls=http://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7-native.jar
+library@JFFI_NATIVE@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.7-native.jar,http://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7-native.jar
+library@JFFI_NATIVE@sha1=4e8c876383acb37da4347902a0a775aefd51de09
+
+library@JNR_X86ASM@path=lib/jnr-x86asm-1.0.2.jar
+library@JNR_X86ASM@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-x86asm-1.0.2.jar,http://repo1.maven.org/maven2/com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar
+library@JNR_X86ASM@sha1=006936bbd6c5b235665d87bd450f5e13b52d4b48
+
+library@ASM@path=lib/asm-4.0.jar
+library@ASM@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm/4.0/asm-4.0.jar
+library@ASM@sha1=659add6efc75a4715d738e73f07505246edf4d66
+
+library@ASM_ANALYSIS@path=lib/asm-analysis-4.0.jar
+library@ASM_ANALYSIS@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar
+library@ASM_ANALYSIS@sha1=1c45d52b6f6c638db13cf3ac12adeb56b254cdd7
+
+library@ASM_COMMONS@path=lib/asm-commons-4.0.jar
+library@ASM_COMMONS@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar
+library@ASM_COMMONS@sha1=a839ec6737d2b5ba7d1878e1a596b8f58aa545d9
+
+library@ASM_TREE@path=lib/asm-tree-4.0.jar
+library@ASM_TREE@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar
+library@ASM_TREE@sha1=67bd266cd17adcee486b76952ece4cc85fe248b8
+
+library@ASM_UTIL@path=lib/asm-util-4.0.jar
+library@ASM_UTIL@urls=http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar,http://repo1.maven.org/maven2/org/ow2/asm/asm-util/4.0/asm-util-4.0.jar
+library@ASM_UTIL@sha1=d7a65f54cda284f9706a750c23d64830bb740c39
 
 library@JNR_INVOKE@path=lib/jnr-invoke-0.1.jar
 library@JNR_INVOKE@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar
@@ -36,23 +66,6 @@ library@JNR_INVOKE@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-invoke/
 library@JNR_UDIS86@path=lib/jnr-udis86-0.1.jar
 library@JNR_UDIS86@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar
 
-library@JNR_X86ASM@path=lib/jnr-x86asm-1.0.2.jar
-library@JNR_X86ASM@urls=http://repo1.maven.org/maven2/com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar
-
-library@ASM@path=lib/asm-4.0.jar
-library@ASM@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm/4.0/asm-4.0.jar
-
-library@ASM_ANALYSIS@path=lib/asm-analysis-4.0.jar
-library@ASM_ANALYSIS@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar
-
-library@ASM_COMMONS@path=lib/asm-commons-4.0.jar
-library@ASM_COMMONS@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar
-
-library@ASM_TREE@path=lib/asm-tree-4.0.jar
-library@ASM_TREE@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar
-
-library@ASM_UTIL@path=lib/asm-util-4.0.jar
-library@ASM_UTIL@urls=http://repo1.maven.org/maven2/org/ow2/asm/asm-util/4.0/asm-util-4.0.jar
 
 distribution@FASTR@path=fastr.jar
 distribution@FASTR@sourcesPath=fastr-sources.jar
