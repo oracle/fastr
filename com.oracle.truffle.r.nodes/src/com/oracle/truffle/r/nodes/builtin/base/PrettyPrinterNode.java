@@ -237,7 +237,11 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(order = 86)
     public String prettyPrintPromise(RPromise promise, Object listElementName) {
-        return prettyPrintLanguageRep(promise, listElementName);
+        if (promise.hasValue()) {
+            return prettyPrintRecursive(promise.getValue(), listElementName);
+        } else {
+            return prettyPrintLanguageRep(promise, listElementName);
+        }
     }
 
     @SlowPath
@@ -254,6 +258,28 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             return ss.getCode();
         }
+    }
+
+    @SlowPath
+    @Specialization(order = 88)
+    public String prettyPrintPairList(RPairList pairList, Object listElementName) {
+        StringBuilder sb = new StringBuilder();
+        if (pairList.getTag() != null) {
+            sb.append(pairList.getTag());
+        }
+        if (pairList.car() != null) {
+            sb.append(prettyPrintRecursive(pairList.car(), listElementName));
+        }
+        if (pairList.cdr() != null) {
+            sb.append(prettyPrintRecursive(pairList.cdr(), listElementName));
+        }
+        return sb.toString();
+    }
+
+    @SlowPath
+    @Specialization(order = 89)
+    public String prettyPrintMissing(RMissing missing, Object listElementName) {
+        return "";
     }
 
     @SlowPath

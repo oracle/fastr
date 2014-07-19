@@ -61,7 +61,7 @@ public interface BaseRFFI {
 
     /**
      * Open a DLL.
-     * 
+     *
      * @return {@code null} on error, opaque handle for following calls otherwise.
      */
     Object dlopen(String path, boolean local, boolean now);
@@ -84,5 +84,14 @@ public interface BaseRFFI {
      * @return {@code null} if no error, message otherwise.
      */
     String dlerror();
+
+    // zip compression/uncompression
+
+    /**
+     * uncompress {@code source} into {@code dest}.
+     *
+     * @return standard return code (0 ok)
+     */
+    int uncompress(byte[] dest, long[] destlen, byte[] source);
 
 }

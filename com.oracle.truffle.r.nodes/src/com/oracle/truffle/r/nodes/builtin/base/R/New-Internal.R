@@ -94,35 +94,35 @@ commandArgs <- function(trailingOnly = FALSE) {
 #.__H__.cbind <- cbind
 #.__H__.rbind <- rbind
 #
-#
-## convert deparsing options to bitmapped integer
-#
-#.deparseOpts <- function(control) {
-#  opts <- pmatch(as.character(control),
-#      ## the exact order of these is determined by the integer codes in
-#      ## ../../../include/Defn.h
-#      c("all",
-#          "keepInteger", "quoteExpressions", "showAttributes",
-#          "useSource", "warnIncomplete", "delayPromises",
-#          "keepNA", "S_compatible"))
-#  if (anyNA(opts))
-#    stop(sprintf(ngettext(as.integer(sum(is.na(opts))),
-#                "deparse option %s is not recognized",
-#                "deparse options %s are not recognized"),
-#            paste(sQuote(control[is.na(opts)]), collapse=", ")),
-#        call. = FALSE, domain = NA)
-#  if (any(opts == 1L))
-#    opts <- unique(c(opts[opts != 1L], 2L,3L,4L,5L,6L,8L)) # not (7,9)
-#  return(sum(2^(opts-2)))
-#}
-#
-#deparse <-
-#    function(expr, width.cutoff = 60L,
-#        backtick = mode(expr) %in% c("call", "expression", "(", "function"),
-#        control = c("keepInteger", "showAttributes", "keepNA"),
-#        nlines = -1L)
-#  .Internal(deparse(expr, width.cutoff, backtick,
-#          .deparseOpts(control), nlines))
+
+# convert deparsing options to bitmapped integer
+
+.deparseOpts <- function(control) {
+  opts <- pmatch(as.character(control),
+      ## the exact order of these is determined by the integer codes in
+      ## ../../../include/Defn.h
+      c("all",
+          "keepInteger", "quoteExpressions", "showAttributes",
+          "useSource", "warnIncomplete", "delayPromises",
+          "keepNA", "S_compatible"))
+  if (anyNA(opts))
+    stop(sprintf(ngettext(as.integer(sum(is.na(opts))),
+                "deparse option %s is not recognized",
+                "deparse options %s are not recognized"),
+            paste(sQuote(control[is.na(opts)]), collapse=", ")),
+        call. = FALSE, domain = NA)
+  if (any(opts == 1L))
+    opts <- unique(c(opts[opts != 1L], 2L,3L,4L,5L,6L,8L)) # not (7,9)
+  return(sum(2^(opts-2)))
+}
+
+deparse <-
+    function(expr, width.cutoff = 60L,
+        backtick = mode(expr) %in% c("call", "expression", "(", "function"),
+        control = c("keepInteger", "showAttributes", "keepNA"),
+        nlines = -1L)
+  .Internal(deparse(expr, width.cutoff, backtick,
+          .deparseOpts(control), nlines))
 
 do.call <- function(what, args, quote = FALSE, envir = parent.frame())
 {

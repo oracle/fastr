@@ -54,6 +54,7 @@ public final class REngine implements RContext.Engine {
     private static long[] childTimes;
     private static RContext context;
     private static RBuiltinLookup builtinLookup;
+    private static RFunction evalFunction;
 
     private REngine() {
     }
@@ -79,6 +80,7 @@ public final class REngine implements RContext.Engine {
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
         VirtualFrame baseFrame = RRuntime.createVirtualFrame();
         REnvironment.baseInitialize(globalFrame, baseFrame);
+        evalFunction = singleton.lookupBuiltin("eval");
         RPackageVariables.initializeBase();
         RVersionInfo.initialize();
         RAccuracyInfo.initialize();
@@ -156,15 +158,23 @@ public final class REngine implements RContext.Engine {
 
     public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
         Object result = null;
+        RFunction ffunction = function;
+        if (ffunction == null) {
+            ffunction = evalFunction;
+        }
         for (int i = 0; i < expr.getLength(); i++) {
             RLanguage lang = (RLanguage) expr.getDataAt(i);
-            result = eval(function, (RNode) lang.getRep(), envir, enclos);
+            result = eval(ffunction, (RNode) lang.getRep(), envir, enclos);
         }
         return result;
     }
 
     public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
-        return eval(function, (RNode) expr.getRep(), envir, enclos);
+        RFunction ffunction = function;
+        if (ffunction == null) {
+            ffunction = evalFunction;
+        }
+        return eval(ffunction, (RNode) expr.getRep(), envir, enclos);
     }
 
     public Object eval(RExpression expr, VirtualFrame frame) {
@@ -284,7 +294,8 @@ public final class REngine implements RContext.Engine {
      */
     private static RNode transform(ASTNode astNode, REnvironment environment) {
         RTruffleVisitor transform = new RTruffleVisitor(environment);
-        return transform.transform(astNode);
+        RNode result = transform.transform(astNode);
+        return result;
     }
 
     /**

@@ -184,15 +184,33 @@ public final class RContext extends ExecutionContext {
          * Support for the {@code eval} family of builtin functions.
          *
          * @param function identifies the eval variant, e.g. {@code local}, {@code eval},
-         *            {@code evalq} being invoked.
+         *            {@code evalq} being invoked. The value {@code null} means plain {@code eval}.
+         *
+         * @param enclos normally {@code null}, but see <a
+         *            href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/eval.html">here
+         *            for details</a>.
          */
         Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException;
+
+        /**
+         * Convenience method for common case.
+         */
+        default Object eval(RExpression expr, REnvironment envir) throws PutException {
+            return eval(null, expr, envir, null);
+        }
 
         /**
          * Variant of {@link #eval(RFunction, RExpression, REnvironment, REnvironment)} for a single
          * language element.
          */
         Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException;
+
+        /**
+         * Convenience method for common case.
+         */
+        default Object eval(RLanguage expr, REnvironment envir) throws PutException {
+            return eval(null, expr, envir, null);
+        }
 
         /**
          * Evaluate {@code expr} in {@code frame}.
