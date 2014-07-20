@@ -66,7 +66,6 @@ public class HiddenInternalFunctions {
             initEval();
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
-                @SuppressWarnings("unused")
                 RIntVector intVec = (RIntVector) values.getDataAt(i);
                 // GnuR does an eval but we short cut since intVec evaluates to itself.
                 // What happens next a pretty gross - we replace the "key" argument variable read

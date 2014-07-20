@@ -708,6 +708,7 @@ public final class RSerialize {
             return BUILTIN;
         }
 
+        @SuppressWarnings("unused")
         private static class State {
             private final StringBuilder sb = new StringBuilder();
             private int linenumber;
@@ -852,9 +853,10 @@ public final class RSerialize {
                         } else if (fop.kind == PP.BINARY2) {
                             if (pl.length() != 2) {
                                 fop = new PPInfo(PP.FUNCALL, 0, false);
-                            } else if (/* userbinop */false) {
-                                fop = new PPInfo(PP.BINARY, fop.prec, fop.rightassoc);
-                            }
+                            } /*
+                               * else if (userbinop) { fop = new PPInfo(PP.BINARY, fop.prec,
+                               * fop.rightassoc); }
+                               */
                         }
                         switch (fop.kind) {
                             case CURLY: {
@@ -1020,11 +1022,11 @@ public final class RSerialize {
             }
         }
 
-        private static boolean curlyahead(Object obj) {
+        private static boolean curlyahead(@SuppressWarnings("unused") Object obj) {
             return false;
         }
 
-        private static boolean parenthesizeCaller(Object s) {
+        private static boolean parenthesizeCaller(@SuppressWarnings("unused") Object s) {
             // TODO implement
             return false;
         }
@@ -1039,7 +1041,7 @@ public final class RSerialize {
         }
 
         @SlowPath
-        private static State args2buff(State state, RPairList args, boolean lineb, boolean formals) {
+        private static State args2buff(State state, RPairList args, @SuppressWarnings("unused") boolean lineb, boolean formals) {
             boolean lbreak = false;
             RPairList arglist = args;
             while (arglist != null) {
