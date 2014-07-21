@@ -286,7 +286,7 @@ def rbench(args):
                     # set compilation threshold to 10
                     if not any("TruffleCompilationThreshold" in x for x in extraVmArgs):
                         extraVmArgs.append('-G:TruffleCompilationThreshold=10')
-                    if (bm.startswith("b25")):
+                    if bm.startswith("b25"):
                         extraVmArgs.append('-G:-TruffleBackgroundCompilation')
                     rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs, runBench=True)
                 if rc != 0:
