@@ -44,16 +44,24 @@ public class AccessArgumentNode extends RNode {
     public Object execute(VirtualFrame frame) {
         Object obj = RArguments.getArgument(frame, index);
         if (obj instanceof RPromise) {
-            RPromise promise = (RPromise) obj;
-            if (promise.getEvalPolicy() == EvalPolicy.RAW) {
-                throw new AssertionError("EvalPolicy == RAW in AAN!?!?");
-            }
-
-            // Now force evaluation for STRICT
-            if (promise.getEvalPolicy() == EvalPolicy.STRICT) {
-                obj = promise.evaluate(frame);
+            obj = handlePromise(frame, obj);
+        } else if (obj instanceof Object[]) {
+            Object[] varArgs = (Object[]) obj;
+            for (int i = 0; i < varArgs.length; i++) {
+                varArgs[i] = handlePromise(frame, varArgs[i]);
             }
         }
         return obj;
+    }
+
+    private static Object handlePromise(VirtualFrame frame, Object promiseObj) {
+        RPromise promise = (RPromise) promiseObj;
+        assert promise.getEvalPolicy() != EvalPolicy.RAW : "EvalPolicy == RAW in AAN!?!?";
+
+        // Now force evaluation for STRICT
+        if (promise.getEvalPolicy() == EvalPolicy.STRICT) {
+            return promise.evaluate(frame);
+        }
+        return promiseObj;
     }
 }

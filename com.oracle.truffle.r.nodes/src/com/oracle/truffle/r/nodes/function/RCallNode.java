@@ -227,9 +227,9 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // TODO Inline only feasible if it's guaranteed that default values of builtins
                     // have NO side effects?!?!?!
-                    UnevaluatedArguments unevaluatedArgs = ArgumentMatcher.matchArgumentsUnevaluated(function, frame, args, getEncapsulatingSourceSection());
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, frame, args, getEncapsulatingSourceSection());
                     // TODO Set proper parent <-> child relations for arguments!!
-                    return root.inline(unevaluatedArgs);
+                    return root.inline(inlinedArgs);
                 }
             }
 

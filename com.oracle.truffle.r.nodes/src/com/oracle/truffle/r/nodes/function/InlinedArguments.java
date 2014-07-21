@@ -23,33 +23,34 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 
 /**
- * Simple container class for holding 'evaluated' arguments ({@link #getEvaluatedArgs()}) which are
- * ready to be pushed into {@link RArguments}. Objects of this class are created by
- * {@link MatchedArgumentsNode}!
+ * Simple container class for holding arguments ({@link #getInlinedArgs()}) which are going to be
+ * inlined into FastR built-ins (using {@link RBuiltinNode#inline(InlinedArguments)}.
  *
+ * @see #getInlinedArgs()
  * @see #getNames()
  */
-public class UnevaluatedArguments extends Arguments<RNode> {
+public class InlinedArguments extends Arguments<RNode> {
 
-    UnevaluatedArguments(RNode[] evaluatedArgs, String[] names) {
+    InlinedArguments(RNode[] evaluatedArgs, String[] names) {
         super(evaluatedArgs, names);
     }
 
     /**
-     * @return The argument array that contains the evaluated arguments
-     * @see UnevaluatedArguments
+     * @return The argument array that contains the evaluated arguments, in formal order. Arguments
+     *         may NOT be <code>null</code>.
+     * @see InlinedArguments
      */
-    public RNode[] getEvaluatedArgs() {
+    public RNode[] getInlinedArgs() {
         return arguments;
     }
 
     /**
      * @return The names of the arguments that where supplied for the function, in the order the
-     *         function call specifies (NOT formal order)
-     * @see UnevaluatedArguments
+     *         function call specifies (NOT formal order). Names may NOT be <code>null</code>.
+     * @see InlinedArguments
      */
     public String[] getNames() {
         return names;

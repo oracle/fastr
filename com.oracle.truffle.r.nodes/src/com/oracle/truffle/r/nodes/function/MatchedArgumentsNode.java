@@ -28,7 +28,6 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsAsObjectArrayNode;
 
 /**
  * <p>
@@ -41,7 +40,7 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsAsObjectArrayN
  * passed into functions. E.g., wraps arguments into Promises etc.
  * </p>
  *
- * //*@see #suppliedNames
+ * @see #suppliedNames
  */
 public class MatchedArgumentsNode extends ArgumentsNode {
 
@@ -75,7 +74,8 @@ public class MatchedArgumentsNode extends ArgumentsNode {
 
     /**
      * @param arguments
-     * @param names //* @param suppliedNames
+     * @param names
+     * @param suppliedNames
      * @param src
      * @return A fresh {@link MatchedArgumentsNode}; arguments may contain <code>null</code> iff
      *         there is neither a supplied argument nor a default argument
@@ -102,8 +102,12 @@ public class MatchedArgumentsNode extends ArgumentsNode {
     }
 
     /**
+     * This method converts the list of arguments this list represents into an <code>Object[]</code>
+     * which then can be passed into {@link RArguments} and used for a function call.
+     *
      * @param frame
-     * @return TODO Gero, add comment!
+     * @return The <code>Object[]</code> containing the values of the arguments this class
+     *         represents
      */
     @ExplodeLoop
     private Object[] doExecuteArray(VirtualFrame frame) {
@@ -111,17 +115,17 @@ public class MatchedArgumentsNode extends ArgumentsNode {
         for (int i = 0; i < arguments.length; i++) {
             RNode arg = arguments[i];
             if (arg instanceof VarArgsNode) {
-                VarArgsNode varargs = (VarArgsNode) arg;
-                RNode[] newVarArgs = new RNode[varargs.elementNodes.length];
+                // Unfold varargs into an Object[]
+                VarArgsNode varArgs = (VarArgsNode) arg;
+                Object[] newVarArgs = new Object[varArgs.elementNodes.length];
                 for (int vi = 0; vi < newVarArgs.length; vi++) {
-                    newVarArgs[vi] = (RNode) varargs.elementNodes[vi].execute(frame);
+                    RNode varArg = varArgs.elementNodes[vi];
+                    newVarArgs[vi] = varArg.execute(frame);
                 }
-                result[i] = new VarArgsAsObjectArrayNode(newVarArgs);
+                result[i] = newVarArgs;
                 continue;
             }
 
-            // This cast is valid, because we know whats inside 'arguments': RNode wrapped inside
-            // Promises!
             result[i] = arg.execute(frame);
         }
         return result;
@@ -152,6 +156,10 @@ public class MatchedArgumentsNode extends ArgumentsNode {
         return names;
     }
 
+    /**
+     * @return The names of the arguments when they were supplied to a function call, in that old
+     *         order. 'No name defined' is denoted by <code>null</code>!
+     */
     public String[] getSuppliedNames() {
         return suppliedNames;
     }

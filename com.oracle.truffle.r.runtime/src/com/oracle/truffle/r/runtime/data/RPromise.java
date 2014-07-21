@@ -68,7 +68,7 @@ public class RPromise {
     /**
      * Create the promise with a representation that allows evaluation later in a given frame.
      */
-    RPromise(EvalPolicy evalPolicy, REnvironment env, Object rep, Object defaultRep) {
+    public RPromise(EvalPolicy evalPolicy, REnvironment env, Object rep, Object defaultRep) {
         this.evalPolicy = evalPolicy;
         this.env = env;
         this.argumentRep = new RLanguageRep(rep);
@@ -145,10 +145,10 @@ public class RPromise {
         return isEvaluated;
     }
 
-    static class RPromiseArgEvaluated extends RPromise {
+    public static class RPromiseArgEvaluated extends RPromise {
         private final Object argumentValue;
 
-        RPromiseArgEvaluated(EvalPolicy evalPolicy, Object argumentValue, Object defaultRep) {
+        public RPromiseArgEvaluated(EvalPolicy evalPolicy, Object argumentValue, Object defaultRep) {
             super(evalPolicy, null, null, defaultRep);
             this.argumentValue = argumentValue;
         }

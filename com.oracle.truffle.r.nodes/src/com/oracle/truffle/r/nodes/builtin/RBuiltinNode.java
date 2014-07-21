@@ -118,7 +118,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public RCallNode inline(UnevaluatedArguments args) {
+    public RCallNode inline(InlinedArguments args) {
         // static number of arguments
         RNode[] builtinArguments = inlineStaticArguments(args);
         RBuiltinNode builtin = createNode(getBuiltin(), builtinArguments, args.getNameCount() == 0 ? null : args.getNames());
@@ -157,15 +157,15 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         return factory.getFactory().createNode(args);
     }
 
-    protected RNode[] inlineStaticArguments(UnevaluatedArguments args) {
+    protected RNode[] inlineStaticArguments(InlinedArguments args) {
         int signatureSize = getBuiltin().getFactory().getExecutionSignature().size();
         RNode[] children = new RNode[signatureSize];
 
         // Fill with already determined arguments..
-        RNode[] pureArgs = args.getEvaluatedArgs();
+        RNode[] pureArgs = args.getInlinedArgs();
         int argsSize = pureArgs.length;
         int di = Math.min(argsSize, signatureSize);
-        System.arraycopy(args.getEvaluatedArgs(), 0, children, 0, di);
+        System.arraycopy(args.getInlinedArgs(), 0, children, 0, di);
 
         // ...and the rest with RMissing
         // TODO Or default values???
