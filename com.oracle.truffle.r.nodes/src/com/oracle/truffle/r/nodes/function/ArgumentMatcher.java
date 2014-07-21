@@ -33,7 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
  * An {@link ArgumentMatcher} knows the {@link #formals} of a specific function and can
@@ -346,7 +346,7 @@ public class ArgumentMatcher {
             // TODO Strict!
             EvalPolicy policy = builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
             RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
-            return PromiseNode.create(suppliedArg.getSourceSection(), new RPromise(suppliedArg, defaultValueNode, env, policy));
+            return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(policy, env, suppliedArg, defaultValueNode));
         }
     }
 
@@ -359,9 +359,9 @@ public class ArgumentMatcher {
             assert builtinRootNode != null;
             RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
             if (!builtinRootNode.evaluatesArg(logicalIndex)) {
-                return PromiseNode.create(suppliedArg.getSourceSection(), new RPromise(suppliedArg, defaultValueNode, env, EvalPolicy.PROMISED));
+                return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(EvalPolicy.PROMISED, env, suppliedArg, defaultValueNode));
             } else {
-                return PromiseNode.create(suppliedArg.getSourceSection(), new RPromise(suppliedArg, defaultValueNode, env, EvalPolicy.RAW));
+                return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(EvalPolicy.RAW, env, suppliedArg, defaultValueNode));
             }
         }
     }

@@ -22,34 +22,33 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
 public class PromiseNode extends RNode {
-    protected final RPromise promise;
+    protected final RPromiseFactory factory;
 
-    private PromiseNode(RPromise promise) {
-        this.promise = promise;
+    private PromiseNode(RPromiseFactory factory) {
+        this.factory = factory;
     }
 
-    public static PromiseNode create(SourceSection src, RPromise promise) {
+    public static PromiseNode create(SourceSection src, RPromiseFactory factory) {
         PromiseNode pn = null;
-        switch (promise.getEvalPolicy()) {
+        switch (factory.getEvalPolicy()) {
             case RAW:
-                pn = new RawPromiseNode(promise);
+                pn = new RawPromiseNode(factory);
                 break;
 
             case STRICT:
-                pn = new StrictPromiseNode(promise);
+                pn = new StrictPromiseNode(factory);
                 break;
 
             case PROMISED:
-                pn = new PromiseNode(promise);
+                pn = new PromiseNode(factory);
                 break;
 
             default:
@@ -65,29 +64,27 @@ public class PromiseNode extends RNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        return promise;
+        return factory.createPromise();
     }
 
+    /**
+     * TODO Gero: comment
+     *
+     */
     private static class StrictPromiseNode extends PromiseNode {
         @Child private RNode suppliedArg;
-        @CompilationFinal private boolean hasArgValue;
 
-        public StrictPromiseNode(RPromise promise) {
-            super(promise);
-            this.suppliedArg = (RNode) promise.getRep();
-            this.hasArgValue = promise.isArgumentEvaluated();
+        public StrictPromiseNode(RPromiseFactory factory) {
+            super(factory);
+            this.suppliedArg = (RNode) factory.getArgument();
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            if (!hasArgValue) {
-                Object obj = suppliedArg.execute(frame);
-                promise.setRawValue(obj);
-
-                hasArgValue = true;
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-            }
-            return promise;
+            // Evaluate the supplied argument here in the caller frame and create the Promise with
+            // this value
+            Object obj = suppliedArg.execute(frame);
+            return factory.createPromiseArgEvaluated(obj);
         }
     }
 
@@ -100,10 +97,10 @@ public class PromiseNode extends RNode {
         @Child private RNode suppliedArg;
         @Child private RNode defaultArg;
 
-        public RawPromiseNode(RPromise promise) {
-            super(promise);
-            this.suppliedArg = (RNode) promise.getRep();
-            this.defaultArg = (RNode) promise.getDefaultRep().getRep();
+        public RawPromiseNode(RPromiseFactory factory) {
+            super(factory);
+            this.suppliedArg = (RNode) factory.getArgument();
+            this.defaultArg = (RNode) factory.getDefaultArg();
         }
 
         @Override
@@ -111,10 +108,8 @@ public class PromiseNode extends RNode {
             // TODO builtin.inline: We do re-evaluation every execute inside the caller frame, as we
             // know that the evaluation of default values has no side effects (hopefully!)
             Object obj = suppliedArg.execute(frame);
-            if (RPromise.isSymbolMissing(obj)) {
-                obj = defaultArg.execute(frame);
-            }
-            return obj;
+            RPromise promise = factory.createPromiseArgEvaluated(obj);
+            return promise.evaluate(frame);
         }
     }
 }

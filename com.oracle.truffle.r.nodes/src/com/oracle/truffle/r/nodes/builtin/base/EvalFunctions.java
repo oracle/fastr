@@ -104,12 +104,12 @@ public class EvalFunctions {
              * the RBuiltin The spec for eval says that expr is evaluated in the current scope (aka
              * the caller's frame) so we do that first by evaluating the RPromise. Then we eval the
              * result, which could do another eval, e.g. "eval(expression(1+2))"
-             *
+             * 
              * Note that builtins do not have a separate VirtualFrame, they use the frame of the
              * caller, so we can evaluate the promise using frame.
              */
             controlVisibility();
-            Object exprVal = expr.evaluate(frame, frame);
+            Object exprVal = expr.evaluate(frame);
             return doEvalBody(exprVal, envir, enclos);
         }
 

@@ -237,7 +237,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(order = 86)
     public String prettyPrintPromise(RPromise promise, Object listElementName) {
-        return prettyPrintLanguageRep(promise, listElementName);
+        return prettyPrintLanguageRep(promise.getArgumentRep(), listElementName);
     }
 
     @SlowPath

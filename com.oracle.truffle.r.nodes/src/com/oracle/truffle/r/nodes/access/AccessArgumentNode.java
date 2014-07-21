@@ -51,7 +51,7 @@ public class AccessArgumentNode extends RNode {
 
             // Now force evaluation for STRICT
             if (promise.getEvalPolicy() == EvalPolicy.STRICT) {
-                obj = promise.evaluate(null, frame);
+                obj = promise.evaluate(frame);
             }
         }
         return obj;

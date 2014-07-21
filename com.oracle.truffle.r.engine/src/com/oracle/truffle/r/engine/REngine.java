@@ -222,16 +222,14 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
-        RNode expr = promise.isArgumentEvaluated() ? (RNode) promise.getDefaultRep().getRep() : (RNode) promise.getRep();
-        RootCallTarget callTarget = makeCallTarget(expr, REnvironment.emptyEnv());
+        RootCallTarget callTarget = makeCallTarget((RNode) promise.getDefaultRep().getRep(), REnvironment.emptyEnv());
         return runCall(callTarget, frame, false, false);
     }
 
     public Object evalPromise(RPromise promise) throws RError {
         // have to do the full out eval
         try {
-            RNode expr = promise.isArgumentEvaluated() ? (RNode) promise.getDefaultRep().getRep() : (RNode) promise.getRep();
-            return eval(lookupBuiltin("eval"), expr, promise.getEnv(), null);
+            return eval(lookupBuiltin("eval"), (RNode) promise.getRep(), promise.getEnv(), null);
         } catch (PutException ex) {
             // TODO a new, rather unlikely, error
             assert false;

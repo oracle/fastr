@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.*;
  * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
  */
 @com.oracle.truffle.api.CompilerDirectives.ValueType
-public class RPromise extends RLanguageRep {
+public class RPromise {
 
     /**
      * {@link EvalPolicy#RAW}<br/>
@@ -51,102 +51,61 @@ public class RPromise extends RLanguageRep {
         STRICT;
     }
 
+    private final EvalPolicy evalPolicy;
     /**
      * For promises associated with environments (frames) that are not top-level.
      */
     private REnvironment env;
+    private final RLanguageRep argumentRep;
+    private final RLanguageRep defaultRep;
 
     /**
      * When {@code null} the promise has not been evaluated.
      */
     private Object value = null;
-    private boolean argIsEvaluated = false;
-    // TODO @CompilationFinal + invalidate??
-    private boolean promiseIsEvaluated = false;
-
-    private final RLanguageRep defaultRep;
-
-    private final EvalPolicy evalPolicy;
-
-    /**
-     * Create the promise with a representation that allows evaluation later in the "current" frame.
-     * The frame may need to be set if the promise is passed as an argument to another function.
-     */
-    public RPromise(Object rep, REnvironment env) {
-        this(rep, null, env, EvalPolicy.PROMISED);
-    }
-
-    /**
-     * Create the promise with a representation that allows evaluation later in the "current" frame.
-     * The frame may need to be set if the promise is passed as an argument to another function.
-     */
-    public RPromise(Object rep, Object defaultRep, EvalPolicy evalPolicy) {
-        this(rep, defaultRep, null, evalPolicy);
-    }
+    private boolean isEvaluated = false;
 
     /**
      * Create the promise with a representation that allows evaluation later in a given frame.
      */
-    public RPromise(Object rep, Object defaultRep, REnvironment env, EvalPolicy evalPolicy) {
-        super(rep);
-        this.env = env;
-        this.defaultRep = new RLanguageRep(defaultRep);
+    RPromise(EvalPolicy evalPolicy, REnvironment env, Object rep, Object defaultRep) {
         this.evalPolicy = evalPolicy;
+        this.env = env;
+        this.argumentRep = new RLanguageRep(rep);
+        this.defaultRep = new RLanguageRep(defaultRep);
     }
 
-    public REnvironment getEnv() {
-        return env;
-    }
-
-    /**
-     * TODO Gero, add comment!
-     *
-     * @param value
-     */
-    public void setRawValue(Object value) {
-        this.value = value;
-        this.argIsEvaluated = true;
-    }
-
-    public Object getRawValue() {
-        return value;
-    }
-
-    public Object evaluate(VirtualFrame argFrame, VirtualFrame defFrame) {
-        return doGetValue(argFrame, defFrame);
-    }
-
-    private Object doGetValue(VirtualFrame argFrame, VirtualFrame defFrame) {
-        if (promiseIsEvaluated) {
+    public Object evaluate(VirtualFrame frame) {
+        if (isEvaluated) {
             return value;
         }
 
-        if (!argIsEvaluated) {
-            value = doEvalValue(argFrame);
-            argIsEvaluated = true;
+        Object obj = doEvalArgument();
+        if (isSymbolMissing(obj)) {
+            obj = doEvalDefaultArgument(frame);
         }
 
-        if (isSymbolMissing(value)) {
-            value = doEvalValue(defFrame);
-        }
-        promiseIsEvaluated = true;
-
-        return value;
+        isEvaluated = true;
+        value = obj;
+        return obj;
     }
 
-    /**
-     * @param frame
-     * @return TODO Gero, add comment!
-     */
-    private Object doEvalValue(VirtualFrame frame) {
+    protected Object doEvalArgument() {
+        Object result = null;
+        assert env != null;
+        try {
+            result = RContext.getEngine().evalPromise(this);
+        } catch (RError e) {
+            result = e;
+            throw e;
+        }
+        return result;
+    }
+
+    protected Object doEvalDefaultArgument(VirtualFrame frame) {
         Object result = null;
         try {
-            if (frame == null) {
-                assert env != null;
-                result = RContext.getEngine().evalPromise(this);
-            } else {
-                result = RContext.getEngine().evalPromise(this, frame);
-            }
+            result = RContext.getEngine().evalPromise(this, frame);
         } catch (RError e) {
             result = e;
             throw e;
@@ -159,22 +118,95 @@ public class RPromise extends RLanguageRep {
         return obj == RMissing.instance;
     }
 
-    /**
-     * Returns {@code true} if this promise has been evaluated?
-     */
-    public boolean isEvaluated() {
-        return promiseIsEvaluated;
-    }
-
-    public boolean isArgumentEvaluated() {
-        return argIsEvaluated;
-    }
-
     public EvalPolicy getEvalPolicy() {
         return evalPolicy;
     }
 
+    public REnvironment getEnv() {
+        return env;
+    }
+
+    public RLanguageRep getArgumentRep() {
+        return argumentRep;
+    }
+
+    public Object getRep() {
+        return argumentRep.getRep();
+    }
+
     public RLanguageRep getDefaultRep() {
         return defaultRep;
+    }
+
+    /**
+     * Returns {@code true} if this promise has been evaluated?
+     */
+    public boolean isEvaluated() {
+        return isEvaluated;
+    }
+
+    static class RPromiseArgEvaluated extends RPromise {
+        private final Object argumentValue;
+
+        RPromiseArgEvaluated(EvalPolicy evalPolicy, Object argumentValue, Object defaultRep) {
+            super(evalPolicy, null, null, defaultRep);
+            this.argumentValue = argumentValue;
+        }
+
+        @Override
+        protected Object doEvalArgument() {
+            return argumentValue;
+        }
+    }
+
+    public static class RPromiseFactory {
+        private REnvironment env;
+        private final Object argument;
+        private final Object defaultArg;
+        private final EvalPolicy evalPolicy;
+
+        public static RPromiseFactory create(REnvironment env, Object rep, Object defaultRep) {
+            return new RPromiseFactory(EvalPolicy.PROMISED, env, rep, defaultRep);
+        }
+
+        /**
+         * Create the promise with a representation that allows evaluation later in the "current"
+         * frame. The frame may need to be set if the promise is passed as an argument to another
+         * function.
+         */
+        public static RPromiseFactory create(EvalPolicy evalPolicy, REnvironment env, Object argument, Object defaultArg) {
+            return new RPromiseFactory(evalPolicy, env, argument, defaultArg);
+        }
+
+        private RPromiseFactory(EvalPolicy evalPolicy, REnvironment env, Object argument, Object defaultArg) {
+            this.evalPolicy = evalPolicy;
+            this.env = env;
+            this.argument = argument;
+            this.defaultArg = defaultArg;
+        }
+
+        public RPromise createPromise() {
+            return new RPromise(evalPolicy, env, argument, defaultArg);
+        }
+
+        public RPromise createPromiseArgEvaluated(Object argumentValue) {
+            return new RPromiseArgEvaluated(evalPolicy, argumentValue, defaultArg);
+        }
+
+        public REnvironment getEnv() {
+            return env;
+        }
+
+        public Object getArgument() {
+            return argument;
+        }
+
+        public Object getDefaultArg() {
+            return defaultArg;
+        }
+
+        public EvalPolicy getEvalPolicy() {
+            return evalPolicy;
+        }
     }
 }
