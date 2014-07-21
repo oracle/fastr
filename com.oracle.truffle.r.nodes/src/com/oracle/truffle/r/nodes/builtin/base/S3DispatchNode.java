@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -64,7 +65,12 @@ public abstract class S3DispatchNode extends DispatchNode {
 
     protected void findFunction(final String generic, final String className, Frame frame) {
         checkLength(className, generic);
-        findFunction(RRuntime.toString(new StringBuilder(generic).append(RRuntime.RDOT).append(className)), frame);
+        findFunction(functionName(generic, className), frame);
+    }
+
+    @SlowPath
+    private static String functionName(String generic, String className) {
+        return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
     }
 
     protected WriteVariableNode initWvn(WriteVariableNode wvn, final String name) {
