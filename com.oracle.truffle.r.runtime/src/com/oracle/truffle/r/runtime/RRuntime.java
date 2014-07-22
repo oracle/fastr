@@ -456,7 +456,7 @@ public class RRuntime {
     }
 
     public static RComplex double2complex(double d) {
-        return isNA(d) ? createComplexNA() : double2complexNoCheck(d);
+        return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
     @SlowPath

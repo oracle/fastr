@@ -22,73 +22,74 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RClosures {
 
     // Logical to ...
 
-    public static RAbstractIntVector createLogicalToIntVector(RAbstractLogicalVector vector, RDataCheckClosure check) {
+    public static RAbstractIntVector createLogicalToIntVector(RAbstractLogicalVector vector, NACheck check) {
         return new RLogicalToIntVectorClosure(vector, check);
     }
 
-    public static RAbstractDoubleVector createLogicalToDoubleVector(RAbstractLogicalVector vector, RDataCheckClosure check) {
+    public static RAbstractDoubleVector createLogicalToDoubleVector(RAbstractLogicalVector vector, NACheck check) {
         return new RLogicalToDoubleVectorClosure(vector, check);
     }
 
-    public static RAbstractComplexVector createLogicalToComplexVector(RAbstractLogicalVector vector, RDataCheckClosure check) {
+    public static RAbstractComplexVector createLogicalToComplexVector(RAbstractLogicalVector vector, NACheck check) {
         return new RLogicalToComplexVectorClosure(vector, check);
     }
 
-    public static RAbstractStringVector createLogicalToStringVector(RAbstractLogicalVector vector, RDataCheckClosure check) {
+    public static RAbstractStringVector createLogicalToStringVector(RAbstractLogicalVector vector, NACheck check) {
         return new RLogicalToStringVectorClosure(vector, check);
     }
 
     // Int to ...
 
-    public static RAbstractDoubleVector createIntToDoubleVector(RAbstractIntVector vector, RDataCheckClosure check) {
+    public static RAbstractDoubleVector createIntToDoubleVector(RAbstractIntVector vector, NACheck check) {
         return new RIntToDoubleVectorClosure(vector, check);
     }
 
-    public static RAbstractComplexVector createIntToComplexVector(RAbstractIntVector vector, RDataCheckClosure check) {
+    public static RAbstractComplexVector createIntToComplexVector(RAbstractIntVector vector, NACheck check) {
         return new RIntToComplexVectorClosure(vector, check);
     }
 
-    public static RAbstractStringVector createIntToStringVector(RAbstractIntVector vector, RDataCheckClosure check) {
+    public static RAbstractStringVector createIntToStringVector(RAbstractIntVector vector, NACheck check) {
         return new RIntToStringVectorClosure(vector, check);
     }
 
     // Double to ...
 
-    public static RAbstractComplexVector createDoubleToComplexVector(RAbstractDoubleVector vector, RDataCheckClosure check) {
+    public static RAbstractComplexVector createDoubleToComplexVector(RAbstractDoubleVector vector, NACheck check) {
         return new RDoubleToComplexVectorClosure(vector, check);
     }
 
-    public static RAbstractStringVector createDoubleToStringVector(RAbstractDoubleVector vector, RDataCheckClosure check) {
+    public static RAbstractStringVector createDoubleToStringVector(RAbstractDoubleVector vector, NACheck check) {
         return new RDoubleToStringVectorClosure(vector, check);
     }
 
     // Raw to ...
 
-    public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector, RDataCheckClosure check) {
+    public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector, NACheck check) {
         return new RRawToIntVectorClosure(vector, check);
     }
 
-    public static RAbstractDoubleVector createRawToDoubleVector(RAbstractRawVector vector, RDataCheckClosure check) {
+    public static RAbstractDoubleVector createRawToDoubleVector(RAbstractRawVector vector, NACheck check) {
         return new RRawToDoubleVectorClosure(vector, check);
     }
 
-    public static RAbstractComplexVector createRawToComplexVector(RAbstractRawVector vector, RDataCheckClosure check) {
+    public static RAbstractComplexVector createRawToComplexVector(RAbstractRawVector vector, NACheck check) {
         return new RRawToComplexVectorClosure(vector, check);
     }
 
-    public static RAbstractStringVector createRawToStringVector(RAbstractRawVector vector, RDataCheckClosure check) {
+    public static RAbstractStringVector createRawToStringVector(RAbstractRawVector vector, NACheck check) {
         return new RRawToStringVectorClosure(vector, check);
     }
 
     // Complex to ...
 
-    public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector, RDataCheckClosure check) {
+    public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector, NACheck check) {
         return new RComplexToStringVectorClosure(vector, check);
     }
 

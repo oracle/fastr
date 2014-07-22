@@ -23,13 +23,14 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
     private final RAbstractRawVector vector;
 
-    public RRawToDoubleVectorClosure(RAbstractRawVector vector, RDataCheckClosure naCheck) {
+    public RRawToDoubleVectorClosure(RAbstractRawVector vector, NACheck naCheck) {
         super(vector, naCheck);
         this.vector = vector;
     }

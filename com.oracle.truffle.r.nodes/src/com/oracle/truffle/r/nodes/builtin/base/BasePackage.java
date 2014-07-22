@@ -39,13 +39,13 @@ public class BasePackage extends RBuiltinPackage {
          * Primitive operations (these are really builtins, but not currently defined that way, so
          * we fake it)
          */
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.AddBuiltin.class).arguments(BinaryArithmetic.ADD, null);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.SubtractBuiltin.class).arguments(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.DivBuiltin.class).arguments(BinaryArithmetic.DIV, null);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.IntegerDivBuiltin.class).arguments(BinaryArithmetic.INTEGER_DIV, null);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.ModBuiltin.class).arguments(BinaryArithmetic.MOD, null);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.MultiplyBuiltin.class).arguments(BinaryArithmetic.MULTIPLY, null);
-        load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.PowBuiltin.class).arguments(BinaryArithmetic.POW, null);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.AddBuiltin.class).arguments(BinaryArithmetic.ADD, null);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.SubtractBuiltin.class).arguments(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.DivBuiltin.class).arguments(BinaryArithmetic.DIV, null);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.IntegerDivBuiltin.class).arguments(BinaryArithmetic.INTEGER_DIV, null);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.ModBuiltin.class).arguments(BinaryArithmetic.MOD, null);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.MultiplyBuiltin.class).arguments(BinaryArithmetic.MULTIPLY, null);
+        load(BinaryArithmeticExperimentalNode.class).setRBuiltin(BinaryArithmetic.PowBuiltin.class).arguments(BinaryArithmetic.POW, null);
         load(BinaryBooleanNode.class).setRBuiltin(BinaryCompare.EqualBuiltin.class).arguments(BinaryCompare.EQUAL);
         load(BinaryBooleanNode.class).setRBuiltin(BinaryCompare.NotEqualBuiltin.class).arguments(BinaryCompare.NOT_EQUAL);
         load(BinaryBooleanNode.class).setRBuiltin(BinaryCompare.GreaterEqualBuiltin.class).arguments(BinaryCompare.GREATER_EQUAL);

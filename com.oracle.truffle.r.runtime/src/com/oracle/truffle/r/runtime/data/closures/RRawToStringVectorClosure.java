@@ -23,13 +23,14 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RRawToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
     private final RAbstractRawVector vector;
 
-    public RRawToStringVectorClosure(RAbstractRawVector vector, RDataCheckClosure naCheck) {
+    public RRawToStringVectorClosure(RAbstractRawVector vector, NACheck naCheck) {
         super(vector, naCheck);
         this.vector = vector;
     }
