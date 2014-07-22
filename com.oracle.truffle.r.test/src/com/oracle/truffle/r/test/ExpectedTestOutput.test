@@ -5946,6 +5946,14 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 #{ length(array(dim=c(1,0,2,3))) }
 [1] 0
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(TRUE) }
+[1] "TRUE"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(c(T, F)) }
+[1] "c(TRUE, FALSE)"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiagonal
 #{ diag(1, 2, 7) }
      [,1] [,2] [,3] [,4] [,5] [,6] [,7]
@@ -6732,6 +6740,30 @@ Error in rm("foo", envir = baseenv()) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFloor
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   0  -4  NA NaN Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormals
+#{ f <- function(a) {}; formals(f) }
+$a
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormals
+#{ f <- function(a, b = c(1, 2)) {}; formals(f) }
+$a
+
+
+$b
+c(1, 2)
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormals
+#{ f <- function(a, b) {}; formals(f) }
+$a
+
+
+$b
+
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFrames
 #{ t1 <- function() {  aa <- 1; t2 <- function() { cat("current frame is", sys.nframe(), "; "); cat("parents are frame numbers", sys.parents(), "; "); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }
@@ -8655,6 +8687,38 @@ a b
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
 #{prod(c(TRUE, TRUE))}
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ l <- quote(a[3] <- 4) ; eval(l) ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ quote(1:3) }
+1:3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ quote(list(1, 2)) }
+list(1, 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ quote(x <- x + 1) }
+x <- x + 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ typeof(quote(1)) }
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ typeof(quote(x + y)) }
+[1] "language"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ typeof(quote(x)) }
+[1] "symbol"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
 #{ set.seed(4336, "default"); sum(runif(10000)) }

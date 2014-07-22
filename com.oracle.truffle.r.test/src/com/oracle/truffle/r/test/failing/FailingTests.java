@@ -749,7 +749,7 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDeparse_1dc435ef27d6d10df26ec2271cb67316() {
+    public void TestSimpleBuiltins_testDeparseIgnore_1dc435ef27d6d10df26ec2271cb67316() {
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
     }
 
@@ -1454,58 +1454,18 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testQuote_b0c9c56afaa693b70b7fb241f261ccdf() {
-        assertEval("{ quote(1:3) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_8b82ba407a1eb6062c2565daa9557474() {
-        assertEval("{ quote(list(1,2)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_339002b066f4349faeef982ea5860293() {
-        assertEval("{ typeof(quote(1)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_d8393f64864243ce76e46a2bb07637b2() {
-        assertEval("{ typeof(quote(x + y)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_0b4f01ed9d7275da794434ee3b6f8d45() {
-        assertEval("{ quote(x <- x + 1) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_0ce6b058e6a459207f7154ded3d856cb() {
-        assertEval("{ typeof(quote(x)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_2ce345e0f74c01976ac35948bfab5a71() {
+    public void TestSimpleBuiltins_testQuoteIgnore_2ce345e0f74c01976ac35948bfab5a71() {
         assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testQuote_409341bfbb82606d75eb0c1700c98952() {
+    public void TestSimpleBuiltins_testQuoteIgnore_409341bfbb82606d75eb0c1700c98952() {
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testQuote_b8cacd46656e5a810809ba31bd8af586() {
+    public void TestSimpleBuiltins_testQuoteIgnore_b8cacd46656e5a810809ba31bd8af586() {
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_e61120d917bf2901af3855b76706bcf1() {
-        assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testQuote_d285d13bbf9697578c2b60d4e8305cdd() {
-        assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
     }
 
     @Ignore

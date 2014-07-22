@@ -48,7 +48,7 @@ public abstract class Internal extends RBuiltinNode {
     @Specialization
     public Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
-        RNode call = (RNode) RDataFactory.createLanguage(x.getRep()).getRep();
+        RNode call = (RNode) x.getRep();
         String name = null;
         RootCallNode callNode = null;
         assert call instanceof WrapArgumentNode;

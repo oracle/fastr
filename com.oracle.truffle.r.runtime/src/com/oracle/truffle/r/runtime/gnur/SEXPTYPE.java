@@ -60,7 +60,13 @@ public enum SEXPTYPE {
     PACKAGESXP(248, null),
     PERSISTSXP(247, null),
     EMPTYENV_SXP(242, null),
-    BASEENV_SXP(241, null);
+    BASEENV_SXP(241, null),
+
+    // FastR scalar variants of GnuR vector types
+    FASTR_DOUBLE(300, Double.class),
+    FASTR_INT(301, Integer.class),
+    FASTR_BYTE(302, Byte.class),
+    FASTR_STRING(303, String.class);
 
     public final int code;
     public final Class<?> fastRClass;
@@ -87,6 +93,22 @@ public enum SEXPTYPE {
         }
         assert false;
         return null;
+    }
+
+    public static SEXPTYPE convertFastRScalarType(SEXPTYPE type) {
+        switch (type) {
+            case FASTR_DOUBLE:
+                return SEXPTYPE.REALSXP;
+            case FASTR_INT:
+                return SEXPTYPE.INTSXP;
+            case FASTR_BYTE:
+                return SEXPTYPE.LGLSXP;
+            case FASTR_STRING:
+                return SEXPTYPE.CHARSXP;
+            default:
+                assert false;
+                return null;
+        }
     }
 
     static {
