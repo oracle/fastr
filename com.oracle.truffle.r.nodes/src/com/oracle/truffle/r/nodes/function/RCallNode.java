@@ -86,6 +86,14 @@ public abstract class RCallNode extends RNode {
         return null;
     }
 
+    protected <T extends Node> T replaceChild(T oldChild, T newChild) {
+        if (oldChild == null) {
+            return insert(newChild);
+        } else {
+            return oldChild.replace(newChild);
+        }
+    }
+
     private abstract static class RootCallNode extends RCallNode {
 
         @Child protected RNode functionNode;
