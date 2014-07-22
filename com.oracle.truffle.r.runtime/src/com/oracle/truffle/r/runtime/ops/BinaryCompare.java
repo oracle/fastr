@@ -177,7 +177,7 @@ public abstract class BinaryCompare extends BooleanOperation {
             if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
-            return RRuntime.asLogical(!(left > right) && !(left < right));
+            return RRuntime.asLogical(left == right);
         }
 
         @Override
