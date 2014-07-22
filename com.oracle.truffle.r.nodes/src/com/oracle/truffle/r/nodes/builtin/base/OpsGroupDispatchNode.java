@@ -33,10 +33,12 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
         // arguments should be matched. But as OpsGroupDispatchNode is for BinaryOperators, we can
         // assume that arguments are in correct order!
         RNode[] unevaluatedArgs = callArgsNode.getArguments();
-        evaluatedArgs = new Object[callArgsNode.getArguments().length];
-        for (int i = 0; i < evaluatedArgs.length; i++) {
-            evaluatedArgs[i] = unevaluatedArgs[i].execute(frame);
+        Object[] evaledArgs = new Object[callArgsNode.getArguments().length];
+        for (int i = 0; i < evaledArgs.length; i++) {
+            evaledArgs[i] = unevaluatedArgs[i].execute(frame);
         }
+        // Delay assignment to allow recursion
+        evaluatedArgs = evaledArgs;
 
         if (evaluatedArgs.length > 0) {
             this.typeL = getArgClass(evaluatedArgs[0]);
