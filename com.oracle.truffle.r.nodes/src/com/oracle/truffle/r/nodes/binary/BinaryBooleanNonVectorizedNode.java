@@ -92,7 +92,7 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
 
     @Specialization(order = 5, guards = "needsRightOperand")
     public byte doLogical(byte left, boolean needsRightOperand, byte right) {
-        return logic.op(RRuntime.logical2double(left), RRuntime.logical2double(right));
+        return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
     @Specialization(order = 6, guards = "!needsRightOperand")
