@@ -171,21 +171,17 @@ public class GroupDispatchNode extends S3DispatchNode {
 
     private void initFunCall(RFunction func) {
         // avoid re-evaluating arguments.
-        // TODO Gero: Add comment, not needed any more!!!
-// if (evaluatedArgs != null) {
-// RNode[] argArray = new RNode[callArgsNode.getArguments().length];
-// System.arraycopy(callArgsNode.getArguments(), evaluatedArgs.length, argArray,
-// evaluatedArgs.length, argArray.length - evaluatedArgs.length);
-// for (int i = 0; i < evaluatedArgs.length; ++i) {
-// if (evaluatedArgs[i] != null) {
-// CompilerDirectives.transferToInterpreterAndInvalidate();
-// argArray[i] = ConstantNode.create(evaluatedArgs[i]);
-// }
-// }
-// this.funCall = new DispatchNode.FunctionCall(func,
-// CallArgumentsNode.create(callArgsNode.modeChange(), callArgsNode.modeChangeForAll(), argArray,
-// callArgsNode.getNames()));
-// }
+        if (evaluatedArgs != null) {
+            RNode[] argArray = new RNode[callArgsNode.getArguments().length];
+            System.arraycopy(callArgsNode.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
+            for (int i = 0; i < evaluatedArgs.length; ++i) {
+                if (evaluatedArgs[i] != null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    argArray[i] = ConstantNode.create(evaluatedArgs[i]);
+                }
+            }
+            this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(callArgsNode.modeChange(), callArgsNode.modeChangeForAll(), argArray, callArgsNode.getNames()));
+        }
         if (this.funCall == null) {
             this.funCall = new DispatchNode.FunctionCall(func, callArgsNode);
         }

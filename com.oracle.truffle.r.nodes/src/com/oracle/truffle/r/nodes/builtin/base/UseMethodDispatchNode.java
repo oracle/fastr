@@ -47,45 +47,63 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
-        FormalArguments formals = ((RRootNode) targetFunction.getTarget().getRootNode()).getFormalArguments();
+        RFunction calledGeneric = RArguments.getFunction(frame);
+        FormalArguments calledFormals = ((RRootNode) calledGeneric.getTarget().getRootNode()).getFormalArguments();
+// int varArgsIndex = calledFormals.getVarArgIndex();
 
-        int defaultCount = formals.getArgsCount();
+        // Extract arguments from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
-        int argListSize = Math.max(argCount, defaultCount);
+        int argListSize = argCount;
         ArrayList<Object> argList = new ArrayList<>(argListSize);
         int fi = 0;
         for (; fi < argCount; ++fi) {
             Object arg = RArguments.getArgument(frame, fi);
             if (arg instanceof Object[]) {
-                Object[] arrayArg = (Object[]) arg;
-                argListSize += arrayArg.length;
+                Object[] varArgs = (Object[]) arg;
+                argListSize += varArgs.length;
                 argList.ensureCapacity(argListSize);
 
-                for (Object anArg : arrayArg) {
-                    argList.add(anArg);
+                for (Object varArg : varArgs) {
+                    addArg(argList, varArg);
                 }
             } else {
-                // TODO Gero: Replace with proper missing handling when available!
-                if (arg == RMissing.instance) {
-                    argList.add(formals.getDefaultArgs()[fi].execute(frame));
-                } else {
-                    argList.add(arg);
-                }
+                addArg(argList, arg);
             }
         }
-        // TODO Gero, move this to ArgumentsMatcher
 
-        while (fi < defaultCount) {
-            argList.add(formals.getDefaultArgs()[fi].execute(frame));
-            fi++;
+        // ...and use them as 'supplied' arguments...
+
+        // Don't use "..." as supplied name! TODO Correct name matching necessary???
+        String[] calledSuppliedNames = new String[calledFormals.getNames().length];
+        Arrays.fill(calledSuppliedNames, null);
+        // TODO UseMethod: Add proper name resolution
+// for (int i = 0; i < calledSuppliedNames.length; i++) {
+// String name = calledFormals.getNames()[i];
+// if (i == varArgsIndex) {
+// calledSuppliedNames[i] = null;
+// } else {
+// calledSuppliedNames[i] = name;
+// }
+// }
+        EvaluatedArguments evaledArgs = new EvaluatedArguments(argList.toArray(), calledSuppliedNames);
+
+        // ...to match them against the chosen function's formal arguments
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
+
+        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs());
+    }
+
+    private static void addArg(List<Object> values, Object value) {
+        if (RMissing.isMissing(value)) {
+            values.add(null);
+        } else {
+            values.add(value);
         }
-
-        return executeHelper2(callerFrame, argList);
     }
 
     @SlowPath
-    private Object executeHelper2(Frame callerFrame, List<Object> argList) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, argList.toArray());
+    private Object executeHelper2(Frame callerFrame, Object[] arguments) {
+        Object[] argObject = RArguments.createS3Args(targetFunction, arguments);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);

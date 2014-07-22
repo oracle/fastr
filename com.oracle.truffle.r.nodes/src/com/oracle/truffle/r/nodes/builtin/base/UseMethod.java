@@ -133,6 +133,9 @@ public abstract class UseMethod extends RBuiltinNode {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
+            if (enclosingArg instanceof RPromise) {
+                enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
+            }
             return currentNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
         }
     }
@@ -161,6 +164,9 @@ public abstract class UseMethod extends RBuiltinNode {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
                 Object enclosingArg = RArguments.getArgument(frame, 0);
+                if (enclosingArg instanceof RPromise) {
+                    enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
+                }
                 DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
             } else {
