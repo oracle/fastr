@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -37,56 +40,135 @@ public class RPromise {
      * {@link EvalPolicy#STRICT}<br/>
      */
     public enum EvalPolicy {
+        /**
+         * This policy is use for arguments that are inlined for the use in builtins that are
+         * built-into FastR, written in Java and thus evaluated differently then builtins
+         * implemented in R.<br/>
+         * Promises with this policy are evaluated every time they are executed.
+         */
         RAW,
 
         /**
-         * {@link RPromise} are created for every argument. If function is a builtin, its argument
-         * semantics are maintained!
+         * This promise is an actual promise! It's value won't get evaluated until it's read.
          */
         PROMISED,
 
         /**
-         *
+         * This is used for maintaining old, strict argument evaluation semantics. Arguments are
+         * fully evaluated before executing the actual function.
          */
         STRICT;
     }
 
-    private final EvalPolicy evalPolicy;
     /**
-     * For promises associated with environments (frames) that are not top-level.
+     * @see EvalPolicy
+     */
+    private final EvalPolicy evalPolicy;
+
+    /**
+     * The {@link REnvironment} {@link #argumentRep} should be evaluated in. For promises associated
+     * with environments (frames) that are not top-level. May be <code>null</code>.
      */
     private REnvironment env;
+
+    /**
+     * The representation of the supplied argument. May contain <code>null</code> if
+     * <code>{@link #missingBit} == true</code>!
+     */
     private final RLanguageRep argumentRep;
+
+    /**
+     * The representation of the default argument. May NOT be <code>null</code>, 'no default
+     * argument' is denoted by a constant wrapping {@link RMissing#instance}.
+     */
     private final RLanguageRep defaultRep;
+
+    /**
+     * Whether there was a argument supplied or not. If this is set to <code>false</code>,
+     * {@link #argumentRep} contains <code>null</code>!
+     */
+    private final boolean missingBit;
 
     /**
      * When {@code null} the promise has not been evaluated.
      */
     private Object value = null;
-    private boolean isEvaluated = false;
+
+    /**
+     * A flag use by {@link #evaluate(VirtualFrame)} to
+     */
+    @CompilationFinal private boolean isEvaluated = false;
 
     /**
      * Create the promise with a representation that allows evaluation later in a given frame.
+     *
+     * @param evalPolicy {@link EvalPolicy}
+     * @param env {@link #env}
+     * @param argumentRep {@link #argumentRep}
+     * @param defaultRep {@link #defaultRep}
+     * @param missingBit {@link #missingBit}
      */
-    public RPromise(EvalPolicy evalPolicy, REnvironment env, Object rep, Object defaultRep) {
+    RPromise(EvalPolicy evalPolicy, REnvironment env, Object argumentRep, Object defaultRep, boolean missingBit) {
         this.evalPolicy = evalPolicy;
         this.env = env;
-        this.argumentRep = new RLanguageRep(rep);
+        this.argumentRep = new RLanguageRep(argumentRep);
         this.defaultRep = new RLanguageRep(defaultRep);
+        this.missingBit = missingBit;
     }
 
+    /**
+     * @param evalPolicy
+     * @param env
+     * @param rep
+     * @param defaultRep
+     * @return see {@link #RPromise(EvalPolicy, REnvironment, Object, Object, boolean)}, with
+     *         {@link #missingBit} = <code>rep == null</code>
+     */
+    public static RPromise create(EvalPolicy evalPolicy, REnvironment env, Object rep, Object defaultRep) {
+        return new RPromise(evalPolicy, env, rep, defaultRep, rep == null);
+    }
+
+    /**
+     * Evaluates this promise. If it has already been evaluated ({@link #isEvaluated()}),
+     * {@link #getValue()} is returned.
+     *
+     * @param frame The {@link VirtualFrame} which is use for evaluation of {@link #defaultRep} if
+     *            necessary
+     * @return The value this promise resolves to
+     */
     public Object evaluate(VirtualFrame frame) {
         if (isEvaluated) {
             return value;
         }
 
-        Object obj = doEvalArgument();
-        if (isSymbolMissing(obj)) {
-            obj = doEvalDefaultArgument(frame);
+        // If there has been an argument supplied: Evaluate it!
+        Object obj = null;
+        if (!missingBit) {
+            // Evaluate argument
+            obj = doEvalArgument();
         }
 
+        // If there EITHER has been no argument supplied OR its value is missing: Evaluate the
+        // default value.
+        // (The later case may happen, as passing a missing argument into a function call does
+        // _not_ count as evaluation, and forwards the missing state in the form of
+        // RMissing_Arg/RMissing.instance).
+        if (missingBit || RMissing.isMissing(obj)) {
+            // Evaluate default value
+            obj = doEvalDefaultArgument(frame);
+
+// // Check if we just evaluated a missing argument
+// if (RMissing.isMissing(obj)) {
+// // TODO ARGUMENT_MISSING! formal arg name!
+// String name = "<no var name>"; // ((Node) defRep).
+// throw RError.error(RError.Message.ARGUMENT_MISSING, name);
+// }
+        }
+
+        // Done. Set values and invalidate, as promise is evaluate-once.
         isEvaluated = true;
         value = obj;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         return obj;
     }
 
@@ -113,29 +195,53 @@ public class RPromise {
         return result;
     }
 
-    public static boolean isSymbolMissing(Object obj) {
-        // TODO Missing!
-        return obj == RMissing.instance;
+    /**
+     * @return {@link #missingBit}
+     */
+    public boolean isMissingBitSet() {
+        return missingBit;
     }
 
+    /**
+     * @return {@link #evalPolicy}
+     */
     public EvalPolicy getEvalPolicy() {
         return evalPolicy;
     }
 
+    /**
+     * @return {@link #env}
+     */
     public REnvironment getEnv() {
         return env;
     }
 
+    /**
+     * @return {@link #argumentRep}
+     */
     public RLanguageRep getArgumentRep() {
         return argumentRep;
     }
 
+    /**
+     * @return {@link #argumentRep}
+     */
     public Object getRep() {
         return argumentRep.getRep();
     }
 
+    /**
+     * @return {@link #defaultRep}
+     */
     public RLanguageRep getDefaultRep() {
         return defaultRep;
+    }
+
+    /**
+     * @return The raw {@link #value}.
+     */
+    protected Object getValue() {
+        return value;
     }
 
     /**
@@ -145,11 +251,36 @@ public class RPromise {
         return isEvaluated;
     }
 
+    @SlowPath
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder("[ ");
+        b.append(evalPolicy).append(", ");
+        b.append(value).append(", ");
+        b.append(missingBit).append(", ");
+        b.append(argumentRep.getRep()).append(", ");
+        b.append(env).append(", ");
+        b.append(defaultRep.getRep()).append(" ]");
+        return b.toString();
+    }
+
+    /**
+     * A {@link RPromise} implementation that already has its argument value evaluated
+     *
+     * @see #RPromise(EvalPolicy, Object, Object)
+     */
     public static class RPromiseArgEvaluated extends RPromise {
         private final Object argumentValue;
 
+        /**
+         * @param evalPolicy {@link EvalPolicy}
+         * @param argumentValue The already evaluated value of the supplied argument.
+         *            <code>RMissing.instance</code> denotes 'argument not supplied', aka.
+         *            'missing'.
+         * @param defaultRep
+         */
         public RPromiseArgEvaluated(EvalPolicy evalPolicy, Object argumentValue, Object defaultRep) {
-            super(evalPolicy, null, null, defaultRep);
+            super(evalPolicy, null, null, defaultRep, argumentValue == RMissing.instance);
             this.argumentValue = argumentValue;
         }
 
@@ -157,8 +288,26 @@ public class RPromise {
         protected Object doEvalArgument() {
             return argumentValue;
         }
+
+        @SlowPath
+        @Override
+        public String toString() {
+            StringBuilder b = new StringBuilder("[");
+            b.append(getEvalPolicy()).append(", ");
+            b.append(getValue()).append(", ");
+            b.append(isMissingBitSet()).append(", ");
+            b.append(argumentValue).append(", ");
+            b.append(getDefaultRep().getRep()).append(" ]");
+            return b.toString();
+        }
     }
 
+    /**
+     * A factory which produces instances of {@link RPromise}.
+     *
+     * @see RPromiseFactory#createPromise()
+     * @see RPromiseFactory#createPromiseArgEvaluated(Object)
+     */
     public static class RPromiseFactory {
         private REnvironment env;
         private final Object argument;
@@ -185,10 +334,18 @@ public class RPromise {
             this.defaultArg = defaultArg;
         }
 
+        /**
+         * @return A {@link RPromise} from the given parameters
+         */
         public RPromise createPromise() {
-            return new RPromise(evalPolicy, env, argument, defaultArg);
+            return RPromise.create(evalPolicy, env, argument, defaultArg);
         }
 
+        /**
+         * @param argumentValue The already evaluated argument value
+         * @return A {@link RPromise} whose supplied argument has already been evaluated
+         * @see RPromiseArgEvaluated
+         */
         public RPromise createPromiseArgEvaluated(Object argumentValue) {
             return new RPromiseArgEvaluated(evalPolicy, argumentValue, defaultArg);
         }

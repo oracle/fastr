@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.*;
  * supplied argument, the default argument or <code>null</code>, if neither is provided.
  * </p>
  * <p>
- * The {@link #executeArray(VirtualFrame)} method converts these arguments into a form that can be
- * passed into functions. E.g., wraps arguments into Promises etc.
+ * The {@link #executeArray(VirtualFrame)} method executes the argument nodes and converts them into
+ * a form that can be passed into functions.
  * </p>
  *
  * @see #suppliedNames

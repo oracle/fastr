@@ -244,15 +244,10 @@ public class ArgumentMatcher {
             }
         }
 
-        // TODO ARGUMENT_MISSING!!!
-// // Check for missing formal arguments
-// for (int fi = 0; fi < resultArgs.length; fi++) {
-// if (resultArgs[fi] == null) {
-// RNode defaultArg = formals.getDefaultArgs()[fi];
-// if (defaultArg == null) {
-// String name = formals.getNames()[fi];
-// throw RError.error(encapsulatingSrc, RError.Message.ARGUMENT_MISSING, name);
-// }
+// if (varArgIndex != ArgumentsTrait.NO_VARARG) {
+// T arg = resultArgs[varArgIndex];
+// if (arg == null) {
+// resultArgs[varArgIndex] = listFactory.makeList(arrFactory.newArray(0), new String[0]);
 // }
 // }
 
@@ -337,10 +332,10 @@ public class ArgumentMatcher {
         // Insert promises here!
         int logicalIndex = 0;    // also counts arguments wrapped in vararg
         for (int fi = 0; fi < arguments.length; fi++) {
-            RNode arg = arguments[fi];
-            if (arg == null) {
-                arg = ConstantNode.create(RMissing.instance);
-            } else if (arg instanceof VarArgsAsObjectArrayNode) {
+            RNode arg = arguments[fi];  // arg may be null, which denotes 'no arg supplied'
+
+            // Has varargs? Unfold!
+            if (arg instanceof VarArgsAsObjectArrayNode) {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
                 RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
                 for (int j = 0; j < varArgs.elementNodes.length; j++) {
@@ -351,6 +346,7 @@ public class ArgumentMatcher {
                 continue;
             }
 
+            // Normal argument: just wrap in promise
             RNode defaultArg = fi < defaultArgs.length ? formals.getDefaultArg(fi) : null;
             arguments[fi] = promiseWrapper.wrap(builtinRootNode, env, arg, defaultArg, logicalIndex);
             logicalIndex++;
@@ -424,9 +420,10 @@ public class ArgumentMatcher {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
             // TODO Strict!
+            SourceSection promiseSrc = suppliedArg == null ? null : suppliedArg.getSourceSection();
             EvalPolicy policy = builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
             RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
-            return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(policy, env, suppliedArg, defaultValueNode));
+            return PromiseNode.create(promiseSrc, RPromiseFactory.create(policy, env, suppliedArg, defaultValueNode));
         }
     }
 
@@ -440,11 +437,12 @@ public class ArgumentMatcher {
         public RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
             assert builtinRootNode != null;
+            SourceSection promiseSrc = suppliedArg == null ? null : suppliedArg.getSourceSection();
             RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
             if (!builtinRootNode.evaluatesArg(logicalIndex)) {
-                return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(EvalPolicy.PROMISED, env, suppliedArg, defaultValueNode));
+                return PromiseNode.create(promiseSrc, RPromiseFactory.create(EvalPolicy.PROMISED, env, suppliedArg, defaultValueNode));
             } else {
-                return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(EvalPolicy.RAW, env, suppliedArg, defaultValueNode));
+                return PromiseNode.create(promiseSrc, RPromiseFactory.create(EvalPolicy.RAW, env, suppliedArg, defaultValueNode));
             }
         }
     }
@@ -481,7 +479,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return RMissing.instance;
+                return elements; // RMissing.instance;
             }
         }
     }
@@ -491,12 +489,12 @@ public class ArgumentMatcher {
      */
     public static final class VarArgsAsListNodeFactory implements VarArgsFactory<RNode> {
         public RNode makeList(final RNode[] elements, final String[] names) {
-            if (elements.length > 1) {
+            if (elements.length > 1 || elements.length == 0) {
                 return new VarArgsAsListNode(elements, names);
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return ConstantNode.create(RMissing.instance);
+                return new VarArgsAsListNode(elements, names);  // ConstantNode.create(RMissing.instance);
             }
         }
     }
@@ -552,7 +550,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return ConstantNode.create(RMissing.instance);
+                return new VarArgsAsObjectArrayNode(elements);  // ConstantNode.create(RMissing.instance);
             }
         }
     }

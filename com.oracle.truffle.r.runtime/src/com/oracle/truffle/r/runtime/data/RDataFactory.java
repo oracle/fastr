@@ -326,7 +326,7 @@ public final class RDataFactory {
     }
 
     public static RPromise createPromise(Object rep, REnvironment env, Object defaultRep) {
-        return traceDataCreated(new RPromise(EvalPolicy.PROMISED, env, rep, defaultRep));
+        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, env, rep, defaultRep));
     }
 
     public static RPromise createPromise(Object rep) {

@@ -35,6 +35,28 @@ public final class RMissing extends RScalar {
     private RMissing() {
     }
 
+    /**
+     * This function determines, of an arguments value - given as 'value' - is missing. An argument
+     * is missing, when it has not been provided to the current function call, OR if the value that
+     * has been provided once was a missing argument. (cp. R language definition and Internals for
+     * this behavior)
+     *
+     * @param value The value that should be examined
+     * @return <code>true</code> iff this value is 'missing' in the definition of R
+     */
+    public static boolean isMissing(Object value) {
+        if (value == instance) {
+            return true;
+        }
+
+        if (value instanceof RPromise) {
+            RPromise promise = (RPromise) value;
+            // TODO STRICT: We also have to evaluate and check Promise value!
+            return promise.isMissingBitSet();
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return "missing";

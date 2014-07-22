@@ -82,8 +82,8 @@ public class PromiseNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             // Evaluate the supplied argument here in the caller frame and create the Promise with
-            // this value
-            Object obj = suppliedArg.execute(frame);
+            // this value so it can finally be evaluated on the callee side
+            Object obj = suppliedArg != null ? suppliedArg.execute(frame) : RMissing.instance;
             return factory.createPromiseArgEvaluated(obj);
         }
     }
@@ -107,7 +107,7 @@ public class PromiseNode extends RNode {
         public Object execute(VirtualFrame frame) {
             // TODO builtin.inline: We do re-evaluation every execute inside the caller frame, as we
             // know that the evaluation of default values has no side effects (hopefully!)
-            Object obj = suppliedArg.execute(frame);
+            Object obj = suppliedArg != null ? suppliedArg.execute(frame) : RMissing.instance;
             RPromise promise = factory.createPromiseArgEvaluated(obj);
             return promise.evaluate(frame);
         }
