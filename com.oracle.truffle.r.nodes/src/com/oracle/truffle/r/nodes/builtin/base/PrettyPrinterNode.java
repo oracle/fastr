@@ -264,14 +264,20 @@ public abstract class PrettyPrinterNode extends RNode {
     @Specialization(order = 88)
     public String prettyPrintPairList(RPairList pairList, Object listElementName) {
         StringBuilder sb = new StringBuilder();
-        if (pairList.getTag() != null) {
-            sb.append(pairList.getTag());
-        }
-        if (pairList.car() != null) {
-            sb.append(prettyPrintRecursive(pairList.car(), listElementName));
-        }
-        if (pairList.cdr() != null) {
-            sb.append(prettyPrintRecursive(pairList.cdr(), listElementName));
+        RPairList pl = pairList;
+        while (pl != null) {
+            if (pl.getTag() != null) {
+                sb.append('$');
+                sb.append(pl.getTag());
+                sb.append('\n');
+            }
+            if (pl.car() != null) {
+                sb.append(prettyPrintRecursive(pl.car(), listElementName));
+            }
+            pl = (RPairList) pl.cdr();
+            if (pl != null) {
+                sb.append('\n');
+            }
         }
         return sb.toString();
     }
@@ -279,7 +285,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(order = 89)
     public String prettyPrintMissing(RMissing missing, Object listElementName) {
-        return "";
+        return "\n";
     }
 
     @SlowPath

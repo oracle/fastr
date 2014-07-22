@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * Denotes the (rarely seen) {@code pairlist} type in R.
  */
-public class RPairList implements RAttributable {
+public class RPairList implements RAttributable, RAbstractContainer {
     private Object car;
     private Object cdr;
     private String tag;
@@ -37,6 +39,13 @@ public class RPairList implements RAttributable {
      */
     private final SEXPTYPE type;
 
+    public RPairList(Object car, Object cdr, String tag) {
+        this(car, cdr, tag, null);
+    }
+
+    /**
+     * Variant used in unserialization to record the GnuR type the pairlist denotes.
+     */
     public RPairList(Object car, Object cdr, String tag, SEXPTYPE type) {
         this.car = car;
         this.cdr = cdr;
@@ -67,18 +76,6 @@ public class RPairList implements RAttributable {
         return pl.car;
     }
 
-    public int length() {
-        int result = 1;
-        Object tcdr = cdr;
-        while (tcdr != null && tcdr != RNull.instance) {
-            if (tcdr instanceof RPairList) {
-                tcdr = ((RPairList) tcdr).cdr;
-            }
-            result++;
-        }
-        return result;
-    }
-
     public String getTag() {
         return tag;
     }
@@ -100,6 +97,79 @@ public class RPairList implements RAttributable {
             attributes = RAttributes.create();
         }
         return attributes;
+    }
+
+    public int getLength() {
+        int result = 1;
+        Object tcdr = cdr;
+        while (tcdr != null && tcdr != RNull.instance) {
+            if (tcdr instanceof RPairList) {
+                tcdr = ((RPairList) tcdr).cdr;
+            }
+            result++;
+        }
+        return result;
+    }
+
+    public int[] getDimensions() {
+        return new int[]{1};
+    }
+
+    public Class<?> getElementClass() {
+        return null;
+    }
+
+    public RVector materializeNonSharedVector() {
+        assert false;
+        return null;
+    }
+
+    public RShareable materializeToShareable() {
+        assert false;
+        return null;
+    }
+
+    public Object getDataAtAsObject(int index) {
+        RPairList pl = this;
+        int i = 0;
+        while (pl != null && i < index) {
+            pl = (RPairList) pl.cdr;
+            i++;
+        }
+        return pl.car;
+    }
+
+    public Object getNames() {
+        int l = getLength();
+        String[] data = new String[l];
+        RPairList pl = this;
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        int i = 0;
+        while (pl != null) {
+            data[i] = pl.tag;
+            if (pl.tag == RRuntime.STRING_NA) {
+                complete = false;
+            }
+            pl = (RPairList) pl.cdr;
+            i++;
+        }
+        return RDataFactory.createStringVector(data, complete);
+    }
+
+    public RList getDimNames() {
+        return null;
+    }
+
+    public Object getRowNames() {
+        return null;
+    }
+
+    public RStringVector getClassHierarchy() {
+        return null;
+    }
+
+    public boolean isObject() {
+        return false;
     }
 
 }

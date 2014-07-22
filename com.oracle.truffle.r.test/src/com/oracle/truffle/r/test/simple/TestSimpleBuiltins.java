@@ -2234,18 +2234,22 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testQuote() {
-        assertEval("{ quote(1:3) }"); // specific to fastr output format
-        assertEval("{ quote(list(1,2)) }"); // specific to fastr output format
+        assertEval("{ quote(1:3) }");
+        assertEval("{ quote(list(1, 2)) }");
         assertEval("{ typeof(quote(1)) }");
         assertEval("{ typeof(quote(x + y)) }");
-        assertEval("{ quote(x <- x + 1) }"); // specific to fastr output format
+        assertEval("{ quote(x <- x + 1) }");
         assertEval("{ typeof(quote(x)) }");
 
-        assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
         assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
         assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
+    }
+
+    @Test
+    @Ignore
+    public void testQuoteIgnore() {
+        assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
     }
@@ -2336,14 +2340,28 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testFormals() {
+        assertEval("{ f <- function(a) {}; formals(f) }");
+        assertEval("{ f <- function(a, b) {}; formals(f) }");
+        assertEval("{ f <- function(a, b = c(1, 2)) {}; formals(f) }");
+    }
+
+    @Test
     public void testLocal() {
         assertEval("{ kk <- local({k <- function(x) {x*2}}); kk(8)}");
         assertEval("{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
     }
 
     @Test
-    @Ignore
     public void testDeparse() {
+        assertEval("{ deparse(TRUE) }");
+        assertEval("{ deparse(c(T, F)) }");
+        // TODO add more
+    }
+
+    @Test
+    @Ignore
+    public void testDeparseIgnore() {
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
     }
 
