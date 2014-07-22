@@ -76,7 +76,9 @@ def _truffle_r_gate_body(args, tasks):
     tasks.append(t.stop())
     # temp disable
     t = mx.GateTask('UnitTests: simple')
-    rc = junit(['--tests', _default_unit_tests()])
+    junit(['--tests', _default_unit_tests()])
+# temp disable check
+#    rc = junit(['--tests', _default_unit_tests()])
 #    if rc != 0:
 #        mx.abort('unit tests failed')
     tasks.append(t.stop())
