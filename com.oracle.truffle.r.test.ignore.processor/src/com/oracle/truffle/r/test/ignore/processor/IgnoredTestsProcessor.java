@@ -140,6 +140,11 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
         return new String(data);
     }
 
+    /**
+     * Called twice, with {@code ignore === false} for included tests and {@code ignore === true}
+     * for those annotated with {@code Ignore}. N.B. The duplicate checking currently does not work
+     * across both variants, so when a test annotation is changed, duplicates may be reported.
+     */
     private void generateTestsFile(File outputFileDir, String className, boolean ignore, String oldContent) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("MD5");
         StringWriter swr = new StringWriter();
@@ -154,23 +159,26 @@ public class IgnoredTestsProcessor extends AbstractProcessor {
         wr.println("//Checkstyle: stop");
         wr.printf("public class %s extends TestBase {%n", className);
         boolean duplicates = false;
-        Set<String> methodTags = new HashSet<>();
+        Map<String, String> methodTags = new HashMap<>();
         for (Map.Entry<String, SortedSet<CallAndArg>> entrySet : testMap.entrySet()) {
-            String methodName = entrySet.getKey().replace('.', '_');
+            String methodName = entrySet.getKey();
+            String methodNameTrans = methodName.replace('.', '_');
             for (CallAndArg testCall : entrySet.getValue()) {
                 if (ignore && !testCall.isIgnored) {
                     continue;
                 }
                 byte[] uniq = digest.digest(testCall.arg.getBytes());
                 String tag = hexBytes(uniq);
-                if (methodTags.contains(tag)) {
-                    error("duplicate ignored test in: " + methodName + ", :" + testCall.arg);
+                String previous = methodTags.get(tag);
+                if (previous != null) {
+                    String errMsg = String.format("duplicate test in %s: '%s', initially seen in %s", methodName, testCall.arg, previous);
+                    error(errMsg);
                     duplicates = true;
                 } else {
-                    methodTags.add(tag);
+                    methodTags.put(tag, methodName);
                 }
                 wr.printf("    @%s%n", ignore ? "Ignore" : "Test");
-                wr.printf("    public void %s_%s() {%n", methodName, tag);
+                wr.printf("    public void %s_%s() {%n", methodNameTrans, tag);
                 wr.printf("        %s;%n", testCall);
                 wr.println("    }\n");
             }
