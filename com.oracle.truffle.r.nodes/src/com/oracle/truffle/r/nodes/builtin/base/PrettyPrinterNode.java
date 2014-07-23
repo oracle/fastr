@@ -273,6 +273,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             if (pl.car() != null) {
                 sb.append(prettyPrintRecursive(pl.car(), listElementName));
+                sb.append('\n');
             }
             pl = (RPairList) pl.cdr();
             if (pl != null) {
@@ -285,7 +286,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(order = 89)
     public String prettyPrintMissing(RMissing missing, Object listElementName) {
-        return "\n";
+        return "";
     }
 
     @SlowPath

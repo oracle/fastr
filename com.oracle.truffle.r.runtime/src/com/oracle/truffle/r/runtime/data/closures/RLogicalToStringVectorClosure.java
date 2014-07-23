@@ -22,24 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RLogicalToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
     private final RAbstractLogicalVector vector;
 
-    public RLogicalToStringVectorClosure(RAbstractLogicalVector vector, RDataCheckClosure naCheck) {
+    public RLogicalToStringVectorClosure(RAbstractLogicalVector vector, NACheck naCheck) {
         super(vector, naCheck);
         this.vector = vector;
     }
 
     public String getDataAt(int index) {
-        byte data = vector.getDataAt(index);
-        naCheck.enable(!vector.isComplete());
-        if (naCheck.check(data)) {
-            return RRuntime.STRING_NA;
-        }
-        return RRuntime.logicalToString(data);
+        return naCheck.convertLogicalToString(vector.getDataAt(index));
     }
 }

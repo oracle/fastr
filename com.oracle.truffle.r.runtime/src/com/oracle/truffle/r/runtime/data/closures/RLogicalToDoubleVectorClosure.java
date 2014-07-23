@@ -22,24 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RLogicalToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
     private final RAbstractLogicalVector vector;
 
-    public RLogicalToDoubleVectorClosure(RAbstractLogicalVector vector, RDataCheckClosure naCheck) {
+    public RLogicalToDoubleVectorClosure(RAbstractLogicalVector vector, NACheck naCheck) {
         super(vector, naCheck);
         this.vector = vector;
     }
 
     public double getDataAt(int index) {
-        byte data = vector.getDataAt(index);
-        naCheck.enable(!vector.isComplete());
-        if (naCheck.check(data)) {
-            return RRuntime.DOUBLE_NA;
-        }
-        return data;
+        return naCheck.convertLogicalToDouble(vector.getDataAt(index));
     }
 }

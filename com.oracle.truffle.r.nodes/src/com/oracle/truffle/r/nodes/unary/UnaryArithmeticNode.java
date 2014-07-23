@@ -23,8 +23,11 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
@@ -42,22 +45,24 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         this.arithmetic = prev.arithmetic;
     }
 
-    @Specialization(order = 1, guards = "!isNA")
+    public abstract Object execute(VirtualFrame frame, Object operand);
+
+    @Specialization(order = 0, guards = "!isNA")
     public int doInt(int operand) {
         return arithmetic.op(operand);
     }
 
-    @Specialization(order = 2, guards = "isNA")
+    @Specialization(order = 1, guards = "isNA")
     public int doIntNA(@SuppressWarnings("unused") int operand) {
         return RRuntime.INT_NA;
     }
 
-    @Specialization(order = 3, guards = "!isNA")
+    @Specialization(order = 2, guards = "!isNA")
     public double doDouble(double operand) {
         return arithmetic.op(operand);
     }
 
-    @Specialization(order = 4, guards = "isNA")
+    @Specialization(order = 3, guards = "isNA")
     public double doDoubleNA(@SuppressWarnings("unused") double operand) {
         return RRuntime.DOUBLE_NA;
     }
@@ -82,17 +87,25 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         return RRuntime.INT_NA;
     }
 
+    private static void copyAttributes(RVector ret, RAbstractVector v) {
+        ret.copyRegAttributesFrom(v);
+        ret.setDimensions(v.getDimensions());
+        ret.copyNamesFrom(v);
+    }
+
     @Specialization(order = 10, guards = "isComplete")
-    public RDoubleVector doDoubleVector(RDoubleVector operands) {
+    public RDoubleVector doDoubleVector(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
         for (int i = 0; i < operands.getLength(); ++i) {
             res[i] = arithmetic.op(operands.getDataAt(i));
         }
-        return RDataFactory.createDoubleVector(res, RDataFactory.COMPLETE_VECTOR);
+        RDoubleVector ret = RDataFactory.createDoubleVector(res, RDataFactory.COMPLETE_VECTOR);
+        copyAttributes(ret, operands);
+        return ret;
     }
 
     @Specialization(order = 11, guards = "!isComplete")
-    public RDoubleVector doDoubleVectorNA(RDoubleVector operands) {
+    public RDoubleVector doDoubleVectorNA(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
         na.enable(operands);
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -102,22 +115,26 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
                 res[i] = arithmetic.op(operands.getDataAt(i));
             }
         }
-        return RDataFactory.createDoubleVector(res, na.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(res, na.neverSeenNA());
+        copyAttributes(ret, operands);
+        return ret;
     }
 
     @Specialization(order = 20, guards = "isComplete")
-    public RComplexVector doComplexVector(RComplexVector operands) {
+    public RComplexVector doComplexVector(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
         for (int i = 0; i < operands.getLength(); ++i) {
             RComplex r = arithmetic.op(operands.getDataAt(i).getRealPart(), operands.getDataAt(i).getImaginaryPart());
             res[2 * i] = r.getRealPart();
             res[2 * i + 1] = r.getImaginaryPart();
         }
-        return RDataFactory.createComplexVector(res, RDataFactory.COMPLETE_VECTOR);
+        RComplexVector ret = RDataFactory.createComplexVector(res, RDataFactory.COMPLETE_VECTOR);
+        copyAttributes(ret, operands);
+        return ret;
     }
 
     @Specialization(order = 21, guards = "!isComplete")
-    public RComplexVector doComplexVectorNA(RComplexVector operands) {
+    public RComplexVector doComplexVectorNA(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
         na.enable(operands);
         for (int i = 0; i < operands.getLength(); ++i) {
@@ -130,18 +147,64 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
                 res[2 * i + 1] = r.getImaginaryPart();
             }
         }
-        return RDataFactory.createComplexVector(res, na.neverSeenNA());
+        RComplexVector ret = RDataFactory.createComplexVector(res, na.neverSeenNA());
+        copyAttributes(ret, operands);
+        return ret;
+    }
+
+    @Specialization(order = 30, guards = "isComplete")
+    public RIntVector doIntVector(RAbstractIntVector operands) {
+        int[] res = new int[operands.getLength()];
+        for (int i = 0; i < operands.getLength(); ++i) {
+            res[i] = arithmetic.op(operands.getDataAt(i));
+        }
+        RIntVector ret = RDataFactory.createIntVector(res, RDataFactory.COMPLETE_VECTOR);
+        copyAttributes(ret, operands);
+        return ret;
+    }
+
+    @Specialization(order = 31, guards = "!isComplete")
+    public RIntVector doIntVectorNA(RAbstractIntVector operands) {
+        int[] res = new int[operands.getLength()];
+        na.enable(operands);
+        for (int i = 0; i < operands.getLength(); ++i) {
+            if (na.check(operands.getDataAt(i))) {
+                res[i] = RRuntime.INT_NA;
+            } else {
+                res[i] = arithmetic.op(operands.getDataAt(i));
+            }
+        }
+        RIntVector ret = RDataFactory.createIntVector(res, na.neverSeenNA());
+        copyAttributes(ret, operands);
+        return ret;
+    }
+
+    @Specialization(order = 40, guards = "isComplete")
+    public RIntVector doLogicalVector(RAbstractLogicalVector operands) {
+        return doIntVector(RClosures.createLogicalToIntVector(operands, na));
+    }
+
+    @Specialization(order = 41, guards = "!isComplete")
+    public RIntVector doLogicalVectorNA(RAbstractLogicalVector operands) {
+        return doIntVectorNA(RClosures.createLogicalToIntVector(operands, na));
+    }
+
+    @Specialization(order = 50)
+    public Object doStringVector(@SuppressWarnings("unused") RAbstractStringVector operands) {
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
+    }
+
+    @Specialization(order = 51)
+    public Object doRawVector(@SuppressWarnings("unused") RAbstractRawVector operands) {
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
     }
 
     protected static boolean isComplexNA(RComplex c) {
         return c.isNA();
     }
 
-    protected static boolean isComplete(RComplexVector cv) {
+    protected static boolean isComplete(RAbstractVector cv) {
         return cv.isComplete();
     }
 
-    protected static boolean isComplete(RDoubleVector dv) {
-        return dv.isComplete();
-    }
 }
