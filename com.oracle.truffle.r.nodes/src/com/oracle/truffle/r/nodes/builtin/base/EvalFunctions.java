@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.RError.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -101,16 +102,20 @@ public class EvalFunctions {
         @Specialization
         public Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
             /*
-             * In the current hack expr is always a RPromise because we specified noEval for it in
-             * the RBuiltin The spec for eval says that expr is evaluated in the current scope (aka
-             * the caller's frame) so we do that first by evaluating the RPromise. Then we eval the
-             * result, which could do another eval, e.g. "eval(expression(1+2))"
+             * expr is always a RPromise because we specified noEval for it in the RBuiltin The spec
+             * for eval says that expr is evaluated in the current scope (aka the caller's frame) so
+             * we do that first by evaluating the RPromise. Then we eval the result, which could do
+             * another eval, e.g. "eval(expression(1+2))"
              * 
              * Note that builtins do not have a separate VirtualFrame, they use the frame of the
              * caller, so we can evaluate the promise using frame.
              */
             controlVisibility();
-            Object exprVal = expr.evaluate(frame);
+            RLanguageRep rep = expr.getArgumentRep();
+            if (rep.getRep() == null) {
+                throw RError.error(getEncapsulatingSourceSection(), Message.ARGUMENT_MISSING, "expr");
+            }
+            Object exprVal = RContext.getEngine().eval(RDataFactory.createLanguage(rep.getRep()), frame);
             return doEvalBody(exprVal, envir, enclos);
         }
 
