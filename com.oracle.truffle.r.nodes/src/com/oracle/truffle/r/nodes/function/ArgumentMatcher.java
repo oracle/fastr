@@ -479,7 +479,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return elements; // RMissing.instance;
+                return RMissing.instance;
             }
         }
     }
@@ -494,7 +494,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return new VarArgsAsListNode(elements, names);  // ConstantNode.create(RMissing.instance);
+                return ConstantNode.create(RMissing.instance);
             }
         }
     }
@@ -550,7 +550,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return new VarArgsAsObjectArrayNode(elements);  // ConstantNode.create(RMissing.instance);
+                return ConstantNode.create(RMissing.instance);
             }
         }
     }
