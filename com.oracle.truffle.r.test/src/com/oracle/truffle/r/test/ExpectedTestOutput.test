@@ -12774,6 +12774,13 @@ Error in if (NA) x <- 3 : missing value where TRUE/FALSE needed
 #if(!TRUE) 1 else 2
 [1] 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (FALSE) 23 else NULL }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (FALSE) 23 }
+
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfWithoutElse
 #if(TRUE) 1
 [1] 1
