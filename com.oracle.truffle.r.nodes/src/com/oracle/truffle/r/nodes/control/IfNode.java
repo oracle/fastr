@@ -32,13 +32,32 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild("condition"), @NodeChild("thenPart"), @NodeChild("elsePart")})
-public abstract class IfNode extends RNode {
+@NodeField(name = "elseGiven", type = boolean.class)
+public abstract class IfNode extends RNode implements VisibilityController {
+
+    protected abstract boolean isElseGiven();
+
+    /**
+     * Result visibility of an if node depends on whether there is an else branch or not, and on the
+     * condition. For instance, the expression {@code if (FALSE) 23} will evaluate to {@code NULL},
+     * but the result will not be printed in the shell. Conversely, {@code NULL} will be printed for
+     * {@code if (FALSE) 23 else NULL} because the else branch is given.
+     *
+     * This means that we need to take care of visibility in this class, and do a double check of
+     * the condition and the presence of an else branch below in {@link #doObject}.
+     */
+    private boolean isVisible;
+
+    @Override
+    public boolean getVisibility() {
+        return isVisible;
+    }
 
     public static RNode create(RNode condition, RNode thenPart, RNode elsePart) {
         if (elsePart != null) {
-            return IfNodeFactory.create(condition, thenPart, elsePart);
+            return IfNodeFactory.create(condition, thenPart, elsePart, true);
         } else {
-            return IfNodeFactory.create(condition, thenPart, ConstantNode.create(RNull.instance));
+            return IfNodeFactory.create(condition, thenPart, ConstantNode.create(RNull.instance), false);
         }
     }
 
@@ -65,6 +84,8 @@ public abstract class IfNode extends RNode {
 
     @Specialization
     public Object doObject(byte condition, boolean hasThen, Object left, boolean hasElse, Object right) {
+        isVisible = condition == RRuntime.LOGICAL_TRUE || isElseGiven();
+        controlVisibility();
         return hasThen ? left : right;
     }
 }
