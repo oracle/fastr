@@ -121,11 +121,6 @@ public class TestrGenBuiltiniscall extends TestBase {
 	}
 
 	@Test
-	public void testiscall22(){
-		assertEval("argv <- list(c(1.1+0i, NA, 3+0i));is.call(argv[[1]]);");
-	}
-
-	@Test
 	public void testiscall23(){
 		assertEval("argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\')));is.call(argv[[1]]);");
 	}

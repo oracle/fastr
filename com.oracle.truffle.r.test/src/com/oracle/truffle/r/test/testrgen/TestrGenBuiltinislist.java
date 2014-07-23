@@ -151,11 +151,6 @@ public class TestrGenBuiltinislist extends TestBase {
 	}
 
 	@Test
-	public void testislist28(){
-		assertEval("argv <- list(c(1.1+0i, NA, 3+0i));is.list(argv[[1]]);");
-	}
-
-	@Test
 	public void testislist29(){
 		assertEval("argv <- list(structure(1, .Dim = 1L));is.list(argv[[1]]);");
 	}

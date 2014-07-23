@@ -79,9 +79,4 @@ public class TestrGenBuiltinasPOSIXct extends TestBase {
 	public void testasPOSIXct13(){
 		assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = c(2L, 4L, 6L, 8L, 10L, 12L, 14L, 16L, 18L, 20L, 22L, 24L, 26L, 28L, 30L, 32L), mon = 1L, year = 102L, wday = 6L, yday = 32L, isdst = -1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = c(\'\', \'EST\', \'EDT\')), \'\'); .Internal(as.POSIXct(argv[[1]], argv[[2]]))");
 	}
-
-	@Test
-	public void testasPOSIXct14(){
-		assertEval("argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_, mday = NA_integer_, mon = NA_integer_, year = NA_integer_, wday = NA_integer_, yday = NA_integer_, isdst = -1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'), \'GMT\'); .Internal(as.POSIXct(argv[[1]], argv[[2]]))");
-	}
 }

@@ -31,11 +31,6 @@ public class TestrGenBuiltingamma extends TestBase {
 	}
 
 	@Test
-	public void testgamma4(){
-		assertEval("argv <- list(c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1));gamma(argv[[1]]);");
-	}
-
-	@Test
 	public void testgamma5(){
 		assertEval("argv <- list(101);gamma(argv[[1]]);");
 	}

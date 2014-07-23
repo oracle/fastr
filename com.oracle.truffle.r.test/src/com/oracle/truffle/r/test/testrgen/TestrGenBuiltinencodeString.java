@@ -31,11 +31,6 @@ public class TestrGenBuiltinencodeString extends TestBase {
 	}
 
 	@Test
-	public void testencodeString5(){
-		assertEval("argv <- list(c(\'1\', \'2\', NA), 0L, \'\\\'\', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
-	}
-
-	@Test
 	public void testencodeString6(){
 		assertEval("argv <- list(c(\'NA\', \'a\', \'b\', \'c\', \'d\', NA), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
 	}

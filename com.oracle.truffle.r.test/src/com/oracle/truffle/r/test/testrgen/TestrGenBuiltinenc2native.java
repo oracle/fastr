@@ -21,11 +21,6 @@ public class TestrGenBuiltinenc2native extends TestBase {
 	}
 
 	@Test
-	public void testenc2native2(){
-		assertEval("argv <- list(character(0));enc2native(argv[[1]]);");
-	}
-
-	@Test
 	public void testenc2native3(){
 		assertEval("argv <- list(structure(character(0), .Names = character(0)));enc2native(argv[[1]]);");
 	}

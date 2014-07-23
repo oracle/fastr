@@ -51,11 +51,6 @@ public class TestrGenBuiltinnchar extends TestBase {
 	}
 
 	@Test
-	public void testnchar8(){
-		assertEval("argv <- list(character(0), \'c\', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
-	}
-
-	@Test
 	public void testnchar9(){
 		assertEval("argv <- list(c(\'\\\'1\\\'\', \'\\\'2\\\'\', NA), \'w\', FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
 	}

@@ -26,11 +26,6 @@ public class TestrGenBuiltinlevelsassign extends TestBase {
 	}
 
 	@Test
-	public void testlevelsassign3(){
-		assertEval("argv <- list(structure(1:2, .Label = c(\'a\', \'b\'), class = \'factor\'), value = structure(list(C = \'C\', A = \'a\', B = \'b\'), .Names = c(\'C\', \'A\', \'B\')));`levels<-`(argv[[1]],argv[[2]]);");
-	}
-
-	@Test
 	public void testlevelsassign4(){
 		assertEval("argv <- list(structure(c(1L, 1L, 2L, 2L, 3L, 3L, 1L, 1L, 2L, 2L, 3L, 3L), .Label = c(\'1\', \'2\', \'3\'), class = \'factor\'), value = structure(list(A = c(1, 3), B = 2), .Names = c(\'A\', \'B\')));`levels<-`(argv[[1]],argv[[2]]);");
 	}

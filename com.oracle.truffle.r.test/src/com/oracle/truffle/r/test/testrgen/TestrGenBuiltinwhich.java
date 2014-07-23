@@ -59,9 +59,4 @@ public class TestrGenBuiltinwhich extends TestBase {
 	public void testwhich9(){
 		assertEval("argv <- list(structure(FALSE, .Names = \'signature-class.Rd\')); .Internal(which(argv[[1]]))");
 	}
-
-	@Test
-	public void testwhich10(){
-		assertEval("argv <- list(logical(0)); .Internal(which(argv[[1]]))");
-	}
 }

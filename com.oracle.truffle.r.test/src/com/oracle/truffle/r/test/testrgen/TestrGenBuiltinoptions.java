@@ -39,9 +39,4 @@ public class TestrGenBuiltinoptions extends TestBase {
 	public void testoptions5(){
 		assertEval("argv <- list(NULL); .Internal(options(argv[[1]]))");
 	}
-
-	@Test
-	public void testoptions6(){
-		assertEval("argv <- list(\'ts.eps\'); .Internal(options(argv[[1]]))");
-	}
 }

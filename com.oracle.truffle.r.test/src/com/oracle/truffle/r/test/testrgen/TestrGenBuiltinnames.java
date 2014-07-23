@@ -36,11 +36,6 @@ public class TestrGenBuiltinnames extends TestBase {
 	}
 
 	@Test
-	public void testnames5(){
-		assertEval("argv <- list(structure(list(itemBullet = \'• \'), .Names = \'itemBullet\'));names(argv[[1]]);");
-	}
-
-	@Test
 	public void testnames6(){
 		assertEval("argv <- list(structure(list(groups = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L), .Label = c(\'1\', \'2\', \'3\'), class = \'factor\')), .Names = \'groups\'));names(argv[[1]]);");
 	}
@@ -158,11 +153,6 @@ public class TestrGenBuiltinnames extends TestBase {
 	@Test
 	public void testnames29(){
 		assertEval("argv <- list(structure(list(zz = complex(0)), .Names = \'zz\'));names(argv[[1]]);");
-	}
-
-	@Test
-	public void testnames30(){
-		assertEval("argv <- list(structure(list(A = c(1L, NA, 1L), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA, NA, NA), E = c(FALSE, NA, TRUE), F = structure(c(1L, NA, 2L), .Label = c(\'abc\', \'def\'), class = \'factor\')), .Names = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), class = \'data.frame\', row.names = c(\'1\', \'2\', \'3\')));names(argv[[1]]);");
 	}
 
 	@Test

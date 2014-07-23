@@ -161,11 +161,6 @@ public class TestrGenBuiltinunclass extends TestBase {
 	}
 
 	@Test
-	public void testunclass30(){
-		assertEval("argv <- list(structure(list(A = c(1L, NA, 1L), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA, NA, NA), E = c(FALSE, NA, TRUE), F = structure(c(1L, NA, 2L), .Label = c(\'abc\', \'def\'), class = \'factor\')), .Names = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), row.names = c(\'1\', \'2\', \'3\')));unclass(argv[[1]]);");
-	}
-
-	@Test
 	public void testunclass31(){
 		assertEval("argv <- list(structure(list(), .Names = character(0), row.names = c(NA, -10L), terms = quote(~0)));unclass(argv[[1]]);");
 	}

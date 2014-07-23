@@ -191,11 +191,6 @@ public class TestrGenBuiltininvisible extends TestBase {
 	}
 
 	@Test
-	public void testinvisible36(){
-		assertEval("argv <- list(structure(list(A = c(1L, NA, 1L), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA, NA, NA), E = c(FALSE, NA, TRUE), F = structure(c(1L, NA, 2L), .Label = c(\'abc\', \'def\'), class = \'factor\')), .Names = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), class = \'data.frame\', row.names = c(\'1\', \'2\', \'3\')));invisible(argv[[1]]);");
-	}
-
-	@Test
 	public void testinvisible37(){
 		assertEval("argv <- list(structure(list(sec = numeric(0), min = integer(0), hour = integer(0), mday = integer(0), mon = integer(0), year = integer(0), wday = integer(0), yday = integer(0), isdst = integer(0)), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'UTC\'));invisible(argv[[1]]);");
 	}
@@ -248,11 +243,6 @@ public class TestrGenBuiltininvisible extends TestBase {
 	@Test
 	public void testinvisible47(){
 		assertEval("argv <- list(structure(list(a = c(1L, 4L, 7L), b = c(2L, 5L, 8L), c = c(3L, 6L, 9L)), .Names = c(\'a\', \'b\', \'c\'), class = \'data.frame\', row.names = c(NA, -3L)));invisible(argv[[1]]);");
-	}
-
-	@Test
-	public void testinvisible48(){
-		assertEval("argv <- list(structure(list(tables = structure(list(`Grand mean` = 103.87323943662, N = structure(c(78.7365206866197, 98.5088731171753, 113.842206450509, 123.008873117175), .Dim = 4L, .Dimnames = structure(list(N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = \'N\'), class = \'mtable\'), `V:N` = structure(c(79.5323303457107, 86.1989970123773, 69.7732394366197, 98.0323303457106, 108.032330345711, 89.1989970123773, 114.198997012377, 116.698997012377, 110.365663679044, 124.365663679044, 126.365663679044, 118.032330345711), .Dim = 3:4, .Dimnames = structure(list(V = c(\'Golden.rain\', \'Marvellous\', \'Victory\'), N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = c(\'V\', \'N\')), class = \'mtable\')), .Names = c(\'Grand mean\', \'N\', \'V:N\')), n = structure(list(N = structure(c(17, 18, 18, 18), .Dim = 4L, .Dimnames = structure(list(N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = \'N\')), `V:N` = structure(c(6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6), .Dim = 3:4, .Dimnames = structure(list(V = c(\'Golden.rain\', \'Marvellous\', \'Victory\'), N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = c(\'V\', \'N\')))), .Names = c(\'N\', \'V:N\'))), .Names = c(\'tables\', \'n\'), type = \'means\', class = c(\'tables_aov\', \'list.of\')));invisible(argv[[1]]);");
 	}
 
 	@Test

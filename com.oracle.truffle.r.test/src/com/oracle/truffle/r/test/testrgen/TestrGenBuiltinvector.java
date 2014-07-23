@@ -41,21 +41,6 @@ public class TestrGenBuiltinvector extends TestBase {
 	}
 
 	@Test
-	public void testvector6(){
-		assertEval("argv <- list(\'integer\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
-	public void testvector7(){
-		assertEval("argv <- list(\'logical\', 15L); .Internal(vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
-	public void testvector8(){
-		assertEval("argv <- list(\'double\', 2); .Internal(vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
 	public void testvector9(){
 		assertEval("argv <- list(\'raw\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
 	}

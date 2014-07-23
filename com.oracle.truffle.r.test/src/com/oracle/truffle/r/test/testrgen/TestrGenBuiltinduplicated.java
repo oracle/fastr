@@ -56,11 +56,6 @@ public class TestrGenBuiltinduplicated extends TestBase {
 	}
 
 	@Test
-	public void testduplicated9(){
-		assertEval("argv <- list(list(\'!\', \'%%\', \'%*%\', \'%/%\', \'&\', \'*\', \'+\', \'-\', \'/\', \'Arith\', \'BunchKaufman\', \'Cholesky\', \'Compare\', \'Logic\', \'Math2\', \'Math\', \'Ops\', \'Schur\', \'Summary\', \'[\', \'[<-\', \'^\', \'all.equal\', \'all\', \'any\', \'as.array\', \'as.integer\', \'as.logical\', \'as.matrix\', \'as.numeric\', \'as.vector\', \'band\', \'cbind2\', \'chol2inv\', \'chol\', \'coerce\', \'coerce<-\', \'colMeans\', \'colSums\', \'cov2cor\', \'crossprod\', \'determinant\', \'diag\', \'diag<-\', \'diff\', \'dim\', \'dim<-\', \'dimnames\', \'dimnames<-\', \'drop\', \'expand\', \'expm\',     \'facmul\', \'forceSymmetric\', \'format\', \'head\', \'image\', \'initialize\', \'is.finite\', \'is.infinite\', \'is.na\', \'isDiagonal\', \'isSymmetric\', \'isTriangular\', \'kronecker\', \'length\', \'lu\', \'mean\', \'nnzero\', \'norm\', \'pack\', \'print\', \'prod\', \'qr.Q\', \'qr.R\', \'qr.coef\', \'qr.fitted\', \'qr.qty\', \'qr.qy\', \'qr.resid\', \'qr\', \'rbind2\', \'rcond\', \'rep\', \'rowMeans\', \'rowSums\', \'show\', \'skewpart\', \'solve\', \'sum\', \'summary\', \'symmpart\', \'t\', \'tail\', \'tcrossprod\', \'toeplitz\', \'tril\', \'triu\', \'unname\', \'unpack\', \'update\',     \'updown\', \'which\', \'writeMM\', \'zapsmall\', \'Ops\', \'[\', \'Math\'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
-	}
-
-	@Test
 	public void testduplicated10(){
 		assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
 	}

@@ -19,9 +19,4 @@ public class TestrGenBuiltinstderr extends TestBase {
 	public void teststderr1(){
 		assertEval(" .Internal(stderr())");
 	}
-
-	@Test
-	public void teststderr2(){
-		assertEval(" .Internal(stderr())");
-	}
 }

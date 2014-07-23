@@ -19,9 +19,4 @@ public class TestrGenBuiltinprintDeferredWarnings extends TestBase {
 	public void testprintDeferredWarnings1(){
 		assertEval(" .Internal(printDeferredWarnings())");
 	}
-
-	@Test
-	public void testprintDeferredWarnings2(){
-		assertEval(" .Internal(printDeferredWarnings())");
-	}
 }

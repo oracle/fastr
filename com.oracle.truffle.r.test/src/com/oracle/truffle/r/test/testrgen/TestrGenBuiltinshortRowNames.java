@@ -61,11 +61,6 @@ public class TestrGenBuiltinshortRowNames extends TestBase {
 	}
 
 	@Test
-	public void testshortRowNames10(){
-		assertEval("argv <- list(structure(list(A = c(1, NA, 1), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA_integer_, NA_integer_, NA_integer_), E = c(FALSE, NA, TRUE), F = c(\'abc\', NA, \'def\')), .Names = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), class = \'data.frame\', row.names = c(\'1\', \'2\', \'3\')), 2L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
 	public void testshortRowNames11(){
 		assertEval("argv <- list(structure(list(age = c(40, 60, 80)), .Names = \'age\', row.names = c(NA, -3L), class = \'data.frame\'), 0L); .Internal(shortRowNames(argv[[1]], argv[[2]]))");
 	}

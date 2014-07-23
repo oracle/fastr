@@ -76,11 +76,6 @@ public class TestrGenBuiltinall extends TestBase {
 	}
 
 	@Test
-	public void testall13(){
-		assertEval("argv <- list(logical(0));all(argv[[1]]);");
-	}
-
-	@Test
 	public void testall14(){
 		assertEval("argv <- list(NA);all(argv[[1]]);");
 	}

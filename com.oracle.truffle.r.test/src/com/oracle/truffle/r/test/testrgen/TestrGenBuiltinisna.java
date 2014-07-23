@@ -36,11 +36,6 @@ public class TestrGenBuiltinisna extends TestBase {
 	}
 
 	@Test
-	public void testisna5(){
-		assertEval("argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_, mday = NA_integer_, mon = NA_integer_, year = NA_integer_, wday = NA_integer_, yday = NA_integer_, isdst = -1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
-	}
-
-	@Test
 	public void testisna6(){
 		assertEval("argv <- list(list(list(1)));is.na(argv[[1]]);");
 	}
@@ -55,10 +50,6 @@ public class TestrGenBuiltinisna extends TestBase {
 		assertEval("argv <- list(structure(c(23L, 24L, 47L, 48L, 71L, 72L, 95L, 96L, 119L, 120L), .Dim = c(2L, 5L), .Dimnames = list(NULL, c(\'V5\', \'V6\', \'V7\', \'V8\', \'V9\'))));is.na(argv[[1]]);");
 	}
 
-	@Test
-	public void testisna9(){
-		assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));is.na(argv[[1]]);");
-	}
 
 	@Test
 	public void testisna10(){

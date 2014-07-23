@@ -241,11 +241,6 @@ public class TestrGenBuiltinasvector extends TestBase {
 	}
 
 	@Test
-	public void testasvector46(){
-		assertEval("argv <- list(NA, \'integer\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
 	public void testasvector47(){
 		assertEval("argv <- list(structure(c(0.1, 0.8, 1, 0.5, 0.8, 1, 0, 0.5, 1), .Dim = c(3L, 3L), .Dimnames = list(c(\'(3.59,4.5]\', \'(4.5,5.4]\', \'(5.4,6.31]\'), c(\'ctrl\', \'trt1\', \'trt2\'))), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
 	}
@@ -301,11 +296,6 @@ public class TestrGenBuiltinasvector extends TestBase {
 	}
 
 	@Test
-	public void testasvector58(){
-		assertEval("argv <- list(NULL, \'integer\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
 	public void testasvector59(){
 		assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'character(0)\', row.names = character(0), class = \'data.frame\'), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
 	}
@@ -321,11 +311,6 @@ public class TestrGenBuiltinasvector extends TestBase {
 	}
 
 	@Test
-	public void testasvector62(){
-		assertEval("argv <- list(c(NA, NaN), \'character\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
 	public void testasvector63(){
 		assertEval("argv <- list(2, \'list\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
 	}
@@ -333,11 +318,6 @@ public class TestrGenBuiltinasvector extends TestBase {
 	@Test
 	public void testasvector64(){
 		assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
-	public void testasvector65(){
-		assertEval("argv <- list(NULL, \'double\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
 	}
 
 	@Test
@@ -398,16 +378,6 @@ public class TestrGenBuiltinasvector extends TestBase {
 	@Test
 	public void testasvector77(){
 		assertEval("argv <- list(structure(list(), .Dim = 0L), \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
-	public void testasvector78(){
-		assertEval("argv <- list(NULL, \'any\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
-	public void testasvector79(){
-		assertEval("argv <- list(c(NA, NaN), \'integer\'); .Internal(as.vector(argv[[1]], argv[[2]]))");
 	}
 
 	@Test

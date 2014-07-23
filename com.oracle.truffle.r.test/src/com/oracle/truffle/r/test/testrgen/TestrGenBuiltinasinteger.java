@@ -35,10 +35,6 @@ public class TestrGenBuiltinasinteger extends TestBase {
 		assertEval("argv <- list(c(0, 1, NA, NA, 1, 1, -1, 1, 3, -2, -2, 7, -1, -1, -1, -1, -1, -1, -1, -1, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));as.integer(argv[[1]]);");
 	}
 
-	@Test
-	public void testasinteger5(){
-		assertEval("argv <- list(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE));as.integer(argv[[1]]);");
-	}
 
 	@Test
 	public void testasinteger6(){

@@ -19,9 +19,4 @@ public class TestrGenBuiltinnargs extends TestBase {
 	public void testnargs1(){
 		assertEval("nargs( );");
 	}
-
-	@Test
-	public void testnargs2(){
-		assertEval("nargs( );");
-	}
 }

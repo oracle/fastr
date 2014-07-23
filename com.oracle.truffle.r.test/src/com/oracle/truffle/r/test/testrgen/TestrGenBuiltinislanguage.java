@@ -36,11 +36,6 @@ public class TestrGenBuiltinislanguage extends TestBase {
 	}
 
 	@Test
-	public void testislanguage5(){
-		assertEval("argv <- list(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\');is.language(argv[[1]]);");
-	}
-
-	@Test
 	public void testislanguage6(){
 		assertEval("argv <- list(1.79769313486232e+308);is.language(argv[[1]]);");
 	}

@@ -46,11 +46,6 @@ public class TestrGenBuiltinstrtrim extends TestBase {
 	}
 
 	@Test
-	public void teststrtrim7(){
-		assertEval("argv <- list(c(\'\\\'1\\\'\', \'\\\'2\\\'\', NA), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
-	}
-
-	@Test
 	public void teststrtrim8(){
 		assertEval("argv <- list(character(0), 40L); .Internal(strtrim(argv[[1]], argv[[2]]))");
 	}

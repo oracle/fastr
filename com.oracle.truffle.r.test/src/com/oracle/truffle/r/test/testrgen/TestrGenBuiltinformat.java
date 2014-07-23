@@ -36,11 +36,6 @@ public class TestrGenBuiltinformat extends TestBase {
 	}
 
 	@Test
-	public void testformat5(){
-		assertEval("argv <- list(\'\\abc\', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
-	}
-
-	@Test
 	public void testformat6(){
 		assertEval("argv <- list(structure(c(47.97, 57.9, 74.76, 868.88), .Names = c(\'<none>\', \'- x4\', \'- x2\', \'- x1\')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
 	}
@@ -113,11 +108,6 @@ public class TestrGenBuiltinformat extends TestBase {
 	@Test
 	public void testformat20(){
 		assertEval("argv <- list(c(\'abc\', NA, \'def\'), FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
-	}
-
-	@Test
-	public void testformat21(){
-		assertEval("argv <- list(\'\\\\ab\\\\c\', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
 	}
 
 	@Test
@@ -233,11 +223,6 @@ public class TestrGenBuiltinformat extends TestBase {
 	@Test
 	public void testformat44(){
 		assertEval("argv <- list(95, 2, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
-	}
-
-	@Test
-	public void testformat45(){
-		assertEval("argv <- list(c(1.1+0i, NA, 3+0i), FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
 	}
 
 	@Test

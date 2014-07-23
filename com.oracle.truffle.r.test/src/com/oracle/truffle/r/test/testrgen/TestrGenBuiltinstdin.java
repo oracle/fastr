@@ -19,9 +19,4 @@ public class TestrGenBuiltinstdin extends TestBase {
 	public void teststdin1(){
 		assertEval(" .Internal(stdin())");
 	}
-
-	@Test
-	public void teststdin2(){
-		assertEval(" .Internal(stdin())");
-	}
 }

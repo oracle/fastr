@@ -36,16 +36,6 @@ public class TestrGenBuiltinaslogical extends TestBase {
 	}
 
 	@Test
-	public void testaslogical5(){
-		assertEval("argv <- list(NULL);as.logical(argv[[1]]);");
-	}
-
-	@Test
-	public void testaslogical6(){
-		assertEval("argv <- list(\'\');as.logical(argv[[1]]);");
-	}
-
-	@Test
 	public void testaslogical7(){
 		assertEval("argv <- list(\'FALSE\');as.logical(argv[[1]]);");
 	}
@@ -88,11 +78,6 @@ public class TestrGenBuiltinaslogical extends TestBase {
 	@Test
 	public void testaslogical15(){
 		assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));as.logical(argv[[1]]);");
-	}
-
-	@Test
-	public void testaslogical16(){
-		assertEval("argv <- list(structure(\'TRUE\', .Names = \'.registration\'));as.logical(argv[[1]]);");
 	}
 
 	@Test

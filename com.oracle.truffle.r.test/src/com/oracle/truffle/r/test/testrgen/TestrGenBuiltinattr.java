@@ -26,11 +26,6 @@ public class TestrGenBuiltinattr extends TestBase {
 	}
 
 	@Test
-	public void testattr3(){
-		assertEval("argv <- list(structure(list(A = c(1L, NA, 1L), B = c(1.1, NA, 2), C = c(1.1+0i, NA, 3+0i), D = c(NA, NA, NA), E = c(FALSE, NA, TRUE), F = structure(c(1L, NA, 2L), .Label = c(\'abc\', \'def\'), class = \'factor\')), .Names = c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), class = \'data.frame\', row.names = c(\'1\', \'2\', \'3\')), \'row.names\');attr(argv[[1]],argv[[2]]);");
-	}
-
-	@Test
 	public void testattr4(){
 		assertEval("argv <- list(structure(list(`cbind(w = weight, w2 = weight^2)` = structure(c(4.17, 5.58, 5.18, 6.11, 4.5, 4.61, 5.17, 4.53, 5.33, 5.14, 4.81, 4.17, 4.41, 3.59, 5.87, 3.83, 6.03, 4.89, 4.32, 4.69, 17.3889, 31.1364, 26.8324, 37.3321, 20.25, 21.2521, 26.7289, 20.5209, 28.4089, 26.4196, 23.1361, 17.3889, 19.4481, 12.8881, 34.4569, 14.6689, 36.3609, 23.9121, 18.6624, 21.9961), .Dim = c(20L, 2L), .Dimnames = list(NULL, c(\'w\', \'w2\'))), group = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c(\'Ctl\', \'Trt\'), class = \'factor\')), .Names = c(\'cbind(w = weight, w2 = weight^2)\', \'group\'), terms = quote(cbind(w = weight, w2 = weight^2) ~ group), row.names = c(NA, 20L), class = \'data.frame\'), \'terms\');attr(argv[[1]],argv[[2]]);");
 	}
