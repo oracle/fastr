@@ -14,6 +14,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -172,6 +173,7 @@ public class GroupDispatchNode extends S3DispatchNode {
         return null;
     }
 
+    @SlowPath
     private void initFunCall(RFunction func) {
         // avoid re-evaluating arguments.
         if (evaluatedArgs != null) {
@@ -179,7 +181,6 @@ public class GroupDispatchNode extends S3DispatchNode {
             System.arraycopy(callArgsNode.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
             for (int i = 0; i < evaluatedArgs.length; ++i) {
                 if (evaluatedArgs[i] != null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     argArray[i] = ConstantNode.create(evaluatedArgs[i]);
                 }
             }

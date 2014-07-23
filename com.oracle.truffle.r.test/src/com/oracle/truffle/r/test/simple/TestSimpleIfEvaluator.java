@@ -94,4 +94,10 @@ public class TestSimpleIfEvaluator extends TestBase {
         assertEvalWarning("{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(c(TRUE,FALSE)) ; f(1) }");
     }
 
+    @Test
+    public void testIfVisibility() {
+        assertEval("{ if (FALSE) 23 }");
+        assertEval("{ if (FALSE) 23 else NULL }");
+    }
+
 }

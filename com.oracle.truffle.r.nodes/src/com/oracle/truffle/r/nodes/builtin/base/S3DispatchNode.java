@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -62,7 +63,12 @@ public abstract class S3DispatchNode extends DispatchNode {
 
     protected void findFunction(final String generic, final String className, Frame frame) {
         checkLength(className, generic);
-        findFunction(RRuntime.toString(new StringBuilder(generic).append(RRuntime.RDOT).append(className)), frame);
+        findFunction(functionName(generic, className), frame);
+    }
+
+    @SlowPath
+    private static String functionName(String generic, String className) {
+        return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
     }
 
     protected WriteVariableNode initWvn(WriteVariableNode wvn, final String name) {
@@ -96,7 +102,11 @@ public abstract class S3DispatchNode extends DispatchNode {
     }
 
     protected void addVars(VirtualFrame frame) {
-        FrameDescriptor fDesc = frame.getFrameDescriptor();
+        addVars0(frame.getFrameDescriptor());
+    }
+
+    @SlowPath
+    private static void addVars0(FrameDescriptor fDesc) {
         fDesc.findOrAddFrameSlot(RRuntime.RDotGeneric);
         fDesc.findOrAddFrameSlot(RRuntime.RDotMethod);
         fDesc.findOrAddFrameSlot(RRuntime.RDotClass);
@@ -105,7 +115,11 @@ public abstract class S3DispatchNode extends DispatchNode {
     }
 
     protected void removeVars(VirtualFrame frame) {
-        FrameDescriptor fDesc = frame.getFrameDescriptor();
+        removeVars0(frame.getFrameDescriptor());
+    }
+
+    @SlowPath
+    private static void removeVars0(FrameDescriptor fDesc) {
         fDesc.removeFrameSlot(RRuntime.RDotGeneric);
         fDesc.removeFrameSlot(RRuntime.RDotMethod);
         fDesc.removeFrameSlot(RRuntime.RDotClass);
