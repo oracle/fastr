@@ -150,12 +150,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ c(-1+2i,1.1+2.1i) }");
         assertEval("{ c(1-2i,1+22i) }");
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; round(y/x, digits=5) }");
-    }
-
-    @Test
-    @Ignore
-    public void testScalarsComplexIgnore() {
-        // FIXME print format
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y+x }");
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }");
     }
@@ -290,11 +284,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ a <- c(1,3) ; a ^ 3 }");
         assertEval("{ c(1,3) - 4 }");
         assertEval("{ c(1,3) %/% c(2,4) }");
-    }
-
-    @Test
-    @Ignore
-    public void testVectorsOperationsIgnore() {
         assertEval("{ c(1,3) / c(2,4) }");
     }
 
@@ -305,11 +294,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ z <- c(1+1i,3+2i) ; z * c(1,2) }");
         assertEval("{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }");
         assertEval("{ round( 3^c(1,2,3+1i), digits=5 ) }");
-    }
-
-    @Test
-    @Ignore
-    public void testVectorsOperationsComplexIgnore() {
         assertEval("{ z <- c(-1.5-1i,10) ; (z * z)[1] }");
         assertEval("{ c(1+1i,3+2i) / 2 }");
         assertEval("{ c(1,2,3+1i)^3 }");
@@ -333,7 +317,6 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testVectorsLengthWarning() {
         assertEvalWarning("{ 1:2+1:3 }");
         assertEvalWarning("{ 1:3*1:2 }");
@@ -342,14 +325,12 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testVectorsNonConformable() {
         assertEvalError("{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- 2:1 ; x + y }");
         assertEvalError("{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- c(1,1,2) ; x + y }");
     }
 
     @Test
-    @Ignore
     public void testVectorsMatrixDimsDontMatch() {
         assertEvalError("{ m <- matrix(nrow=2, ncol=2, 1:4) ; m + 1:16 }");
     }
@@ -376,11 +357,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(as.raw(c(a=1,b=2))) }");
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; x <- as.raw(10:11) ; attr(x, \"my\") <- 1 ; f(x) }");
         assertEval("{ l <- list(); !l }");
-    }
-
-    @Test
-    @Ignore
-    public void testUnaryNotRawIgnore() {
         assertEval("{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(matrix(as.raw(1:4),nrow=2 )) }");
     }
 
@@ -418,11 +394,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ -(2+1i)  }");
         assertEval("{ -((0+1i)/0)  }");
         assertEval("{ -((1+0i)/0)  }");
-    }
-
-    @Test
-    @Ignore
-    public void testUnaryMinusComplexIgnore() {
         assertEval("{ -c((1+0i)/0,2) }");
     }
 
@@ -435,11 +406,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ z <- logical() ; -z }");
         assertEval("{ z <- integer() ; -z }");
         assertEval("{ z <- double() ; -z }");
-    }
-
-    @Test
-    @Ignore
-    public void testUnaryMinusAsFunctionIgnore() {
         assertEval("{ f <- function(z) { -z } ; f(1:3) ; f(1L) }");
         assertEval("{ f <- function(z) { -z } ; f(1:3) ; f(TRUE) }");
     }
@@ -448,17 +414,11 @@ public class TestSimpleArithmetic extends TestBase {
     public void testUnaryMinusAsFunctionComplex() {
         assertEval("{ f <- function(z) { -z } ; f(1L) ; f(1+1i) }");
         assertEval("{ f <- function(z) { -z } ; f(1+1i) ; f(1L) }");
-    }
-
-    @Test
-    @Ignore
-    public void testUnaryMinusAsFunctionComplexIgnore() {
         assertEval("{ z <- (1+1i)[0] ; -z }");
         assertEval("{ f <- function(z) { -z } ; f(1:3) ; f(c((0+0i)/0,1+1i)) }");
     }
 
     @Test
-    @Ignore
     public void testUnaryMinusErrors() {
         assertEvalError("{ z <- \"hello\" ; -z }");
         assertEvalError("{ z <- c(\"hello\",\"hi\") ; -z }");
@@ -469,12 +429,6 @@ public class TestSimpleArithmetic extends TestBase {
     public void testMatrices() {
         assertEval("{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m-1 }");
         assertEval("{ z<-matrix(12)+1 ; z }");
-    }
-
-    @Test
-    @Ignore
-    public void testMatricesIgnore() {
-        // FIXME print regressions
         assertEval("{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m+1L }");
         assertEval("{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m+m }");
     }
@@ -486,11 +440,6 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ m <- double() ; dim(m) <- c(0,4) ; t(m) %*% m }");
         assertEval("{ m <- double() ; dim(m) <- c(0,4) ; n <- matrix(1:4,4) ; m %*% n }");
         assertEval("{ m <- double() ; dim(m) <- c(4,0) ; n <- matrix(1:4,ncol=4) ; n %*% m }");
-    }
-
-    @Test
-    @Ignore
-    public void testMatricesProductIgnore() {
         assertEval("{ x <- 1:3 %*% 9:11 ; x[1] }");
         assertEval("{ m<-matrix(1:3, nrow=1) ; 1:2 %*% m }");
         assertEval("{ m<-matrix(1:6, nrow=2) ; 1:2 %*% m }");
@@ -510,7 +459,6 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMatricesOuterProduct() {
         assertEval("{ 1:3 %o% 1:2 }");
         assertEvalError("{ 1:4 %*% 1:3 }");
@@ -520,7 +468,6 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMatricesPrecedence() {
         assertEval("{ 10 / 1:3 %*% 3:1 }");
         assertEval("{ x <- 1:2 ; dim(x) <- c(1,1,2) ; y <- 2:3 ; dim(y) <- c(1,1,2) ; x + y }");

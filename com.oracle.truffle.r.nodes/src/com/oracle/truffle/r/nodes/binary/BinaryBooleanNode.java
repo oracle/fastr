@@ -687,7 +687,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
-    protected boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
+    protected static boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
         if (!left.hasDimensions() || !right.hasDimensions()) {
             return false;
         }
