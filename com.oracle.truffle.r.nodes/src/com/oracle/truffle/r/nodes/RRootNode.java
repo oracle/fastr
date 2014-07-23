@@ -31,12 +31,12 @@ import com.oracle.truffle.r.nodes.function.*;
 
 /**
  * The base class for R code that can be executed, namely {@link FunctionDefinitionNode} and
- * {@link RBuiltinNode}
+ * {@link RBuiltinNode}.
  */
 public abstract class RRootNode extends RootNode {
 
     /**
-     * The formal arguments this function is supposed to take
+     * The formal arguments this function is supposed to take.
      */
     private final FormalArguments formalArguments;
 

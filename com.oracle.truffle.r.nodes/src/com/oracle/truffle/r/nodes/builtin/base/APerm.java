@@ -102,7 +102,7 @@ public abstract class APerm extends RBuiltinNode {
     private static int[] getDimensions(RAbstractVector v) {
         // Get dimensions move to int array
         RIntVector dimV = RDataFactory.createIntVector(v.getDimensions(), RDataFactory.COMPLETE_VECTOR);
-        int dim[] = new int[dimV.getLength()];
+        int[] dim = new int[dimV.getLength()];
         for (int i = 0; i < dimV.getLength(); i++) {
             dim[i] = dimV.getDataAt(i);
         }

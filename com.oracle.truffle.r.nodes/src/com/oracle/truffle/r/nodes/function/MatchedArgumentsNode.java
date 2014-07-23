@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.*;
  *
  * @see #suppliedNames
  */
-public class MatchedArgumentsNode extends ArgumentsNode {
+public final class MatchedArgumentsNode extends ArgumentsNode {
 
     /**
      * Holds the list of names for the supplied arguments this {@link MatchedArgumentsNode} was

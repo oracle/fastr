@@ -43,7 +43,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     protected final String[] names;
 
     /**
-     * The number of {@link #names} given (i.e., not <code>null</code>)
+     * The number of {@link #names} given (i.e., not <code>null</code>).
      *
      * @see ArgumentsTrait#countNonNull(String[])
      */

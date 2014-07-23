@@ -73,7 +73,7 @@ public abstract class RCallNode extends RNode {
     /**
      * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
      * original call.
-     * 
+     *
      * @param frame TODO
      * @param src source section to use (from original call)
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
@@ -293,7 +293,7 @@ public abstract class RCallNode extends RNode {
     }
 
     /**
-     * A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no varargs)
+     * A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no varargs).
      */
     private static class DispatchedCallNode extends RCallNode {
 
@@ -348,7 +348,7 @@ public abstract class RCallNode extends RNode {
 
     /**
      * {@link RootCallNode} in case there is no fixed {@link RFunction} but an expression which
-     * first has to be evaluated
+     * first has to be evaluated.
      */
     private static final class GenericCallNode extends RootCallNode {
 

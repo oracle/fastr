@@ -255,7 +255,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * Searches for suppliedName inside formalNames and returns its (formal) index
+     * Searches for suppliedName inside formalNames and returns its (formal) index.
      *
      * @param formalNames
      * @param suppliedName
@@ -309,7 +309,7 @@ public class ArgumentMatcher {
 
     /**
      * Walks a list of given arguments ({@link RNode}s) and wraps them in {@link PromiseNode}s
-     * individually by using promiseWrapper (unfolds varargs, too!)
+     * individually by using promiseWrapper (unfolds varargs, too!).
      *
      * @param function The function which is to be called
      * @param env The {@link REnvironment} of the caller
@@ -355,7 +355,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * Interface for trading the cost of reflection using
+     * Interface for trading the cost of using reflection.
      *
      * <pre>
      * Class<?> argClass = suppliedArgs.getClass().getComponentClass();
@@ -376,7 +376,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link ArrayFactory} implementation for {@link RNode}
+     * {@link ArrayFactory} implementation for {@link RNode}.
      */
     private static class RNodeArrayFactory implements ArrayFactory<RNode> {
         public RNode[] newArray(int length) {
@@ -385,7 +385,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link ArrayFactory} implementation for {@link Object}
+     * {@link ArrayFactory} implementation for {@link Object}.
      */
     private static class ObjectArrayFactory implements ArrayFactory<Object> {
         public Object[] newArray(int length) {
@@ -396,7 +396,7 @@ public class ArgumentMatcher {
     /**
      * This interface was introduced to reuse
      * {@link ArgumentMatcher#wrapInPromises(RFunction, REnvironment, RNode[], FormalArguments, PromiseWrapper)}
-     * and encapsulates the wrapping of a single argument into a {@link PromiseNode}
+     * and encapsulates the wrapping of a single argument into a {@link PromiseNode}.
      */
     private interface PromiseWrapper {
         /**
@@ -413,7 +413,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link PromiseWrapper} implementation for 'normal' function calls
+     * {@link PromiseWrapper} implementation for 'normal' function calls.
      */
     private static class DefaultPromiseWrapper implements PromiseWrapper {
         public RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
@@ -429,7 +429,7 @@ public class ArgumentMatcher {
 
     /**
      * {@link PromiseWrapper} implementation for arguments that are going to be used for 'inlined'
-     * builtins
+     * builtins.
      *
      * @see RBuiltinRootNode#inline(InlinedArguments)
      */
@@ -457,7 +457,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link VarArgsFactory} implementation that returns varargs as {@link RList}
+     * {@link VarArgsFactory} implementation that returns varargs as {@link RList}.
      */
     public static final class VarArgsAsListFactory implements VarArgsFactory<Object> {
         public Object makeList(final Object[] elements, final String[] names) {
@@ -470,7 +470,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link VarArgsFactory} implementation that returns varargs as <code>Object[]</code>
+     * {@link VarArgsFactory} implementation that returns varargs as <code>Object[]</code>.
      */
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
         public Object makeList(final Object[] elements, final String[] names) {
@@ -485,7 +485,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link VarArgsFactory} implementation that returns varargs as {@link VarArgsAsListNode}
+     * {@link VarArgsFactory} implementation that returns varargs as {@link VarArgsAsListNode}.
      */
     public static final class VarArgsAsListNodeFactory implements VarArgsFactory<RNode> {
         public RNode makeList(final RNode[] elements, final String[] names) {
@@ -500,7 +500,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * A {@link RNode} that encapsulates a list of varargs (as {@link RNode})
+     * A {@link RNode} that encapsulates a list of varargs (as {@link RNode}).
      */
     public abstract static class VarArgsNode extends RNode {
         @Children protected final RNode[] elementNodes;
@@ -515,7 +515,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * A {@link RNode} that encapsulates a list of varargs with names (as {@link RNode})
+     * A {@link RNode} that encapsulates a list of varargs with names (as {@link RNode}).
      */
     public static final class VarArgsAsListNode extends VarArgsNode {
         private final String[] names;
@@ -541,7 +541,7 @@ public class ArgumentMatcher {
 
     /**
      * {@link VarArgsFactory} implementation that returns varargs as
-     * {@link VarArgsAsObjectArrayNode}
+     * {@link VarArgsAsObjectArrayNode}.
      */
     public static final class VarArgsAsObjectArrayNodeFactory implements VarArgsFactory<RNode> {
         public RNode makeList(final RNode[] elements, final String[] names) {
@@ -556,7 +556,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link VarArgsNode} that executes all its elements and returns the resulting value array
+     * {@link VarArgsNode} that executes all its elements and returns the resulting value array.
      */
     public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
         public VarArgsAsObjectArrayNode(RNode[] elements) {

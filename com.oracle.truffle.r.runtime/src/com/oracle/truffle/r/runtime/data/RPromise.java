@@ -35,9 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 public class RPromise {
 
     /**
-     * {@link EvalPolicy#RAW}<br/>
-     * {@link EvalPolicy#PROMISED}<br/>
-     * {@link EvalPolicy#STRICT}<br/>
+     * The policy used to evaluate a promise.
      */
     public enum EvalPolicy {
         /**
@@ -95,7 +93,7 @@ public class RPromise {
     private Object value = null;
 
     /**
-     * A flag use by {@link #evaluate(VirtualFrame)} to
+     * A flag to indicate the promise has been evaluated.
      */
     @CompilationFinal private boolean isEvaluated = false;
 
@@ -266,7 +264,7 @@ public class RPromise {
     }
 
     /**
-     * A {@link RPromise} implementation that already has its argument value evaluated
+     * A {@link RPromise} implementation that already has its argument value evaluated.
      *
      * @see #RPromise(EvalPolicy, Object, Object)
      */
@@ -309,7 +307,7 @@ public class RPromise {
      * @see RPromiseFactory#createPromise()
      * @see RPromiseFactory#createPromiseArgEvaluated(Object)
      */
-    public static class RPromiseFactory {
+    public static final class RPromiseFactory {
         private REnvironment env;
         private final Object argument;
         private final Object defaultArg;

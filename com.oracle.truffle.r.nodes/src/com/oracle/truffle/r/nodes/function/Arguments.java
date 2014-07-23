@@ -26,24 +26,24 @@ import com.oracle.truffle.r.nodes.*;
 
 /**
  * Simple generic base class for pairs of {@link #arguments} and {@link #names} (that are not
- * {@link RNode}s)
+ * {@link RNode}s).
  *
  * @param <T> The type of {@link #arguments}
  */
 public abstract class Arguments<T> implements ArgumentsTrait {
 
     /**
-     * Array of arguments; semantics have to be specified by child classes
+     * Array of arguments; semantics have to be specified by child classes.
      */
     protected final T[] arguments;
 
     /**
-     * Array of arguments; semantics have to be specified by child classes
+     * Array of arguments; semantics have to be specified by child classes.
      */
     protected final String[] names;
 
     /**
-     * Cache use for {@link #getNameCount()}
+     * Cache use for {@link #getNameCount()}.
      */
     private Integer nameCountCache = null;
 

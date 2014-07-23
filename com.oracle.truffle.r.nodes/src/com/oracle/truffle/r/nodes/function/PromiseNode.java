@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 public class PromiseNode extends RNode {
     protected final RPromiseFactory factory;
 
-    private PromiseNode(RPromiseFactory factory) {
+    protected PromiseNode(RPromiseFactory factory) {
         this.factory = factory;
     }
 
@@ -68,7 +68,7 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * TODO Gero: comment
+     * TODO Gero: comment.
      *
      */
     private static class StrictPromiseNode extends PromiseNode {
@@ -89,7 +89,7 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * TODO Gero: comment
+     * TODO Gero: comment.
      *
      * @see EvalPolicy#RAW
      */

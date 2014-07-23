@@ -56,9 +56,9 @@ public final class Utils {
 
     public static void debug(String msg) {
         if (DEBUG) {
-            // CheckStyle: stop system..print check
+            // CheckStyle: stop system.print check
             System.err.println(msg);
-            // CheckStyle: resume system..print check
+            // CheckStyle: resume system.print check
         }
     }
 

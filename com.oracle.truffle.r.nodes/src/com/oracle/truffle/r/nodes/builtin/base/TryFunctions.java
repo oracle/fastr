@@ -54,7 +54,7 @@ public class TryFunctions {
         @Specialization
         public Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
-            return expr.getValue(frame);
+            return expr.evaluate(frame);
         }
     }
 
@@ -83,7 +83,7 @@ public class TryFunctions {
         @Specialization
         public Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
             controlVisibility();
-            return expr.getValue(frame);
+            return expr.evaluate(frame);
         }
     }
 }
