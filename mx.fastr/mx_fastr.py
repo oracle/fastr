@@ -297,6 +297,9 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
+def bench(args):
+    mx.abort("no benchmarks available")
+
 def mx_post_parse_cmd_line(opts):
     # dynamically load the benchmarks suite
     hg_base = mx.get_env('HG_BASE')
@@ -304,7 +307,6 @@ def mx_post_parse_cmd_line(opts):
     bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
     if bm_suite:
         mx.build_suite(bm_suite)
-
 
 def mx_init(suite):
     global _fastr_suite
@@ -317,6 +319,7 @@ def mx_init(suite):
         'Rscript' : [runRscriptCommand, '[options]'],
         'rtestgen' : [testgen, ''],
         # core overrides
+        'bench' : [bench, ''],
         'gate' : [gate, ''],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
