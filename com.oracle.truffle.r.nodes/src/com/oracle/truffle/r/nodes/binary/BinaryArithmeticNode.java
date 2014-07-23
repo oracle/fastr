@@ -24,8 +24,10 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeFactory.ArithmeticCastFactory;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -33,778 +35,488 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@SuppressWarnings("unused")
 public abstract class BinaryArithmeticNode extends BinaryNode {
 
-    @Child private BinaryArithmetic binary;
-    @Child private UnaryArithmetic unary;
+    @Child private BinaryArithmetic arithmetic;
+    @Child private UnaryArithmeticNode unaryNode;
+    private UnaryArithmeticFactory unaryFactory;
 
     private final NACheck leftNACheck;
     private final NACheck rightNACheck;
     private final NACheck resultNACheck;
 
+    private final BranchProfile emptyVector = new BranchProfile();
+    private final BranchProfile nonEmptyVector = new BranchProfile();
+
     public BinaryArithmeticNode(BinaryArithmeticFactory factory, UnaryArithmeticFactory unaryFactory) {
-        this.binary = factory.create();
-        this.unary = unaryFactory != null ? unaryFactory.create() : null;
+        this.arithmetic = factory.create();
+        this.unaryFactory = unaryFactory;
         leftNACheck = new NACheck();
         rightNACheck = new NACheck();
         resultNACheck = new NACheck();
     }
 
     public BinaryArithmeticNode(BinaryArithmeticNode op) {
-        this.binary = op.binary;
-        this.unary = op.unary;
+        this.arithmetic = op.arithmetic;
+        this.unaryFactory = op.unaryFactory;
         this.leftNACheck = op.leftNACheck;
         this.rightNACheck = op.rightNACheck;
         this.resultNACheck = op.resultNACheck;
+    }
+
+    private Object doUnaryOp(VirtualFrame frame, Object operand) {
+        if (unaryNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (unaryFactory == null) {
+                throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
+            } else {
+                unaryNode = insert(UnaryArithmeticNodeFactory.create(unaryFactory, null));
+            }
+        }
+        return unaryNode.execute(frame, operand);
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory arithmetic) {
         return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null);
     }
 
-    @CreateCast({"arguments"})
-    public RNode[] createCastLeft(RNode[] child) {
-        return new RNode[]{createCast(child[0], leftNACheck), createCast(child[1], rightNACheck)};
-    }
-
-    private static RNode createCast(RNode child, NACheck check) {
-        return ArithmeticCastFactory.create(child, check);
-    }
-
     @Specialization(order = 0)
-    public Object doLeftNull(RNull left, Object right) {
-        return doRightNull(right, left);
+    public Object doUnary(VirtualFrame frame, Object left, @SuppressWarnings("unused") RMissing right) {
+        return doUnaryOp(frame, left);
     }
 
     @Specialization(order = 1)
-    public Object doRightNull(Object left, RNull right) {
-        if (left instanceof RVector) {
-            RVector rVector = (RVector) left;
-            if (rVector.getElementClass() == RInt.class || rVector.getElementClass() == RLogical.class) {
-                return RDataFactory.createDoubleVector(0);
-            }
-            return rVector.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-        } else if (left instanceof RNull) {
-            return RDataFactory.createDoubleVector(0);
-        } else if (left instanceof Byte || left instanceof Integer || left instanceof Double) {
-            return RDataFactory.createDoubleVector(0);
-        } else if (left instanceof String) {
-            return RDataFactory.createStringVector(0);
-        } else if (left instanceof RRaw) {
-            return RDataFactory.createRawVector(0);
-        } else if (left instanceof RComplex) {
-            return RDataFactory.createComplexVector(0);
-        }
-        return right;
+    public RDoubleVector doLeftNull(RNull left, RAbstractIntVector right) {
+        return doRightNull(right, left);
+    }
+
+    @Specialization(order = 2)
+    public RDoubleVector doLeftNull(RNull left, RAbstractDoubleVector right) {
+        return doRightNull(right, left);
+    }
+
+    @Specialization(order = 3)
+    public RDoubleVector doLeftNull(RNull left, RAbstractLogicalVector right) {
+        return doRightNull(right, left);
+    }
+
+    @Specialization(order = 4)
+    public RComplexVector doLeftNull(RNull left, RAbstractComplexVector right) {
+        return doRightNull(right, left);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 5)
+    public RDoubleVector doRightNull(RAbstractIntVector left, RNull right) {
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 6)
+    public RDoubleVector doRightNull(RAbstractDoubleVector left, RNull right) {
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 7)
+    public RDoubleVector doRightNull(RAbstractLogicalVector left, RNull right) {
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 8)
+    public RComplexVector doRightNull(RAbstractComplexVector left, RNull right) {
+        return RDataFactory.createEmptyComplexVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 9)
+    public RDoubleVector doRightNull(RNull left, RNull right) {
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(order = 10)
+    public Object doLeftString(RAbstractStringVector left, Object right) {
+        return doRightString(right, left);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 11)
+    public Object doRightString(Object left, RAbstractStringVector right) {
+        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+    }
+
+    @Specialization(order = 15)
+    public Object doLeftRaw(RAbstractRawVector left, Object right) {
+        return doRightRaw(right, left);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(order = 16)
+    public Object doRightRaw(Object left, RAbstractRawVector right) {
+        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     public boolean supportsIntResult() {
-        return binary.isSupportsIntResult();
+        return arithmetic.isSupportsIntResult();
     }
 
-    // unary operations
+    // int
+
+    @Specialization(order = 20, guards = {"supportsIntResult"})
+    public int doInt(int left, int right) {
+        return performArithmeticEnableNACheck(left, right);
+    }
+
+    @Specialization(order = 21)
+    public double doInt(int left, double right) {
+        return performArithmeticDoubleEnableNACheck(RRuntime.int2double(left), right);
+    }
+
+    @Specialization(order = 22)
+    public double doInt(double left, int right) {
+        return performArithmeticDoubleEnableNACheck(left, RRuntime.int2double(right));
+    }
+
+    @Specialization(order = 23, guards = {"supportsIntResult"})
+    public int doInt(int left, byte right) {
+        return performArithmeticEnableNACheck(left, RRuntime.logical2int(right));
+    }
+
+    @Specialization(order = 24, guards = {"supportsIntResult"})
+    public int doInt(byte left, int right) {
+        return performArithmeticEnableNACheck(RRuntime.logical2int(left), right);
+    }
+
+    @Specialization(order = 27)
+    public RComplex doInt(int left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(RRuntime.int2complex(left), right);
+    }
+
+    @Specialization(order = 28)
+    public RComplex doInt(RComplex left, int right) {
+        return performArithmeticComplexEnableNACheck(left, RRuntime.int2complex(right));
+    }
+
+    @Specialization(order = 30, guards = {"!supportsIntResult"})
+    public double doIntDouble(int left, int right) {
+        return performArithmeticIntIntDoubleEnableNACheck(left, right);
+    }
+
+    @Specialization(order = 33, guards = {"!supportsIntResult"})
+    public double doIntDouble(int left, byte right) {
+        return performArithmeticIntIntDoubleEnableNACheck(left, RRuntime.logical2int(right));
+    }
+
+    @Specialization(order = 34, guards = {"!supportsIntResult"})
+    public double doIntDouble(byte left, int right) {
+        return performArithmeticIntIntDoubleEnableNACheck(RRuntime.logical2int(left), right);
+    }
+
+    // double
+
+    @Specialization(order = 40)
+    public double doDouble(double left, double right) {
+        return performArithmeticDoubleEnableNACheck(left, right);
+    }
+
+    @Specialization(order = 42)
+    public double doDouble(double left, byte right) {
+        return performArithmeticDoubleEnableNACheck(left, RRuntime.logical2double(right));
+    }
+
+    @Specialization(order = 44)
+    public double doDouble(byte left, double right) {
+        return performArithmeticDoubleEnableNACheck(RRuntime.logical2double(left), right);
+    }
 
     @Specialization(order = 50)
-    public int doUnaryInt(int left, RMissing right) {
-        checkUnary();
-        if (leftNACheck.check(left)) {
-            return RRuntime.INT_NA;
-        }
-        return unary.op(left);
-    }
-
-    @Specialization(order = 51)
-    public double doUnaryDouble(double left, RMissing right) {
-        checkUnary();
-        if (leftNACheck.check(left)) {
-            return RRuntime.DOUBLE_NA;
-        }
-        return unary.op(left);
+    public RComplex doDouble(double left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(RRuntime.double2complex(left), right);
     }
 
     @Specialization(order = 52)
-    public RComplex doUnaryComplex(RComplex left, RMissing right) {
-        checkUnary();
-        if (leftNACheck.check(left)) {
-            return RRuntime.createComplexNA();
-        }
-        return unary.op(left.getRealPart(), left.getImaginaryPart());
-    }
-
-    @Specialization(order = 53)
-    public RIntVector doUnaryIntVector(RIntVector left, RMissing right) {
-        checkUnary();
-        int[] res = new int[left.getLength()];
-        leftNACheck.enable(left);
-        for (int i = 0; i < left.getLength(); ++i) {
-            if (leftNACheck.check(left.getDataAt(i))) {
-                res[i] = RRuntime.INT_NA;
-            } else {
-                res[i] = unary.op(left.getDataAt(i));
-            }
-        }
-        RIntVector ret = RDataFactory.createIntVector(res, leftNACheck.neverSeenNA());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
-
-    @Specialization(order = 54)
-    public RDoubleVector doUnaryDoubleVector(RDoubleVector left, RMissing right) {
-        checkUnary();
-        double[] res = new double[left.getLength()];
-        leftNACheck.enable(left);
-        for (int i = 0; i < left.getLength(); ++i) {
-            if (leftNACheck.check(left.getDataAt(i))) {
-                res[i] = RRuntime.DOUBLE_NA;
-            } else {
-                res[i] = unary.op(left.getDataAt(i));
-            }
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(res, leftNACheck.neverSeenNA());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
-
-    @Specialization(order = 55)
-    public RComplexVector doComplexVectorNA(RComplexVector left, RMissing right) {
-        double[] res = new double[left.getLength() * 2];
-        leftNACheck.enable(left);
-        for (int i = 0; i < left.getLength(); ++i) {
-            if (leftNACheck.check(left.getDataAt(i))) {
-                res[2 * i] = RRuntime.DOUBLE_NA;
-                res[2 * i + 1] = 0.0;
-            } else {
-                RComplex r = unary.op(left.getDataAt(i).getRealPart(), left.getDataAt(i).getImaginaryPart());
-                res[2 * i] = r.getRealPart();
-                res[2 * i + 1] = r.getImaginaryPart();
-            }
-        }
-        RComplexVector ret = RDataFactory.createComplexVector(res, leftNACheck.neverSeenNA());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
-
-    @Specialization(order = 56)
-    public RIntVector doUnaryIntSequence(RIntSequence left, RMissing right) {
-        checkUnary();
-        int[] res = new int[left.getLength()];
-        leftNACheck.enable(left);
-        for (int i = 0; i < left.getLength(); ++i) {
-            if (leftNACheck.check(left.getDataAt(i))) {
-                res[i] = RRuntime.INT_NA;
-            } else {
-                res[i] = unary.op(left.getDataAt(i));
-            }
-        }
-        RIntVector ret = RDataFactory.createIntVector(res, leftNACheck.neverSeenNA());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
-
-    @Specialization(order = 57)
-    public RDoubleVector doUnaryDoubleSequence(RDoubleSequence left, RMissing right) {
-        checkUnary();
-        double[] res = new double[left.getLength()];
-        leftNACheck.enable(left);
-        for (int i = 0; i < left.getLength(); ++i) {
-            if (leftNACheck.check(left.getDataAt(i))) {
-                res[i] = RRuntime.INT_NA;
-            } else {
-                res[i] = unary.op(left.getDataAt(i));
-            }
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(res, leftNACheck.neverSeenNA());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+    public RComplex doDouble(RComplex left, double right) {
+        return performArithmeticComplexEnableNACheck(left, RRuntime.double2complex(right));
     }
 
-    private void checkUnary() {
-        if (unary == null) {
-            throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
-        }
-    }
-
-    // Scalar operations
-
-    @Specialization(order = 110, guards = "supportsIntResult")
-    public int doIntInt(int left, int right) {
-        return performArithmetic(left, right);
-    }
-
-    @Specialization(order = 111, guards = "!supportsIntResult")
-    public double doIntIntDouble(int left, int right) {
-        return performArithmeticIntIntDouble(left, right);
-    }
-
-    @Specialization(order = 112)
-    public double doIntDouble(int left, double right) {
-        return performArithmeticDouble(leftNACheck.convertIntToDouble(left), right);
-    }
-
-    @Specialization(order = 113)
-    public RComplex doIntComplex(int left, RComplex right) {
-        return performArithmeticComplex(leftNACheck.convertIntToComplex(left), right);
-    }
-
-    @Specialization(order = 120)
-    public double doDoubleInt(double left, int right) {
-        return performArithmeticDouble(left, rightNACheck.convertIntToDouble(right));
-    }
-
-    @Specialization(order = 121)
-    public double doDoubleDouble(double left, double right) {
-        return performArithmeticDouble(left, right);
-    }
-
-    @Specialization(order = 122)
-    public RComplex doDoubleComplex(double left, RComplex right) {
-        return performArithmeticComplex(leftNACheck.convertDoubleToComplex(left), right);
-    }
-
-    @Specialization(order = 130)
-    public RComplex doComplexInt(RComplex left, int right) {
-        return performArithmeticComplex(left, rightNACheck.convertIntToComplex(right));
-    }
-
-    @Specialization(order = 131)
-    public RComplex doComplexDouble(RComplex left, double right) {
-        return performArithmeticComplex(left, rightNACheck.convertDoubleToComplex(right));
-    }
-
-    @Specialization(order = 132)
-    public RComplex doComplexComplex(RComplex left, RComplex right) {
-        return performArithmeticComplex(left, right);
-    }
-
-    // Scalar + Vector mix operations
-
-    @Specialization(order = 210, guards = "supportsIntResult")
-    public RIntVector doIntScalarIntVector(int left, RIntVector right) {
-        return performScalarIntVectorOp(left, right);
-    }
-
-    @Specialization(order = 1210, guards = "supportsIntResult")
-    public RIntVector doIntScalarIntVector(int left, RIntSequence right) {
-        return performScalarIntVectorOp(left, right);
-    }
-
-    @Specialization(order = 211, guards = "!supportsIntResult")
-    public RDoubleVector doIntScalarIntVectorDouble(int left, RIntVector right) {
-        return performScalarIntVectorOpDouble(left, right);
-    }
-
-    @Specialization(order = 1211, guards = "!supportsIntResult")
-    public RDoubleVector doIntScalarIntVectorDouble(int left, RIntSequence right) {
-        return performScalarIntVectorOpDouble(left, right);
-    }
-
-    @Specialization(order = 212)
-    public RDoubleVector doIntScalarDoubleVector(int left, RDoubleVector right) {
-        return performScalarDoubleVectorOp(leftNACheck.convertIntToDouble(left), right);
-    }
-
-    @Specialization(order = 213)
-    public RComplexVector doIntScalarComplexVector(int left, RComplexVector right) {
-        return performScalarComplexVectorOp(leftNACheck.convertIntToComplex(left), right);
-    }
-
-    @Specialization(order = 220)
-    public RDoubleVector doDoubleScalarIntVector(double left, RIntVector right) {
-        return performScalarDoubleWithIntVectorOp(left, right);
-    }
-
-    @Specialization(order = 1220)
-    public RDoubleVector doDoubleScalarIntVector(double left, RIntSequence right) {
-        return performScalarDoubleWithIntVectorOp(left, right);
-    }
-
-    @Specialization(order = 221)
-    public RDoubleVector doDoubleScalarDoubleVector(double left, RDoubleVector right) {
-        return performScalarDoubleVectorOp(left, right);
-    }
-
-    @Specialization(order = 222)
-    public RComplexVector doDoubleScalarComplexVector(double left, RComplexVector right) {
-        return performScalarComplexVectorOp(leftNACheck.convertDoubleToComplex(left), right);
-    }
-
-    @Specialization(order = 230)
-    public RComplexVector doComplexScalarIntVector(RComplex left, RIntVector right) {
-        return performScalarComplexVectorOp(left, RClosures.createIntToComplexVector(right, rightNACheck));
-    }
-
-    @Specialization(order = 1230)
-    public RComplexVector doComplexScalarIntVector(RComplex left, RIntSequence right) {
-        return performScalarComplexVectorOp(left, RClosures.createIntToComplexVector(right, rightNACheck));
-    }
-
-    @Specialization(order = 231)
-    public RComplexVector doComplexScalarIntVector(RComplex left, RDoubleVector right) {
-        return performScalarComplexVectorOp(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
-    }
-
-    @Specialization(order = 232)
-    public RComplexVector doComplexScalarIntVector(RComplex left, RComplexVector right) {
-        return performScalarComplexVectorOp(left, right);
-    }
-
-    @Specialization(order = 240)
-    public RIntVector doLogicalScalarIntVector(byte left, RIntVector right) {
-        return performScalarIntVectorOp(leftNACheck.convertLogicalToInt(left), right);
-    }
-
-    @Specialization(order = 1240)
-    public RIntVector doLogicalScalarIntVector(byte left, RIntSequence right) {
-        return performScalarIntVectorOp(leftNACheck.convertLogicalToInt(left), right);
-    }
-
-    @Specialization(order = 241)
-    public RDoubleVector doLogicalScalarDoubleVector(byte left, RDoubleVector right) {
-        return performScalarDoubleVectorOp(leftNACheck.convertLogicalToDouble(left), right);
-    }
-
-    @Specialization(order = 242)
-    public RComplexVector doLogicalScalarComplexVector(byte left, RComplexVector right) {
-        return performScalarComplexVectorOp(leftNACheck.convertLogicalToComplex(left), right);
-    }
-
-    // Vector + Scalar mix operations
-
-    @Specialization(order = 310, guards = "supportsIntResult")
-    public RIntVector doIntVectorScalar(RIntVector left, int right) {
-        return performIntVectorOp(left, right);
-    }
-
-    @Specialization(order = 311, guards = "!supportsIntResult")
-    public RDoubleVector doIntVectorScalarDouble(RIntVector left, int right) {
-        return performIntVectorOpDouble(left, right);
-    }
-
-    @Specialization(order = 312)
-    public RDoubleVector doIntVectorScalar(RIntVector left, double right) {
-        return performDoubleVectorOp(RClosures.createIntToDoubleVector(left, leftNACheck), right);
-    }
-
-    @Specialization(order = 313)
-    public RComplexVector doIntVectorScalar(RIntVector left, RComplex right) {
-        return performComplexVectorScalarOp(RClosures.createIntToComplexVector(left, leftNACheck), right);
-    }
-
-    @Specialization(order = 314)
-    public RIntVector doIntVectorScalar(RIntVector left, byte right) {
-        return performIntVectorOp(left, rightNACheck.convertLogicalToInt(right));
-    }
-
-    @Specialization(order = 315, guards = "supportsIntResult")
-    public RIntVector doIntVectorScalar(RIntSequence left, int right) {
-        return performIntVectorOp(left, right);
-    }
-
-    @Specialization(order = 316, guards = "!supportsIntResult")
-    public RDoubleVector doIntVectorScalarDouble(RIntSequence left, int right) {
-        return performIntVectorOpDouble(left, right);
-    }
-
-    @Specialization(order = 317, guards = "canCreateSequenceResultWithRight")
-    public RDoubleSequence doIntVectorScalarDoubleSequence(RIntSequence left, double right) {
-        if (this.binary instanceof BinaryArithmetic.Multiply) {
-            return RDataFactory.createDoubleSequence(left.getStart() * right, left.getStride() * right, left.getLength());
-        } else if (this.binary instanceof BinaryArithmetic.Subtract) {
-            return RDataFactory.createDoubleSequence(left.getStart() - right, left.getStride(), left.getLength());
-        } else {
-            assert this.binary instanceof BinaryArithmetic.Add;
-            return RDataFactory.createDoubleSequence(left.getStart() + right, left.getStride(), left.getLength());
-        }
-    }
-
-    @Specialization(order = 334, guards = "!canCreateSequenceResultWithRight")
-    public RDoubleVector doIntVectorScalar(RIntSequence left, double right) {
-        return performDoubleVectorOp(RClosures.createIntToDoubleVector(left, leftNACheck), right);
-    }
-
-    @Specialization(order = 335, guards = "canCreateSequenceResultWithLeft")
-    public RDoubleSequence doIntVectorScalarDoubleSequence(double left, RDoubleSequence right) {
-        if (this.binary instanceof BinaryArithmetic.Multiply) {
-            return RDataFactory.createDoubleSequence(right.getStart() * left, right.getStride() * left, right.getLength());
-        } else {
-            assert this.binary instanceof BinaryArithmetic.Add;
-            return RDataFactory.createDoubleSequence(right.getStart() + left, right.getStride(), right.getLength());
-        }
-    }
-
-    @Specialization(order = 336, guards = "!canCreateSequenceResultWithLeft")
-    public RDoubleVector doIntVectorScalar(double left, RDoubleSequence right) {
-        return performScalarDoubleVectorOp(left, right);
-    }
-
-    @Specialization(order = 337)
-    public RDoubleVector doDoubleSequenceDoubleOp(RDoubleSequence left, double right) {
-        return performDoubleVectorOp(left, right);
-    }
+    // logical
 
-    @Specialization(order = 338)
-    public RDoubleVector doDoubleSequenceDoubleOp(RDoubleSequence left, int right) {
-        return performDoubleVectorOp(left, rightNACheck.convertIntToDouble(right));
+    @Specialization(order = 60, guards = {"supportsIntResult"})
+    public int doLogical(byte left, byte right) {
+        return performArithmeticEnableNACheck(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
-    public boolean canCreateSequenceResultWithRight(Object left, double right) {
-        return !this.rightNACheck.check(right) && (this.binary instanceof BinaryArithmetic.Multiply || this.binary instanceof BinaryArithmetic.Add || this.binary instanceof BinaryArithmetic.Subtract);
+    @Specialization(order = 66)
+    public RComplex doLogical(byte left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(RRuntime.logical2complex(left), right);
     }
 
-    public boolean canCreateSequenceResultWithLeft(double left, Object right) {
-        return !this.leftNACheck.check(left) && (this.binary instanceof BinaryArithmetic.Multiply || this.binary instanceof BinaryArithmetic.Add);
+    @Specialization(order = 68)
+    public RComplex doLogical(RComplex left, byte right) {
+        return performArithmeticComplexEnableNACheck(left, RRuntime.logical2complex(right));
     }
 
-    @Specialization(order = 318)
-    public RComplexVector doIntVectorScalar(RIntSequence left, RComplex right) {
-        return performComplexVectorScalarOp(RClosures.createIntToComplexVector(left, leftNACheck), right);
+    @Specialization(order = 70, guards = {"!supportsIntResult"})
+    public double doLogicalDouble(byte left, byte right) {
+        return performArithmeticIntIntDoubleEnableNACheck(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
-    @Specialization(order = 319)
-    public RIntVector doIntVectorScalar(RIntSequence left, byte right) {
-        return performIntVectorOp(left, rightNACheck.convertLogicalToInt(right));
-    }
-
-    @Specialization(order = 320)
-    public RDoubleVector doDoubleVectorScalar(RDoubleVector left, int right) {
-        return performDoubleVectorOp(left, rightNACheck.convertIntToDouble(right));
-    }
-
-    @Specialization(order = 321)
-    public RDoubleVector doDoubleVectorScalar(RDoubleVector left, double right) {
-        return performDoubleVectorOp(left, right);
-    }
-
-    @Specialization(order = 322)
-    public RComplexVector doDoubleVectorScalar(RDoubleVector left, RComplex right) {
-        return performComplexVectorScalarOp(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
-    }
-
-    @Specialization(order = 323)
-    public RDoubleVector doDoubleVectorScalar(RDoubleVector left, byte right) {
-        return performDoubleVectorOp(left, rightNACheck.convertLogicalToDouble(right));
-    }
-
-    @Specialization(order = 330)
-    public RComplexVector doComplexVectorScalar(RComplexVector left, int right) {
-        return performComplexVectorScalarOp(left, rightNACheck.convertIntToComplex(right));
-    }
-
-    @Specialization(order = 331)
-    public RComplexVector doComplexVectorScalar(RComplexVector left, double right) {
-        return performComplexVectorScalarOp(left, rightNACheck.convertDoubleToComplex(right));
-    }
-
-    @Specialization(order = 332)
-    public RComplexVector doComplexVectorScalar(RComplexVector left, RComplex right) {
-        return performComplexVectorScalarOp(left, right);
-    }
-
-    @Specialization(order = 333)
-    public RComplexVector doComplexVectorScalar(RComplexVector left, byte right) {
-        return performComplexVectorScalarOp(left, rightNACheck.convertLogicalToComplex(right));
-    }
-
-    // Vector + Vector operations, with same length
-
-    @Specialization(order = 410, guards = {"areSameLength", "supportsIntResult"})
-    public RIntVector doIntVectorIntVectorSameLengthReturnIntVector(RIntVector left, RIntVector right) {
-        return performIntVectorIntVectorOpSameLengthInt(left, right);
-    }
-
-    @Specialization(order = 411, guards = {"areSameLength", "!supportsIntResult"})
-    public RDoubleVector doIntVectorIntVectorSameLengthReturnIntVectorDouble(RIntVector left, RIntVector right) {
-        return performIntVectorIntVectorOpSameLengthIntDouble(left, right);
-    }
+    // complex
 
-    @Specialization(order = 1410, guards = {"areSameLength", "supportsIntResult"})
-    public RIntVector doIntVectorIntVectorSameLengthReturnIntVector(RIntVector left, RIntSequence right) {
-        return performIntVectorIntVectorOpSameLengthInt(left, right);
+    @Specialization(order = 150)
+    public RComplex doComplex(RComplex left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(left, right);
     }
 
-    @Specialization(order = 1411, guards = {"areSameLength", "!supportsIntResult"})
-    public RDoubleVector doIntVectorIntVectorSameLengthReturnIntVectorDouble(RIntVector left, RIntSequence right) {
-        return performIntVectorIntVectorOpSameLengthIntDouble(left, right);
+    protected static boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
+        return BinaryBooleanNode.differentDimensions(left, right);
     }
 
-    @Specialization(order = 1412, guards = {"areSameLength", "supportsIntResult"})
-    public RIntVector doIntVectorIntVectorSameLengthReturnIntVector(RIntSequence left, RIntVector right) {
-        return performIntVectorIntVectorOpSameLengthInt(left, right);
+    @SuppressWarnings("unused")
+    @Specialization(order = 1000, guards = "differentDimensions")
+    public RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
-    @Specialization(order = 1413, guards = {"areSameLength", "!supportsIntResult"})
-    public RDoubleVector doIntVectorIntVectorSameLengthReturnIntVectorDouble(RIntSequence left, RIntVector right) {
-        return performIntVectorIntVectorOpSameLengthIntDouble(left, right);
-    }
+    // int vector and vectors
 
-    @Specialization(order = 1414, guards = {"areSameLength", "supportsIntResult"})
-    public RIntVector doIntVectorIntVectorSameLengthReturnIntVector(RIntSequence left, RIntSequence right) {
-        return performIntVectorIntVectorOpSameLengthInt(left, right);
+    @Specialization(order = 1001, guards = {"!areSameLength", "supportsIntResult"})
+    public RIntVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
+        return performIntVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(order = 1415, guards = {"areSameLength", "!supportsIntResult"})
-    public RDoubleVector doIntVectorIntVectorSameLengthReturnIntVectorDouble(RIntSequence left, RIntSequence right) {
-        return performIntVectorIntVectorOpSameLengthIntDouble(left, right);
+    @Specialization(order = 1002, guards = {"areSameLength", "supportsIntResult"})
+    public RIntVector doIntVectorSameLength(RAbstractIntVector left, RAbstractIntVector right) {
+        return performIntVectorOpSameLength(left, right);
     }
 
-    @Specialization(order = 412, guards = "areSameLength")
-    public RDoubleVector doIntVectorDoubleVectorSameLength(RIntVector left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
+    @Specialization(order = 1003, guards = "!areSameLength")
+    public RDoubleVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractDoubleVector right) {
+        return performDoubleVectorOpDifferentLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 413, guards = "areSameLength")
-    public RComplexVector doIntVectorComplexVectorSameLength(RIntVector left, RComplexVector right) {
-        return performComplexVectorComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
+    @Specialization(order = 1004, guards = "areSameLength")
+    public RDoubleVector doIntVectorSameLength(RAbstractIntVector left, RAbstractDoubleVector right) {
+        return performDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 1416, guards = "areSameLength")
-    public RDoubleVector doIntVectorDoubleVectorSameLength(RIntSequence left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
+    @Specialization(order = 1005, guards = "!areSameLength")
+    public RDoubleVector doIntVectorDifferentLength(RAbstractDoubleVector left, RAbstractIntVector right) {
+        return performDoubleVectorOpDifferentLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1417, guards = "areSameLength")
-    public RComplexVector doIntVectorComplexVectorSameLength(RIntSequence left, RComplexVector right) {
-        return performComplexVectorComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
+    @Specialization(order = 1006, guards = "areSameLength")
+    public RDoubleVector doIntVectorIntVectorSameLength(RAbstractDoubleVector left, RAbstractIntVector right) {
+        return performDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(order = 420, guards = "areSameLength")
-    public RDoubleVector doIntVectorDoubleVectorSameLength(RDoubleVector left, RIntVector right) {
-        return performDoubleVectorDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
+    @Specialization(order = 1007, guards = {"!areSameLength", "supportsIntResult"})
+    public RIntVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1420, guards = "areSameLength")
-    public RDoubleVector doIntVectorDoubleVectorSameLength(RDoubleVector left, RIntSequence right) {
-        return performDoubleVectorDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
+    @Specialization(order = 1008, guards = {"areSameLength", "supportsIntResult"})
+    public RIntVector doIntVectorSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpSameLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 421, guards = "areSameLength")
-    public RDoubleVector doIntVectorDoubleVectorSameLength(RDoubleVector left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOpSameLength(left, right);
+    @Specialization(order = 1009, guards = {"!areSameLength", "supportsIntResult"})
+    public RIntVector doIntVectorDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
+        return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 422, guards = "areSameLength")
-    public RComplexVector doIntVectorDoubleVectorSameLength(RDoubleVector left, RComplexVector right) {
-        return performComplexVectorComplexVectorOpSameLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
+    @Specialization(order = 1010, guards = {"areSameLength", "supportsIntResult"})
+    public RIntVector doIntVectorSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
+        return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 430, guards = "areSameLength")
-    public RComplexVector doComplexVectorIntVectorSameLength(RComplexVector left, RIntVector right) {
-        return performComplexVectorComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
+    @Specialization(order = 1015, guards = "!areSameLength")
+    public RComplexVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 1430, guards = "areSameLength")
-    public RComplexVector doComplexVectorIntVectorSameLength(RComplexVector left, RIntSequence right) {
-        return performComplexVectorComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
+    @Specialization(order = 1016, guards = "areSameLength")
+    public RComplexVector doIntVectorSameLength(RAbstractIntVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 431, guards = "areSameLength")
-    public RComplexVector doComplexVectorIntVectorSameLength(RComplexVector left, RDoubleVector right) {
-        return performComplexVectorComplexVectorOpSameLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
+    @Specialization(order = 1017, guards = "!areSameLength")
+    public RComplexVector doIntVectorDifferentLength(RAbstractComplexVector left, RAbstractIntVector right) {
+        return performComplexVectorOpDifferentLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(order = 432, guards = "areSameLength")
-    public RComplexVector doIntVectorDoubleVectorSameLength(RComplexVector left, RComplexVector right) {
-        return performComplexVectorComplexVectorOpSameLength(left, right);
+    @Specialization(order = 1018, guards = "areSameLength")
+    public RComplexVector doIntVectorSameLength(RAbstractComplexVector left, RAbstractIntVector right) {
+        return performComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(order = 450, guards = "areSameLength")
-    public RIntVector doIntVectorLogicalVectorSameLength(RIntVector left, RLogicalVector right) {
-        return performIntVectorIntVectorOpSameLengthInt(left, RClosures.createLogicalToIntVector(right, rightNACheck));
+    @Specialization(order = 1021, guards = {"!areSameLength", "!supportsIntResult"})
+    public RDoubleVector doIntVectorDoubleDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
+        return performIntVectorOpDoubleDifferentLength(left, right);
     }
 
-    @Specialization(order = 1450, guards = "areSameLength")
-    public RIntVector doIntVectorLogicalVectorSameLength(RIntSequence left, RLogicalVector right) {
-        return performIntVectorIntVectorOpSameLengthInt(left, RClosures.createLogicalToIntVector(right, rightNACheck));
+    @Specialization(order = 1022, guards = {"areSameLength", "!supportsIntResult"})
+    public RDoubleVector doIntVectorDoubleSameLength(RAbstractIntVector left, RAbstractIntVector right) {
+        return performIntVectorOpDoubleSameLength(left, right);
     }
 
-    @Specialization(order = 451, guards = "areSameLength")
-    public RIntVector doIntVectorLogicalVectorSameLength(RLogicalVector left, RIntVector right) {
-        return performIntVectorIntVectorOpSameLengthInt(RClosures.createLogicalToIntVector(left, leftNACheck), right);
+    @Specialization(order = 1027, guards = {"!areSameLength", "!supportsIntResult"})
+    public RDoubleVector doIntVectorDoubleDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpDoubleDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1451, guards = "areSameLength")
-    public RIntVector doIntVectorLogicalVectorSameLength(RLogicalVector left, RIntSequence right) {
-        return performIntVectorIntVectorOpSameLengthInt(RClosures.createLogicalToIntVector(left, leftNACheck), right);
+    @Specialization(order = 1028, guards = {"areSameLength", "!supportsIntResult"})
+    public RDoubleVector doIntVectorDoubleSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpDoubleSameLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 452, guards = "areSameLength")
-    public RDoubleVector doDoubeVectorLogicalVectorSameLength(RDoubleVector left, RLogicalVector right) {
-        return performDoubleVectorDoubleVectorOpSameLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
+    @Specialization(order = 1029, guards = {"!areSameLength", "!supportsIntResult"})
+    public RDoubleVector doIntVectorDoubleDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
+        return performIntVectorOpDoubleDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 453, guards = "areSameLength")
-    public RDoubleVector doDoubleVectorLogicalVectorSameLength(RLogicalVector left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOpSameLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
+    @Specialization(order = 1030, guards = {"areSameLength", "!supportsIntResult"})
+    public RDoubleVector doIntVectorDoubleSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
+        return performIntVectorOpDoubleSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
-
-    // Vector + Vector operations, not same length
 
-    @Specialization(order = 510, guards = "supportsIntResult")
-    public RIntVector doIntVectorIntVectorReturnIntVector(RIntVector left, RIntVector right) {
-        return performIntVectorIntVectorOpInt(left, right);
-    }
+    // double vector and vectors
 
-    public RDoubleVector doIntVectorIntVectorReturnIntVectorDouble(RIntVector left, RIntVector right) {
-        return performIntVectorIntVectorOpIntDouble(left, right);
+    @Specialization(order = 1100, guards = "!areSameLength")
+    public RDoubleVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+        return performDoubleVectorOpDifferentLength(left, right);
     }
 
-    @Specialization(order = 1510, guards = "supportsIntResult")
-    public RIntVector doIntVectorIntVectorReturnIntVector(RIntVector left, RIntSequence right) {
-        return performIntVectorIntVectorOpInt(left, right);
+    @Specialization(order = 1101, guards = "areSameLength")
+    public RDoubleVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+        return performDoubleVectorOpSameLength(left, right);
     }
 
-    public RDoubleVector doIntVectorIntVectorReturnIntVectorDouble(RIntVector left, RIntSequence right) {
-        return performIntVectorIntVectorOpIntDouble(left, right);
+    @Specialization(order = 1102, guards = "!areSameLength")
+    public RDoubleVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
+        return performDoubleVectorOpDifferentLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1511, guards = "supportsIntResult")
-    public RIntVector doIntVectorIntVectorReturnIntVector(RIntSequence left, RIntSequence right) {
-        return performIntVectorIntVectorOpInt(left, right);
+    @Specialization(order = 1103, guards = "areSameLength")
+    public RDoubleVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
+        return performDoubleVectorOpSameLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
-    public RDoubleVector doIntVectorIntVectorReturnIntVectorDouble(RIntSequence left, RIntSequence right) {
-        return performIntVectorIntVectorOpIntDouble(left, right);
+    @Specialization(order = 1104, guards = "!areSameLength")
+    public RDoubleVector doDoubleVectorDifferentLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
+        return performDoubleVectorOpDifferentLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 1612, guards = "supportsIntResult")
-    public RIntVector doIntVectorIntVectorReturnIntVector(RIntSequence left, RIntVector right) {
-        return performIntVectorIntVectorOpInt(left, right);
+    @Specialization(order = 1105, guards = "areSameLength")
+    public RDoubleVector doDoubleVectorSameLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
+        return performDoubleVectorOpSameLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
-    public RDoubleVector doIntVectorIntVectorReturnIntVectorDouble(RIntSequence left, RIntVector right) {
-        return performIntVectorIntVectorOpIntDouble(left, right);
+    @Specialization(order = 1110, guards = "!areSameLength")
+    public RComplexVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 512)
-    public RDoubleVector doIntVectorDoubleVector(RIntVector left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOp(RClosures.createIntToDoubleVector(left, leftNACheck), right);
+    @Specialization(order = 1111, guards = "areSameLength")
+    public RComplexVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 513)
-    public RComplexVector doIntVectorComplexVector(RIntVector left, RComplexVector right) {
-        return performComplexVectorComplexVectorOp(RClosures.createIntToComplexVector(left, leftNACheck), right);
+    @Specialization(order = 1112, guards = "!areSameLength")
+    public RComplexVector doDoubleVectorDifferentLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
+        return performComplexVectorOpDifferentLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1512)
-    public RDoubleVector doIntVectorDoubleVector(RIntSequence left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOp(RClosures.createIntToDoubleVector(left, leftNACheck), right);
+    @Specialization(order = 1113, guards = "areSameLength")
+    public RComplexVector doDoubleVectorSameLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
+        return performComplexVectorOpSameLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1513)
-    public RComplexVector doIntVectorComplexVector(RIntSequence left, RComplexVector right) {
-        return performComplexVectorComplexVectorOp(RClosures.createIntToComplexVector(left, leftNACheck), right);
-    }
+    // logical vector and vectors
 
-    @Specialization(order = 520)
-    public RDoubleVector doIntVectorDoubleVector(RDoubleVector left, RIntVector right) {
-        return performDoubleVectorDoubleVectorOp(left, RClosures.createIntToDoubleVector(right, rightNACheck));
+    @Specialization(order = 1200, guards = {"!areSameLength", "supportsIntResult"})
+    public RIntVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1520)
-    public RDoubleVector doIntVectorDoubleVector(RDoubleVector left, RIntSequence right) {
-        return performDoubleVectorDoubleVectorOp(left, RClosures.createIntToDoubleVector(right, rightNACheck));
+    @Specialization(order = 1201, guards = {"areSameLength", "supportsIntResult"})
+    public RIntVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 521)
-    public RDoubleVector doIntVectorDoubleVector(RDoubleVector left, RDoubleVector right) {
-        return performDoubleVectorDoubleVectorOp(left, right);
+    @Specialization(order = 1206, guards = "!areSameLength")
+    public RComplexVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 522)
-    public RComplexVector doIntVectorDoubleVector(RDoubleVector left, RComplexVector right) {
-        return performComplexVectorComplexVectorOp(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
+    @Specialization(order = 1207, guards = "areSameLength")
+    public RComplexVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
-    @Specialization(order = 530)
-    public RComplexVector doComplexVectorIntVector(RComplexVector left, RIntVector right) {
-        return performComplexVectorComplexVectorOp(left, RClosures.createIntToComplexVector(right, rightNACheck));
+    @Specialization(order = 1208, guards = "!areSameLength")
+    public RComplexVector doLogicalVectorDifferentLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
+        return performComplexVectorOpDifferentLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(order = 1530)
-    public RComplexVector doComplexVectorIntVector(RComplexVector left, RIntSequence right) {
-        return performComplexVectorComplexVectorOp(left, RClosures.createIntToComplexVector(right, rightNACheck));
+    @Specialization(order = 1209, guards = "areSameLength")
+    public RComplexVector doLogicalVectorSameLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
+        return performComplexVectorOpSameLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
-    @Specialization(order = 531)
-    public RComplexVector doComplexVectorIntVector(RComplexVector left, RDoubleVector right) {
-        return performComplexVectorComplexVectorOp(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
+    @Specialization(order = 1210, guards = {"!areSameLength", "!supportsIntResult"})
+    public RDoubleVector doLogicalVectorDoubleDifferentLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpDoubleDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    @Specialization(order = 532)
-    public RComplexVector doIntVectorDoubleVector(RComplexVector left, RComplexVector right) {
-        return performComplexVectorComplexVectorOp(left, right);
+    @Specialization(order = 1211, guards = {"areSameLength", "!supportsIntResult"})
+    public RDoubleVector doLogicalVectorDoubleSameLength(RAbstractLogicalVector left, RAbstractLogicalVector right) {
+        return performIntVectorOpDoubleSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
-    private RIntVector performIntVectorOp(RAbstractIntVector left, int right) {
-        int length = left.getLength();
-        int[] result = new int[length];
-        for (int i = 0; i < length; ++i) {
-            int leftValue = left.getDataAt(i);
-            result[i] = performArithmetic(leftValue, right);
-        }
-        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
+    // complex vector and vectors
 
-    private RDoubleVector performIntVectorOpDouble(RAbstractIntVector left, int right) {
-        int length = left.getLength();
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            int leftValue = left.getDataAt(i);
-            result[i] = performArithmeticIntIntDouble(leftValue, right);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
+    @Specialization(order = 1400, guards = "!areSameLength")
+    public RComplexVector doComplexVectorDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(left, right);
     }
 
-    private RIntVector performScalarIntVectorOp(int left, RAbstractIntVector right) {
-        int length = right.getLength();
-        int[] result = new int[length];
-        for (int i = 0; i < length; ++i) {
-            int rightValue = right.getDataAt(i);
-            result[i] = performArithmetic(left, rightValue);
-        }
-        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.setDimensions(right.getDimensions());
-        ret.copyNamesFrom(right);
-        return ret;
+    @Specialization(order = 1401, guards = "areSameLength")
+    public RComplexVector doComplexVectorSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(left, right);
     }
 
-    private RDoubleVector performScalarIntVectorOpDouble(int left, RAbstractIntVector right) {
-        int length = right.getLength();
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            int rightValue = right.getDataAt(i);
-            result[i] = performArithmeticIntIntDouble(left, rightValue);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.setDimensions(right.getDimensions());
-        ret.copyNamesFrom(right);
-        return ret;
-    }
+    // implementation
 
-    private RComplexVector performComplexVectorComplexVectorOp(RAbstractComplexVector left, RAbstractComplexVector right) {
+    private void copyAttributes(RVector ret, RAbstractVector left, RAbstractVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
+        int length = Math.max(leftLength, rightLength);
+        ret.copyRegAttributesFrom(leftLength == length ? left : right);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), this.getSourceSection());
+        ret.copyNamesFrom(leftLength == length ? left : right);
+    }
+
+    private void copyAttributesSameLength(RVector ret, RAbstractVector left, RAbstractVector right) {
+        ret.copyRegAttributesFrom(right);
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
+        if (!ret.copyNamesFrom(left)) {
+            ret.copyNamesFrom(right);
+        }
+    }
+
+    private RComplexVector performComplexVectorOpDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+        int leftLength = left.getLength();
+        int rightLength = right.getLength();
+        if (leftLength == 0 || rightLength == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyComplexVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         int length = Math.max(leftLength, rightLength);
         double[] result = new double[length << 1];
         int j = 0;
@@ -819,23 +531,26 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
-        if (leftLength == length) {
-            ret.copyRegAttributesFrom(left);
-            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(left);
-        } else {
-            ret.copyRegAttributesFrom(right);
-            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(right);
+        boolean notMultiple = j != 0 || k != 0;
+        if (notMultiple) {
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
+        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
+        copyAttributes(ret, left, right);
         return ret;
     }
 
-    private RDoubleVector performDoubleVectorDoubleVectorOp(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+    private RDoubleVector performDoubleVectorOpDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         int length = Math.max(leftLength, rightLength);
+        if (leftLength == 0 || rightLength == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyDoubleVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         double[] result = new double[length];
         int j = 0;
         int k = 0;
@@ -846,22 +561,25 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        if (leftLength == length) {
-            ret.copyRegAttributesFrom(left);
-            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(left);
-        } else {
-            ret.copyRegAttributesFrom(right);
-            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(right);
+        boolean notMultiple = j != 0 || k != 0;
+        if (notMultiple) {
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        copyAttributes(ret, left, right);
         return ret;
     }
 
-    private RIntVector performIntVectorIntVectorOpInt(RAbstractIntVector left, RAbstractIntVector right) {
+    private RIntVector performIntVectorOpDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
+        if (leftLength == 0 || rightLength == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyIntVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         int length = Math.max(leftLength, rightLength);
         int[] result = new int[length];
         int j = 0;
@@ -873,22 +591,25 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
-        if (leftLength == length) {
-            ret.copyRegAttributesFrom(left);
-            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(left);
-        } else {
-            ret.copyRegAttributesFrom(right);
-            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(right);
+        boolean notMultiple = j != 0 || k != 0;
+        if (notMultiple) {
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
+        RIntVector ret = RDataFactory.createIntVector(result, isComplete());
+        copyAttributes(ret, left, right);
         return ret;
     }
 
-    private RDoubleVector performIntVectorIntVectorOpIntDouble(RAbstractIntVector left, RAbstractIntVector right) {
+    private RDoubleVector performIntVectorOpDoubleDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
+        if (leftLength == 0 || rightLength == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyDoubleVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         int length = Math.max(leftLength, rightLength);
         double[] result = new double[length];
         int j = 0;
@@ -896,26 +617,29 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(k);
             int rightValue = right.getDataAt(j);
-            result[i] = performArithmeticDouble(leftValue, rightValue);
+            result[i] = performArithmeticIntIntDouble(leftValue, rightValue);
             j = Utils.incMod(j, rightLength);
             k = Utils.incMod(k, leftLength);
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        if (leftLength == length) {
-            ret.copyRegAttributesFrom(left);
-            ret.setDimensions(left.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(left);
-        } else {
-            ret.copyRegAttributesFrom(right);
-            ret.setDimensions(right.getDimensions(), getEncapsulatingSourceSection());
-            ret.copyNamesFrom(right);
+        boolean notMultiple = j != 0 || k != 0;
+        if (notMultiple) {
+            RError.warning(RError.Message.LENGTH_NOT_MULTI);
         }
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
+        copyAttributes(ret, left, right);
         return ret;
     }
 
-    private RComplexVector performComplexVectorComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+    private RComplexVector performComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
+        if (length == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyComplexVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         double[] result = new double[length << 1];
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
@@ -926,18 +650,20 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             result[index + 1] = resultValue.getImaginaryPart();
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
-        if (!ret.copyNamesFrom(left)) {
-            ret.copyNamesFrom(right);
-        }
+        copyAttributesSameLength(ret, left, right);
         return ret;
     }
 
-    private RDoubleVector performDoubleVectorDoubleVectorOpSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+    private RDoubleVector performDoubleVectorOpSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
+        if (length == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyDoubleVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             double leftValue = left.getDataAt(i);
@@ -945,18 +671,20 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             result[i] = performArithmeticDouble(leftValue, rightValue);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
-        if (!ret.copyNamesFrom(left)) {
-            ret.copyNamesFrom(right);
-        }
+        copyAttributesSameLength(ret, left, right);
         return ret;
     }
 
-    private RIntVector performIntVectorIntVectorOpSameLengthInt(RAbstractIntVector left, RAbstractIntVector right) {
+    private RIntVector performIntVectorOpSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
+        if (length == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyIntVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         int[] result = new int[length];
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
@@ -964,126 +692,50 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             result[i] = performArithmetic(leftValue, rightValue);
         }
         RIntVector ret = RDataFactory.createIntVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
-        if (!ret.copyNamesFrom(left)) {
-            ret.copyNamesFrom(right);
-        }
+        copyAttributesSameLength(ret, left, right);
         return ret;
     }
 
-    private RDoubleVector performIntVectorIntVectorOpSameLengthIntDouble(RAbstractIntVector left, RAbstractIntVector right) {
+    private RDoubleVector performIntVectorOpDoubleSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
+        if (length == 0) {
+            emptyVector.enter();
+            return RDataFactory.createEmptyDoubleVector();
+        }
+        nonEmptyVector.enter();
+        leftNACheck.enable(!left.isComplete());
+        rightNACheck.enable(!right.isComplete());
         double[] result = new double[length];
         for (int i = 0; i < length; ++i) {
             int leftValue = left.getDataAt(i);
             int rightValue = right.getDataAt(i);
-            result[i] = performArithmeticDouble(leftValue, rightValue);
+            result[i] = performArithmeticIntIntDouble(leftValue, rightValue);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
-        if (!ret.copyNamesFrom(left)) {
-            ret.copyNamesFrom(right);
-        }
+        copyAttributesSameLength(ret, left, right);
         return ret;
     }
 
-    private RDoubleVector performDoubleVectorOp(RAbstractDoubleVector left, double right) {
-        int length = left.getLength();
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            double leftValue = left.getDataAt(i);
-            result[i] = performArithmeticDouble(leftValue, right);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
-
-    private RComplexVector performComplexVectorScalarOp(RAbstractComplexVector left, RComplex right) {
-        int length = left.getLength();
-        double[] result = new double[length << 1];
-        for (int i = 0; i < length; ++i) {
-            RComplex leftValue = left.getDataAt(i);
-            RComplex complex = performArithmeticComplex(leftValue, right);
-            int index = i << 1;
-            result[index] = complex.getRealPart();
-            result[index + 1] = complex.getImaginaryPart();
-
-        }
-        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
-        ret.copyRegAttributesFrom(left);
-        ret.setDimensions(left.getDimensions());
-        ret.copyNamesFrom(left);
-        return ret;
-    }
-
-    private RDoubleVector performScalarDoubleWithIntVectorOp(double left, RAbstractIntVector right) {
-        int length = right.getLength();
-        this.rightNACheck.enable(!right.isComplete());
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            double rightValue = rightNACheck.convertIntToDouble(right.getDataAt(i));
-            result[i] = performArithmeticDouble(left, rightValue);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.setDimensions(right.getDimensions());
-        ret.copyNamesFrom(right);
-        return ret;
-    }
-
-    private RDoubleVector performScalarDoubleVectorOp(double left, RAbstractDoubleVector right) {
-        int length = right.getLength();
-        double[] result = new double[length];
-        for (int i = 0; i < length; ++i) {
-            double rightValue = right.getDataAt(i);
-            result[i] = performArithmeticDouble(left, rightValue);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.setDimensions(right.getDimensions());
-        ret.copyNamesFrom(right);
-        return ret;
-    }
-
-    private RComplexVector performScalarComplexVectorOp(RComplex left, RAbstractComplexVector right) {
-        int length = right.getLength();
-        double[] result = new double[length << 1];
-        for (int i = 0; i < length; ++i) {
-            RComplex rightValue = right.getDataAt(i);
-            RComplex complex = performArithmeticComplex(left, rightValue);
-            int index = i << 1;
-            result[index] = complex.getRealPart();
-            result[index + 1] = complex.getImaginaryPart();
-
-        }
-        RComplexVector ret = RDataFactory.createComplexVector(result, isComplete());
-        ret.copyRegAttributesFrom(right);
-        ret.setDimensions(right.getDimensions());
-        ret.copyNamesFrom(right);
-        return ret;
+    private double performArithmeticDoubleEnableNACheck(double left, double right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticDouble(left, right);
     }
 
     private double performArithmeticDouble(double left, double right) {
         if (leftNACheck.check(left)) {
-            if (this.binary instanceof BinaryArithmetic.Pow && right == 0) {
+            if (this.arithmetic instanceof BinaryArithmetic.Pow && right == 0) {
                 // CORNER: Make sure NA^0 == 1
                 return 1;
-            } else if (this.binary instanceof BinaryArithmetic.Mod && right == 0) {
+            } else if (this.arithmetic instanceof BinaryArithmetic.Mod && right == 0) {
                 // CORNER: Make sure NA%%0 == NaN
                 return Double.NaN;
             }
             return RRuntime.DOUBLE_NA;
         }
         if (rightNACheck.check(right)) {
-            if (this.binary instanceof BinaryArithmetic.Pow && left == 1) {
+            if (this.arithmetic instanceof BinaryArithmetic.Pow && left == 1) {
                 // CORNER: Make sure 1^NA == 1
                 return 1;
             }
@@ -1093,35 +745,43 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
             }
             return RRuntime.DOUBLE_NA;
         }
-        return binary.op(left, right);
+        return arithmetic.op(left, right);
+    }
+
+    private RComplex performArithmeticComplexEnableNACheck(RComplex left, RComplex right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticComplex(left, right);
     }
 
     private RComplex performArithmeticComplex(RComplex left, RComplex right) {
         if (leftNACheck.check(left)) {
-            if (this.binary instanceof BinaryArithmetic.Pow && right.isZero()) {
+            if (this.arithmetic instanceof BinaryArithmetic.Pow && right.isZero()) {
                 // CORNER: (0i + NA)^0 == 1
                 return RDataFactory.createComplexRealOne();
-            } else if (this.binary instanceof BinaryArithmetic.Mod) {
+            } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
                 throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
         if (rightNACheck.check(right)) {
-            if (this.binary instanceof BinaryArithmetic.Pow && left.isZero()) {
+            if (this.arithmetic instanceof BinaryArithmetic.Pow && left.isZero()) {
                 // CORNER: 0^(0i + NA) == NaN + NaNi
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);
-            } else if (this.binary instanceof BinaryArithmetic.Mod) {
+            } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
                 throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
-        return binary.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
+        return arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
     }
 
-    private boolean isComplete() {
-        return leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA() && resultNACheck.neverSeenNA();
+    private int performArithmeticEnableNACheck(int left, int right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmetic(left, right);
     }
 
     private int performArithmetic(int left, int right) {
@@ -1131,9 +791,15 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         if (rightNACheck.check(right)) {
             return RRuntime.INT_NA;
         }
-        int value = binary.op(left, right);
+        int value = arithmetic.op(left, right);
         resultNACheck.check(value);
         return value;
+    }
+
+    private double performArithmeticIntIntDoubleEnableNACheck(int left, int right) {
+        leftNACheck.enable(left);
+        rightNACheck.enable(right);
+        return performArithmeticIntIntDouble(left, right);
     }
 
     private double performArithmeticIntIntDouble(int left, int right) {
@@ -1143,168 +809,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         if (rightNACheck.check(right)) {
             return RRuntime.DOUBLE_NA;
         }
-        return binary.op(leftNACheck.convertIntToDouble(left), rightNACheck.convertIntToDouble(right));
+        return arithmetic.op(leftNACheck.convertIntToDouble(left), rightNACheck.convertIntToDouble(right));
     }
 
-    @NodeField(name = "NACheck", type = NACheck.class)
-    @NodeChild("operand")
-    public abstract static class ArithmeticToDoubleCast extends RNode {
-
-        protected abstract NACheck getNACheck();
-
-        @Specialization
-        public RNull cast(RNull operand) {
-            return operand;
-        }
-
-        @Specialization
-        public double doIntToDouble(int operand) {
-            return intToDouble(operand);
-        }
-
-        private double intToDouble(int operand) {
-            if (getNACheck().check(operand)) {
-                return RRuntime.DOUBLE_NA;
-            }
-            return operand;
-        }
-
-        @Specialization
-        public double doDouble(double operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RComplex doComplex(RComplex operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RDoubleVector doIntVectorDouble(RIntVector operand) {
-            return intVectorToDoubleVector(operand);
-        }
-
-        private RDoubleVector intVectorToDoubleVector(RIntVector operand) {
-            double[] result = new double[operand.getLength()];
-            for (int i = 0; i < result.length; ++i) {
-                result[i] = intToDouble(operand.getDataAt(i));
-            }
-            return RDataFactory.createDoubleVector(result, getNACheck().neverSeenNA(), operand.getDimensions());
-        }
-
-        @Specialization
-        public RDoubleVector doDoubleVector(RDoubleVector operand) {
-            return operand;
-        }
-
-        @Specialization
-        public RComplexVector doComplexVector(RComplexVector operand) {
-            return operand;
-        }
+    private boolean isComplete() {
+        return leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA() && resultNACheck.neverSeenNA();
     }
 
-    @NodeField(name = "NACheck", type = NACheck.class)
-    @NodeChild("operand")
-    public abstract static class ArithmeticCast extends RNode {
-
-        protected abstract NACheck getNACheck();
-
-        @Specialization
-        public RNull doNull(RNull operand) {
-            return operand;
-        }
-
-        @Specialization
-        public int doInt(int operand) {
-            getNACheck().enable(RRuntime.isNA(operand));
-            return operand;
-        }
-
-        @Specialization
-        public double doDouble(double operand) {
-            getNACheck().enable(operand);
-            return operand;
-        }
-
-        @Specialization
-        public RComplex doComplex(RComplex operand) {
-            getNACheck().enable(operand);
-            return operand;
-        }
-
-        @Specialization
-        public int doBoolean(byte operand) {
-            getNACheck().enable(operand);
-            return getNACheck().convertLogicalToInt(operand);
-        }
-
-        @Specialization
-        public RMissing doBoolean(RMissing operand) {
-            return operand;
-        }
-
-        @Specialization
-        public Object doRaw(RRaw operand) {
-            return doRawVector(RDataFactory.createRawVectorFromScalar(operand));
-        }
-
-        @Specialization
-        public Object doString(String operand) {
-            return doStringVector(RDataFactory.createStringVectorFromScalar(operand));
-        }
-
-        @Specialization
-        public RIntSequence doIntVector(RIntSequence operand) {
-            // NACheck may keep disabled.
-            return operand;
-        }
-
-        @Specialization
-        public RDoubleSequence doIntVector(RDoubleSequence operand) {
-            // NACheck may keep disabled.
-            return operand;
-        }
-
-        @Specialization
-        public RIntVector doIntVector(RIntVector operand) {
-            getNACheck().enable(!operand.isComplete());
-            return operand;
-        }
-
-        @Specialization
-        public RDoubleVector doDoubleVector(RDoubleVector operand) {
-            getNACheck().enable(!operand.isComplete());
-            return operand;
-        }
-
-        @Specialization
-        public RComplexVector doComplexVector(RComplexVector operand) {
-            getNACheck().enable(!operand.isComplete());
-            return operand;
-        }
-
-        @Specialization
-        public RIntVector doLogicalVector(RLogicalVector operand) {
-            getNACheck().enable(!operand.isComplete());
-            return logicalToInt(operand);
-        }
-
-        @Specialization
-        public Object doStringVector(RStringVector operand) {
-            throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
-        }
-
-        @Specialization
-        public Object doRawVector(RRawVector operand) {
-            throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
-        }
-
-        private RIntVector logicalToInt(RLogicalVector operand) {
-            int[] result = new int[operand.getLength()];
-            for (int i = 0; i < result.length; ++i) {
-                result[i] = getNACheck().convertLogicalToInt(operand.getDataAt(i));
-            }
-            return RDataFactory.createIntVector(result, getNACheck().neverSeenNA());
-        }
-    }
 }
