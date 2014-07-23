@@ -85,7 +85,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
 // calledSuppliedNames[i] = name;
 // }
 // }
-        EvaluatedArguments evaledArgs = new EvaluatedArguments(argList.toArray(), calledSuppliedNames);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
 
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());

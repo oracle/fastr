@@ -267,6 +267,7 @@ public abstract class RCallNode extends RNode {
         }
 
         protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
+            // TODO Gero: Do we need args.copy() here?
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
@@ -321,7 +322,7 @@ public abstract class RCallNode extends RNode {
      */
     private static class DispatchedVarArgsCallNode extends RCallNode {
 
-        @Child protected CallArgumentsNode suppliedArgs;
+        /* @Child */protected CallArgumentsNode suppliedArgs;    // Is not executed!
         @Child protected DirectCallNode call;
         @Child protected MatchedArgumentsNode matchedArgs;
 
