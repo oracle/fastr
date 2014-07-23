@@ -27,39 +27,24 @@ import com.oracle.truffle.r.runtime.gnur.*;
 @SuppressWarnings("unused")
 @RBuiltin(name = "deparse", kind = RBuiltinKind.INTERNAL)
 public abstract class Deparse extends RBuiltinNode {
-    private static final int KEEPINTEGER = 1;
-    private static final int QUOTEEXPRESSIONS = 2;
-    private static final int SHOWATTRIBUTES = 4;
-    private static final int USESOURCE = 8;
-    private static final int WARNINCOMPLETE = 16;
-    private static final int DELAYPROMISES = 32;
-    private static final int KEEPNA = 64;
-    private static final int S_COMPAT = 128;
-    /* common combinations of the above */
-    private static final int SIMPLEDEPARSE = 0;
-    private static final int DEFAULTDEPARSE = 65; /* KEEPINTEGER | KEEPNA, used for calls */
-
-    private static final int MIN_Cutoff = 20;
-    private static final int MAX_Cutoff = 500;
-    private static final int DEFAULT_Cutoff = 60;
-
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         arguments[2] = CastLogicalNodeFactory.create(arguments[2], false, false, false);
-        arguments[4] = CastIntegerNodeFactory.create(arguments[4], false, false, false);
+        arguments[3] = CastIntegerNodeFactory.create(arguments[3], false, false, false);
         return arguments;
     }
 
     @SlowPath
     @Specialization
     public RStringVector deparse(Object expr, int widthCutoffArg, RLogicalVector backtick, int nlines) {
+        controlVisibility();
         int widthCutoff = widthCutoffArg;
-        if (widthCutoff == RRuntime.INT_NA || widthCutoff < MIN_Cutoff || widthCutoff > MAX_Cutoff) {
+        if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {
             RContext.getInstance().setEvalWarning("invalid 'cutoff' value for 'deparse', using default");
-            widthCutoff = DEFAULT_Cutoff;
+            widthCutoff = RDeparse.DEFAULT_Cutoff;
         }
 
-        String[] data = new String[0];
+        String[] data = RDeparse.deparse(expr, widthCutoff, RRuntime.fromLogical(backtick.getDataAt(0)), nlines);
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 

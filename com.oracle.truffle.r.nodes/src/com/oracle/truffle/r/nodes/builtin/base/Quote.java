@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -43,14 +45,28 @@ public abstract class Quote extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance)};
     }
 
+    public abstract Object execute(RPromise expr);
+
     @Specialization
     public RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization
-    public RLanguage doQuote(RPromise arg) {
+    public Object doQuote(RPromise expr) {
         controlVisibility();
-        return RDataFactory.createLanguage(arg.getRep());
+        // GnuR creates symbols for simple variables and actual values for constants
+        RNode node = (RNode) expr.getRep();
+        RNode unode = ((WrapArgumentNode) node).getOperand();
+        SourceSection ss = node.getSourceSection();
+        if (unode instanceof ReadVariableNode) {
+            return RDataFactory.createSymbol(ss.toString());
+        } else if (unode instanceof ConstantNode) {
+            ConstantNode cnode = (ConstantNode) unode;
+            return cnode.getValue();
+        } else {
+            return RDataFactory.createLanguage(expr.getRep());
+        }
+
     }
 }

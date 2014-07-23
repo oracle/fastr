@@ -29,10 +29,9 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public final class NACheck implements RDataCheckClosure {
+public final class NACheck {
 
     private static final int NO_CHECK = 0;
     private static final int CHECK_DEOPT = 1;

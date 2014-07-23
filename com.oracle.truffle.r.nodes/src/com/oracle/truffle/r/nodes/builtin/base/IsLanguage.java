@@ -40,4 +40,10 @@ public abstract class IsLanguage extends IsTypeNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
+    @Override
+    @Specialization
+    public byte isType(RLanguage value) {
+        return RRuntime.LOGICAL_TRUE;
+    }
+
 }

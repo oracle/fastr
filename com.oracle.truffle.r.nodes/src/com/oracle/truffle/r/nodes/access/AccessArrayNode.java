@@ -1275,6 +1275,12 @@ public abstract class AccessArrayNode extends RNode {
         return accessRecursive(frame, expression.getList(), position, recLevel, dropDim);
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(order = 1100)
+    Object access(RPairList pairlist, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        return pairlist.getDataAtAsObject(position - 1);
+    }
+
     protected boolean outOfBounds(RList vector, @SuppressWarnings("unused") int recLevel, int position) {
         return position > vector.getLength();
     }

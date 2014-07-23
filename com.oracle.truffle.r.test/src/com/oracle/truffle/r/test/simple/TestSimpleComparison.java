@@ -268,11 +268,6 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ c(0/0+1i,2+1i) == c(1+1i,2+1i) }");
         assertEval("{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }");
 
-    }
-
-    @Test
-    @Ignore
-    public void testVectorsIgnore() {
         assertEvalError("{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
     }
 

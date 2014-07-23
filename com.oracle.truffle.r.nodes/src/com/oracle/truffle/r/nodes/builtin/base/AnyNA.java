@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE)
 public abstract class AnyNA extends RBuiltinNode {
 
-    private static String[] PARAMETER_NAMES = new String[]{"x", "recursive"};
+    private static final String[] PARAMETER_NAMES = new String[]{"x", "recursive"};
 
     @Child IsNA isna;
     @Child Any any;
