@@ -18,41 +18,41 @@
 
 #geterrmessage <- function() .Internal(geterrmessage())
 
-try <- function(expr, silent = FALSE) {
-  tryCatch(expr, error = function(e) {
-        call <- conditionCall(e)
-        if (! is.null(call)) {
-          ## Patch up the call to produce nicer result for testing as
-          ## try(stop(...)).  This will need adjusting if the
-          ## implementation of tryCatch changes.
-          ## Use identical() since call[[1L]] can be non-atomic.
-          if (identical(call[[1L]], quote(doTryCatch)))
-            call <- sys.call(-4L)
-          dcall <- deparse(call)[1L]
-          prefix <- paste("Error in", dcall, ": ")
-          LONG <- 75L # to match value in errors.c
-          msg <- conditionMessage(e)
-          sm <- strsplit(msg, "\n")[[1L]]
-          w <- 14L + nchar(dcall, type="w") + nchar(sm[1L], type="w")
-          ## this could be NA if any of this is invalid in a MBCS
-          if(is.na(w))
-            w <-  14L + nchar(dcall, type="b") + nchar(sm[1L], type="b")
-          if (w > LONG)
-            prefix <- paste0(prefix, "\n  ")
-        }
-        else prefix <- "Error : "
-        msg <- paste0(prefix, conditionMessage(e), "\n")
-        ## Store the error message for legacy uses of try() with
-        ## geterrmessage().
-        .Internal(seterrmessage(msg[1L]))
-        if (! silent && identical(getOption("show.error.messages"), TRUE)) {
-          cat(msg, file = stderr())
-          .Internal(printDeferredWarnings())
-        }
-        invisible(structure(msg, class = "try-error", condition = e))
-      })
-}
-
+#try <- function(expr, silent = FALSE) {
+#  tryCatch(expr, error = function(e) {
+#        call <- conditionCall(e)
+#        if (! is.null(call)) {
+#          ## Patch up the call to produce nicer result for testing as
+#          ## try(stop(...)).  This will need adjusting if the
+#          ## implementation of tryCatch changes.
+#          ## Use identical() since call[[1L]] can be non-atomic.
+#          if (identical(call[[1L]], quote(doTryCatch)))
+#            call <- sys.call(-4L)
+#          dcall <- deparse(call)[1L]
+#          prefix <- paste("Error in", dcall, ": ")
+#          LONG <- 75L # to match value in errors.c
+#          msg <- conditionMessage(e)
+#          sm <- strsplit(msg, "\n")[[1L]]
+#          w <- 14L + nchar(dcall, type="w") + nchar(sm[1L], type="w")
+#          ## this could be NA if any of this is invalid in a MBCS
+#          if(is.na(w))
+#            w <-  14L + nchar(dcall, type="b") + nchar(sm[1L], type="b")
+#          if (w > LONG)
+#            prefix <- paste0(prefix, "\n  ")
+#        }
+#        else prefix <- "Error : "
+#        msg <- paste0(prefix, conditionMessage(e), "\n")
+#        ## Store the error message for legacy uses of try() with
+#        ## geterrmessage().
+#        .Internal(seterrmessage(msg[1L]))
+#        if (! silent && identical(getOption("show.error.messages"), TRUE)) {
+#          cat(msg, file = stderr())
+#          .Internal(printDeferredWarnings())
+#        }
+#        invisible(structure(msg, class = "try-error", condition = e))
+#      })
+#}
+#
 #comment <- function(x) .Internal(comment(x))
 #`comment<-` <- function(x, value) .Internal("comment<-"(x, value))
 #
@@ -94,35 +94,35 @@ commandArgs <- function(trailingOnly = FALSE) {
 #.__H__.cbind <- cbind
 #.__H__.rbind <- rbind
 #
-#
-## convert deparsing options to bitmapped integer
-#
-#.deparseOpts <- function(control) {
-#  opts <- pmatch(as.character(control),
-#      ## the exact order of these is determined by the integer codes in
-#      ## ../../../include/Defn.h
-#      c("all",
-#          "keepInteger", "quoteExpressions", "showAttributes",
-#          "useSource", "warnIncomplete", "delayPromises",
-#          "keepNA", "S_compatible"))
-#  if (anyNA(opts))
-#    stop(sprintf(ngettext(as.integer(sum(is.na(opts))),
-#                "deparse option %s is not recognized",
-#                "deparse options %s are not recognized"),
-#            paste(sQuote(control[is.na(opts)]), collapse=", ")),
-#        call. = FALSE, domain = NA)
-#  if (any(opts == 1L))
-#    opts <- unique(c(opts[opts != 1L], 2L,3L,4L,5L,6L,8L)) # not (7,9)
-#  return(sum(2^(opts-2)))
-#}
-#
-#deparse <-
-#    function(expr, width.cutoff = 60L,
-#        backtick = mode(expr) %in% c("call", "expression", "(", "function"),
-#        control = c("keepInteger", "showAttributes", "keepNA"),
-#        nlines = -1L)
-#  .Internal(deparse(expr, width.cutoff, backtick,
-#          .deparseOpts(control), nlines))
+
+# convert deparsing options to bitmapped integer
+
+.deparseOpts <- function(control) {
+  opts <- pmatch(as.character(control),
+      ## the exact order of these is determined by the integer codes in
+      ## ../../../include/Defn.h
+      c("all",
+          "keepInteger", "quoteExpressions", "showAttributes",
+          "useSource", "warnIncomplete", "delayPromises",
+          "keepNA", "S_compatible"))
+  if (anyNA(opts))
+    stop(sprintf(ngettext(as.integer(sum(is.na(opts))),
+                "deparse option %s is not recognized",
+                "deparse options %s are not recognized"),
+            paste(sQuote(control[is.na(opts)]), collapse=", ")),
+        call. = FALSE, domain = NA)
+  if (any(opts == 1L))
+    opts <- unique(c(opts[opts != 1L], 2L,3L,4L,5L,6L,8L)) # not (7,9)
+  return(sum(2^(opts-2)))
+}
+
+deparse <-
+    function(expr, width.cutoff = 60L,
+        backtick = mode(expr) %in% c("call", "expression", "(", "function"),
+        control = c("keepInteger", "showAttributes", "keepNA"),
+        nlines = -1L)
+  .Internal(deparse(expr, width.cutoff, backtick,
+          .deparseOpts(control), nlines))
 
 do.call <- function(what, args, quote = FALSE, envir = parent.frame())
 {
@@ -162,10 +162,10 @@ drop <- function(x) .Internal(drop(x))
 #    x <- x[!ii]
 #  .Internal(is.unsorted(x, strictly))
 #}
-#
-#nchar <- function(x, type = "chars", allowNA = FALSE)
-#  .Internal(nchar(x, type, allowNA))
-#
+
+nchar <- function(x, type = "chars", allowNA = FALSE)
+  .Internal(nchar(x, type, allowNA))
+
 #polyroot <- function(z) .Internal(polyroot(z))
 #
 #readline <- function(prompt = "") .Internal(readline(prompt))

@@ -93,7 +93,7 @@ public class GrepFunctions {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, invert);
             valueCheck(value);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             int[] result = findAllIndexes(pattern, vector);
             if (result == null) {
                 return RDataFactory.createEmptyIntVector();
@@ -133,7 +133,7 @@ public class GrepFunctions {
         public Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             byte[] data = new byte[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 data[i] = RRuntime.asLogical(Grep.findIndex(pattern, vector.getDataAt(i)));
@@ -149,7 +149,7 @@ public class GrepFunctions {
         public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             return replaceMatch(pattern, replacement, x);
         }
 
@@ -157,7 +157,7 @@ public class GrepFunctions {
         public RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             return doSub(pattern, replacement, vector);
         }
 
@@ -166,7 +166,7 @@ public class GrepFunctions {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             // FIXME print a warning that only pattern[1] is used
-            String pattern = checkPreDefinedClasses(patternArg.getDataAt(0));
+            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             return doSub(pattern, replacement, vector);
         }
 
@@ -175,7 +175,7 @@ public class GrepFunctions {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             // FIXME print a warning that only replacement[1] is used
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             return doSub(pattern, replacement.getDataAt(0), vector);
         }
 
@@ -202,7 +202,7 @@ public class GrepFunctions {
         public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             return replaceMatch(pattern, replacement, x);
         }
 
@@ -210,7 +210,7 @@ public class GrepFunctions {
         public String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg.getDataAt(0));
+            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             // TODO print warnings that only the first element of each is used
             return replaceMatch(pattern, replacement.getDataAt(0), x.getDataAt(0));
         }
@@ -229,7 +229,7 @@ public class GrepFunctions {
         public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             int[] result = new int[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 result[i] = findIndex(pattern, vector.getDataAt(i)).get(0);
@@ -265,7 +265,7 @@ public class GrepFunctions {
         public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg);
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i)));
@@ -281,32 +281,6 @@ public class GrepFunctions {
             }
             return arr;
         }
-    }
-
-    private static final String[] preDefinedClassesFrom = new String[]{"[:alpha:]", "[:alnum:]", "[:digit:]"};
-    private static final String[] preDefinedClassesTo = new String[]{"a-zA-Z", "0-9A-Za-z", "0-9"};
-
-    /**
-     * R defines some short forms of character classes. E.g. {@code [[:alnum:]]} means
-     * {@code [0-9A-Za-z]} but independent of locale and character encoding. So we have to translate
-     * these for use with Java regexp. TODO handle the complete set and do locale and character
-     * encoding
-     */
-    private static String checkPreDefinedClasses(String pattern) {
-        String result = pattern;
-        boolean none = false;
-        while (!none && result.indexOf("[[") >= 0) {
-            none = true;
-            for (int i = 0; i < preDefinedClassesFrom.length; i++) {
-                int ix = result.indexOf(preDefinedClassesFrom[i]);
-                if (ix >= 0) {
-                    result = result.substring(0, ix) + preDefinedClassesTo[i] + result.substring(ix + preDefinedClassesFrom[i].length());
-                    none = false;
-                }
-            }
-            // if none is still true, we didn't find any so we are done.
-        }
-        return result;
     }
 
     @RBuiltin(name = "agrep", kind = INTERNAL)

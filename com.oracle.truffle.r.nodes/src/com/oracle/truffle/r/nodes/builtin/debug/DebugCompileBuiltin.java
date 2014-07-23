@@ -78,7 +78,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
-                throw RError.error(getEncapsulatingSourceSection(), e.toString());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;

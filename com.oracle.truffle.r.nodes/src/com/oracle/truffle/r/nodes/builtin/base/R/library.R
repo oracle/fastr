@@ -273,7 +273,6 @@ library <-
                 sQuote(package)), domain = NA)
       pkgInfo <- readRDS(pfile)
       testRversion(pkgInfo, package, pkgpath)
-      print("testRversion done")
       ## avoid any bootstrapping issues by these exemptions
       if(!package %in% c("datasets", "grDevices", "graphics", "methods",
               "splines", "stats", "stats4", "tcltk", "tools",
@@ -282,7 +281,6 @@ library <-
         checkLicense(package, pkgInfo, pkgpath)
 
       ## The check for inconsistent naming is now in find.package
-    print("checLicence done")
 
       if(is.character(pos)) {
         npos <- match(pos, search())

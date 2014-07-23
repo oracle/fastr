@@ -43,4 +43,8 @@ public abstract class UnaryNode extends RNode {
         return RRuntime.isNA(operand);
     }
 
+    protected static boolean isNaN(double operand) {
+        return Double.isNaN(operand);
+    }
+
 }

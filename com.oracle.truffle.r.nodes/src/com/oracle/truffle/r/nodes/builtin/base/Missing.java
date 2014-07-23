@@ -25,16 +25,20 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "missing", kind = PRIMITIVE)
-public abstract class Missing extends IsTypeNode {
+@RBuiltin(name = "missing", kind = PRIMITIVE, nonEvalArgs = {0})
+// N.B This implementation returns FALSE if missing is called on a parameter with a default value.
+// Fixing this requires changes to the function call mechanism.
+public abstract class Missing extends RBuiltinNode {
 
-    @Override
     @Specialization
-    public byte isType(RMissing value) {
+    public byte missing(VirtualFrame frame, RPromise x) {
         controlVisibility();
-        return RRuntime.LOGICAL_TRUE;
+        Object xval = x.evaluate(frame);
+        return RRuntime.asLogical(xval instanceof RMissing);
     }
 }

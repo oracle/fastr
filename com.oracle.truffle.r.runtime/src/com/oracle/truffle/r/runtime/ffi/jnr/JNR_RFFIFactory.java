@@ -581,4 +581,36 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         return cRFFI;
     }
 
+    // zip
+
+    public interface Zip {
+        int uncompress(@Out byte[] dest, @In long[] destlen, @In byte[] source, long sourcelen);
+    }
+
+    private static class ZipProvider {
+        private static Zip zip;
+
+        @SlowPath
+        private static Zip createAndLoadLib() {
+            return LibraryLoader.create(Zip.class).load("z");
+        }
+
+        static Zip zip() {
+            if (zip == null) {
+                zip = createAndLoadLib();
+            }
+            return zip;
+        }
+    }
+
+    private static Zip zip() {
+        return ZipProvider.zip();
+    }
+
+    public int uncompress(byte[] dest, long[] destlen, byte[] source) {
+        return zip().uncompress(dest, destlen, source, source.length);
+    }
+
+
+
 }

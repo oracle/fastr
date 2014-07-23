@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.methods;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.break", kind = PRIMITIVE)
-public abstract class DebugBreak extends RBuiltinNode {
-
-    @SuppressWarnings("unused")
-    @Specialization
-    public RNull doBreak(VirtualFrame frame, RMissing arg) {
-        return RNull.instance;
+public class MethodsPackage extends RBuiltinPackage {
+    public MethodsPackage() {
+        loadBuiltins();
     }
 
-    @Specialization
-    public RNull doBreak(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
-        return RNull.instance;
+    @Override
+    public String getName() {
+        return "methods";
     }
 
 }

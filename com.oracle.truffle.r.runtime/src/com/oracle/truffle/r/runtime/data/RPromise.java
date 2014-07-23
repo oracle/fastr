@@ -240,7 +240,8 @@ public class RPromise {
     /**
      * @return The raw {@link #value}.
      */
-    protected Object getValue() {
+    public Object getValue() {
+        assert isEvaluated;
         return value;
     }
 

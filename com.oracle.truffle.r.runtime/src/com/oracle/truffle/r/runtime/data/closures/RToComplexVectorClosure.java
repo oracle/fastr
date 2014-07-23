@@ -23,13 +23,14 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
 
-    protected final RDataCheckClosure naCheck;
+    protected final NACheck naCheck;
 
-    public RToComplexVectorClosure(RAbstractVector vector, RDataCheckClosure naCheck) {
+    public RToComplexVectorClosure(RAbstractVector vector, NACheck naCheck) {
         super(vector);
         this.naCheck = naCheck;
     }

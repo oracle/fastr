@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -30,7 +31,7 @@ public class RRawToComplexVectorClosure extends RToComplexVectorClosure implemen
 
     private final RAbstractRawVector logicalVector;
 
-    public RRawToComplexVectorClosure(RAbstractRawVector vector, RDataCheckClosure naCheck) {
+    public RRawToComplexVectorClosure(RAbstractRawVector vector, NACheck naCheck) {
         super(vector, naCheck);
         this.logicalVector = vector;
     }

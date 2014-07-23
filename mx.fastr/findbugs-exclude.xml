@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- exclude generated parser and lexer -->
+  <Match>
+    <Class name="com.oracle.truffle.r.parser.RParser"/>
+  </Match>
+  <Match>
+    <Class name="com.oracle.truffle.r.parser.RLexer"/>
+  </Match>
+  <!-- exclude RAccuracyInfo (translated from GnuR) -->
+  <Match>
+    <Class name="com.oracle.truffle.r.runtime.RAccuracyInfo"/>
+  </Match>
+  <!-- exclude generated node factory classes -->
+  <Match>
+      <Class name="~com\.oracle\.truffle\.r\.nodes\..*Factory(\$.*)?"/>
+  </Match>
+</FindBugsFilter>

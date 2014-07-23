@@ -110,6 +110,9 @@ public class BaseOptions implements ROptions.Handler {
         ROptions.setValue(Name.Warn.rName, RDataFactory.createIntVectorFromScalar(0));
         ROptions.setValue(Name.WarningLength.rName, RDataFactory.createIntVectorFromScalar(1000));
         ROptions.setValue(Name.Width.rName, RDataFactory.createIntVectorFromScalar(80));
+
+        // others
+        ROptions.setValue(Name.BrowserNLdisabled.rName, RDataFactory.createLogicalVectorFromScalar(false));
     }
 
     public void addOptions() {

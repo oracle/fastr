@@ -30,7 +30,7 @@ anyDuplicated.data.frame <-
     function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
     if(!identical(incomparables, FALSE))
-	.NotYetUsed("incomparables != FALSE")
+        .NotYetUsed("incomparables != FALSE")
     anyDuplicated(do.call("paste", c(x, sep="\r")), fromLast = fromLast)
 }
 
@@ -38,7 +38,7 @@ anyDuplicated.matrix <- anyDuplicated.array <-
     function(x, incomparables = FALSE, MARGIN = 1L, fromLast = FALSE, ...)
 {
     if(!identical(incomparables, FALSE))
-	.NotYetUsed("incomparables != FALSE")
+        .NotYetUsed("incomparables != FALSE")
     dx <- dim(x)
     ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))

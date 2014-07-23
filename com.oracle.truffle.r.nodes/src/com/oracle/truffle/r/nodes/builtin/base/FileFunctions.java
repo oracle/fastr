@@ -49,7 +49,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     boolean ok = true;
@@ -128,7 +128,7 @@ public class FileFunctions {
             for (int i = 0; i < len; i++) {
                 String from = vecFrom.getDataAt(i % lenFrom);
                 String to = vecTo.getDataAt(i % lenTo);
-                if (from == RRuntime.STRING_NA || to == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
@@ -189,7 +189,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     File f = new File(Utils.tildeExpand(path));
@@ -225,7 +225,7 @@ public class FileFunctions {
                 String to = vecTo.getDataAt(i);
                 // GnuR's behavior regarding NA is quite inconsistent (error, warning, ignored)
                 // we choose ignore
-                if (from == RRuntime.STRING_NA || to == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
@@ -254,7 +254,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (path == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     File f = new File(Utils.tildeExpand(path));
@@ -306,7 +306,7 @@ public class FileFunctions {
                         files.add(fullNames == RRuntime.LOGICAL_TRUE ? entry.toString() : entry.getFileName().toString());
                     }
                 } catch (IOException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex.getMessage());
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
                 }
             }
             if (files.size() == 0) {
@@ -335,14 +335,26 @@ public class FileFunctions {
             return new RNode[]{null, ConstantNode.create(File.separator)};
         }
 
-        @Specialization(guards = "simpleArgs")
+        @SuppressWarnings("unused")
+        @Specialization(order = 0, guards = "lengthZero")
+        public RStringVector doFilePathZero(RAbstractStringVector vec, String fsep) {
+            return RDataFactory.createEmptyStringVector();
+        }
+
+        @Specialization(order = 1, guards = "!lengthZero")
+        public RStringVector doFilePath(RAbstractStringVector vec, String fsep) {
+            return doFilePath(new Object[]{vec}, fsep);
+        }
+
+        @Specialization(order = 2, guards = "simpleArgs")
         public RStringVector doFilePath(Object[] args, String fsep) {
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < args.length; i++) {
                 Object elem = args[i];
                 String elemAsString;
                 if (elem instanceof RStringVector) {
-                    elemAsString = ((RStringVector) elem).getDataAt(0);
+                    RStringVector svec = (RStringVector) elem;
+                    elemAsString = svec.getLength() == 0 ? "" : svec.getDataAt(0);
                 } else if (elem instanceof Object[]) {
                     Object[] elemArray = (Object[]) elem;
                     for (int j = 0; j < elemArray.length - 1; j++) {
@@ -363,10 +375,14 @@ public class FileFunctions {
             return RDataFactory.createStringVectorFromScalar(sb.toString());
         }
 
+        public static boolean lengthZero(RAbstractStringVector vec, @SuppressWarnings("unused") String fsep) {
+            return vec.getLength() == 0;
+        }
+
         public static boolean simpleArgs(Object[] args, String fsep) {
             for (Object arg : args) {
                 if (arg instanceof RStringVector) {
-                    if (((RStringVector) arg).getLength() != 1) {
+                    if (((RStringVector) arg).getLength() > 1) {
                         return false;
                     }
                 } else {
@@ -397,7 +413,7 @@ public class FileFunctions {
             String[] data = new String[vec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String name = vec.getDataAt(i);
-                if (name == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(name)) {
                     data[i] = name;
                     complete = RDataFactory.INCOMPLETE_VECTOR;
                 } else if (name.length() == 0) {

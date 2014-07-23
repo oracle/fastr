@@ -237,7 +237,11 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(order = 86)
     public String prettyPrintPromise(RPromise promise, Object listElementName) {
-        return prettyPrintLanguageRep(promise.getArgumentRep(), listElementName);
+        if (promise.isEvaluated()) {
+            return prettyPrintRecursive(promise.getValue(), listElementName);
+        } else {
+            return prettyPrintLanguageRep(promise.getArgumentRep(), listElementName);
+        }
     }
 
     @SlowPath
@@ -254,6 +258,35 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             return ss.getCode();
         }
+    }
+
+    @SlowPath
+    @Specialization(order = 88)
+    public String prettyPrintPairList(RPairList pairList, Object listElementName) {
+        StringBuilder sb = new StringBuilder();
+        RPairList pl = pairList;
+        while (pl != null) {
+            if (pl.getTag() != null) {
+                sb.append('$');
+                sb.append(pl.getTag());
+                sb.append('\n');
+            }
+            if (pl.car() != null) {
+                sb.append(prettyPrintRecursive(pl.car(), listElementName));
+                sb.append('\n');
+            }
+            pl = (RPairList) pl.cdr();
+            if (pl != null) {
+                sb.append('\n');
+            }
+        }
+        return sb.toString();
+    }
+
+    @SlowPath
+    @Specialization(order = 89)
+    public String prettyPrintMissing(RMissing missing, Object listElementName) {
+        return "";
     }
 
     @SlowPath
@@ -302,7 +335,7 @@ public abstract class PrettyPrinterNode extends RNode {
             if (printNamesHeader) {
                 for (int i = 0; i < names.getLength(); i++) {
                     String s = names.getDataAt(i);
-                    if (s == RRuntime.STRING_NA) {
+                    if (RRuntime.isNA(s)) {
                         s = RRuntime.NA_HEADER;
                     }
                     maxWidth = Math.max(maxWidth, s.length());
@@ -363,7 +396,7 @@ public abstract class PrettyPrinterNode extends RNode {
                             builder.append(' ');
                         }
                         String headerString = names.getDataAt(index);
-                        if (headerString == RRuntime.STRING_NA) {
+                        if (RRuntime.isNA(headerString)) {
                             headerString = RRuntime.NA_HEADER;
                         }
                         for (int k = 0; k < actualColumnWidth - headerString.length(); ++k) {
@@ -404,7 +437,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(1);
             String dimId = dimNamesVector.getDataAt(r - 1);
-            if (dimId == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(dimId)) {
                 dimId = RRuntime.NA_HEADER;
             }
             wdiff = dataColWidth - dimId.length();
@@ -430,7 +463,7 @@ public abstract class PrettyPrinterNode extends RNode {
         } else {
             RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(0);
             String dimId = dimNamesVector.getDataAt(c - 1);
-            if (dimId == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(dimId)) {
                 dimId = RRuntime.NA_HEADER;
             }
             return dimId;
@@ -813,7 +846,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
-            if (v == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(v) || RRuntime.isNaN(v)) {
                 continue;
             }
             if (decimalPointOffsets[i] == -1) {
@@ -831,7 +864,7 @@ public abstract class PrettyPrinterNode extends RNode {
         int lastLen = 0;
         for (int i = 0; i < values.length; ++i) {
             String v = values[i];
-            if (v == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(v)) {
                 // do not use NA for deciding alignment
                 continue;
             }
@@ -963,6 +996,18 @@ public abstract class PrettyPrinterNode extends RNode {
         @SlowPath
         @Specialization
         public String prettyPrintListElement(RLanguage operand, Object listElementName) {
+            return prettyPrintSingleElement(operand, listElementName);
+        }
+
+        @SlowPath
+        @Specialization
+        public String prettyPrintListElement(REnvironment operand, Object listElementName) {
+            return prettyPrintSingleElement(operand, listElementName);
+        }
+
+        @SlowPath
+        @Specialization
+        public String prettyPrintListElement(RFunction operand, Object listElementName) {
             return prettyPrintSingleElement(operand, listElementName);
         }
 
@@ -1402,7 +1447,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             if (columnDimNames != null) {
                 String columnName = columnDimNames.getDataAt(c);
-                if (columnName == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(columnName)) {
                     columnName = RRuntime.NA_HEADER;
                 }
                 if (columnName.length() > dataColWidths[c]) {

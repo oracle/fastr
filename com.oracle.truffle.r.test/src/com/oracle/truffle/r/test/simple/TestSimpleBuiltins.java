@@ -53,6 +53,10 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(0L,0L,0L) }");
         assertEval("{ seq(0L,0L) }");
         assertEval("{ seq(0,0,1i) }");
+        assertEvalError("{ seq(integer(), 7) }");
+        assertEvalError("{ seq(c(1,2), 7) }");
+        assertEvalError("{ seq(7, integer()) }");
+        assertEvalError("{ seq(7, c(41,42)) }");
     }
 
     @Test
@@ -549,6 +553,8 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testMatrixIgnore() {
+        assertEval("{ matrix(c(NaN,4+5i,2+0i,5+10i)} ");
+        assertEval("{ matrix(TRUE,FALSE,FALSE,TRUE)}");
         // FIXME missing warning
         assertEvalWarning("{ matrix(c(1,2,3,4),3,2) }");
         assertEvalWarning("{ matrix(1:4,3,2) }");
@@ -633,6 +639,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sum(1:6, 3, 4) }");
         assertEval("{ sum(1:6, 3L, TRUE) }");
         assertEval("{ `sum`(1:10) }");
+        assertEval("{ x<-c(FALSE, FALSE); is.double(sum(x)) }");
+        assertEval("{ x<-c(FALSE, FALSE); is.integer(sum(x)) }");
     }
 
     @Test
@@ -1388,6 +1396,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testLsRegExp() {
+        assertEval("{ abc <- 1; ls(pattern=\"a.*\")}");
+        assertEval("{ .abc <- 1; ls(pattern=\"\\\\.a.*\")}");
+        assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\\\.a.*\")}");
+        assertEval("{ abc <- 1; ls(pattern=\"[[:alpha:]]*\")}");
+        assertEval("{ f <- function(abc) { ls(pattern=\"[a-z]*\") }; f(1) }");
+    }
+
+    @Test
     public void testLength() {
         assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
         assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
@@ -1858,7 +1875,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAperm() {
         // default argument for permutation is transpose
         assertEval("{ a = array(1:4,c(2,2)); b = aperm(a); c(a[1,1] == b[1,1], a[1,2] == b[2,1], a[2,1] == b[1,2], a[2,2] == b[2,2]) }");
@@ -1867,7 +1883,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
 
         // no resize does not change the dimensions
-        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(3,2,1), resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
 
         // correct structure with resize
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1)); a[1,2,3] == b[2,3,1] }");
@@ -1881,6 +1897,19 @@ public class TestSimpleBuiltins extends TestBase {
         // correct structure without resize
         assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1), resize = FALSE); a[1,2,3] == b[2,1,2] }");
 
+        // no resize does not change the dimensions
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        assertEval("{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }");
+        assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
+    }
+
+    @Test
+    @Ignore
+    public void testApermBroken() {
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
+
+        // // The rest of these work but produce a slightly different output than R itself
         // first argument not an array
         assertEvalError("{ aperm(c(1,2,3)); }");
 
@@ -1888,64 +1917,16 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
 
         // perm is not a permutation vector
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,1)); }");
+        assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
 
         // perm value out of bounds
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
 
         // perm specified in complex numbers produces warning
         assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
-    }
 
-    @Test
-    public void testColStatsMatrix() {
-        // colSums on matrix drop dimension
-        assertEval("{ a = colSums(matrix(1:12,3,4)); dim(a) }");
-
-        // colSums on matrix have correct length
-        assertEval("{ a = colSums(matrix(1:12,3,4)); length(a) }");
-
-        // colSums on matrix have correct values
-        assertEval("{ colSums(matrix(1:12,3,4)) }");
-    }
-
-    @Test
-    @Ignore
-    public void testColStatsArray() {
-        // colSums on array have correct dimension
-        assertEval("{ a = colSums(array(1:24,c(2,3,4))); d = dim(a); c(d[1],d[2]) }");
-
-        // colSums on array have correct length
-        assertEval("{ a = colSums(array(1:24,c(2,3,4))); length(a) }");
-
-        // colSums on array have correct values
-        assertEval("{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }");
-    }
-
-    @Test
-    @Ignore
-    public void testRowStats() {
-        // rowSums on matrix drop dimension
-        assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
-
-        // rowSums on matrix have correct length
-        assertEval("{ a = rowSums(matrix(1:12,3,4)); length(a) }");
-
-        // rowSums on matrix have correct values
-        assertEval("{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }");
-    }
-
-    @Test
-    @Ignore
-    public void testRowStatsArray() {
-        // rowSums on array have no dimension
-        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }");
-
-        // row on array have correct length
-        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); length(a) }");
-
-        // rowSums on array have correct values
-        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+        // Invalid first argument, not array
+        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
     }
 
     @Test
@@ -2004,6 +1985,9 @@ public class TestSimpleBuiltins extends TestBase {
     public void testCbindIgnore() {
         assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
         assertEval("{ cbind(1:3,1:2) }");
+        assertEval("{ cbind(2,3, complex(3,3,2));}");
+        assertEval("{ cbind(2,3, c(1,1,1))");
+        assertEval("{ cbind(2.1:10,32.2)");
     }
 
     @Test
@@ -2250,18 +2234,22 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testQuote() {
-        assertEval("{ quote(1:3) }"); // specific to fastr output format
-        assertEval("{ quote(list(1,2)) }"); // specific to fastr output format
+        assertEval("{ quote(1:3) }");
+        assertEval("{ quote(list(1, 2)) }");
         assertEval("{ typeof(quote(1)) }");
         assertEval("{ typeof(quote(x + y)) }");
-        assertEval("{ quote(x <- x + 1) }"); // specific to fastr output format
+        assertEval("{ quote(x <- x + 1) }");
         assertEval("{ typeof(quote(x)) }");
 
-        assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
         assertEvalError("{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }");
         assertEvalError("{ l <- quote(a[3] <- 4) ; eval(l) ; f() }");
+    }
+
+    @Test
+    @Ignore
+    public void testQuoteIgnore() {
+        assertEval("{ l <- quote(x[1,1] <- 10) ; f <- function() { eval(l) } ; x <- matrix(1:4,nrow=2) ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) } ; x <- 10 ; f() ; x }");
         assertEval("{ l <- quote(x[1] <- 1) ; f <- function() { eval(l) ; x <<- 10 ; get(\"x\") } ; x <- 20 ; f() }");
     }
@@ -2352,14 +2340,28 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testFormals() {
+        assertEval("{ f <- function(a) {}; formals(f) }");
+        assertEval("{ f <- function(a, b) {}; formals(f) }");
+        assertEval("{ f <- function(a, b = c(1, 2)) {}; formals(f) }");
+    }
+
+    @Test
     public void testLocal() {
         assertEval("{ kk <- local({k <- function(x) {x*2}}); kk(8)}");
         assertEval("{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
     }
 
     @Test
-    @Ignore
     public void testDeparse() {
+        assertEval("{ deparse(TRUE) }");
+        assertEval("{ deparse(c(T, F)) }");
+        // TODO add more
+    }
+
+    @Test
+    @Ignore
+    public void testDeparseIgnore() {
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
     }
 
@@ -2844,25 +2846,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testBuiltinPropagationIgnore() {
-        // aperm not implemented
-        assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  aperm(m) }");
-        // sapply implementation incomplete
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; sapply(1:2, function(z) {x}) }");
-        // lapply not implemented
-        assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1 ; lapply(1:2, function(z) {x}) }");
-        // eigen implementation problem
-        assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
-        // exp not implemented
-        assertEval("{ x <- 1 ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
-        // rep implementation problem
-        assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
-        // seq implementation problem
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
-    }
-
-    @Test
     public void testDefaultArgs() {
         assertEvalError("{ array(dim=c(-2,2)); }");
         assertEvalError("{ array(dim=c(-2,-2)); }");
@@ -3145,4 +3128,187 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
     }
+
+    @Test
+    public void testSweep() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1, 5) }");
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1, 1:4) }");
+
+    }
+
+    @Test
+    @Ignore
+    public void testSweepBroken() {
+        assertEval("{ sweep(array(1:24, dim = 4:2), 1:2, 5) }");
+
+        // Correct output but warnings
+        assertEval("{ A <- matrix(1:15, ncol=5); sweep(A, 2, colSums(A), \"/\") }");
+        assertEval("{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
+        assertEval("{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
+    }
+
+    @Test
+    @Ignore
+    public void testRowMeansIgnore() {
+        // Error in multiplying complex number to double vector.
+        // FastR prints "[1] NaN+NaNi   4.5+  7.5i"
+        // R prints "[1]       NA 4.5+7.5i"
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+        // Error message mismatch
+        assertEval("{rowMeans(matrix(NA,NA,NA),TRUE)}");
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
+    }
+
+    @Test
+    public void testRowMeans() {
+        assertEval("{rowMeans(matrix(c(3,4,2,5)))}");
+        assertEval("{rowMeans(matrix(c(3L,4L,2L,5L)))}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+        assertEval("{rowMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+
+    }
+
+    @Test
+    @Ignore
+    public void testRowSumsIgnore() {
+        // Error message mismatch
+        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
+    }
+
+    @Test
+    public void testRowSums() {
+        assertEval("{x<-cbind(1:3, 4:6, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NA, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NaN, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NaN, 7:9, 10:12); rowSums(x, na.rm=TRUE)}");
+        assertEval("{x<-cbind(1:4, NA, NaN, 9:12); rowSums(x, na.rm=TRUE)}");
+        assertEval("{x<-cbind(2L:10L,3L); rowSums(x)}");
+        assertEval("{rowSums(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+
+        // rowSums on matrix drop dimension
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
+
+        // rowSums on matrix have correct length
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); length(a) }");
+
+        // rowSums on matrix have correct values
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }");
+
+        // rowSums on array have no dimension
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }");
+
+        // row on array have correct length
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // rowSums on array have correct values
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+
+    }
+
+    @Test
+    public void testColSums() {
+        // colSums on matrix drop dimension
+        assertEval("{ a = colSums(matrix(1:12,3,4)); dim(a) }");
+
+        // colSums on matrix have correct length
+        assertEval("{ a = colSums(matrix(1:12,3,4)); length(a) }");
+
+        // colSums on matrix have correct values
+        assertEval("{ colSums(matrix(1:12,3,4)) }");
+
+        // colSums on array have correct dimension
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); d = dim(a); c(d[1],d[2]) }");
+
+        // colSums on array have correct length
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // colSums on array have correct values
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }");
+    }
+
+    @Test
+    public void testColMeans() {
+        assertEval("{colMeans(matrix(c(3,4,2,5)))}");
+        assertEval("{colMeans(matrix(c(3L,4L,2L,5L)))}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+        assertEval("{colMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{colMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}");
+    }
+
+    @Test
+    @Ignore
+    public void testColMeansIgnore() {
+        assertEval("{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
+
+    @Test
+    public void testCumulativeMax() {
+        assertEval("{ cummax(c(1,2,3)) }");
+        assertEval("{ cummax(NA) }");
+        assertEval("{ cummax(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cummax(1:10) }");
+        assertEval("{ cummax(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cummax(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cummax(as.logical(-2:2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCumulativeMaxIgnore() {
+        assertEval("{ cummax(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cummax(c(1+1i, NA, 2+3i)) }");
+    }
+
+    @Test
+    public void testCumulativeMin() {
+        assertEval("{ cummin(c(1,2,3)) }");
+        assertEval("{ cummin(NA) }");
+        assertEval("{ cummin(1:10) }");
+        assertEval("{ cummin(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cummin(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cummin(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cummin(as.logical(-2:2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCumulativeMinIgnore() {
+        // Error message mismatch.
+        assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
+    }
+
 }

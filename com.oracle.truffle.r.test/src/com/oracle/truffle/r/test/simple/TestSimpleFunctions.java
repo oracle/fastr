@@ -37,6 +37,12 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void testReturnIgnore() {
+        assertEval("{ f<-function() { return(invisible(2)) } ; f() }");
+    }
+
+    @Test
     public void testDefinitionsNamedAndDefault() {
         assertEval("{ f<-function(a=1,b=2,c=3) {TRUE} ; f(,,) }");
 

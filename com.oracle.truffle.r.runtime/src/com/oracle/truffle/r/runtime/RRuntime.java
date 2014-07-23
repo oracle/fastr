@@ -19,6 +19,8 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 public class RRuntime {
 
     //@formatter:off
@@ -53,6 +55,7 @@ public class RRuntime {
     public static final int TRUE = 1;
     public static final int FALSE = 0;
     public static final String STRING_NA = new String("NA");
+    public static final String STRING_NaN = new String("NaN");
     public static final String STRING_TRUE = new String("TRUE");
     public static final String STRING_FALSE = new String("FALSE");
     public static final int INT_NA = Integer.MIN_VALUE;
@@ -162,7 +165,7 @@ public class RRuntime {
     }
 
     public static boolean isNAorNaN(double d) {
-        return Double.isNaN(d);
+        return isNA(d) || Double.isNaN(d);
     }
 
     @SlowPath
@@ -453,7 +456,7 @@ public class RRuntime {
     }
 
     public static RComplex double2complex(double d) {
-        return isNA(d) ? createComplexNA() : double2complexNoCheck(d);
+        return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
     }
 
     @SlowPath
@@ -473,7 +476,7 @@ public class RRuntime {
             return "-Inf";
         }
         if (Double.isNaN(operand)) {
-            return "NaN";
+            return STRING_NaN;
         }
 
         /*
@@ -599,8 +602,14 @@ public class RRuntime {
         return sb.toString();
     }
 
+    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "string NA is intended to be treated as an identity")
     public static boolean isNA(String value) {
         return value == STRING_NA;
+    }
+
+    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "string NaN is intended to be treated as an identity")
+    public static boolean isNaN(String value) {
+        return value == STRING_NaN;
     }
 
     public static boolean isNA(byte value) {
@@ -641,7 +650,7 @@ public class RRuntime {
 
     @SlowPath
     public static String quoteString(String data) {
-        return data == STRING_NA ? STRING_NA : "\"" + data + "\"";
+        return isNA(data) ? STRING_NA : "\"" + data + "\"";
     }
 
 }

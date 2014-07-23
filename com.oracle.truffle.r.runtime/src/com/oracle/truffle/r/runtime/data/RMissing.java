@@ -23,12 +23,12 @@
 package com.oracle.truffle.r.runtime.data;
 
 /**
- * See singleton {@link #instance}
+ * See singleton {@link #instance}.
  */
 public final class RMissing extends RScalar {
 
     /**
-     * This object denotes a missing argument in a function call
+     * This object denotes a missing argument in a function call.
      */
     public static final RMissing instance = new RMissing();
 
@@ -39,7 +39,7 @@ public final class RMissing extends RScalar {
      * This function determines, of an arguments value - given as 'value' - is missing. An argument
      * is missing, when it has not been provided to the current function call, OR if the value that
      * has been provided once was a missing argument. (cp. R language definition and Internals for
-     * this behavior)
+     * this behavior).
      *
      * @param value The value that should be examined
      * @return <code>true</code> iff this value is 'missing' in the definition of R

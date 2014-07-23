@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.nio.charset.*;
-import java.util.*;
+import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -194,7 +194,7 @@ public final class Utils {
         }
     }
 
-    private static Charset UTF8;
+    private static volatile Charset UTF8;
 
     public static Charset getUTF8() {
         if (UTF8 == null) {
@@ -215,31 +215,30 @@ public final class Utils {
         if (depth == 0) {
             return Truffle.getRuntime().getCurrentFrame().getFrame(fa, true);
         }
-        Iterator<FrameInstance> it = Truffle.getRuntime().getStackTrace().iterator();
-        if (!it.hasNext()) {
-            return null;
-        }
-        FrameInstance fi = null;
-        for (int i = 0; i < depth; ++i) {
-            if (!it.hasNext()) {
-                return null;
+
+        LongAdder i = new LongAdder();
+        return Truffle.getRuntime().iterateFrames(frameInstance -> {
+            Frame f = null;
+            i.increment();
+            if (i.intValue() == depth) {
+                f = frameInstance.getFrame(fa, false);
             }
-            fi = it.next();
-        }
-        return fi == null ? null : fi.getFrame(fa, false);
+            return f;
+        });
     }
 
     /**
      * Return the depth of the stack, excluding the current frame and the pseudo-frame at the base.
      */
     public static int stackDepth() {
-        int depth = 0;
-        Iterator<FrameInstance> it = Truffle.getRuntime().getStackTrace().iterator();
-        while (it.hasNext()) {
-            depth++;
-            it.next();
-        }
-        return depth - 1;
+        LongAdder depth = new LongAdder();
+
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            depth.increment();
+            return null;
+        });
+
+        return depth.intValue() - 1;
     }
 
     /**
@@ -260,12 +259,18 @@ public final class Utils {
         FrameInstance current = Truffle.getRuntime().getCurrentFrame();
         dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), current.isVirtualFrame());
 
-        Iterable<FrameInstance> frames = Truffle.getRuntime().getStackTrace();
-        if (frames != null) {
-            for (FrameInstance frame : frames) {
-                dumpFrame(str, frame.getCallTarget(), frame.getFrame(FrameAccess.READ_ONLY, true), frame.isVirtualFrame());
-            }
-        }
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), frameInstance.isVirtualFrame());
+            return null;
+        });
+
+// Iterable<FrameInstance> frames = Truffle.getRuntime().getStackTrace();
+// if (frames != null) {
+// for (FrameInstance frame : frames) {
+// dumpFrame(str, frame.getCallTarget(), frame.getFrame(FrameAccess.READ_ONLY, true),
+// frame.isVirtualFrame());
+// }
+// }
         return str.toString();
     }
 

@@ -24,35 +24,73 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-/**
- * TODO Implement completely. Currently just what is needed for {@code set.seed}.
- */
 @RBuiltin(name = "pmatch", kind = INTERNAL)
 public abstract class PMatch extends RBuiltinNode {
 
+    @CreateCast("arguments")
+    public RNode[] castArguments(RNode[] arguments) {
+        arguments[2] = CastIntegerNodeFactory.create(arguments[2], false, false, false);
+        arguments[3] = CastLogicalNodeFactory.create(arguments[3], false, false, false);
+        return arguments;
+    }
+
     @Specialization
-    public RIntVector doPMatch(String x, RAbstractStringVector table) {
-        ArrayList<Integer> matches = new ArrayList<>(table.getLength());
-        for (int i = 0; i < table.getLength(); i++) {
-            if (x.equals(table.getDataAt(i))) {
-                matches.add(i + 1);
+    public RIntVector doPMatch(RAbstractStringVector x, RAbstractStringVector table, int nomatch, byte duplicatesOk) {
+        int xl = x.getLength();
+        int tl = table.getLength();
+        boolean dupsOk = RRuntime.fromLogical(duplicatesOk);
+        int[] matches = new int[xl];
+        boolean[] matched = new boolean[xl];
+        boolean[] used = new boolean[tl];
+        // set up default result
+        for (int i = 0; i < matches.length; i++) {
+            matches[i] = nomatch;
+        }
+        // check for exact matches, then partial matches
+        for (int p = 0; p < 2; p++) {
+            for (int i = 0; i < xl; i++) {
+                String xs = x.getDataAt(i);
+                if (matched[i]) {
+                    continue;
+                }
+                // empty string matches nothing, not even another empty string
+                if (xs.length() == 0) {
+                    continue;
+                }
+                if (xs == RRuntime.STRING_NA) {
+                    xs = "NA";
+                }
+                for (int t = 0; t < tl; t++) {
+                    if (!used[t]) {
+                        boolean match = p == 0 ? xs.equals(table.getDataAt(t)) : table.getDataAt(t).startsWith(xs);
+                        if (match) {
+                            matches[i] = t + 1;
+                            matched[i] = true;
+                            if (!dupsOk) {
+                                used[t] = true;
+                            }
+                        }
+                    }
+                }
             }
         }
-        int size = matches.size();
-        if (size == 0) {
-            return RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA);
-        } else if (size == 1) {
-            return RDataFactory.createIntVectorFromScalar(matches.get(0));
-        } else {
-            throw RError.nyi(getEncapsulatingSourceSection(), "pmatch aspect");
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        if (nomatch == RRuntime.INT_NA) {
+            for (int i = 0; i < matches.length; i++) {
+                if (matches[i] == RRuntime.INT_NA) {
+                    complete = RDataFactory.INCOMPLETE_VECTOR;
+                    break;
+                }
+            }
         }
+        return RDataFactory.createIntVector(matches, complete);
     }
 }

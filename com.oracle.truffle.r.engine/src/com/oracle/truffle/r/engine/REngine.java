@@ -54,6 +54,7 @@ public final class REngine implements RContext.Engine {
     private static long[] childTimes;
     private static RContext context;
     private static RBuiltinLookup builtinLookup;
+    private static RFunction evalFunction;
 
     private REngine() {
     }
@@ -79,6 +80,8 @@ public final class REngine implements RContext.Engine {
         VirtualFrame globalFrame = RRuntime.createVirtualFrame();
         VirtualFrame baseFrame = RRuntime.createVirtualFrame();
         REnvironment.baseInitialize(globalFrame, baseFrame);
+        evalFunction = singleton.lookupBuiltin("eval");
+        RPackageVariables.initializeBase();
         RVersionInfo.initialize();
         RAccuracyInfo.initialize();
         RRNG.initialize();
@@ -155,10 +158,38 @@ public final class REngine implements RContext.Engine {
 
     public Object eval(RFunction function, RExpression expr, REnvironment envir, REnvironment enclos) throws PutException {
         Object result = null;
+        RFunction ffunction = function;
+        if (ffunction == null) {
+            ffunction = evalFunction;
+        }
         for (int i = 0; i < expr.getLength(); i++) {
-            result = eval(function, (RLanguage) expr.getDataAt(i), envir, enclos);
+            RLanguage lang = (RLanguage) expr.getDataAt(i);
+            result = eval(ffunction, (RNode) lang.getRep(), envir, enclos);
         }
         return result;
+    }
+
+    public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
+        RFunction ffunction = function;
+        if (ffunction == null) {
+            ffunction = evalFunction;
+        }
+        return eval(ffunction, (RNode) expr.getRep(), envir, enclos);
+    }
+
+    public Object eval(RExpression expr, VirtualFrame frame) {
+        Object result = null;
+        for (int i = 0; i < expr.getLength(); i++) {
+            RLanguage lang = (RLanguage) expr.getDataAt(i);
+            result = eval(lang, frame);
+        }
+        return result;
+    }
+
+    public Object eval(RLanguage expr, VirtualFrame frame) {
+        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
+        return runCall(callTarget, frame, false, false);
+
     }
 
     /**
@@ -167,13 +198,7 @@ public final class REngine implements RContext.Engine {
      * {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then update "f"
      * on return.
      *
-     * @param function the actual function that invoked the "eval", e.g. {@code eval}, {@code evalq}
-     *            , {@code local}, or {@code null} if identification isn't important.
      */
-    public Object eval(RFunction function, RLanguage expr, REnvironment envir, REnvironment enclos) throws PutException {
-        return eval(function, (RNode) expr.getRep(), envir, enclos);
-    }
-
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget(exprRep, REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();
@@ -269,7 +294,8 @@ public final class REngine implements RContext.Engine {
      */
     private static RNode transform(ASTNode astNode, REnvironment environment) {
         RTruffleVisitor transform = new RTruffleVisitor(environment);
-        return transform.transform(astNode);
+        RNode result = transform.transform(astNode);
+        return result;
     }
 
     /**
@@ -309,7 +335,7 @@ public final class REngine implements RContext.Engine {
             reportWarnings(false);
         } catch (RError e) {
             if (topLevel) {
-                reportRError(e);
+                singleton.printRError(e);
             } else {
                 throw e;
             }
@@ -327,7 +353,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static void reportRError(RError e) {
+    public void printRError(RError e) {
         context.getConsoleHandler().printErrorln(e.toString());
         reportWarnings(true);
     }

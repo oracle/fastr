@@ -20,16 +20,16 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import subprocess, tempfile, shutil, filecmp, platform, shlex
-from os.path import join, sep
-from argparse import ArgumentParser, REMAINDER
+import tempfile, shutil, filecmp, platform, zipfile, sys
+from os.path import join, sep, exists
+from argparse import ArgumentParser
 import mx
 import mx_graal
 import os
 
 _fastr_suite = None
 
-def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None):
+def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     os.environ['R_HOME'] = _fastr_suite.dir
@@ -43,20 +43,55 @@ def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None):
     else:
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
-    vmArgs = ['-ea', '-esa', '-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.shell")]
+    if runBench == False:
+        vmArgs = vmArgs + ['-ea', '-esa']
     if extraVmArgs:
         vmArgs = vmArgs + extraVmArgs
     return mx_graal.vm(vmArgs + [className] + args, nonZeroIsFatal=nonZeroIsFatal)
 
-def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None):
+def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
-    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs)
+    return _runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
 
 def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
     return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
 
-def _truffle_r_gate_body(args, tasks):
+def findbugs(args):
+    '''run FindBugs against non-test Java projects'''
+    findBugsHome = mx.get_env('FINDBUGS_HOME', None)
+    if findBugsHome:
+        findbugsJar = join(findBugsHome, 'lib', 'findbugs.jar')
+    else:
+        findbugsLib = join(_fastr_suite.dir, 'lib', 'findbugs-3.0.0')
+        if not exists(findbugsLib):
+            tmp = tempfile.mkdtemp(prefix='findbugs-download-tmp', dir=_fastr_suite.dir)
+            try:
+                findbugsDist = join(tmp, 'findbugs.zip')
+                mx.download(findbugsDist, ['http://lafo.ssw.uni-linz.ac.at/graal-external-deps/findbugs-3.0.0.zip', 'http://sourceforge.net/projects/findbugs/files/findbugs/3.0.0/findbugs-3.0.0.zip'])
+                with zipfile.ZipFile(findbugsDist) as zf:
+                    candidates = [e for e in zf.namelist() if e.endswith('/lib/findbugs.jar')]
+                    assert len(candidates) == 1, candidates
+                    libDirInZip = os.path.dirname(candidates[0])
+                    zf.extractall(tmp)
+                shutil.copytree(join(tmp, libDirInZip), findbugsLib)
+            finally:
+                shutil.rmtree(tmp)
+        findbugsJar = join(findbugsLib, 'findbugs.jar')
+    assert exists(findbugsJar)
+    nonTestProjects = [p for p in _fastr_suite.projects if not p.name.endswith('.test') and not p.name.endswith('.processor') and not p.native]
+    outputDirs = [p.output_dir() for p in nonTestProjects]
+    findbugsResults = join(_fastr_suite.dir, 'findbugs.html')
+
+    cmd = ['-jar', findbugsJar, '-low', '-maxRank', '15', '-exclude', join(_fastr_suite.mxDir, 'findbugs-exclude.xml'), '-html']
+    if sys.stdout.isatty():
+        cmd.append('-progress')
+    cmd = cmd + ['-auxclasspath', mx.classpath([p.name for p in nonTestProjects]), '-output', findbugsResults, '-exitcode'] + args + outputDirs
+    exitcode = mx.run_java(cmd, nonZeroIsFatal=False)
+    return exitcode
+
+def _fastr_gate_body(args, tasks):
     _check_autogen_tests(False)
 
     # workaround for Hotspot Mac OS X build problem
@@ -87,14 +122,24 @@ def gate(args):
     '''Run the R gate'''
     # suppress the download meter
     mx._opts.no_download_progress = True
-    # ideally would be a standard gate task - we do it early
+
+    # ideally would be standard gate tasks - we do these early
+
     t = mx.GateTask('Copyright check')
     rc = mx.checkcopyrights(['--primary'])
     t.stop()
     if rc != 0:
         mx.abort('copyright errors')
+
+# temp disable due to non-determinism
+#    t = mx.GateTask('FindBugs')
+#    rc = findbugs([])
+#    t.stop()
+#    if rc != 0:
+#        mx.abort('FindBugs warnings were found')
+
     _check_autogen_tests(True)
-    mx.gate(args, _truffle_r_gate_body)
+    mx.gate(args, _fastr_gate_body)
 
 _tempdir = None
 
@@ -191,99 +236,10 @@ def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
-    mx.clean(testOnly)
+    mx.clean(['--no-dist', ] + testOnly)
     mx.build(testOnly)
     # now just invoke junit with the appropriate options
     junit(args + ['--tests', _default_unit_tests(), '--gen-expected-output'])
-
-def rbench(args):
-    '''run a one or more R benchmarks'''
-    parser = ArgumentParser(prog='mx rbench')
-    parser.add_argument('--J', dest='extra_javavm_args', help='extra Java VM arguments', metavar='@<args>')
-    parser.add_argument('--path', action='store_true', help='print path to benchmark')
-    parser.add_argument('--gnur', action='store_true', help='run under GnuR')
-    parser.add_argument('--gnur-path', action='store', metavar='<path>', help='specify path to GnuR', default='R')
-    parser.add_argument('--fail-fast', action='store_true', help='abort on first failure')
-    parser.add_argument('--gnur-jit', action='store_true', help='enable GnuR JIT')
-    parser.add_argument('benchmarks', nargs=REMAINDER, metavar='benchmarkgroup.name', help='list of benchmarks to run')
-    args = parser.parse_args(args)
-
-    if args.extra_javavm_args:
-        args.extra_javavm_args = shlex.split(args.extra_javavm_args.lstrip('@'))
-    # dynamically load the benchmarks suite
-    hg_base = mx.get_env('HG_BASE')
-    alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
-    bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
-    mx.build_suite(bm_suite)
-
-    failure = 0
-    for bm in args.benchmarks:
-        # Get the R script location via helper app
-        # N.B. we do not use mx.run_java() as that might check options we don't want for the helper, e.g. debugging agent
-        rc = 0
-        javacmd = [mx.java().java, '-cp', mx.classpath('r.benchmarks'), 'r.benchmarks.RBenchmarks', bm]
-        try:
-            bmpath = subprocess.check_output(javacmd).rstrip()
-            if args.path:
-                print bmpath
-            else:
-                headline = ('GnuR' if args.gnur else 'FastR') + ' running ' + bm
-                print headline
-                command = ['-f', bmpath]
-                if args.gnur:
-                    env = os.environ
-                    if args.gnur_jit:
-                        env['R_ENABLE_JIT'] = '3'
-                    rc = subprocess.call([args.gnur_path, '--slave'] + command, env=env)
-                else:
-                    # temporary: disable group generics as long as they impose a considerable performance overhead
-                    command = ['--DisableGroupGenerics'] + command
-                    extraVmArgs = args.extra_javavm_args
-                    if not any("TruffleCompilationThreshold" in x for x in extraVmArgs):
-                        # set compilation threshold to 10
-                        extraVmArgs.append('-G:TruffleCompilationThreshold=10')
-                    if (bm.startswith("b25")):
-                        extraVmArgs.append('-G:-TruffleBackgroundCompilation')
-                    rc = runRCommand(command, nonZeroIsFatal=False, extraVmArgs=extraVmArgs)
-                if rc != 0:
-                    print 'benchmark ' + bm + ' failed'
-                    emsg = rc
-        except subprocess.CalledProcessError:
-            emsg = 'benchmark ' + bm + ' not found'
-            rc = 1
-        # check error and fail-fast option
-        if rc != 0:
-            failure = failure if failure > rc else rc
-            if args.fail_fast:
-                mx.abort(emsg)
-    # if any failed
-    if failure != 0:
-        mx.abort('benchmark run failed')
-    return failure
-
-def _bench_harness_body(args, vmArgs):
-    marks = ['shootout.binarytrees', 'shootout.fannkuchredux', 'shootout.fasta', 'shootout.fastaredux',
-             'shootout.knucleotide', 'shootout.mandelbrot-ascii', 'shootout.nbody', 'shootout.pidigits',
-             'shootout.regexdna', 'shootout.reversecomplement', 'shootout.spectralnorm',
-             'b25.bench.prog-1', 'b25.bench.prog-2', 'b25.bench.prog-4', 'b25.bench.prog-5',
-             'b25.bench.matcal-1', 'b25.bench.matcal-2', 'b25.bench.matcal-3', 'b25.bench.matcal-4', 'b25.bench.matcal-5',
-             'b25.bench.matfunc-1', 'b25.bench.matfunc-2', 'b25.bench.matfunc-3', 'b25.bench.matfunc-4', 'b25.bench.matfunc-5']
-    if vmArgs:
-        marks = ['--J', vmArgs] + marks
-    return rbench(marks)
-
-def bench(args):
-    '''Run a standard set of R benchmarks'''
-    # In the automatic benchmark context, the vm will neither be built nor set.
-    # In interactive (development) use, if it is set (interactive use) we use it, otherwise we choose the server variant.
-    # The build component of mx.bench causes the vm to be built.
-
-    # suppress the download meter
-    mx._opts.no_download_progress = True
-
-    vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
-    with vm:
-        mx.bench(args, harness=_bench_harness_body)
 
 def unittest(args):
     print "use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests"
@@ -344,6 +300,17 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
+def bench(args):
+    mx.abort("no benchmarks available")
+
+def mx_post_parse_cmd_line(opts):
+    # dynamically load the benchmarks suite
+    hg_base = mx.get_env('HG_BASE')
+    alternate = None if hg_base is None else join(hg_base, 'r_benchmarks')
+    bm_suite = _fastr_suite.import_suite('r_benchmarks', version=None, alternate=alternate)
+    if bm_suite:
+        mx.build_suite(bm_suite)
+
 def mx_init(suite):
     global _fastr_suite
     _fastr_suite = suite
@@ -354,14 +321,14 @@ def mx_init(suite):
         'rscript' : [runRscriptCommand, '[options]'],
         'Rscript' : [runRscriptCommand, '[options]'],
         'rtestgen' : [testgen, ''],
-        'rbench' : [rbench, 'options'],
         # core overrides
+        'bench' : [bench, ''],
         'gate' : [gate, ''],
-        'bench' : [bench, 'options'],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],
+        'findbugs' : [findbugs, '']
     }
     mx.update_commands(suite, commands)

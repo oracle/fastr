@@ -191,6 +191,44 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         return ret;
     }
 
+    @Specialization(order = 56)
+    public RIntVector doUnaryIntSequence(RIntSequence left, RMissing right) {
+        checkUnary();
+        int[] res = new int[left.getLength()];
+        leftNACheck.enable(left);
+        for (int i = 0; i < left.getLength(); ++i) {
+            if (leftNACheck.check(left.getDataAt(i))) {
+                res[i] = RRuntime.INT_NA;
+            } else {
+                res[i] = unary.op(left.getDataAt(i));
+            }
+        }
+        RIntVector ret = RDataFactory.createIntVector(res, leftNACheck.neverSeenNA());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
+    }
+
+    @Specialization(order = 57)
+    public RDoubleVector doUnaryDoubleSequence(RDoubleSequence left, RMissing right) {
+        checkUnary();
+        double[] res = new double[left.getLength()];
+        leftNACheck.enable(left);
+        for (int i = 0; i < left.getLength(); ++i) {
+            if (leftNACheck.check(left.getDataAt(i))) {
+                res[i] = RRuntime.INT_NA;
+            } else {
+                res[i] = unary.op(left.getDataAt(i));
+            }
+        }
+        RDoubleVector ret = RDataFactory.createDoubleVector(res, leftNACheck.neverSeenNA());
+        ret.copyRegAttributesFrom(left);
+        ret.setDimensions(left.getDimensions());
+        ret.copyNamesFrom(left);
+        return ret;
+    }
+
     private void checkUnary() {
         if (unary == null) {
             throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
@@ -413,6 +451,11 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     @Specialization(order = 337)
     public RDoubleVector doDoubleSequenceDoubleOp(RDoubleSequence left, double right) {
         return performDoubleVectorOp(left, right);
+    }
+
+    @Specialization(order = 338)
+    public RDoubleVector doDoubleSequenceDoubleOp(RDoubleSequence left, int right) {
+        return performDoubleVectorOp(left, rightNACheck.convertIntToDouble(right));
     }
 
     public boolean canCreateSequenceResultWithRight(Object left, double right) {

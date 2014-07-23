@@ -60,6 +60,10 @@ public final class RFunction extends RScalar {
         return builtin != null;
     }
 
+    public RBuiltin getRBuiltin() {
+        return builtin;
+    }
+
     public String getName() {
         return name;
     }

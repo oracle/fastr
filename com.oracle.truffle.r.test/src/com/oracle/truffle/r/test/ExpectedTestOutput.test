@@ -171,6 +171,18 @@
 [1] NA NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatrices
+#{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m+1L }
+     [,1] [,2] [,3]
+[1,]    2    3    4
+[2,]    5    6    7
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatrices
+#{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m+m }
+     [,1] [,2] [,3]
+[1,]    2    4    6
+[2,]    8   10   12
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatrices
 #{ m <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) ; m-1 }
      [,1] [,2] [,3]
 [1,]    0    1    2
@@ -181,10 +193,80 @@
      [,1]
 [1,]   13
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesOuterProduct
+#{ 1:3 %*% as.raw(c(1,2,3)) }
+Error in 1:3 %*% as.raw(c(1, 2, 3)) :
+  requires numeric/complex matrix/vector arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesOuterProduct
+#{ 1:3 %*% c(TRUE,FALSE,TRUE) }
+     [,1]
+[1,]    4
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesOuterProduct
+#{ 1:3 %o% 1:2 }
+     [,1] [,2]
+[1,]    1    2
+[2,]    2    4
+[3,]    3    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesOuterProduct
+#{ 1:4 %*% 1:3 }
+Error in 1:4 %*% 1:3 : non-conformable arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesOuterProduct
+#{ as.raw(1:3) %o% 1:3 }
+Error in as.vector(X) %*% t(as.vector(Y)) :
+  requires numeric/complex matrix/vector arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesPrecedence
+#{ 10 / 1:3 %*% 3:1 }
+     [,1]
+[1,]    1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesPrecedence
+#{ x <- 1:2 ; dim(x) <- c(1,1,2) ; y <- 2:3 ; dim(y) <- c(1,1,2) ; x + y }
+, , 1
+
+     [,1]
+[1,]    3
+
+, , 2
+
+     [,1]
+[1,]    5
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ 1:3 %*% matrix(4,nrow=2,ncol=5) }
+Error in 1:3 %*% matrix(4, nrow = 2, ncol = 5) :
+  non-conformable arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ a <- array(1:9, dim=c(3,1,3)) ;  a %*% 1:9 }
+     [,1]
+[1,]  285
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ a<-matrix(1:6, ncol=2) ; b<-matrix(11:16, nrow=2) ; a %*% b }
+     [,1] [,2] [,3]
+[1,]   59   69   79
+[2,]   82   96  110
+[3,]  105  123  141
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ as.raw(1:3) %*% 1:3 }
+Error in as.raw(1:3) %*% 1:3 :
+  requires numeric/complex matrix/vector arguments
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
 #{ double() %*% double() }
      [,1]
 [1,]    0
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m <- double() ; dim(m) <- c(0,0) ; m %*% m }
+<0 x 0 matrix>
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
 #{ m <- double() ; dim(m) <- c(0,4) ; m %*% t(m) }
@@ -206,6 +288,69 @@
 #{ m <- double() ; dim(m) <- c(4,0) ; n <- matrix(1:4,ncol=4) ; n %*% m }
 
 [1,]
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m <- matrix(c(1,2,3,0/0), nrow=4) ; m %*% 1:4 }
+     [,1] [,2] [,3] [,4]
+[1,]    1    2    3    4
+[2,]    2    4    6    8
+[3,]    3    6    9   12
+[4,]  NaN  NaN  NaN  NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m <- matrix(c(NA,1,0/0,2), nrow=2) ; 1:2 %*% m }
+     [,1] [,2]
+[1,]   NA  NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m <- matrix(c(NA,1,4,2), nrow=2) ; t(m) %*% m }
+     [,1] [,2]
+[1,]   NA   NA
+[2,]   NA   20
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m<-matrix(1:3, ncol=1) ; m %*% 1:2 }
+     [,1] [,2]
+[1,]    1    2
+[2,]    2    4
+[3,]    3    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m<-matrix(1:3, nrow=1) ; 1:2 %*% m }
+     [,1] [,2] [,3]
+[1,]    1    2    3
+[2,]    2    4    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m<-matrix(1:6, nrow=2) ; 1:2 %*% m }
+     [,1] [,2] [,3]
+[1,]    5   11   17
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ m<-matrix(1:6, nrow=2) ; m %*% 1:3 }
+     [,1]
+[1,]   22
+[2,]   28
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ matrix(2,nrow=2,ncol=3) %*% matrix(4,nrow=1,ncol=5) }
+Error in matrix(2, nrow = 2, ncol = 3) %*% matrix(4, nrow = 1, ncol = 5) :
+  non-conformable arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ matrix(4,nrow=2,ncol=5) %*% 1:4 }
+Error in matrix(4, nrow = 2, ncol = 5) %*% 1:4 :
+  non-conformable arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ matrix(c(3,1,0/0,2), nrow=2) %*% matrix(1:6,nrow=2) }
+     [,1] [,2] [,3]
+[1,]  NaN  NaN  NaN
+[2,]    5   11   17
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testMatricesProduct
+#{ x <- 1:3 %*% 9:11 ; x[1] }
+[1] 62
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testModulo
 #{ 3 %% -2 }
@@ -964,6 +1109,14 @@ raw(0)
 [1] -1.00000+1.00000i  0.34862+0.50459i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y*x }
+[1]  -1- 7i -62-25i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
+#{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y+x }
+[1]  2- 1i -1+15i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testScalarsComplex
 #{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y-x }
 [1]  4+3i -7-5i
 
@@ -1064,6 +1217,14 @@ raw(0)
 [1] -1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusAsFunction
+#{ f <- function(z) { -z } ; f(1:3) ; f(1L) }
+[1] -1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusAsFunction
+#{ f <- function(z) { -z } ; f(1:3) ; f(TRUE) }
+[1] -1
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusAsFunction
 #{ f <- function(z) { -z } ; f(1L) ; f(1) }
 [1] -1
 
@@ -1092,8 +1253,16 @@ integer(0)
 [1] -1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusAsFunctionComplex
+#{ f <- function(z) { -z } ; f(1:3) ; f(c((0+0i)/0,1+1i)) }
+[1] NaN+NaNi  -1-  1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusAsFunctionComplex
 #{ f <- function(z) { -z } ; f(1L) ; f(1+1i) }
 [1] -1-1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusAsFunctionComplex
+#{ z <- (1+1i)[0] ; -z }
+complex(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusComplex
 #{ -((0+1i)/0)  }
@@ -1106,6 +1275,22 @@ integer(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusComplex
 #{ -(2+1i)  }
 [1] -2-1i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusComplex
+#{ -c((1+0i)/0,2) }
+[1] NaN+NaNi  -2+  0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusErrors
+#{ f <- function(z) { -z } ; f(1:3) ; f("hello") }
+Error in -z : invalid argument to unary operator
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusErrors
+#{ z <- "hello" ; -z }
+Error in -z : invalid argument to unary operator
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusErrors
+#{ z <- c("hello","hi") ; -z }
+Error in -z : invalid argument to unary operator
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryMinusVector
 #{ -(1[2]) }
@@ -1184,6 +1369,12 @@ $dimnames[[2]]
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotRaw
 #{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(as.raw(c(a=1,b=2))) }
 [1] fe fd
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotRaw
+#{ f <- function(arg) { !arg } ; f(as.raw(10)) ; f(matrix(as.raw(1:4),nrow=2 )) }
+     [,1] [,2]
+[1,]   fe   fc
+[2,]   fd   fb
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testUnaryNotRaw
 #{ f <- function(arg) { !arg } ; f(as.raw(10)) ; x <- as.raw(10:11) ; attr(x, "my") <- 1 ; f(x) }
@@ -1516,6 +1707,38 @@ numeric(0)
 #{ c(3,4) %/% 2 }
 [1] 1 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsLengthWarning
+#{ 1:2+1:3 }
+[1] 2 4 4
+Warning message:
+In 1:2 + 1:3 :
+  longer object length is not a multiple of shorter object length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsLengthWarning
+#{ 1:3*1:2 }
+[1] 1 4 3
+Warning message:
+In 1:3 * 1:2 :
+  longer object length is not a multiple of shorter object length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsLengthWarning
+#{ 1:3+c(1,2+2i) }
+[1] 2+0i 4+2i 4+0i
+Warning message:
+In 1:3 + c(1, 2 + (0+2i)) :
+  longer object length is not a multiple of shorter object length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsLengthWarning
+#{ c(1,2+2i)+1:3 }
+[1] 2+0i 4+2i 4+0i
+Warning message:
+In c(1, 2 + (0+2i)) + 1:3 :
+  longer object length is not a multiple of shorter object length
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsMatrixDimsDontMatch
+#{ m <- matrix(nrow=2, ncol=2, 1:4) ; m + 1:16 }
+Error: dims [product 4] do not match the length of object [16]
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsModulo
 #{ c(3,4) %% 2 }
 [1] 1 0
@@ -1612,6 +1835,14 @@ numeric(0)
 #{ c(NA,NA,NA,NA)+c(1L,2L) }
 [1] NA NA NA NA
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsNonConformable
+#{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- 2:1 ; x + y }
+Error in x + y : non-conformable arrays
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsNonConformable
+#{ x <- 1:2 ; dim(x) <- 1:2 ; y <- 2:3 ; dim(y) <- c(1,1,2) ; x + y }
+Error in x + y : non-conformable arrays
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperations
 #{ a <- c(1,3) ; a ^ 3 }
 [1]  1 27
@@ -1628,6 +1859,10 @@ numeric(0)
 #{ c(1,3) - 4 }
 [1] -3 -1
 
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperations
+#{ c(1,3) / c(2,4) }
+[1] 0.50 0.75
+
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
 #{ a <- c(1+1i,3+2i) ; a - (4+3i) }
 [1] -3-2i -1-1i
@@ -1637,12 +1872,24 @@ numeric(0)
 [1] 1+1i 6+4i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
+#{ c(1+1i,3+2i) / 2 }
+[1] 0.5+0.5i 1.5+1.0i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
+#{ c(1,2,3+1i)^3 }
+[1]  1+ 0i  8+ 0i 18+26i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
 #{ round( 3^c(1,2,3+1i), digits=5 ) }
 [1]  3.00000+ 0.00000i  9.00000+ 0.00000i 12.28048+24.04558i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
 #{ round(c(1+1i,2+3i)^c(1+1i,3+4i), digits = 5) }
 [1]  0.27396+0.58370i -0.20455+0.89662i
+
+##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
+#{ z <- c(-1.5-1i,10) ; (z * z)[1] }
+[1] 1.25+3i
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testVectorsOperationsComplex
 #{ z <- c(1+1i,3+2i) ; z * c(1,2) }
@@ -3118,6 +3365,13 @@ attr(,"a")
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
+#{ m <- matrix(1:6, nrow=2) ; attr(m,"a") <- 1 ;  aperm(m) }
+     [,1] [,2]
+[1,]    1    2
+[2,]    3    4
+[3,]    5    6
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
 #{ m <- matrix(1:6, nrow=2) ; attr(m,"a") <- 1 ;  diag(m) <- c(1,1) ; m }
      [,1] [,2] [,3]
 [1,]    1    3    5
@@ -3133,6 +3387,10 @@ attr(,"a")
 [3,]    5    6
 attr(,"a")
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
+#{ m <- matrix(1:6, nrow=2) ; attr(m,"a") <- 1 ; mm <- aperm(m) ; dim(mm) }
+[1] 3 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
 #{ m <- matrix(rep(1,4), nrow=2) ; attr(m,"a") <- 1 ;  upper.tri(m) }
@@ -3170,6 +3428,21 @@ attr(,"myatt")
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
 #{ x <- 1 ; attr(x, "myatt") <- 1; x:x }
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
+#{ x <- c(a=1) ; attr(x, "myatt") <- 1 ; lapply(1:2, function(z) {x}) }
+[[1]]
+a
+1
+attr(,"myatt")
+[1] 1
+
+[[2]]
+a
+1
+attr(,"myatt")
+[1] 1
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleAttributes.testBuiltinPropagation
 #{ x <- c(a=1) ; attr(x, "myatt") <- 1; log10(x) }
@@ -3667,6 +3940,74 @@ $a
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAnyDuplicated
 #{anyDuplicated(c(FALSE, TRUE, FALSE))}
 [1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(2,3,4)); b = aperm(a); c(dim(b)[1],dim(b)[2],dim(b)[3]) }
+[1] 4 3 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1)); a[1,2,3] == b[2,3,1] }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1), resize = FALSE); a[1,2,3] == b[2,1,2] }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(2,3,4)); b = aperm(a, c(3,2,1), resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }
+[1] 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }
+[1] 2 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1)); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }
+[1] TRUE TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1), resize = FALSE); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }
+[1] TRUE TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ a = array(1:4,c(2,2)); b = aperm(a); c(a[1,1] == b[1,1], a[1,2] == b[2,1], a[2,1] == b[1,2], a[2,2] == b[2,2]) }
+[1] TRUE TRUE TRUE TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }
+, , 1
+
+     [,1]
+[1,] "FASTR"
+[2,] "FAST"
+
+, , 2
+
+     [,1]
+[1,] "IS"
+[2,] "FASTR"
+
+, , 3
+
+     [,1]
+[1,] "SO"
+[2,] "IS"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }
+, , 1
+
+     [,1] [,2]  [,3]  [,4] [,5]
+[1,] TRUE TRUE FALSE FALSE TRUE
+[2,] TRUE TRUE FALSE FALSE TRUE
+
+, , 2
+
+      [,1] [,2] [,3] [,4]  [,5]
+[1,] FALSE TRUE TRUE TRUE FALSE
+[2,] FALSE TRUE TRUE TRUE FALSE
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testApply
 #{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,1,sum) }
@@ -4675,15 +5016,91 @@ character(0)
 #{ toupper(c()) }
 character(0)
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColStatsMatrix
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}
+[1]  7 19 31 43
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}
+[1] 3.5+4.25i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3,4,2,5)))}
+[1] 3.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}
+[1] 3.5 NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}
+[1] 3.5 5.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3L,4L,2L,5L)))}
+[1] 3.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}
+[1]  NA 3.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}
+[1] 3.0 3.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}
+[1] NaN 3.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}
+[1] 3.0 3.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}
+[1]  NA NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}
+[1] 0.5  NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 0.5 0.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}
+[1] 0.5 NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 0.5 0.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColMeans
+#{colMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}
+[1] 0.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColSums
+#{ a = colSums(array(1:24,c(2,3,4))); c(a[1,1],a[2,2],a[3,3],a[3,4]) }
+[1]  3 19 35 47
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColSums
+#{ a = colSums(array(1:24,c(2,3,4))); d = dim(a); c(d[1],d[2]) }
+[1] 3 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColSums
+#{ a = colSums(array(1:24,c(2,3,4))); length(a) }
+[1] 12
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColSums
 #{ a = colSums(matrix(1:12,3,4)); dim(a) }
 NULL
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColStatsMatrix
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColSums
 #{ a = colSums(matrix(1:12,3,4)); length(a) }
 [1] 4
 
-##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColStatsMatrix
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testColSums
 #{ colSums(matrix(1:12,3,4)) }
 [1]  6 15 24 33
 
@@ -5421,6 +5838,62 @@ In cor(cbind(c(1, 1, 1), c(1, 1, 1))) : the standard deviation is zero
 #{ cov(c(1,2,3),c(1,2,5)) }
 [1] 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(1:10) }
+ [1]  1  2  3  4  5  6  7  8  9 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(NA) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(as.logical(-2:2)) }
+[1] 1 1 1 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(c(1,2,3)) }
+[1] 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(c(2000000000L, NA, 2000000000L)) }
+[1] 2000000000         NA         NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(c(TRUE,FALSE,NA,TRUE)) }
+[1]  1  1 NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMax
+#{ cummax(c(TRUE,FALSE,TRUE)) }
+[1] 1 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(1:10) }
+ [1] 1 1 1 1 1 1 1 1 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(NA) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(as.logical(-2:2)) }
+[1] 1 1 0 0 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(c(1,2,3)) }
+[1] 1 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(c(2000000000L, NA, 2000000000L)) }
+[1] 2000000000         NA         NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(c(TRUE,FALSE,NA,TRUE)) }
+[1]  1  0 NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeMin
+#{ cummin(c(TRUE,FALSE,TRUE)) }
+[1] 1 0 0
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCumulativeSum
 #{ cumsum(1:10) }
  [1]  1  3  6 10 15 21 28 36 45 55
@@ -5472,6 +5945,14 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDefaultArgs
 #{ length(array(dim=c(1,0,2,3))) }
 [1] 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(TRUE) }
+[1] "TRUE"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(c(T, F)) }
+[1] "c(TRUE, FALSE)"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiagonal
 #{ diag(1, 2, 7) }
@@ -6259,6 +6740,30 @@ Error in rm("foo", envir = baseenv()) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFloor
 #{ floor(c(0.2,-3.4,NA,0/0,1/0)) }
 [1]   0  -4  NA NaN Inf
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormals
+#{ f <- function(a) {}; formals(f) }
+$a
+
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormals
+#{ f <- function(a, b = c(1, 2)) {}; formals(f) }
+$a
+
+
+$b
+c(1, 2)
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFormals
+#{ f <- function(a, b) {}; formals(f) }
+$a
+
+
+$b
+
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFrames
 #{ t1 <- function() {  aa <- 1; t2 <- function() { cat("current frame is", sys.nframe(), "; "); cat("parents are frame numbers", sys.parents(), "; "); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }
@@ -7422,6 +7927,26 @@ Error in get("x") : object 'x' not found
 #{ x <- function(){3} ; gg <- function() { assign("x", 4) ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x() } ; h() } ; f() } ; g() } ; gg() }
 [1] 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLsRegExp
+#{ .abc <- 1; ls(all.names=TRUE, pattern="\\.a.*")}
+[1] ".abc"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLsRegExp
+#{ .abc <- 1; ls(pattern="\\.a.*")}
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLsRegExp
+#{ abc <- 1; ls(pattern="[[:alpha:]]*")}
+[1] "abc"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLsRegExp
+#{ abc <- 1; ls(pattern="a.*")}
+[1] "abc"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testLsRegExp
+#{ f <- function(abc) { ls(pattern="[a-z]*") }; f(1) }
+[1] "abc"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatMult
 #{ as.vector(c(1,2,3)) %*% t(as.vector(c(1,2))) }
      [,1] [,2]
@@ -8162,6 +8687,38 @@ a b
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testProd
 #{prod(c(TRUE, TRUE))}
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ l <- quote(a[3] <- 4) ; eval(l) ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ l <- quote(a[3] <- 4) ; f <- function() { eval(l) } ; f() }
+Error in a[3] <- 4 : object 'a' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ quote(1:3) }
+1:3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ quote(list(1, 2)) }
+list(1, 2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ quote(x <- x + 1) }
+x <- x + 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ typeof(quote(1)) }
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ typeof(quote(x + y)) }
+[1] "language"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testQuote
+#{ typeof(quote(x)) }
+[1] "symbol"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRandom
 #{ set.seed(4336, "default"); sum(runif(10000)) }
@@ -8904,6 +9461,146 @@ numeric(0)
 #{ round(c(0,0.2,0.4,0.6,0.8,1)) }
 [1] 0 0 0 1 1 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}
+[1] 3+ 2i 4+ 5i 2+ 0i 5+10i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3,4,2,5)))}
+[1] 3 4 2 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}
+[1] NaN 4.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}
+[1] 3.0 4.5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3L,4L,2L,5L)))}
+[1] 3 4 2 5
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}
+[1] 2.5  NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}
+[1] 2.5 5.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}
+[1] 2.5 NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}
+[1] 2.5 5.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}
+[1]  NA NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 2.0+0.0i 4.5+7.5i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}
+[1] 0.5  NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 0.5 0.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}
+[1] 0.5 NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 0.5 0.0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowMeans
+#{rowMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}
+[1] 1 0 0 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }
+[1] 144 156
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{ a = rowSums(array(1:24,c(2,3,4))); length(a) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }
+[1] 22 26 30
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{ a = rowSums(matrix(1:12,3,4)); length(a) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(3+2i,4+5i,2+0i,5+10i)))}
+[1] 3+ 2i 4+ 5i 2+ 0i 5+10i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}
+[1]  NA NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 2+ 0i 9+15i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}
+[1]  1 NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 1 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}
+[1]   1 NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}
+[1] 1 0
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{x<-cbind(1:3, 4:6, 7:9); rowSums(x)}
+[1] 12 15 18
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{x<-cbind(1:3, NA, 7:9); rowSums(x)}
+[1] NA NA NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{x<-cbind(1:3, NaN, 7:9); rowSums(x)}
+[1] NaN NaN NaN
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{x<-cbind(1:3, NaN, 7:9, 10:12); rowSums(x, na.rm=TRUE)}
+[1] 18 21 24
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{x<-cbind(1:4, NA, NaN, 9:12); rowSums(x, na.rm=TRUE)}
+[1] 10 12 14 16
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRowSums
+#{x<-cbind(2L:10L,3L); rowSums(x)}
+[1]  5  6  7  8  9 10 11 12 13
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSample
 #{  set.seed(4357, "default"); x <- 5 ; sample(x, 5, FALSE, NULL) ;}
 [1] 3 4 5 2 1
@@ -9129,6 +9826,22 @@ list()
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
 #{ seq(1L,4L,2L) }
 [1] 1 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(7, c(41,42)) }
+Error in seq.default(7, c(41, 42)) : 'to' must be of length 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(7, integer()) }
+Error in seq.default(7, integer()) : 'to' must be of length 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(c(1,2), 7) }
+Error in seq.default(c(1, 2), 7) : 'from' must be of length 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatement
+#{ seq(integer(), 7) }
+Error in seq.default(integer(), 7) : 'from' must be of length 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSequenceStatementNamedParams
 #{ seq(from=-10,to=-5,by=2) }
@@ -9516,6 +10229,14 @@ character(0)
 #{ sum(c(0, 1, 2, 3), 4) }
 [1] 10
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ x<-c(FALSE, FALSE); is.double(sum(x)) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
+#{ x<-c(FALSE, FALSE); is.integer(sum(x)) }
+[1] TRUE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSummaryGroupDispatch
 #{x<-c(1,2,3);class(x)<-"foo";Summary.foo<-function(x,...){"summary"};max(x)}
 [1] "summary"
@@ -9527,6 +10248,44 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSummaryGroupDispatch
 #{x<-c(1,2,3);class(x)<-"foo";min.foo<-function(x,...){"summary"};min(x)}
 [1] "summary"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSweep
+#{ sweep(array(1:24, dim = 4:2), 1, 1:4) }
+, , 1
+
+     [,1] [,2] [,3]
+[1,]    0    4    8
+[2,]    0    4    8
+[3,]    0    4    8
+[4,]    0    4    8
+
+, , 2
+
+     [,1] [,2] [,3]
+[1,]   12   16   20
+[2,]   12   16   20
+[3,]   12   16   20
+[4,]   12   16   20
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSweep
+#{ sweep(array(1:24, dim = 4:2), 1, 5) }
+, , 1
+
+     [,1] [,2] [,3]
+[1,]   -4    0    4
+[2,]   -3    1    5
+[3,]   -2    2    6
+[4,]   -1    3    7
+
+, , 2
+
+     [,1] [,2] [,3]
+[1,]    8   12   16
+[2,]    9   13   17
+[3,]   10   14   18
+[4,]   11   15   19
+
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSwitch
 #{ test1 <- function(type) { switch(type, mean = 1, median = 2, trimmed = 3) };test1("median")}
@@ -11079,6 +11838,10 @@ logical(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ logical() == c(FALSE, FALSE) }
 logical(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
+#{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }
+Error: dims [product 4] do not match the length of object [16]
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testVectors
 #{ raw() < as.raw(c(2,1,4)) }

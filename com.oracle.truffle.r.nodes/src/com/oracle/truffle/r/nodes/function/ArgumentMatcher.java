@@ -89,7 +89,7 @@ public class ArgumentMatcher {
     }
 
     /**
-     * Used for the implementation of the 'UseMethod' builtin: Reorders the arguments passed into
+     * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
      * the called, generic function and prepares them to be passed into the specific function
      *
      * @param function The 'Method' which is going to be 'Use'd

@@ -109,7 +109,7 @@ public abstract class TempFile extends RBuiltinNode {
         } else if (obj instanceof String) {
             return RDataFactory.createStringVector((String) obj);
         }
-        throw RError.error(getEncapsulatingSourceSection(), msg);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
     private static String createFile(String pattern, String tempDir, String fileExt) {

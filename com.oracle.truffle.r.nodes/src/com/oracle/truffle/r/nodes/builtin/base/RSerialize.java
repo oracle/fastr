@@ -9,11 +9,16 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
-import java.util.*;
-
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 
 // Code loosely transcribed from GnuR serialize.c.
@@ -23,62 +28,6 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  */
 public final class RSerialize {
-
-    private static enum SEXPTYPE {
-        NILSXP(0), /* nil ()NULL */
-        SYMSXP(1), /* symbols */
-        LISTSXP(2), /* lists of dotted pairs */
-        CLOSXP(3), /* closures */
-        ENVSXP(4), /* environments */
-        PROMSXP(5), /* promises: [un]evaluated closure arguments */
-        LANGSXP(6), /* language constructs (special lists) */
-        SPECIALSXP(7), /* special forms */
-        BUILTINSXP(8), /* builtin non-special forms */
-        CHARSXP(9), /* "scalar" string type (internal only) */
-        LGLSXP(10), /* logical vectors */
-        INTSXP(13), /* integer vectors */
-        REALSXP(14), /* real variables */
-        CPLXSXP(15), /* complex variables */
-        STRSXP(16), /* string vectors */
-        DOTSXP(17), /* dot-dot-dot object */
-        ANYSXP(18), /* make "any" args work */
-        VECSXP(19), /* generic vectors */
-        EXPRSXP(20), /* expressions vectors */
-        BCODESXP(21), /* byte code */
-        EXTPTRSXP(22), /* external pointer */
-        WEAKREFSXP(23), /* weak reference */
-        RAWSXP(24), /* raw bytes */
-        S4SXP(25), /* S4 non-vector */
-
-        NEWSXP(30), /* fresh node creaed in new page */
-        FREESXP(31), /* node released by GC */
-
-        FUNSXP(99), /* Closure or Builtin */
-
-        REFSXP(255),
-        NILVALUE_SXP(254),
-        GLOBALENV_SXP(253),
-        UNBOUNDVALUE_SXP(252),
-        MISSINGARG_SXP(251),
-        BASENAMESPACE_SXP(250),
-        NAMESPACESXP(249),
-        PACKAGESXP(248),
-        PERSISTSXP(247);
-
-        final int code;
-
-        static Map<Integer, SEXPTYPE> codeMap = new HashMap<>();
-
-        SEXPTYPE(int code) {
-            this.code = code;
-        }
-    }
-
-    static {
-        for (SEXPTYPE type : SEXPTYPE.values()) {
-            SEXPTYPE.codeMap.put(type.code, type);
-        }
-    }
 
     private static class Flags {
         static final int IS_OBJECT_BIT_MASK = 1 << 8;
@@ -118,10 +67,15 @@ public final class RSerialize {
     private PStream stream;
     private Object[] refTable = new Object[128];
     private int refTableIndex;
+    @SuppressWarnings("unused") private final RFunction hook;
 
     private RSerialize(RConnection conn) throws IOException {
+        this(conn.getInputStream(), null);
+    }
+
+    private RSerialize(InputStream is, RFunction hook) throws IOException {
+        this.hook = hook;
         byte[] buf = new byte[2];
-        InputStream is = conn.getInputStream();
         is.read(buf);
         switch (buf[0]) {
             case 'A':
@@ -134,7 +88,6 @@ public final class RSerialize {
             case '\n':
             default:
         }
-
     }
 
     private int inRefIndex(Flags flags) {
@@ -146,13 +99,14 @@ public final class RSerialize {
         }
     }
 
-    private void addReadRef(Object item) {
+    private Object addReadRef(Object item) {
         if (refTableIndex >= refTable.length) {
             Object[] newRefTable = new Object[2 * refTable.length];
             System.arraycopy(refTable, 0, newRefTable, 0, refTable.length);
             refTable = newRefTable;
         }
         refTable[refTableIndex++] = item;
+        return item;
     }
 
     private Object getReadRef(int index) {
@@ -161,13 +115,26 @@ public final class RSerialize {
 
     public static Object unserialize(RConnection conn) throws IOException {
         RSerialize instance = new RSerialize(conn);
-        int version = instance.stream.readInt();
+        return instance.unserialize();
+    }
+
+    public static Object unserialize(byte[] data, RFunction hook) throws IOException {
+// try (BufferedOutputStream bs = new BufferedOutputStream(new FileOutputStream("problem.rds"))) {
+// bs.write(data);
+// }
+        RSerialize instance = new RSerialize(new ByteArrayInputStream(data), hook);
+        return instance.unserialize();
+    }
+
+    private Object unserialize() {
+        int version = stream.readInt();
         @SuppressWarnings("unused")
-        int writerVersion = instance.stream.readInt();
+        int writerVersion = stream.readInt();
         @SuppressWarnings("unused")
-        int releaseVersion = instance.stream.readInt();
+        int releaseVersion = stream.readInt();
         assert version == 2; // TODO proper error message
-        return instance.readItem();
+        Object result = readItem();
+        return result;
     }
 
     private Object readItem() {
@@ -180,8 +147,27 @@ public final class RSerialize {
             case NILVALUE_SXP:
                 return RNull.instance;
 
+            case EMPTYENV_SXP:
+                return REnvironment.emptyEnv();
+
+            case BASEENV_SXP:
+                return REnvironment.baseEnv();
+
+            case GLOBALENV_SXP:
+                return REnvironment.globalEnv();
+
+            case MISSINGARG_SXP:
+                return RMissing.instance;
+
             case REFSXP: {
                 return getReadRef(inRefIndex(flags));
+            }
+
+            case NAMESPACESXP: {
+                RStringVector s = inStringVec(false);
+                addReadRef(findNamespace(s));
+
+                break;
             }
 
             case VECSXP: {
@@ -199,17 +185,7 @@ public final class RSerialize {
             }
 
             case STRSXP: {
-                int len = stream.readInt();
-                String[] data = new String[len];
-                boolean complete = RDataFactory.COMPLETE_VECTOR; // optimistic
-                for (int i = 0; i < len; i++) {
-                    String item = (String) readItem();
-                    if (RRuntime.isNA(item)) {
-                        complete = RDataFactory.INCOMPLETE_VECTOR;
-                    }
-                    data[i] = item;
-                }
-                result = RDataFactory.createStringVector(data, complete);
+                result = inStringVec(true);
                 break;
             }
 
@@ -240,7 +216,7 @@ public final class RSerialize {
                 double[] data = new double[len];
                 boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
                 for (int i = 0; i < len; i++) {
-                    data[i] = stream.readInt();
+                    data[i] = stream.readDouble();
                 }
                 result = RDataFactory.createDoubleVector(data, complete);
                 break;
@@ -262,25 +238,43 @@ public final class RSerialize {
             case PROMSXP:
             case DOTSXP: {
                 Object attrItem = null;
-                String tagItem = null;
+                RSymbol tagItem = null;
                 if (flags.hasAttr) {
                     attrItem = readItem();
 
                 }
                 if (flags.hasTag) {
-                    tagItem = (String) readItem();
+                    tagItem = (RSymbol) readItem();
                 }
                 Object carItem = readItem();
                 Object cdrItem = readItem();
-                result = new RPairList(carItem, cdrItem, tagItem);
+                RPairList pairList = new RPairList(carItem, cdrItem, tagItem == null ? null : tagItem.getName(), type);
+                result = pairList;
                 if (attrItem != null) {
-                    // result.setAttr(attrItem);
+                    // Can't attribute a RPairList
+                    // pairList.setAttr(name, value);
+                }
+                if (type == SEXPTYPE.CLOSXP) {
+                    // must convert the RPairList to a FastR RFunction
+                    // We could convert to an AST directly, but it is easier and more robust
+                    // to deparse and reparse.
+                    String deparse = RDeparse.deparse((RPairList) result);
+                    try {
+                        // TODO is there a problem with the lexical environment?
+                        RExpression expr = RContext.getEngine().parse(deparse);
+                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.globalEnv(), 0));
+                        result = func;
+                    } catch (RContext.Engine.ParseException | PutException ex) {
+                        // denotes a deparse/eval error, which is an unrecoverable bug
+                        Utils.fail("internal deparse error");
+                    }
                 }
                 break;
             }
 
             case SYMSXP: {
-                result = readItem();
+                String name = (String) readItem();
+                result = RDataFactory.createSymbol(name);
                 addReadRef(result);
                 break;
             }
@@ -311,7 +305,7 @@ public final class RSerialize {
                 RPairList pl = (RPairList) attr;
                 while (true) {
                     String tag = pl.getTag();
-                    Object car = pl.getCar();
+                    Object car = pl.car();
                     // Eventually we can just use the generic setAttr
                     if (tag.equals(RRuntime.NAMES_ATTR_KEY)) {
                         vec.setNames(car);
@@ -324,7 +318,7 @@ public final class RSerialize {
                     } else {
                         vec.setAttr(tag, car);
                     }
-                    Object cdr = pl.getCdr();
+                    Object cdr = pl.cdr();
                     if (cdr instanceof RNull) {
                         break;
                     } else {
@@ -335,6 +329,44 @@ public final class RSerialize {
         }
 
         return result;
+    }
+
+    private RStringVector inStringVec(boolean strsxp) {
+        if (!strsxp) {
+            if (stream.readInt() != 0) {
+                throw RError.error(Message.GENERIC, "names in persistent strings are not supported yet");
+            }
+        }
+        int len = stream.readInt();
+        String[] data = new String[len];
+        boolean complete = RDataFactory.COMPLETE_VECTOR; // optimistic
+        for (int i = 0; i < len; i++) {
+            String item = (String) readItem();
+            if (RRuntime.isNA(item)) {
+                complete = RDataFactory.INCOMPLETE_VECTOR;
+            }
+            data[i] = item;
+        }
+        return RDataFactory.createStringVector(data, complete);
+    }
+
+    private static RCallNode getNamespaceCall;
+
+    private static REnvironment findNamespace(RStringVector name) {
+        if (getNamespaceCall == null) {
+            try {
+                getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse("..getNamespace(name)").getDataAt(0)).getRep();
+            } catch (ParseException ex) {
+                // most unexpected
+                Utils.fail("findNameSpace");
+            }
+        }
+        RCallNode call = RCallNode.createCloneReplacingFirstArg(getNamespaceCall, ConstantNode.create(name));
+        try {
+            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
+        } catch (PutException ex) {
+            throw RError.error(null, ex);
+        }
     }
 
     private abstract static class PStream {
@@ -354,7 +386,6 @@ public final class RSerialize {
             return null;
         }
 
-        @SuppressWarnings("unused")
         double readDouble() {
             notImpl();
             return 0.0;
@@ -584,5 +615,4 @@ public final class RSerialize {
             return xdr.getDouble();
         }
     }
-
 }

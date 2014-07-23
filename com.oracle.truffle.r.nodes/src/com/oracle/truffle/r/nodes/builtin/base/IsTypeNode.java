@@ -168,6 +168,11 @@ public abstract class IsTypeNode extends RBuiltinNode {
     }
 
     @Specialization
+    public byte isType(RPairList value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
     public byte isType(Object value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;

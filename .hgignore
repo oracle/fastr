@@ -13,6 +13,7 @@
 ^dist/
 ^java/
 ^lib/
+^library/
 ^jdk1.(7|8).0
 ^java64/
 ^work/
@@ -82,3 +83,4 @@ agent/make/sa17.tar.gz
 R.tokens
 .tmp.unit.knucleotide.input
 *.o
+findbugs.html

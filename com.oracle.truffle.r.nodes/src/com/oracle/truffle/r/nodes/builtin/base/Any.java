@@ -42,6 +42,8 @@ public abstract class Any extends RBuiltinNode {
 
     @Child CastLogicalNode castLogicalNode;
 
+    public abstract Object execute(VirtualFrame frame, Object o);
+
     private byte castLogical(VirtualFrame frame, Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 // Transcribed from GnuR src/main/platform.c
 
 public class RAccuracyInfo {
@@ -28,6 +30,7 @@ public class RAccuracyInfo {
     public final double xmin;
     public final double xmax;
 
+    @SuppressFBWarnings(value = "FE_FLOATING_POINT_EQUALITY", justification = "the use of direct comparison is intended here")
     RAccuracyInfo() {
         int ibetaTemp;
         int itTemp;

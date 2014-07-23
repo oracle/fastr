@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -46,8 +47,8 @@ public class Recall extends RCustomBuiltinNode {
         return PARAMETER_NAMES;
     }
 
-    @Child protected MatchedArgumentsNode matchedArgs;
     @Child private DirectCallNode callNode;
+    @CompilationFinal private RFunction function;
 
     public Recall(RBuiltinNode prev) {
         super(prev);
@@ -56,31 +57,37 @@ public class Recall extends RCustomBuiltinNode {
     @Override
     public Object execute(VirtualFrame frame) {
         controlVisibility();
-        // for now, make sure that it's not compiled at all
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        RFunction function = RArguments.getFunction(frame);
         if (function == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
-        }
-        if (callNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            function = RArguments.getFunction(frame);
+            if (function == null) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+            }
             callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
-            // Now we need to grap the arguments passed to this function and forward them to
-            matchedArgs = insert(MatchedArgumentsNode.createUnnamed(createArgs(arguments[0])));
-            arguments[0] = null;
         }
 
+        // TODO mjj This is almost certainly incorrect
         // Match arguments for function
-        Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
+        Object[] argsObject = RArguments.create(function, createArgs(frame, arguments[0]));
         return callNode.call(frame, argsObject);
     }
 
-    private static RNode[] createArgs(RNode argNode) {
+    @ExplodeLoop
+    private static void executeArgs(VirtualFrame frame, RNode[] args, Object[] argValues) {
+        for (int i = 0; i < args.length; i++) {
+            argValues[i] = args[i].execute(frame);
+        }
+    }
+
+    private static Object[] createArgs(VirtualFrame frame, RNode argNode) {
         RNode actualArgNode = argNode instanceof WrapArgumentNode ? ((WrapArgumentNode) argNode).getOperand() : argNode;
         if (actualArgNode instanceof VarArgsNode) {
-            return ((VarArgsNode) actualArgNode).getArgumentNodes();
+            RNode[] args = ((VarArgsNode) actualArgNode).getArgumentNodes();
+            Object[] argValues = new Object[args.length];
+            executeArgs(frame, args, argValues);
+            return argValues;
         } else {
-            return new RNode[]{actualArgNode};
+            return new Object[]{argNode.execute(frame)};
         }
     }
 }

@@ -56,6 +56,7 @@ public class NamespaceFunctions {
     public abstract static class IsNamespaceEnv extends RBuiltinNode {
         @Specialization
         public byte doIsNamespaceEnv(REnvironment env) {
+            controlVisibility();
             return RRuntime.asLogical(env.isNamespaceEnv());
         }
     }
@@ -64,6 +65,7 @@ public class NamespaceFunctions {
     public abstract static class GetNamespaceRegistry extends RBuiltinNode {
         @Specialization
         public REnvironment doGetNamespaceRegistry(@SuppressWarnings("unused") RMissing missing) {
+            controlVisibility();
             return REnvironment.getNamespaceRegistry();
         }
     }
@@ -72,6 +74,7 @@ public class NamespaceFunctions {
     public abstract static class RegisterNamespace extends RBuiltinNode {
         @Specialization
         public RNull registerNamespace(String name, REnvironment env) {
+            controlVisibility();
             REnvironment.registerNamespace(name, env);
             return RNull.instance;
         }
@@ -81,14 +84,17 @@ public class NamespaceFunctions {
     public abstract static class UnregisterNamespace extends RBuiltinNode {
         @Specialization
         public RNull unregisterNamespace(@SuppressWarnings("unused") RAbstractStringVector name) {
-            // REnvironment.unregisterNamespace(name, env);
+            controlVisibility();
+            // TODO implement
             return RNull.instance;
         }
 
         @Specialization
-        public Object doGetRegisteredNamespace(RSymbol name) {
+        public Object unregisterNamespace(@SuppressWarnings("unused") RSymbol name) {
             controlVisibility();
-            return doGetRegisteredNamespace(name);
+            // TODO implement
+            return RNull.instance;
         }
     }
+
 }

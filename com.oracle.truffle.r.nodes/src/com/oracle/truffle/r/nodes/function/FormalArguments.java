@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * </ul>
  * The order is always the one defined by the function definition.
  */
-public class FormalArguments extends Arguments<RNode> {
+public final class FormalArguments extends Arguments<RNode> {
 
     public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
 

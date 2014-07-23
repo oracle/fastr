@@ -98,7 +98,7 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
                 continue;
             }
             for (int j = 0; j < classHr.getLength(); ++j) {
-                if (classHr.equals(klass.getDataAt(0))) {
+                if (classHr.getDataAt(j).equals(klass.getDataAt(0))) {
                     methods[i] = targetFunctionName;
                     break;
                 }

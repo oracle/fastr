@@ -78,4 +78,9 @@ public abstract class CastToContainerNode extends CastNode {
         return expression;
     }
 
+    @Specialization
+    public RPairList cast(RPairList pairlist) {
+        return pairlist;
+    }
+
 }

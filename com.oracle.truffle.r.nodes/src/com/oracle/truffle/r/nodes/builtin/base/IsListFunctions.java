@@ -93,6 +93,12 @@ public class IsListFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
+        @Specialization(order = 13)
+        public byte isType(RPairList pl) {
+            controlVisibility();
+            return RRuntime.LOGICAL_TRUE;
+        }
+
         protected boolean isList(RAbstractVector vector) {
             return vector.getElementClass() == Object.class;
         }
@@ -107,9 +113,9 @@ public class IsListFunctions {
     public abstract static class IsPairList extends IsTypeNode {
         @Specialization
         @Override
-        public byte isType(Object value) {
+        public byte isType(RPairList value) {
             controlVisibility();
-            return RRuntime.asLogical(false);
+            return RRuntime.LOGICAL_TRUE;
         }
     }
 
