@@ -28,6 +28,7 @@ import java.util.*;
 import org.antlr.runtime.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -306,6 +307,7 @@ public final class REngine implements RContext.Engine {
      * @param enclosing the enclosing environment to use for the anonymous function (value probably
      *            does not matter)
      */
+    @SlowPath
     private static RootCallTarget makeCallTarget(RNode node, REnvironment enclosing) {
         REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(enclosing);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>", true);
@@ -358,6 +360,7 @@ public final class REngine implements RContext.Engine {
         reportWarnings(true);
     }
 
+    @SlowPath
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
