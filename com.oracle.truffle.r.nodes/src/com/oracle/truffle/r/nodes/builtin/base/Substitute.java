@@ -83,7 +83,8 @@ public abstract class Substitute extends RBuiltinNode {
                 // Without real promises this is essentially impossible, as we need the expression
                 // that was uttered in the caller of the function this substitute call occurs in,
                 // and that may itself be a promise from an earlier call.
-                throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr), can't substitute args");
+                // N.B. In many cases it is ok to just return the value, which is what we do to
+                // allow progress on package loading
             }
             if (env == null) {
                 env = EnvFunctions.frameToEnvironment(frame);
