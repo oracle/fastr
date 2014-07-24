@@ -1902,19 +1902,9 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }");
         assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
-    }
 
-    @Test
-    @Ignore
-    public void testApermBroken() {
-        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
-
-        // // The rest of these work but produce a slightly different output than R itself
-        // first argument not an array
-        assertEvalError("{ aperm(c(1,2,3)); }");
-
-        // invalid perm length
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
+        // perm specified in complex numbers produces warning
+        assertEvalWarning("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
 
         // perm is not a permutation vector
         assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
@@ -1922,11 +1912,20 @@ public class TestSimpleBuiltins extends TestBase {
         // perm value out of bounds
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
 
-        // perm specified in complex numbers produces warning
-        assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
+        // first argument not an array
+        assertEvalError("{ aperm(c(1,2,3)); }");
 
         // Invalid first argument, not array
-        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
+        assertEvalError("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
+
+        // invalid perm length
+        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
+    }
+
+    @Test
+    @Ignore
+    public void testApermBroken() {
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
     }
 
     @Test

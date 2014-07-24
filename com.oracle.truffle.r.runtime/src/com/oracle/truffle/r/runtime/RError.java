@@ -300,7 +300,7 @@ public final class RError extends RuntimeException {
         MUST_BE_STRING("'%s' must be a character string"),
         ARGUMENT_MUST_BE_STRING("argument '%s' must be a character string"),
         MUST_BE_NONNULL_STRING("'%s' must be non-null character string"),
-        IS_OF_WRONG_LENGTH("'%s' is of wrong length"),
+        IS_OF_WRONG_LENGTH("'%s' is of wrong length %d (!= %d)"),
         IS_OF_WRONG_ARITY("'%d' argument passed to '%s' which requires '%d'"),
         OBJECT_NOT_SUBSETTABLE("object of type '%s' is not subsettable"),
         DIMS_DONT_MATCH_LENGTH("dims [product %d] do not match the length of object [%d]"),

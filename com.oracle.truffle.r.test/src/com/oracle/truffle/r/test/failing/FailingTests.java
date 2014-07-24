@@ -274,36 +274,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApermBroken_fc6d4e2ce3038c9b44e62938ed037b59() {
-        assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApermBroken_3d260fe7d682d16e5eabf013f369333f() {
-        assertEval("{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApermBroken_f663b80fd121c4a4b2fe9d966eb3db55() {
-        assertEvalError("{ aperm(c(1,2,3)); }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApermBroken_6a90b304900b2f56fb170f26490d9bca() {
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApermBroken_ced88e799f3281fae93e9a290dc0db54() {
-        assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testApermBroken_d452fc9657b296292ea89b31c89a766b() {
-        assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testAsCharacterIgnore_c803fc23a52fdc9950e5603f439b132f() {
         assertEval("{ as.character(list(1,2,3)) }");
     }
