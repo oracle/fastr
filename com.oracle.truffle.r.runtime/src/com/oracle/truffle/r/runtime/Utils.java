@@ -56,9 +56,9 @@ public final class Utils {
 
     public static void debug(String msg) {
         if (DEBUG) {
-            // CheckStyle: stop system.print check
+            // CheckStyle: stop system..print check
             System.err.println(msg);
-            // CheckStyle: resume system.print check
+            // CheckStyle: resume system..print check
         }
     }
 
@@ -156,6 +156,7 @@ public final class Utils {
     public static void warn(String msg) {
         // CheckStyle: stop system..print check
         System.err.println("FastR warning: " + msg);
+        // CheckStyle: resume system..print check
     }
 
     /**
@@ -169,6 +170,7 @@ public final class Utils {
     public static void fail(String msg) {
         // CheckStyle: stop system..print check
         System.err.println("FastR internal error: " + msg);
+        // CheckStyle: resume system..print check
         Utils.exit(2);
     }
 
@@ -264,13 +266,6 @@ public final class Utils {
             return null;
         });
 
-// Iterable<FrameInstance> frames = Truffle.getRuntime().getStackTrace();
-// if (frames != null) {
-// for (FrameInstance frame : frames) {
-// dumpFrame(str, frame.getCallTarget(), frame.getFrame(FrameAccess.READ_ONLY, true),
-// frame.isVirtualFrame());
-// }
-// }
         return str.toString();
     }
 
