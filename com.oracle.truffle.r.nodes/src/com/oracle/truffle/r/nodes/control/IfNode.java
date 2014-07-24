@@ -84,7 +84,9 @@ public abstract class IfNode extends RNode implements VisibilityController {
 
     @Specialization
     public Object doObject(byte condition, boolean hasThen, Object left, boolean hasElse, Object right) {
-        isVisible = condition == RRuntime.LOGICAL_TRUE || isElseGiven();
+        if (!RContext.isHeadless()) {
+            isVisible = condition == RRuntime.LOGICAL_TRUE || isElseGiven();
+        }
         controlVisibility();
         return hasThen ? left : right;
     }
