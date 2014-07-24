@@ -151,7 +151,7 @@ public class RPromise {
         // (The later case may happen, as passing a missing argument into a function call does
         // _not_ count as evaluation, and forwards the missing state in the form of
         // RMissing_Arg/RMissing.instance).
-        if (missingBit || RMissing.isMissing(obj)) {
+        if (missingBit || RMissing.isMissing(frame, obj)) {
             // Evaluate default value
             obj = doEvalDefaultArgument(frame);
 

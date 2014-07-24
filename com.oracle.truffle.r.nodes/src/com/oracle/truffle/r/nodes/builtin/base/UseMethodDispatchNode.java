@@ -64,10 +64,10 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argList.ensureCapacity(argListSize);
 
                 for (Object varArg : varArgs) {
-                    addArg(argList, varArg);
+                    addArg(frame, argList, varArg);
                 }
             } else {
-                addArg(argList, arg);
+                addArg(frame, argList, arg);
             }
         }
 
@@ -93,8 +93,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs());
     }
 
-    private static void addArg(List<Object> values, Object value) {
-        if (RMissing.isMissing(value)) {
+    private static void addArg(VirtualFrame frame, List<Object> values, Object value) {
+        if (RMissing.isMissing(frame, value)) {
             values.add(null);
         } else {
             values.add(value);

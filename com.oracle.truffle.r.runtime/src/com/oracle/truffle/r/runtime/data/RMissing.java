@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.frame.*;
+
 /**
  * See singleton {@link #instance}.
  */
@@ -38,23 +40,38 @@ public final class RMissing extends RScalar {
     /**
      * This function determines, of an arguments value - given as 'value' - is missing. An argument
      * is missing, when it has not been provided to the current function call, OR if the value that
-     * has been provided once was a missing argument. (cp. R language definition and Internals for
-     * this behavior).
+     * has been provided once was a missing argument. (cp. R language definition and Internals 1.5.1
+     * Missingness).
      *
+     * @param frame The frame where to eventually evaluate the promise in
      * @param value The value that should be examined
      * @return <code>true</code> iff this value is 'missing' in the definition of R
      */
-    public static boolean isMissing(Object value) {
+    public static boolean isMissing(VirtualFrame frame, Object value) {
         if (value == instance) {
             return true;
         }
 
+        // This might be a promise...
         if (value instanceof RPromise) {
-            RPromise promise = (RPromise) value;
-            // TODO STRICT: We also have to evaluate and check Promise value!
-            return promise.isMissingBitSet();
+            return isMissing(frame, (RPromise) value);
         }
         return false;
+    }
+
+    /**
+     * @param frame The frame where to eventually evaluate the promise in
+     * @param promise The {@link RPromise} that might evaluate to be 'missing'
+     * @return See {@link #isMissing(VirtualFrame, Object)}
+     */
+    public static boolean isMissing(VirtualFrame frame, RPromise promise) {
+        // Is missing bit set?
+        if (promise.isMissingBitSet()) {
+            return true;
+        }
+
+        // We also have to evaluate and check Promise value!
+        return promise.evaluate(frame) == instance;
     }
 
     @Override
