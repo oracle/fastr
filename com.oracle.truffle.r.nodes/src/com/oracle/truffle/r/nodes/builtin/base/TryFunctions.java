@@ -32,11 +32,11 @@ import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Temporary substitutions that just evaluates the expression for package loading and assume no
+ * Temporary substitutions that just evaluate the expression for package loading and assume no
  * errors or finallys.
  */
 public class TryFunctions {
-    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1})
+    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {0})
     public abstract static class Try extends RBuiltinNode {
 
         private static final String[] PARAMETER_NAMES = new String[]{"expr", "silent"};
