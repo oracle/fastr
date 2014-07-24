@@ -88,30 +88,21 @@ public class EvalFunctions {
         }
     }
 
-    @RBuiltin(name = "eval", nonEvalArgs = {0}, kind = SUBSTITUTE)
+    @RBuiltin(name = "eval", kind = SUBSTITUTE)
     public abstract static class Eval extends EvalAdapter {
 
-        public abstract Object execute(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos);
+// public abstract Object execute(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing
+// enclos);
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
+        public Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
             return doEval(frame, expr, REnvironment.globalEnv(), enclos);
         }
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
-            /*
-             * In the current hack expr is always a RPromise because we specified noEval for it in
-             * the RBuiltin The spec for eval says that expr is evaluated in the current scope (aka
-             * the caller's frame) so we do that first by evaluating the RPromise. Then we eval the
-             * result, which could do another eval, e.g. "eval(expression(1+2))"
-             * 
-             * Note that builtins do not have a separate VirtualFrame, they use the frame of the
-             * caller, so we can evaluate the promise using frame.
-             */
+        public Object doEval(@SuppressWarnings("unused") VirtualFrame frame, Object expr, REnvironment envir, RMissing enclos) {
             controlVisibility();
-            Object exprVal = expr.getValue(frame);
-            return doEvalBody(exprVal, envir, enclos);
+            return doEvalBody(expr, envir, enclos);
         }
 
     }
