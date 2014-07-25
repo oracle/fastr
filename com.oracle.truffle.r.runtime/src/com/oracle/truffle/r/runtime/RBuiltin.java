@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import java.lang.annotation.*;
 
+import com.oracle.truffle.api.nodes.NodeUtil.NodeField;
+
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RBuiltin {
 
@@ -53,7 +55,14 @@ public @interface RBuiltin {
     int[] nonEvalArgs() default {};
 
     /**
-     * Special magic relating to "..." arguments. TODO Say more.
+     * This flag is used to determine whether this {@link RBuiltin} needs the names of the supplied
+     * arguments for construction. If <code>true</code>, they are passed into
+     * NodeFactory.create(...). This is done in RBuiltinNode.createNode(), e.g.<br/>
+     * Just like {@code Combine}, these builtins declare a new {@link NodeField} "argNames" which
+     * gets set by the factory and which can then be accessed during runtime.
+     *
+     * @return Whether this {@link RBuiltin} needs access to the names of the supplied arguments
+     *         during execution (just like combine 'c(...)')
      */
     boolean isCombine() default false;
 
