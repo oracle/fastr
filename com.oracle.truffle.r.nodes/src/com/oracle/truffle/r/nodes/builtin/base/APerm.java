@@ -36,7 +36,7 @@ public abstract class APerm extends RBuiltinNode {
         controlVisibility();
 
         if (!vector.isArray()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
 
         int[] dim = getDimensions(vector);
@@ -93,7 +93,7 @@ public abstract class APerm extends RBuiltinNode {
             }
         } else {
             // perm size error
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
 
         return arrayPerm;
