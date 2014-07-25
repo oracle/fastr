@@ -60,14 +60,4 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
         }
     }
 
-    @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, String name, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
-        controlVisibility();
-        try {
-            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), REnvironment.frameToEnvironment(frame), null));
-            return RNull.instance;
-        } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
-        }
-    }
 }
