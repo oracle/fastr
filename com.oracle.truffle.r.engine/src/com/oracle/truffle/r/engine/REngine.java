@@ -35,6 +35,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
@@ -74,6 +75,7 @@ public final class REngine implements RContext.Engine {
         startTime = System.nanoTime();
         childTimes = new long[]{0, 0};
         Locale.setDefault(Locale.ROOT);
+        FastROptions.initialize();
         RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
         builtinLookup = RBuiltinPackages.getInstance();

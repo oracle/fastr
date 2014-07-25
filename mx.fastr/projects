@@ -73,6 +73,9 @@ distribution@FASTR@dependencies=com.oracle.truffle.r.nodes
 distribution@FASTR@exclude=JDK_TOOLS,FINDBUGS,NETLIB,ASM_UTIL,ASM_TREE,ASM_COMMONS,ASM_ANALYSIS,ASM,JNR_X86ASM,JFFI_NATIVE,JFFI,JNR_FFI,JNR_CONSTANTS,JNR_POSIX,JNR_INVOKE,JNR_UDIS86,JLINE,ANTLR-C,ANTLR
 distribution@FASTR@distDependencies=TRUFFLE,GRAAL
 
+distribution@FASTR_OPTIONS@path=fastr-options.jar
+distribution@FASTR_OPTIONS@dependencies=com.oracle.truffle.r.options
+
 # com.oracle.truffle.r.parser.processor
 project@com.oracle.truffle.r.parser.processor@sourceDirs=src
 project@com.oracle.truffle.r.parser.processor@dependencies=JDK_TOOLS,ANTLR,ANTLR-C
@@ -90,7 +93,7 @@ project@com.oracle.truffle.r.parser@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.nodes
 project@com.oracle.truffle.r.nodes@sourceDirs=src
-project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser
+project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser,com.oracle.truffle.r.options
 project@com.oracle.truffle.r.nodes@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.nodes@javaCompliance=1.8
 project@com.oracle.truffle.r.nodes@annotationProcessors=com.oracle.truffle.dsl.processor
@@ -137,4 +140,10 @@ project@com.oracle.truffle.r.native@sourceDirs=
 project@com.oracle.truffle.r.native@native=true
 project@com.oracle.truffle.r.native@workingSets=FastR
 
+# com.oracle.truffle.r.options
+project@com.oracle.truffle.r.options@sourceDirs=src
+project@com.oracle.truffle.r.options@dependencies=com.oracle.graal.options
+project@com.oracle.truffle.r.options@checkstyle=com.oracle.truffle.r.runtime
+project@com.oracle.truffle.r.options@javaCompliance=1.8
+project@com.oracle.truffle.r.options@workingSets=FastR
 
