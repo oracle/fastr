@@ -175,20 +175,38 @@ public abstract class Seq extends RBuiltinNode {
         return (int) start.getDataAt(0);
     }
 
-    @Specialization(order = 150)
+    @Specialization(order = 150, guards = "lengthZero")
+    public RIntVector LengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut) {
+        controlVisibility();
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization(order = 151, guards = "!lengthZero")
     public RIntSequence seq(RMissing start, RMissing to, RMissing stride, int lengthOut) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, lengthOut);
     }
 
-    @Specialization(order = 151)
+    @Specialization(order = 155, guards = "lengthZero")
+    public RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, double lengthOut) {
+        controlVisibility();
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization(order = 156, guards = "!lengthZero")
     public RIntSequence seq(RMissing start, RMissing to, RMissing stride, double lengthOut) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, (int) lengthOut);
     }
 
-    @Specialization(order = 160, guards = "startLengthOne")
-    public RDoubleSequence seq(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut) {
+    @Specialization(order = 160, guards = {"startLengthOne", "lengthZero"})
+    public RDoubleVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut) {
+        controlVisibility();
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(order = 161, guards = {"startLengthOne", "!lengthZero"})
+    public RDoubleSequence seqLengthZero(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, lengthOut);
     }
@@ -238,4 +256,17 @@ public abstract class Seq extends RBuiltinNode {
         }
         return true;
     }
+
+    protected boolean lengthZero(RAbstractVector start, Object to, Object stride, int lengthOut) {
+        return lengthOut == 0;
+    }
+
+    protected boolean lengthZero(RMissing start, Object to, Object stride, int lengthOut) {
+        return lengthOut == 0;
+    }
+
+    protected boolean lengthZero(Object start, Object to, Object stride, double lengthOut) {
+        return lengthOut == 0;
+    }
+
 }

@@ -10629,48 +10629,53 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_f5295de8fec47c85c0ebb8273aaffe5e() {
+    public void TestSimpleBuiltins_testRep_f5295de8fec47c85c0ebb8273aaffe5e() {
         assertEval("{ rep(1:3, length.out=NA) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_37bcda27c57e6918291616b0f69bf3b6() {
+    public void TestSimpleBuiltins_testRep_37bcda27c57e6918291616b0f69bf3b6() {
         assertEval("{ x <- as.raw(11) ; names(x) <- c(\"X\") ; rep(x, 3) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_5b82141af1888c35e442c79c94ee046f() {
+    public void TestSimpleBuiltins_testRep_5b82141af1888c35e442c79c94ee046f() {
         assertEval("{ x <- as.raw(c(11,12)) ; names(x) <- c(\"X\",\"Y\") ; rep(x, 2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_2df9727ae253abdb9c0ea3a4055d1563() {
+    public void TestSimpleBuiltins_testRep_2df9727ae253abdb9c0ea3a4055d1563() {
         assertEval("{ x <- c(TRUE,NA) ; names(x) <- c(\"X\",NA) ; rep(x, length.out=3) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_41febe11e7d8ee67ae1a3c96176e6758() {
+    public void TestSimpleBuiltins_testRep_41febe11e7d8ee67ae1a3c96176e6758() {
         assertEval("{ x <- 1L ; names(x) <- c(\"X\") ; rep(x, times=2) } ");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_4d2f602803b6746348def3b076ff4129() {
+    public void TestSimpleBuiltins_testRep_4d2f602803b6746348def3b076ff4129() {
         assertEval("{ x <- 1 ; names(x) <- c(\"X\") ; rep(x, times=0) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_e8422af202641451dc9547b331356e3f() {
+    public void TestSimpleBuiltins_testRep_e8422af202641451dc9547b331356e3f() {
         assertEval("{ x <- 1+1i ; names(x) <- c(\"X\") ; rep(x, times=2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_109091b6f9625b204bc0e053084ffef6() {
+    public void TestSimpleBuiltins_testRep_109091b6f9625b204bc0e053084ffef6() {
         assertEval("{ x <- c(1+1i,1+2i) ; names(x) <- c(\"X\") ; rep(x, times=2) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testRepIgnore_5e2e382a5ebec41881dd1cac8e3dc177() {
+    public void TestSimpleBuiltins_testRep_5e2e382a5ebec41881dd1cac8e3dc177() {
         assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRep_22a733041501c35c7d97a6acd643f991() {
+        assertEval("{ x<-c(1,2); names(x)<-c(\"X\", \"Y\"); rep(x, c(3,2)) }");
     }
 
     @Test
@@ -11484,6 +11489,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSequenceStatementNamedParams_017c83d5285ef470e086c8cdcf688948() {
+        assertEval("{ seq(length.out=0) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_1251c8e4910f8fd3c34d302f4dedd4e3() {
         assertEval("{ seq(to=-1,from=-10) }");
     }
@@ -11491,11 +11501,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_e098431abfadfb039b6df6aff8256b5e() {
         assertEval("{ seq(length.out=13.4) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_017c83d5285ef470e086c8cdcf688948() {
-        assertEval("{ seq(length.out=0) }");
     }
 
     @Test

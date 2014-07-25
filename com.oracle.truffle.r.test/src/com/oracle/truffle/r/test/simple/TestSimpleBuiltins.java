@@ -81,6 +81,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(from=1.7) }");
         assertEval("{ seq(from=1,to=3,by=1) }");
         assertEval("{ seq(from=-10,to=-5,by=2) }");
+
+        assertEval("{ seq(length.out=0) }");
     }
 
     @Test
@@ -88,7 +90,6 @@ public class TestSimpleBuiltins extends TestBase {
     public void testSequenceStatementNamedParamsIgnore() {
         assertEval("{ seq(to=-1,from=-10) }");
         assertEval("{ seq(length.out=13.4) }");
-        assertEval("{ seq(length.out=0) }");
         assertEval("{ seq(along.with=10) }");
         assertEval("{ seq(along.with=NA) }");
         assertEval("{ seq(along.with=1:10) }");
@@ -174,12 +175,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep(c(1,2),c(3,3)) }");
         assertEval("{ rep(NA,8) }");
         assertEval("{ rep(TRUE,8) }");
-    }
-
-    @Test
-    @Ignore
-    public void testRepIgnore() {
         assertEval("{ rep(1:3, length.out=NA) }");
+
         assertEval("{ x <- as.raw(11) ; names(x) <- c(\"X\") ; rep(x, 3) }");
         assertEval("{ x <- as.raw(c(11,12)) ; names(x) <- c(\"X\",\"Y\") ; rep(x, 2) }");
         assertEval("{ x <- c(TRUE,NA) ; names(x) <- c(\"X\",NA) ; rep(x, length.out=3) }");
@@ -188,6 +185,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1+1i ; names(x) <- c(\"X\") ; rep(x, times=2) }");
         assertEval("{ x <- c(1+1i,1+2i) ; names(x) <- c(\"X\") ; rep(x, times=2) }");
         assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
+
+        assertEval("{ x<-c(1,2); names(x)<-c(\"X\", \"Y\"); rep(x, c(3,2)) }");
     }
 
     @Test

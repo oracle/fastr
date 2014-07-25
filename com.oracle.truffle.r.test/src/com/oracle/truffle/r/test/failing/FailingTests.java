@@ -1584,51 +1584,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_f5295de8fec47c85c0ebb8273aaffe5e() {
-        assertEval("{ rep(1:3, length.out=NA) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_37bcda27c57e6918291616b0f69bf3b6() {
-        assertEval("{ x <- as.raw(11) ; names(x) <- c(\"X\") ; rep(x, 3) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_5b82141af1888c35e442c79c94ee046f() {
-        assertEval("{ x <- as.raw(c(11,12)) ; names(x) <- c(\"X\",\"Y\") ; rep(x, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_2df9727ae253abdb9c0ea3a4055d1563() {
-        assertEval("{ x <- c(TRUE,NA) ; names(x) <- c(\"X\",NA) ; rep(x, length.out=3) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_41febe11e7d8ee67ae1a3c96176e6758() {
-        assertEval("{ x <- 1L ; names(x) <- c(\"X\") ; rep(x, times=2) } ");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_4d2f602803b6746348def3b076ff4129() {
-        assertEval("{ x <- 1 ; names(x) <- c(\"X\") ; rep(x, times=0) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_e8422af202641451dc9547b331356e3f() {
-        assertEval("{ x <- 1+1i ; names(x) <- c(\"X\") ; rep(x, times=2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_109091b6f9625b204bc0e053084ffef6() {
-        assertEval("{ x <- c(1+1i,1+2i) ; names(x) <- c(\"X\") ; rep(x, times=2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testRepIgnore_5e2e382a5ebec41881dd1cac8e3dc177() {
-        assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testRoundIgnore_bb594f5dd03efc19fa1dbee51b5324da() {
         assertEval("{ round(1.123456,digit=2.8) }");
     }
@@ -1821,11 +1776,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_e098431abfadfb039b6df6aff8256b5e() {
         assertEval("{ seq(length.out=13.4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSequenceStatementNamedParamsIgnore_017c83d5285ef470e086c8cdcf688948() {
-        assertEval("{ seq(length.out=0) }");
     }
 
     @Ignore
