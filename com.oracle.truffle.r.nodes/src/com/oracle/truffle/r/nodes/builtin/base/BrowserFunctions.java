@@ -82,7 +82,7 @@ public class BrowserFunctions {
 
         private static void doBrowser(VirtualFrame frame) {
             ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-            REnvironment callerEnv = EnvFunctions.frameToEnvironment(frame);
+            REnvironment callerEnv = REnvironment.frameToEnvironment(frame);
             ch.printf("Called from: %s%n", callerEnv == REnvironment.globalEnv() ? "top level" : RArguments.getFunction(frame).getTarget());
             String savedPrompt = ch.getPrompt();
             ch.setPrompt(browserPrompt());

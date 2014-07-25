@@ -28,7 +28,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -60,7 +59,7 @@ public class EnvFunctions {
                 if (callerFrame == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
-                    return frameToEnvironment(callerFrame);
+                    return REnvironment.frameToEnvironment(callerFrame);
                 }
 
             }
@@ -169,7 +168,7 @@ public class EnvFunctions {
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-            return frameToEnvironment(callerFrame);
+            return REnvironment.frameToEnvironment(callerFrame);
         }
 
         /**
@@ -180,7 +179,7 @@ public class EnvFunctions {
             controlVisibility();
             Frame enclosing = func.getEnclosingFrame();
             REnvironment env = RArguments.getEnvironment(enclosing);
-            return env == null ? lexicalChain(enclosing) : env;
+            return env == null ? REnvironment.lexicalChain(enclosing) : env;
         }
 
         @Specialization(order = 100)
@@ -224,7 +223,7 @@ public class EnvFunctions {
             // TODO this will eventually go away when R code fixed when promises available
             controlVisibility();
             // FIXME what if hash == FALSE?
-            return new REnvironment.NewEnv(frameToEnvironment(frame), size);
+            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame), size);
         }
 
         @Specialization
@@ -317,53 +316,6 @@ public class EnvFunctions {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(false);
         }
-    }
-
-    /**
-     * Check if a frame corresponds to a function. If there is no function associated with the
-     * frame, then is it one of the package environments. Fortunately, we do not have to do a search
-     * as, in this case, the {@link REnvironment} value is also stored in the frame.
-     *
-     * @return ({code null) if this is a function frame, else the associated environment
-     */
-    static REnvironment checkNonFunctionFrame(Frame frame) {
-        RFunction callerFunc = RArguments.getFunction(frame);
-        if (callerFunc == null) {
-            REnvironment env = RArguments.getEnvironment(frame);
-            assert env != null;
-            return env;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Converts a {@link Frame} to an {@link REnvironment}.
-     */
-    static REnvironment frameToEnvironment(Frame frame) {
-        REnvironment env = checkNonFunctionFrame(frame);
-        if (env == null) {
-            env = lexicalChain(frame);
-        }
-        return env;
-    }
-
-    /**
-     * When functions are defined, the associated {@link FunctionDefinitionNode} contains an
-     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment instance
-     * whose parent is the lexically enclosing environment. This chain can be followed back to
-     * whichever "base" (i.e. non-function) environment the outermost function was defined in, e.g.
-     * "global" or "base". The purpose of this method is to create an analogous lexical parent chain
-     * of {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
-     * {@link MaterializedFrame}.
-     */
-    static REnvironment lexicalChain(Frame frame) {
-        REnvironment env = checkNonFunctionFrame(frame);
-        if (env == null) {
-            // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame.materialize());
-        }
-        return env;
     }
 
 }
