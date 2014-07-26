@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.ast.Repeat;
@@ -124,7 +125,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
         if (callName != null) {
             final String functionName = RRuntime.toString(callName);
-            if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
+            if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
                 return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
             }
             return RCallNode.createCall(callSource, ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
@@ -203,7 +204,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode operand = op.getLHS().accept(this);
         final String functionName = op.getPrettyOperator();
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
-        if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
+        if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
             return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
@@ -215,7 +216,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         RNode right = op.getRHS().accept(this);
         final String functionName = op.getPrettyOperator();
         final CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, left, right);
-        if (!RCmdOptions.DISABLE_GROUP_GENERICS.getValue() && RGroupGenerics.getGroup(functionName) != null) {
+        if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
             return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode);
