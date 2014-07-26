@@ -238,7 +238,7 @@ public abstract class REnvironment implements RAttributable {
         // now load rPackages, we need a new VirtualFrame for each
         REnvironment pkgParent = autoloadEnv;
         for (RPackage rPackage : rPackages) {
-            VirtualFrame pkgFrame = RRuntime.createVirtualFrame();
+            VirtualFrame pkgFrame = RRuntime.createNonFunctionFrame();
             Package pkgEnv = new Package(pkgParent, rPackage.name, pkgFrame, rPackage.path);
             RContext.getEngine().loadDefaultPackage(rPackage.name, pkgFrame, pkgEnv);
             attach(2, pkgEnv);

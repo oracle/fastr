@@ -132,10 +132,22 @@ public final class RArguments {
         a[INDEX_N_NAMES] = names.length;
         System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
         System.arraycopy(names, 0, a, INDEX_ARGUMENTS + evaluatedArgs.length, names.length);
+        assert envFunctionInvariant(a);
     }
 
-    public static Object[] create() {
-        return create(null, null, EMPTY_OBJECT_ARRAY);
+    private static boolean envFunctionInvariant(Object[] a) {
+        return !(a[INDEX_ENVIRONMENT] == null && a[INDEX_FUNCTION] == null);
+    }
+
+    /**
+     * A package-private method for creating an uninitialized array, used only the the runtime, as
+     * it violates the invariant.
+     */
+    static Object[] createUnitialized() {
+        Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
+        a[INDEX_N_ARGS] = 0;
+        a[INDEX_N_NAMES] = 0;
+        return a;
     }
 
     public static Object[] create(RFunction functionObj) {
