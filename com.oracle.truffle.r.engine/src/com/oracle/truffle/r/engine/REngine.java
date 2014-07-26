@@ -78,8 +78,8 @@ public final class REngine implements RContext.Engine {
         crashOnFatalError = crashOnFatalErrorArg;
         builtinLookup = RBuiltinPackages.getInstance();
         context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, headless);
-        VirtualFrame globalFrame = RRuntime.createVirtualFrame();
-        VirtualFrame baseFrame = RRuntime.createVirtualFrame();
+        VirtualFrame globalFrame = RRuntime.createNonFunctionFrame();
+        VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
         REnvironment.baseInitialize(globalFrame, baseFrame);
         evalFunction = singleton.lookupBuiltin("eval");
         RPackageVariables.initializeBase();
@@ -130,7 +130,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
-        VirtualFrame frame = RRuntime.createVirtualFrame();
+        VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, REnvironment.globalEnv(), printResult);
     }
@@ -203,7 +203,7 @@ public final class REngine implements RContext.Engine {
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget(exprRep, REnvironment.globalEnv());
         MaterializedFrame envFrame = envir.getFrame();
-        VirtualFrame vFrame = RRuntime.createVirtualFrame();
+        VirtualFrame vFrame = RRuntime.createFunctionFrame(function);
         // We make the new frame look like it was a real call to "function".
         RArguments.setEnclosingFrame(vFrame, function.getEnclosingFrame());
         RArguments.setFunction(vFrame, function);

@@ -87,8 +87,7 @@ public class GroupDispatchNode extends S3DispatchNode {
     }
 
     private void setEnvironment() {
-        final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
-        RArguments.setEnclosingFrame(newFrame, targetFunction.getEnclosingFrame());
+        final VirtualFrame newFrame = RRuntime.createFunctionFrame(targetFunction);
         defineVars(newFrame);
         wvnMethod.execute(newFrame, dotMethod);
         if (writeGroup) {
