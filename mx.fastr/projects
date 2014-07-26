@@ -73,9 +73,6 @@ distribution@FASTR@dependencies=com.oracle.truffle.r.nodes
 distribution@FASTR@exclude=JDK_TOOLS,FINDBUGS,NETLIB,ASM_UTIL,ASM_TREE,ASM_COMMONS,ASM_ANALYSIS,ASM,JNR_X86ASM,JFFI_NATIVE,JFFI,JNR_FFI,JNR_CONSTANTS,JNR_POSIX,JNR_INVOKE,JNR_UDIS86,JLINE,ANTLR-C,ANTLR
 distribution@FASTR@distDependencies=TRUFFLE,GRAAL
 
-distribution@FASTR_OPTIONS@path=fastr-options.jar
-distribution@FASTR_OPTIONS@dependencies=com.oracle.truffle.r.options
-
 # com.oracle.truffle.r.parser.processor
 project@com.oracle.truffle.r.parser.processor@sourceDirs=src
 project@com.oracle.truffle.r.parser.processor@dependencies=JDK_TOOLS,ANTLR,ANTLR-C
