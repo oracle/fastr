@@ -74,7 +74,7 @@ public class HiddenInternalFunctions {
                 ConstantNode vecNode = ConstantNode.create(intVec);
                 RCallNode expr0 = RCallNode.createCloneReplacingFirstArg(callNode, vecNode);
                 try {
-                    aenv.put(name, RDataFactory.createPromise(expr0, eenv, null));
+                    aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
                 }

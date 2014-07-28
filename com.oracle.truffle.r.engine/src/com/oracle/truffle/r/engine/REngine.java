@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseArg;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
@@ -248,7 +249,9 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
-        RootCallTarget callTarget = makeCallTarget((RNode) promise.getDefaultRep().getRep(), REnvironment.emptyEnv());
+        assert promise instanceof RPromiseArg;
+        RPromiseArg promisedArg = (RPromiseArg) promise;
+        RootCallTarget callTarget = makeCallTarget((RNode) promisedArg.getDefaultRep().getRep(), REnvironment.emptyEnv());
         return runCall(callTarget, frame, false, false);
     }
 

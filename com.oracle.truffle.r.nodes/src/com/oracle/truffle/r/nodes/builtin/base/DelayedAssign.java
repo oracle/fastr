@@ -53,7 +53,7 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
         controlVisibility();
         String name = nameVec.getDataAt(0);
         try {
-            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), EnvFunctions.frameToEnvironment(frame), null));
+            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), EnvFunctions.frameToEnvironment(frame)));
             return RNull.instance;
         } catch (PutException ex) {
             throw RError.error(getEncapsulatingSourceSection(), ex);
@@ -64,7 +64,7 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
     public Object doDelayedAssign(VirtualFrame frame, String name, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
         controlVisibility();
         try {
-            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), EnvFunctions.frameToEnvironment(frame), null));
+            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), EnvFunctions.frameToEnvironment(frame)));
             return RNull.instance;
         } catch (PutException ex) {
             throw RError.error(getEncapsulatingSourceSection(), ex);

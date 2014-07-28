@@ -27,16 +27,16 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseArgFactory;
 
 public class PromiseNode extends RNode {
-    protected final RPromiseFactory factory;
+    protected final RPromiseArgFactory factory;
 
-    protected PromiseNode(RPromiseFactory factory) {
+    protected PromiseNode(RPromiseArgFactory factory) {
         this.factory = factory;
     }
 
-    public static PromiseNode create(SourceSection src, RPromiseFactory factory) {
+    public static PromiseNode create(SourceSection src, RPromiseArgFactory factory) {
         PromiseNode pn = null;
         switch (factory.getEvalPolicy()) {
             case RAW:
@@ -64,7 +64,7 @@ public class PromiseNode extends RNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        return factory.createPromise();
+        return factory.createPromiseArg();
     }
 
     /**
@@ -74,7 +74,7 @@ public class PromiseNode extends RNode {
     private static class StrictPromiseNode extends PromiseNode {
         @Child private RNode suppliedArg;
 
-        public StrictPromiseNode(RPromiseFactory factory) {
+        public StrictPromiseNode(RPromiseArgFactory factory) {
             super(factory);
             this.suppliedArg = (RNode) factory.getArgument();
         }
@@ -97,7 +97,7 @@ public class PromiseNode extends RNode {
         @Child private RNode suppliedArg;
         @Child private RNode defaultArg;
 
-        public RawPromiseNode(RPromiseFactory factory) {
+        public RawPromiseNode(RPromiseArgFactory factory) {
             super(factory);
             this.suppliedArg = (RNode) factory.getArgument();
             this.defaultArg = (RNode) factory.getDefaultArg();
