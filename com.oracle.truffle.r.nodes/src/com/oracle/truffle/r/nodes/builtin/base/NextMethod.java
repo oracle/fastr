@@ -52,7 +52,7 @@ public abstract class NextMethod extends RBuiltinNode {
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args);
+            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args, getSuppliedArgsNames());
             dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = genericName;
         }

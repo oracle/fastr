@@ -33,7 +33,12 @@ public abstract class UseMethod extends RBuiltinNode {
      */
     private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
 
-    @Child UseMethodNode useMethodNode = new UninitializedUseMethodNode(0);
+    @Child UseMethodNode useMethodNode;
+
+    public UseMethod() {
+        super();
+        this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
+    }
 
     @Override
     public Object[] getParameterNames() {
@@ -54,6 +59,11 @@ public abstract class UseMethod extends RBuiltinNode {
     private abstract static class UseMethodNode extends RNode {
 
         @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
+        protected final String[] suppliedArgsNames;
+
+        public UseMethodNode(String[] suppliedArgsNames) {
+            this.suppliedArgsNames = suppliedArgsNames;
+        }
 
         @Override
         public Object execute(VirtualFrame frame) {
@@ -67,7 +77,8 @@ public abstract class UseMethod extends RBuiltinNode {
 
         protected final int depth;
 
-        protected UninitializedUseMethodNode(int depth) {
+        protected UninitializedUseMethodNode(int depth, String[] suppliedArgsNames) {
+            super(suppliedArgsNames);
             this.depth = depth;
         }
 
@@ -81,12 +92,12 @@ public abstract class UseMethod extends RBuiltinNode {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
                 if (o == RMissing.instance) {
-                    return replace(new UseMethodGenericOnlyNode(generic, depth));
+                    return replace(new UseMethodGenericOnlyNode(generic, depth, suppliedArgsNames));
                 } else {
-                    return replace(new UseMethodGenericAndObjectNode(generic, depth));
+                    return replace(new UseMethodGenericAndObjectNode(generic, depth, suppliedArgsNames));
                 }
             }
-            return replace(new UseMethodFallbackNode());
+            return replace(new UseMethodFallbackNode(suppliedArgsNames));
         }
 
     }
@@ -98,10 +109,11 @@ public abstract class UseMethod extends RBuiltinNode {
 
         private final String generic;
 
-        protected UseMethodCachedNode(String generic, int depth) {
+        protected UseMethodCachedNode(String generic, int depth, String[] suppliedArgsNames) {
+            super(suppliedArgsNames);
             this.generic = generic;
-            nextNode = new UninitializedUseMethodNode(depth + 1);
-            currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+            nextNode = new UninitializedUseMethodNode(depth + 1, suppliedArgsNames);
+            currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
         }
 
         protected abstract Object executeDispatch(VirtualFrame frame, String gen, Object o);
@@ -123,8 +135,8 @@ public abstract class UseMethod extends RBuiltinNode {
      */
     private static final class UseMethodGenericOnlyNode extends UseMethodCachedNode {
 
-        protected UseMethodGenericOnlyNode(String generic, int depth) {
-            super(generic, depth);
+        protected UseMethodGenericOnlyNode(String generic, int depth, String[] suppliedArgsNames) {
+            super(generic, depth, suppliedArgsNames);
         }
 
         @Override
@@ -142,8 +154,8 @@ public abstract class UseMethod extends RBuiltinNode {
 
     private static final class UseMethodGenericAndObjectNode extends UseMethodCachedNode {
 
-        protected UseMethodGenericAndObjectNode(String generic, int depth) {
-            super(generic, depth);
+        protected UseMethodGenericAndObjectNode(String generic, int depth, String[] suppliedArgsNames) {
+            super(generic, depth, suppliedArgsNames);
         }
 
         @Override
@@ -153,6 +165,10 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     private static final class UseMethodFallbackNode extends UseMethodNode {
+
+        public UseMethodFallbackNode(String[] suppliedArgsNames) {
+            super(suppliedArgsNames);
+        }
 
         @Override
         public Object execute(VirtualFrame frame, String generic, Object o) {
@@ -167,10 +183,10 @@ public abstract class UseMethod extends RBuiltinNode {
                 if (enclosingArg instanceof RPromise) {
                     enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
                 }
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
             } else {
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, o));
             }
         }
