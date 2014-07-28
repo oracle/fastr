@@ -107,14 +107,14 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin()));
+            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
         }
     }
 
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
     }
 }

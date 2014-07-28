@@ -24,16 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.Node.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -50,7 +46,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private void updateNamesStringVector(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin()));
+            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         updateNames.executeStringVector(frame, vector, o);
     }

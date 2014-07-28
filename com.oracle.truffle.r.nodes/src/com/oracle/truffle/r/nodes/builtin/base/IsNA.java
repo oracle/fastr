@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,7 +41,7 @@ public abstract class IsNA extends RBuiltinNode {
     private Object isNARecursive(VirtualFrame frame, Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveIsNA = insert(IsNAFactory.create(new RNode[1], getBuiltin()));
+            recursiveIsNA = insert(IsNAFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return recursiveIsNA.execute(frame, o);
     }

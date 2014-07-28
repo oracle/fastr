@@ -37,7 +37,7 @@ public abstract class Invisible extends RInvisibleBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
 
     public static RNode create(RNode value) {
-        return InvisibleFactory.create(new RNode[]{value}, null);
+        return InvisibleFactory.create(new RNode[]{value}, null, null);
     }
 
     @Override

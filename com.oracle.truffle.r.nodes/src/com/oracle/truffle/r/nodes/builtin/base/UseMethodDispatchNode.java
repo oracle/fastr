@@ -17,16 +17,18 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    UseMethodDispatchNode(final String generic, final RStringVector type) {
+    private final String[] suppliedArgsNames;
+
+    UseMethodDispatchNode(final String generic, final RStringVector type, String[] suppliedArgsNames) {
         this.genericName = generic;
         this.type = type;
+        this.suppliedArgsNames = suppliedArgsNames;
     }
 
     @Override
@@ -47,10 +49,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
-        RFunction calledGeneric = RArguments.getFunction(frame);
-        FormalArguments calledFormals = ((RRootNode) calledGeneric.getTarget().getRootNode()).getFormalArguments();
-// int varArgsIndex = calledFormals.getVarArgIndex();
-
         // Extract arguments from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
         int argListSize = argCount;
@@ -72,19 +70,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
 
         // ...and use them as 'supplied' arguments...
-
-        // Don't use "..." as supplied name! TODO Correct name matching necessary???
-        String[] calledSuppliedNames = new String[calledFormals.getNames().length];
-        Arrays.fill(calledSuppliedNames, null);
-        // TODO UseMethod: Add proper name resolution
-// for (int i = 0; i < calledSuppliedNames.length; i++) {
-// String name = calledFormals.getNames()[i];
-// if (i == varArgsIndex) {
-// calledSuppliedNames[i] = null;
-// } else {
-// calledSuppliedNames[i] = name;
-// }
-// }
+        String[] calledSuppliedNames = suppliedArgsNames;
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
 
         // ...to match them against the chosen function's formal arguments

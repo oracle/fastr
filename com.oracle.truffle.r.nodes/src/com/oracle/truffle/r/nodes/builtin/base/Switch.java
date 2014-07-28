@@ -21,18 +21,14 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "switch", kind = PRIMITIVE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
-@NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "switch", kind = PRIMITIVE)
 public abstract class Switch extends RBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"EXPR", "..."};
 
     @Child protected CastIntegerNode castIntNode;
-
-    public abstract String[] getArgNames();
 
     private boolean isVisible = true;
 
@@ -55,7 +51,7 @@ public abstract class Switch extends RBuiltinNode {
         controlVisibility();
         Object currentDefaultValue = null;
         final String xStr = x.getDataAt(0);
-        final String[] argNames = this.getArgNames();
+        final String[] argNames = this.getSuppliedArgsNames();
         for (int i = 1; i < argNames.length; ++i) {
             final String argName = argNames[i];
             final Object value = optionalArgs[i - 1];

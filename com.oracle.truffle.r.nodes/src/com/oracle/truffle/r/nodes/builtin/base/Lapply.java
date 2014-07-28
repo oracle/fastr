@@ -21,11 +21,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "lapply", kind = INTERNAL, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "lapply", kind = INTERNAL)
 public abstract class Lapply extends RBuiltinNode {
 
     @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();

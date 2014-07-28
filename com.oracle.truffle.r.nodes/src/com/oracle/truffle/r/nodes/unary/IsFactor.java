@@ -30,14 +30,14 @@ public abstract class IsFactor extends RInvisibleBuiltinNode {
     public byte isFactor(VirtualFrame frame, Object x) {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
         if (!typeof.execute(frame, x).equals(RRuntime.TYPE_INTEGER)) {
             return RRuntime.LOGICAL_FALSE;
         }
         if (inherits == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inherits = insert(InheritsFactory.create(new RNode[3], this.getBuiltin()));
+            inherits = insert(InheritsFactory.create(new RNode[3], this.getBuiltin(), getSuppliedArgsNames()));
         }
         return inherits.execute(frame, x, RDataFactory.createStringVector(RRuntime.TYPE_FACTOR), RRuntime.LOGICAL_FALSE);
     }

@@ -28,7 +28,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -58,7 +57,7 @@ public class TryFunctions {
         }
     }
 
-    @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1}, lastParameterKind = LastParameterKind.VAR_ARGS_ALWAYS_ARRAY)
+    @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1})
     public abstract static class TryCatch extends RBuiltinNode {
 
         // Ignoring finally completely

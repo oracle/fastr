@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
  * {@code .C} and {.Fortran} functions.
@@ -45,8 +45,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL.*;
 public class ForeignFunctions {
     public abstract static class Adapter extends RBuiltinNode {
         private static final Object[] PARAMETER_NAMES = new Object[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
-
-        public abstract String[] getArgNames();
 
         @Override
         public Object[] getParameterNames() {
@@ -81,8 +79,7 @@ public class ForeignFunctions {
     /**
      * For now, just some special case functions that are built in to the implementation.
      */
-    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Fortran extends Adapter {
         private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
         private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
@@ -174,8 +171,7 @@ public class ForeignFunctions {
 
     }
 
-    @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class C extends Adapter {
 
         private static final int SCALAR_DOUBLE = 0;
@@ -237,7 +233,7 @@ public class ForeignFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
-            RStringVector listNames = validateArgNames(args.length, getArgNames());
+            RStringVector listNames = validateArgNames(args.length, getSuppliedArgsNames());
             Object[] results = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
                 switch (argTypes[i]) {
@@ -288,8 +284,7 @@ public class ForeignFunctions {
     /**
      * For now, just some special case functions that are built in to the implementation.
      */
-    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Call extends Adapter {
 
         @Child private CastComplexNode castComplex;

@@ -28,7 +28,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.RError.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -48,7 +48,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], this.getBuiltin()));
+                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], this.getBuiltin(), this.getSuppliedArgsNames()));
             }
         }
 
@@ -74,7 +74,7 @@ public class HiddenInternalFunctions {
                 ConstantNode vecNode = ConstantNode.create(intVec);
                 RCallNode expr0 = RCallNode.createCloneReplacingFirstArg(callNode, vecNode);
                 try {
-                    aenv.put(name, RDataFactory.createPromise(expr0, eenv, null));
+                    aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
                 }

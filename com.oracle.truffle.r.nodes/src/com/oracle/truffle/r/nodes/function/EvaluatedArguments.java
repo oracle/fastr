@@ -63,7 +63,11 @@ public class EvaluatedArguments extends Arguments<Object> {
 
             // Names, too!
             argNames = new String[args.length];
-            System.arraycopy(names, 0, argNames, 0, argNames.length);
+            if (names != null) {
+                System.arraycopy(names, 0, argNames, 0, argNames.length);
+            }
+        } else if (argNames == null) {
+            argNames = new String[args.length];
         }
 
         // Create EvaluatedArguments!

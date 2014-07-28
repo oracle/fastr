@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -169,14 +169,14 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin()));
+            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), this.getSuppliedArgsNames()));
         }
     }
 
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), this.getSuppliedArgsNames()));
         }
     }
 }

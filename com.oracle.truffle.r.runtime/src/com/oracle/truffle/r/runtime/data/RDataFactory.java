@@ -325,12 +325,12 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RPromise createPromise(Object rep, REnvironment env, Object defaultRep) {
-        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, env, rep, defaultRep));
+    public static RPromise createPromise(Object rep, REnvironment env) {
+        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, env, rep));
     }
 
     public static RPromise createPromise(Object rep) {
-        return createPromise(rep, null, null);
+        return createPromise(rep, null);
     }
 
 }

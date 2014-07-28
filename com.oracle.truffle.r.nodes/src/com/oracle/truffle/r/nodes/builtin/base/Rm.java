@@ -30,18 +30,17 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
-import com.oracle.truffle.r.runtime.REnvironment.*;
+import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE)
 // TODO remove should be INTERNAL and rm is in R
 public abstract class Rm extends RInvisibleBuiltinNode {
 
     public static Rm create(String name) {
         RNode[] args = getParameterValues0();
         args[0] = ConstantNode.create(name);
-        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("rm"));
+        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("rm"), null);
     }
 
     private static RNode[] getParameterValues0() {

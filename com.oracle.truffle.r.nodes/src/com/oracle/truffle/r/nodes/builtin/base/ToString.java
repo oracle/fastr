@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "toString", kind = SUBSTITUTE)
 // TODO Implement in R
@@ -51,7 +50,7 @@ public abstract class ToString extends RBuiltinNode {
     private String toStringRecursive(VirtualFrame frame, Object o) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringFactory.create(new RNode[1], getBuiltin()));
+            recursiveToString = insert(ToStringFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
             recursiveToString.setSeparator(separator);
             recursiveToString.setQuotes(quotes);
             recursiveToString.setIntL(intL);

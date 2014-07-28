@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastStringNode extends CastNode {
 
-    @Child private ToString toString = ToStringFactory.create(new RNode[1], null);
+    @Child private ToString toString = ToStringFactory.create(new RNode[1], null, null);
 
     public abstract Object executeString(VirtualFrame frame, int o);
 

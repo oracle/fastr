@@ -25,8 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
@@ -240,7 +240,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (promise.isEvaluated()) {
             return prettyPrintRecursive(promise.getValue(), listElementName);
         } else {
-            return prettyPrintLanguageRep(promise.getArgumentRep(), listElementName);
+            return prettyPrintLanguageRep(promise.getExprRep(), listElementName);
         }
     }
 
@@ -703,8 +703,8 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            re = insert(ReFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Re")));
-            im = insert(ImFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Im")));
+            re = insert(ReFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Re"), null));
+            im = insert(ImFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Im"), null));
         }
 
         VirtualFrame frame = currentFrame();
