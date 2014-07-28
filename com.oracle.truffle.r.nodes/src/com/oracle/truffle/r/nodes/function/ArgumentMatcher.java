@@ -64,7 +64,7 @@ public class ArgumentMatcher {
      */
     public static MatchedArgumentsNode matchArguments(RFunction function, VirtualFrame frame, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        REnvironment env = REnvironment.Function.create(RArguments.getEnvironment(frame), frame.materialize());
+        REnvironment env = REnvironment.frameToEnvironment(frame);
         RNode[] wrappedArgs = matchNodes(function, env, suppliedArgs, encapsulatingSrc, false);
         return MatchedArgumentsNode.create(wrappedArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
     }
@@ -83,7 +83,7 @@ public class ArgumentMatcher {
      * @see #matchNodes(RFunction, REnvironment, CallArgumentsNode, SourceSection, boolean)
      */
     public static InlinedArguments matchArgumentsInlined(RFunction function, VirtualFrame frame, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
-        REnvironment env = REnvironment.Function.create(RArguments.getEnvironment(frame), frame.materialize());
+        REnvironment env = REnvironment.frameToEnvironment(frame);
         RNode[] wrappedArgs = matchNodes(function, env, suppliedArgs, encapsulatingSrc, true);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }

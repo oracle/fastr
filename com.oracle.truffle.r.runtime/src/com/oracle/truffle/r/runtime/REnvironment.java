@@ -412,6 +412,63 @@ public abstract class REnvironment implements RAttributable {
         return envToRemove;
     }
 
+    /**
+     * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
+     */
+    public static REnvironment createLsCurrent(MaterializedFrame frame) {
+        Function result = new Function(null, frame);
+        return result;
+    }
+
+    /**
+     * Check if a frame corresponds to a function. If there is no function associated with the
+     * frame, then is it one of the package environments. Fortunately, we do not have to do a search
+     * as, in this case, the {@link REnvironment} value is also stored in the frame.
+     *
+     * @return ({code null) if this is a function frame, else the associated environment
+     */
+    public static REnvironment checkNonFunctionFrame(Frame frame) {
+        RFunction callerFunc = RArguments.getFunction(frame);
+        if (callerFunc == null) {
+            REnvironment env = RArguments.getEnvironment(frame);
+            assert env != null;
+            return env;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Converts a {@link Frame} to an {@link REnvironment}.
+     */
+    public static REnvironment frameToEnvironment(Frame frame) {
+        REnvironment env = checkNonFunctionFrame(frame);
+        if (env == null) {
+            env = lexicalChain(frame);
+        }
+        return env;
+    }
+
+    /**
+     * When functions are defined, the associated {@code FunctionDefinitionNode} contains an
+     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment instance
+     * whose parent is the lexically enclosing environment. This chain can be followed back to
+     * whichever "base" (i.e. non-function) environment the outermost function was defined in, e.g.
+     * "global" or "base". The purpose of this method is to create an analogous lexical parent chain
+     * of {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
+     * {@link MaterializedFrame}.
+     */
+    public static REnvironment lexicalChain(Frame frame) {
+        REnvironment env = checkNonFunctionFrame(frame);
+        if (env == null) {
+            // parent is the env of the enclosing frame
+            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame.materialize());
+        }
+        return env;
+    }
+
+    // END of static methods
+
     private static final String NAMESPACE_KEY = ".__NAMESPACE__.";
 
     /**
@@ -746,22 +803,14 @@ public abstract class REnvironment implements RAttributable {
      * When a function is invoked a {@link Function} environment may be created in response to the R
      * {@code environment()} base package function, and it will have an associated frame.
      */
-    public static final class Function extends REnvironment {
+    private static final class Function extends REnvironment {
 
-        public Function(REnvironment parent, MaterializedFrame frame) {
+        private Function(REnvironment parent, MaterializedFrame frame) {
             // function environments are not named
             super(parent, UNNAMED, frame);
         }
 
-        /**
-         * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
-         */
-        public static Function createLsCurrent(MaterializedFrame frame) {
-            Function result = new Function(null, frame);
-            return result;
-        }
-
-        public static Function create(REnvironment parent, MaterializedFrame frame) {
+        private static Function create(REnvironment parent, MaterializedFrame frame) {
             Function result = new Function(parent, frame);
             return result;
         }
