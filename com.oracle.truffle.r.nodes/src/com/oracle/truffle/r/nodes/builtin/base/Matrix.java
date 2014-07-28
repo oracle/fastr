@@ -48,8 +48,8 @@ public abstract class Matrix extends RBuiltinNode {
 
     private static final String[] PARAMETER_NAMES = new String[]{"data", "nrow", "ncol", "byrow", "dimnames", "missingNrow", "missingNcol"};
 
-    @Child private Transpose transpose = TransposeFactory.create(new RNode[1], getBuiltin());
-    @Child private IsNumeric isNumeric = IsNumericFactory.create(new RNode[1], getBuiltin());
+    @Child private Transpose transpose = TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
+    @Child private IsNumeric isNumeric = IsNumericFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
     @Child private CastIntegerNode castIntNode;
 
     @Override

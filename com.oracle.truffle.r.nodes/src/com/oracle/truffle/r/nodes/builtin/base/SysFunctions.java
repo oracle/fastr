@@ -90,13 +90,10 @@ public class SysFunctions {
 
     }
 
-    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE)
     // TODO INTERNAL when argument names available in list(...)
     public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
         private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-        public abstract String[] getArgNames();
 
         @Override
         public Object[] getParameterNames() {
@@ -111,7 +108,7 @@ public class SysFunctions {
         @Specialization
         public RLogicalVector doSysSetEnv(Object[] args) {
             controlVisibility();
-            String[] argNames = getArgNames();
+            String[] argNames = getSuppliedArgsNames();
             validateArgNames(argNames);
             byte[] data = new byte[args.length];
             for (int i = 0; i < args.length; i++) {

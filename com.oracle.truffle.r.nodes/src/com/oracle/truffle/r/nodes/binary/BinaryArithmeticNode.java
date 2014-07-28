@@ -77,7 +77,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory arithmetic) {
-        return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null);
+        return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null, null);
     }
 
     @Specialization(order = 0)

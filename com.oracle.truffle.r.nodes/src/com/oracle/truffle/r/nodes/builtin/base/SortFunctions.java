@@ -69,7 +69,7 @@ public class SortFunctions {
             controlVisibility();
             if (doubleOrder == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin()));
+                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
             }
             RIntVector result = (RIntVector) doubleOrder.executeDoubleVector(frame, vec, RMissing.instance);
             if (RRuntime.fromLogical(decreasing)) {

@@ -240,7 +240,7 @@ public abstract class RBuiltinPackage {
 
         public RBuiltinNode createNode(Object... arguments) {
             try {
-                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1]);
+                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1], (String[]) arguments[2]);
                 return RBuiltinCustomConstructors.createNode(clazz.getName(), builtin);
             } catch (Exception e) {
                 throw new RuntimeException(e);

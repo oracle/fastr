@@ -46,7 +46,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private void updateNamesStringVector(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin()));
+            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         updateNames.executeStringVector(frame, vector, o);
     }

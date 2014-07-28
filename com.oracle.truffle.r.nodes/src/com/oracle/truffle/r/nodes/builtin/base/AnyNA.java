@@ -58,8 +58,8 @@ public abstract class AnyNA extends RBuiltinNode {
             return RRuntime.LOGICAL_FALSE;
         }
         if (isna == null) {
-            isna = insert(IsNAFactory.create(new RNode[1], getBuiltin()));
-            any = insert(AnyFactory.create(new RNode[1], getBuiltin()));
+            isna = insert(IsNAFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            any = insert(AnyFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         Object val = isna.execute(frame, x);
         if (!(val instanceof Byte)) {

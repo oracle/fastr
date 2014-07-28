@@ -33,14 +33,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * A temporary substitution to work around bug with {@code list(...)} used in R version.
  */
-@RBuiltin(name = "structure", kind = SUBSTITUTE, isCombine = true)
-@NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "structure", kind = SUBSTITUTE)
 public abstract class Structure extends RBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{".Data", "..."};
 
 // private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    public abstract String[] getArgNames();
 
     @Override
     public Object[] getParameterNames() {
@@ -57,7 +54,7 @@ public abstract class Structure extends RBuiltinNode {
     public Object structure(RAbstractContainer obj, Object args) {
         if (!(args instanceof RMissing)) {
             Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
-            String[] argNames = getArgNames();
+            String[] argNames = getSuppliedArgsNames();
             validateArgNames(argNames);
             for (int i = 0; i < values.length; i++) {
                 obj.setAttr(argNames[i + 1], fixupValue(values[i]));

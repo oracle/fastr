@@ -703,8 +703,8 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            re = insert(ReFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Re")));
-            im = insert(ImFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Im")));
+            re = insert(ReFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Re"), null));
+            im = insert(ImFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Im"), null));
         }
 
         VirtualFrame frame = currentFrame();

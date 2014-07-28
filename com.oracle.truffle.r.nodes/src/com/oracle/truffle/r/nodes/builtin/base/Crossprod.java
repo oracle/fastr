@@ -46,7 +46,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private Object matMult(VirtualFrame frame, Object op1, Object op2) {
         if (matMult == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matMult = insert(MatMultFactory.create(new RNode[1], getBuiltin()));
+            matMult = insert(MatMultFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return matMult.executeObject(frame, op1, op2);
     }
@@ -54,7 +54,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private Object transpose(VirtualFrame frame, Object value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeFactory.create(new RNode[1], getBuiltin()));
+            transpose = insert(TransposeFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return transpose.execute(frame, value);
     }

@@ -48,7 +48,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin()));
+            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return (RAbstractVector) updateNames.executeStringVector(frame, vector, o);
     }
@@ -56,7 +56,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[1], getBuiltin()));
+            updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return updateDimNames.executeList(frame, vector, o);
     }

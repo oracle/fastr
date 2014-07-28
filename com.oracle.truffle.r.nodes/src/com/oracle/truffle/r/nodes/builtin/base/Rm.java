@@ -40,7 +40,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     public static Rm create(String name) {
         RNode[] args = getParameterValues0();
         args[0] = ConstantNode.create(name);
-        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("rm"));
+        return RmFactory.create(args, RBuiltinPackages.lookupBuiltin("rm"), null);
     }
 
     private static RNode[] getParameterValues0() {

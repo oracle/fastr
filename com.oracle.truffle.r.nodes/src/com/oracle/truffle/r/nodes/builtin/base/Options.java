@@ -33,8 +33,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "options", kind = SUBSTITUTE, isCombine = true)
-@NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "options", kind = SUBSTITUTE)
 /**
  * N.B. In the general case of option assignment via parameter names, the value may be of any type (i.e. {@code Object},
  * so we cannot (currently) specialize on any specific types, owing to the "stuck specialization" bug.
@@ -48,8 +47,6 @@ public abstract class Options extends RBuiltinNode {
     public Object[] getParameterNames() {
         return PARAMETER_NAMES;
     }
-
-    public abstract String[] getArgNames();
 
     // @Specialization
     private RList options(@SuppressWarnings("unused") RMissing x) {
@@ -73,7 +70,7 @@ public abstract class Options extends RBuiltinNode {
             return options((RMissing) args);
         } else {
             Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
-            String[] argNames = getArgNames();
+            String[] argNames = getSuppliedArgsNames();
             Object[] data = new Object[values.length];
             String[] names = new String[values.length];
             // getting

@@ -50,7 +50,7 @@ public abstract class ToString extends RBuiltinNode {
     private String toStringRecursive(VirtualFrame frame, Object o) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringFactory.create(new RNode[1], getBuiltin()));
+            recursiveToString = insert(ToStringFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
             recursiveToString.setSeparator(separator);
             recursiveToString.setQuotes(quotes);
             recursiveToString.setIntL(intL);

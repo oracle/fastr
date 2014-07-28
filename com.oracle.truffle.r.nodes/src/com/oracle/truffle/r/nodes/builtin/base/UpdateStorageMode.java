@@ -36,7 +36,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         controlVisibility();
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
         String typeX = typeof.execute(frame, x);
         if (typeX.equals(value)) {
@@ -44,14 +44,14 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorFactory.create(new RNode[1], this.getBuiltin()));
+            isFactor = insert(IsFactorFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
         if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin()));
+            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
         }
         Object result = castTypeNode.execute(frame, x, value);
         if (result == null) {

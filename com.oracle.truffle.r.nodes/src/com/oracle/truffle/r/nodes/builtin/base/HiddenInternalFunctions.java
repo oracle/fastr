@@ -48,7 +48,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], this.getBuiltin()));
+                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], this.getBuiltin(), this.getSuppliedArgsNames()));
             }
         }
 

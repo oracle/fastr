@@ -32,13 +32,20 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@NodeField(name = "builtin", type = RBuiltinFactory.class)
+@NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedArgsNames", type = String[].class)})
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends RCallNode implements VisibilityController {
 
     public String getSourceCode() {
         return "<builtin>";
     }
+
+    /**
+     * @return TODO Gero, add comment!
+     */
+    public abstract String[] getSuppliedArgsNames();
+
+    public abstract RBuiltinFactory getBuiltin();
 
     /**
      * Accessor to the Truffle-generated 'arguments' field, used by binary operators and such.<br/>
@@ -48,8 +55,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
      * @return The arguments this builtin has received
      */
     public abstract RNode[] getArguments();
-
-    public abstract RBuiltinFactory getBuiltin();
 
     /**
      * @return The names of the builtin's formal arguments
@@ -140,9 +145,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     }
 
     private static RBuiltinNode createNode(RBuiltinFactory factory, RNode[] builtinArguments, String[] argNames) {
-        RBuiltin rBuiltin = getRBuiltin(factory.getFactory().getClass());
-        boolean isCombine = rBuiltin == null ? false : rBuiltin.isCombine();
-        Object[] args = new Object[(isCombine ? 3 : 2) + factory.getConstantArguments().length];
+        Object[] args = new Object[3 + factory.getConstantArguments().length];
         int index = 0;
         for (; index < factory.getConstantArguments().length; index++) {
             args[index] = factory.getConstantArguments()[index];
@@ -150,9 +153,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
 
         args[index++] = builtinArguments;
         args[index++] = factory;
-        if (isCombine) {
-            args[index++] = argNames;
-        }
+        args[index++] = argNames;
 
         return factory.getFactory().createNode(args);
     }
@@ -251,14 +252,16 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         @Children protected final RNode[] arguments;
 
         private final RBuiltinFactory builtin;
+        private final String[] suppliedArgsNames;
 
         public RCustomBuiltinNode(RBuiltinNode prev) {
-            this(prev.getArguments(), prev.getBuiltin());
+            this(prev.getArguments(), prev.getBuiltin(), prev.getSuppliedArgsNames());
         }
 
-        public RCustomBuiltinNode(RNode[] arguments, RBuiltinFactory builtin) {
+        public RCustomBuiltinNode(RNode[] arguments, RBuiltinFactory builtin, String[] suppliedArgsNames) {
             this.arguments = arguments;
             this.builtin = builtin;
+            this.suppliedArgsNames = suppliedArgsNames;
         }
 
         @Override
@@ -272,10 +275,14 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         }
 
         @Override
+        public String[] getSuppliedArgsNames() {
+            return suppliedArgsNames;
+        }
+
+        @Override
         public String getSourceCode() {
             return "<custom builtin>";
         }
-
     }
 
 }
