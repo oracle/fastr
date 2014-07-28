@@ -112,7 +112,7 @@ public class EvalFunctions {
 
         @Specialization
         public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(expr, EnvFunctions.frameToEnvironment(frame), enclos);
+            return doEval(expr, REnvironment.frameToEnvironment(frame), enclos);
         }
 
         @Specialization
@@ -142,7 +142,7 @@ public class EvalFunctions {
 
         @Specialization
         public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(expr, new REnvironment.NewEnv(EnvFunctions.frameToEnvironment(frame), 0), enclos);
+            return doEval(expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame), 0), enclos);
         }
 
         @Specialization

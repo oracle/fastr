@@ -59,7 +59,7 @@ public abstract class Ls extends RBuiltinNode {
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
         controlVisibility();
         // this is the ls() specialisation
-        return REnvironment.Function.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), null);
+        return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), null);
     }
 
     @Specialization(order = 1)
@@ -81,7 +81,7 @@ public abstract class Ls extends RBuiltinNode {
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, String pattern) {
         controlVisibility();
         // this is the ls() specialisation
-        return REnvironment.Function.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), compile(pattern));
+        return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), compile(pattern));
     }
 
     @Specialization(order = 4)
