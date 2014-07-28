@@ -54,17 +54,18 @@ simplify2array <- function(x, higher = TRUE)
   }
   else x
 }
-#
-#sapply <- function(X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
-#{
-#  FUN <- match.fun(FUN)
-#  answer <- lapply(X = X, FUN = FUN, ...)
-#  if(USE.NAMES && is.character(X) && is.null(names(answer)))
-#    names(answer) <- X
-#  if(!identical(simplify, FALSE) && length(answer))
-#    simplify2array(answer, higher = (simplify == "array"))
-#  else answer
-#}
+
+sapply <- function(X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
+#sapply <- function(X, FUN, USE.NAMES = TRUE, simplify = TRUE, ...)
+{
+  FUN <- match.fun(FUN)
+  answer <- lapply(X = X, FUN = FUN, ...)
+  if(USE.NAMES && is.character(X) && is.null(names(answer)))
+    names(answer) <- X
+  if(!identical(simplify, FALSE) && length(answer))
+    simplify2array(answer, higher = (simplify == "array"))
+  else answer
+}
 
 vapply <- function(X, FUN, FUN.VALUE, ...,  USE.NAMES = TRUE)
 {

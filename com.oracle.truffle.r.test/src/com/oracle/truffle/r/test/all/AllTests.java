@@ -12839,23 +12839,78 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testUnlistIgnore_f35b6e0161ac852251f29fe1bc8a7f0c() {
+    public void TestSimpleBuiltins_testUnlist_f35b6e0161ac852251f29fe1bc8a7f0c() {
         assertEval("{ unlist(list(a=\"hello\", b=\"hi\")) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testUnlistIgnore_0e497d9170f54c56c46d71f9c2a7b065() {
+    public void TestSimpleBuiltins_testUnlist_0e497d9170f54c56c46d71f9c2a7b065() {
         assertEval("{ x <- list(a=1,b=2:3,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testUnlistIgnore_053bfeb29189c57f2c388a6015092e27() {
+    public void TestSimpleBuiltins_testUnlist_053bfeb29189c57f2c388a6015092e27() {
         assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testUnlistIgnore_566f28a4c86058a48ce00c31c2d3032c() {
+    public void TestSimpleBuiltins_testUnlist_566f28a4c86058a48ce00c31c2d3032c() {
         assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE, use.names=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_f877e922531cbfc866df3db839d13a6e() {
+        assertEval("{ x <- list(a=1,b=c(x=2, z=3),list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_f3b14be29f97ff4cda6fcb8aa24d324a() {
+        assertEval("{ y<-c(2, 3); names(y)<-c(\"z\", NA); x <- list(a=1,b=y,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_02984fba623e3a9b414c977505af1729() {
+        assertEval("{ x <- list(a=1,b=c(x=2, 3),list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_967fbc2f020a38dae918eda9227fe296() {
+        assertEval("{ unlist(list(a=1, c(b=2,c=3))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_c29973a0bc652cd104bfce49a03386c0() {
+        assertEval("{ unlist(list(a=1, c(2,3))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_2fcb06c73a1dc8e17fe119434dffe856() {
+        assertEval("{ unlist(list(a=1, c(2,3), d=4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_f561d54761acef16e1d441cc33707f33() {
+        assertEval("{ unlist(list(a=1, c(2,3), 4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_89a293d8df5137410000cd360a92d6b7() {
+        assertEval("{ unlist(list(1+1i, c(7+7i,42+42i))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_c7f707f76d54212012df4c81aeda8658() {
+        assertEval("{ unlist(list(1+1i, list(7+7i,42+42i)), recursive=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_23db868a1c8b59181c8be4cb9383187b() {
+        assertEval("{ unlist(list(1+1i, c(7,42))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_73c11a9496af4a1b05a48c6b92cf4c87() {
+        assertEval("{ unlist(list(1+1i, list(7,42)), recursive=FALSE) }");
     }
 
     @Test
