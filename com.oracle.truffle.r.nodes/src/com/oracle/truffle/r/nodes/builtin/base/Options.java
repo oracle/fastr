@@ -30,11 +30,10 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "options", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
+@RBuiltin(name = "options", kind = SUBSTITUTE, isCombine = true)
 @NodeField(name = "argNames", type = String[].class)
 /**
  * N.B. In the general case of option assignment via parameter names, the value may be of any type (i.e. {@code Object},

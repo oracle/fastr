@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
  * {@code .C} and {.Fortran} functions.

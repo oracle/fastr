@@ -30,7 +30,6 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -91,7 +90,7 @@ public class SysFunctions {
 
     }
 
-    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_ALWAYS_ARRAY, isCombine = true)
+    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE, isCombine = true)
     @NodeField(name = "argNames", type = String[].class)
     // TODO INTERNAL when argument names available in list(...)
     public abstract static class SysSetEnv extends RInvisibleBuiltinNode {

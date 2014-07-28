@@ -179,9 +179,8 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     /**
      * A wrapper builtin is a {@link RCustomBuiltinNode} that is able to create any arbitrary node
      * as builtin. It can be used as normal builtin. Implement {@link #createDelegate()} to create
-     * that node. Warning: setting argument count is not yet implemented. set
-     * {@link RBuiltin#lastParameterKind()} to varargs to get all arguments in a single node in the
-     * arguments array.
+     * that node. Warning: setting argument count is not yet implemented. set {@link RBuiltin} to
+     * varargs to get all arguments in a single node in the arguments array.
      */
     // TODO support argument for number of arguments. Currently no arguments are passed
     // or in case of var args exactly one.

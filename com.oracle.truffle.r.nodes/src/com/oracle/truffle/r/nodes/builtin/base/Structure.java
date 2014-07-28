@@ -27,14 +27,13 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * A temporary substitution to work around bug with {@code list(...)} used in R version.
  */
-@RBuiltin(name = "structure", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
+@RBuiltin(name = "structure", kind = SUBSTITUTE, isCombine = true)
 @NodeField(name = "argNames", type = String[].class)
 public abstract class Structure extends RBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{".Data", "..."};
