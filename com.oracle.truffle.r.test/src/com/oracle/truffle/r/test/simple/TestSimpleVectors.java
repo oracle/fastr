@@ -2063,6 +2063,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-integer(0); dim(x)<-c(0, 1); dimnames(x)<-list(NULL, \"a\"); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 2, 2); dimnames(x)<-list(\"a\", NULL, c(\"b\", \"c\"), c(\"d\", \"e\"), c(\"f\", \"g\")); x }");
         assertEval("{ x<-integer(0); dim(x)<-c(0, 4); dimnames(x)<-list(NULL, c(\"a\", \"bbbbbbbbbbbb\", \"c\", \"d\")); x }");
+        assertEval("{ x<-c(3+2i, 5+0i, 1+3i, 5+3i, 2-4i, 5-2i, 6-7i, 5-0i); dim(x)<-c(2,2,2); x }");
 
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[0, c(1,1,1,1)] }", TESTED_4L_VECTORS));
         assertTemplateEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"aaa\", \"b\", \"c\", \"d\")); x[0, c(1,1,1,1)] }", TESTED_4L_VECTORS));

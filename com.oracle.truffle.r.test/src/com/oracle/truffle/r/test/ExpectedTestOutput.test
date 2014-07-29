@@ -2259,6 +2259,9 @@ Error in array(NA, dim = c(-2, 2)) :
   negative length vectors are not allowed
 
 ##com.oracle.truffle.r.test.simple.TestSimpleArrays.testArrayBuiltin
+#{ c <- array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2)); length(c); dim(c) <- c(2,2,2); }
+
+##com.oracle.truffle.r.test.simple.TestSimpleArrays.testArrayBuiltin
 #{ dim(array(NA, dim=c(2.1,2.9,3.1,4.7))) }
 [1] 2 2 3 4
 
@@ -4014,6 +4017,21 @@ In aperm.default(array(1:27, c(3, 3, 3)), c(1 + (0+1i), 3 + (0+3i),  :
      [,1]
 [1,] "SO"
 [2,] "IS"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
+#{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }
+, , 1
+
+     [,1] [,2]
+[1,] 3+2i 1+3i
+[2,] 3+2i 1+3i
+
+, , 2
+
+     [,1] [,2]
+[1,] 5+0i 5-3i
+[2,] 5+0i 5-3i
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAperm
@@ -52147,6 +52165,21 @@ b 4
       [,1]  [,2]
 [1,] 10005 10007
 [2,] 10006 10008
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint
+#{ x<-c(3+2i, 5+0i, 1+3i, 5+3i, 2-4i, 5-2i, 6-7i, 5-0i); dim(x)<-c(2,2,2); x }
+, , 1
+
+     [,1] [,2]
+[1,] 3+2i 1+3i
+[2,] 5+0i 5+3i
+
+, , 2
+
+     [,1] [,2]
+[1,] 2-4i 6-7i
+[2,] 5-2i 5+0i
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testPrint

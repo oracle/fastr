@@ -1329,6 +1329,7 @@ public abstract class PrettyPrinterNode extends RNode {
             // prepare data (relevant for column widths)
             String[] reStrings = new String[nrow * ncol];
             String[] imStrings = new String[nrow * ncol];
+            String[] siStrings = new String[nrow * ncol];
             int[] dataColWidths = new int[ncol];
             RList dimNames = vector.getDimNames();
             RStringVector columnDimNames = null;
@@ -1341,6 +1342,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     int index = c * nrow + r;
                     reStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getRealPart());
                     imStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getImaginaryPart());
+                    siStrings[index] = vector.getDataAt(index + offset).getImaginaryPart() < 0.0 ? "-" : "+";
                     // "" because column width is computed later
                     maintainColumnData(dataColWidths, columnDimNames, c, "");
                 }
@@ -1355,7 +1357,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
             String[] dataStrings = new String[nrow * ncol];
             for (int i = 0; i < dataStrings.length; i++) {
-                dataStrings[i] = vector.getDataAt(i).isNA() ? "NA" : concat(reStrings[i], vector.getDataAt(i).getImaginaryPart() < 0.0 ? "-" : "+", imStrings[i], "i");
+                dataStrings[i] = vector.getDataAt(i).isNA() ? "NA" : concat(reStrings[i], siStrings[i], imStrings[i], "i");
             }
 
             // final adjustment of column width

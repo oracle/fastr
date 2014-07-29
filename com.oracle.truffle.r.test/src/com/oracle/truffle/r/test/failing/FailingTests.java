@@ -269,11 +269,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testApermBroken_f54817b85a2f5e115a2abb393bbfc271() {
-        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testAsCharacterIgnore_c803fc23a52fdc9950e5603f439b132f() {
         assertEval("{ as.character(list(1,2,3)) }");
     }

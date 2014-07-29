@@ -1931,11 +1931,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         // invalid perm length
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
-    }
 
-    @Test
-    @Ignore
-    public void testApermBroken() {
+        // Complex Vector
         assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
     }
 

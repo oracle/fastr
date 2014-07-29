@@ -2679,6 +2679,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleArrays_testArrayBuiltin_204dbd46ef3ac206dbc98d55d12999f7() {
+        assertEval("{ c <- array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2)); length(c); dim(c) <- c(2,2,2); }");
+    }
+
+    @Test
     public void TestSimpleArrays_testArrayBuiltin_e57eb5be20feb32f2d83ebb6866057c9() {
         assertEvalError("{ array(NA, dim=c(-2,2)); }");
     }
@@ -4454,6 +4459,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAperm_f54817b85a2f5e115a2abb393bbfc271() {
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAperm_ced88e799f3281fae93e9a290dc0db54() {
         assertEvalError("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
     }
@@ -4481,11 +4491,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testAperm_fc6d4e2ce3038c9b44e62938ed037b59() {
         assertEvalWarning("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testApermBroken_f54817b85a2f5e115a2abb393bbfc271() {
-        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
     }
 
     @Test
@@ -20816,6 +20821,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testPrint_26c4856d8152edfdee732b70242e88a8() {
         assertEval("{ x<-integer(0); dim(x)<-c(0, 4); dimnames(x)<-list(NULL, c(\"a\", \"bbbbbbbbbbbb\", \"c\", \"d\")); x }");
+    }
+
+    @Test
+    public void TestSimpleVectors_testPrint_d7db3c40a9f1dd6b5ee5c23bbabec53d() {
+        assertEval("{ x<-c(3+2i, 5+0i, 1+3i, 5+3i, 2-4i, 5-2i, 6-7i, 5-0i); dim(x)<-c(2,2,2); x }");
     }
 
     @Test
