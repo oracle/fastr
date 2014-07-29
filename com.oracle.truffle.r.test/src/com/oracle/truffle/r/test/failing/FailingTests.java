@@ -2584,73 +2584,8 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleIfEvaluator_testCast_9199af29689a0510d0f2b7657d6f9656() {
-        assertEvalError("{ if (integer()) { TRUE } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_9759a28257afd267f562c056ecb21bc3() {
-        assertEvalError("{ if (1[2:1]) { TRUE } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_16ad47e3aae858392d62ccd5199242c9() {
-        assertEvalError("{ if (c(1L[2],0L,0L)) { TRUE } else { 2 } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_bda065a78031d440e536225f68fb6c2c() {
-        assertEvalError("{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(logical()) }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_82982f95ffe974f98ccba036dfa8744e() {
-        assertEvalWarning("{ f <- function(a) { if (is.na(a)) { 1 } else { 2 } } ; f(5) ; f(1:3)}");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_0db47653499ad8ead6375d84cb54b7f9() {
-        assertEvalWarning("{ if (1:3) { TRUE } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_099b8bdf35d655c86519abbffda1ce8d() {
-        assertEvalWarning("{ if (c(0,0,0)) { TRUE } else { 2 } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_813778d331bc4877ff5907cb5b3c7f3c() {
-        assertEvalWarning("{ if (c(1L,0L,0L)) { TRUE } else { 2 } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_3e2b75fc9ef406c71f3e29e6b3d99c78() {
-        assertEvalWarning("{ if (c(0L,0L,0L)) { TRUE } else { 2 } }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_7fc18aa80c865a84fa5e33de006f8ccd() {
-        assertEvalWarning("{ f <- function(cond) { if (cond) { TRUE } else { 2 } } ; f(1:3) ; f(2) }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_54e42c6c4429a21b131e545c9dc37dbe() {
-        assertEvalWarning("{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(c(TRUE,FALSE)) ; f(FALSE) }");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testCast_f221f10e3f4b7d00f239da0a0f88304f() {
-        assertEvalWarning("{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(c(TRUE,FALSE)) ; f(1) }");
-    }
-
-    @Ignore
     public void TestSimpleIfEvaluator_testIfDanglingElseIgnore_d73be7d76c1d5f7720c73594824df7ea() {
         assertEvalNoOutput("if(FALSE) if (FALSE) 1 else 2");
-    }
-
-    @Ignore
-    public void TestSimpleIfEvaluator_testIfIgnore_e44614f9767a91b8721567cbaab6aa97() {
-        assertEvalWarning("{ f <- function(x) { if (x) 1 else 2 } ; f(1) ; f(1:3) }");
     }
 
     @Ignore

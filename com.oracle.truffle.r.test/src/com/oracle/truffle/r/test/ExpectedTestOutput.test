@@ -13043,6 +13043,85 @@ NULL
 #{ f<-function() { return(2) ; 3 } ; f() }
 [1] 2
 
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ f <- function(a) { if (is.na(a)) { 1 } else { 2 } } ; f(5) ; f(1:3)}
+[1] 2
+Warning message:
+In if (is.na(a)) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(c(TRUE,FALSE)) ; f(1) }
+[1] TRUE
+Warning message:
+In if (cond) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(c(TRUE,FALSE)) ; f(FALSE) }
+[1] 2
+Warning message:
+In if (cond) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ f <- function(cond) { if (cond) { TRUE } else { 2 }  } ; f(logical()) }
+Error in if (cond) { : argument is of length zero
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ f <- function(cond) { if (cond) { TRUE } else { 2 } } ; f(1:3) ; f(2) }
+[1] TRUE
+Warning message:
+In if (cond) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (1:3) { TRUE } }
+[1] TRUE
+Warning message:
+In if (1:3) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (1[2:1]) { TRUE } }
+Error in if (1[2:1]) { : argument is not interpretable as logical
+In addition: Warning message:
+In if (1[2:1]) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (c(0,0,0)) { TRUE } else { 2 } }
+[1] 2
+Warning message:
+In if (c(0, 0, 0)) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (c(0L,0L,0L)) { TRUE } else { 2 } }
+[1] 2
+Warning message:
+In if (c(0L, 0L, 0L)) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (c(1L,0L,0L)) { TRUE } else { 2 } }
+[1] TRUE
+Warning message:
+In if (c(1L, 0L, 0L)) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (c(1L[2],0L,0L)) { TRUE } else { 2 } }
+Error in if (c(1L[2], 0L, 0L)) { :
+  argument is not interpretable as logical
+In addition: Warning message:
+In if (c(1L[2], 0L, 0L)) { :
+  the condition has length > 1 and only the first element will be used
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
+#{ if (integer()) { TRUE } }
+Error in if (integer()) { : argument is of length zero
+
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIf
 #{ f <- function(v) { if (FALSE==v) TRUE else FALSE } ; f(TRUE) ; f(1) }
 [1] FALSE
@@ -13116,6 +13195,13 @@ Error in if (NA) x <- 3 : missing value where TRUE/FALSE needed
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfDanglingElse
 #if(TRUE) if (FALSE) 1 else 2
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfIgnore
+#{ f <- function(x) { if (x) 1 else 2 } ; f(1) ; f(1:3) }
+[1] 1
+Warning message:
+In if (x) 1 else 2 :
+  the condition has length > 1 and only the first element will be used
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfNot1
 #if(!FALSE) 1 else 2

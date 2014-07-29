@@ -72,13 +72,11 @@ public class TestSimpleIfEvaluator extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testIfIgnore() {
         assertEvalWarning("{ f <- function(x) { if (x) 1 else 2 } ; f(1) ; f(1:3) }");
     }
 
     @Test
-    @Ignore
     public void testCast() {
         assertEvalWarning("{ f <- function(a) { if (is.na(a)) { 1 } else { 2 } } ; f(5) ; f(1:3)}");
         assertEvalWarning("{ if (1:3) { TRUE } }");

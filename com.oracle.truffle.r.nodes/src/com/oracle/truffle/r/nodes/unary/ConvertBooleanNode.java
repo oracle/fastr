@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class ConvertBooleanNode extends UnaryNode {
@@ -44,8 +44,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doLogical(byte value) {
         check.enable(value);
         if (check.check(value)) {
-            CompilerDirectives.transferToInterpreter();
-            throw unexpectedNAError();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
         }
         return value;
     }
@@ -54,8 +53,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doInt(int value) {
         check.enable(value);
         if (check.check(value)) {
-            CompilerDirectives.transferToInterpreter();
-            throw unexpectedNAError();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(value != 0);
     }
@@ -64,8 +62,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doDouble(double value) {
         check.enable(value);
         if (check.check(value)) {
-            CompilerDirectives.transferToInterpreter();
-            throw unexpectedNAError();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(value != 0D);
     }
@@ -74,10 +71,20 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public byte doComplex(RComplex value) {
         check.enable(value);
         if (check.check(value)) {
-            CompilerDirectives.transferToInterpreter();
-            throw unexpectedNAError();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(!value.isZero());
+    }
+
+    @Specialization
+    public byte doString(String value) {
+        check.enable(value);
+        byte logicalValue = check.convertStringToLogical(value);
+        check.enable(logicalValue);
+        if (check.check(logicalValue)) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        }
+        return logicalValue;
     }
 
     @Specialization
@@ -87,106 +94,108 @@ public abstract class ConvertBooleanNode extends UnaryNode {
 
     @Specialization
     public byte doIntSequence(RIntSequence value) {
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
+        }
         return RRuntime.asLogical(value.getStart() != 0);
     }
 
     @Specialization
     public byte doDoubleSequence(RDoubleSequence value) {
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
+        }
         return RRuntime.asLogical(value.getStart() != 0D);
     }
 
-    @Specialization
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isEmpty")
+    public byte doEmptyVector(RAbstractVector value) {
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
+    }
+
+    private BranchProfile moreThanOneElem = new BranchProfile();
+
+    @Specialization(guards = "!isEmpty")
     public byte doIntVector(RIntVector value) {
-        if (isNotEmpty(value)) {
-            check.enable(value);
-            if (check.check(value.getDataAt(0))) {
-                CompilerDirectives.transferToInterpreter();
-                throw unexpectedNAError();
-            }
-            return RRuntime.asLogical(value.getDataAt(0) != 0);
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw lengthZeroError();
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
+        check.enable(value);
+        if (check.check(value.getDataAt(0))) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        }
+        return RRuntime.asLogical(value.getDataAt(0) != 0);
     }
 
-    @Specialization
+    @Specialization(guards = "!isEmpty")
     public byte doDoubleVector(RDoubleVector value) {
-        if (isNotEmpty(value)) {
-            check.enable(value);
-            if (check.check(value.getDataAt(0))) {
-                CompilerDirectives.transferToInterpreter();
-                throw unexpectedNAError();
-            }
-            return RRuntime.asLogical(value.getDataAt(0) != 0D);
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw lengthZeroError();
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
+        check.enable(value);
+        if (check.check(value.getDataAt(0))) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        }
+        return RRuntime.asLogical(value.getDataAt(0) != 0D);
     }
 
-    @Specialization
+    @Specialization(guards = "!isEmpty")
     public byte doLogicalVector(RLogicalVector value) {
-        if (isNotEmpty(value)) {
-            check.enable(value);
-            if (check.check(value.getDataAt(0))) {
-                CompilerDirectives.transferToInterpreter();
-                throw unexpectedNAError();
-            }
-            return RRuntime.asLogical(value.getDataAt(0) != RRuntime.LOGICAL_FALSE);
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw lengthZeroError();
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
+        check.enable(value);
+        if (check.check(value.getDataAt(0))) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
+        }
+        return RRuntime.asLogical(value.getDataAt(0) != RRuntime.LOGICAL_FALSE);
     }
 
-    @Specialization
+    @Specialization(guards = "!isEmpty")
     public byte doComplexVector(RComplexVector value) {
-        if (isNotEmpty(value)) {
-            check.enable(value);
-            if (check.check(value.getDataAt(0))) {
-                CompilerDirectives.transferToInterpreter();
-                throw unexpectedNAError();
-            }
-            return RRuntime.asLogical(!value.getDataAt(0).isZero());
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw lengthZeroError();
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
+        check.enable(value);
+        if (check.check(value.getDataAt(0))) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        }
+        return RRuntime.asLogical(!value.getDataAt(0).isZero());
     }
 
-    @Specialization
+    @Specialization(guards = "!isEmpty")
     public byte doRawVector(RRawVector value) {
-        if (isNotEmpty(value)) {
-            return RRuntime.asLogical(value.getDataAt(0).getValue() != 0);
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw lengthZeroError();
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
+        return RRuntime.asLogical(value.getDataAt(0).getValue() != 0);
     }
 
-    private BranchProfile everSeenLengthZero = new BranchProfile();
-
-    private boolean isNotEmpty(RVector value) {
-        // TODO output warning if vector length > 1
-        if (value.getLength() != 0) {
-            return true;
+    @Specialization(guards = "!isEmpty")
+    public byte doStringVector(RStringVector value) {
+        if (value.getLength() > 1) {
+            moreThanOneElem.enter();
+            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
-        everSeenLengthZero.enter();
-        return false;
+        check.enable(value);
+        byte logicalValue = check.convertStringToLogical(value.getDataAt(0));
+        check.enable(logicalValue);
+        if (check.check(logicalValue)) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        }
+        return logicalValue;
     }
 
-    @Generic
-    public byte doInvalid(@SuppressWarnings("unused") Object value) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
-    }
-
-    private RError unexpectedNAError() {
-        return RError.error(getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
-    }
-
-    private RError lengthZeroError() {
-        return RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
+    protected boolean isEmpty(RAbstractVector vector) {
+        return vector.getLength() == 0;
     }
 
     public static ConvertBooleanNode create(RNode node) {
