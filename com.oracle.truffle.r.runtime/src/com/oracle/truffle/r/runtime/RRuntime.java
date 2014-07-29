@@ -153,11 +153,18 @@ public class RRuntime {
     public static final String DROP_DIM_ARG_NAME = "drop";
 
     /**
-     * Create a {@link VirtualFrame} Such a value cannot be stored in an object field, so must be
-     * passed as an argument.
+     * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the
+     * global environment.
      */
-    public static VirtualFrame createVirtualFrame() {
-        return Truffle.getRuntime().createVirtualFrame(RArguments.create(), new FrameDescriptor());
+    public static VirtualFrame createNonFunctionFrame() {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(), new FrameDescriptor());
+    }
+
+    /**
+     * Create a {@link VirtualFrame} for {@link RFunction} {@code function}.
+     */
+    public static VirtualFrame createFunctionFrame(RFunction function) {
+        return Truffle.getRuntime().createVirtualFrame(RArguments.create(function), new FrameDescriptor());
     }
 
     public static RComplex createComplexNA() {
