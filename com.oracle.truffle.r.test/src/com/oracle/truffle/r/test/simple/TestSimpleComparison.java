@@ -119,11 +119,6 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ a <- TRUE ; b <- 1L[2] ; a > b }");
         assertEval("{ a <- 1 ; b <- a[2] ; a == b }");
         assertEval("{ a <- 1 ; b <- a[2] ; b > a }");
-    }
-
-    @Test
-    @Ignore
-    public void testScalarsNAIgnore() {
         assertEval("{ a <- 1L ; b <- TRUE[2] ; a == b }");
         assertEval("{ a <- TRUE[2] ; b <- 1L ; a == b }");
     }

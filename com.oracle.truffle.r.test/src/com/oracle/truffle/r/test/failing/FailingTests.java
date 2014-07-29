@@ -1869,11 +1869,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testStrSplitIgnore_46d4b4f12ca8e8fb947be03344b9b554() {
-        assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSubIgnore_0902579a0dce5fa8d7a808155b8c09b0() {
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
     }
@@ -2251,16 +2246,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleComparison_testScalarsNAAsFunctionIgnore_c803d5d2a05362ff97b2237e3502ac08() {
         assertEval("{ f <- function(a,b) { a > b } ; f(1,2) ; f(1L,2) ; f(\"hello\"[2], \"hi\") }");
-    }
-
-    @Ignore
-    public void TestSimpleComparison_testScalarsNAIgnore_5d82706c2baa41a30419736895aecb0c() {
-        assertEval("{ a <- 1L ; b <- TRUE[2] ; a == b }");
-    }
-
-    @Ignore
-    public void TestSimpleComparison_testScalarsNAIgnore_6617a42ac54ed9cdf434eee9b0c67e30() {
-        assertEval("{ a <- TRUE[2] ; b <- 1L ; a == b }");
     }
 
     @Ignore

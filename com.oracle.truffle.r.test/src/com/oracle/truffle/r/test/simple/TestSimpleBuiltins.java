@@ -1037,11 +1037,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ strsplit(\"helloh\", \"\", fixed=TRUE) }");
         assertEval("{ strsplit(\"helloh\", \"h\") }");
         assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\")) }");
-    }
-
-    @Test
-    @Ignore
-    public void testStrSplitIgnore() {
         assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
     }
 

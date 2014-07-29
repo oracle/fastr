@@ -10227,6 +10227,10 @@ Error: object 'x' not found
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStrSplit
+#{ strsplit("ahoj", split="") [[c(1,2)]] }
+[1] "h"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testStrSplit
 #{ strsplit("helloh", "", fixed=TRUE) }
 [[1]]
 [1] "h" "e" "l" "l" "o" "h"
@@ -11793,6 +11797,10 @@ Error in x > FALSE : invalid comparison with complex values
 [1] NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalarsNA
+#{ a <- 1L ; b <- TRUE[2] ; a == b }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalarsNA
 #{ a <- 1L ; b <- a[2] ; a == b }
 [1] NA
 
@@ -11818,6 +11826,10 @@ Error in x > FALSE : invalid comparison with complex values
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalarsNA
 #{ a <- TRUE ; b <- 1L[2] ; a > b }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalarsNA
+#{ a <- TRUE[2] ; b <- 1L ; a == b }
 [1] NA
 
 ##com.oracle.truffle.r.test.simple.TestSimpleComparison.testScalarsNAAsFunction
