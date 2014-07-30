@@ -27,8 +27,8 @@ import java.util.*;
 
 import org.antlr.runtime.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.RPromiseArg;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
@@ -221,7 +220,9 @@ public final class REngine implements RContext.Engine {
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();
         // Copy existing bindings
-        for (FrameSlot slot : envfd.getSlots()) {
+        int i = 0;
+        for (; i < envfd.getSlots().size(); i++) {
+            FrameSlot slot = envfd.getSlots().get(i);
             FrameSlotKind slotKind = slot.getKind();
             FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
             try {
@@ -276,9 +277,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
-        assert promise instanceof RPromiseArg;
-        RPromiseArg promisedArg = (RPromiseArg) promise;
-        RootCallTarget callTarget = makeCallTarget((RNode) promisedArg.getDefaultRep().getRep(), REnvironment.emptyEnv());
+        RootCallTarget callTarget = makeCallTarget((RNode) promise.getRep(), REnvironment.emptyEnv());
         return runCall(callTarget, frame, false, false);
     }
 

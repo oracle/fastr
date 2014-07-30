@@ -66,7 +66,7 @@ public final class RMissing extends RScalar {
      */
     public static boolean isMissing(VirtualFrame frame, RPromise promise) {
         // Is missing bit set?
-        if (promise.isMissingBitSet()) {
+        if (promise.isMissing()) {
             return true;
         }
 
