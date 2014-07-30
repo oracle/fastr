@@ -36,8 +36,20 @@ import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * {@code eval}, {@code evalq} and {@code local} are implemented as SUBSTITUTEs to ensure that the
- * expression argument is not evaluated which, currently, is only possible for builtins.
+ * expression/envir arguments are not evaluated which, absent full promises, is only possible for
+ * builtins.
  *
+ * N.B. {@code eval}, in particular, can accept an argument of any type so, with the current issue
+ * of not being able to mix specializations that take arguments of type {@code T <: Object} and
+ * {@code Object}, we don't specialize on {@code RExpression} and {@code RLanguage} but do runtime
+ * instance checks instead.
+ *
+ * The general case where the "envir" argument is an arbitrary environment cannot be optimized by
+ * Truffle as it necessarily involves a {@link MaterializedFrame}. However, we break out the special
+ * case of the "current" frame, instead than routinely converting it to an environment and following
+ * the slow path.
+ *
+ * TODO handle the special {@code enclos} argument special case.
  */
 public class EvalFunctions {
     public abstract static class EvalAdapter extends RBuiltinNode {
@@ -55,13 +67,22 @@ public class EvalFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        protected Object doEvalBody(Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
-            Object expr = exprArg;
+        private static Object checkConvertSymbol(Object expr) {
             if (expr instanceof RSymbol) {
                 String symbolName = ((RSymbol) expr).getName();
                 // We have to turn the string value back into a RLanguage object
-                expr = RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
+                return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
+            } else {
+                return expr;
             }
+        }
+
+        /**
+         * Slow path variant, eval in arbitrary environment/frame.
+         */
+        protected Object doEvalBody(Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
+            Object expr = checkConvertSymbol(exprArg);
+
             if (expr instanceof RExpression || expr instanceof RLanguage) {
                 try {
                     Object result;
@@ -80,6 +101,22 @@ public class EvalFunctions {
             }
         }
 
+        /**
+         * Fast path variant, eval in the caller frame.
+         */
+        protected Object doEvalBodyInCallerFrame(VirtualFrame frame, Object exprArg) {
+            Object expr = checkConvertSymbol(exprArg);
+
+            if (expr instanceof RExpression) {
+                return RContext.getEngine().eval((RExpression) exprArg, frame);
+            } else if (expr instanceof RLanguage) {
+                return RContext.getEngine().eval((RLanguage) exprArg, frame);
+            } else {
+                // just return value
+                return expr;
+            }
+        }
+
         protected RFunction getFunction() {
             if (function == null) {
                 function = RContext.getEngine().lookupBuiltin(getRBuiltin().name());
@@ -92,8 +129,8 @@ public class EvalFunctions {
     public abstract static class Eval extends EvalAdapter {
 
         @Specialization
-        public Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(frame, expr, REnvironment.globalEnv(), enclos);
+        public Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
+            return doEvalBodyInCallerFrame(frame, expr);
         }
 
         @Specialization
@@ -108,8 +145,8 @@ public class EvalFunctions {
     public abstract static class EvalQuote extends EvalAdapter {
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(expr, REnvironment.frameToEnvironment(frame), enclos);
+        public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
+            return doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep()));
         }
 
         @Specialization
