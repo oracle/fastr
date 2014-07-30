@@ -219,33 +219,38 @@ public final class REngine implements RContext.Engine {
         RArguments.setFunction(vFrame, function);
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();
-        // Copy existing bindings
+        // Copy existing bindings. Logically we want to clone the existing frame contents.
+        // N.B. Since FrameDescriptors can be shared between frames, the descriptor may
+        // contain slots that do not have values in the frame.
         int i = 0;
         for (; i < envfd.getSlots().size(); i++) {
             FrameSlot slot = envfd.getSlots().get(i);
             FrameSlotKind slotKind = slot.getKind();
             FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
-            try {
-                switch (slotKind) {
-                    case Byte:
-                        vFrame.setByte(vFrameSlot, envFrame.getByte(slot));
-                        break;
-                    case Int:
-                        vFrame.setInt(vFrameSlot, envFrame.getInt(slot));
-                        break;
-                    case Double:
-                        vFrame.setDouble(vFrameSlot, envFrame.getDouble(slot));
-                        break;
-                    case Object:
-                        vFrame.setObject(vFrameSlot, envFrame.getObject(slot));
-                        break;
-                    case Illegal:
-                        break;
-                    default:
-                        throw new FrameSlotTypeException();
+            Object slotValue = envFrame.getValue(slot);
+            if (slotValue != null) {
+                try {
+                    switch (slotKind) {
+                        case Byte:
+                            vFrame.setByte(vFrameSlot, (byte) slotValue);
+                            break;
+                        case Int:
+                            vFrame.setInt(vFrameSlot, (int) slotValue);
+                            break;
+                        case Double:
+                            vFrame.setDouble(vFrameSlot, (double) slotValue);
+                            break;
+                        case Object:
+                            vFrame.setObject(vFrameSlot, slotValue);
+                            break;
+                        case Illegal:
+                            break;
+                        default:
+                            throw new FrameSlotTypeException();
+                    }
+                } catch (FrameSlotTypeException ex) {
+                    throw new RuntimeException("unexpected FrameSlot exception", ex);
                 }
-            } catch (FrameSlotTypeException ex) {
-                throw new RuntimeException("unexpected FrameSlot exception", ex);
             }
 
         }
@@ -256,10 +261,12 @@ public final class REngine implements RContext.Engine {
                 if (slot.getKind() != FrameSlotKind.Illegal) {
                     // the put will take care of checking the slot type, so getValue is ok
                     Object value = vFrame.getValue(slot);
-                    if (value instanceof RFunction) {
-                        checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
+                    if (value != null) {
+                        if (value instanceof RFunction) {
+                            checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
+                        }
+                        envir.put(slot.getIdentifier().toString(), value);
                     }
-                    envir.put(slot.getIdentifier().toString(), value);
                 }
             }
         }
