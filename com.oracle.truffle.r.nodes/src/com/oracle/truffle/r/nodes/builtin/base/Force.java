@@ -25,19 +25,29 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "force", kind = SUBSTITUTE)
+@RBuiltin(name = "force", kind = SUBSTITUTE, nonEvalArgs = {0})
 // TODO revert to R (promises)
+// We make the arg as nonEval to retain control in the hybrid promises mode
 public abstract class Force extends RBuiltinNode {
 
     @Specialization
-    Object force(Object arg) {
+    Object force(@SuppressWarnings("unused") VirtualFrame frame, Object arg) {
         if (arg instanceof RPromise) {
             RPromise promise = (RPromise) arg;
-            return promise.getValue();
+            if (promise.isEvaluated()) {
+                return promise.getValue();
+            } else {
+                Object result = RContext.getEngine().evalPromise(promise);
+                if (result instanceof RPromise) {
+                    result = RContext.getEngine().evalPromise((RPromise) result);
+                }
+                return result;
+            }
         } else {
             // argument already evaluated - nothing to do
             return arg;
