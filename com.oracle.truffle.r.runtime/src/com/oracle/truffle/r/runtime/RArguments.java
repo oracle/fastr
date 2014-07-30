@@ -140,13 +140,11 @@ public final class RArguments {
     }
 
     /**
-     * A package-private method for creating an uninitialized array, used only the the runtime, as
-     * it violates the invariant.
+     * A method for creating an uninitialized array, used only in very special situations as it
+     * temporarily violates {@link #envFunctionInvariant}.
      */
-    static Object[] createUnitialized() {
+    public static Object[] createUnitialized() {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
-        a[INDEX_N_ARGS] = 0;
-        a[INDEX_N_NAMES] = 0;
         return a;
     }
 
