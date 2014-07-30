@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.REnvironment.UsesREnvMap;
 
 /**
  * Allows an {@link REnvironment} without a Truffle {@link Frame}, e.g. one created by
@@ -41,8 +42,9 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     private final Object[] arguments;
     private byte[] tags;
 
-    public REnvMaterializedFrame(REnvMapFrameAccess frameAccess) {
+    public REnvMaterializedFrame(UsesREnvMap env) {
         descriptor = new FrameDescriptor();
+        REnvMapFrameAccess frameAccess = env.getFrameAccess();
         map = frameAccess.getMap();
         tags = new byte[map.size()];
         int i = 0;
@@ -52,8 +54,8 @@ public class REnvMaterializedFrame implements MaterializedFrame {
             tags[i++] = (byte) kind.ordinal();
         }
         frameAccess.setMaterializedFrame(this);
-        // really only need the enclosing frame slot
-        arguments = new Object[RArguments.MINIMAL_ARRAY_LENGTH];
+        arguments = RArguments.createUnitialized();
+        RArguments.setEnvironment(this, (REnvironment) env);
     }
 
     /**

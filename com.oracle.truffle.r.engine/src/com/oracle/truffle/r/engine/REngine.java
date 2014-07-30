@@ -202,6 +202,14 @@ public final class REngine implements RContext.Engine {
      * {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then update "f"
      * on return.
      *
+     * N.B. The implementation should do its utmost to avoid calling this method as it is inherently
+     * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
+     * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
+     *
+     * TODO The check to patch the enclosing frame for {@code RFunctions} defined during the eval is
+     * painful and perhaps inadequate (should we be deep analysis of the result?). Can we find a way
+     * to avoid the patch? and get the enclosing frame correct on definition?
+     *
      */
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
         RootCallTarget callTarget = makeCallTarget(exprRep, REnvironment.globalEnv());
@@ -244,10 +252,27 @@ public final class REngine implements RContext.Engine {
         if (result != null) {
             FrameDescriptor fd = vFrame.getFrameDescriptor();
             for (FrameSlot slot : fd.getSlots()) {
-                envir.put(slot.getIdentifier().toString(), vFrame.getValue(slot));
+                if (slot.getKind() != FrameSlotKind.Illegal) {
+                    // the put will take care of checking the slot type, so getValue is ok
+                    Object value = vFrame.getValue(slot);
+                    if (value instanceof RFunction) {
+                        checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
+                    }
+                    envir.put(slot.getIdentifier().toString(), value);
+                }
             }
         }
+        if (result instanceof RFunction) {
+            checkPatchRFunctionEnclosingFrame((RFunction) result, vFrame, envFrame);
+        }
         return result;
+    }
+
+    private static void checkPatchRFunctionEnclosingFrame(RFunction func, Frame vFrame, MaterializedFrame envFrame) {
+        if (func.getEnclosingFrame() == vFrame) {
+            // this function's enclosing environment should be envFrame
+            func.setEnclosingFrame(envFrame);
+        }
     }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {

@@ -607,7 +607,7 @@ public abstract class REnvironment implements RAttributable {
         MaterializedFrame envFrame = env.frameAccess.getFrame();
         if (envFrame == null && env.parent != null) {
             MaterializedFrame parentFrame = getMaterializedFrame(env.parent);
-            envFrame = new REnvMaterializedFrame((REnvMapFrameAccess) env.frameAccess);
+            envFrame = new REnvMaterializedFrame((UsesREnvMap) env);
             RArguments.setEnclosingFrame(envFrame, parentFrame);
         }
         return envFrame;
@@ -840,11 +840,15 @@ public abstract class REnvironment implements RAttributable {
 
     }
 
+    public interface UsesREnvMap {
+        REnvMapFrameAccess getFrameAccess();
+    }
+
     /**
      * An environment explicitly created with, typically, {@code new.env}. Such environments are
      * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
      */
-    public static final class NewEnv extends REnvironment {
+    public static final class NewEnv extends REnvironment implements UsesREnvMap {
 
         /**
          * Constructor for the {@code new.env} function.
@@ -859,6 +863,10 @@ public abstract class REnvironment implements RAttributable {
         public NewEnv(String name) {
             this(null, 0);
             setAttr(NAME_ATTR_KEY, name);
+        }
+
+        public REnvMapFrameAccess getFrameAccess() {
+            return (REnvMapFrameAccess) frameAccess;
         }
 
     }

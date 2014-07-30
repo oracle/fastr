@@ -660,4 +660,19 @@ public class RRuntime {
         return isNA(data) ? STRING_NA : "\"" + data + "\"";
     }
 
+    public static FrameSlotKind getSlotKind(Object value) {
+        if (value == null) {
+            return FrameSlotKind.Illegal;
+        }
+        if (value instanceof Byte) {
+            return FrameSlotKind.Byte;
+        } else if (value instanceof Integer) {
+            return FrameSlotKind.Int;
+        } else if (value instanceof Double) {
+            return FrameSlotKind.Double;
+        } else {
+            return FrameSlotKind.Object;
+        }
+    }
+
 }
