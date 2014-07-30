@@ -172,22 +172,24 @@ public class EnvFunctions {
         }
 
         /**
-         * Returns the environment that {@code func} was created in.
+         * Returns the environment that {@code func} was created in. N.B. In current Truffle we
+         * cannot both have a specialization for {@link RFunction} and one for {@link Object}, but
+         * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
          */
         @Specialization(order = 1)
-        public REnvironment environment(RFunction func) {
+        public Object environment(Object funcArg) {
             controlVisibility();
-            Frame enclosing = func.getEnclosingFrame();
-            REnvironment env = RArguments.getEnvironment(enclosing);
-            return env == null ? REnvironment.lexicalChain(enclosing) : env;
+            if (funcArg instanceof RFunction) {
+                RFunction func = (RFunction) funcArg;
+                Frame enclosing = func.getEnclosingFrame();
+                REnvironment env = RArguments.getEnvironment(enclosing);
+                return env == null ? REnvironment.lexicalChain(enclosing) : env;
+            } else {
+                // Not an error according to GnuR
+                return RNull.instance;
+            }
         }
 
-        @Specialization(order = 100)
-        public RNull environment(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            // Not an error according to GnuR
-            return RNull.instance;
-        }
     }
 
     @RBuiltin(name = "environmentName", kind = INTERNAL)
