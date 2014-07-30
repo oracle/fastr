@@ -30,9 +30,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "force", kind = SUBSTITUTE, nonEvalArgs = {0})
+@RBuiltin(name = "force", kind = SUBSTITUTE)
 // TODO revert to R (promises)
-// We make the arg as nonEval to retain control in the hybrid promises mode
 public abstract class Force extends RBuiltinNode {
 
     @Specialization
@@ -43,9 +42,6 @@ public abstract class Force extends RBuiltinNode {
                 return promise.getValue();
             } else {
                 Object result = RContext.getEngine().evalPromise(promise);
-                if (result instanceof RPromise) {
-                    result = RContext.getEngine().evalPromise((RPromise) result);
-                }
                 return result;
             }
         } else {
