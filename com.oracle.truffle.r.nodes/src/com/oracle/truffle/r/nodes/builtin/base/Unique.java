@@ -33,7 +33,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "unique", kind = INTERNAL)
-// TODO Implement general case
+// TODO A more efficient implementation is in order; GNU R uses hash tables so perhaps we should
+// consider using one of the existing libraries that offer hash table implementations for primitive
+// types
 public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
@@ -48,6 +50,200 @@ public abstract class Unique extends RBuiltinNode {
         }
         String[] data = new String[dataList.size()];
         dataList.toArray(data);
-        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createStringVector(data, vec.isComplete());
     }
+
+    // these are intended to stay private as they will go away once we figure out which external
+    // library to use
+
+    private static class IntArray {
+        int[] backingArray;
+        int index;
+
+        public IntArray(int len) {
+            this.backingArray = new int[len];
+            index = 0;
+        }
+
+        public boolean contains(int val) {
+            for (int i = 0; i < index; i++) {
+                if (backingArray[i] == val) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void add(int val) {
+            backingArray[index++] = val;
+        }
+
+        public int[] toArray() {
+            int[] newArray = new int[index];
+            for (int i = 0; i < index; i++) {
+                newArray[i] = backingArray[i];
+            }
+            return newArray;
+        }
+    }
+
+    private static class DoubleArray {
+        double[] backingArray;
+        int index;
+
+        public DoubleArray(int len) {
+            this.backingArray = new double[len];
+            index = 0;
+        }
+
+        public boolean contains(double val) {
+            for (int i = 0; i < index; i++) {
+                if (backingArray[i] == val) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void add(double val) {
+            backingArray[index++] = val;
+        }
+
+        public double[] toArray() {
+            double[] newArray = new double[index];
+            for (int i = 0; i < index; i++) {
+                newArray[i] = backingArray[i];
+            }
+            return newArray;
+        }
+    }
+
+    private static class DoubleArrayForComplex {
+        double[] backingArray;
+        int index;
+
+        public DoubleArrayForComplex(int len) {
+            this.backingArray = new double[len << 1];
+            index = 0;
+        }
+
+        public boolean contains(RComplex val) {
+            for (int i = 0; i < index; i++) {
+                if (backingArray[i << 1] == val.getRealPart() && backingArray[i << 1 + 1] == val.getImaginaryPart()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void add(RComplex val) {
+            backingArray[index++] = val.getRealPart();
+            backingArray[index++] = val.getImaginaryPart();
+        }
+
+        public double[] toArray() {
+            double[] newArray = new double[index];
+            for (int i = 0; i < index; i++) {
+                newArray[i] = backingArray[i];
+            }
+            return newArray;
+        }
+    }
+
+    private static class ByteArray {
+        byte[] backingArray;
+        int index;
+
+        public ByteArray(int len) {
+            this.backingArray = new byte[len];
+            index = 0;
+        }
+
+        public boolean contains(byte val) {
+            for (int i = 0; i < index; i++) {
+                if (backingArray[i] == val) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void add(byte val) {
+            backingArray[index++] = val;
+        }
+
+        public byte[] toArray() {
+            byte[] newArray = new byte[index];
+            for (int i = 0; i < index; i++) {
+                newArray[i] = backingArray[i];
+            }
+            return newArray;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax) {
+        IntArray dataList = new IntArray(vec.getLength());
+        for (int i = 0; i < vec.getLength(); i++) {
+            int val = vec.getDataAt(i);
+            if (!dataList.contains(val)) {
+                dataList.add(val);
+            }
+        }
+        return RDataFactory.createIntVector(dataList.toArray(), vec.isComplete());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax) {
+        DoubleArray dataList = new DoubleArray(vec.getLength());
+        for (int i = 0; i < vec.getLength(); i++) {
+            double val = vec.getDataAt(i);
+            if (!dataList.contains(val)) {
+                dataList.add(val);
+            }
+        }
+        return RDataFactory.createDoubleVector(dataList.toArray(), vec.isComplete());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax) {
+        ByteArray dataList = new ByteArray(vec.getLength());
+        for (int i = 0; i < vec.getLength(); i++) {
+            byte val = vec.getDataAt(i);
+            if (!dataList.contains(val)) {
+                dataList.add(val);
+            }
+        }
+        return RDataFactory.createLogicalVector(dataList.toArray(), vec.isComplete());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax) {
+        DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
+        for (int i = 0; i < vec.getLength(); i++) {
+            RComplex s = vec.getDataAt(i);
+            if (!dataList.contains(s)) {
+                dataList.add(s);
+            }
+        }
+        return RDataFactory.createComplexVector(dataList.toArray(), vec.isComplete());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax) {
+        ByteArray dataList = new ByteArray(vec.getLength());
+        for (int i = 0; i < vec.getLength(); i++) {
+            byte val = vec.getDataAt(i).getValue();
+            if (!dataList.contains(val)) {
+                dataList.add(val);
+            }
+        }
+        return RDataFactory.createRawVector(dataList.toArray());
+    }
+
 }

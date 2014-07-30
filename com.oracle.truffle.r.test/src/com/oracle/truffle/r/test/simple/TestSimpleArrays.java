@@ -91,6 +91,9 @@ public class TestSimpleArrays extends TestBase {
 
         // double dimensions work and are rounded down always
         assertEval("{ dim(array(NA, dim=c(2.1,2.9,3.1,4.7))) }");
+
+        // complex size check
+        assertEval("{ c <- array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2)); length(c); dim(c) <- c(2,2,2); }");
     }
 
     @Test

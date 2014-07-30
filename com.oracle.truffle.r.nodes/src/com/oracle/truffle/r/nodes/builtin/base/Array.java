@@ -122,7 +122,7 @@ public abstract class Array extends RBuiltinNode {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
-        double[] data = new double[totalLength << 2];
+        double[] data = new double[totalLength << 1];
         int ind = 0;
         for (int i = 0; i < totalLength; i++) {
             RComplex d = vec.getDataAt(i % vec.getLength());

@@ -682,7 +682,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSapplyIgnore() {
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
@@ -1038,11 +1037,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ strsplit(\"helloh\", \"\", fixed=TRUE) }");
         assertEval("{ strsplit(\"helloh\", \"h\") }");
         assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\")) }");
-    }
-
-    @Test
-    @Ignore
-    public void testStrSplitIgnore() {
         assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
     }
 
@@ -1849,15 +1843,28 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testUnlist() {
         assertEval("{ unlist(list(\"hello\", \"hi\")) }");
+
+        assertEval("{ unlist(list(a=\"hello\", b=\"hi\")) }");
+        assertEval("{ x <- list(a=1,b=2:3,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE, use.names=FALSE) }");
+
+        assertEval("{ x <- list(a=1,b=c(x=2, z=3),list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ y<-c(2, 3); names(y)<-c(\"z\", NA); x <- list(a=1,b=y,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(a=1,b=c(x=2, 3),list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ unlist(list(a=1, c(b=2,c=3))) }");
+        assertEval("{ unlist(list(a=1, c(2,3))) }");
+        assertEval("{ unlist(list(a=1, c(2,3), d=4)) }");
+        assertEval("{ unlist(list(a=1, c(2,3), 4)) }");
+        assertEval("{ unlist(list(1+1i, c(7+7i,42+42i))) }");
+        assertEval("{ unlist(list(1+1i, list(7+7i,42+42i)), recursive=FALSE) }");
+        assertEval("{ unlist(list(1+1i, c(7,42))) }");
+        assertEval("{ unlist(list(1+1i, list(7,42)), recursive=FALSE) }");
     }
 
     @Test
     @Ignore
     public void testUnlistIgnore() {
-        assertEval("{ unlist(list(a=\"hello\", b=\"hi\")) }");
-        assertEval("{ x <- list(a=1,b=2:3,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
-        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE) }");
-        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE, use.names=FALSE) }");
         assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
         assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
 
@@ -1919,11 +1926,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         // invalid perm length
         assertEvalError("{ aperm(array(1,c(3,3,3)), c(1,2)); }");
-    }
 
-    @Test
-    @Ignore
-    public void testApermBroken() {
+        // Complex Vector
         assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
     }
 

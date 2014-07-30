@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @SuppressWarnings("unused")
 @RBuiltin(name = "is.na", kind = PRIMITIVE)
@@ -55,7 +56,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector isNA(RIntVector vector) {
+    public RLogicalVector isNA(RAbstractIntVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -71,7 +72,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector isNA(RDoubleVector vector) {
+    public RLogicalVector isNA(RAbstractDoubleVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
