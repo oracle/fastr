@@ -30,11 +30,13 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.IEnvironmentProvider;
+import com.oracle.truffle.r.nodes.function.PromiseNode.DefaultEnvProvider;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
-import com.oracle.truffle.r.runtime.data.RPromise.RPromiseArgEvaluated;
-import com.oracle.truffle.r.runtime.data.RPromise.RPromiseArgFactory;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
+import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
 /**
  * <p>
@@ -113,7 +115,11 @@ public class ArgumentMatcher {
                 // vararg in the specific version of a generic
                 // TODO STRICT!
                 RNode defaultArg = formals.getDefaultArg(i);
-                evaledArgs[i] = new RPromiseArgEvaluated(EvalPolicy.STRICT, RMissing.instance, defaultArg);
+                if (defaultArg == null) {
+                    evaledArgs[i] = RMissing.instance;
+                } else {
+                    evaledArgs[i] = RPromise.create(EvalPolicy.STRICT, PromiseType.ARG_DEFAULT, null, defaultArg);
+                }
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getNames());
@@ -141,7 +147,7 @@ public class ArgumentMatcher {
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
         PromiseWrapper wrapper = isForInlinedBuilin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
-        return wrapInPromises(function, env, resultArgs, formals, wrapper);
+        return wrapInPromises(function, resultArgs, formals, wrapper);
     }
 
     /**
@@ -312,14 +318,13 @@ public class ArgumentMatcher {
      * individually by using promiseWrapper (unfolds varargs, too!).
      *
      * @param function The function which is to be called
-     * @param env The {@link REnvironment} of the caller
      * @param arguments The arguments passed to the function call, already in correct order
      * @param formals The {@link FormalArguments} for the given function
      * @param promiseWrapper The {@link PromiseWrapper} implementation which handles the wrapping of
      *            individual arguments
      * @return A list of {@link RNode} wrapped in {@link PromiseNode}s
      */
-    private static RNode[] wrapInPromises(RFunction function, REnvironment env, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper) {
+    private static RNode[] wrapInPromises(RFunction function, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper) {
         RNode[] defaultArgs = formals.getDefaultArgs();
 
         // Check whether this is a builtin
@@ -330,6 +335,7 @@ public class ArgumentMatcher {
         }
 
         // Insert promises here!
+        IEnvironmentProvider envProvider = new DefaultEnvProvider();
         int logicalIndex = 0;    // also counts arguments wrapped in vararg
         for (int fi = 0; fi < arguments.length; fi++) {
             RNode arg = arguments[fi];  // arg may be null, which denotes 'no arg supplied'
@@ -339,7 +345,7 @@ public class ArgumentMatcher {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
                 RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
                 for (int j = 0; j < varArgs.elementNodes.length; j++) {
-                    modifiedVArgumentNodes[j] = promiseWrapper.wrap(builtinRootNode, env, varArgs.elementNodes[j], null, logicalIndex);
+                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
                     logicalIndex++;
                 }
                 arguments[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
@@ -347,11 +353,43 @@ public class ArgumentMatcher {
             }
 
             // Normal argument: just wrap in promise
-            RNode defaultArg = fi < defaultArgs.length ? formals.getDefaultArg(fi) : null;
-            arguments[fi] = promiseWrapper.wrap(builtinRootNode, env, arg, defaultArg, logicalIndex);
+            RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
+            arguments[fi] = wrap(promiseWrapper, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
             logicalIndex++;
         }
         return arguments;
+    }
+
+    /**
+     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+     * @param envProvider TODO Gero, add comment!
+     * @param suppliedArg The argument supplied for this parameter
+     * @param defaultValue The default value for this argument
+     * @param logicalIndex The logicalIndex of this argument, also counting individual arguments in
+     *            varargs
+     * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
+     *         {@link PromiseNode}
+     */
+    private static RNode wrap(PromiseWrapper promiseWrapper, RBuiltinRootNode builtinRootNode, IEnvironmentProvider envProvider, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+        // Determine whether to choose supplied argument or default value
+        RNode expr = null;
+        PromiseType promiseType = null;
+        if (suppliedArg != null) {
+            // Supplied arg
+            expr = suppliedArg;
+            promiseType = PromiseType.ARG_SUPPLIED;
+        } else {
+            // Default value
+            if (defaultValue != null) {
+                expr = defaultValue;
+                promiseType = PromiseType.ARG_DEFAULT;
+            } else {
+                // In this case, we simply return RMissing (like R)
+                return ConstantNode.create(RMissing.instance);
+            }
+        }
+        EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(builtinRootNode, logicalIndex);
+        return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, expr, defaultValue), envProvider);
     }
 
     /**
@@ -395,35 +433,29 @@ public class ArgumentMatcher {
 
     /**
      * This interface was introduced to reuse
-     * {@link ArgumentMatcher#wrapInPromises(RFunction, REnvironment, RNode[], FormalArguments, PromiseWrapper)}
+     * {@link ArgumentMatcher#wrapInPromises(RFunction, RNode[], FormalArguments, PromiseWrapper)}
      * and encapsulates the wrapping of a single argument into a {@link PromiseNode}.
      */
     private interface PromiseWrapper {
         /**
          * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-         * @param env The {@link REnvironment} the argument should be evaluated in
-         * @param suppliedArg The argument supplied for this parameter
-         * @param defaultValue The default value for this argument
          * @param logicalIndex The logicalIndex of this argument, also counting individual arguments
          *            in varargs
          * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
          *         {@link PromiseNode}
          */
-        RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex);
+        EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int logicalIndex);
     }
 
     /**
      * {@link PromiseWrapper} implementation for 'normal' function calls.
      */
     private static class DefaultPromiseWrapper implements PromiseWrapper {
-        public RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+        public EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
             // TODO Strict!
-            SourceSection promiseSrc = suppliedArg == null ? null : suppliedArg.getSourceSection();
-            EvalPolicy policy = builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
-            RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
-            return PromiseNode.create(promiseSrc, RPromiseArgFactory.create(policy, env, suppliedArg, defaultValueNode));
+            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
         }
     }
 
@@ -434,16 +466,9 @@ public class ArgumentMatcher {
      * @see RBuiltinRootNode#inline(InlinedArguments)
      */
     private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
-        public RNode wrap(RBuiltinRootNode builtinRootNode, REnvironment env, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+        public EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
-            assert builtinRootNode != null;
-            SourceSection promiseSrc = suppliedArg == null ? null : suppliedArg.getSourceSection();
-            RNode defaultValueNode = defaultValue == null ? ConstantNode.create(RMissing.instance) : defaultValue;
-            if (!builtinRootNode.evaluatesArg(logicalIndex)) {
-                return PromiseNode.create(promiseSrc, RPromiseArgFactory.create(EvalPolicy.PROMISED, env, suppliedArg, defaultValueNode));
-            } else {
-                return PromiseNode.create(promiseSrc, RPromiseArgFactory.create(EvalPolicy.RAW, env, suppliedArg, defaultValueNode));
-            }
+            return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.RAW;
         }
     }
 
@@ -494,7 +519,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return ConstantNode.create(RMissing.instance);
+                return null;    // ConstantNode.create(RMissing.instance);
             }
         }
     }
@@ -550,7 +575,7 @@ public class ArgumentMatcher {
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
-                return ConstantNode.create(RMissing.instance);
+                return null;    // ConstantNode.create(RMissing.instance);
             }
         }
     }
