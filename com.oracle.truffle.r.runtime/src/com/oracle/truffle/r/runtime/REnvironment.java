@@ -604,6 +604,7 @@ public abstract class REnvironment implements RAttributable {
      * Ensures that {@code env} and all its parents have a {@link MaterializedFrame}. Used for
      * {@link NewEnv} environments that only need frames when they are used in {@code eval} etc.
      */
+    @SlowPath
     private static MaterializedFrame getMaterializedFrame(REnvironment env) {
         MaterializedFrame envFrame = env.frameAccess.getFrame();
         if (envFrame == null && env.parent != null) {
