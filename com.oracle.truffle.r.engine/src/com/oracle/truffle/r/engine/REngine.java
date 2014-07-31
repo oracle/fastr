@@ -128,13 +128,13 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, envForFrame, printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, REnvironment.globalEnv(), printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult);
     }
 
     public class ParseException extends Exception {
@@ -190,7 +190,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object eval(RLanguage expr, VirtualFrame frame) {
-        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
+        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep());
         return runCall(callTarget, frame, false, false);
 
     }
@@ -211,7 +211,7 @@ public final class REngine implements RContext.Engine {
      *
      */
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
-        RootCallTarget callTarget = makeCallTarget(exprRep, REnvironment.globalEnv());
+        RootCallTarget callTarget = makeCallTarget(exprRep);
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createFunctionFrame(function);
         // We make the new frame look like it was a real call to "function".
@@ -284,7 +284,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
-        RootCallTarget callTarget = makeCallTarget((RNode) promise.getRep(), REnvironment.emptyEnv());
+        RootCallTarget callTarget = makeCallTarget((RNode) promise.getRep());
         return runCall(callTarget, frame, false, false);
     }
 
@@ -299,9 +299,9 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
+    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult) {
         try {
-            return runCall(makeCallTarget(parseToRNode(stream, source), envForFrame), frame, printResult, true);
+            return runCall(makeCallTarget(parseToRNode(stream, source)), frame, printResult, true);
         } catch (RecognitionException | RuntimeException e) {
             context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -337,16 +337,21 @@ public final class REngine implements RContext.Engine {
 
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
-     * {@link RootCallTarget} for it.
+     * {@link RootCallTarget} for it. We define the
+     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment to have the
+     * {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
+     * environments, i.e. is truly anonymous.
      *
-     * @param node
-     * @param enclosing the enclosing environment to use for the anonymous function (value probably
-     *            does not matter)
+     * N.B. For certain expressions, there might be some value in enclosing the wrapper function in
+     * a specific lexical scope. E.g., as a way to access names in the expression known to be
+     * defined in that scope.
+     *
+     * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
     @SlowPath
-    private static RootCallTarget makeCallTarget(RNode node, REnvironment enclosing) {
-        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(enclosing);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, FormalArguments.NO_ARGS, "<main>", true);
+    private static RootCallTarget makeCallTarget(RNode body) {
+        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, "<wrapper>", true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }
