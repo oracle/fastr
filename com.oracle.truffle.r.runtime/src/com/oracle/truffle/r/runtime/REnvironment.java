@@ -439,9 +439,10 @@ public abstract class REnvironment implements RAttributable {
     }
 
     /**
-     * Converts a {@link Frame} to an {@link REnvironment}.
+     * Converts a {@link Frame} to an {@link REnvironment}, which necessarily requires the frame to
+     * be materialized.
      */
-    public static REnvironment frameToEnvironment(Frame frame) {
+    public static REnvironment frameToEnvironment(MaterializedFrame frame) {
         REnvironment env = checkNonFunctionFrame(frame);
         if (env == null) {
             env = lexicalChain(frame);
@@ -459,11 +460,11 @@ public abstract class REnvironment implements RAttributable {
      * {@link MaterializedFrame}.
      */
     @SlowPath
-    public static REnvironment lexicalChain(Frame frame) {
+    public static REnvironment lexicalChain(MaterializedFrame frame) {
         REnvironment env = checkNonFunctionFrame(frame);
         if (env == null) {
             // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame.materialize());
+            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame);
         }
         return env;
     }

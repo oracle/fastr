@@ -66,7 +66,7 @@ public class AccessArgumentNode extends RNode {
         if (promise.getType() == PromiseType.ARG_DEFAULT && promise.getEvalPolicy() == EvalPolicy.PROMISED && promise.getEnv() == null) {
             // In this case the promise might lack the proper REnvironment, as it was created before
             // the environment was
-            promise.updateEnv(REnvironment.frameToEnvironment(frame));
+            promise.updateEnv(REnvironment.frameToEnvironment(frame.materialize()));
         }
 
         // Now force evaluation for STRICT
@@ -81,7 +81,7 @@ public class AccessArgumentNode extends RNode {
 
         public REnvironment getREnvironmentFor(VirtualFrame frame) {
             if (calleeEnv == null || calleeEnv.getFrame() != frame) {
-                calleeEnv = REnvironment.frameToEnvironment(frame);
+                calleeEnv = REnvironment.frameToEnvironment(frame.materialize());
             }
             return calleeEnv;
         }

@@ -59,7 +59,7 @@ public class EnvFunctions {
                 if (callerFrame == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
-                    return REnvironment.frameToEnvironment(callerFrame);
+                    return REnvironment.frameToEnvironment(callerFrame.materialize());
                 }
 
             }
@@ -168,7 +168,7 @@ public class EnvFunctions {
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-            return REnvironment.frameToEnvironment(callerFrame);
+            return REnvironment.frameToEnvironment(callerFrame.materialize());
         }
 
         /**
@@ -183,7 +183,7 @@ public class EnvFunctions {
                 RFunction func = (RFunction) funcArg;
                 Frame enclosing = func.getEnclosingFrame();
                 REnvironment env = RArguments.getEnvironment(enclosing);
-                return env == null ? REnvironment.lexicalChain(enclosing) : env;
+                return env == null ? REnvironment.lexicalChain(enclosing.materialize()) : env;
             } else {
                 // Not an error according to GnuR
                 return RNull.instance;
@@ -225,7 +225,7 @@ public class EnvFunctions {
             // TODO this will eventually go away when R code fixed when promises available
             controlVisibility();
             // FIXME what if hash == FALSE?
-            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame), size);
+            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), size);
         }
 
         @Specialization

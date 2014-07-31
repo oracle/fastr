@@ -81,7 +81,7 @@ public abstract class Substitute extends RBuiltinNode {
                 // allow progress on package loading
             }
             if (env == null) {
-                env = REnvironment.frameToEnvironment(frame);
+                env = REnvironment.frameToEnvironment(frame.materialize());
             }
             Object val = env.get(name);
             if (val == null) {

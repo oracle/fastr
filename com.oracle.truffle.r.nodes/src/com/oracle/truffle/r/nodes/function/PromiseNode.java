@@ -161,7 +161,7 @@ public class PromiseNode extends RNode {
         }
     }
 
-    public static interface IEnvironmentProvider {
+    public interface IEnvironmentProvider {
         REnvironment getREnvironmentFor(VirtualFrame frame);
     }
 
@@ -173,7 +173,7 @@ public class PromiseNode extends RNode {
 
         public REnvironment getREnvironmentFor(VirtualFrame frame) {
             if (callerEnv == null || callerEnv.getFrame() != frame) {
-                callerEnv = REnvironment.frameToEnvironment(frame);
+                callerEnv = REnvironment.frameToEnvironment(frame.materialize());
             }
 
             return callerEnv;

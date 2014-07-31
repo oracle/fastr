@@ -85,7 +85,7 @@ public class FrameFunctions {
                 return REnvironment.globalEnv();
             } else {
                 Frame callerFrame = getFrame(n);
-                return REnvironment.frameToEnvironment(callerFrame);
+                return REnvironment.frameToEnvironment(callerFrame.materialize());
             }
         }
 
@@ -175,7 +175,7 @@ public class FrameFunctions {
             if (callerFrame == null) {
                 return REnvironment.globalEnv();
             } else {
-                return REnvironment.frameToEnvironment(callerFrame);
+                return REnvironment.frameToEnvironment(callerFrame.materialize());
             }
         }
     }
