@@ -458,6 +458,7 @@ public abstract class REnvironment implements RAttributable {
      * of {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
      * {@link MaterializedFrame}.
      */
+    @SlowPath
     public static REnvironment lexicalChain(Frame frame) {
         REnvironment env = checkNonFunctionFrame(frame);
         if (env == null) {
