@@ -345,7 +345,7 @@ public class ArgumentMatcher {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
                 RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
                 for (int j = 0; j < varArgs.elementNodes.length; j++) {
-                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
+                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
                     logicalIndex++;
                 }
                 arguments[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
@@ -354,13 +354,14 @@ public class ArgumentMatcher {
 
             // Normal argument: just wrap in promise
             RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-            arguments[fi] = wrap(promiseWrapper, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
+            arguments[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
             logicalIndex++;
         }
         return arguments;
     }
 
     /**
+     * @param function TODO
      * @param builtinRootNode The {@link RBuiltinRootNode} of the function
      * @param envProvider TODO Gero, add comment!
      * @param suppliedArg The argument supplied for this parameter
@@ -370,7 +371,8 @@ public class ArgumentMatcher {
      * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
      *         {@link PromiseNode}
      */
-    private static RNode wrap(PromiseWrapper promiseWrapper, RBuiltinRootNode builtinRootNode, IEnvironmentProvider envProvider, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+    private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, RBuiltinRootNode builtinRootNode, IEnvironmentProvider envProvider, RNode suppliedArg, RNode defaultValue,
+                    int logicalIndex) {
         // Determine whether to choose supplied argument or default value
         RNode expr = null;
         PromiseType promiseType = null;
@@ -388,7 +390,7 @@ public class ArgumentMatcher {
                 return ConstantNode.create(RMissing.instance);
             }
         }
-        EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(builtinRootNode, logicalIndex);
+        EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, logicalIndex);
         return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, expr, defaultValue), envProvider);
     }
 
@@ -438,24 +440,25 @@ public class ArgumentMatcher {
      */
     private interface PromiseWrapper {
         /**
+         * @param function the {@link RFunction} being called
          * @param builtinRootNode The {@link RBuiltinRootNode} of the function
          * @param logicalIndex The logicalIndex of this argument, also counting individual arguments
          *            in varargs
          * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
          *         {@link PromiseNode}
          */
-        EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int logicalIndex);
+        EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex);
     }
 
     /**
      * {@link PromiseWrapper} implementation for 'normal' function calls.
      */
     private static class DefaultPromiseWrapper implements PromiseWrapper {
-        public EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int logicalIndex) {
+        public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
             // TODO Strict!
-            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
+            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : function.getUsePromises() ? EvalPolicy.PROMISED : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
         }
     }
 
@@ -466,7 +469,7 @@ public class ArgumentMatcher {
      * @see RBuiltinRootNode#inline(InlinedArguments)
      */
     private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
-        public EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int logicalIndex) {
+        public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
             return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.RAW;
         }
