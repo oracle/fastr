@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "as.logical", kind = PRIMITIVE)
+@RBuiltin(name = "as.logical", kind = PRIMITIVE, parameterNames = {"x", "..."})
 @SuppressWarnings("unused")
 public abstract class AsLogical extends RBuiltinNode {
 

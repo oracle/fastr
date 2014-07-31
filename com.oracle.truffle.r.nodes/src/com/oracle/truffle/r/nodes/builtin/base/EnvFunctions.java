@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class EnvFunctions {
 
-    @RBuiltin(name = "as.environment", kind = PRIMITIVE)
+    @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"})
     public abstract static class AsEnvironment extends RBuiltinNode {
 
         @Specialization
@@ -151,7 +151,7 @@ public class EnvFunctions {
 
     }
 
-    @RBuiltin(name = "is.environment", kind = PRIMITIVE)
+    @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsEnvironment extends RBuiltinNode {
 
         @Specialization

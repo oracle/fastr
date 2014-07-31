@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "Im", kind = PRIMITIVE)
+@RBuiltin(name = "Im", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Im extends RBuiltinNode {
 
     public abstract Object executeRDoubleVector(VirtualFrame frame, RAbstractComplexVector vector);

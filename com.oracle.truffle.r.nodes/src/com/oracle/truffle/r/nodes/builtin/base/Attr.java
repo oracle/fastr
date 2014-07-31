@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "attr", kind = PRIMITIVE)
+@RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"})
 public abstract class Attr extends RBuiltinNode {
 
     private static Object searchKeyPartial(RAttributes attributes, String name) {

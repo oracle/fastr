@@ -38,6 +38,11 @@ public @interface RBuiltin {
     String name();
 
     /**
+     * The parameter names.
+     */
+    String[] parameterNames() default {};
+
+    /**
      * A list of aliases for {@code name()}.
      */
     String[] aliases() default {};

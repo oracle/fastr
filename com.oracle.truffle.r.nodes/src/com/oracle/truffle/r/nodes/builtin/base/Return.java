@@ -32,16 +32,10 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "return", kind = PRIMITIVE)
+@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"})
 public abstract class Return extends RBuiltinNode {
 
-    private static final String[] PARAMETER_NAMES = new String[]{null};
     private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

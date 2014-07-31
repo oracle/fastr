@@ -24,18 +24,11 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "switch", kind = PRIMITIVE)
+@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."})
 public abstract class Switch extends RBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"EXPR", "..."};
-
     @Child protected CastIntegerNode castIntNode;
 
     private boolean isVisible = true;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

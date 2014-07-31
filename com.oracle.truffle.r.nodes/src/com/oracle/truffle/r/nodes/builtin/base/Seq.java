@@ -176,7 +176,7 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(order = 150, guards = "lengthZero")
-    public RIntVector LengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut) {
+    public RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }

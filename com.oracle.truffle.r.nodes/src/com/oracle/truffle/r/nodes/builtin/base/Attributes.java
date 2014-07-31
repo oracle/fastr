@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "attributes", kind = PRIMITIVE)
+@RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"})
 public abstract class Attributes extends RBuiltinNode {
 
     @Specialization(guards = "!hasAttributes")

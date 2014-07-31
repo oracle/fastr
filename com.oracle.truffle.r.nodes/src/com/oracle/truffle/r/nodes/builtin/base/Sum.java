@@ -37,15 +37,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 /**
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
-@RBuiltin(name = "sum", kind = PRIMITIVE)
+@RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public final class Sum extends RWrapperBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"...", "na.rm"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};

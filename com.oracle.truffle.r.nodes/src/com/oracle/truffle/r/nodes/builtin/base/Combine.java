@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "c", kind = PRIMITIVE)
+@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
 @SuppressWarnings("unused")
 public abstract class Combine extends RBuiltinNode {
 
@@ -52,8 +52,6 @@ public abstract class Combine extends RBuiltinNode {
 
     @Child private PrecedenceNode precedenceNode;
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
     public abstract Object executeCombine(VirtualFrame frame, Object value);
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
@@ -68,11 +66,6 @@ public abstract class Combine extends RBuiltinNode {
             resultVector = resultVector.copy();
         }
         return resultVector;
-    }
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     protected Combine() {

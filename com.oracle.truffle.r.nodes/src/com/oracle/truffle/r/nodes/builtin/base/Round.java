@@ -34,19 +34,12 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "round", kind = PRIMITIVE)
+@RBuiltin(name = "round", kind = PRIMITIVE, parameterNames = {"x", "digits"})
 public abstract class Round extends RBuiltinNode {
 
     @Child protected UnaryArithmetic roundOp = UnaryArithmetic.ROUND.create();
 
     private final NACheck check = NACheck.create();
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "digits"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

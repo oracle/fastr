@@ -22,7 +22,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "UseMethod", kind = PRIMITIVE)
+@RBuiltin(name = "UseMethod", kind = PRIMITIVE, parameterNames = {"generic", "object"})
 public abstract class UseMethod extends RBuiltinNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
@@ -31,18 +31,11 @@ public abstract class UseMethod extends RBuiltinNode {
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
-    private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
-
     @Child UseMethodNode useMethodNode;
 
     public UseMethod() {
         super();
         this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
-    }
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     @Override

@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "oldClass", kind = PRIMITIVE)
+@RBuiltin(name = "oldClass", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetOldClass extends RBuiltinNode {
 
     @Specialization

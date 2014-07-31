@@ -50,15 +50,8 @@ public class BrowserFunctions {
 
     private static final ArrayList<HelperState> helperState = new ArrayList<>();
 
-    @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "browser", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"})
     public abstract static class Browser extends RInvisibleBuiltinNode {
-
-        private static final String[] PARAMETER_NAMES = new String[]{"text", "condition", "expr", "skipCalls"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @SuppressWarnings("unused")
-@RBuiltin(name = "is.na", kind = PRIMITIVE)
+@RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsNA extends RBuiltinNode {
 
     @Child IsNA recursiveIsNA;

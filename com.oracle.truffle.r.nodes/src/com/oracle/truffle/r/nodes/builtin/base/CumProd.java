@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "cumprod", kind = PRIMITIVE)
+@RBuiltin(name = "cumprod", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class CumProd extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

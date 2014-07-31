@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "Mod", kind = PRIMITIVE)
+@RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Mod extends RBuiltinNode {
 
     @Child protected BinaryArithmeticNode pow = BinaryArithmeticNode.create(BinaryArithmetic.POW);

@@ -31,18 +31,11 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "invisible", kind = PRIMITIVE)
+@RBuiltin(name = "invisible", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Invisible extends RInvisibleBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
 
     public static RNode create(RNode value) {
         return InvisibleFactory.create(new RNode[]{value}, null, null);
-    }
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     @Override

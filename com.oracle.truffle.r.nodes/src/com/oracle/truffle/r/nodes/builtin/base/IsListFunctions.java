@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class IsListFunctions {
-    @RBuiltin(name = "is.list", kind = PRIMITIVE)
+    @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"})
     @SuppressWarnings("unused")
     // TODO ideally this would inherit from isTypeNode,
     // but issues around subclassing would need to be resolved
@@ -109,7 +109,7 @@ public class IsListFunctions {
 
     }
 
-    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE)
+    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsPairList extends IsTypeNode {
         @Specialization
         @Override

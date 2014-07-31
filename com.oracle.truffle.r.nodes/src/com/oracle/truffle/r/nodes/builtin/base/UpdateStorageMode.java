@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
-@RBuiltin(name = "storage.mode<-", kind = PRIMITIVE)
+@RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class UpdateStorageMode extends RBuiltinNode {
 
     @Child private Typeof typeof;

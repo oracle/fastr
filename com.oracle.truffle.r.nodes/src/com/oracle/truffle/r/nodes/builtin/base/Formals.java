@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "formals", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "formals", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"fun"})
 // TODO revert to INTERNAL when promises are lazy
 public abstract class Formals extends RBuiltinNode {
     @Specialization

@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "abs", kind = PRIMITIVE)
+@RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Abs extends RBuiltinNode {
 
     private final NACheck check = NACheck.create();

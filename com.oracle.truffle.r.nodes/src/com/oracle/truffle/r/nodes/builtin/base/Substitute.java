@@ -36,16 +36,10 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 // TODO Implement completely
-@RBuiltin(name = "substitute", kind = PRIMITIVE, nonEvalArgs = {0})
+@RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = {0})
 public abstract class Substitute extends RBuiltinNode {
-    private static final String[] PARAMETER_NAMES = new String[]{"expr", "env"};
 
     @Child Quote quote;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

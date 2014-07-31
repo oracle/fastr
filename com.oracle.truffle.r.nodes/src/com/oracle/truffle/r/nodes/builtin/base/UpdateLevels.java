@@ -17,7 +17,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "levels<-", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "levels<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     @Specialization

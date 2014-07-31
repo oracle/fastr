@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * that we know that {@code func} is either a builtin or it's an error. We want to rewrite the AST
  * as if the {@code func} had been called directly.
  */
-@RBuiltin(name = ".Internal", kind = PRIMITIVE, nonEvalArgs = {0})
+@RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = {0})
 public abstract class Internal extends RBuiltinNode {
 
     @Specialization

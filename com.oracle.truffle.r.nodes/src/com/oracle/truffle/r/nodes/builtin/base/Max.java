@@ -32,15 +32,8 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "max", kind = PRIMITIVE)
+@RBuiltin(name = "max", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public final class Max extends RWrapperBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     public Max(RBuiltinNode prev) {
         super(prev);
     }

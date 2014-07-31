@@ -20,7 +20,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"...", "na.rm"})
 public abstract class Prod extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"..."};

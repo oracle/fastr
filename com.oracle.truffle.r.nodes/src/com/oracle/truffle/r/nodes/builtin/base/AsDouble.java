@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE)
+@RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, parameterNames = {"x", "..."})
 // TODO define alias in R
 @SuppressWarnings("unused")
 public abstract class AsDouble extends RBuiltinNode {

@@ -31,15 +31,8 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "quote", nonEvalArgs = {0}, kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "quote", nonEvalArgs = {0}, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"expr"})
 public abstract class Quote extends RBuiltinNode {
-    private static final String[] PARAMETER_NAMES = new String[]{"expr"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance)};

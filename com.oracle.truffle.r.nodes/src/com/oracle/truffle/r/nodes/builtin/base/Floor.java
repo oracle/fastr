@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "floor", kind = PRIMITIVE)
+@RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"})
 public class Floor extends RWrapperBuiltinNode {
 
     public Floor(RBuiltinNode prev) {

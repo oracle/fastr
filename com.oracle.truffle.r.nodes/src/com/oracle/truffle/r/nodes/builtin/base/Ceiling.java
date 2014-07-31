@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "ceiling", kind = PRIMITIVE)
+@RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
 public class Ceiling extends RWrapperBuiltinNode {
 
     public Ceiling(RBuiltinNode prev) {

@@ -30,18 +30,11 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "list", kind = PRIMITIVE)
+@RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."})
 // TODO Is it really worth having all the individual specializations given that we have to have one
 // for *every* type
 // and the code is essentially equivalent for each one?
 public abstract class ListBuiltin extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Specialization
     public RList list(@SuppressWarnings("unused") RMissing missing) {

@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.double", kind = PRIMITIVE)
+@RBuiltin(name = "is.double", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsDouble extends IsTypeNode {
 
     @Specialization

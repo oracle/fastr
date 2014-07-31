@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "length<-", kind = PRIMITIVE)
+@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     @CreateCast("arguments")

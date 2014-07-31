@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "cummax", kind = PRIMITIVE)
+@RBuiltin(name = "cummax", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class CumMax extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

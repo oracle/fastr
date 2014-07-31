@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.atomic", kind = PRIMITIVE)
+@RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsAtomic extends RBuiltinNode {
 
     @Specialization

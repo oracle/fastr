@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "log2", kind = PRIMITIVE)
+@RBuiltin(name = "log2", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Log2 extends RBuiltinNode {
 
     private static final double log2value = Math.log(2);
