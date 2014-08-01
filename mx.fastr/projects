@@ -2,7 +2,7 @@ suite=fastr
 mxversion=2.4.0
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
-library@JDK_TOOLS@sha1=NOCHECK
+#library@JDK_TOOLS@sha1=NOCHECK
 
 library@ANTLR@path=lib/antlr-runtime-3.5.jar
 library@ANTLR@urls=http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar
