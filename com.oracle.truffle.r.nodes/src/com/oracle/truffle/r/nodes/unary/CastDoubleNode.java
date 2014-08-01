@@ -352,10 +352,10 @@ public abstract class CastDoubleNode extends CastNode {
                     } else if (doubleVector.getLength() == 0) {
                         result[i] = RRuntime.DOUBLE_NA;
                     } else {
-                        return cannotCoerceListError();
+                        return cannotCoerceListError(frame);
                     }
                 } else {
-                    return cannotCoerceListError();
+                    return cannotCoerceListError(frame);
                 }
             }
         }
@@ -366,8 +366,8 @@ public abstract class CastDoubleNode extends CastNode {
         return ret;
     }
 
-    private RDoubleVector cannotCoerceListError() {
-        throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "numeric");
+    private RDoubleVector cannotCoerceListError(VirtualFrame frame) {
+        throw RError.error(frame, this.getSourceSection(), RError.Message.LIST_COERCION, "numeric");
     }
 
     @Generic

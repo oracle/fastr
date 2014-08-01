@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,16 +47,16 @@ public abstract class Structure extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object structure(RMissing obj, RMissing args) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
+    public Object structure(VirtualFrame frame, RMissing obj, RMissing args) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
     }
 
     @Specialization
-    public Object structure(RAbstractContainer obj, Object args) {
+    public Object structure(VirtualFrame frame, RAbstractContainer obj, Object args) {
         if (!(args instanceof RMissing)) {
             Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
             String[] argNames = getSuppliedArgsNames();
-            validateArgNames(argNames);
+            validateArgNames(frame, argNames);
             for (int i = 0; i < values.length; i++) {
                 obj.setAttr(argNames[i + 1], fixupValue(values[i]));
             }
@@ -70,7 +71,7 @@ public abstract class Structure extends RBuiltinNode {
         return value;
     }
 
-    private void validateArgNames(String[] argNames) throws RError {
+    private void validateArgNames(VirtualFrame frame, String[] argNames) throws RError {
         // first "name" is the container
         boolean ok = argNames != null;
         if (argNames != null) {
@@ -81,7 +82,7 @@ public abstract class Structure extends RBuiltinNode {
             }
         }
         if (!ok) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
     }
 }

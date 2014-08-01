@@ -151,9 +151,9 @@ public class BrowserFunctions {
         /**
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
-        protected HelperState getHelperState(int n) {
+        protected HelperState getHelperState(VirtualFrame frame, int n) {
             if (n <= 0) {
-                throw RError.error(getEncapsulatingSourceSection(), Message.POSITIVE_CONTEXTS);
+                throw RError.error(frame, getEncapsulatingSourceSection(), Message.POSITIVE_CONTEXTS);
             }
             int nn = n;
             if (nn > helperState.size()) {
@@ -167,30 +167,30 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL)
     public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
-        public String browserText(int n) {
+        public String browserText(VirtualFrame frame, int n) {
             controlVisibility();
-            return getHelperState(n).text;
+            return getHelperState(frame, n).text;
         }
 
         @Specialization
-        public String browserText(double n) {
+        public String browserText(VirtualFrame frame, double n) {
             controlVisibility();
-            return getHelperState((int) n).text;
+            return getHelperState(frame, (int) n).text;
         }
     }
 
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL)
     public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
-        public Object browserCondition(int n) {
+        public Object browserCondition(VirtualFrame frame, int n) {
             controlVisibility();
-            return getHelperState(n).condition;
+            return getHelperState(frame, n).condition;
         }
 
         @Specialization
-        public Object browserCondition(double n) {
+        public Object browserCondition(VirtualFrame frame, double n) {
             controlVisibility();
-            return getHelperState((int) n).condition;
+            return getHelperState(frame, (int) n).condition;
         }
     }
 

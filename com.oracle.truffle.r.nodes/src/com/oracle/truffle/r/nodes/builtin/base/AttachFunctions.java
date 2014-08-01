@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.DetachException;
@@ -132,35 +133,35 @@ public class AttachFunctions {
     public abstract static class Detach extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public Object doDetach(int name, int pos, byte unload, byte characterOnly, byte force) {
+        public Object doDetach1(VirtualFrame frame, int name, int pos, byte unload, byte characterOnly, byte force) {
             controlVisibility();
-            return doDetach(name, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
+            return doDetach3(frame, name, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization
-        public Object doDetach(double name, int pos, byte unload, byte characterOnly, byte force) {
-            return doDetach((int) name, pos, unload, characterOnly, force);
+        public Object doDetach(VirtualFrame frame, double name, int pos, byte unload, byte characterOnly, byte force) {
+            return doDetach1(frame, (int) name, pos, unload, characterOnly, force);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object doDetach(String name, int pos, byte unload, byte characterOnly, byte force) {
+        public Object doDetach2(VirtualFrame frame, String name, int pos, byte unload, byte characterOnly, byte force) {
             controlVisibility();
             int ix = REnvironment.lookupIndexOnSearchPath(name);
             if (ix <= 0) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "name");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "name");
             }
-            return doDetach(ix, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
+            return doDetach3(frame, ix, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
         }
 
-        REnvironment doDetach(int pos, boolean unload, boolean force) {
+        REnvironment doDetach3(VirtualFrame frame, int pos, boolean unload, boolean force) {
             if (pos == 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             }
             try {
                 return REnvironment.detach(pos, unload, force);
             } catch (DetachException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex);
+                throw RError.error(frame, getEncapsulatingSourceSection(), ex);
             }
         }
     }

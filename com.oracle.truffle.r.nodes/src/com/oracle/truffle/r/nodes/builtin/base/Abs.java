@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,9 +40,9 @@ public abstract class Abs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull abs(RNull x) {
+    public RNull abs(VirtualFrame frame, RNull x) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization
@@ -77,16 +78,16 @@ public abstract class Abs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(RRaw vector) {
+    public Object abs(VirtualFrame frame, RRaw vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(String vector) {
+    public Object abs(VirtualFrame frame, String vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @Specialization
@@ -141,16 +142,16 @@ public abstract class Abs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(RStringVector vector) {
+    public Object abs(VirtualFrame frame, RStringVector vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(RRawVector vector) {
+    public Object abs(VirtualFrame frame, RRawVector vector) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     private int performInt(int value) {

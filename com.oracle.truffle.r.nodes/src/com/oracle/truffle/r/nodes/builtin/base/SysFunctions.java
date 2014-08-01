@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -83,9 +84,9 @@ public class SysFunctions {
         }
 
         @Specialization(order = 100)
-        public Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
+        public Object sysGetEnvGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
         }
 
     }
@@ -101,15 +102,15 @@ public class SysFunctions {
         }
 
         @Specialization
-        public RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
-            return doSysSetEnv(new Object[]{argVec.getDataAt(0)});
+        public RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector argVec) {
+            return doSysSetEnv(frame, new Object[]{argVec.getDataAt(0)});
         }
 
         @Specialization
-        public RLogicalVector doSysSetEnv(Object[] args) {
+        public RLogicalVector doSysSetEnv(VirtualFrame frame, Object[] args) {
             controlVisibility();
             String[] argNames = getSuppliedArgsNames();
-            validateArgNames(argNames);
+            validateArgNames(frame, argNames);
             byte[] data = new byte[args.length];
             for (int i = 0; i < args.length; i++) {
                 REnvVars.put(argNames[i], (String) args[i]);
@@ -118,7 +119,7 @@ public class SysFunctions {
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private void validateArgNames(String[] argNames) throws RError {
+        private void validateArgNames(VirtualFrame frame, String[] argNames) throws RError {
             boolean ok = argNames != null;
             if (argNames != null) {
                 for (int i = 0; i < argNames.length; i++) {
@@ -128,7 +129,7 @@ public class SysFunctions {
                 }
             }
             if (!ok) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
             }
         }
     }
@@ -156,17 +157,17 @@ public class SysFunctions {
         }
 
         @Specialization(order = 1)
-        public Object sysSleep(String secondsString) {
+        public Object sysSleep(VirtualFrame frame, String secondsString) {
             controlVisibility();
-            long millis = convertToMillis(checkValidString(secondsString));
+            long millis = convertToMillis(checkValidString(frame, secondsString));
             sleep(millis);
             return RNull.instance;
         }
 
         @Specialization(order = 2, guards = "lengthOne")
-        public Object sysSleep(RStringVector secondsVector) {
+        public Object sysSleep(VirtualFrame frame, RStringVector secondsVector) {
             controlVisibility();
-            long millis = convertToMillis(checkValidString(secondsVector.getDataAt(0)));
+            long millis = convertToMillis(checkValidString(frame, secondsVector.getDataAt(0)));
             sleep(millis);
             return RNull.instance;
         }
@@ -176,20 +177,20 @@ public class SysFunctions {
         }
 
         @Specialization(order = 100)
-        public Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
+        public Object sysSleep(VirtualFrame frame, @SuppressWarnings("unused") Object arg) throws RError {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
         }
 
         private static long convertToMillis(double d) {
             return (long) (d * 1000);
         }
 
-        private double checkValidString(String s) {
+        private double checkValidString(VirtualFrame frame, String s) {
             try {
                 return Double.parseDouble(s);
             } catch (NumberFormatException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
             }
         }
 
@@ -247,9 +248,9 @@ public class SysFunctions {
         }
 
         @Specialization(order = 100)
-        public Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
+        public Object sysReadlinkGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
         }
     }
 

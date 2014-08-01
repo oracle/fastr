@@ -27,8 +27,8 @@ public final class RError extends RuntimeException {
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
-     * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
-     * object and any arguments. E.g. see {@link REnvironment.PutException}.
+     * {@link RError#error(VirtualFrame, SourceSection, RErrorException)}, which access the stored
+     * {@link Message} object and any arguments. E.g. see {@link REnvironment.PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -59,10 +59,35 @@ public final class RError extends RuntimeException {
         return getMessage();
     }
 
-    public static RError error(SourceSection src, Message msg, Object... args) {
+    /**
+     * An error that cannot be caught by {@code options(error = expr)} as there is no
+     * {@link VirtualFrame} available. Ideally this should not be necessary.
+     */
+    public static RError uncatchableError(SourceSection src, Message msg, Object... args) {
         return error(null, src, msg, args);
     }
 
+    public static RError uncatchableError(SourceSection src, RErrorException ex) {
+        return error(null, src, ex.msg, ex.args);
+    }
+
+    /**
+     * Handles an R error with the most general argument signature. All other variants delegate to
+     * this method. R allows an error to be caught and an arbitrary expression evaluated, often a
+     * call to the {@code browser} function for interactive inspection of the environment where the
+     * error occurred.
+     *
+     * Note that in the current implementation some errors are uncatchable owing to problems with
+     * their being generated at points where the frame is not available. Note also that the method
+     * never actually returns a result, but the throws the error directly. However, the signature
+     * has a return type of {@link RError} to allow callers to use the idiom
+     * {@code throw error(...)} to indicate the control transfer.
+     *
+     * @param frame the frame where the error occurred. Currently may be {@code null} for un
+     * @param src source of the code throwing the error, or {@code null} if not available
+     * @param msg a {@link Message} instance specifying the error
+     * @param args arguments for format specifiers in the message string
+     */
     public static RError error(VirtualFrame frame, SourceSection src, Message msg, Object... args) {
         CompilerDirectives.transferToInterpreter();
         RError rError;
@@ -72,33 +97,51 @@ public final class RError extends RuntimeException {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
         Object errorExpr = ROptions.getValue("error");
-        if (errorExpr != RNull.instance && frame != null) {
-            // Errors and warnings are output before the expression is evaluated
-            RContext.getEngine().printRError(rError);
-            // errorExpr can be anything, but not everything makes sense
-            if (errorExpr instanceof RLanguage) {
-                RContext.getEngine().eval((RLanguage) errorExpr, frame);
-            } else if (errorExpr instanceof RExpression) {
-                RContext.getEngine().eval((RExpression) errorExpr, frame);
+        if (errorExpr != RNull.instance) {
+            if (frame == null) {
+                // uncatchable
+                RContext.getInstance().getConsoleHandler().println("error in uncatchable");
+                throw rError;
             } else {
-                // GnuR checks this earlier when the option is set
-                throw new RError(null, Message.INVALID_ERROR.message);
+                // Errors and warnings are output before the expression is evaluated
+                RContext.getEngine().printRError(rError);
+                // errorExpr can be anything, but not everything makes sense
+                if (errorExpr instanceof RLanguage) {
+                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                } else if (errorExpr instanceof RExpression) {
+                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                } else {
+                    // GnuR checks this earlier when the option is set
+                    throw new RError(null, Message.INVALID_ERROR.message);
+                }
+                // Control, transfer to top level, but suppress print
+                throw new RError(null, "");
             }
-            // Control, transfer to top level, but suppress print
-            throw new RError(null, "");
         } else {
             throw rError;
         }
     }
 
-    public static RError error(Message msg, Object... args) {
-        return error(null, null, msg, args);
+    /**
+     * Convenience variant of {@link #error(VirtualFrame, SourceSection, Message, Object...)} where
+     * no source section can be provide. Ideally, this would never happen.
+     */
+    public static RError error(VirtualFrame frame, Message msg, Object... args) {
+        return error(frame, null, msg, args);
     }
 
-    public static RError error(SourceSection src, RErrorException ex) {
-        return error(null, src, ex.msg, ex.args);
+    /**
+     * Variant for the case where the original error occurs in code where it is not appropriate to
+     * report the error. The error information is propagated using the {@link RErrorException}.
+     */
+    public static RError error(VirtualFrame frame, SourceSection src, RErrorException ex) {
+        return error(frame, src, ex.msg, ex.args);
     }
 
+    /**
+     * A temporary error that indicates an unimplemented feature where terminating the VM using
+     * {@link Utils#fatalError(String)} would be inappropriate.
+     */
     public static RError nyi(SourceSection src, String msg) {
         CompilerDirectives.transferToInterpreter();
         return new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
@@ -430,7 +473,7 @@ public final class RError extends RuntimeException {
         CUMMAX_UNDEFINED_FOR_COMPLEX("'cummin' not defined for complex numbers"),
         CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers");
 
-        private final String message;
+        public final String message;
         private final boolean hasArgs;
 
         private Message(String message) {

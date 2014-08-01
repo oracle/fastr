@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -51,7 +52,7 @@ public abstract class Array extends RBuiltinNode {
         return new RNode[]{children[0], CastIntegerNodeFactory.create(dimsVector, false, false, false), children[2]};
     }
 
-    private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {
+    private int dimDataHelper(VirtualFrame frame, RAbstractIntVector dim, int[] dimData) {
         int totalLength = 1;
         int seenNegative = 0;
         for (int i = 0; i < dim.getLength(); i++) {
@@ -62,18 +63,18 @@ public abstract class Array extends RBuiltinNode {
             totalLength *= dimData[i];
         }
         if (seenNegative == dim.getLength() && seenNegative != 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
         } else if (seenNegative > 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
         }
         return totalLength;
     }
 
     @Specialization
-    public RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RIntVector doArray(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         int[] data = new int[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
@@ -82,10 +83,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RDoubleVector doArray(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         double[] data = new double[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
@@ -94,10 +95,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RLogicalVector doArray(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         byte[] data = new byte[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
@@ -106,10 +107,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RStringVector doArray(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         String[] data = new String[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());
@@ -118,10 +119,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RComplexVector doArray(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         double[] data = new double[totalLength << 1];
         int ind = 0;
         for (int i = 0; i < totalLength; i++) {
@@ -133,10 +134,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RRawVector doArray(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         byte[] data = new byte[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength()).getValue();
@@ -145,10 +146,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RList doArray(RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    public RList doArray(VirtualFrame frame, RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         int[] dimData = new int[dim.getLength()];
-        int totalLength = dimDataHelper(dim, dimData);
+        int totalLength = dimDataHelper(frame, dim, dimData);
         Object[] data = new Object[totalLength];
         for (int i = 0; i < totalLength; i++) {
             data[i] = vec.getDataAt(i % vec.getLength());

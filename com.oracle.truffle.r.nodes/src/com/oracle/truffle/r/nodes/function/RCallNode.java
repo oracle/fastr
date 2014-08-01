@@ -84,7 +84,7 @@ public abstract class RCallNode extends RNode {
         BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
-        RCallNode result = current.createCacheNode(function);
+        RCallNode result = current.createCacheNode(frame, function);
         result.assignSourceSection(src);
         return result;
     }
@@ -241,11 +241,11 @@ public abstract class RCallNode extends RNode {
             return specialize(frame, function).execute(frame, function);
         }
 
-        private RCallNode specialize(@SuppressWarnings("unused") VirtualFrame frame, RFunction function) {
+        private RCallNode specialize(VirtualFrame frame, RFunction function) {
             CompilerAsserts.neverPartOfCompilation();
 
             if (depth < INLINE_CACHE_SIZE) {
-                final RCallNode current = createCacheNode(function);
+                final RCallNode current = createCacheNode(frame, function);
                 final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
                 current.onCreate();
                 this.replace(cachedNode);
@@ -266,7 +266,7 @@ public abstract class RCallNode extends RNode {
             return parentNode;
         }
 
-        protected RCallNode createCacheNode(RFunction function) {
+        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
             // TODO Gero: Do we need args.copy() here?
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
@@ -274,7 +274,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // TODO Inline only feasible if it's guaranteed that default values of builtins
                     // have NO side effects?!?!?!
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, getEncapsulatingSourceSection());
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, getEncapsulatingSourceSection());
                     // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
                 }
@@ -287,7 +287,7 @@ public abstract class RCallNode extends RNode {
                 return new DispatchedVarArgsCallNode(function, args);
             } else {
                 // Nope! (peeewh)
-                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(function, args, getEncapsulatingSourceSection());
+                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, getEncapsulatingSourceSection());
                 return new DispatchedCallNode(function, matchedArgs);
             }
         }
@@ -338,7 +338,7 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(function, suppliedArgs, getEncapsulatingSourceSection());
+            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
             replaceChild(matchedArgs, newMatchedArgs);
             matchedArgs = newMatchedArgs;
 
@@ -366,7 +366,7 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction function) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(function, suppliedArgs, getEncapsulatingSourceSection());
+            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
             replaceChild(matchedArgs, newMatchedArgs);
             matchedArgs = newMatchedArgs;
 

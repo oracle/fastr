@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -61,9 +62,9 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization(order = 100)
-    public RStringVector tempfileGeneric(Object pattern, Object tempDir, Object fileExt) throws RError {
+    public RStringVector tempfileGeneric(VirtualFrame frame, Object pattern, Object tempDir, Object fileExt) throws RError {
         controlVisibility();
-        RStringVector[] argVecs = new RStringVector[]{checkVector(pattern, INVALID_PATTERN), checkVector(tempDir, INVALID_TEMPDIR), checkVector(fileExt, INVALID_FILEEXT)};
+        RStringVector[] argVecs = new RStringVector[]{checkVector(frame, pattern, INVALID_PATTERN), checkVector(frame, tempDir, INVALID_TEMPDIR), checkVector(frame, fileExt, INVALID_FILEEXT)};
         // Now we have RStringVectors of at least length 1
         int maxL = 0;
         for (int i = 0; i < argVecs.length; i++) {
@@ -100,7 +101,7 @@ public abstract class TempFile extends RBuiltinNode {
         return RDataFactory.createStringVector(data, true);
     }
 
-    private RStringVector checkVector(Object obj, String msg) throws RError {
+    private RStringVector checkVector(VirtualFrame frame, Object obj, String msg) throws RError {
         if (obj instanceof RStringVector) {
             RStringVector result = (RStringVector) obj;
             if (result.getLength() > 0) {
@@ -109,7 +110,7 @@ public abstract class TempFile extends RBuiltinNode {
         } else if (obj instanceof String) {
             return RDataFactory.createStringVector((String) obj);
         }
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
     private static String createFile(String pattern, String tempDir, String fileExt) {

@@ -45,12 +45,12 @@ public class FrameFunctions {
         /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
-        protected Frame getFrame(int nn) {
+        protected Frame getFrame(VirtualFrame frame, int nn) {
             int n = nn;
             if (n > 0) {
                 int d = Utils.stackDepth();
                 if (n > d) {
-                    RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                    RError.error(frame, RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 n = d - n;
             } else {
@@ -58,7 +58,7 @@ public class FrameFunctions {
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n);
             if (callerFrame == null) {
-                RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                RError.error(frame, RError.Message.NOT_THAT_MANY_FRAMES);
             }
             return callerFrame;
         }
@@ -76,7 +76,7 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.frame", kind = INTERNAL)
     public abstract static class SysFrame extends FrameHelper {
         @Specialization()
-        public REnvironment sysFrame(int nd) {
+        public REnvironment sysFrame(VirtualFrame frame, int nd) {
             controlVisibility();
             int n = nd;
             if (n == 0) {
@@ -84,14 +84,14 @@ public class FrameFunctions {
                 // (which may differ from globalenv() during startup)
                 return REnvironment.globalEnv();
             } else {
-                Frame callerFrame = getFrame(n);
+                Frame callerFrame = getFrame(frame, n);
                 return REnvironment.frameToEnvironment(callerFrame.materialize());
             }
         }
 
         @Specialization()
-        public REnvironment sysFrame(double nd) {
-            return sysFrame((int) nd);
+        public REnvironment sysFrame(VirtualFrame frame, double nd) {
+            return sysFrame(frame, (int) nd);
         }
     }
 
@@ -118,11 +118,11 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.function", kind = INTERNAL)
     public abstract static class SysFunction extends FrameHelper {
         @Specialization()
-        public Object sysFunction(int nd) {
+        public Object sysFunction(VirtualFrame frame, int nd) {
             controlVisibility();
             int n = nd;
             // N.B. Despite the spec, n==0 is treated as the current function
-            Frame callerFrame = getFrame(n);
+            Frame callerFrame = getFrame(frame, n);
             RFunction func = RArguments.getFunction(callerFrame);
             if (func == null) {
                 return RNull.instance;
@@ -132,8 +132,8 @@ public class FrameFunctions {
         }
 
         @Specialization()
-        public Object sysFunction(double nd) {
-            return sysFunction((int) nd);
+        public Object sysFunction(VirtualFrame frame, double nd) {
+            return sysFunction(frame, (int) nd);
         }
     }
 
@@ -165,11 +165,11 @@ public class FrameFunctions {
     @RBuiltin(name = "parent.frame", kind = INTERNAL)
     public abstract static class ParentFrame extends FrameHelper {
         @Specialization()
-        public REnvironment parentFrame(double nd) {
+        public REnvironment parentFrame(VirtualFrame frame, double nd) {
             controlVisibility();
             int n = (int) nd;
             if (n == 0) {
-                RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
+                RError.error(frame, RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n + 1);
             if (callerFrame == null) {

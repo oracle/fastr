@@ -177,7 +177,7 @@ public class PromiseNode extends RNode {
 
         public RawPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
-            // defaultExpt and expr are identical here!
+            // defaultExpr and expr are identical here!
             this.defaultExpr = (RNode) factory.getExpr();
         }
 

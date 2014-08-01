@@ -48,7 +48,7 @@ public abstract class NextMethod extends RBuiltinNode {
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
         if (genericName == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -73,11 +73,11 @@ public abstract class NextMethod extends RBuiltinNode {
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         return enclosingArg.getClassHierarchy();
     }

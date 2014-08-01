@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -45,7 +46,7 @@ public abstract class Vector extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector vector(String mode, int length) {
+    public RAbstractVector vector(VirtualFrame frame, String mode, int length) {
         controlVisibility();
         switch (mode) {
             case "character":
@@ -62,7 +63,7 @@ public abstract class Vector extends RBuiltinNode {
                 Arrays.fill(data, RNull.instance);
                 return RDataFactory.createList(data);
             default:
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
     }
 

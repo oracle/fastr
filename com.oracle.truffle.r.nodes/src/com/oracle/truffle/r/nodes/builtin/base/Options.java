@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -64,7 +65,7 @@ public abstract class Options extends RBuiltinNode {
     }
 
     @Specialization
-    public Object options(Object args) {
+    public Object options(VirtualFrame frame, Object args) {
         controlVisibility();
         if (args instanceof RMissing) {
             return options((RMissing) args);
@@ -85,7 +86,7 @@ public abstract class Options extends RBuiltinNode {
                     } else if (value instanceof String) {
                         optionName = (String) value;
                     } else {
-                        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
+                        throw RError.error(frame, getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
                     }
                     Object optionVal = ROptions.getValue(optionName);
                     data[i] = optionVal == null ? RNull.instance : optionVal;

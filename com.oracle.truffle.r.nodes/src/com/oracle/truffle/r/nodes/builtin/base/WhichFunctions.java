@@ -82,11 +82,6 @@ public class WhichFunctions {
             return maxIndex + 1;
         }
 
-        @Specialization
-        public int which(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
-        }
     }
 
     @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL)
@@ -112,10 +107,5 @@ public class WhichFunctions {
             return minIndex + 1;
         }
 
-        @Specialization
-        public int which(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
-        }
     }
 }

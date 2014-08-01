@@ -87,7 +87,7 @@ public abstract class UpdateFieldNode extends RNode {
         try {
             env.put(getField(), value);
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
         }
         return env;
     }

@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -70,7 +71,7 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
     private static final Compiler compiler = Compiler.getCompiler();
 
     @Specialization
-    public byte compileFunction(RFunction function) {
+    public byte compileFunction(VirtualFrame frame, RFunction function) {
         controlVisibility();
         if (compiler != null) {
             try {
@@ -78,15 +79,15 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte compileFunction(@SuppressWarnings("unused") Object arg) {
+    public byte compileFunction(VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
     }
 }
