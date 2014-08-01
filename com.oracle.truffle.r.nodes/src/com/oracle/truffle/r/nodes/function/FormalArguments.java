@@ -77,14 +77,15 @@ public final class FormalArguments extends Arguments<RNode> {
     }
 
     /**
-     * Other than {@link #getDefaultArgs()} this method returns not <code>null</code> but a
-     * {@link ConstantNode} wrapping {@link RMissing#instance}!!!
+     * Other than {@link #getDefaultArgs()} and {@link #getDefaultArg(int)} this method returns not
+     * <code>null</code> but a {@link ConstantNode} wrapping {@link RMissing#instance}!!!
      *
      * @param index
      * @return The default arguments for the given index, or an instance of {@link ConstantNode} if
      *         <code>null</code>!
      */
     public RNode getDefaultArgNonNull(int index) {
+        assert index >= 0 && index < arguments.length;
         RNode result = arguments[index];
         if (result == null) {
             result = ConstantNode.create(RMissing.instance);
@@ -93,14 +94,13 @@ public final class FormalArguments extends Arguments<RNode> {
     }
 
     /**
-     * Other than {@link #getDefaultArgs()} this method returns not <code>null</code> but a
-     * {@link ConstantNode} wrapping {@link RMissing#instance}!!! TODO Gero, out of date!"
-     * 
+     * This works as a direct accessor to on of the {@link #getDefaultArgs()}.
+     *
      * @param index
-     * @return The default arguments for the given index, or an instance of {@link ConstantNode} if
-     *         <code>null</code>!
+     * @return The default arguments for the given index, or <code>null</code> if there is none.
      */
     public RNode getDefaultArg(int index) {
+        assert index >= 0 && index < arguments.length;
         return arguments[index];
     }
 

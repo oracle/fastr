@@ -31,16 +31,39 @@ import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
+/**
+ * This {@link RNode} implementation is used as a
+ */
 public class PromiseNode extends RNode {
+    /**
+     * The {@link RPromiseFactory} which holds all information necessary to construct a proper
+     * {@link RPromise} for every case that might occur
+     */
     protected final RPromiseFactory factory;
-    protected final IEnvironmentProvider envProvider;
 
-    protected PromiseNode(RPromiseFactory factory, IEnvironmentProvider envProvider) {
+    /**
+     * {@link EnvProvider} needed to construct a proper {@link REnvironment} for the promises being
+     * created here
+     */
+    protected final EnvProvider envProvider;
+
+    /**
+     * @param factory {@link #factory}
+     * @param envProvider {@link #envProvider}
+     */
+    protected PromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
         this.factory = factory;
         this.envProvider = envProvider;
     }
 
-    public static PromiseNode create(SourceSection src, RPromiseFactory factory, IEnvironmentProvider envProvider) {
+    /**
+     * @param src The {@link SourceSection} of the argument for debugging purposes
+     * @param factory {@link #factory}
+     * @param envProvider {@link #envProvider}
+     * @return Depending on {@link RPromiseFactory#getEvalPolicy()} and
+     *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
+     */
+    public static PromiseNode create(SourceSection src, RPromiseFactory factory, EnvProvider envProvider) {
         PromiseNode pn = null;
         assert factory.getType() != PromiseType.NO_ARG;
         switch (factory.getEvalPolicy()) {
@@ -73,7 +96,7 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * {@link RPromise} values are assign once.
+     * Creates a new {@link RPromise} every time
      */
     @Override
     public Object execute(VirtualFrame frame) {
@@ -81,13 +104,15 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * TODO Gero: comment.
-     *
+     * This class is meant for supplied arguments (which have to be evaluated in the caller frame)
+     * which are supposed to evaluated {@link EvalPolicy#STRICT}: This means, we can simply evaluate
+     * them here! And simply fill a {@link RPromise} with the result value.
+     * {@link EvalPolicy#STRICT} {@link PromiseType#ARG_SUPPLIED}
      */
     private static class StrictSuppliedPromiseNode extends PromiseNode {
         @Child private RNode suppliedArg;
 
-        public StrictSuppliedPromiseNode(RPromiseFactory factory, IEnvironmentProvider envProvider) {
+        public StrictSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
             this.suppliedArg = (RNode) factory.getExpr();
         }
@@ -111,14 +136,15 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * TODO Gero: comment.
-     *
-     * @see EvalPolicy#RAW
+     * This class is meant for supplied arguments (which have to be evaluated in the caller frame)
+     * which are supposed to be evaluated {@link EvalPolicy#RAW}: This means we can simply evaluate
+     * it here, and as it's {@link EvalPolicy#RAW}, return its value and not the {@link RPromise}
+     * itself! {@link EvalPolicy#RAW} {@link PromiseType#ARG_SUPPLIED}
      */
     private static class RawSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
 
-        public RawSuppliedPromiseNode(RPromiseFactory factory, IEnvironmentProvider envProvider) {
+        public RawSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
             this.expr = (RNode) factory.getExpr();
         }
@@ -128,55 +154,38 @@ public class PromiseNode extends RNode {
             // TODO builtin.inline: We do re-evaluation every execute inside the caller frame, as we
             // know that the evaluation of default values has no side effects (hopefully!)
             Object obj = expr.execute(frame);
-            RPromise promise = null;
             if (obj == RMissing.instance) {
                 if (factory.getDefaultExpr() == null) {
                     return RMissing.instance;
                 }
-                promise = factory.createPromiseDefault();
+                RPromise promise = factory.createPromiseDefault();
+                return promise.evaluate(frame);
             } else {
-                promise = factory.createPromiseArgEvaluated(obj);
+                return obj;
             }
-            return promise.evaluate(frame);
         }
     }
 
     /**
-     * TODO Gero: comment.
-     *
-     * @see EvalPolicy#RAW
+     * This class is meant for default arguments which have to be evaluated in the callee frame -
+     * usually. But as this is for {@link EvalPolicy#RAW}, arguments are simply evaluated inside the
+     * caller frame: This means we can simply evaluate it here, and as it's {@link EvalPolicy#RAW},
+     * return its value and not the {@link RPromise} itself!
      */
     private static class RawPromiseNode extends PromiseNode {
-        public RawPromiseNode(RPromiseFactory factory, IEnvironmentProvider envProvider) {
+        @Child private RNode defaultExpr;
+
+        public RawPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
+            // defaultExpt and expr are identical here!
+            this.defaultExpr = (RNode) factory.getExpr();
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            // TODO builtin.inline: We do re-evaluation every execute inside the caller frame, as we
-            // know that the evaluation of default values has no side effects (hopefully!)
-            // This is ARG_DEFAULT but use the same frame/environment!!!
-            RPromise promise = factory.createPromise(null); // envProvider.getREnvironmentFor(frame));
-            return promise.evaluate(frame);
-        }
-    }
-
-    public interface IEnvironmentProvider {
-        REnvironment getREnvironmentFor(VirtualFrame frame);
-    }
-
-    public static class DefaultEnvProvider implements IEnvironmentProvider {
-        private REnvironment callerEnv = null;
-
-        public DefaultEnvProvider() {
-        }
-
-        public REnvironment getREnvironmentFor(VirtualFrame frame) {
-            if (callerEnv == null || callerEnv.getFrame() != frame) {
-                callerEnv = REnvironment.frameToEnvironment(frame.materialize());
-            }
-
-            return callerEnv;
+            // builtin.inline: We do re-evaluation every execute inside the caller frame, based on
+            // the assumption that the evaluation of default values should have no side effects
+            return defaultExpr.execute(frame);
         }
     }
 

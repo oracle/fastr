@@ -24,10 +24,11 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 
 /**
  * Simple {@link RNode} that returns a function argument specified by its formal index. Used to
@@ -36,11 +37,17 @@ import com.oracle.truffle.r.runtime.data.RPromise.*;
 public class AccessArgumentNode extends RNode {
 
     private final int index;
-    @SuppressWarnings("unused") private final AccessArgumentContext accessArgCtx;
 
-    public AccessArgumentNode(int index, AccessArgumentContext accessArgCtx) {
+    /**
+     * This class should prevent the unnecessary creation of a new {@link REnvironment} for every
+     * argument. An instance of this class is shared between all {@link AccessArgumentNode}s of a
+     * function and provides them with a - lazy created - instance of the callee environment.
+     */
+    private final EnvProvider envProvider;
+
+    public AccessArgumentNode(int index, EnvProvider envProvider) {
         this.index = index;
-        this.accessArgCtx = accessArgCtx;
+        this.envProvider = envProvider;
     }
 
     @Override
@@ -57,16 +64,16 @@ public class AccessArgumentNode extends RNode {
         return obj;
     }
 
-    @SuppressWarnings("static-method")
     private Object handlePromise(VirtualFrame frame, Object promiseObj) {
         RPromise promise = (RPromise) promiseObj;
-        assert promise.getEvalPolicy() != EvalPolicy.RAW : "EvalPolicy == RAW in AAN!?!?";
+        assert promise.getEvalPolicy() != EvalPolicy.RAW;
         assert promise.getType() != PromiseType.NO_ARG;
 
-        if (promise.getType() == PromiseType.ARG_DEFAULT && promise.getEvalPolicy() == EvalPolicy.PROMISED && promise.getEnv() == null) {
+        // Check whether it is necessary to create a callee REnvironment for the promise
+        if (promise.needsCalleeFrame()) {
             // In this case the promise might lack the proper REnvironment, as it was created before
             // the environment was
-            promise.updateEnv(REnvironment.frameToEnvironment(frame.materialize()));
+            promise.updateEnv(envProvider.getREnvironmentFor(frame));
         }
 
         // Now force evaluation for STRICT
@@ -74,16 +81,5 @@ public class AccessArgumentNode extends RNode {
             return promise.evaluate(frame);
         }
         return promiseObj;
-    }
-
-    public static class AccessArgumentContext implements IEnvironmentProvider {
-        private REnvironment calleeEnv = null;
-
-        public REnvironment getREnvironmentFor(VirtualFrame frame) {
-            if (calleeEnv == null || calleeEnv.getFrame() != frame) {
-                calleeEnv = REnvironment.frameToEnvironment(frame.materialize());
-            }
-            return calleeEnv;
-        }
     }
 }
