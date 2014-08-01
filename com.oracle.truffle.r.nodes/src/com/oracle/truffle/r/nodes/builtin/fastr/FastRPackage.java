@@ -20,19 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.r.nodes.builtin.*;
 
-public class DebugPackage extends RBuiltinPackage {
+public class FastRPackage extends RBuiltinPackage {
 
-    public DebugPackage() {
+    public FastRPackage() {
         loadBuiltins();
     }
 
     @Override
     public String getName() {
-        return "debug";
+        return "fastr";
     }
 
 }

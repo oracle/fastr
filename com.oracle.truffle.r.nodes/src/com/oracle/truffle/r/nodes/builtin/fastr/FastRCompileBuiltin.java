@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
@@ -32,8 +32,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.compile", kind = PRIMITIVE)
-public abstract class DebugCompileBuiltin extends RBuiltinNode {
+@RBuiltin(name = "fastr.compile", kind = PRIMITIVE)
+public abstract class FastRCompileBuiltin extends RBuiltinNode {
 
     static final class Compiler {
         private Class<?> optimizedCallTarget;

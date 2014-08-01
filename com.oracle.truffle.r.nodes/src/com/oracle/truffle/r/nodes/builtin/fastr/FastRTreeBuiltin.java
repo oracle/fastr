@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.use.promises", kind = PRIMITIVE)
-public abstract class DebugUsePromises extends RInvisibleBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"function"};
+@RBuiltin(name = "fastr.tree", kind = PRIMITIVE)
+@RBuiltinComment("Prints the Truffle tree of a function. Use debug.tree(a, TRUE) for more detailed output.")
+public abstract class FastRTreeBuiltin extends RBuiltinNode {
+
+    private static final Object[] PARAMETER_NAMES = new Object[]{"function", "verbose"};
 
     @Override
     public Object[] getParameterNames() {
@@ -42,14 +45,23 @@ public abstract class DebugUsePromises extends RInvisibleBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
     @Specialization
-    public Object debugPromise(RFunction function) {
+    public Object printTree(RFunction function, byte verbose) {
         controlVisibility();
-        function.setUsePromises();
-        return RNull.instance;
+        RootNode root = function.getTarget().getRootNode();
+        if (verbose == RRuntime.LOGICAL_TRUE) {
+            return NodeUtil.printTreeToString(root);
+        } else {
+            return NodeUtil.printCompactTreeToString(root);
+        }
     }
 
+    @Specialization
+    public RNull printTree(Object function, @SuppressWarnings("unused") Object verbose) {
+        controlVisibility();
+        throw RError.error(RError.Message.INVALID_VALUE, RRuntime.toString(function));
+    }
 }
