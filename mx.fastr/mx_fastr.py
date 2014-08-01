@@ -33,16 +33,8 @@ def _runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     os.environ['R_HOME'] = _fastr_suite.dir
+    _set_libpath()
     # Set up path for Lapack libraries
-    osname = platform.system()
-    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'lib', osname.lower())
-    lib_value = lib_base
-    if osname == 'Darwin':
-        lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'
-        lib_value = lib_value + os.pathsep + '/usr/lib'
-    else:
-        lib_env = 'LD_LIBRARY_PATH'
-    os.environ[lib_env] = lib_value
     vmArgs = ['-cp', mx.classpath("com.oracle.truffle.r.shell")]
     if runBench == False:
         vmArgs = vmArgs + ['-ea', '-esa']
@@ -57,6 +49,17 @@ def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
 def runRscriptCommand(args, nonZeroIsFatal=True):
     '''run Rscript file'''
     return _runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
+
+def _set_libpath():
+    osname = platform.system()
+    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'lib', osname.lower())
+    lib_value = lib_base
+    if osname == 'Darwin':
+        lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'
+        lib_value = lib_value + os.pathsep + '/usr/lib'
+    else:
+        lib_env = 'LD_LIBRARY_PATH'
+    os.environ[lib_env] = lib_value
 
 def findbugs(args):
     '''run FindBugs against non-test Java projects'''
@@ -212,6 +215,8 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
+    _set_libpath()
+
     return mx_graal.vm(vmArgs + junitArgs, vm="server", nonZeroIsFatal=False)
 
 def junit(args):
@@ -224,10 +229,13 @@ def junit(args):
     parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file ')
     # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
 
+    if os.environ.has_key('R_PROFILE_USER'):
+        mx.abort('unset R_PROFILE_USER before running unit tests')
+
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    return junit(['--tests', 'com.oracle.truffle.r.test.simple'] + args)
+    return junit(['--tests', _default_unit_tests()] + args)
 
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
