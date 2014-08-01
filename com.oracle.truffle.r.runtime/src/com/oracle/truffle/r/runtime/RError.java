@@ -59,6 +59,37 @@ public final class RError extends RuntimeException {
         return getMessage();
     }
 
+    // use a ThreadLocal if multi-threaded evaluation
+    /**
+     * Are we (temporarily) ignore errors? Assumes single threaded.
+     */
+    private static boolean ignoreError;
+
+    /**
+     * Support for the temporary suppression of the normal error catch machinery. After a call to
+     * {code ignoreError(true)}, the error will simply be thrown on the assumption that if will be
+     * caught by the caller and some alternative course of action chosen. This should always be used
+     * in a {@code try finally} block, e.g:
+     *
+     * <pre>
+     * boolean prev = RError.ignore(true);
+     * try {
+     *     // do something that might throw an RError
+     *     ...
+     * } finally {
+     *     RError.ignore(prev);
+     * }
+     * </pre>
+     *
+     * @param ignore
+     * @return the previous setting
+     */
+    public static boolean ignoreError(boolean ignore) {
+        boolean prev = ignoreError;
+        ignoreError = ignore;
+        return prev;
+    }
+
     /**
      * An error that cannot be caught by {@code options(error = expr)} as there is no
      * {@link VirtualFrame} available. Ideally this should not be necessary.
@@ -96,6 +127,11 @@ public final class RError extends RuntimeException {
         } else {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
+        if (ignoreError) {
+            // do we really need to be in the interpreter in this case?
+            throw rError;
+        }
+
         Object errorExpr = ROptions.getValue("error");
         if (errorExpr != RNull.instance) {
             if (frame == null) {

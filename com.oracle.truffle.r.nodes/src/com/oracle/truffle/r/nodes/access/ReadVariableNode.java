@@ -433,7 +433,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         protected abstract String getSymbol();
 
         @Specialization
-        public Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
+        public Object doObject(VirtualFrame frame) {
             controlVisibility();
             throw RError.error(frame, RError.Message.UNKNOWN_OBJECT, getSymbol());
         }

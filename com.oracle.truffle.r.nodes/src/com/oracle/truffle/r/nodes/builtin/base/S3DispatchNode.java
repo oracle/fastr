@@ -47,6 +47,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         }
         Object func = targetFunction = null;
         targetFunctionName = null;
+        boolean prevIgnoreError = RError.ignoreError(true);
         try {
             if (frame instanceof VirtualFrame) {
                 func = lookup.execute((VirtualFrame) frame);
@@ -54,6 +55,9 @@ public abstract class S3DispatchNode extends DispatchNode {
                 func = lookup.execute(null, (MaterializedFrame) frame);
             }
         } catch (RError r) {
+            // in this context, this is not a reportable error
+        } finally {
+            RError.ignoreError(prevIgnoreError);
         }
         if (func != null && func instanceof RFunction) {
             targetFunctionName = functionName;
