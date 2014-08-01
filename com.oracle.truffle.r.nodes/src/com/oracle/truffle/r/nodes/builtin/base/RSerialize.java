@@ -335,7 +335,7 @@ public final class RSerialize {
     private RStringVector inStringVec(boolean strsxp) {
         if (!strsxp) {
             if (stream.readInt() != 0) {
-                throw RError.error(Message.GENERIC, "names in persistent strings are not supported yet");
+                throw RError.uncatchableError(null, Message.GENERIC, "names in persistent strings are not supported yet");
             }
         }
         int len = stream.readInt();
@@ -366,7 +366,7 @@ public final class RSerialize {
         try {
             return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
         } catch (PutException ex) {
-            throw RError.error(null, ex);
+            throw RError.uncatchableError(null, ex);
         }
     }
 

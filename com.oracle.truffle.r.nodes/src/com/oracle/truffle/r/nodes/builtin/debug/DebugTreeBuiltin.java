@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.debug;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -60,8 +61,8 @@ public abstract class DebugTreeBuiltin extends RBuiltinNode {
     }
 
     @Specialization
-    public RNull printTree(Object function, @SuppressWarnings("unused") Object verbose) {
+    public RNull printTree(VirtualFrame frame, Object function, @SuppressWarnings("unused") Object verbose) {
         controlVisibility();
-        throw RError.error(RError.Message.INVALID_VALUE, RRuntime.toString(function));
+        throw RError.error(frame, RError.Message.INVALID_VALUE, RRuntime.toString(function));
     }
 }

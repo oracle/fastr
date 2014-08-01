@@ -76,7 +76,7 @@ public class HiddenInternalFunctions {
                 try {
                     aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
                 }
             }
             return RNull.instance;
@@ -92,11 +92,11 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "importIntoEnv", kind = INTERNAL)
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Specialization
-        public RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
+        public RNull importIntoEnv(VirtualFrame frame, REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
             controlVisibility();
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
-                throw RError.error(getEncapsulatingSourceSection(), Message.IMP_EXP_NAMES_MATCH);
+                throw RError.error(frame, getEncapsulatingSourceSection(), Message.IMP_EXP_NAMES_MATCH);
             }
             for (int i = 0; i < length; i++) {
                 String impsym = impNames.getDataAt(i);
@@ -113,7 +113,7 @@ public class HiddenInternalFunctions {
                 try {
                     impEnv.put(impsym, binding);
                 } catch (PutException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
                 }
 
             }
@@ -142,7 +142,7 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        public Object lazyLoadDBFetch(RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -153,7 +153,7 @@ public class HiddenInternalFunctions {
                     bs.read(dbData);
                 } catch (IOException ex) {
                     // unexpected
-                    throw RError.error(Message.GENERIC, ex.getMessage());
+                    throw RError.error(frame, Message.GENERIC, ex.getMessage());
                 }
                 dbCache.put(dbPath, dbData);
             }
@@ -172,24 +172,24 @@ public class HiddenInternalFunctions {
                 destlen[0] = udata.length;
                 int rc = RFFIFactory.getRFFI().getBaseRFFI().uncompress(udata, destlen, data);
                 if (rc != 0) {
-                    throw RError.error(Message.GENERIC, "zlib uncompress error");
+                    throw RError.error(frame, Message.GENERIC, "zlib uncompress error");
                 }
                 try {
                     Object result = RSerialize.unserialize(udata, envhook);
                     return result;
                 } catch (IOException ex) {
                     // unexpected
-                    throw RError.error(Message.GENERIC, ex.getMessage());
+                    throw RError.error(frame, Message.GENERIC, ex.getMessage());
                 }
             } else {
-                throw RError.error(Message.GENERIC, "unsupported compression");
+                throw RError.error(frame, Message.GENERIC, "unsupported compression");
             }
         }
 
         @Specialization
-        public Object lazyLoadDBFetch(RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
+        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
             initCast();
-            return lazyLoadDBFetch(key, datafile, castIntNode.doLogicalVector(compressed), envhook);
+            return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
         }
     }
 

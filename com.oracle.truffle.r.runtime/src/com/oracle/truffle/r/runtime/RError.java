@@ -27,8 +27,8 @@ public final class RError extends RuntimeException {
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
-     * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
-     * object and any arguments. E.g. see {@link REnvironment.PutException}.
+     * {@link RError#error(VirtualFrame, SourceSection, RErrorException)}, which access the stored
+     * {@link Message} object and any arguments. E.g. see {@link REnvironment.PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -59,8 +59,16 @@ public final class RError extends RuntimeException {
         return getMessage();
     }
 
-    public static RError error(SourceSection src, Message msg, Object... args) {
+    /**
+     * An error that cannot be caught by {@code options(error = expr)} as there is no
+     * {@link VirtualFrame} available. Ideally this should not be necessary.
+     */
+    public static RError uncatchableError(SourceSection src, Message msg, Object... args) {
         return error(null, src, msg, args);
+    }
+
+    public static RError uncatchableError(SourceSection src, RErrorException ex) {
+        return error(null, src, ex.msg, ex.args);
     }
 
     public static RError error(VirtualFrame frame, SourceSection src, Message msg, Object... args) {
@@ -72,31 +80,37 @@ public final class RError extends RuntimeException {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
         Object errorExpr = ROptions.getValue("error");
-        if (errorExpr != RNull.instance && frame != null) {
-            // Errors and warnings are output before the expression is evaluated
-            RContext.getEngine().printRError(rError);
-            // errorExpr can be anything, but not everything makes sense
-            if (errorExpr instanceof RLanguage) {
-                RContext.getEngine().eval((RLanguage) errorExpr, frame);
-            } else if (errorExpr instanceof RExpression) {
-                RContext.getEngine().eval((RExpression) errorExpr, frame);
+        if (errorExpr != RNull.instance) {
+            if (frame == null) {
+                // uncatchable
+                RContext.getInstance().getConsoleHandler().println("error in uncatchable");
+                throw rError;
             } else {
-                // GnuR checks this earlier when the option is set
-                throw new RError(null, Message.INVALID_ERROR.message);
+                // Errors and warnings are output before the expression is evaluated
+                RContext.getEngine().printRError(rError);
+                // errorExpr can be anything, but not everything makes sense
+                if (errorExpr instanceof RLanguage) {
+                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                } else if (errorExpr instanceof RExpression) {
+                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                } else {
+                    // GnuR checks this earlier when the option is set
+                    throw new RError(null, Message.INVALID_ERROR.message);
+                }
+                // Control, transfer to top level, but suppress print
+                throw new RError(null, "");
             }
-            // Control, transfer to top level, but suppress print
-            throw new RError(null, "");
         } else {
             throw rError;
         }
     }
 
-    public static RError error(Message msg, Object... args) {
-        return error(null, null, msg, args);
+    public static RError error(VirtualFrame frame, Message msg, Object... args) {
+        return error(frame, null, msg, args);
     }
 
-    public static RError error(SourceSection src, RErrorException ex) {
-        return error(null, src, ex.msg, ex.args);
+    public static RError error(VirtualFrame frame, SourceSection src, RErrorException ex) {
+        return error(frame, src, ex.msg, ex.args);
     }
 
     public static RError nyi(SourceSection src, String msg) {

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -683,8 +684,8 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     }
 
     @Specialization(order = 1000, guards = "differentDimensions")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
+    public RLogicalVector doIntVectorDifferentLength(VirtualFrame frame, RAbstractVector left, RAbstractVector right) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
     protected static boolean differentDimensions(RAbstractVector left, RAbstractVector right) {

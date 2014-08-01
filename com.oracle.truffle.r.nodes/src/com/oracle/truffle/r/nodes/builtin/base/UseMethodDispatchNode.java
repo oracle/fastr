@@ -35,7 +35,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         if (targetFunction == null) {
-            findTargetFunction(callerFrame);
+            findTargetFunction(frame, callerFrame);
         }
         return executeHelper(frame, callerFrame);
     }
@@ -44,7 +44,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        findTargetFunction(callerFrame);
+        findTargetFunction(frame, callerFrame);
         return executeHelper(frame, callerFrame);
     }
 
@@ -74,7 +74,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
 
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, frame, evaledArgs, getEncapsulatingSourceSection());
 
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs());
     }
@@ -98,7 +98,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     @SlowPath
-    private void findTargetFunction(Frame callerFrame) {
+    private void findTargetFunction(VirtualFrame frame, Frame callerFrame) {
         for (int i = 0; i < this.type.getLength(); ++i) {
             findFunction(this.genericName, this.type.getDataAt(i), callerFrame);
             if (targetFunction != null) {
@@ -118,7 +118,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findFunction(this.genericName, RRuntime.DEFAULT, callerFrame);
             if (targetFunction == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
             }
         }
     }

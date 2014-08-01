@@ -67,7 +67,7 @@ public class RNGFunctions {
         public RNull setSeed(VirtualFrame frame, byte seed, RNull kind, RNull normKind) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SEED_NOT_VALID_INT);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SEED_NOT_VALID_INT);
         }
 
         private void doSetSeed(VirtualFrame frame, Integer newSeed, int kind, int normKind) {
@@ -75,7 +75,7 @@ public class RNGFunctions {
                 RRNG.doSetSeed(frame, newSeed, kind, normKind);
             } catch (RNGException ex) {
                 if (ex.isError()) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
                 } else {
                     RContext.getInstance().setEvalWarning(ex.getMessage());
                 }
@@ -102,7 +102,7 @@ public class RNGFunctions {
                 RRNG.doRNGKind(frame, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             } catch (RNGException ex) {
                 if (ex.isError()) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
                 } else {
                     RContext.getInstance().setEvalWarning(ex.getMessage());
                 }

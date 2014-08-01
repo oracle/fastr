@@ -80,7 +80,7 @@ public class EvalFunctions {
         /**
          * Slow path variant, eval in arbitrary environment/frame.
          */
-        protected Object doEvalBody(Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
+        protected Object doEvalBody(VirtualFrame frame, Object exprArg, REnvironment envir, @SuppressWarnings("unused") RMissing enclos) {
             Object expr = checkConvertSymbol(exprArg);
 
             if (expr instanceof RExpression || expr instanceof RLanguage) {
@@ -93,7 +93,7 @@ public class EvalFunctions {
                     }
                     return result;
                 } catch (PutException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
                 }
             } else {
                 // just return value
@@ -136,7 +136,7 @@ public class EvalFunctions {
         @Specialization
         public Object doEval(@SuppressWarnings("unused") VirtualFrame frame, Object expr, REnvironment envir, RMissing enclos) {
             controlVisibility();
-            return doEvalBody(expr, envir, enclos);
+            return doEvalBody(frame, expr, envir, enclos);
         }
 
     }
@@ -150,12 +150,12 @@ public class EvalFunctions {
         }
 
         @Specialization
-        public Object doEval(RPromise expr, REnvironment envir, RMissing enclos) {
+        public Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
             /*
              * evalq does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
+            return doEvalBody(frame, RDataFactory.createLanguage(expr.getRep()), envir, enclos);
         }
 
     }
@@ -176,16 +176,16 @@ public class EvalFunctions {
 
         @Specialization
         public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
-            return doEval(expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame), 0), enclos);
+            return doEval(frame, expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame), 0), enclos);
         }
 
         @Specialization
-        public Object doEval(RPromise expr, REnvironment envir, RMissing enclos) {
+        public Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
             /*
              * local does not evaluate it's first argument
              */
             controlVisibility();
-            return doEvalBody(RDataFactory.createLanguage(expr.getRep()), envir, enclos);
+            return doEvalBody(frame, RDataFactory.createLanguage(expr.getRep()), envir, enclos);
         }
 
     }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -38,11 +39,11 @@ public abstract class Quote extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance)};
     }
 
-    public abstract Object execute(RPromise expr);
+    public abstract Object execute(VirtualFrame frame, RPromise expr);
 
     @Specialization
-    public RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    public RLanguage doQuote(VirtualFrame frame, @SuppressWarnings("unused") RMissing arg) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization

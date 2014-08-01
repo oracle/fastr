@@ -59,7 +59,7 @@ public abstract class Substitute extends RBuiltinNode {
         // In the global environment, substitute behaves like quote
         REnvironment env = REnvironment.checkNonFunctionFrame(frame);
         if (env == REnvironment.globalEnv()) {
-            return checkQuote().execute(expr);
+            return checkQuote().execute(frame, expr);
         }
         // We have to examine all the names in the expression:
         // 1. Ordinary variable, replace by value (if bound)

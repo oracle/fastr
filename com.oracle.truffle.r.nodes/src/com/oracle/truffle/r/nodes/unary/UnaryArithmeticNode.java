@@ -190,13 +190,13 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     }
 
     @Specialization(order = 50)
-    public Object doStringVector(@SuppressWarnings("unused") RAbstractStringVector operands) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
+    public Object doStringVector(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector operands) {
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
     }
 
     @Specialization(order = 51)
-    public Object doRawVector(@SuppressWarnings("unused") RAbstractRawVector operands) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
+    public Object doRawVector(VirtualFrame frame, @SuppressWarnings("unused") RAbstractRawVector operands) {
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE_UNARY);
     }
 
     protected static boolean isComplexNA(RComplex c) {

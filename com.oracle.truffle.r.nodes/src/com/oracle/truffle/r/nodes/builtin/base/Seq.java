@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -50,7 +51,7 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(order = 0, guards = {"zero", "startLengthOne", "toLengthOne"})
-    public int seq(RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut) {
+    public int seq(VirtualFrame frame, RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut) {
         controlVisibility();
         return 0;
     }
@@ -243,16 +244,16 @@ public abstract class Seq extends RBuiltinNode {
         return start.getDataAt(0) == 0 && to.getDataAt(0) == 0;
     }
 
-    protected boolean startLengthOne(RAbstractVector start) {
+    protected boolean startLengthOne(VirtualFrame frame, RAbstractVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean toLengthOne(RAbstractVector start, RAbstractVector to) {
+    protected boolean toLengthOne(VirtualFrame frame, RAbstractVector start, RAbstractVector to) {
         if (to.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
         }
         return true;
     }

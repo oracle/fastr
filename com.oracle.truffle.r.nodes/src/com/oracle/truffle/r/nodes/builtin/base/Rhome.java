@@ -59,10 +59,4 @@ public abstract class Rhome extends RBuiltinNode {
         return RDataFactory.createStringVector(result);
     }
 
-    @Specialization(order = 100)
-    public Object doRhomeGeneric(@SuppressWarnings("unused") Object x) {
-        controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
-    }
-
 }

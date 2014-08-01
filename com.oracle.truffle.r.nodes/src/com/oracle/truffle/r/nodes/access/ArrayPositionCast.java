@@ -70,20 +70,20 @@ public abstract class ArrayPositionCast extends RNode {
         this.isSubset = other.isSubset;
     }
 
-    protected static void verifyDimensions(RAbstractContainer container, int dimension, int numDimensions, boolean assignment, boolean isSubset, SourceSection sourceSection) {
+    protected static void verifyDimensions(VirtualFrame frame, RAbstractContainer container, int dimension, int numDimensions, boolean assignment, boolean isSubset, SourceSection sourceSection) {
         if ((container.getDimensions() == null && (dimension != 0 || numDimensions > 1)) || (container.getDimensions() != null && dimension >= container.getDimensions().length)) {
             if (assignment) {
                 if (isSubset) {
                     if (numDimensions == 2) {
-                        throw RError.error(sourceSection, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
+                        throw RError.error(frame, sourceSection, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
                     } else {
-                        throw RError.error(sourceSection, RError.Message.INCORRECT_SUBSCRIPTS);
+                        throw RError.error(frame, sourceSection, RError.Message.INCORRECT_SUBSCRIPTS);
                     }
                 } else {
-                    throw RError.error(sourceSection, RError.Message.IMPROPER_SUBSCRIPT);
+                    throw RError.error(frame, sourceSection, RError.Message.IMPROPER_SUBSCRIPT);
                 }
             } else {
-                throw RError.error(sourceSection, RError.Message.INCORRECT_DIMENSIONS);
+                throw RError.error(frame, sourceSection, RError.Message.INCORRECT_DIMENSIONS);
             }
         }
     }
@@ -99,8 +99,8 @@ public abstract class ArrayPositionCast extends RNode {
     }
 
     @Specialization(order = 3)
-    public RIntVector doMissingVector(Object op, RAbstractContainer container, RMissing operand) {
-        verifyDimensions(container, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
+    public RIntVector doMissingVector(VirtualFrame frame, Object op, RAbstractContainer container, RMissing operand) {
+        verifyDimensions(frame, container, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
         int[] data = new int[numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension]];
         for (int i = 0; i < data.length; i++) {
             data[i] = i + 1;
@@ -272,40 +272,40 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 1)
-        public RMissing doFuncOp(RAbstractContainer container, RFunction operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "closure");
+        public RMissing doFuncOp(VirtualFrame frame, RAbstractContainer container, RFunction operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "closure");
         }
 
         @Specialization(order = 6, guards = "dimLengthOne")
-        public int doMissingDimLengthOne(RAbstractContainer container, RMissing operand) {
+        public int doMissingDimLengthOne(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
             if (!isSubset) {
                 if (assignment) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
                 }
             }
             return 1;
         }
 
         @Specialization(order = 7, guards = "!dimLengthOne")
-        public RMissing doMissing(RAbstractContainer container, RMissing operand) {
+        public RMissing doMissing(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
             if (!isSubset) {
                 if (assignment) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
                 }
             }
             return operand;
         }
 
         @Specialization(order = 8)
-        public int doNull(RAbstractContainer container, RNull operand) {
+        public int doNull(VirtualFrame frame, RAbstractContainer container, RNull operand) {
             if (isSubset) {
                 return 0;
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             }
         }
 
@@ -330,9 +330,9 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 13, guards = {"indNA", "!isSubset", "!isVectorList"})
-        public int doIntNA(RAbstractContainer container, int operand) {
+        public int doIntNA(VirtualFrame frame, RAbstractContainer container, int operand) {
             if (!assignment) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
             } else {
                 // let assignment handle it as it depends on the value
                 return RRuntime.INT_NA;
@@ -350,21 +350,21 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 16, guards = {"!indNA", "outOfBounds", "numDimensionsOne"})
-        public int doIntOutOfBoundsOneDim(RAbstractContainer container, int operand) {
+        public int doIntOutOfBoundsOneDim(VirtualFrame frame, RAbstractContainer container, int operand) {
             if (assignment) {
                 return operand;
             } else {
                 if (isSubset) {
                     return RRuntime.INT_NA;
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
                 }
             }
         }
 
         @Specialization(order = 17, guards = {"!indNA", "outOfBounds", "!numDimensionsOne"})
-        public int doIntOutOfBounds(RAbstractContainer container, int operand) {
-            throw RError.error(assignment ? getEncapsulatingSourceSection() : null, RError.Message.SUBSCRIPT_BOUNDS);
+        public int doIntOutOfBounds(VirtualFrame frame, RAbstractContainer container, int operand) {
+            throw RError.error(frame, assignment ? getEncapsulatingSourceSection() : null, RError.Message.SUBSCRIPT_BOUNDS);
         }
 
         @Specialization(order = 18, guards = {"!indNA", "outOfBoundsNegative", "dimLengthOne", "isSubset"})
@@ -517,7 +517,7 @@ public abstract class ArrayPositionCast extends RNode {
             return operand;
         }
 
-        private int findPosition(RAbstractContainer container, Object namesObj, String operand) {
+        private int findPosition(VirtualFrame frame, RAbstractContainer container, Object namesObj, String operand) {
             if (namesObj != RNull.instance) {
                 RStringVector names = (RStringVector) namesObj;
                 for (int j = 0; j < names.getLength(); j++) {
@@ -529,7 +529,7 @@ public abstract class ArrayPositionCast extends RNode {
             if (numDimensions == 1) {
                 return RRuntime.INT_NA;
             } else {
-                throw RError.error(isSubset ? null : getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(frame, isSubset ? null : getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
@@ -553,8 +553,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 48, guards = {"indNA", "!numDimensionsOne"})
-        public Object doStringNA(RAbstractContainer container, String operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+        public Object doStringNA(VirtualFrame frame, RAbstractContainer container, String operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
         }
 
         @Specialization(order = 49, guards = {"indNA", "isAssignment", "numDimensionsOne"})
@@ -575,16 +575,16 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 52, guards = {"isSubset", "hasNames", "!isAssignment", "numDimensionsOne"})
-        public Object doStringOneDimNamesSubset(RList vector, String operand) {
+        public Object doStringOneDimNamesSubset(VirtualFrame frame, RList vector, String operand) {
             RStringVector names = (RStringVector) vector.getNames();
-            return findPosition(vector, names, operand);
+            return findPosition(frame, vector, names, operand);
         }
 
         @Specialization(order = 53, guards = {"!isSubset", "hasNames", "!isAssignment", "numDimensionsOne"})
-        public Object doStringOneDimNames(RList vector, String operand) {
+        public Object doStringOneDimNames(VirtualFrame frame, RList vector, String operand) {
             // we need to return either an int or null - is there a prettier way to handle this?
             RStringVector names = (RStringVector) vector.getNames();
-            int result = findPosition(vector, names, operand);
+            int result = findPosition(frame, vector, names, operand);
             if (RRuntime.isNA(result)) {
                 return RNull.instance;
             } else {
@@ -593,9 +593,9 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 54, guards = {"hasNames", "!isAssignment", "numDimensionsOne"})
-        public int doStringOneDimNames(RAbstractContainer container, String operand) {
+        public int doStringOneDimNames(VirtualFrame frame, RAbstractContainer container, String operand) {
             RStringVector names = (RStringVector) container.getNames();
-            return findPosition(container, names, operand);
+            return findPosition(frame, container, names, operand);
         }
 
         @Specialization(order = 55, guards = {"!hasNames", "isAssignment", "numDimensionsOne"})
@@ -610,40 +610,40 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 57, guards = {"hasDimNames", "!numDimensionsOne"})
-        public int doString(RAbstractContainer container, String operand) {
+        public int doString(VirtualFrame frame, RAbstractContainer container, String operand) {
             RList dimNames = container.getDimNames();
             Object names = dimNames.getDataAt(dimension);
-            return findPosition(container, names, operand);
+            return findPosition(frame, container, names, operand);
         }
 
         @Specialization(order = 58, guards = "isSubset")
-        public int doStringNoNamesSubset(RList vector, String operand) {
+        public int doStringNoNamesSubset(VirtualFrame frame, RList vector, String operand) {
             if (numDimensions == 1) {
                 return RRuntime.INT_NA;
             } else {
-                throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
+                throw RError.error(frame, RError.Message.NO_ARRAY_DIMNAMES);
             }
         }
 
         @Specialization(order = 59, guards = "!isSubset")
-        public RNull doStringNoNames(RList vector, String operand) {
+        public RNull doStringNoNames(VirtualFrame frame, RList vector, String operand) {
             if (numDimensions == 1) {
                 return RNull.instance;
             } else {
-                throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
+                throw RError.error(frame, RError.Message.NO_ARRAY_DIMNAMES);
             }
         }
 
         @Specialization(order = 60)
-        public int doStringNoNames(RAbstractContainer container, String operand) {
+        public int doStringNoNames(VirtualFrame frame, RAbstractContainer container, String operand) {
             if (isSubset) {
                 if (numDimensions == 1) {
                     return RRuntime.INT_NA;
                 } else {
-                    throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
+                    throw RError.error(frame, RError.Message.NO_ARRAY_DIMNAMES);
                 }
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
@@ -655,8 +655,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 66, guards = {"!isSubset", "opLengthZero"})
-        public RAbstractIntVector doIntVectorOp(RList vector, RAbstractVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+        public RAbstractIntVector doIntVectorOp(VirtualFrame frame, RList vector, RAbstractVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
 
         @Specialization(order = 67, guards = {"!isSubset", "!opLengthZero", "!opLengthOne"})
@@ -680,8 +680,8 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 101, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
-        public RAbstractIntVector doIntVectorOpSubset(RAbstractContainer container, RAbstractIntVector operand) {
-            return transformIntoPositive(container, operand);
+        public RAbstractIntVector doIntVectorOpSubset(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector operand) {
+            return transformIntoPositive(frame, container, operand);
         }
 
         @Specialization(order = 103, guards = {"isSubset", "opLengthZero"})
@@ -705,13 +705,13 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 136, guards = {"outOfBounds", "isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doLogicalVectorOutOfBounds(RAbstractContainer container, RAbstractLogicalVector operand) {
-            throw RError.error(isSubset ? null : getEncapsulatingSourceSection(), RError.Message.LOGICAL_SUBSCRIPT_LONG);
+        public RIntVector doLogicalVectorOutOfBounds(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
+            throw RError.error(frame, isSubset ? null : getEncapsulatingSourceSection(), RError.Message.LOGICAL_SUBSCRIPT_LONG);
         }
 
         @Specialization(order = 137, guards = {"outOfBounds", "!isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doLogicalVectorOutOfBoundsTooManySelected(RAbstractContainer container, RAbstractLogicalVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+        public RIntVector doLogicalVectorOutOfBoundsTooManySelected(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
 
         private static int[] eliminateZeros(RAbstractContainer container, int[] positions, int zeroCount) {
@@ -767,11 +767,11 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 139, guards = {"!outOfBounds", "!isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doLogicalVectorTooManySelected(RAbstractContainer container, RAbstractLogicalVector operand) {
+        public RIntVector doLogicalVectorTooManySelected(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
             if (operand.getLength() == 2 && operand.getDataAt(0) == RRuntime.LOGICAL_FALSE) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             }
         }
 
@@ -786,22 +786,22 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 151, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doComplexVectorSubset(RAbstractContainer container, RAbstractComplexVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+        public RIntVector doComplexVectorSubset(VirtualFrame frame, RAbstractContainer container, RAbstractComplexVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
 
         @Specialization(order = 152, guards = {"!isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doComplexVector(RAbstractContainer container, RAbstractComplexVector operand) {
+        public RIntVector doComplexVector(VirtualFrame frame, RAbstractContainer container, RAbstractComplexVector operand) {
             if (operand.getLength() == 2) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             }
         }
 
         @Specialization(order = 153, guards = {"isSubset", "opLengthZero"})
-        public RIntVector doComplexVectoTooFewSelectedSubset(RAbstractContainer container, RAbstractComplexVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+        public RIntVector doComplexVectoTooFewSelectedSubset(VirtualFrame frame, RAbstractContainer container, RAbstractComplexVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
 
         @Specialization(order = 160, guards = "opLengthOne")
@@ -810,25 +810,25 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 161, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
-        public RAbstractIntVector doRawVectorSubset(RAbstractContainer container, RAbstractRawVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+        public RAbstractIntVector doRawVectorSubset(VirtualFrame frame, RAbstractContainer container, RAbstractRawVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
 
         @Specialization(order = 162, guards = {"!isSubset", "!opLengthOne", "!opLengthZero"})
-        public RAbstractIntVector doRawVector(RAbstractContainer container, RAbstractRawVector operand) {
+        public RAbstractIntVector doRawVector(VirtualFrame frame, RAbstractContainer container, RAbstractRawVector operand) {
             if (operand.getLength() == 2) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             }
         }
 
         @Specialization(order = 163, guards = {"isSubset", "opLengthZero"})
-        public RIntVector doRawVectorTooFewSelectedSubset(RAbstractContainer container, RAbstractRawVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+        public RIntVector doRawVectorTooFewSelectedSubset(VirtualFrame frame, RAbstractContainer container, RAbstractRawVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
 
-        private RIntVector findPositions(RAbstractContainer container, RStringVector names, RAbstractStringVector operand, boolean retainNames) {
+        private RIntVector findPositions(VirtualFrame frame, RAbstractContainer container, RStringVector names, RAbstractStringVector operand, boolean retainNames) {
             int[] data = new int[operand.getLength()];
             boolean seenNA = false;
             for (int i = 0; i < data.length; i++) {
@@ -845,7 +845,7 @@ public abstract class ArrayPositionCast extends RNode {
                         data[i] = RRuntime.INT_NA;
                         seenNA = true;
                     } else {
-                        throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
+                        throw RError.error(frame, RError.Message.SUBSCRIPT_BOUNDS);
                     }
                 }
             }
@@ -913,9 +913,9 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 172, guards = {"hasNames", "!isAssignment", "numDimensionsOne", "isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doStringVectorOneDimNames(RAbstractContainer container, RAbstractStringVector operand) {
+        public RIntVector doStringVectorOneDimNames(VirtualFrame frame, RAbstractContainer container, RAbstractStringVector operand) {
             RStringVector names = (RStringVector) container.getNames();
-            return findPositions(container, names, operand, assignment);
+            return findPositions(frame, container, names, operand, assignment);
         }
 
         @Specialization(order = 173, guards = {"!hasNames", "isAssignment", "numDimensionsOne", "isSubset", "!opLengthOne", "!opLengthZero"})
@@ -936,10 +936,10 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 175, guards = {"hasDimNames", "!numDimensionsOne", "isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doStringVector(RAbstractContainer container, RAbstractStringVector operand) {
+        public RIntVector doStringVector(VirtualFrame frame, RAbstractContainer container, RAbstractStringVector operand) {
             RList dimNames = container.getDimNames();
             RStringVector names = (RStringVector) dimNames.getDataAt(dimension);
-            return findPositions(container, names, operand, false);
+            return findPositions(frame, container, names, operand, false);
         }
 
         @Specialization(order = 176, guards = {"!isSubset", "!opLengthOne", "!opLengthZero", "numDimensionsOne"})
@@ -949,18 +949,18 @@ public abstract class ArrayPositionCast extends RNode {
         }
 
         @Specialization(order = 177, guards = {"!isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doStringVectorTooManySelected(RAbstractContainer container, RAbstractStringVector operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+        public RIntVector doStringVectorTooManySelected(VirtualFrame frame, RAbstractContainer container, RAbstractStringVector operand) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
 
         @Specialization(order = 178, guards = {"isSubset", "!opLengthOne", "!opLengthZero"})
-        public RIntVector doStringVectorNoDimNames(RAbstractContainer container, RAbstractStringVector operand) {
+        public RIntVector doStringVectorNoDimNames(VirtualFrame frame, RAbstractContainer container, RAbstractStringVector operand) {
             if (numDimensions == 1) {
                 int[] data = new int[operand.getLength()];
                 Arrays.fill(data, RRuntime.INT_NA);
                 return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR);
             } else {
-                throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(frame, RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
@@ -1049,7 +1049,7 @@ public abstract class ArrayPositionCast extends RNode {
         private AssumedValue<Boolean> hasSeenNegative = new AssumedValue<>("hasSeenNegative", false);
         private AssumedValue<Boolean> hasSeenNA = new AssumedValue<>("hasSeenNA", false);
 
-        private RAbstractIntVector transformIntoPositive(RAbstractContainer container, RAbstractIntVector positions) {
+        private RAbstractIntVector transformIntoPositive(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector positions) {
             int zeroCount = 0;
             positionNACheck.enable(positions);
             int positionsLength = positions.getLength();
@@ -1063,13 +1063,13 @@ public abstract class ArrayPositionCast extends RNode {
                     }
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
-                        throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
+                        throw RError.error(frame, RError.Message.SUBSCRIPT_BOUNDS);
                     }
                     if (numDimensions == 1 && pos > container.getLength()) {
                         if (isSubset) {
                             outOfBounds = true;
                         } else {
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
                         }
                     }
                     if (!hasSeenPositive.get()) {
@@ -1077,7 +1077,7 @@ public abstract class ArrayPositionCast extends RNode {
                     }
                 } else if (pos == 0) {
                     if (!isSubset) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
                     }
                     if (!hasSeenZero.get()) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1093,7 +1093,7 @@ public abstract class ArrayPositionCast extends RNode {
             }
             if (hasSeenPositive.get() || hasSeenNA.get()) {
                 if (hasSeenNegative.get()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
                 } else if (hasSeenZero.get() || (outOfBounds && numDimensions == 1)) {
                     // eliminate 0-s and handle out-of-bounds for single-subscript accesses
                     int[] data = eliminateZeros(container, positions, zeroCount);
@@ -1113,7 +1113,7 @@ public abstract class ArrayPositionCast extends RNode {
                 }
             } else if (hasSeenNegative.get()) {
                 if (hasSeenNA.get()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
                 }
                 boolean[] excludedPositions = new boolean[dimLength];
                 int allPositionsNum = dimLength;
@@ -1162,8 +1162,8 @@ public abstract class ArrayPositionCast extends RNode {
             return value.getLength() == 1;
         }
 
-        private int getDimensionSize(RAbstractContainer container) {
-            verifyDimensions(container, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
+        private int getDimensionSize(VirtualFrame frame, RAbstractContainer container) {
+            verifyDimensions(frame, container, dimension, numDimensions, assignment, isSubset, getEncapsulatingSourceSection());
             return numDimensions == 1 ? container.getLength() : container.getDimensions()[dimension];
         }
 
@@ -1171,20 +1171,20 @@ public abstract class ArrayPositionCast extends RNode {
             return container.getElementClass() == Object.class;
         }
 
-        protected boolean dimLengthOne(RAbstractContainer container, byte operand) {
-            return getDimensionSize(container) == 1;
+        protected boolean dimLengthOne(VirtualFrame frame, RAbstractContainer container, byte operand) {
+            return getDimensionSize(frame, container) == 1;
         }
 
-        protected boolean dimLengthOne(RAbstractContainer container, int operand) {
-            return getDimensionSize(container) == 1;
+        protected boolean dimLengthOne(VirtualFrame frame, RAbstractContainer container, int operand) {
+            return getDimensionSize(frame, container) == 1;
         }
 
-        protected boolean dimLengthOne(RAbstractContainer container, RMissing operand) {
-            return getDimensionSize(container) == 1;
+        protected boolean dimLengthOne(VirtualFrame frame, RAbstractContainer container, RMissing operand) {
+            return getDimensionSize(frame, container) == 1;
         }
 
-        protected boolean dimLengthOne(RAbstractContainer container, RAbstractVector operand) {
-            return getDimensionSize(container) == 1;
+        protected boolean dimLengthOne(VirtualFrame frame, RAbstractContainer container, RAbstractVector operand) {
+            return getDimensionSize(frame, container) == 1;
         }
 
         protected static boolean indNA(RAbstractContainer container, int operand) {
@@ -1203,18 +1203,18 @@ public abstract class ArrayPositionCast extends RNode {
             return operand == RRuntime.LOGICAL_TRUE;
         }
 
-        protected boolean outOfBoundsNegative(RAbstractContainer container, int operand) {
-            return operand < 0 && -operand > getDimensionSize(container);
+        protected boolean outOfBoundsNegative(VirtualFrame frame, RAbstractContainer container, int operand) {
+            return operand < 0 && -operand > getDimensionSize(frame, container);
         }
 
-        protected boolean outOfBounds(RAbstractContainer container, RAbstractLogicalVector operand) {
+        protected boolean outOfBounds(VirtualFrame frame, RAbstractContainer container, RAbstractLogicalVector operand) {
             // out of bounds if multi dimensional access with a logical vector that's too long (in
             // single-dimensional case it's OK)
-            return (operand.getLength() > getDimensionSize(container)) && numDimensions != 1;
+            return (operand.getLength() > getDimensionSize(frame, container)) && numDimensions != 1;
         }
 
-        protected boolean outOfBounds(RAbstractContainer container, int operand) {
-            return operand > getDimensionSize(container);
+        protected boolean outOfBounds(VirtualFrame frame, RAbstractContainer container, int operand) {
+            return operand > getDimensionSize(frame, container);
         }
 
         protected boolean numDimensionsOne() {

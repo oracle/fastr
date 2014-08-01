@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -218,10 +219,11 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
     }
 
     public final void setNames(Object newNames) {
-        setNames(newNames, null);
+        // TODO No frame, can an error happen here?
+        setNames(null, newNames, null);
     }
 
-    public void setNames(Object newNames, SourceSection sourceSection) {
+    public void setNames(VirtualFrame frame, Object newNames, SourceSection sourceSection) {
         if (attributes != null && (newNames == null || newNames == RNull.instance)) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
@@ -229,7 +231,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
             this.names = null;
         } else if (newNames != null && newNames != RNull.instance) {
             if (newNames != RNull.instance && ((RStringVector) newNames).getLength() > this.getLength()) {
-                throw RError.error(sourceSection, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, ((RStringVector) newNames).getLength(), this.getLength());
+                throw RError.error(frame, sourceSection, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, ((RStringVector) newNames).getLength(), this.getLength());
             }
             if (this.dimensions != null && dimensions.length == 1) {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R documentation
@@ -250,20 +252,21 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
     }
 
     public void setDimNames(RList newDimNames) {
-        setDimNames(newDimNames, null);
+        // TODO No frame, can an error happen here?
+        setDimNames(null, newDimNames, null);
     }
 
-    public void setDimNames(RList newDimNames, SourceSection sourceSection) {
+    public void setDimNames(VirtualFrame frame, RList newDimNames, SourceSection sourceSection) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
             this.matrixDimension = 0;
         } else if (newDimNames != null) {
             if (dimensions == null) {
-                throw RError.error(sourceSection, RError.Message.DIMNAMES_NONARRAY);
+                throw RError.error(frame, sourceSection, RError.Message.DIMNAMES_NONARRAY);
             }
             int newDimNamesLength = newDimNames.getLength();
             if (newDimNamesLength > dimensions.length) {
-                throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
+                throw RError.error(frame, sourceSection, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
             }
             for (int i = 0; i < newDimNamesLength; i++) {
                 Object dimObject = newDimNames.getDataAt(i);
@@ -272,7 +275,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
                     if (dimVector.getLength() == 0) {
                         newDimNames.updateDataAt(i, RNull.instance, null);
                     } else if (dimVector.getLength() != dimensions[i]) {
-                        throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                        throw RError.error(frame, sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                     }
                 }
             }
@@ -369,9 +372,11 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
     public final void setDimensions(int[] newDimensions, SourceSection sourceSection) {
         if (attributes != null && newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
-            setDimNames(null, sourceSection);
+            // TODO No frame, can an error happen here?
+            setDimNames(null, null, sourceSection);
         } else if (newDimensions != null) {
-            verifyDimensions(newDimensions, sourceSection);
+            // TODO No frame, can an error happen here?
+            verifyDimensions(null, newDimensions, sourceSection);
             setMatrixDimensions(newDimensions, getLength());
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, true));
         }
@@ -506,9 +511,11 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         assert (this.dimensions == null);
         assert (this.attributes == null);
         // for some reason, names is copied first, then dims, then dimnames
-        this.setNames(vector.getNames(), sourceSection);
+        // TODO No frame, can an error happen here?
+        this.setNames(null, vector.getNames(), sourceSection);
         this.setDimensions(vector.getDimensions(), sourceSection);
-        this.setDimNames(vector.getDimNames(), sourceSection);
+        // TODO No frame, can an error happen here?
+        this.setDimNames(null, vector.getDimNames(), sourceSection);
     }
 
     public boolean copyNamesFrom(RAbstractVector vector) {

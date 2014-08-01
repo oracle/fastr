@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,9 +35,9 @@ public abstract class Log10 extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull log(RNull x) {
+    public RNull log(VirtualFrame frame, RNull x) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization

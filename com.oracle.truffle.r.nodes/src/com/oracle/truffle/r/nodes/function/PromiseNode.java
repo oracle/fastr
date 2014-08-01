@@ -161,7 +161,7 @@ public class PromiseNode extends RNode {
         }
     }
 
-    public static interface IEnvironmentProvider {
+    public interface IEnvironmentProvider {
         REnvironment getREnvironmentFor(VirtualFrame frame);
     }
 

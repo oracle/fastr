@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -179,9 +180,9 @@ public abstract class ColMeans extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 6)
-    public RDoubleVector colMeans(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
+    public RDoubleVector colMeans(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }
 
     @SuppressWarnings("unused")
