@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.AccessArgumentNode.*;
 import com.oracle.truffle.r.nodes.access.AccessArrayNode.MultiDimPosConverterNode;
 import com.oracle.truffle.r.nodes.access.AccessArrayNodeFactory.MultiDimPosConverterNodeFactory;
 import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
@@ -159,7 +158,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             RNode[] defaultValues = new RNode[argumentsList.size()];
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size() + 1];
-                AccessArgumentContext accessArgCtx = new AccessArgumentContext();
+                EnvProvider envProvider = new EnvProvider();
                 int index = 0;
                 for (ArgNode arg : argumentsList) {
                     // Parse argument's default value
@@ -172,7 +171,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     }
 
                     // Create an initialization statement
-                    init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index, accessArgCtx), true, false);
+                    init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index, envProvider), true, false);
 
                     // Store formal arguments
                     argumentNames[index] = RRuntime.toString(arg.getName());
