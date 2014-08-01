@@ -69,9 +69,7 @@ public abstract class Array extends RBuiltinNode {
         return totalLength;
     }
 
-    @Specialization
-    public RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
-        controlVisibility();
+    private RIntVector doArrayInt(RAbstractIntVector vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         int[] data = new int[totalLength];
@@ -81,9 +79,21 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createIntVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization
-    public RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    @Specialization(order = 10)
+    public RIntVector doArrayNoDimNames(RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
+        return doArrayInt(vec, dim);
+    }
+
+    @Specialization(order = 11)
+    public RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RIntVector ret = doArrayInt(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
+
+    private RDoubleVector doArrayDouble(RAbstractDoubleVector vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         double[] data = new double[totalLength];
@@ -93,9 +103,21 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createDoubleVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization
-    public RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    @Specialization(order = 20)
+    public RDoubleVector doArrayNoDimNames(RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
+        return doArrayDouble(vec, dim);
+    }
+
+    @Specialization(order = 21)
+    public RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RDoubleVector ret = doArrayDouble(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
+
+    private RLogicalVector doArrayLogical(RAbstractLogicalVector vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         byte[] data = new byte[totalLength];
@@ -105,9 +127,21 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createLogicalVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization
-    public RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    @Specialization(order = 30)
+    public RLogicalVector doArrayNoDimNames(RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
+        return doArrayLogical(vec, dim);
+    }
+
+    @Specialization(order = 31)
+    public RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RLogicalVector ret = doArrayLogical(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
+
+    private RStringVector doArrayString(RAbstractStringVector vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         String[] data = new String[totalLength];
@@ -117,9 +151,21 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createStringVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization
-    public RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    @Specialization(order = 40)
+    public RStringVector doArrayNoDimNames(RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
+        return doArrayString(vec, dim);
+    }
+
+    @Specialization(order = 41)
+    public RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RStringVector ret = doArrayString(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
+
+    private RComplexVector doArrayComplex(RAbstractComplexVector vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         double[] data = new double[totalLength << 1];
@@ -132,9 +178,21 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createComplexVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization
-    public RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    @Specialization(order = 50)
+    public RComplexVector doArrayNoDimNames(RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
+        return doArrayComplex(vec, dim);
+    }
+
+    @Specialization(order = 51)
+    public RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RComplexVector ret = doArrayComplex(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
+
+    private RRawVector doArrayRaw(RAbstractRawVector vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         byte[] data = new byte[totalLength];
@@ -144,9 +202,21 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createRawVector(data, dimData);
     }
 
-    @Specialization
-    public RList doArray(RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    @Specialization(order = 60)
+    public RRawVector doArrayNoDimNames(RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
+        return doArrayRaw(vec, dim);
+    }
+
+    @Specialization(order = 61)
+    public RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RRawVector ret = doArrayRaw(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
+
+    private RList doArrayList(RList vec, RAbstractIntVector dim) {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         Object[] data = new Object[totalLength];
@@ -156,4 +226,17 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createList(data, dimData);
     }
 
+    @Specialization(order = 70)
+    public RList doArrayNoDimeNames(RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+        controlVisibility();
+        return doArrayList(vec, dim);
+    }
+
+    @Specialization(order = 71)
+    public RList doArray(RList vec, RAbstractIntVector dim, RList dimnames) {
+        controlVisibility();
+        RList ret = doArrayList(vec, dim);
+        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        return ret;
+    }
 }
