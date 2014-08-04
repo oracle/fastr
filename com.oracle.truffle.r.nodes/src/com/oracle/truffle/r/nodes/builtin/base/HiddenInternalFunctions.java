@@ -61,7 +61,7 @@ public class HiddenInternalFunctions {
          * modified call in the {@code eenv} environment.
          */
         @Specialization
-        public RNull doMakeLazy(@SuppressWarnings("unused") VirtualFrame frame, RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
+        public RNull doMakeLazy(VirtualFrame frame, RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
             controlVisibility();
             initEval();
             for (int i = 0; i < names.getLength(); i++) {

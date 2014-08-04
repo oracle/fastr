@@ -141,6 +141,8 @@ public abstract class BinaryArithmetic extends Operation {
 
     public abstract RComplex op(double leftReal, double leftImag, double rightReal, double rightImag);
 
+    public abstract String op(String left, String right);
+
     public static double fmod(double a, double b) {
         // LICENSE: transcribed code from GNU R, which is licensed under GPL
         double q = a / b;
@@ -197,6 +199,11 @@ public abstract class BinaryArithmetic extends Operation {
             return RDataFactory.createComplex(op(leftReal, rightReal), op(leftImag, rightImag));
         }
 
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
+        }
     }
 
     private static final class AddOverflow extends Add {
@@ -239,6 +246,12 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             return RDataFactory.createComplex(op(leftReal, rightReal), op(leftImag, rightImag));
+        }
+
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
 
@@ -303,6 +316,12 @@ public abstract class BinaryArithmetic extends Operation {
             interm[3] = op(leftReal, rightImag);
             res[0] = interm[0] - interm[1];
             res[1] = interm[2] + interm[3];
+        }
+
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
 
@@ -431,6 +450,12 @@ public abstract class BinaryArithmetic extends Operation {
 
             return RDataFactory.createComplex(real, imag);
         }
+
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
+        }
     }
 
     private static final class IntegerDiv extends BinaryArithmetic {
@@ -466,6 +491,12 @@ public abstract class BinaryArithmetic extends Operation {
             CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("unsupported complex operation");
         }
+
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
+        }
     }
 
     public static final class Mod extends BinaryArithmetic {
@@ -496,6 +527,12 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             throw RError.uncatchableError(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+        }
+
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
 
@@ -646,6 +683,12 @@ public abstract class BinaryArithmetic extends Operation {
             double rho = Math.exp(zr * rightReal - zi * rightImag);
 
             return RDataFactory.createComplex(rho * Math.cos(theta), rho * Math.sin(theta));
+        }
+
+        @Override
+        public String op(String left, String right) {
+            CompilerDirectives.transferToInterpreter();
+            throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
 
         // The code for chypot was transcribed from FastR:
@@ -908,6 +951,11 @@ public abstract class BinaryArithmetic extends Operation {
             CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
+
+        @Override
+        public String op(String left, String right) {
+            return left.compareTo(right) > 0 ? left : right;
+        }
     }
 
     private static class Min extends BinaryArithmetic {
@@ -930,6 +978,11 @@ public abstract class BinaryArithmetic extends Operation {
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
             CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
+        }
+
+        @Override
+        public String op(String left, String right) {
+            return left.compareTo(right) < 0 ? left : right;
         }
     }
 

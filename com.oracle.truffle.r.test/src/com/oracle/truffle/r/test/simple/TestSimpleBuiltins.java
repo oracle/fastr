@@ -57,10 +57,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ seq(c(1,2), 7) }");
         assertEvalError("{ seq(7, integer()) }");
         assertEvalError("{ seq(7, c(41,42)) }");
+        assertEval("{ seq(integer()) }");
+        assertEval("{ seq(double()) }");
     }
 
     @Test
-    @Ignore
     public void testSequenceStatementIgnore() {
         // seq does not work properly (added tests for vector accesses that paste correct seq's
         // result in TestSimpleVectors)
@@ -86,7 +87,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSequenceStatementNamedParamsIgnore() {
         assertEval("{ seq(to=-1,from=-10) }");
         assertEval("{ seq(length.out=13.4) }");
@@ -121,11 +121,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ vector(\"integer\") }");
         assertEval("{ vector(\"numeric\") }");
         assertEval("{ vector(\"numeric\", length=4) }");
-    }
-
-    @Test
-    @Ignore
-    public void testVectorConstructorIgnore() {
         assertEval("{ vector(length=3) }");
     }
 
@@ -135,11 +130,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ max(2L, 4L) }");
         assertEvalWarning("{ max() }");
         assertEval("{ max(1:10, 100:200, c(4.0, 5.0)) }");
-    }
+        assertEval("{ max(NA, 1.1) }");
+        assertEval("{ max(0/0, 1.1) }");
+        assertEval("{ max(0/0, 1.1, NA) }");
+        assertEval("{ max(c(as.character(NA), \"foo\")) }");
+        assertEvalWarning("{ max(character(0)) }");
+        assertEvalWarning("{ max(character()) }");
+        assertEvalWarning("{ max(integer(0)) }");
+        assertEvalWarning("{ max(integer()) }");
+        assertEvalWarning("{ max(double(0)) }");
+        assertEvalWarning("{ max(double()) }");
+        assertEvalWarning("{ max(NULL) }");
 
-    @Test
-    @Ignore
-    public void testMaximumIgnore() {
         assertEval("{ max(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
         assertEval("{ max(c(\"hi\",\"abbey\",\"hello\")) }");
         assertEval("{ max(\"hi\",\"abbey\",\"hello\") }");
@@ -153,11 +155,18 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ min(c(1,2,0/0)) }");
         assertEval("{ max(c(1,2,0/0)) }");
         assertEval("{ min(1:10, 100:200, c(4.0, -5.0)) }");
-    }
+        assertEval("{ min(NA, 1.1) }");
+        assertEval("{ min(0/0, 1.1) }");
+        assertEval("{ min(0/0, 1.1, NA) }");
+        assertEval("{ min(c(as.character(NA), \"foo\")) }");
+        assertEvalWarning("{ min(character(0)) }");
+        assertEvalWarning("{ min(character()) }");
+        assertEvalWarning("{ min(integer(0)) }");
+        assertEvalWarning("{ min(integer()) }");
+        assertEvalWarning("{ min(double(0)) }");
+        assertEvalWarning("{ min(double()) }");
+        assertEvalWarning("{ min(NULL) }");
 
-    @Test
-    @Ignore
-    public void testMinimumIgnore() {
         assertEval("{ min(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
         assertEval("{ min(c(\"hi\",\"abbey\",\"hello\")) }");
         assertEval("{ min(\"hi\",\"abbey\",\"hello\") }");
@@ -615,18 +624,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
         assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
 
+        assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
+        assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }"); // FIXME missing warning
     }
 
     @Test
     public void testDrop() {
         assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
-    }
-
-    @Test
-    @Ignore
-    public void testCastsIgnore() {
-        assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }"); // FIXME missing warning
-        assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }"); // FIXME missing warning
     }
 
     @Test
@@ -2055,7 +2059,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testFFT() {
         assertEval("{ fft(1:4) }");
         assertEval("{ fft(1:4, inverse=TRUE) }");

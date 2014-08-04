@@ -1,8 +1,12 @@
 suite=fastr
-mxversion=2.4.0
+mxversion=2.4.3
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
-#library@JDK_TOOLS@sha1=NOCHECK
+library@JDK_TOOLS@sha1=NOCHECK
+
+library@CHECKSTYLE@path=lib/checkstyle-5.5-all.jar
+library@CHECKSTYLE@urls=jar:http://sourceforge.net/projects/checkstyle/files/checkstyle/5.5/checkstyle-5.5-bin.zip/download!/checkstyle-5.5/checkstyle-5.5-all.jar
+library@CHECKSTYLE@sha1=6f4bb2b3dafb9426a67fa9c47f96ffed3b44749a
 
 library@ANTLR@path=lib/antlr-runtime-3.5.jar
 library@ANTLR@urls=http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar

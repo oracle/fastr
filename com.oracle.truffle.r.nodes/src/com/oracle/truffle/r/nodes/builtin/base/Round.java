@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
@@ -57,6 +58,10 @@ public abstract class Round extends RBuiltinNode {
         return digits != 0;
     }
 
+    protected static boolean hasDigits(@SuppressWarnings("unused") RAbstractVector x, int digits) {
+        return digits != 0;
+    }
+
     @Specialization(order = 1)
     public int round(int x, @SuppressWarnings("unused") int digits) {
         controlVisibility();
@@ -76,7 +81,7 @@ public abstract class Round extends RBuiltinNode {
     }
 
     @Specialization(order = 22, guards = "!hasDigits")
-    public RDoubleVector round(RDoubleVector x, int digits) {
+    public RDoubleVector round(RAbstractDoubleVector x, int digits) {
         controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
@@ -84,11 +89,13 @@ public abstract class Round extends RBuiltinNode {
             result[i] = round(x.getDataAt(i), digits);
             check.check(result[i]);
         }
-        return RDataFactory.createDoubleVector(result, check.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
     }
 
     @Specialization(order = 23, guards = "hasDigits")
-    public RDoubleVector roundDigits(RDoubleVector x, int digits) {
+    public RDoubleVector roundDigits(RAbstractDoubleVector x, int digits) {
         controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
@@ -96,7 +103,9 @@ public abstract class Round extends RBuiltinNode {
             result[i] = roundDigits(x.getDataAt(i), digits);
             check.check(result[i]);
         }
-        return RDataFactory.createDoubleVector(result, check.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
     }
 
     @Specialization(order = 30, guards = "!hasDigits")
@@ -123,7 +132,9 @@ public abstract class Round extends RBuiltinNode {
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);
         }
-        return RDataFactory.createComplexVector(result, check.neverSeenNA());
+        RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
     }
 
     @Specialization(order = 33, guards = "hasDigits")
@@ -138,7 +149,9 @@ public abstract class Round extends RBuiltinNode {
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);
         }
-        return RDataFactory.createComplexVector(result, check.neverSeenNA());
+        RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
     }
 
 }
