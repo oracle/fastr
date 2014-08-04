@@ -89,7 +89,9 @@ public class TrigExpFunctions {
             for (int i = 0; i < x.getLength(); i++) {
                 resultVector[i] = isDouble ? doFunDouble(dx.getDataAt(i), fun) : doFunInt(ix.getDataAt(i), fun);
             }
-            return RDataFactory.createDoubleVector(resultVector, x.isComplete());
+            RDoubleVector ret = RDataFactory.createDoubleVector(resultVector, x.isComplete());
+            ret.copyAttributesFrom(x);
+            return ret;
         }
 
     }

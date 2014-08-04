@@ -299,7 +299,7 @@ public class ForeignFunctions {
         private Object castComplex(VirtualFrame frame, Object operand) {
             if (castComplex == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castComplex = insert(CastComplexNodeFactory.create(null, true, false, false));
+                castComplex = insert(CastComplexNodeFactory.create(null, true, true, false));
             }
             return castComplex.executeCast(frame, operand);
         }
@@ -331,10 +331,10 @@ public class ForeignFunctions {
             int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;
             if (zVec.getLength() > 1) {
+                int[] maxf = new int[1];
+                int[] maxp = new int[1];
                 if (zVec.getDimensions() == null) {
                     int n = zVec.getLength();
-                    int[] maxf = new int[1];
-                    int[] maxp = new int[1];
                     RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
                     if (maxf[0] == 0) {
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
@@ -342,10 +342,45 @@ public class ForeignFunctions {
                     double[] work = new double[4 * maxf[0]];
                     int[] iwork = new int[maxp[0]];
                     retCode = RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(z, 1, n, 1, inv, work, iwork);
+                } else {
+                    int maxmaxf = 1;
+                    int maxmaxp = 1;
+                    int[] d = zVec.getDimensions();
+                    int ndims = d.length;
+                    /* do whole loop just for error checking and maxmax[fp] .. */
+                    for (int i = 0; i < ndims; i++) {
+                        if (d[i] > 1) {
+                            RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(d[i], maxf, maxp);
+                            if (maxf[0] == 0) {
+                                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                            }
+                            if (maxf[0] > maxmaxf) {
+                                maxmaxf = maxf[0];
+                            }
+                            if (maxp[0] > maxmaxp) {
+                                maxmaxp = maxp[0];
+                            }
+                        }
+                    }
+                    double[] work = new double[4 * maxmaxf];
+                    int[] iwork = new int[maxmaxp];
+                    int nseg = zVec.getLength();
+                    int n = 1;
+                    int nspn = 1;
+                    for (int i = 0; i < ndims; i++) {
+                        if (d[i] > 1) {
+                            nspn *= n;
+                            n = d[i];
+                            nseg /= n;
+                            RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
+                            RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(z, nseg, n, nspn, inv, work, iwork);
+                        }
+                    }
+
                 }
             }
 
-            return RDataFactory.createComplexVector(z, zVec.isComplete());
+            return RDataFactory.createComplexVector(z, zVec.isComplete(), zVec.getDimensions());
         }
 
         private static boolean matchName(RList f, String name) {

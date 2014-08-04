@@ -86,7 +86,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     public int doIntVector(RIntVector operand) {
         int result = semantics.getIntStart();
         na.enable(operand);
-        for (int i = 0; i < operand.getLength(); i++) {
+        int i = 0;
+        for (; i < operand.getLength(); i++) {
             int d = operand.getDataAt(i);
             na.enable(d);
             result = na.check(d) ? RRuntime.INT_NA : arithmetic.op(result, d);
@@ -95,6 +96,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
                 return result;
             }
         }
+        if (i == 0 && semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
+        }
         return result;
     }
 
@@ -102,7 +106,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     public double doDoubleVector(RDoubleVector operand) {
         double result = semantics.getDoubleStart();
         na.enable(operand);
-        for (int i = 0; i < operand.getLength(); i++) {
+        int i = 0;
+        for (; i < operand.getLength(); i++) {
             double d = operand.getDataAt(i);
             na.enable(d);
             result = na.check(d) ? RRuntime.DOUBLE_NA : arithmetic.op(result, d);
@@ -111,6 +116,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
                 return result;
             }
         }
+        if (i == 0 && semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
+        }
         return result;
     }
 
@@ -118,7 +126,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     public int doLogicalVector(RLogicalVector operand) {
         int result = semantics.getIntStart();
         na.enable(operand);
-        for (int i = 0; i < operand.getLength(); i++) {
+        int i = 0;
+        for (; i < operand.getLength(); i++) {
             byte d = operand.getDataAt(i);
             na.enable(d);
             result = na.check(d) ? RRuntime.INT_NA : arithmetic.op(result, d);
@@ -127,6 +136,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
                 return result;
             }
         }
+        if (i == 0 && semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
+        }
         return result;
     }
 
@@ -134,13 +146,17 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     public int doIntSequence(RIntSequence operand) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); ++i) {
+        int i = 0;
+        for (; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
             na.enable(result);
             if (na.check(result)) {
                 return result;
             }
             current += operand.getStride();
+        }
+        if (i == 0 && semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
         }
         return result;
     }
@@ -149,7 +165,8 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     public double doDoubleSequence(RDoubleSequence operand) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); ++i) {
+        int i = 0;
+        for (; i < operand.getLength(); ++i) {
             result = arithmetic.op(result, current);
             na.enable(result);
             if (na.check(result)) {
@@ -157,13 +174,17 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             current += operand.getStride();
         }
+        if (i == 0 && semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
+        }
         return result;
     }
 
     @Specialization(order = 12)
     public RComplex doComplexVector(RComplexVector operand) {
         RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
-        for (int i = 0; i < operand.getLength(); ++i) {
+        int i = 0;
+        for (; i < operand.getLength(); ++i) {
             RComplex current = operand.getDataAt(i);
             na.enable(current);
             result = na.check(current) ? RRuntime.createComplexNA() : arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());
@@ -172,13 +193,68 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
                 return result;
             }
         }
+        if (i == 0 && semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
+        }
         return result;
+    }
+
+    // the algorithm that works for other types (reducing a vector starting with the "start value")
+    // does not work for String-s as, in particular, we cannot supply the (lexicographically)
+    // "largest" String for the implementation of max function
+
+    @Specialization(order = 15, guards = "empty")
+    public String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand) {
+        if (semantics.getEmptyWarning() != null) {
+            RError.warning(semantics.emptyWarning);
+        }
+        return semantics.getStringStart();
+    }
+
+    @Specialization(order = 16, guards = "lengthOne")
+    public String doStringVectorOneElem(RStringVector operand) {
+        return operand.getDataAt(0);
+    }
+
+    @Specialization(order = 17, guards = "longerThanOne")
+    public String doStringVector(RStringVector operand) {
+        String result = operand.getDataAt(0);
+        na.enable(result);
+        if (na.check(result)) {
+            return result;
+        }
+        for (int i = 1; i < operand.getLength(); ++i) {
+            String current = operand.getDataAt(i);
+            na.enable(current);
+            if (na.check(current)) {
+                return current;
+            }
+            result = arithmetic.op(result, current);
+            na.enable(result);
+            if (na.check(result)) {
+                return result;
+            }
+        }
+        return result;
+    }
+
+    protected boolean empty(RStringVector vector) {
+        return vector.getLength() == 0;
+    }
+
+    protected boolean lengthOne(RStringVector vector) {
+        return vector.getLength() == 1;
+    }
+
+    protected boolean longerThanOne(RStringVector vector) {
+        return vector.getLength() > 1;
     }
 
     public static final class ReduceSemantics {
 
         private final int intStart;
         private final double doubleStart;
+        private final String stringStart = RRuntime.STRING_NA; // does not seem to change
         private final boolean nullInt;
         private final RError.Message emptyWarning;
 
@@ -195,6 +271,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
         public double getDoubleStart() {
             return doubleStart;
+        }
+
+        public String getStringStart() {
+            return stringStart;
         }
 
         public boolean isNullInt() {

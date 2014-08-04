@@ -129,21 +129,20 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- c(a=1) ; attr(x, \"myatt\") <- 1 ; lapply(1:2, function(z) {x}) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ; mm <- aperm(m) ; dim(mm) }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; attr(m,\"a\") <- 1 ;  aperm(m) }");
+
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; sapply(1:2, function(z) {x}) }");
+        assertEval("{ x <- 1 ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
+        assertEval("{ x <- c(a=1,b=2) ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
+        assertEval("{ x <- c(1,2) ; dim(x)<-c(1,2); attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
+        assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
     }
 
     @Test
     @Ignore
     public void testBuiltinPropagationIgnore() {
-        // sapply implementation incomplete
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1 ; sapply(1:2, function(z) {x}) }");
         // eigen implementation problem
         assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
-        // exp not implemented
-        assertEval("{ x <- 1 ; attr(x, \"myatt\") <- 1; round(exp(x), digits=5) }");
-        // rep implementation problem
-        assertEval("{ x <- c(a=TRUE) ; attr(x, \"myatt\") <- 1; rep(x,2) }");
-        // seq implementation problem
-        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 1; seq(x) }");
     }
 
     @Test
