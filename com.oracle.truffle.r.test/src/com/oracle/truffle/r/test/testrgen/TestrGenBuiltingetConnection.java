@@ -15,8 +15,8 @@ import com.oracle.truffle.r.test.*;
 
 public class TestrGenBuiltingetConnection extends TestBase {
 
-	@Test
-	public void testgetConnection1(){
-		assertEval("argv <- list(FALSE); .Internal(getConnection(argv[[1]]))");
-	}
+    @Test
+    public void testgetConnection1() {
+        assertEval("argv <- list(FALSE); .Internal(getConnection(argv[[1]]))");
+    }
 }

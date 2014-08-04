@@ -15,8 +15,8 @@ import com.oracle.truffle.r.test.*;
 
 public class TestrGenBuiltinfileremove extends TestBase {
 
-	@Test
-	public void testfileremove1(){
-		assertEval("argv <- list(character(0)); .Internal(file.remove(argv[[1]]))");
-	}
+    @Test
+    public void testfileremove1() {
+        assertEval("argv <- list(character(0)); .Internal(file.remove(argv[[1]]))");
+    }
 }

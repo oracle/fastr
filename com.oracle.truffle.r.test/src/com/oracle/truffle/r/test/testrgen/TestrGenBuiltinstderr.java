@@ -15,8 +15,8 @@ import com.oracle.truffle.r.test.*;
 
 public class TestrGenBuiltinstderr extends TestBase {
 
-	@Test
-	public void teststderr1(){
-		assertEval(" .Internal(stderr())");
-	}
+    @Test
+    public void teststderr1() {
+        assertEval(" .Internal(stderr())");
+    }
 }

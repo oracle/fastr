@@ -15,8 +15,8 @@ import com.oracle.truffle.r.test.*;
 
 public class TestrGenBuilting extends TestBase {
 
-	@Test
-	public void testg1(){
-		assertEval("argv <- list(1);g(argv[[1]]);");
-	}
+    @Test
+    public void testg1() {
+        assertEval("argv <- list(1);g(argv[[1]]);");
+    }
 }

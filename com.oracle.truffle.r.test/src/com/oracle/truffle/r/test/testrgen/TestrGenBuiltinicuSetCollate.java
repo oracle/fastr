@@ -15,8 +15,8 @@ import com.oracle.truffle.r.test.*;
 
 public class TestrGenBuiltinicuSetCollate extends TestBase {
 
-	@Test
-	public void testicuSetCollate1(){
-		assertEval(" .Internal(icuSetCollate())");
-	}
+    @Test
+    public void testicuSetCollate1() {
+        assertEval(" .Internal(icuSetCollate())");
+    }
 }

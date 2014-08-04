@@ -15,8 +15,8 @@ import com.oracle.truffle.r.test.*;
 
 public class TestrGenBuiltincharToRaw extends TestBase {
 
-	@Test
-	public void testcharToRaw1(){
-		assertEval("argv <- list(\'\'); .Internal(charToRaw(argv[[1]]))");
-	}
+    @Test
+    public void testcharToRaw1() {
+        assertEval("argv <- list(\'\'); .Internal(charToRaw(argv[[1]]))");
+    }
 }
