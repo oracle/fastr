@@ -41,7 +41,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
 
         private Compiler() {
             try {
-                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget");
+                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
                 compileMethod = optimizedCallTarget.getDeclaredMethod("compile");
             } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
                 Utils.fail("DebugCompileBuiltin failed to find compile method");
