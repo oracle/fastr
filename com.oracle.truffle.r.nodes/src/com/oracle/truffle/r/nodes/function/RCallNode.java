@@ -28,8 +28,8 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.*;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -79,9 +79,10 @@ public abstract class RCallNode extends RNode {
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
      *            {code .Internal}.
      * @param function the resolved {@link RFunction}.
+     * @param symbol The name of the function
      */
-    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function) {
-        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function);
+    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, Symbol symbol) {
+        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, symbol);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
         RCallNode result = current.createCacheNode(frame, function);
@@ -272,8 +273,8 @@ public abstract class RCallNode extends RNode {
                 RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
-                    // TODO Inline only feasible if it's guaranteed that default values of builtins
-                    // have NO side effects?!?!?!
+// We inline the given arguments here, as builtins are executed inside the same
+// frame as they are called.
                     InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, getEncapsulatingSourceSection());
                     // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
@@ -281,8 +282,8 @@ public abstract class RCallNode extends RNode {
             }
 
             // Now we need to distinguish: Do supplied arguments vary between calls?
-            boolean hasVarArgsSupplied = args.hasVarArgs();
-            if (hasVarArgsSupplied) {
+            boolean hasVarArgsInvolved = args.containsVarArgsSymbol() || ((RRootNode) function.getTarget().getRootNode()).getFormalArguments().hasVarArgs();
+            if (hasVarArgsInvolved) {
                 // Yes, maybe.
                 return new DispatchedVarArgsCallNode(function, args);
             } else {

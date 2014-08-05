@@ -49,7 +49,7 @@ public abstract class Internal extends RBuiltinNode {
     public Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
         RNode call = (RNode) x.getRep();
-        String name = null;
+        Symbol symbol = null;
         RootCallNode callNode = null;
         assert call instanceof WrapArgumentNode;
         RNode operand = ((WrapArgumentNode) call).getOperand();
@@ -57,25 +57,25 @@ public abstract class Internal extends RBuiltinNode {
             callNode = (RootCallNode) operand;
             RNode func = callNode.getFunctionNode();
             if (func instanceof UnresolvedReadVariableNode) {
-                name = ((UnresolvedReadVariableNode) func).getSymbol();
+                symbol = ((UnresolvedReadVariableNode) func).getSymbol();
             } else {
                 // is anything else possible?
             }
         }
 
-        if (name == null) {
+        if (symbol == null) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
         }
         // TODO remove prefix for real use
-        RFunction function = RContext.getEngine().lookupBuiltin(name);
+        RFunction function = RContext.getEngine().lookupBuiltin(symbol.getName());
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, name);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
         }
 
         // .Internal function is validated
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // Replace the original call; we can't just use callNode as that will cause recursion!
-        RCallNode internalCallNode = RCallNode.createInternalCall(frame, this.getParent().getSourceSection(), callNode, function);
+        RCallNode internalCallNode = RCallNode.createInternalCall(frame, this.getParent().getSourceSection(), callNode, function, symbol);
         this.getParent().replace(internalCallNode);
         // evaluate the actual builtin this time, next time we won't get here!
         Object result = internalCallNode.execute(frame);

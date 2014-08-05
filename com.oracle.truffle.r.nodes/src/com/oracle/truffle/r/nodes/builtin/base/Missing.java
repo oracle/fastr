@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -36,12 +37,12 @@ public abstract class Missing extends RBuiltinNode {
     @Specialization
     public byte missing(VirtualFrame frame, RPromise promise) {
         controlVisibility();
-        return RRuntime.asLogical(RMissing.isMissing(frame, promise));
+        return RRuntime.asLogical(RMissingHelper.isMissing(frame, promise));
     }
 
     @Specialization
     public byte missing(VirtualFrame frame, Object obj) {
         controlVisibility();
-        return RRuntime.asLogical(RMissing.isMissing(frame, obj));
+        return RRuntime.asLogical(RMissingHelper.isMissing(frame, obj));
     }
 }

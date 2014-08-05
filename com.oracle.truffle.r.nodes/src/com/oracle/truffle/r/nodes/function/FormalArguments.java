@@ -23,9 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
-import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * This class denotes a list of formal arguments which consist of the tuple
@@ -38,6 +36,11 @@ import com.oracle.truffle.r.runtime.data.*;
 public final class FormalArguments extends Arguments<RNode> {
 
     public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
+
+    /**
+     * Serves as cache for {@link #hasVarArgs()}
+     */
+    private Boolean hasVarArgs = null;
 
     /**
      * @param argumentsNames {@link #getNames()}
@@ -61,6 +64,14 @@ public final class FormalArguments extends Arguments<RNode> {
         return new FormalArguments(argumentsNames, newDefaults);
     }
 
+    @Override
+    public boolean hasVarArgs() {
+        if (hasVarArgs == null) {
+            hasVarArgs = super.hasVarArgs();
+        }
+        return hasVarArgs;
+    }
+
     /**
      * @return The list of argument names a function definition specifies
      */
@@ -74,23 +85,6 @@ public final class FormalArguments extends Arguments<RNode> {
      */
     public RNode[] getDefaultArgs() {
         return arguments;
-    }
-
-    /**
-     * Other than {@link #getDefaultArgs()} and {@link #getDefaultArg(int)} this method returns not
-     * <code>null</code> but a {@link ConstantNode} wrapping {@link RMissing#instance}!!!
-     *
-     * @param index
-     * @return The default arguments for the given index, or an instance of {@link ConstantNode} if
-     *         <code>null</code>!
-     */
-    public RNode getDefaultArgNonNull(int index) {
-        assert index >= 0 && index < arguments.length;
-        RNode result = arguments[index];
-        if (result == null) {
-            result = ConstantNode.create(RMissing.instance);
-        }
-        return result;
     }
 
     /**

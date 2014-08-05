@@ -45,6 +45,7 @@ import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.ast.Repeat;
+import com.oracle.truffle.r.parser.ast.Symbol;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;

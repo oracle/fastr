@@ -120,6 +120,12 @@ public class RPromise {
     @CompilationFinal protected boolean isEvaluated = false;
 
     /**
+     * A flag which is necessary to avoid cyclic evaluation. Manipulated by
+     * {@link #setUnderEvaluation(boolean)} and can by checked via {@link #isUnderEvaluation()}.
+     */
+    private boolean underEvaluation = false;
+
+    /**
      * This creates a new tuple (env, expr), which may later be evaluated.
      *
      * @param evalPolicy {@link EvalPolicy}
@@ -158,9 +164,6 @@ public class RPromise {
         // Evaluate this promises value!
         // TODO Performance: We can use frame directly if we are sure that it matches the on in env!
         if (env != null && env != RArguments.getEnvironment(frame)) {
-            if (exprRep.getRep() == null) {
-                System.out.print("as");
-            }
             value = doEvalArgument();
         } else {
             assert type == PromiseType.ARG_DEFAULT;
@@ -197,27 +200,6 @@ public class RPromise {
     }
 
     /**
-     * @return {@link #evalPolicy}
-     */
-    public EvalPolicy getEvalPolicy() {
-        return evalPolicy;
-    }
-
-    /**
-     * @return {@link #type}
-     */
-    public PromiseType getType() {
-        return type;
-    }
-
-    /**
-     * @return {@link #env}
-     */
-    public REnvironment getEnv() {
-        return env;
-    }
-
-    /**
      * This method is necessary, as we have to create {@link RPromise}s before the actual function
      * call, but the callee frame and environment get created _after_ the call happened. This update
      * has to take place in AccessArgumentNode, just before arguments get stuffed into the fresh
@@ -242,6 +224,34 @@ public class RPromise {
      */
     public boolean needsCalleeFrame() {
         return evalPolicy != EvalPolicy.STRICT && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
+    }
+
+    /**
+     * @return {@link #evalPolicy}
+     */
+    public EvalPolicy getEvalPolicy() {
+        return evalPolicy;
+    }
+
+    /**
+     * @return {@link #type}
+     */
+    public PromiseType getType() {
+        return type;
+    }
+
+    /**
+     * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
+     */
+    public boolean isDefaulted() {
+        return type == PromiseType.ARG_DEFAULT;
+    }
+
+    /**
+     * @return {@link #env}
+     */
+    public REnvironment getEnv() {
+        return env;
     }
 
     /**
@@ -274,11 +284,19 @@ public class RPromise {
     }
 
     /**
-     * @return Whether this {@link RPromise} is 'missing' (see {@link RMissing} for details). As
-     *         this is argument, it cannot be missing!
+     * Used to manipulate {@link #underEvaluation}.
+     *
+     * @param underEvaluation The new value to set
      */
-    public boolean isMissing() {
-        return type == PromiseType.ARG_DEFAULT;
+    public void setUnderEvaluation(boolean underEvaluation) {
+        this.underEvaluation = underEvaluation;
+    }
+
+    /**
+     * @return The state of the {@link #underEvaluation} flag.
+     */
+    public boolean isUnderEvaluation() {
+        return underEvaluation;
     }
 
     @Override

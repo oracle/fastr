@@ -62,11 +62,40 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link MatchedArgumentsNode} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
-     * @see #matchNodes(VirtualFrame, RFunction, CallArgumentsNode, SourceSection, boolean)
+     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
     public static MatchedArgumentsNode matchArguments(VirtualFrame frame, RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
+
+        // "Evaluate" supplied arguments
+        RNode[] suppliedEvaled = new RNode[suppliedArgs.getArguments().length];
+        for (int i = 0; i < suppliedEvaled.length; i++) {
+            RNode arg = suppliedArgs.getArguments()[i];
+
+            // Check for 'missing' arguments
+            {
+                RNode rvnArg = arg;
+
+                // Eventually unfold WrapArgumentNode
+                if (rvnArg instanceof WrapArgumentNode) {
+                    rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
+                }
+
+                // ReadVariableNode denotes a symbol
+                if (rvnArg instanceof ReadVariableNode) {
+                    ReadVariableNode rvn = (ReadVariableNode) rvnArg;
+                    Symbol symbol = rvn.getSymbol();
+                    if (RMissingHelper.isMissingArgument(frame, symbol)) {
+                        suppliedEvaled[i] = null;
+                        continue;
+                    }
+                }
+            }
+
+            suppliedEvaled[i] = arg;
+        }
+
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs, encapsulatingSrc, false);
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedEvaled, suppliedArgs.getNames(), encapsulatingSrc, false);
         return MatchedArgumentsNode.create(wrappedArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
     }
 
@@ -82,10 +111,10 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
-     * @see #matchNodes(VirtualFrame, RFunction, CallArgumentsNode, SourceSection, boolean)
+     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
     public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs, encapsulatingSrc, true);
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, true);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
@@ -137,6 +166,7 @@ public class ArgumentMatcher {
      * @param frame carrier for error reporting
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
+     * @param suppliedNames The names for the arguments supplied to the call
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
      * @param isForInlinedBuilin Whether the arguments are passed into an inlined builtin and need
      *            special treatment
@@ -146,12 +176,11 @@ public class ArgumentMatcher {
      * @see #permuteArguments(VirtualFrame, RFunction, Object[], String[], FormalArguments,
      *      VarArgsFactory, ArrayFactory, SourceSection)
      */
-    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc, boolean isForInlinedBuilin) {
+    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuilin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        RNode[] resultArgs = permuteArguments(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(),
-                        encapsulatingSrc);
+        RNode[] resultArgs = permuteArguments(frame, function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
         PromiseWrapper wrapper = isForInlinedBuilin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
         return wrapInPromises(function, resultArgs, formals, wrapper);
     }
@@ -257,13 +286,6 @@ public class ArgumentMatcher {
                 }
             }
         }
-
-// if (varArgIndex != ArgumentsTrait.NO_VARARG) {
-// T arg = resultArgs[varArgIndex];
-// if (arg == null) {
-// resultArgs[varArgIndex] = listFactory.makeList(arrFactory.newArray(0), new String[0]);
-// }
-// }
 
         return resultArgs;
     }

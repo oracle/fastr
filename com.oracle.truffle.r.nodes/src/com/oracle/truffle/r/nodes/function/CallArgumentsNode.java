@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -36,6 +37,12 @@ import com.oracle.truffle.r.runtime.*;
 public final class CallArgumentsNode extends ArgumentsNode {
 
     private static final String[] NO_NAMES = new String[0];
+
+    /**
+     * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this flag
+     * is set to {@code true}.
+     */
+    private final boolean containsVarArgsSymbol;
 
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
@@ -54,8 +61,9 @@ public final class CallArgumentsNode extends ArgumentsNode {
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, String[] names, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, String[] names, boolean containsVarArgsSymbol, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, names);
+        this.containsVarArgsSymbol = containsVarArgsSymbol;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
     }
@@ -79,9 +87,22 @@ public final class CallArgumentsNode extends ArgumentsNode {
     public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
+        boolean containsVarArgsSymbol = false;
         for (int i = 0; i < wrappedArgs.length; ++i) {
-            wrappedArgs[i] = args[i] == null ? null : WrapArgumentNode.create(args[i], i == 0 || modeChangeForAll ? modeChange : true);
+            RNode arg = args[i];
+            if (arg == null) {
+                wrappedArgs[i] = null;
+            } else {
+                if (!containsVarArgsSymbol && arg instanceof ReadVariableNode) {
+                    // Check for presence of "..." in the arguments
+                    ReadVariableNode rvn = (ReadVariableNode) arg;
+                    containsVarArgsSymbol = rvn.getSymbol().isVarArg();
+                }
+                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true);
+            }
         }
+
+        // Check names
         String[] resolvedNames = names;
         if (resolvedNames == null) {
             resolvedNames = NO_NAMES;
@@ -89,7 +110,7 @@ public final class CallArgumentsNode extends ArgumentsNode {
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, modeChange, modeChangeForAll);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, containsVarArgsSymbol, modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -106,6 +127,13 @@ public final class CallArgumentsNode extends ArgumentsNode {
     public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
         // Execute has not semantic meaning for CallArgumentsNode
         throw new AssertionError();
+    }
+
+    /**
+     * @return {@link #containsVarArgsSymbol}
+     */
+    public boolean containsVarArgsSymbol() {
+        return containsVarArgsSymbol;
     }
 
     /**

@@ -81,7 +81,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private static void addArg(VirtualFrame frame, List<Object> values, Object value) {
-        if (RMissing.isMissing(frame, value)) {
+        if (RMissingHelper.isMissing(frame, value)) {
             values.add(null);
         } else {
             values.add(value);
