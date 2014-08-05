@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class EnvProvider {
     /**
-     * The cached {@link REnvironment}
+     * The cached {@link REnvironment}.
      */
     private REnvironment env = null;
 

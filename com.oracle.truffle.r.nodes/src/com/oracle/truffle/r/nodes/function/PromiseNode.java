@@ -32,18 +32,19 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
 /**
- * This {@link RNode} implementation is used as a
+ * This {@link RNode} implementation is used as a factory node for {@link RPromise} as it integrates
+ * well with the architecture.
  */
 public class PromiseNode extends RNode {
     /**
      * The {@link RPromiseFactory} which holds all information necessary to construct a proper
-     * {@link RPromise} for every case that might occur
+     * {@link RPromise} for every case that might occur.
      */
     protected final RPromiseFactory factory;
 
     /**
      * {@link EnvProvider} needed to construct a proper {@link REnvironment} for the promises being
-     * created here
+     * created here.
      */
     protected final EnvProvider envProvider;
 
@@ -96,7 +97,7 @@ public class PromiseNode extends RNode {
     }
 
     /**
-     * Creates a new {@link RPromise} every time
+     * Creates a new {@link RPromise} every time.
      */
     @Override
     public Object execute(VirtualFrame frame) {
