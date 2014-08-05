@@ -24,29 +24,62 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 
+/**
+ * Simple {@link RNode} that returns a function argument specified by its formal index. Used to
+ * populate a function's environment.
+ */
 public class AccessArgumentNode extends RNode {
 
     private final int index;
-    @Child private RNode defaultValue;
-    private final boolean defaultValueIsMissing;
 
-    public AccessArgumentNode(int index, RNode defaultValue) {
+    /**
+     * This class should prevent the unnecessary creation of a new {@link REnvironment} for every
+     * argument. An instance of this class is shared between all {@link AccessArgumentNode}s of a
+     * function and provides them with a - lazy created - instance of the callee environment.
+     */
+    private final EnvProvider envProvider;
+
+    public AccessArgumentNode(int index, EnvProvider envProvider) {
         this.index = index;
-        this.defaultValue = defaultValue;
-        this.defaultValueIsMissing = (defaultValue instanceof ConstantNode && ((ConstantNode) defaultValue).getValue() == RMissing.instance);
+        this.envProvider = envProvider;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        if (index < RArguments.getArgumentsLength(frame)) {
-            Object argument = RArguments.getArgument(frame, index);
-            if (defaultValueIsMissing || argument != RMissing.instance) {
-                return argument;
+        Object obj = RArguments.getArgument(frame, index);
+        if (obj instanceof RPromise) {
+            obj = handlePromise(frame, obj);
+        } else if (obj instanceof Object[]) {
+            Object[] varArgs = (Object[]) obj;
+            for (int i = 0; i < varArgs.length; i++) {
+                varArgs[i] = handlePromise(frame, varArgs[i]);
             }
         }
-        return defaultValue.execute(frame);
+        return obj;
+    }
+
+    private Object handlePromise(VirtualFrame frame, Object promiseObj) {
+        RPromise promise = (RPromise) promiseObj;
+        assert promise.getEvalPolicy() != EvalPolicy.RAW;
+        assert promise.getType() != PromiseType.NO_ARG;
+
+        // Check whether it is necessary to create a callee REnvironment for the promise
+        if (promise.needsCalleeFrame()) {
+            // In this case the promise might lack the proper REnvironment, as it was created before
+            // the environment was
+            promise.updateEnv(envProvider.getREnvironmentFor(frame));
+        }
+
+        // Now force evaluation for STRICT
+        if (promise.getEvalPolicy() == EvalPolicy.STRICT) {
+            return promise.evaluate(frame);
+        }
+        return promiseObj;
     }
 }

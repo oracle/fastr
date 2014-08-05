@@ -29,7 +29,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "is.numeric", kind = PRIMITIVE)
+@RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsNumeric extends IsTypeNode {
 
     public abstract byte execute(VirtualFrame frame, Object value);

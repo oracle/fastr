@@ -26,12 +26,13 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.finite", kind = PRIMITIVE)
+@RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsFinite extends RBuiltinNode {
 
     @Specialization
@@ -45,9 +46,9 @@ public abstract class IsFinite extends RBuiltinNode {
     }
 
     @Specialization(order = 100)
-    public Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
+    public Object doIsFiniteGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARGUMENT_TYPE);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARGUMENT_TYPE);
     }
 }

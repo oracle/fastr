@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "is.language", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "is.language", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class IsLanguage extends IsTypeNode {
     @Override
     @Specialization

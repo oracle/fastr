@@ -38,6 +38,11 @@ public @interface RBuiltin {
     String name();
 
     /**
+     * The parameter names.
+     */
+    String[] parameterNames() default {};
+
+    /**
      * A list of aliases for {@code name()}.
      */
     String[] aliases() default {};
@@ -51,25 +56,4 @@ public @interface RBuiltin {
      *
      */
     int[] nonEvalArgs() default {};
-
-    /**
-     * Special magic relating to "..." arguments. TODO Say more.
-     */
-    boolean isCombine() default false;
-
-    /**
-     * How is the last parameter treated? TODO Say more.
-     */
-    LastParameterKind lastParameterKind() default LastParameterKind.VALUE;
-
-    public enum LastParameterKind {
-        VALUE,
-        VAR_ARGS_SPECIALIZE,
-        VAR_ARGS_ALWAYS_ARRAY;
-
-        public boolean isVarArgs() {
-            return this != VALUE;
-        }
-    }
-
 }

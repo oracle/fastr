@@ -249,14 +249,14 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization(order = 100)
     @SuppressWarnings("unused")
-    public RIntVector match(RFunction x, Object table, Object nomatchObj, Object incomparables) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
+    public RIntVector match(VirtualFrame frame, RFunction x, Object table, Object nomatchObj, Object incomparables) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
     @Specialization(order = 101)
     @SuppressWarnings("unused")
-    public RIntVector match(Object x, RFunction table, Object nomatchObj, Object incomparables) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
+    public RIntVector match(VirtualFrame frame, Object x, RFunction table, Object nomatchObj, Object incomparables) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
     protected boolean isStringVectorX(RAbstractVector x) {

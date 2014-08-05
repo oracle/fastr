@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "unclass", kind = PRIMITIVE)
+@RBuiltin(name = "unclass", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class UnClass extends RBuiltinNode {
 
     @Specialization

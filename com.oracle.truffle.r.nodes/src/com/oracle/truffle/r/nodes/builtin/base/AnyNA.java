@@ -30,18 +30,11 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "recursive"})
 public abstract class AnyNA extends RBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"x", "recursive"};
 
     @Child IsNA isna;
     @Child Any any;
-
-    @Override
-    public String[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {
@@ -58,8 +51,8 @@ public abstract class AnyNA extends RBuiltinNode {
             return RRuntime.LOGICAL_FALSE;
         }
         if (isna == null) {
-            isna = insert(IsNAFactory.create(new RNode[1], getBuiltin()));
-            any = insert(AnyFactory.create(new RNode[1], getBuiltin()));
+            isna = insert(IsNAFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            any = insert(AnyFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         Object val = isna.execute(frame, x);
         if (!(val instanceof Byte)) {

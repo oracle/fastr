@@ -30,8 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "toupper", kind = SUBSTITUTE)
-// TODO INTERNAL
+@RBuiltin(name = "toupper", kind = INTERNAL)
 public abstract class ToUpper extends RBuiltinNode {
 
     @Specialization

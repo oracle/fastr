@@ -30,11 +30,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "all", kind = PRIMITIVE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "all", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 @SuppressWarnings("unused")
 public abstract class All extends RBuiltinNode {
 
@@ -56,13 +55,6 @@ public abstract class All extends RBuiltinNode {
             castLogicalNode = insert(CastLogicalNodeFactory.create(null, true, false, false));
         }
         return (RLogicalVector) castLogicalNode.executeLogical(frame, o);
-    }
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     @Specialization

@@ -139,28 +139,28 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Specialization(order = 10, guards = "!doesInherit")
     @SuppressWarnings("unused")
-    public Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignNoInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         if (pos == REnvironment.emptyEnv()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
         }
         try {
             pos.put(x, value);
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
         }
         return value;
     }
 
     @Specialization(order = 11, guards = "!doesInheritX")
     @SuppressWarnings("unused")
-    public Object assignNoInherit(String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
-        return assignNoInherit(x, value, envir, RMissing.instance, inherits, immediate);
+    public Object assignNoInherit(VirtualFrame frame, String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
+        return assignNoInherit(frame, x, value, envir, RMissing.instance, inherits, immediate);
     }
 
     @Specialization(order = 12, guards = "doesInherit")
     @SuppressWarnings("unused")
-    public Object assignInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         REnvironment env = pos;
         while (env != null) {
@@ -176,27 +176,27 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 REnvironment.globalEnv().put(x, value);
             }
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
         }
         return value;
     }
 
     @Specialization(order = 20, guards = "!doesInherit")
-    public Object assignNoInherit(RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignNoInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
-        return assignNoInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
+        return assignNoInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(order = 21, guards = "doesInherit")
-    public Object assignInherit(RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
-        return assignInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
+        return assignInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(order = 22, guards = "doesInheritX")
-    public Object assignInherit(RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
         controlVisibility();
-        return assignInherit(x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);
+        return assignInherit(frame, x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);
     }
 
     @SuppressWarnings("unused")

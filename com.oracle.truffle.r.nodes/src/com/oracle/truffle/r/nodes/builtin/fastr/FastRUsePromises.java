@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.typeof", kind = PRIMITIVE)
-@RBuiltinComment("Returns a simple string representation of the internal runtime type of a value.")
-public abstract class DebugTypeOfBuiltin extends RBuiltinNode {
+@RBuiltin(name = "fastr.use.promises", kind = PRIMITIVE)
+public abstract class FastRUsePromises extends RInvisibleBuiltinNode {
+    private static final Object[] PARAMETER_NAMES = new Object[]{"function"};
+
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    }
 
     @Specialization
-    public String type(Object value) {
+    public Object debugPromise(RFunction function) {
         controlVisibility();
-        return value.getClass().getSimpleName();
+        function.setUsePromises();
+        return RNull.instance;
     }
 
 }

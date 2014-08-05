@@ -32,14 +32,14 @@ import com.oracle.truffle.r.runtime.data.*;
 
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastSymbolNode extends CastNode {
-    @Child private ToString toString = ToStringFactory.create(new RNode[1], null);
+    @Child private ToString toString = ToStringFactory.create(new RNode[1], null, null);
 
     public abstract Object executeSymbol(VirtualFrame frame, Object o);
 
     @SuppressWarnings("unused")
     @Specialization
     public RSymbol doNull(VirtualFrame frame, RNull value) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
     }
 
     @Specialization

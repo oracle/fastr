@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class IsListFunctions {
-    @RBuiltin(name = "is.list", kind = PRIMITIVE)
+    @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"})
     @SuppressWarnings("unused")
     // TODO ideally this would inherit from isTypeNode,
     // but issues around subclassing would need to be resolved
@@ -52,9 +53,9 @@ public class IsListFunctions {
         }
 
         @Specialization
-        public byte isType(RMissing value) {
+        public byte isType(VirtualFrame frame, RMissing value) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
         @Specialization
@@ -109,7 +110,7 @@ public class IsListFunctions {
 
     }
 
-    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE)
+    @RBuiltin(name = "is.pairlist", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsPairList extends IsTypeNode {
         @Specialization
         @Override

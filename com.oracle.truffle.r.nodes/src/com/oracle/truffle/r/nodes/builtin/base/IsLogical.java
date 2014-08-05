@@ -28,7 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "is.logical", kind = PRIMITIVE)
+@RBuiltin(name = "is.logical", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsLogical extends IsTypeNode {
 
     @Specialization

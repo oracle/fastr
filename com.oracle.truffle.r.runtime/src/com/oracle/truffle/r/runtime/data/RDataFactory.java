@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 public final class RDataFactory {
 
@@ -325,7 +326,7 @@ public final class RDataFactory {
     }
 
     public static RPromise createPromise(Object rep, REnvironment env) {
-        return traceDataCreated(new RPromise(rep, env));
+        return traceDataCreated(RPromise.create(EvalPolicy.PROMISED, PromiseType.NO_ARG, env, rep));
     }
 
     public static RPromise createPromise(Object rep) {

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 
 public final class RBuiltinBuilder {
 
@@ -48,11 +47,6 @@ public final class RBuiltinBuilder {
 
     public RBuiltinBuilder arguments(Object... values) {
         factory.setConstantArguments(values);
-        return this;
-    }
-
-    public RBuiltinBuilder lastParameter(LastParameterKind lastParameterKind) {
-        factory.setLastParameterKind(lastParameterKind);
         return this;
     }
 

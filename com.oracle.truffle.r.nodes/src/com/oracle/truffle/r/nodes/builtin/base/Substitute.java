@@ -36,16 +36,10 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 // TODO Implement completely
-@RBuiltin(name = "substitute", kind = PRIMITIVE, nonEvalArgs = {0})
+@RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = {0})
 public abstract class Substitute extends RBuiltinNode {
-    private static final String[] PARAMETER_NAMES = new String[]{"expr", "env"};
 
     @Child Quote quote;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {
@@ -54,7 +48,7 @@ public abstract class Substitute extends RBuiltinNode {
 
     private Quote checkQuote() {
         if (quote == null) {
-            quote = insert(QuoteFactory.create(new RNode[1], getBuiltin()));
+            quote = insert(QuoteFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
         return quote;
     }
@@ -65,7 +59,7 @@ public abstract class Substitute extends RBuiltinNode {
         // In the global environment, substitute behaves like quote
         REnvironment env = REnvironment.checkNonFunctionFrame(frame);
         if (env == REnvironment.globalEnv()) {
-            return checkQuote().execute(expr);
+            return checkQuote().execute(frame, expr);
         }
         // We have to examine all the names in the expression:
         // 1. Ordinary variable, replace by value (if bound)
@@ -87,7 +81,7 @@ public abstract class Substitute extends RBuiltinNode {
                 // allow progress on package loading
             }
             if (env == null) {
-                env = REnvironment.frameToEnvironment(frame);
+                env = REnvironment.frameToEnvironment(frame.materialize());
             }
             Object val = env.get(name);
             if (val == null) {

@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.array", kind = PRIMITIVE)
+@RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsArray extends RBuiltinNode {
 
     @Specialization

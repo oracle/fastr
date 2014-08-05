@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.*;
@@ -75,7 +76,7 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(order = 0, guards = {"startLengthOne", "toLengthOne", "zero"})
-    public int seqZero(RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+    public int seqZero(VirtualFrame frame, RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
@@ -259,7 +260,7 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(order = 150, guards = "lengthZero")
-    public RIntVector LengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
+    public RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
@@ -362,30 +363,30 @@ public abstract class Seq extends RBuiltinNode {
         return start.getLength() == 0;
     }
 
-    protected boolean startLengthOne(RAbstractIntVector start) {
+    protected boolean startLengthOne(VirtualFrame frame, RAbstractIntVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean startLengthOne(RAbstractLogicalVector start) {
+    protected boolean startLengthOne(VirtualFrame frame, RAbstractLogicalVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean startLengthOne(RAbstractDoubleVector start) {
+    protected boolean startLengthOne(VirtualFrame frame, RAbstractDoubleVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean toLengthOne(RAbstractVector start, RAbstractVector to) {
+    protected boolean toLengthOne(VirtualFrame frame, RAbstractVector start, RAbstractVector to) {
         if (to.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
         }
         return true;
     }

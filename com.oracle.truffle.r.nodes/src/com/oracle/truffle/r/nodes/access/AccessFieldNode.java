@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -62,8 +63,8 @@ public abstract class AccessFieldNode extends RNode {
     }
 
     @Specialization(order = 1000)
-    public Object accessField(@SuppressWarnings("unused") RAbstractVector object) {
-        throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
+    public Object accessField(VirtualFrame frame, @SuppressWarnings("unused") RAbstractVector object) {
+        throw RError.error(frame, RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
     protected static boolean hasNames(RList object) {

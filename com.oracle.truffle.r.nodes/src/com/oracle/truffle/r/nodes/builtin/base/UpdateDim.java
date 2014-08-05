@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "dim<-", kind = PRIMITIVE)
+@RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x"})
 @SuppressWarnings("unused")
 public abstract class UpdateDim extends RInvisibleBuiltinNode {
 
@@ -59,10 +59,10 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     public RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
         controlVisibility();
         if (dimensions.getLength() == 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
         }
         int[] dimsData = castInteger(frame, dimensions).materialize().getDataCopy();
-        vector.verifyDimensions(dimsData, getEncapsulatingSourceSection());
+        vector.verifyDimensions(frame, dimsData, getEncapsulatingSourceSection());
         RVector result = vector.materialize();
         result.resetDimensions(dimsData);
         return result;

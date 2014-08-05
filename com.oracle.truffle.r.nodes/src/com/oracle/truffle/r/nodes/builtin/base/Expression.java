@@ -27,18 +27,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "expression", kind = PRIMITIVE, nonEvalArgs = {-1}, lastParameterKind = LastParameterKind.VAR_ARGS_ALWAYS_ARRAY)
+@RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = {-1})
 public abstract class Expression extends RBuiltinNode {
-    private static final String[] PARAMETER_NAMES = new String[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     /*
      * Owing to the nonEvalArgs, all arguments are RPromise, but an expression actually consists of
      * RLanguage elements so we convert, even though an RPromise is a subclass.

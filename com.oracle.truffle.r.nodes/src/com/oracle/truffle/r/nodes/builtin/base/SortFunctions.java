@@ -27,9 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -69,7 +69,7 @@ public class SortFunctions {
             controlVisibility();
             if (doubleOrder == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin()));
+                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
             }
             RIntVector result = (RIntVector) doubleOrder.executeDoubleVector(frame, vec, RMissing.instance);
             if (RRuntime.fromLogical(decreasing)) {

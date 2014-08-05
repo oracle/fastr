@@ -20,19 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 
-public class DebugPackage extends RBuiltinPackage {
+/**
+ * Simple container class for holding arguments ({@link #getInlinedArgs()}) which are going to be
+ * inlined into FastR built-ins (using {@link RBuiltinNode#inline(InlinedArguments)}.
+ *
+ * @see #getInlinedArgs()
+ * @see #getNames()
+ */
+public class InlinedArguments extends Arguments<RNode> {
 
-    public DebugPackage() {
-        loadBuiltins();
+    InlinedArguments(RNode[] evaluatedArgs, String[] names) {
+        super(evaluatedArgs, names);
     }
 
-    @Override
-    public String getName() {
-        return "debug";
+    /**
+     * @return The argument array that contains the evaluated arguments, in formal order. Arguments
+     *         may NOT be <code>null</code>.
+     * @see InlinedArguments
+     */
+    public RNode[] getInlinedArgs() {
+        return arguments;
     }
 
+    /**
+     * @return The names of the arguments that where supplied for the function, in the order the
+     *         function call specifies (NOT formal order). Names may NOT be <code>null</code>.
+     * @see InlinedArguments
+     */
+    public String[] getNames() {
+        return names;
+    }
 }

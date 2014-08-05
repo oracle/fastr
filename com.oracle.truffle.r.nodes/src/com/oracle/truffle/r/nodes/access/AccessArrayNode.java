@@ -177,14 +177,14 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 1, guards = {"inRecursion", "isFirstPositionPositive"})
-    RNull accessNullInRecursionPosPositive(RNull vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+    RNull accessNullInRecursionPosPositive(VirtualFrame frame, RNull vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = {"inRecursion", "!isFirstPositionPositive"})
-    RNull accessNullInRecursion(RNull vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+    RNull accessNullInRecursion(VirtualFrame frame, RNull vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @SuppressWarnings("unused")
@@ -195,32 +195,32 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 4, guards = {"inRecursion", "isFirstPositionOne"})
-    RNull accessFunctionInRecursionPosOne(RFunction vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "closure", 1);
+    RNull accessFunctionInRecursionPosOne(VirtualFrame frame, RFunction vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "closure", 1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 5, guards = {"inRecursion", "isFirstPositionPositive", "!isFirstPositionOne"})
-    RNull accessFunctionInRecursionPosPositive(RFunction vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+    RNull accessFunctionInRecursionPosPositive(VirtualFrame frame, RFunction vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 6, guards = {"inRecursion", "!isFirstPositionPositive"})
-    RNull accessFunctionInRecursion(RFunction vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+    RNull accessFunctionInRecursion(VirtualFrame frame, RFunction vector, int recLevel, RAbstractIntVector positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 7, guards = "inRecursion")
-    RNull accessFunctionInRecursionString(RFunction vector, int recLevel, RAbstractStringVector positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+    RNull accessFunctionInRecursionString(VirtualFrame frame, RFunction vector, int recLevel, RAbstractStringVector positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 8)
-    RNull accessFunction(RFunction vector, int recLevel, Object position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SUBSETTABLE, "closure");
+    RNull accessFunction(VirtualFrame frame, RFunction vector, int recLevel, Object position, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SUBSETTABLE, "closure");
     }
 
     @SuppressWarnings("unused")
@@ -233,9 +233,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 10)
-    Object access(RAbstractContainer container, int recLevel, RMissing positions, RAbstractLogicalVector dropDim) {
+    Object access(VirtualFrame frame, RAbstractContainer container, int recLevel, RMissing positions, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
         } else {
             return container;
         }
@@ -243,14 +243,14 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 11, guards = "wrongDimensions")
-    Object access(RAbstractContainer container, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
+    Object access(VirtualFrame frame, RAbstractContainer container, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 12, guards = {"isPositionNA", "!isSubset"})
-    RIntVector accessNA(RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+    RIntVector accessNA(VirtualFrame frame, RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
 
     private RStringVector getName(RAbstractVector vector, int position) {
@@ -399,7 +399,7 @@ public abstract class AccessArrayNode extends RNode {
     // lists require special handling for one-dimensional "subscript", that is [[]], accesses due to
     // support for recursive access
 
-    public static int getPositionInRecursion(RList vector, String position, int recLevel, SourceSection sourceSection) {
+    public static int getPositionInRecursion(VirtualFrame frame, RList vector, String position, int recLevel, SourceSection sourceSection) {
         if (vector.getNames() != RNull.instance) {
             RStringVector names = (RStringVector) vector.getNames();
             for (int i = 0; i < names.getLength(); i++) {
@@ -408,18 +408,18 @@ public abstract class AccessArrayNode extends RNode {
                 }
             }
         }
-        throw RError.error(sourceSection, RError.Message.NO_SUCH_INDEX, recLevel + 1);
+        throw RError.error(frame, sourceSection, RError.Message.NO_SUCH_INDEX, recLevel + 1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 15, guards = "!hasNames")
-    RList accessStringNoNames(RList vector, int recLevel, RStringVector p, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, 1);
+    RList accessStringNoNames(VirtualFrame frame, RList vector, int recLevel, RStringVector p, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, 1);
     }
 
     @Specialization(order = 16, guards = {"hasNames", "!isSubset", "twoPosition"})
     Object accessStringTwoPosRec(VirtualFrame frame, RList vector, int recLevel, RStringVector p, RAbstractLogicalVector dropDim) {
-        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
+        int position = getPositionInRecursion(frame, vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
         Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
         return accessRecursive(frame, newVector, newPosition, recLevel + 1, dropDim);
@@ -427,68 +427,68 @@ public abstract class AccessArrayNode extends RNode {
 
     @Specialization(order = 17, guards = {"hasNames", "!isSubset", "!twoPosition"})
     Object accessString(VirtualFrame frame, RList vector, int recLevel, RStringVector p, RAbstractLogicalVector dropDim) {
-        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
+        int position = getPositionInRecursion(frame, vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection());
         RStringVector newP = popHead(p, posNACheck);
         return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1, dropDim);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 20, guards = {"!isSubset", "onePosition", "!inRecursion"})
-    Object accessOnePos(RList vector, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
+    Object accessOnePos(VirtualFrame frame, RList vector, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
         int position = p.getDataAt(0);
         if (RRuntime.isNA(position)) {
             return RNull.instance;
         } else if (position <= 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else if (position > vector.getLength()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
         }
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 21, guards = {"!isSubset", "noPosition"})
-    Object accessNoPos(RList vector, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+    Object accessNoPos(VirtualFrame frame, RList vector, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
-    public static int getPositionFromNegative(RList vector, int position, SourceSection sourceSection) {
+    public static int getPositionFromNegative(VirtualFrame frame, RList vector, int position, SourceSection sourceSection) {
         if (vector.getLength() == 1 && position == -1) {
             // x<-c(1); x[-1] <==> x[0]
-            throw RError.error(sourceSection, RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, sourceSection, RError.Message.SELECT_LESS_1);
         } else if (vector.getLength() > 1 && position < -vector.getLength()) {
             // x<-c(1,2); x[-3] <==> x[1,2]
-            throw RError.error(sourceSection, RError.Message.SELECT_MORE_1);
+            throw RError.error(frame, sourceSection, RError.Message.SELECT_MORE_1);
         } else if (vector.getLength() > 2 && position > -vector.getLength()) {
             // x<-c(1,2,3); x[-2] <==> x[1,3]
-            throw RError.error(sourceSection, RError.Message.SELECT_MORE_1);
+            throw RError.error(frame, sourceSection, RError.Message.SELECT_MORE_1);
         }
         assert (vector.getLength() == 2);
         return position == -1 ? 2 : 1;
     }
 
-    private int getPositionInRecursion(RList vector, int position, int recLevel) {
+    private int getPositionInRecursion(VirtualFrame frame, RList vector, int position, int recLevel) {
         if (RRuntime.isNA(position) || position > vector.getLength()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
         } else if (position < 0) {
-            return getPositionFromNegative(vector, position, getEncapsulatingSourceSection());
+            return getPositionFromNegative(frame, vector, position, getEncapsulatingSourceSection());
         } else if (position == 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         return position;
     }
 
     @Specialization(order = 22, guards = {"!isSubset", "onePosition", "inRecursion"})
-    Object accessSubscript(RList vector, int recLevel, RIntVector p, @SuppressWarnings("unused") RAbstractLogicalVector dropDim) {
+    Object accessSubscript(VirtualFrame frame, RList vector, int recLevel, RIntVector p, @SuppressWarnings("unused") RAbstractLogicalVector dropDim) {
         int position = p.getDataAt(0);
-        position = getPositionInRecursion(vector, position, recLevel);
+        position = getPositionInRecursion(frame, vector, position, recLevel);
         return vector.getDataAt(position - 1);
     }
 
     @Specialization(order = 23, guards = {"!isSubset", "twoPosition"})
     Object accessTwoPosRec(VirtualFrame frame, RList vector, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
         int position = p.getDataAt(0);
-        position = getPositionInRecursion(vector, position, recLevel);
+        position = getPositionInRecursion(frame, vector, position, recLevel);
         Object newVector = castVector(frame, vector.getDataAt(position - 1));
         Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1)));
         return accessRecursive(frame, newVector, newPosition, recLevel + 1, dropDim);
@@ -497,7 +497,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization(order = 24, guards = {"!isSubset", "multiPos"})
     Object access(VirtualFrame frame, RList vector, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
         int position = p.getDataAt(0);
-        position = getPositionInRecursion(vector, position, recLevel);
+        position = getPositionInRecursion(frame, vector, position, recLevel);
         RIntVector newP = popHead(p, posNACheck);
         return accessRecursive(frame, vector.getDataAt(position - 1), newP, recLevel + 1, dropDim);
     }
@@ -515,20 +515,20 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 26, guards = {"!isPositionNA", "isPositionNegative", "!outOfBoundsNegative"})
-    RList accessNegativeInBounds(RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+    RList accessNegativeInBounds(VirtualFrame frame, RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 27, guards = {"!isPositionNA", "isPositionNegative", "outOfBoundsNegative", "oneElemVector"})
-    RList accessNegativeOutOfBoundsOneElemVector(RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+    RList accessNegativeOutOfBoundsOneElemVector(VirtualFrame frame, RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 28, guards = {"!isPositionNA", "isPositionNegative", "outOfBoundsNegative", "!oneElemVector"})
-    RList accessNegativeOutOfBounds(RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+    RList accessNegativeOutOfBounds(VirtualFrame frame, RAbstractContainer container, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
@@ -558,15 +558,15 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 33, guards = {"!isSubset", "outOfBounds"})
-    Object accessOutOfBounds(RList vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+    Object accessOutOfBounds(VirtualFrame frame, RList vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 34, guards = "isPositionZero")
-    RList accessPosZero(RList vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RList accessPosZero(VirtualFrame frame, RList vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createList();
@@ -577,14 +577,14 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 35, guards = {"!isSubset", "inRecursion", "multiPos", "!isVectorList"})
-    Object accessRecFailedRec(RAbstractContainer container, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECURSIVE_INDEXING_FAILED, recLevel + 1);
+    Object accessRecFailedRec(VirtualFrame frame, RAbstractContainer container, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.RECURSIVE_INDEXING_FAILED, recLevel + 1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 36, guards = {"!isSubset", "!inRecursion", "multiPos", "!isVectorList"})
-    Object accessRecFailed(RAbstractContainer container, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+    Object accessRecFailed(VirtualFrame frame, RAbstractContainer container, int recLevel, RIntVector p, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(order = 40)
@@ -680,9 +680,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 45, guards = "isPositionZero")
-    RIntVector accessPosZero(RAbstractIntVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RIntVector accessPosZero(VirtualFrame frame, RAbstractIntVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyIntVector();
@@ -784,9 +784,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 55, guards = "isPositionZero")
-    RDoubleVector accessPosZero(RAbstractDoubleVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RDoubleVector accessPosZero(VirtualFrame frame, RAbstractDoubleVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyDoubleVector();
@@ -888,9 +888,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 65, guards = "isPositionZero")
-    RLogicalVector accessPosZero(RLogicalVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RLogicalVector accessPosZero(VirtualFrame frame, RLogicalVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyLogicalVector();
@@ -992,9 +992,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 75, guards = "isPositionZero")
-    RStringVector accessPosZero(RStringVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RStringVector accessPosZero(VirtualFrame frame, RStringVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyStringVector();
@@ -1100,9 +1100,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 85, guards = "isPositionZero")
-    RComplexVector accessPosZero(RComplexVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RComplexVector accessPosZero(VirtualFrame frame, RComplexVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyComplexVector();
@@ -1203,9 +1203,9 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 95, guards = "isPositionZero")
-    RRawVector accessPosZero(RRawVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
+    RRawVector accessPosZero(VirtualFrame frame, RRawVector vector, int recLevel, int position, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         }
         if (vector.getNames() == RNull.instance) {
             return RDataFactory.createEmptyRawVector();
@@ -1216,46 +1216,46 @@ public abstract class AccessArrayNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 200, guards = "noPosition")
-    Object accessListEmptyPos(RAbstractContainer container, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
+    Object accessListEmptyPos(VirtualFrame frame, RAbstractContainer container, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 201, guards = "onePosition")
-    Object accessListOnePos(RAbstractContainer container, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+    Object accessListOnePos(VirtualFrame frame, RAbstractContainer container, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 202, guards = "multiPos")
-    Object accessListMultiPosList(RList vector, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+    Object accessListMultiPosList(VirtualFrame frame, RList vector, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 203, guards = {"multiPos", "!isVectorList"})
-    Object accessListMultiPos(RAbstractContainer container, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
+    Object accessListMultiPos(VirtualFrame frame, RAbstractContainer container, int recLevel, RList positions, RAbstractLogicalVector dropDim) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 210)
-    Object accessListMultiPos(RAbstractContainer container, int recLevel, RComplex positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+    Object accessListMultiPos(VirtualFrame frame, RAbstractContainer container, int recLevel, RComplex positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 220)
-    Object accessListMultiPos(RAbstractContainer container, int recLevel, RRaw positions, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+    Object accessListMultiPos(VirtualFrame frame, RAbstractContainer container, int recLevel, RRaw positions, RAbstractLogicalVector dropDim) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     // this should really be implemented in R
@@ -1267,7 +1267,7 @@ public abstract class AccessArrayNode extends RNode {
     @SuppressWarnings("unused")
     @Specialization(order = 1001, guards = "isSubset")
     Object accessSubset(VirtualFrame frame, RDataFrame dataFrame, int recLevel, int position, RAbstractLogicalVector dropDim) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.DATA_FRAMES_SUBSET_ACCESS);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DATA_FRAMES_SUBSET_ACCESS);
     }
 
     @Specialization(order = 1010)
@@ -1833,66 +1833,66 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization(order = 2, guards = {"!singleOpNegative", "multiPos"})
-        public RAbstractIntVector doIntVectorMultiPos(@SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
+        public RAbstractIntVector doIntVectorMultiPos(VirtualFrame frame, @SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
             if (isSubset) {
                 return positions;
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 3, guards = {"singleOpNA"})
-        public RAbstractIntVector doIntVectorNA(Object vector, RAbstractIntVector positions) {
+        public RAbstractIntVector doIntVectorNA(VirtualFrame frame, Object vector, RAbstractIntVector positions) {
             if (isSubset) {
                 return positions;
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 4, guards = {"singleOpNegative", "!singleOpNA"})
-        public RAbstractIntVector doIntVectorNegative(Object vector, RAbstractIntVector positions) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+        public RAbstractIntVector doIntVectorNegative(VirtualFrame frame, Object vector, RAbstractIntVector positions) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 10, guards = "noPosition")
-        Object accessListEmptyPos(RAbstractVector vector, RList positions) {
+        Object accessListEmptyPos(VirtualFrame frame, RAbstractVector vector, RList positions) {
             if (!isSubset) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 11, guards = "onePosition")
-        Object accessListOnePos(RAbstractVector vector, RList positions) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+        Object accessListOnePos(VirtualFrame frame, RAbstractVector vector, RList positions) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 12, guards = "multiPos")
-        Object accessListMultiPos(RAbstractVector vector, RList positions) {
+        Object accessListMultiPos(VirtualFrame frame, RAbstractVector vector, RList positions) {
             if (!isSubset) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 20)
-        Object accessListOnePos(RAbstractVector vector, RComplex positions) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+        Object accessListOnePos(VirtualFrame frame, RAbstractVector vector, RComplex positions) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
 
         @SuppressWarnings("unused")
         @Specialization(order = 30)
-        Object accessListOnePos(RAbstractVector vector, RRaw positions) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+        Object accessListOnePos(VirtualFrame frame, RAbstractVector vector, RRaw positions) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
 
         @SuppressWarnings("unused")

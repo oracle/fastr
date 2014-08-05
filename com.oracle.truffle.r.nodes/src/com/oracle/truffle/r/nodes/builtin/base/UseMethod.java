@@ -22,7 +22,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "UseMethod", kind = PRIMITIVE)
+@RBuiltin(name = "UseMethod", kind = PRIMITIVE, parameterNames = {"generic", "object"})
 public abstract class UseMethod extends RBuiltinNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
@@ -31,13 +31,11 @@ public abstract class UseMethod extends RBuiltinNode {
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
-    private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object"};
+    @Child UseMethodNode useMethodNode;
 
-    @Child UseMethodNode useMethodNode = new UninitializedUseMethodNode(0);
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
+    public UseMethod() {
+        super();
+        this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
     }
 
     @Override
@@ -54,6 +52,11 @@ public abstract class UseMethod extends RBuiltinNode {
     private abstract static class UseMethodNode extends RNode {
 
         @Child protected ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeFactory.create(null);
+        protected final String[] suppliedArgsNames;
+
+        public UseMethodNode(String[] suppliedArgsNames) {
+            this.suppliedArgsNames = suppliedArgsNames;
+        }
 
         @Override
         public Object execute(VirtualFrame frame) {
@@ -67,7 +70,8 @@ public abstract class UseMethod extends RBuiltinNode {
 
         protected final int depth;
 
-        protected UninitializedUseMethodNode(int depth) {
+        protected UninitializedUseMethodNode(int depth, String[] suppliedArgsNames) {
+            super(suppliedArgsNames);
             this.depth = depth;
         }
 
@@ -81,12 +85,12 @@ public abstract class UseMethod extends RBuiltinNode {
             CompilerAsserts.neverPartOfCompilation();
             if (depth < INLINE_CACHE_SIZE) {
                 if (o == RMissing.instance) {
-                    return replace(new UseMethodGenericOnlyNode(generic, depth));
+                    return replace(new UseMethodGenericOnlyNode(generic, depth, suppliedArgsNames));
                 } else {
-                    return replace(new UseMethodGenericAndObjectNode(generic, depth));
+                    return replace(new UseMethodGenericAndObjectNode(generic, depth, suppliedArgsNames));
                 }
             }
-            return replace(new UseMethodFallbackNode());
+            return replace(new UseMethodFallbackNode(suppliedArgsNames));
         }
 
     }
@@ -98,10 +102,11 @@ public abstract class UseMethod extends RBuiltinNode {
 
         private final String generic;
 
-        protected UseMethodCachedNode(String generic, int depth) {
+        protected UseMethodCachedNode(String generic, int depth, String[] suppliedArgsNames) {
+            super(suppliedArgsNames);
             this.generic = generic;
-            nextNode = new UninitializedUseMethodNode(depth + 1);
-            currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+            nextNode = new UninitializedUseMethodNode(depth + 1, suppliedArgsNames);
+            currentNode = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
         }
 
         protected abstract Object executeDispatch(VirtualFrame frame, String gen, Object o);
@@ -123,24 +128,27 @@ public abstract class UseMethod extends RBuiltinNode {
      */
     private static final class UseMethodGenericOnlyNode extends UseMethodCachedNode {
 
-        protected UseMethodGenericOnlyNode(String generic, int depth) {
-            super(generic, depth);
+        protected UseMethodGenericOnlyNode(String generic, int depth, String[] suppliedArgsNames) {
+            super(generic, depth, suppliedArgsNames);
         }
 
         @Override
         public Object executeDispatch(VirtualFrame frame, final String gen, Object obj) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
+            if (enclosingArg instanceof RPromise) {
+                enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
+            }
             return currentNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
         }
     }
 
     private static final class UseMethodGenericAndObjectNode extends UseMethodCachedNode {
 
-        protected UseMethodGenericAndObjectNode(String generic, int depth) {
-            super(generic, depth);
+        protected UseMethodGenericAndObjectNode(String generic, int depth, String[] suppliedArgsNames) {
+            super(generic, depth, suppliedArgsNames);
         }
 
         @Override
@@ -151,6 +159,10 @@ public abstract class UseMethod extends RBuiltinNode {
 
     private static final class UseMethodFallbackNode extends UseMethodNode {
 
+        public UseMethodFallbackNode(String[] suppliedArgsNames) {
+            super(suppliedArgsNames);
+        }
+
         @Override
         public Object execute(VirtualFrame frame, String generic, Object o) {
             // TODO restructure UseMethodDispatchNode to expose generic case
@@ -158,13 +170,16 @@ public abstract class UseMethod extends RBuiltinNode {
             CompilerAsserts.neverPartOfCompilation();
             if (o == RMissing.instance) {
                 if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
                 Object enclosingArg = RArguments.getArgument(frame, 0);
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                if (enclosingArg instanceof RPromise) {
+                    enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
+                }
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
             } else {
-                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD);
+                DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, o));
             }
         }

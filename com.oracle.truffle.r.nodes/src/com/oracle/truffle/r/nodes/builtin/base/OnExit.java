@@ -36,15 +36,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
-@RBuiltin(name = "on.exit", nonEvalArgs = {0}, kind = PRIMITIVE)
+@RBuiltin(name = "on.exit", kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = {0})
 public abstract class OnExit extends RInvisibleBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"expr", "add"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

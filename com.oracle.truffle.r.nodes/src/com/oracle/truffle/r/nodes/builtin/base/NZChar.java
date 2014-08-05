@@ -29,12 +29,12 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "nzchar", kind = PRIMITIVE)
+@RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class NZChar extends RBuiltinNode {
     @Child CastStringNode convertString;
 
@@ -46,7 +46,7 @@ public abstract class NZChar extends RBuiltinNode {
         try {
             return (String) convertString.executeCast(frame, content);
         } catch (ConversionFailedException e) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
         }
     }
 

@@ -30,12 +30,12 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "seq_along", kind = PRIMITIVE)
+@RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"})
 public abstract class SeqAlong extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{LengthFactory.create(new RNode[]{children[0]}, getBuiltin())};
+        return new RNode[]{LengthFactory.create(new RNode[]{children[0]}, getBuiltin(), null)};
     }
 
     @Specialization

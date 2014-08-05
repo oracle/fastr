@@ -25,20 +25,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "log2", kind = PRIMITIVE)
+@RBuiltin(name = "log2", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Log2 extends RBuiltinNode {
 
     private static final double log2value = Math.log(2);
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull log(RNull x) {
+    public RNull log(VirtualFrame frame, RNull x) {
         controlVisibility();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization

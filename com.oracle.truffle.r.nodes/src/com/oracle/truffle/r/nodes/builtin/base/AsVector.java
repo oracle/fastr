@@ -204,9 +204,9 @@ public abstract class AsVector extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 1002, guards = "invalidMode")
-    public RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
+    public RAbstractVector asVectorWrongMode(VirtualFrame frame, RAbstractVector x, String mode) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
     }
 
     protected boolean castToInt(RAbstractVector x, String mode) {

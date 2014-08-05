@@ -30,15 +30,14 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "mean.default", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "mean.default", kind = SUBSTITUTE)
 public abstract class Mean extends RBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
+    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "trim", "na.rm", "..."};
 
     @Override
     public Object[] getParameterNames() {
@@ -47,7 +46,7 @@ public abstract class Mean extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance)};
     }
 
     public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);

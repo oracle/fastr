@@ -32,17 +32,19 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "return", kind = PRIMITIVE)
+@RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"})
 public abstract class Return extends RBuiltinNode {
+
+    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
+
+    @Override
+    public RNode[] getParameterValues() {
+        return PARAMETER_VALUES;
+    }
 
     @Specialization
     public Object returnFunction(Object value) {
         controlVisibility();
         throw new ReturnException(value);
-    }
-
-    @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RNull.instance)};
     }
 }

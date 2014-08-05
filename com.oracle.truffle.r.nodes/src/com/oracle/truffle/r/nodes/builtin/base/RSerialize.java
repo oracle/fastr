@@ -12,14 +12,14 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
+
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -119,9 +119,6 @@ public final class RSerialize {
     }
 
     public static Object unserialize(byte[] data, RFunction hook) throws IOException {
-// try (BufferedOutputStream bs = new BufferedOutputStream(new FileOutputStream("problem.rds"))) {
-// bs.write(data);
-// }
         RSerialize instance = new RSerialize(new ByteArrayInputStream(data), hook);
         return instance.unserialize();
     }
@@ -334,7 +331,7 @@ public final class RSerialize {
     private RStringVector inStringVec(boolean strsxp) {
         if (!strsxp) {
             if (stream.readInt() != 0) {
-                throw RError.error(Message.GENERIC, "names in persistent strings are not supported yet");
+                throw RError.nyi(null, "names in persistent strings are not supported yet");
             }
         }
         int len = stream.readInt();
@@ -365,7 +362,7 @@ public final class RSerialize {
         try {
             return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
         } catch (PutException ex) {
-            throw RError.error(null, ex);
+            throw RError.uncatchableError(null, ex);
         }
     }
 

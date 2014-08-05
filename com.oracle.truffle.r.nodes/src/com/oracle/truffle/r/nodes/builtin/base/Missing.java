@@ -27,18 +27,22 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "missing", kind = PRIMITIVE, nonEvalArgs = {0})
-// N.B This implementation returns FALSE if missing is called on a parameter with a default value.
-// Fixing this requires changes to the function call mechanism.
+@RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = {0})
 public abstract class Missing extends RBuiltinNode {
 
     @Specialization
-    public byte missing(VirtualFrame frame, RPromise x) {
+    public byte missing(VirtualFrame frame, RPromise promise) {
         controlVisibility();
-        Object xval = x.getValue(frame);
-        return RRuntime.asLogical(xval instanceof RMissing);
+        return RRuntime.asLogical(RMissingHelper.isMissing(frame, promise));
+    }
+
+    @Specialization
+    public byte missing(VirtualFrame frame, Object obj) {
+        controlVisibility();
+        return RRuntime.asLogical(RMissingHelper.isMissing(frame, obj));
     }
 }

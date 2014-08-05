@@ -30,10 +30,9 @@ pmatch <- function(x, table, nomatch = NA, duplicates.ok = FALSE)
 match.arg <- function (arg, choices, several.ok = FALSE)
 {
     if (missing(choices)) {
-        stop("missing choices in match.arg")
-# TODO: implement deparse
-#    formal.args <- formals(sys.function(sys.parent()))
-#    choices <- eval(formal.args[[deparse(substitute(arg))]])
+#        stop("missing choices in match.arg")
+        formal.args <- formals(sys.function(sys.parent()))
+        choices <- eval(formal.args[[deparse(substitute(arg))]])
     }
     if (is.null(arg)) return(choices[1L])
     else if(!is.character(arg))

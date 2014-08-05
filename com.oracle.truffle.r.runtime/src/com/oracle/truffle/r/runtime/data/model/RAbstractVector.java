@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -41,7 +42,10 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RAbstractVector copyDropAttributes();
 
-    void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
+    /**
+     * May throw errors, so needs a {@link VirtualFrame}.
+     */
+    void verifyDimensions(VirtualFrame frame, int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();
 

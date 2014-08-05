@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
@@ -35,9 +35,9 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.source", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.source", kind = PRIMITIVE)
 @RBuiltinComment("Returns the source code associated with a function, and for all of its nodes.")
-public abstract class DebugSource extends RBuiltinNode {
+public abstract class FastRSource extends RBuiltinNode {
 
     @SlowPath
     @Specialization

@@ -27,7 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
-import com.oracle.truffle.r.nodes.builtin.debug.*;
+import com.oracle.truffle.r.nodes.builtin.fastr.*;
 import com.oracle.truffle.r.nodes.builtin.methods.*;
 import com.oracle.truffle.r.nodes.builtin.stats.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,7 +47,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     static {
         RBuiltinPackages.add(new BasePackage());
-        RBuiltinPackages.add(new DebugPackage());
+        RBuiltinPackages.add(new FastRPackage());
         RBuiltinPackages.add(new StatsPackage());
         RBuiltinPackages.add(new MethodsPackage());
     }

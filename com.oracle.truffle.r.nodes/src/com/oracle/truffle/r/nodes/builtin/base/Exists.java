@@ -61,7 +61,7 @@ public abstract class Exists extends RBuiltinNode {
         controlVisibility();
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin()));
+            getNode = insert(GetFactory.create(new RNode[5], this.getBuiltin(), getSuppliedArgsNames()));
         }
         try {
             getNode.execute(frm, name, where, envir, mode, inherits);

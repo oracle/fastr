@@ -16,7 +16,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -30,7 +29,6 @@ public abstract class S3DispatchNode extends DispatchNode {
     @Child protected WriteVariableNode wvnClass;
     @Child protected WriteVariableNode wvnMethod;
     @Child protected WriteVariableNode wvnDefEnv;
-    @Child protected RNode[] argNodes;
     @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;
@@ -49,6 +47,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         }
         Object func = targetFunction = null;
         targetFunctionName = null;
+        boolean prevIgnoreError = RError.ignoreError(true);
         try {
             if (frame instanceof VirtualFrame) {
                 func = lookup.execute((VirtualFrame) frame);
@@ -56,6 +55,9 @@ public abstract class S3DispatchNode extends DispatchNode {
                 func = lookup.execute(null, (MaterializedFrame) frame);
             }
         } catch (RError r) {
+            // in this context, this is not a reportable error
+        } finally {
+            RError.ignoreError(prevIgnoreError);
         }
         if (func != null && func instanceof RFunction) {
             targetFunctionName = functionName;
@@ -132,7 +134,8 @@ public abstract class S3DispatchNode extends DispatchNode {
     private void checkLength(final String className, final String generic) {
         // The magic number two taken from src/main/objects.c
         if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
+            // TODO pass frame to make error catchable
+            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
         }
     }
 }

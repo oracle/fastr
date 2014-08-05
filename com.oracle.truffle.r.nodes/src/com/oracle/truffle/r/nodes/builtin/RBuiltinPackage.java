@@ -32,7 +32,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 
 /**
  * Denotes an R package that is built-in to the implementation. It consists of two parts:
@@ -166,7 +165,6 @@ public abstract class RBuiltinPackage {
     protected final RBuiltinBuilder load(Class<? extends RBuiltinNode> clazz) {
         RBuiltin builtin = clazz.getAnnotation(RBuiltin.class);
         String[] names = null;
-        LastParameterKind lastParameterKind = LastParameterKind.VALUE;
         if (builtin != null) {
             int al = builtin.aliases().length;
             names = new String[1 + al];
@@ -175,9 +173,8 @@ public abstract class RBuiltinPackage {
             if (al > 0) {
                 System.arraycopy(builtin.aliases(), 0, names, 1, al);
             }
-            lastParameterKind = builtin.lastParameterKind();
         }
-        return loadImpl(clazz, names, builtin, lastParameterKind);
+        return loadImpl(clazz, names, builtin);
     }
 
     void updateNames(RBuiltinFactory builtin, String[] oldNames, String[] newNames) {
@@ -195,7 +192,7 @@ public abstract class RBuiltinPackage {
     }
 
     @SuppressWarnings("unchecked")
-    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, RBuiltin builtin, LastParameterKind lastParameterKind) {
+    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, RBuiltin builtin) {
         if (!RBuiltinNode.class.isAssignableFrom(clazz)) {
             throw new RuntimeException(clazz.getName() + " is must be assignable to " + RBuiltinNode.class);
         }
@@ -223,7 +220,7 @@ public abstract class RBuiltinPackage {
             }
             nodeFactory = new ReflectiveNodeFactory(clazz);
         }
-        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, lastParameterKind, nodeFactory, new Object[0], this);
+        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, nodeFactory, new Object[0], this);
         for (String name : factory.getBuiltinNames()) {
             if (builtins.containsKey(name)) {
                 throw new RuntimeException("Duplicate builtin " + name + " defined.");
@@ -243,7 +240,7 @@ public abstract class RBuiltinPackage {
 
         public RBuiltinNode createNode(Object... arguments) {
             try {
-                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1]);
+                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1], (String[]) arguments[2]);
                 return RBuiltinCustomConstructors.createNode(clazz.getName(), builtin);
             } catch (Exception e) {
                 throw new RuntimeException(e);

@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "sqrt", kind = PRIMITIVE)
+@RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Sqrt extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

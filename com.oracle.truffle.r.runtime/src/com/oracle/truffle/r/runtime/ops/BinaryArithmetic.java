@@ -526,7 +526,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+            throw RError.uncatchableError(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
