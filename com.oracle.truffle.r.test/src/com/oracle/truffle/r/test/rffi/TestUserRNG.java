@@ -22,15 +22,21 @@
  */
 package com.oracle.truffle.r.test.rffi;
 
+import java.nio.file.*;
+
 import org.junit.*;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.*;
 
 public class TestUserRNG extends TestBase {
     @Test
-    @Ignore
     public void testUserRNG() {
-        // TODO
+        Path cwd = Paths.get(System.getProperty("user.dir"));
+        Path libPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native/urand/bin/liburand.so");
+        Path relLibPath = cwd.relativize(libPath);
+        String testExpr = String.format("{ dyn.load(\"%s\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", relLibPath);
+        assertEval(testExpr);
     }
 
 }

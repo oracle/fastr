@@ -121,9 +121,9 @@ project@com.oracle.truffle.r.test@annotationProcessors=com.oracle.truffle.r.test
 project@com.oracle.truffle.r.test@workingSets=Truffle,FastR,Test
 
 # com.oracle.truffle.r.test.native
-# project@com.oracle.truffle.r.test.native@sourceDirs=
-# project@com.oracle.truffle.r.test.native@native=true
-# project@com.oracle.truffle.r.test.native@workingSets=FastR
+project@com.oracle.truffle.r.test.native@sourceDirs=
+project@com.oracle.truffle.r.test.native@native=true
+project@com.oracle.truffle.r.test.native@workingSets=FastR
 
 # com.oracle.truffle.r.engine
 project@com.oracle.truffle.r.engine@sourceDirs=src
