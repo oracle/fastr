@@ -2607,6 +2607,13 @@ public class TestSimpleBuiltins extends TestBase {
     public void testInvisible() {
         assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
+    }
+
+    @Test
+    @Ignore
+    public void testInvisibleIgnore() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }
 
     @Test
@@ -2822,6 +2829,11 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"^.foo\"<-function(e1,e2){e1+e2};x^y}");
 
         assertEval("{x<-1;class(x)<-\"foo\";\"!.foo\"<-function(e1,e2){x};!x}");
+    }
+
+    @Test
+    public void testOpsGroupDispatchLs() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }
 
     @Test

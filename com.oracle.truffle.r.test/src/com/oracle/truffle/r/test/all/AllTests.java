@@ -7829,8 +7829,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInvisible_7772bf3df913370ad529802bddebc179() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInvisible_45ebb4beda7d951423729ceea489852e() {
         assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInvisibleIgnore_d73dc3df8036b77c171c3b1e3e6abe2b() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }
 
     @Test
@@ -9876,6 +9886,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testOpsGroupDispatch_6d12455c14061853a453ebbf4b5d845c() {
         assertEval("{x<-1;class(x)<-\"foo\";\"!.foo\"<-function(e1,e2){x};!x}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOpsGroupDispatchLs_2b92f252b506f74c3dd61aa019e285ed() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }
 
     @Test
