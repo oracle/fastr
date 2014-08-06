@@ -51,4 +51,4 @@ $(BIN)/%.o: %.c
 	gcc -I$(INCLUDE_DIR) -fPIC -O2 -c $< -o $@
 
 clean:
-	rm $(BIN)/*
+	rm -rf $(BIN)
