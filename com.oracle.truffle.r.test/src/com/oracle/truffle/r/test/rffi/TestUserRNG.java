@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,14 @@ import java.nio.file.*;
 import org.junit.*;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.test.*;
 
+/**
+ * Test for a user-defined random number generator. Implicitly tests {@code dyn.load} as well as the
+ * {@link UserRngRFFI} interface. We take care to use relative paths so the expected output file is
+ * portable.
+ */
 public class TestUserRNG extends TestBase {
     @Test
     public void testUserRNG() {

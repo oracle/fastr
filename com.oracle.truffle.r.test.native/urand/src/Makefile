@@ -37,12 +37,15 @@ endif
 
 INCLUDE_DIR := $(subst test.native,native,$(TOPDIR))/include
 
-all: $(C_OBJECTS)
+all: mkbin $(C_OBJECTS)
 ifneq ($(shell uname), Darwin)
 	gcc -fPIC -shared -o $(C_LIB) $(C_OBJECTS)
 else
 	gcc -dynamiclib -undefined dynamic_lookup -o $(C_LIB) $(C_OBJECTS)
 endif
+
+mkbin:
+	mkdir -p $(BIN)
 
 $(BIN)/%.o: %.c
 	gcc -I$(INCLUDE_DIR) -fPIC -O2 -c $< -o $@
