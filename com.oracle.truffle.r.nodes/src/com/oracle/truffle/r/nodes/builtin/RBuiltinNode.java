@@ -73,9 +73,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
      */
     protected Object[] getParameterNames() {
         RBuiltin builtin = getRBuiltin();
-        if (builtin == null) {
-            System.console();
-        }
         return builtin == null ? null : builtin.parameterNames();
     }
 

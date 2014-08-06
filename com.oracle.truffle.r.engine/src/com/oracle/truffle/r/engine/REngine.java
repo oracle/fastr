@@ -367,7 +367,6 @@ public final class REngine implements RContext.Engine {
         SourceSection ss = body.getSourceSection();
         String trace;
         if (ss == null) {
-            System.console();
             if (body instanceof ConstantNode) {
                 trace = ((ConstantNode) body).getValue().toString();
             } else {
