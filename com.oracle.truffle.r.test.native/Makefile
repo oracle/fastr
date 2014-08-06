@@ -30,4 +30,3 @@ urand:
 
 clean:
 	$(MAKE) -C urand/src clean
-	

@@ -1,3 +1,5 @@
+com.oracle.truffle.r.native/include/R_ext/Boolean.h,no.copyright
+com.oracle.truffle.r.native/include/R_ext/Random.h,no.copyright
 com.oracle.truffle.r.native/src/fft.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/AnyDuplicated.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/APerm.java,purdue.copyright
@@ -118,6 +120,7 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/TestBase.java,purdue.cop
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/all/AllTests.java,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/failing/FailingTests.java,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/failing/TestSimpleFailing.java,no.copyright
+com.oracle.truffle.r.test.native/urand/src/urand.c,gnu_r.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/TestSimpleArithmetic.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/TestSimpleArrays.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/TestSimpleAssignment.java,purdue.copyright
