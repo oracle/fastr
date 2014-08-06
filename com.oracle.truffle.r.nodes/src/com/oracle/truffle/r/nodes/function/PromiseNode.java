@@ -68,11 +68,11 @@ public class PromiseNode extends RNode {
         PromiseNode pn = null;
         assert factory.getType() != PromiseType.NO_ARG;
         switch (factory.getEvalPolicy()) {
-            case RAW:
+            case INLINED:
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    pn = new RawSuppliedPromiseNode(factory, envProvider);
+                    pn = new InlinedSuppliedPromiseNode(factory, envProvider);
                 } else {
-                    pn = new RawPromiseNode(factory, envProvider);
+                    pn = new InlinedPromiseNode(factory, envProvider);
                 }
                 break;
 
@@ -129,14 +129,14 @@ public class PromiseNode extends RNode {
 
     /**
      * This class is meant for supplied arguments (which have to be evaluated in the caller frame)
-     * which are supposed to be evaluated {@link EvalPolicy#RAW}: This means we can simply evaluate
-     * it here, and as it's {@link EvalPolicy#RAW}, return its value and not the {@link RPromise}
-     * itself! {@link EvalPolicy#RAW} {@link PromiseType#ARG_SUPPLIED}
+     * which are supposed to be evaluated {@link EvalPolicy#INLINED}: This means we can simply
+     * evaluate it here, and as it's {@link EvalPolicy#INLINED}, return its value and not the
+     * {@link RPromise} itself! {@link EvalPolicy#INLINED} {@link PromiseType#ARG_SUPPLIED}
      */
-    private static class RawSuppliedPromiseNode extends PromiseNode {
+    private static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
 
-        public RawSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
+        public InlinedSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
             this.expr = (RNode) factory.getExpr();
         }
@@ -161,14 +161,14 @@ public class PromiseNode extends RNode {
 
     /**
      * This class is meant for default arguments which have to be evaluated in the callee frame -
-     * usually. But as this is for {@link EvalPolicy#RAW}, arguments are simply evaluated inside the
-     * caller frame: This means we can simply evaluate it here, and as it's {@link EvalPolicy#RAW},
-     * return its value and not the {@link RPromise} itself!
+     * usually. But as this is for {@link EvalPolicy#INLINED}, arguments are simply evaluated inside
+     * the caller frame: This means we can simply evaluate it here, and as it's
+     * {@link EvalPolicy#INLINED}, return its value and not the {@link RPromise} itself!
      */
-    private static class RawPromiseNode extends PromiseNode {
+    private static class InlinedPromiseNode extends PromiseNode {
         @Child private RNode defaultExpr;
 
-        public RawPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
+        public InlinedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
             // defaultExpr and expr are identical here!
             this.defaultExpr = (RNode) factory.getExpr();

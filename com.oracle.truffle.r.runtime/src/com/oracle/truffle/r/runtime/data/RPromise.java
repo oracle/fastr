@@ -44,7 +44,7 @@ public class RPromise {
          * (!) frame regardless of their {@link PromiseType}(!!) and return their values immediately
          * (thus are no real promises).
          */
-        RAW,
+        INLINED,
 
         /**
          * This promise is an actual promise! It's value won't get evaluated until it's read.<br/>

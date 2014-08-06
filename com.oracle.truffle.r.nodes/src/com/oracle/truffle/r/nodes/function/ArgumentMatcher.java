@@ -505,7 +505,7 @@ public class ArgumentMatcher {
     private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
-            return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.RAW;
+            return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.INLINED;
         }
     }
 

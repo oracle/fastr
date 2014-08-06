@@ -66,7 +66,7 @@ public class AccessArgumentNode extends RNode {
 
     private Object handlePromise(VirtualFrame frame, Object promiseObj) {
         RPromise promise = (RPromise) promiseObj;
-        assert promise.getEvalPolicy() != EvalPolicy.RAW;
+        assert promise.getEvalPolicy() != EvalPolicy.INLINED;
         assert promise.getType() != PromiseType.NO_ARG;
 
         // Check whether it is necessary to create a callee REnvironment for the promise
