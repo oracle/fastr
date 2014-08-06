@@ -140,7 +140,7 @@ public abstract class REnvironment implements RAttributable {
     /**
      * Returns {@code true} iff {@code frame} is that associated with {@code env}.
      */
-    private static boolean isFrameForEnv(MaterializedFrame frame, REnvironment env) {
+    public static boolean isFrameForEnv(Frame frame, REnvironment env) {
         Object id = env.frameAccess.id();
         if (id == null) {
             return false;

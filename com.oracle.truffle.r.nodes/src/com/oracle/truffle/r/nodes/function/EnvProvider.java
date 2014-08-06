@@ -48,7 +48,7 @@ public class EnvProvider {
      * @see EnvProvider
      */
     public REnvironment getREnvironmentFor(VirtualFrame frame) {
-        if (env == null || env.getFrame() != frame) {
+        if (env == null || !REnvironment.isFrameForEnv(frame, env)) {
             env = REnvironment.frameToEnvironment(frame.materialize());
         }
 
