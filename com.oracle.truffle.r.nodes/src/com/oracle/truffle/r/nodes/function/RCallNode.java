@@ -331,12 +331,12 @@ public abstract class RCallNode extends RNode {
         protected final RFunction function;
 
         /**
-         * Remembers last function and last arguments rearrange signature
+         * Remembers last function and last arguments rearrange signature.
          */
         private final ArgumentMatcher matcher;
 
         /**
-         * Used to speculate on non-changing argument order
+         * Used to speculate on non-changing argument order.
          */
         private final BranchProfile argsChangedProfile = new BranchProfile();
 
@@ -378,11 +378,12 @@ public abstract class RCallNode extends RNode {
         /**
          * Stores the function and arguments used for the last call and checks whether
          * {@link ArgumentMatcher#argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)}
+         * .
          */
         private final ArgumentMatcher matcher;
 
         /**
-         * Used to speculate on non-changing argument order
+         * Used to speculate on non-changing argument order.
          */
         private final BranchProfile argsOrFunctionChangedProfile = new BranchProfile();
 

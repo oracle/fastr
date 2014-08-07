@@ -70,13 +70,13 @@ public class RPromise {
     public enum PromiseType {
         /**
          * This promise is created for an argument that has been supplied to the function call and
-         * thus has to be evaluated inside the caller frame
+         * thus has to be evaluated inside the caller frame.
          */
         ARG_SUPPLIED,
 
         /**
          * This promise is created for an argument that was 'missing' at the function call and thus
-         * contains it's default value and has to be evaluated inside the _callee_ frame
+         * contains it's default value and has to be evaluated inside the _callee_ frame.
          */
         ARG_DEFAULT,
 

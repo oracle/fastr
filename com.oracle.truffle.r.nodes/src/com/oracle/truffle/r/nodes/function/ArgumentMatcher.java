@@ -63,24 +63,24 @@ public class ArgumentMatcher {
     public static final int ARG_NOT_SET = -1;
 
     /**
-     * Stored to check for changes
+     * Stored to check for changes.
      */
     private RFunction lastFunction = null;
 
     /**
-     * Cached, so it can be used on the FastPath
+     * Cached, so it can be used on the FastPath.
      */
     protected SourceSection encapsulatingSrc = null;
 
     /**
-     * The {@link FormalArguments} for {@link #lastFunction}
+     * The {@link FormalArguments} for {@link #lastFunction}.
      */
     private FormalArguments formals = null;
 
     /**
      * The order the last
      * {@link #permuteArgumentsIndices(VirtualFrame, RFunction, Object[], String[], FormalArguments, SourceSection)}
-     * yield
+     * yield.
      *
      * @see #argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)
      */
@@ -148,22 +148,20 @@ public class ArgumentMatcher {
             RNode arg = suppliedArgs.getArguments()[i];
 
             // Check for 'missing' arguments
-            {
-                RNode rvnArg = arg;
+            RNode rvnArg = arg;
 
-                // Eventually unfold WrapArgumentNode
-                if (rvnArg instanceof WrapArgumentNode) {
-                    rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
-                }
+            // Eventually unfold WrapArgumentNode
+            if (rvnArg instanceof WrapArgumentNode) {
+                rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
+            }
 
-                // ReadVariableNode denotes a symbol
-                if (rvnArg instanceof ReadVariableNode) {
-                    ReadVariableNode rvn = (ReadVariableNode) rvnArg;
-                    Symbol symbol = rvn.getSymbol();
-                    if (RMissingHelper.isMissingArgument(frame, symbol)) {
-                        suppliedEvaled[i] = null;
-                        continue;
-                    }
+            // ReadVariableNode denotes a symbol
+            if (rvnArg instanceof ReadVariableNode) {
+                ReadVariableNode rvn = (ReadVariableNode) rvnArg;
+                Symbol symbol = rvn.getSymbol();
+                if (RMissingHelper.isMissingArgument(frame, symbol)) {
+                    suppliedEvaled[i] = null;
+                    continue;
                 }
             }
 

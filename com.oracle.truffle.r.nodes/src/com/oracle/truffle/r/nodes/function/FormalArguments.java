@@ -38,7 +38,7 @@ public final class FormalArguments extends Arguments<RNode> {
     public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
 
     /**
-     * Serves as cache for {@link #hasVarArgs()}
+     * Serves as cache for {@link #hasVarArgs()}.
      */
     private Boolean hasVarArgs = null;
 
