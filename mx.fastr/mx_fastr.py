@@ -112,13 +112,10 @@ def _fastr_gate_body(args, tasks):
     t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
     junit(['--tests', _default_unit_tests(), '--check-expected-output'])
     tasks.append(t.stop())
-    # temp disable
     t = mx.GateTask('UnitTests: simple')
-    junit(['--tests', _default_unit_tests()])
-# temp disable check
-#    rc = junit(['--tests', _default_unit_tests()])
-#    if rc != 0:
-#        mx.abort('unit tests failed')
+    rc = junit(['--tests', _default_unit_tests()])
+    if rc != 0:
+        mx.abort('unit tests failed')
     tasks.append(t.stop())
 
 def gate(args):
