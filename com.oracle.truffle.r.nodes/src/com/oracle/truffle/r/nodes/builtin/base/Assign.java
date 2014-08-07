@@ -86,8 +86,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     @ExplodeLoop
     @Specialization(order = 2, guards = {"noEnv", "doesInheritS"})
     @SuppressWarnings("unused")
-    public Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos,
-                                RMissing environment, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos, RMissing environment, byte inherits, byte immediate) {
         controlVisibility();
         MaterializedFrame materializedFrame = virtualFrame.materialize();
         FrameSlot slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
@@ -106,7 +105,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return variableValue;
     }
 
-    private Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
+    private static Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
         MaterializedFrame materializedFrame = startFrame;
         FrameSlot frameSlot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         while (!isAppropriateFrameSlot(frameSlot, materializedFrame)) {
@@ -117,14 +116,15 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return variableValue;
     }
 
-    private void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
-        if (frameSlot == null) {
-            frameSlot = frame.getFrameDescriptor().addFrameSlot(variableName);
+    private static void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
+        FrameSlot fs = frameSlot;
+        if (fs == null) {
+            fs = frame.getFrameDescriptor().addFrameSlot(variableName);
         }
-        frame.setObject(frameSlot, variableValue);
+        frame.setObject(fs, variableValue);
     }
 
-    private boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {
+    private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {
         return frameSlot != null || REnvironment.isGlobalEnvFrame(materializedFrame);
     }
 
