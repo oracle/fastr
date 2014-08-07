@@ -683,20 +683,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sapply(list(1,2,3),function(x){x*2}) }");
 
         assertEval("{ sapply(1:3, function(x) { if (x==1) { 1 } else if (x==2) { integer() } else { TRUE } }) }");
-    }
 
-    @Test
-    public void testSapplyIgnore() {
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { as.raw(10) } }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { \"hello\" }} ) } ");
         assertEval("{ sapply(1:3, function(x) { if (x==1) { list(1) } else if (x==2) { list(NULL) } else { list(2) } }) }");
 
-        assertEval("{ sapply(1:3, `-`, 2) }");
-        assertEval("{ sapply(1:3, \"-\", 2) }");
-
-        // matrix support
+         // matrix support
         assertEval("{ sapply(1:3, function(i) { list(1,2) }) }");
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { list(1,2) } else { c(11,12) } }) }");
         assertEval("{ sapply(1:3, function(i) { if (i < 3) { c(1+1i,2) } else { c(11,12) } }) }");
@@ -711,6 +705,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { sapply(c(\"a\",\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ f <- function() { sapply(c(X=\"a\",Y=\"b\"), function(x) { c(a=x) })  } ; f() }");
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
+    }
+
+    @Test
+    @Ignore
+    public void testSapplyIgnore() {
+        assertEval("{ sapply(1:3, `-`, 2) }");
+        assertEval("{ sapply(1:3, \"-\", 2) }");
     }
 
     @Test
@@ -2832,6 +2833,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testOpsGroupDispatchLs() {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }

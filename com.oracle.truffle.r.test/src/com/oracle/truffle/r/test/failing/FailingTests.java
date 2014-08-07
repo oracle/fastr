@@ -1109,6 +1109,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testOpsGroupDispatchLs_2b92f252b506f74c3dd61aa019e285ed() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testOrderIgnore_9d9e462e8a8cc7dbbf92366b9602bf39() {
         assertEval("{ order(1:3) }");
     }
@@ -1556,6 +1561,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSampleIgnore_2935bb73d988381d4ae52f265101577a() {
         assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSapplyIgnore_567fb751fa9228a98594254d6b9f8f06() {
+        assertEval("{ sapply(1:3, `-`, 2) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testSapplyIgnore_9ad66c18d0dee6188d50055a969a5721() {
+        assertEval("{ sapply(1:3, \"-\", 2) }");
     }
 
     @Ignore
