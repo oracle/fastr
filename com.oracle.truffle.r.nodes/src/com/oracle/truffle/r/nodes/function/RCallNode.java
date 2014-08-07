@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
@@ -268,13 +269,13 @@ public abstract class RCallNode extends RNode {
         }
 
         protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
-            // TODO Gero: Do we need args.copy() here?
+            // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
-// We inline the given arguments here, as builtins are executed inside the same
-// frame as they are called.
+                    // We inline the given arguments here, as builtins are executed inside the same
+                    // frame as they are called.
                     InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, getEncapsulatingSourceSection());
                     // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
@@ -323,15 +324,26 @@ public abstract class RCallNode extends RNode {
      */
     private static class DispatchedVarArgsCallNode extends RCallNode {
 
-        /* @Child */protected CallArgumentsNode suppliedArgs;    // Is not executed!
+        @Child protected CallArgumentsNode suppliedArgs;    // Is not executed!
         @Child protected DirectCallNode call;
         @Child protected MatchedArgumentsNode matchedArgs;
 
         protected final RFunction function;
 
+        /**
+         * Remembers last function and last arguments rearrange signature
+         */
+        private final ArgumentMatcher matcher;
+
+        /**
+         * Used to speculate on non-changing argument order
+         */
+        private final BranchProfile argsChangedProfile = new BranchProfile();
+
         DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.suppliedArgs = suppliedArgs;
             this.function = function;
+            this.matcher = new ArgumentMatcher();
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
         }
 
@@ -339,9 +351,14 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
-            replaceChild(matchedArgs, newMatchedArgs);
-            matchedArgs = newMatchedArgs;
+            if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
+                argsChangedProfile.enter();
+
+                // Create new MatchedArgumentsNode
+                MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
+                replaceChild(matchedArgs, newMatchedArgs);
+                matchedArgs = newMatchedArgs;
+            }
 
             Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return call.call(frame, argsObject);
@@ -358,18 +375,35 @@ public abstract class RCallNode extends RNode {
         @Child protected IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
         @Child protected MatchedArgumentsNode matchedArgs;
 
+        /**
+         * Stores the function and arguments used for the last call and checks whether
+         * {@link ArgumentMatcher#argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)}
+         */
+        private final ArgumentMatcher matcher;
+
+        /**
+         * Used to speculate on non-changing argument order
+         */
+        private final BranchProfile argsOrFunctionChangedProfile = new BranchProfile();
+
         GenericCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
             super(functionNode);
             this.suppliedArgs = suppliedArgs;
+            this.matcher = new ArgumentMatcher();
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
-            replaceChild(matchedArgs, newMatchedArgs);
-            matchedArgs = newMatchedArgs;
+            if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
+                argsOrFunctionChangedProfile.enter();
+
+                // Create new MatchedArgumentsNode
+                MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
+                replaceChild(matchedArgs, newMatchedArgs);
+                matchedArgs = newMatchedArgs;
+            }
 
             Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return indirectCall.call(frame, function.getTarget(), argsObject);
