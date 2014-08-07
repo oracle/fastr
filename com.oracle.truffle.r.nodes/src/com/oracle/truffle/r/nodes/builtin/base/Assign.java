@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -50,9 +51,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "value", "pos", "envir", "inherits", "immediate"};
 
-    private final BranchProfile slotFoundOnIteration1 = new BranchProfile();
-    private final BranchProfile slotFoundOnIteration2 = new BranchProfile();
-    private final BranchProfile slotFoundOnIteration3 = new BranchProfile();
+    private final BranchProfile[] slotFoundOnIteration = {new BranchProfile(), new BranchProfile(), new BranchProfile()};
 
     @Override
     public Object[] getParameterNames() {
@@ -84,6 +83,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return value;
     }
 
+    @ExplodeLoop
     @Specialization(order = 2, guards = {"noEnv", "doesInheritS"})
     @SuppressWarnings("unused")
     public Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos,
@@ -91,27 +91,18 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         controlVisibility();
         MaterializedFrame materializedFrame = virtualFrame.materialize();
         FrameSlot slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
-        if (isAppropriateFrameSlot(slot, materializedFrame)) {
-            addValueToFrame(variableName, variableValue, materializedFrame, slot);
-            return variableValue;
+        int i = 0;
+        int iterationsAmount = CompilerAsserts.compilationConstant(slotFoundOnIteration.length);
+        for (; i < iterationsAmount; i++) {
+            if (isAppropriateFrameSlot(slot, materializedFrame)) {
+                addValueToFrame(variableName, variableValue, materializedFrame, slot);
+                return variableValue;
+            }
+            slotFoundOnIteration[i].enter();
+            materializedFrame = RArguments.getEnclosingFrame(materializedFrame);
+            slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         }
-        slotFoundOnIteration1.enter();
-        materializedFrame = RArguments.getEnclosingFrame(materializedFrame);
-        slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
-        if (isAppropriateFrameSlot(slot, materializedFrame)) {
-            addValueToFrame(variableName, variableValue, materializedFrame, slot);
-            return variableValue;
-        }
-        slotFoundOnIteration2.enter();
-        materializedFrame = RArguments.getEnclosingFrame(materializedFrame);
-        slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
-        if (isAppropriateFrameSlot(slot, materializedFrame)) {
-            addValueToFrame(variableName, variableValue, materializedFrame, slot);
-            return variableValue;
-        }
-        slotFoundOnIteration3.enter();
-        MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(materializedFrame);
-        assignInheritGenericCase(enclosingFrame, variableName, variableValue);
+        assignInheritGenericCase(materializedFrame, variableName, variableValue);
         return variableValue;
     }
 
