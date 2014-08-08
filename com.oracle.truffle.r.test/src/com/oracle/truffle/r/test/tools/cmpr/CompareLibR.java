@@ -32,7 +32,15 @@ import com.oracle.truffle.r.runtime.*;
  * Compare the FastR versions of .R files in the standard packages against GnuR. Removes all
  * formatting to perform the check, replacing all whitespace (including newlines) with exactly one
  * space.
+ * <p>
+ * Usage:
  *
+ * <pre>
+ * --gnurhome path --package pkg | --files path1 path2
+ * </pre>
+ *
+ * {@code gnurhome} is the path to the GnuR distribution. {@cpde package} gibes the package to
+ * compare,e.g. {@code base}. The second form just compares the two files.
  */
 public class CompareLibR {
 
@@ -55,7 +63,9 @@ public class CompareLibR {
     public static void main(String[] args) throws Exception {
         // Checkstyle: stop system print check
         String gnurHome = null;
-        String lib = null;
+        String pkg = null;
+        String path1 = null;
+        String path2 = null;
         int i = 0;
         while (i < args.length) {
             String arg = args[i];
@@ -64,9 +74,19 @@ public class CompareLibR {
                     i++;
                     gnurHome = args[i];
                     break;
-                case "--lib":
+                case "--package":
                     i++;
-                    lib = args[i];
+                    pkg = args[i];
+                    break;
+                case "--files":
+                    if (args.length == 3) {
+                        i++;
+                        path1 = args[i];
+                        i++;
+                        path2 = args[i];
+                    } else {
+                        usage();
+                    }
                     break;
                 default:
                     usage();
@@ -74,25 +94,30 @@ public class CompareLibR {
             i++;
         }
 
-        if (gnurHome == null) {
+        if (gnurHome == null && path1 == null) {
             usage();
         }
 
-        Map<String, FileContent> fastRFiles = getFastR(lib);
-        Map<String, FileContent> gnuRFiles = getGnuR(gnurHome, lib, fastRFiles);
-        deformat(gnuRFiles);
-        deformat(fastRFiles);
-        for (Map.Entry<String, FileContent> entry : fastRFiles.entrySet()) {
-            FileContent fastR = entry.getValue();
-            String fileName = entry.getKey();
-            FileContent gnuR = gnuRFiles.get(fileName);
-            if (gnuR == null) {
-                System.out.println("FastR has file: " + fileName + " not found in GnuR");
-            } else {
-                if (!fastR.flattened.equals(gnuR.flattened)) {
-                    System.out.println(fileName + " differs");
+        if (path1 != null) {
+            compareFiles(path1, path2);
+        } else {
+
+            Map<String, FileContent> fastRFiles = getFastR(pkg);
+            Map<String, FileContent> gnuRFiles = getGnuR(gnurHome, pkg, fastRFiles);
+            deformat(gnuRFiles);
+            deformat(fastRFiles);
+            for (Map.Entry<String, FileContent> entry : fastRFiles.entrySet()) {
+                FileContent fastR = entry.getValue();
+                String fileName = entry.getKey();
+                FileContent gnuR = gnuRFiles.get(fileName);
+                if (gnuR == null) {
+                    System.out.println("FastR has file: " + fileName + " not found in GnuR");
                 } else {
-                    System.out.println(fileName + " is identical (modulo formatting)");
+                    if (!fastR.flattened.equals(gnuR.flattened)) {
+                        System.out.println(fileName + " differs");
+                    } else {
+                        System.out.println(fileName + " is identical (modulo formatting)");
+                    }
                 }
             }
         }
@@ -120,11 +145,7 @@ public class CompareLibR {
                 String entryName = entry.getFileName().toString();
                 if (entryName.endsWith(".R") && (filter.get(entryName) != null)) {
                     File file = entry.toFile();
-                    byte[] buf = new byte[(int) file.length()];
-                    try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(file))) {
-                        bs.read(buf);
-                        result.put(entryName, new FileContent(entryName, new String(buf)));
-                    }
+                    result.put(entryName, new FileContent(entryName, readFileContent(file)));
                 }
             }
         }
@@ -156,9 +177,36 @@ public class CompareLibR {
         return result;
     }
 
+    private static String readFileContent(File file) throws IOException {
+        byte[] buf = new byte[(int) file.length()];
+        try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(file))) {
+            bs.read(buf);
+        }
+        return new String(buf);
+    }
+
+    private static void writeFile(File file, String s) throws IOException {
+        try (BufferedOutputStream bs = new BufferedOutputStream(new FileOutputStream(file))) {
+            bs.write(s.getBytes());
+        }
+
+    }
+
+    private static void compareFiles(String path1, String path2) throws IOException {
+        String c1 = deformat(readFileContent(new File(path1)));
+        String c2 = deformat(readFileContent(new File(path2)));
+        if (c1.equals(c2)) {
+            System.out.println("files are identical (modulo formatting)");
+        } else {
+            System.out.println("files differ");
+            writeFile(new File(path1 + ".deformat"), c1);
+            writeFile(new File(path2 + ".deformat"), c2);
+        }
+    }
+
     private static void usage() {
         // Checkstyle: stop system print check
-        System.err.println("usage: --gnurhome path --lib lib");
+        System.err.println("usage: --gnurhome path --package pkg | --files path1 path2");
         System.exit(1);
     }
 

@@ -48,16 +48,36 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
+    @Specialization(order = 0)
+    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
+        REnvironment curEnv = curEnv(frame);
+        return doDelayedAssign(frame, nameVec, value, curEnv, curEnv);
+    }
+
+    @Specialization(order = 1)
     public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
+        return doDelayedAssign(frame, nameVec, value, curEnv(frame), assignEnv);
+    }
+
+    @Specialization(order = 2)
+    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
+        return doDelayedAssign(frame, nameVec, value, evalEnv, curEnv(frame));
+    }
+
+    @Specialization(order = 3)
+    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, REnvironment assignEnv) {
         controlVisibility();
         String name = nameVec.getDataAt(0);
         try {
-            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), REnvironment.frameToEnvironment(frame.materialize())));
+            assignEnv.put(name, RDataFactory.createPromise(value.getRep(), evalEnv));
             return RNull.instance;
         } catch (PutException ex) {
             throw RError.error(frame, getEncapsulatingSourceSection(), ex);
         }
+    }
+
+    private REnvironment curEnv(VirtualFrame frame) {
+        return REnvironment.frameToEnvironment(frame.materialize());
     }
 
 }

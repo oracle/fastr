@@ -61,7 +61,7 @@ public abstract class Unlist extends RBuiltinNode {
     @Specialization(guards = "!isNonEmptyList")
     public Object unlistNoop(Object object, byte recursive, byte useNames) {
         controlVisibility();
-        return object;
+        return RNull.instance;
     }
 
     @SuppressWarnings("unused")
