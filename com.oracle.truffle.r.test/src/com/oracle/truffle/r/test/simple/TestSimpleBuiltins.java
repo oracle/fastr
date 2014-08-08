@@ -1864,10 +1864,46 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ unlist(list(1+1i, list(7+7i,42+42i)), recursive=FALSE) }");
         assertEval("{ unlist(list(1+1i, c(7,42))) }");
         assertEval("{ unlist(list(1+1i, list(7,42)), recursive=FALSE) }");
+
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,e=list(f=7))), recursive=TRUE) }");
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,list(f=7)))) }");
+        assertEval("{ x <- list(list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=c(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\"), \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\", \"11\"), \"4\"),\"5\")) ; unlist(x) }");
+
+        assertEval("{ names(unlist(list(list(list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(\"1\",\"2\"))))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\")))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\"))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\"), \"2\"))) }");
+        assertEval("{ unlist(list(a=list(\"0\", list(b=list(\"1\"))))) }");
+
+        assertEval("{ unlist(list(a=list(\"-1\", \"0\", b=list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\", \"3\"))) }");
+
+        assertEval("{ names(unlist(list(list(b=list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\", \"2\"))))) }");
+
+        assertEval("{ names(unlist(list(list(list(c=\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\", d=\"2\"))))) }");
+
+        assertEval("{ unlist(list()) }");
     }
 
     @Test
-    @Ignore
     public void testUnlistIgnore() {
         assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
         assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
@@ -1875,6 +1911,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
         assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
         assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
 
         assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
