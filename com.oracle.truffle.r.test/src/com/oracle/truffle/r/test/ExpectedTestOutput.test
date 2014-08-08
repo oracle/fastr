@@ -11181,8 +11181,48 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 [1] "character"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(a=list(b=list("1"))))) }
+[1] "a.b"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(a=list(b=list("1", "2"))))) }
+[1] "a.b1" "a.b2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(a=list(list("1"))))) }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(a=list(list("1","2"))))) }
+[1] "a1" "a2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(a=list(list(c="1"))))) }
+[1] "a.c"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(a=list(list(c="1", d="2"))))) }
+[1] "a.c" "a.d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(list(b=list("1"))))) }
+[1] "b"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(list(list("1"))))) }
+NULL
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ names(unlist(list(list(list(c="1"))))) }
+[1] "c"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ unlist(list("hello", "hi")) }
 [1] "hello" "hi"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list()) }
+NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ unlist(list(1+1i, c(7+7i,42+42i))) }
@@ -11240,6 +11280,56 @@ a     d
 #{ unlist(list(a=1, c(b=2,c=3))) }
 a b c
 1 2 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=1,b=2, c=list(d=3,e=list(f=7))), recursive=TRUE) }
+    a     b   c.d c.e.f
+    1     2     3     7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=1,b=2, c=list(d=3,list(f=7)))) }
+  a   b c.d c.f
+  1   2   3   7
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list("-1", "0", b=list("1")))) }
+  a1   a2  a.b
+"-1"  "0"  "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list("0", b=list("1")))) }
+  a a.b
+"0" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list("0", b=list("1"), "2"))) }
+ a1 a.b  a3
+"0" "1" "2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list("0", list("1")))) }
+ a1  a2
+"0" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list("0", list(b=list("1"))))) }
+  a a.b
+"0" "1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list(b=list("1")))) }
+a.b
+"1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list(b=list("1"), "2"))) }
+a.b   a
+"1" "2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ unlist(list(a=list(b=list("1"), "2", "3"))) }
+a.b  a2  a3
+"1" "2" "3"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE) }
@@ -11317,6 +11407,46 @@ $x
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",b=c("3", "4"),"5")) ; unlist(x) }
+  a1   a2 a.b1 a.b2   a5
+ "1"  "2"  "3"  "4"  "5"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",b=list("3"))) ; unlist(x) }
+ a1  a2 a.b
+"1" "2" "3"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",b=list("3", "4"))) ; unlist(x) }
+  a1   a2 a.b1 a.b2
+ "1"  "2"  "3"  "4"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",b=list("3", "4"),"5")) ; unlist(x) }
+  a1   a2 a.b1 a.b2   a5
+ "1"  "2"  "3"  "4"  "5"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",b=list("3", list("10"), "4"),"5")) ; unlist(x) }
+  a1   a2 a.b1 a.b2 a.b3   a6
+ "1"  "2"  "3" "10"  "4"  "5"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",b=list("3", list("10", "11"), "4"),"5")) ; unlist(x) }
+  a1   a2 a.b1 a.b2 a.b3 a.b4   a7
+ "1"  "2"  "3" "10" "11"  "4"  "5"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(a=list("1","2",list("3", "4"),"5")) ; unlist(x) }
+ a1  a2  a3  a4  a5
+"1" "2" "3" "4" "5"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
+#{ x <- list(list("1","2",b="3","4")) ; unlist(x) }
+          b
+"1" "2" "3" "4"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlist
 #{ y<-c(2, 3); names(y)<-c("z", NA); x <- list(a=1,b=y,list(x=FALSE)) ; unlist(x, recursive=FALSE) }
 $a
 [1] 1
@@ -11330,6 +11460,33 @@ $b.NA
 $x
 [1] FALSE
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlistIgnore
+#{ x <- list("a", c("b", "c"), list("d", list("e"))) ; unlist(x) }
+[1] "a" "b" "c" "d" "e"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlistIgnore
+#{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }
+ [1] 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlistIgnore
+#{ x <- list(NULL, list("d", list(), character())) ; unlist(x) }
+[1] "d"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlistIgnore
+#{ x <- list(a=list("1","2",b="3","4")) ; unlist(x) }
+ a1  a2 a.b  a4
+"1" "2" "3" "4"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlistIgnore
+#{ x <- list(a=list("1",FALSE,b=list(2:4))) ; unlist(x) }
+     a1      a2    a.b1    a.b2    a.b3
+    "1" "FALSE"     "2"     "3"     "4"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUnlistIgnore
+#{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }
+  a1   a2 a.b1 a.b2 a.b3
+   1    0    2    3    4
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testUpdateClass
 #{ x<-1; oldClass(x)<-"foo"; class(x) }
