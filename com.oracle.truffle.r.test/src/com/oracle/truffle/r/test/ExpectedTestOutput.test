@@ -9732,6 +9732,30 @@ numeric(0)
 #{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }
 [1] 10 05 10 05 10
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(4, x="text")}
+[1] "text" "text" "text" "text"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(length.out=4, "text")}
+[1] "text" "text" "text" "text"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(length.out=4, x=1:2)}
+[1] 1 2 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(x=1:2, length.out=4)}
+[1] 1 2 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{x<-"text"; length.out<-4; rep_len(length.out=length.out, x=x)}
+[1] "text" "text" "text" "text"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{x<-"text"; length.out<-4; rep_len(x=x, length.out=length.out)}
+[1] "text" "text" "text" "text"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRev
 #{ rev(1:3) }
 [1] 3 2 1
