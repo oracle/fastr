@@ -166,7 +166,7 @@ public class RPromise {
         if (env != null && env != RArguments.getEnvironment(frame)) {
             value = doEvalArgument();
         } else {
-            assert type == PromiseType.ARG_DEFAULT;
+// assert type == PromiseType.ARG_DEFAULT;
             value = doEvalArgument(frame);
         }
 

@@ -99,6 +99,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         if (type.equals(RRuntime.TYPE_ANY)) {
             return true;
         }
+        if (obj instanceof RPromise) {
+            // since we do not know what type the evaluates to, it may match.
+            // we recover from a wrong type later
+            return true;
+        }
         if (type.equals(RRuntime.TYPE_FUNCTION) || type.equals(RRuntime.TYPE_CLOSURE) || type.equals(RRuntime.TYPE_BUILTIN) || type.equals(RRuntime.TYPE_SPECIAL)) {
             return obj instanceof RFunction;
         }
