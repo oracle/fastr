@@ -1913,7 +1913,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
 
         assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
-        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
         assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
         assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
 

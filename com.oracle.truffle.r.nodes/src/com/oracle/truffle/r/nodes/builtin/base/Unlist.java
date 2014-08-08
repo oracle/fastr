@@ -105,7 +105,7 @@ public abstract class Unlist extends RBuiltinNode {
     private int getLength(VirtualFrame frame, Object operand) {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthFactory.create(new RNode[1], getBuiltin()));
+            lengthNode = insert(LengthFactory.create(new RNode[1], getBuiltin(), null));
         }
         return lengthNode.executeInt(frame, operand);
     }
