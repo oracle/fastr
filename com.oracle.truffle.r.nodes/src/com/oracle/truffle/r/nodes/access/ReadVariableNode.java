@@ -45,26 +45,54 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     public abstract Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame);
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(String, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(String symbol, boolean shouldCopyValue) {
         return create(symbol, RRuntime.TYPE_ANY, shouldCopyValue);
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(String, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(SourceSection src, String symbol, String mode, boolean shouldCopyValue) {
         ReadVariableNode rvn = create(symbol, mode, shouldCopyValue);
         rvn.assignSourceSection(src);
         return rvn;
     }
 
+    /**
+     * Convenience method
+     *
+     * @return {@link #create(String, String, boolean, boolean)}
+     */
     public static ReadVariableNode create(String symbol, String mode, boolean shouldCopyValue) {
         return create(symbol, mode, shouldCopyValue, true);
     }
 
+    /**
+     * Creates every {@link ReadVariableNode} out there
+     *
+     * @param symbolStr The symbol the {@link ReadVariableNode} is meant to resolve
+     * @param mode The mode of the variable
+     * @param shouldCopyValue Copy semantics
+     * @param isSuper Whether the variable resides in the local frame or not
+     * @return The appropriate implementation of {@link ReadVariableNode}
+     */
     public static ReadVariableNode create(String symbolStr, String mode, boolean shouldCopyValue, boolean isSuper) {
         Symbol symbol = Symbol.create(symbolStr);
+
+        ReadVariableNode rvn = null;
         if (isSuper) {
-            return new UnresolvedReadVariableNode(symbol, mode, shouldCopyValue);
+            rvn = new UnresolvedReadVariableNode(symbol, mode, shouldCopyValue);
+        } else {
+            rvn = new UnResolvedReadLocalVariableNode(symbol, mode);
         }
-        return new UnResolvedReadLocalVariableNode(symbol, mode);
+        return new ReadCheckPromiseNode(rvn);
     }
 
     protected boolean checkType(Object obj, String type) {
@@ -87,6 +115,88 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     }
 
     public abstract Symbol getSymbol();
+
+    /**
+     * Checks every value read from a variable whether it is a {@link RPromise} or not. If yes, it
+     * replaces itself with a {@link ReadPromiseNode}, else with a standard {@link ReadVariableNode}
+     */
+    public static class ReadCheckPromiseNode extends ReadVariableNode {
+
+        @Child private ReadVariableNode readNode;
+
+        public ReadCheckPromiseNode(ReadVariableNode readNode) {
+            super();
+            this.readNode = readNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+
+            Object value = readNode.execute(frame, enclosingFrame);
+            return specializeAndExecute(frame, value);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+
+            Object value = readNode.execute(frame);
+            return specializeAndExecute(frame, value);
+        }
+
+        private Object specializeAndExecute(VirtualFrame frame, Object value) {
+            CompilerAsserts.neverPartOfCompilation();
+
+            if (value != null && value instanceof RPromise) {
+                // Force promise execution to get (back to) the future! ;)
+                RPromise promise = (RPromise) value;
+                promise.evaluate(frame);
+
+                // Replace with ReadPromiseNode and execute it!
+                return replace(new ReadPromiseNode(getSymbol(), promise)).execute(frame);
+            }
+
+            // Value is no promise: Replace with ReadVariableNode...
+            replace(readNode);
+            return value;   // ...and return it, as its already there.
+        }
+
+        @Override
+        public Symbol getSymbol() {
+            return readNode.getSymbol();
+        }
+    }
+
+    /**
+     * Simply longs for its {@link RPromise} and retrieves the already calculated value
+     */
+    public static class ReadPromiseNode extends ReadVariableNode {
+
+        private final Symbol symbol;
+        private final RPromise promise;
+
+        public ReadPromiseNode(Symbol symbol, RPromise promise) {
+            super();
+            this.symbol = symbol;
+            this.promise = promise;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            return promise.getValue();
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return promise.getValue();
+        }
+
+        @Override
+        public Symbol getSymbol() {
+            return symbol;
+        }
+    }
 
     public static final class UnresolvedReadVariableNode extends ReadVariableNode {
 

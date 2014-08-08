@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.UnresolvedReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -56,8 +55,8 @@ public abstract class Internal extends RBuiltinNode {
         if (operand instanceof RootCallNode) {
             callNode = (RootCallNode) operand;
             RNode func = callNode.getFunctionNode();
-            if (func instanceof UnresolvedReadVariableNode) {
-                symbol = ((UnresolvedReadVariableNode) func).getSymbol();
+            if (func instanceof ReadVariableNode) {
+                symbol = ((ReadVariableNode) func).getSymbol();
             } else {
                 // is anything else possible?
             }
