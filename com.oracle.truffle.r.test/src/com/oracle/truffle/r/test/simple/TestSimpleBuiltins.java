@@ -224,6 +224,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep_len(c(3.1415, 0.8), 1) }");
         assertEval("{ rep_len(c(2i+3, 4+2i), 4) }");
         assertEval("{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }");
+        // cases with named arguments:
+        assertEval("{rep_len(x=1:2, length.out=4)}");
+        assertEval("{rep_len(length.out=4, x=1:2)}");
+        assertEval("{rep_len(length.out=4, \"text\")}");
+        assertEval("{rep_len(4, x=\"text\")}");
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(x=x, length.out=length.out)}");
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(length.out=length.out, x=x)}");
     }
 
     @Test

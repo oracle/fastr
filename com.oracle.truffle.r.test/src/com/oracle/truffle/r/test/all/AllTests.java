@@ -10914,6 +10914,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRepLen_2d75960a0879f6b5bad8acd1d670df2e() {
+        assertEval("{rep_len(x=1:2, length.out=4)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_615a14781b0b272254da32c2e2bb047b() {
+        assertEval("{rep_len(length.out=4, x=1:2)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_7606c064d12ac132685ea29891054c80() {
+        assertEval("{rep_len(length.out=4, \"text\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_857e2661dad694ab0dc9ffef1bdb7421() {
+        assertEval("{rep_len(4, x=\"text\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_06f8d5f8c326a62b911640af72d8768c() {
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(x=x, length.out=length.out)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_a6ff9fee0ce1bbf6517ab8ff300cc3b7() {
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(length.out=length.out, x=x)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRev_4d0b89f7d5b9601a90230cf009915fc3() {
         assertEval("{ rev(1:3) }");
     }
