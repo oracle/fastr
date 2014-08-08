@@ -1564,16 +1564,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSapplyIgnore_567fb751fa9228a98594254d6b9f8f06() {
-        assertEval("{ sapply(1:3, `-`, 2) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSapplyIgnore_9ad66c18d0dee6188d50055a969a5721() {
-        assertEval("{ sapply(1:3, \"-\", 2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSetAttr_4c035922fa30fd65161fe53e1af97368() {
         assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
     }

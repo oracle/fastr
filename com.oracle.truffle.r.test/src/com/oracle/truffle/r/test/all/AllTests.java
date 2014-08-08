@@ -11369,6 +11369,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSapply_567fb751fa9228a98594254d6b9f8f06() {
+        assertEval("{ sapply(1:3, `-`, 2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSapply_9ad66c18d0dee6188d50055a969a5721() {
+        assertEval("{ sapply(1:3, \"-\", 2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSapply_2be6b7c9102a07fc7019e3f281e0ee77() {
         assertEval("{ sapply(1:3, function(i) { list(1,2) }) }");
     }
@@ -11426,16 +11436,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSapply_c2167cd4565e9253a6b834237b6772a6() {
         assertEval("{ sapply(c(\"a\",\"b\",\"c\"), function(x) { x }) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSapplyIgnore_567fb751fa9228a98594254d6b9f8f06() {
-        assertEval("{ sapply(1:3, `-`, 2) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSapplyIgnore_9ad66c18d0dee6188d50055a969a5721() {
-        assertEval("{ sapply(1:3, \"-\", 2) }");
     }
 
     @Test
