@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -300,6 +301,7 @@ public class RPromise {
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + exprRep.getRep() + ", " + value + ", " + isEvaluated + "]";
     }
