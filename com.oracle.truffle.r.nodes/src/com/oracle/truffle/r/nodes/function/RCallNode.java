@@ -330,20 +330,21 @@ public abstract class RCallNode extends RNode {
 
         protected final RFunction function;
 
-        /**
-         * Remembers last function and last arguments rearrange signature.
-         */
-        private final ArgumentMatcher matcher;
-
-        /**
-         * Used to speculate on non-changing argument order.
-         */
-        private final BranchProfile argsChangedProfile = new BranchProfile();
+        // TODO VARARGS! Enable on proper implementation
+// /**
+// * Remembers last function and last arguments rearrange signature.
+// */
+// private final ArgumentMatcher matcher;
+//
+// /**
+// * Used to speculate on non-changing argument order.
+// */
+// private final BranchProfile argsChangedProfile = new BranchProfile();
 
         DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.suppliedArgs = suppliedArgs;
             this.function = function;
-            this.matcher = new ArgumentMatcher();
+// this.matcher = new ArgumentMatcher();
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
         }
 
@@ -351,14 +352,14 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
-                argsChangedProfile.enter();
+// if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
+// argsChangedProfile.enter();
 
-                // Create new MatchedArgumentsNode
-                MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
-                replaceChild(matchedArgs, newMatchedArgs);
-                matchedArgs = newMatchedArgs;
-            }
+            // Create new MatchedArgumentsNode
+            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
+            replaceChild(matchedArgs, newMatchedArgs);
+            matchedArgs = newMatchedArgs;
+// }
 
             Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return call.call(frame, argsObject);
