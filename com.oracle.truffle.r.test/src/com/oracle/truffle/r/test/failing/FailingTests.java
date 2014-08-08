@@ -1954,36 +1954,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testUnlistIgnore_a698318202ba9d48899d816aaf045170() {
-        assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testUnlistIgnore_f28bf5269d48ccb8325f37a8fda65a1d() {
-        assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testUnlistIgnore_1d0087eeeb15e56b4081ebf242c3ee4c() {
-        assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testUnlistIgnore_86b20ffcf8f88b8502d3da0218b3327c() {
-        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testUnlistIgnore_ca79e22b108545ebb9086587d6a71e2f() {
-        assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testUnlistIgnore_7c2d3aec2785e5d94b9cad216a3ba4f9() {
-        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testUpdateClassIgnore_de2b6cfc60c31afa53dbd74ec10d3136() {
         assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
     }

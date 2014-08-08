@@ -13094,6 +13094,146 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testUnlist_7e91527f9d24eaba36ae341308785ed3() {
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,e=list(f=7))), recursive=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_200ea0b453bc469bb9dc98695723f142() {
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,list(f=7)))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_f0fbeb5a8fe07368a625119ecb75ed88() {
+        assertEval("{ x <- list(list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_2cdaf5241d101f3ce4f53bc7254d1ce1() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_86b20ffcf8f88b8502d3da0218b3327c() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_b9b2dab9e1d0f58c34770af3dbd7b121() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"))) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_7cffddf25eeb62015664ca7f85ed5965() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_28ae5952510f7971c21ca96ef089e72f() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=c(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_f0599fb3eb5cad601b044217327d6fe7() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\"), \"4\"),\"5\")) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_00e6a4789e7ed62002d33268eee76fb4() {
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\", \"11\"), \"4\"),\"5\")) ; unlist(x) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_67ccdd736ff2171b1a2a7b809b79fc45() {
+        assertEval("{ names(unlist(list(list(list(\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_567e15cc2cf85ec93cab50489cc50f12() {
+        assertEval("{ names(unlist(list(a=list(list(\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_57fa6a1283f6daa6af9e477c5976ad81() {
+        assertEval("{ names(unlist(list(a=list(list(\"1\",\"2\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_8142e7305b9071e289fbf89bee8fce2e() {
+        assertEval("{ unlist(list(a=list(\"0\", list(\"1\")))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_c86c4ceb51249e7a778b39c250a033f9() {
+        assertEval("{ unlist(list(a=list(b=list(\"1\")))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_c9d05cf98d66813328c388b3c9bb31f7() {
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\")))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_254c4d3b5d2dc41871ba5a8ae7cd2e10() {
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\"))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_1b9c72b12a246cd34f7b1f2eb76f6cb2() {
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\"), \"2\"))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_bb29972617e7ccf8d50809ac736d280f() {
+        assertEval("{ unlist(list(a=list(\"0\", list(b=list(\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_36f16a6a74f0a6ad95300e173430934e() {
+        assertEval("{ unlist(list(a=list(\"-1\", \"0\", b=list(\"1\")))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_b92f066abae984a81c0c735c084b2518() {
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\", \"3\"))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_5d50eac6453e06aa2202a22ef8f4936f() {
+        assertEval("{ names(unlist(list(list(b=list(\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_eab23bbaf2b189009d3d45cf66b03f0a() {
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_0f4a3258daae0ec2efcdcbbb0335ef7a() {
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\", \"2\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_91bbb5c09fe94850102810f9abfa747d() {
+        assertEval("{ names(unlist(list(list(list(c=\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_91054ae0ca6f80291241efc44b425824() {
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_fd671e9077f293859777ed36dada4fc2() {
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\", d=\"2\"))))) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testUnlist_b40cd0f8a1c8b274de8c0f661786bfc9() {
+        assertEval("{ unlist(list()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUnlistIgnore_a698318202ba9d48899d816aaf045170() {
         assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
     }
@@ -13109,13 +13249,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testUnlistIgnore_86b20ffcf8f88b8502d3da0218b3327c() {
-        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
+    public void TestSimpleBuiltins_testUnlistIgnore_ca79e22b108545ebb9086587d6a71e2f() {
+        assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testUnlistIgnore_ca79e22b108545ebb9086587d6a71e2f() {
-        assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+    public void TestSimpleBuiltins_testUnlistIgnore_ab3eb16aa022ed4457c69d88e7e3ce68() {
+        assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
     }
 
     @Test

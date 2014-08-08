@@ -1,29 +1,19 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * This material is distributed under the GNU General Public License
+ * Version 2. You may review the terms of this license at
+ * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 2003, The R Foundation
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -34,10 +24,13 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.nodes.builtin.base.UnlistFactory.RecursiveLengthFactory;
 
 @RBuiltin(name = "unlist", kind = SUBSTITUTE)
 // TODO INTERNAL
 public abstract class Unlist extends RBuiltinNode {
+
+    // portions of the algorithm were transcribed from GNU R
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "recursive", "use.names"};
 
@@ -52,362 +45,551 @@ public abstract class Unlist extends RBuiltinNode {
     }
 
     @Child private PrecedenceNode precedenceNode;
+    @Child private Length lengthNode;
+    @Child private RecursiveLength recursiveLengthNode;
 
     protected Unlist() {
-        this.precedenceNode = PrecedenceNodeFactory.create(null);
+        this.precedenceNode = PrecedenceNodeFactory.create(null, null);
+    }
+
+    @NodeChild(value = "operand")
+    protected static abstract class RecursiveLength extends RNode {
+
+        public abstract int executeInt(VirtualFrame frame, Object vector);
+
+        @Child private RecursiveLength recursiveLengthNode;
+
+        private int getRecursiveLength(VirtualFrame frame, Object operand) {
+            if (recursiveLengthNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                recursiveLengthNode = insert(RecursiveLengthFactory.create(null));
+            }
+            return recursiveLengthNode.executeInt(frame, operand);
+        }
+
+        @Specialization
+        @SuppressWarnings("unused")
+        public int getLength(RNull vector) {
+            return 0;
+        }
+
+        @Specialization(order = 10, guards = "!isVectorList")
+        public int getLength(RAbstractVector vector) {
+            return vector.getLength();
+        }
+
+        @Specialization(order = 20, guards = "isVectorList")
+        public int getLengthList(VirtualFrame frame, RAbstractVector vector) {
+            int totalSize = 0;
+            for (int i = 0; i < vector.getLength(); ++i) {
+                Object data = vector.getDataAtAsObject(i);
+                totalSize += getRecursiveLength(frame, data);
+            }
+            return totalSize;
+        }
+
+        protected boolean isVectorList(RAbstractVector vector) {
+            return vector.getElementClass() == Object.class;
+        }
+    }
+
+    private int getLength(VirtualFrame frame, Object operand) {
+        if (lengthNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lengthNode = insert(LengthFactory.create(new RNode[1], getBuiltin(), null));
+        }
+        return lengthNode.executeInt(frame, operand);
+    }
+
+    private int getRecursiveLength(VirtualFrame frame, Object operand) {
+        if (recursiveLengthNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveLengthNode = insert(RecursiveLengthFactory.create(null));
+        }
+        return recursiveLengthNode.executeInt(frame, operand);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isNonEmptyList")
-    public Object unlistNoop(Object object, byte recursive, byte useNames) {
+    @Specialization
+    public RNull unlist(RNull vector, byte recursive, byte useNames) {
         controlVisibility();
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isNonEmptyList")
-    public RAbstractVector unlist(VirtualFrame frame, Object object, byte recursive, byte useNames) {
+    @Specialization(guards = "!isVectorList")
+    public RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
         controlVisibility();
-        RList list = (RList) object;
+        return vector;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isEmpty")
+    public RNull unlistEmptyList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+        controlVisibility();
+        return RNull.instance;
+    }
+
+    // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
+    // the slow path as well; ultimately we may consider (non-recursive) optimization
+    @Specialization(guards = "!isEmpty")
+    public RAbstractVector unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+        controlVisibility();
+        boolean rec = recursive == RRuntime.LOGICAL_TRUE;
+        boolean withNames = useNames == RRuntime.LOGICAL_TRUE;
 
         int precedence = -1;
         int totalSize = 0;
         for (int i = 0; i < list.getLength(); ++i) {
             Object data = list.getDataAt(i);
-            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, data));
-            if (data instanceof RAbstractVector) {
-                RAbstractVector rAbstractVector = (RAbstractVector) data;
-                totalSize += rAbstractVector.getLength();
-            } else if (data != RNull.instance) {
-                totalSize++;
+            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, data, recursive));
+            if (recursive == RRuntime.LOGICAL_TRUE) {
+                totalSize += getRecursiveLength(frame, data);
+            } else {
+                totalSize += getLength(frame, data);
             }
         }
-        return unlistHelper(precedence, totalSize, list, useNames == RRuntime.LOGICAL_TRUE);
-    }
-
-    @SlowPath
-    private static RAbstractVector unlistHelper(int precedence, int totalSize, RList list, boolean useNames) {
+        String[] namesData = withNames ? new String[totalSize] : null;
+        NamesInfo namesInfo = withNames ? new NamesInfo() : null;
         if (precedence == PrecedenceNode.RAW_PRECEDENCE) {
             byte[] result = new byte[totalSize];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractVector) {
-                    RAbstractVector rAbstractVector = (RAbstractVector) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractVector.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperRaw(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position) || namesAssigned;
-                        }
-                        result[position++] = unlistValueRaw(rAbstractVector.getDataAtAsObject(j));
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position) || namesAssigned;
-                    }
-                    result[position++] = unlistValueRaw(cur);
                 }
-            }
-
-            if (namesAssigned) {
-                return RDataFactory.createRawVector(result, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createRawVector(result, names);
+                unlistHelperRaw(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createRawVector(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else if (precedence == PrecedenceNode.LOGICAL_PRECEDENCE) {
             byte[] result = new byte[totalSize];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractVector) {
-                    RAbstractVector rAbstractVector = (RAbstractVector) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractVector.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperLogical(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position) || namesAssigned;
-                        }
-                        result[position++] = unlistValueLogical(rAbstractVector.getDataAtAsObject(j));
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position) || namesAssigned;
-                    }
-                    result[position++] = unlistValueLogical(cur);
                 }
-            }
-
-            if (namesAssigned) {
-                return RDataFactory.createLogicalVector(result, false, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createLogicalVector(result, false, names);
+                unlistHelperLogical(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createLogicalVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else if (precedence == PrecedenceNode.INT_PRECEDENCE) {
             int[] result = new int[totalSize];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractVector) {
-                    RAbstractVector rAbstractVector = (RAbstractVector) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractVector.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperInt(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position) || namesAssigned;
-                        }
-                        result[position++] = unlistValueInt(rAbstractVector.getDataAtAsObject(j));
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position) || namesAssigned;
-                    }
-                    result[position++] = unlistValueInt(cur);
                 }
-            }
-
-            if (namesAssigned) {
-                return RDataFactory.createIntVector(result, false, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createIntVector(result, false, names);
+                unlistHelperInt(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createIntVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else if (precedence == PrecedenceNode.DOUBLE_PRECEDENCE) {
             double[] result = new double[totalSize];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractVector) {
-                    RAbstractVector rAbstractVector = (RAbstractVector) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractVector.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperDouble(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position) || namesAssigned;
-                        }
-                        result[position++] = unlistValueDouble(rAbstractVector.getDataAtAsObject(j));
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position) || namesAssigned;
-                    }
-                    result[position++] = unlistValueDouble(cur);
                 }
-            }
-
-            if (namesAssigned) {
-                return RDataFactory.createDoubleVector(result, false, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createDoubleVector(result, false, names);
+                unlistHelperDouble(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createDoubleVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else if (precedence == PrecedenceNode.COMPLEX_PRECEDENCE) {
             double[] result = new double[totalSize << 1];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractVector) {
-                    RAbstractVector rAbstractVector = (RAbstractVector) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractVector.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperComplex(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position >> 1) || namesAssigned;
-                        }
-                        RComplex val = unlistValueComplex(rAbstractVector.getDataAtAsObject(j));
-                        result[position++] = val.getRealPart();
-                        result[position++] = val.getImaginaryPart();
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position >> 1) || namesAssigned;
-                    }
-                    RComplex val = unlistValueComplex(cur);
-                    result[position++] = val.getRealPart();
-                    result[position++] = val.getImaginaryPart();
                 }
-            }
-
-            if (namesAssigned) {
-                return RDataFactory.createComplexVector(result, false, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createComplexVector(result, false, names);
+                unlistHelperComplex(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createComplexVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else if (precedence == PrecedenceNode.STRING_PRECEDENCE) {
             String[] result = new String[totalSize];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractVector) {
-                    RAbstractVector rAbstractVector = (RAbstractVector) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractVector.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractVector.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperString(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractVector.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position) || namesAssigned;
-                        }
-                        result[position++] = unlistValueString(rAbstractVector.getDataAtAsObject(j));
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position) || namesAssigned;
-                    }
-                    result[position++] = unlistValueString(cur);
                 }
-            }
-
-            if (namesAssigned) {
-                return RDataFactory.createStringVector(result, false, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createStringVector(result, false, names);
+                unlistHelperString(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR,
+                            namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else if (precedence == PrecedenceNode.LIST_PRECEDENCE) {
             Object[] result = new Object[totalSize];
-            int position = 0;
-            RStringVector names = null;
-            String[] namesData = useNames ? new String[totalSize] : null;
-            boolean namesAssigned = false;
-            RStringVector listNames = null;
-            if (list.getNames() != RNull.instance) {
-                listNames = (RStringVector) list.getNames();
-            }
-            boolean namesComplete = listNames != null ? listNames.isComplete() : true;
-
-            for (int i = 0; i < list.getLength(); ++i) {
-                Object cur = list.getDataAt(i);
-                if (cur instanceof RAbstractContainer) {
-                    RAbstractContainer rAbstractContainer = (RAbstractContainer) cur;
-                    RStringVector orgNames = null;
-                    if (rAbstractContainer.getNames() != RNull.instance && useNames) {
-                        orgNames = (RStringVector) rAbstractContainer.getNames();
-                        namesComplete = namesComplete && orgNames.isComplete();
+            if (!rec) {
+                RStringVector listNames = withNames && list.getNames() != RNull.instance ? (RStringVector) list.getNames() : null;
+                int position = 0;
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.getDataAt(i) != RNull.instance) {
+                        position = unlistHelperList(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), rec, withNames);
                     }
-                    for (int j = 0; j < rAbstractContainer.getLength(); ++j) {
-                        if (useNames) {
-                            namesAssigned = assignName(orgNames, listNames, i, j, namesData, position) || namesAssigned;
-                        }
-                        result[position++] = rAbstractContainer.getDataAtAsObject(j);
-                    }
-                } else if (cur != RNull.instance) {
-                    if (useNames) {
-                        namesAssigned = assignListName(listNames, i, namesData, position) || namesAssigned;
-                    }
-                    result[position++] = cur;
                 }
-            }
-            if (namesAssigned) {
-                return RDataFactory.createList(result, RDataFactory.createStringVector(namesData, namesComplete));
             } else {
-                return RDataFactory.createList(result, names);
+                unlistHelperList(result, namesData, 0, namesInfo, list, null, null, rec, withNames);
             }
+            return RDataFactory.createList(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
         } else {
             throw Utils.nyi();
         }
     }
 
-    private static boolean assignListName(RStringVector listNames, int i, String[] namesData, int position) {
-        if (listNames == null || listNames.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-            namesData[position] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-            return false;
+    protected boolean isVectorList(RAbstractVector vector) {
+        return vector.getElementClass() == Object.class;
+    }
+
+    private static class NamesInfo {
+        public int count = 0;
+        public int seqNo = 0;
+        public int firstPos = 0;
+        public boolean namesAssigned = false;
+
+        public void reset() {
+            this.firstPos = -1;
+            this.seqNo = 0;
+            this.count = 0;
+        }
+    }
+
+    @SlowPath
+    private static int unlistHelperRaw(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperRaw(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position, namesData, namesInfo, useNames);
+                    result[position++] = unlistValueRaw(cur);
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position, namesData, namesInfo, useNames);
+            result[position++] = unlistValueRaw(o);
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    @SlowPath
+    private static int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperLogical(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position, namesData, namesInfo, useNames);
+                    result[position++] = unlistValueLogical(cur);
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position, namesData, namesInfo, useNames);
+            result[position++] = unlistValueLogical(o);
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    @SlowPath
+    private static int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperInt(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position, namesData, namesInfo, useNames);
+                    result[position++] = unlistValueInt(cur);
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position, namesData, namesInfo, useNames);
+            result[position++] = unlistValueInt(o);
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    @SlowPath
+    private static int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperDouble(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position, namesData, namesInfo, useNames);
+                    result[position++] = unlistValueDouble(cur);
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position, namesData, namesInfo, useNames);
+            result[position++] = unlistValueDouble(o);
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    @SlowPath
+    private static int unlistHelperComplex(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperComplex(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position >> 1, namesData, namesInfo, useNames);
+                    RComplex val = unlistValueComplex(cur);
+                    result[position++] = val.getRealPart();
+                    result[position++] = val.getImaginaryPart();
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position >> 1, namesData, namesInfo, useNames);
+            RComplex val = unlistValueComplex(o);
+            result[position++] = val.getRealPart();
+            result[position++] = val.getImaginaryPart();
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    @SlowPath
+    private static int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperList(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position, namesData, namesInfo, useNames);
+                    result[position++] = cur;
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position, namesData, namesInfo, useNames);
+            result[position++] = o;
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    @SlowPath
+    private static int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object o, String outerBase, String tag, boolean recursive, boolean useNames) {
+        int position = pos;
+        int saveFirstPos = 0;
+        int saveSeqNo = 0;
+        int saveCount = 0;
+        String base = outerBase;
+        if (tag != null) {
+            base = newBase(outerBase, tag);
+            saveFirstPos = namesInfo.firstPos;
+            saveSeqNo = namesInfo.seqNo;
+            saveCount = namesInfo.count;
+            namesInfo.reset();
+        }
+
+        if (o instanceof RAbstractVector) {
+            RAbstractVector v = (RAbstractVector) o;
+            RStringVector listNames = useNames && v.getNames() != RNull.instance ? (RStringVector) v.getNames() : null;
+            for (int i = 0; i < v.getLength(); ++i) {
+                String name = itemName(listNames, i);
+                Object cur = v.getDataAtAsObject(i);
+                if (v instanceof RList && recursive) {
+                    position = unlistHelperString(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                } else {
+                    assignName(name, base, position, namesData, namesInfo, useNames);
+                    result[position++] = unlistValueString(v.getDataAtAsObject(i));
+                }
+            }
+        } else if (o != RNull.instance) {
+            assignName(null, base, position, namesData, namesInfo, useNames);
+            result[position++] = unlistValueString(o);
+        }
+        fixupName(tag, base, namesData, namesInfo, useNames, saveFirstPos, saveCount, saveSeqNo);
+        return position;
+    }
+
+    private static void fixupName(String tag, String base, String[] namesData, NamesInfo namesInfo, boolean useNames, int saveFirstPos, int saveCount, int saveSeqNo) {
+        if (useNames) {
+            if (tag != null) {
+                if (namesInfo.firstPos >= 0 && namesInfo.count == 1) {
+                    namesData[namesInfo.firstPos] = base;
+                }
+                namesInfo.firstPos = saveFirstPos;
+                namesInfo.count = saveCount;
+            }
+            namesInfo.seqNo = namesInfo.seqNo + saveSeqNo;
+        }
+    }
+
+    private static void assignName(String name, String base, int position, String[] namesData, NamesInfo namesInfo, boolean useNames) {
+        if (useNames) {
+            if (name == null && namesInfo.count == 0) {
+                namesInfo.firstPos = position;
+            }
+            namesInfo.count++;
+            namesData[position] = newName(base, name, namesInfo);
+        }
+    }
+
+    private static String itemName(RStringVector names, int i) {
+        if (names == null || names.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
+            return null;
         } else {
-            namesData[position] = listNames.getDataAt(i);
-            return true;
+            return names.getDataAt(i);
+        }
+    }
+
+    private static String newBase(String base, String tag) {
+        if (base != null && tag != null) {
+            return createCompositeName(base, tag);
+        } else if (base != null) {
+            return base;
+        } else if (tag != null) {
+            return tag;
+        } else {
+            return RRuntime.NAMES_ATTR_EMPTY_VALUE;
         }
 
     }
 
-    private static boolean assignName(RStringVector orgNames, RStringVector listNames, int i, int j, String[] namesData, int position) {
-        if (orgNames == null) {
-            if (listNames == null || listNames.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                namesData[position] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                return false;
-            } else {
-                namesData[position] = createCompositeName(listNames.getDataAt(i), j + 1);
-                return true;
-            }
+    private static String newName(String base, String tag, NamesInfo namesInfo) {
+        namesInfo.seqNo++;
+        if (base != null && tag != null) {
+            namesInfo.namesAssigned = true;
+            return createCompositeName(base, tag);
+        } else if (base != null) {
+            namesInfo.namesAssigned = true;
+            return createCompositeName(base, namesInfo.seqNo);
+        } else if (tag != null) {
+            namesInfo.namesAssigned = true;
+            return tag;
         } else {
-            if (listNames == null || listNames.getDataAt(i).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                namesData[position] = orgNames.getDataAt(j);
-            } else {
-                if (orgNames.getDataAt(j).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                    namesData[position] = createCompositeName(listNames.getDataAt(i), j + 1);
-                } else {
-                    namesData[position] = createCompositeName(listNames.getDataAt(i), orgNames.getDataAt(j));
-                }
-            }
-            return true;
+            return RRuntime.NAMES_ATTR_EMPTY_VALUE;
         }
-
     }
 
     @SlowPath
@@ -481,7 +663,7 @@ public abstract class Unlist extends RBuiltinNode {
         return ((RRaw) dataAtAsObject).getValue();
     }
 
-    public static boolean isNonEmptyList(Object object) {
-        return object instanceof RList && ((RList) object).getLength() != 0;
+    public static boolean isEmpty(RAbstractVector vector) {
+        return vector.getLength() == 0;
     }
 }
