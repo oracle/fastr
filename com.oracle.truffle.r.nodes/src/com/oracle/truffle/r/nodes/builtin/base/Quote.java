@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -31,25 +32,18 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "quote", nonEvalArgs = {0}, kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "quote", nonEvalArgs = {0}, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"expr"})
 public abstract class Quote extends RBuiltinNode {
-    private static final String[] PARAMETER_NAMES = new String[]{"expr"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance)};
     }
 
-    public abstract Object execute(RPromise expr);
+    public abstract Object execute(VirtualFrame frame, RPromise expr);
 
     @Specialization
-    public RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    public RLanguage doQuote(VirtualFrame frame, @SuppressWarnings("unused") RMissing arg) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization

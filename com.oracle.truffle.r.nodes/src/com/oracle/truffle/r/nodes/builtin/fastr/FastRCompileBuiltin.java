@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
@@ -28,12 +28,13 @@ import java.lang.reflect.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.compile", kind = PRIMITIVE)
-public abstract class DebugCompileBuiltin extends RBuiltinNode {
+@RBuiltin(name = "fastr.compile", kind = PRIMITIVE)
+public abstract class FastRCompileBuiltin extends RBuiltinNode {
 
     static final class Compiler {
         private Class<?> optimizedCallTarget;
@@ -41,7 +42,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
 
         private Compiler() {
             try {
-                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget");
+                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
                 compileMethod = optimizedCallTarget.getDeclaredMethod("compile");
             } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
                 Utils.fail("DebugCompileBuiltin failed to find compile method");
@@ -70,7 +71,7 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
     private static final Compiler compiler = Compiler.getCompiler();
 
     @Specialization
-    public byte compileFunction(RFunction function) {
+    public byte compileFunction(VirtualFrame frame, RFunction function) {
         controlVisibility();
         if (compiler != null) {
             try {
@@ -78,15 +79,15 @@ public abstract class DebugCompileBuiltin extends RBuiltinNode {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte compileFunction(@SuppressWarnings("unused") Object arg) {
+    public byte compileFunction(VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
     }
 }

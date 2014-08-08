@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -28,7 +29,17 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     }
 
     private void initDispatchTypes(VirtualFrame frame) {
-        evaluatedArgs = callArgsNode.executeArray(frame);
+        // This is kind of tricky. We want to evaluate args before we know the function for which
+        // arguments should be matched. But as OpsGroupDispatchNode is for BinaryOperators, we can
+        // assume that arguments are in correct order!
+        RNode[] unevaluatedArgs = callArgsNode.getArguments();
+        Object[] evaledArgs = new Object[callArgsNode.getArguments().length];
+        for (int i = 0; i < evaledArgs.length; i++) {
+            evaledArgs[i] = unevaluatedArgs[i].execute(frame);
+        }
+        // Delay assignment to allow recursion
+        evaluatedArgs = evaledArgs;
+
         if (evaluatedArgs.length > 0) {
             this.typeL = getArgClass(evaluatedArgs[0]);
         }

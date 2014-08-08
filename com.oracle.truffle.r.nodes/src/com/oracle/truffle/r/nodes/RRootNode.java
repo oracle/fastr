@@ -26,22 +26,44 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 
+/**
+ * The base class for R code that can be executed, namely {@link FunctionDefinitionNode} and
+ * {@link RBuiltinNode}.
+ */
 public abstract class RRootNode extends RootNode {
 
-    private final Object[] parameterNames;
+    /**
+     * The formal arguments this function is supposed to take.
+     */
+    private final FormalArguments formalArguments;
 
-    protected RRootNode(SourceSection src, Object[] parameterNames, FrameDescriptor frameDescriptor) {
+    protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(src, frameDescriptor);
-        this.parameterNames = parameterNames;
+        this.formalArguments = formalArguments;
     }
 
+    /**
+     * @return The names of the {@link FormalArguments} this function expects
+     */
     public Object[] getParameterNames() {
-        return parameterNames;
+        return formalArguments.getNames();
     }
 
+    /**
+     * @return The number of parameters this functions expects
+     */
     public int getParameterCount() {
-        return parameterNames.length;
+        return formalArguments.getArgsCount();
+    }
+
+    /**
+     * @return {@link #formalArguments}
+     */
+    public FormalArguments getFormalArguments() {
+        return formalArguments;
     }
 
     @SlowPath

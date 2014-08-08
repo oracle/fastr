@@ -28,15 +28,14 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Temporary substitutions that just evaluates the expression for package loading and assume no
+ * Temporary substitutions that just evaluate the expression for package loading and assume no
  * errors or finallys.
  */
 public class TryFunctions {
-    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1})
+    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {0})
     public abstract static class Try extends RBuiltinNode {
 
         private static final String[] PARAMETER_NAMES = new String[]{"expr", "silent"};
@@ -54,11 +53,11 @@ public class TryFunctions {
         @Specialization
         public Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
-            return expr.getValue(frame);
+            return expr.evaluate(frame);
         }
     }
 
-    @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1}, lastParameterKind = LastParameterKind.VAR_ARGS_ALWAYS_ARRAY)
+    @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1})
     public abstract static class TryCatch extends RBuiltinNode {
 
         // Ignoring finally completely
@@ -83,7 +82,7 @@ public class TryFunctions {
         @Specialization
         public Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
             controlVisibility();
-            return expr.getValue(frame);
+            return expr.evaluate(frame);
         }
     }
 }

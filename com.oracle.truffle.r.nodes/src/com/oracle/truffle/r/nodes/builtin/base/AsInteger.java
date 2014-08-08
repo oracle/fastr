@@ -32,10 +32,8 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
-import com.sun.org.apache.xml.internal.utils.*;
 
-@RBuiltin(name = "as.integer", kind = PRIMITIVE)
+@RBuiltin(name = "as.integer", kind = PRIMITIVE, parameterNames = {"x", "..."})
 @SuppressWarnings("unused")
 public abstract class AsInteger extends RBuiltinNode {
 

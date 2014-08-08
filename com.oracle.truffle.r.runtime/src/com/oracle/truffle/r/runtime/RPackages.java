@@ -38,7 +38,7 @@ public class RPackages {
         }
     }
 
-    public static final String[] DEFAULT_PACKAGES = new String[]{"methods", "debug", "stats"};
+    public static final String[] DEFAULT_PACKAGES = new String[]{"methods", "fastr", "stats"};
     private static ArrayList<RPackage> packages = new ArrayList<>();
 
     /**

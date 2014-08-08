@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.matrix", kind = PRIMITIVE)
+@RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsMatrix extends RBuiltinNode {
 
     @Specialization

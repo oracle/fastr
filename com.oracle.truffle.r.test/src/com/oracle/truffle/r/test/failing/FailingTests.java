@@ -869,6 +869,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testInvisibleIgnore_d73dc3df8036b77c171c3b1e3e6abe2b() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testInvocationIgnore_6024770f1412c264dd004f2fa8bc6fbf() {
         assertEval("{ round( rnorm(1,), digits = 5 ) }");
     }
@@ -1101,6 +1106,11 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testOperatorsIgnore_dd8820aada824b55da8fce1b2069a4a8() {
         assertEval("{ `%*%`(3,5) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testOpsGroupDispatchLs_2b92f252b506f74c3dd61aa019e285ed() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }
 
     @Ignore

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -51,8 +52,8 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final void verifyDimensions(int[] newDimensions, SourceSection sourceSection) {
-        vector.verifyDimensions(newDimensions, sourceSection);
+    public final void verifyDimensions(VirtualFrame frame, int[] newDimensions, SourceSection sourceSection) {
+        vector.verifyDimensions(frame, newDimensions, sourceSection);
     }
 
     @Override

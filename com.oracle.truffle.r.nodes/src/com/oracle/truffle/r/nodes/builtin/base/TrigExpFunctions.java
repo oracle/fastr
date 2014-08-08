@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
@@ -39,22 +40,15 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class TrigExpFunctions {
 
     public static abstract class Adapter extends RBuiltinNode {
-        private static final String[] PARAMETER_NAMES = new String[]{"x"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
-
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
 
         @Specialization
-        public byte isType(@SuppressWarnings("unused") RMissing value) {
+        public byte isType(VirtualFrame frame, @SuppressWarnings("unused") RMissing value) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
     }
@@ -96,7 +90,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Exp extends AdapterCall1 {
         @Specialization
         public double exp(int x) {
@@ -124,7 +118,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class ExpM1 extends AdapterCall1 {
         @Specialization
         public double expm1(int x) {
@@ -152,7 +146,7 @@ public class TrigExpFunctions {
 
     }
 
-    @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Sin extends AdapterCall1 {
         @Specialization
         public double sin(int x) {
@@ -179,7 +173,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "cos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Cos extends AdapterCall1 {
 
         @Specialization
@@ -207,7 +201,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "tan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Tan extends AdapterCall1 {
 
         @Specialization
@@ -235,7 +229,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Asin extends AdapterCall1 {
         @Specialization
         public double asin(int x) {
@@ -262,7 +256,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Acos extends AdapterCall1 {
         @Specialization
         public double acos(int x) {
@@ -289,7 +283,7 @@ public class TrigExpFunctions {
         }
     }
 
-    @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Atan extends AdapterCall1 {
         @Specialization
         public double atan(int x) {
@@ -345,15 +339,8 @@ public class TrigExpFunctions {
      * {@code atan2} takes two args. To avoid combinatorial explosion in specializations we coerce
      * the {@code int} forms to {@code double}.
      */
-    @RBuiltin(name = "atan2", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "atan2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"y", "x"})
     public abstract static class Atan2 extends AdapterCall2 {
-
-        private static final String[] PARAMETER_NAMES = new String[]{"y", "x"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -375,13 +362,13 @@ public class TrigExpFunctions {
         }
 
         @Specialization(order = 10)
-        public Object atan(@SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, PARAMETER_NAMES[0]);
+        public Object atan(VirtualFrame frame, @SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
         }
 
         @Specialization(order = 11)
-        public Object atan(@SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, PARAMETER_NAMES[1]);
+        public Object atan(VirtualFrame frame, @SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
         }
 
         @Specialization(order = 0)

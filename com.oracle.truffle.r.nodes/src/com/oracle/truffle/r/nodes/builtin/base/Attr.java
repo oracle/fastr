@@ -25,13 +25,14 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "attr", kind = PRIMITIVE)
+@RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"})
 public abstract class Attr extends RBuiltinNode {
 
     private static Object searchKeyPartial(RAttributes attributes, String name) {
@@ -97,9 +98,9 @@ public abstract class Attr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 12, guards = "emptyName")
-    public Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
+    public Object attrEmtpyName(VirtualFrame frame, RAbstractContainer container, RStringVector name) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
     }
 
     protected boolean isRowNamesAttr(@SuppressWarnings("unused") RAbstractContainer container, String name) {

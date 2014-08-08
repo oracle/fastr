@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.object", kind = PRIMITIVE)
+@RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsObject extends RBuiltinNode {
 
     @Specialization

@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 
-@RBuiltin(name = "storage.mode<-", kind = PRIMITIVE)
+@RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class UpdateStorageMode extends RBuiltinNode {
 
     @Child private Typeof typeof;
@@ -36,7 +36,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         controlVisibility();
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
         String typeX = typeof.execute(frame, x);
         if (typeX.equals(value)) {
@@ -44,18 +44,18 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorFactory.create(new RNode[1], this.getBuiltin()));
+            isFactor = insert(IsFactorFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
         if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin()));
+            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
         }
         Object result = castTypeNode.execute(frame, x, value);
         if (result == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
         } else {
             if (x instanceof RAttributable && result instanceof RAttributable) {
                 RAttributable rx = (RAttributable) x;
@@ -75,21 +75,21 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Specialization(order = 1, guards = "isReal")
     public Object updateReal(VirtualFrame frame, final Object x, final String value) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.REAL, RRuntime.TYPE_DOUBLE);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.REAL, RRuntime.TYPE_DOUBLE);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = "isSingle")
     public Object updateSingle(VirtualFrame frame, final Object x, final String value) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.SINGLE, "mode<-");
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.SINGLE, "mode<-");
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 3)
     public Object update(VirtualFrame frame, final Object x, final Object value) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
     }
 
     @SuppressWarnings("unused")

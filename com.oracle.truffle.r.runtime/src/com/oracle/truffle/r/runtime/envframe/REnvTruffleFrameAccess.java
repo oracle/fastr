@@ -28,6 +28,7 @@ import java.util.stream.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -69,15 +70,36 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     @Override
     public void put(String key, Object value) throws PutException {
-        // check locking
+        // check locking, handled in superclass
         super.put(key, value);
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = fd.findFrameSlot(key);
-        if (slot != null) {
-            frame.setObject(slot, value);
+        FrameSlotKind slotKind = null;
+        if (slot == null) {
+            slotKind = RRuntime.getSlotKind(value);
+            if (slotKind != FrameSlotKind.Illegal) {
+                slot = fd.addFrameSlot(key, slotKind);
+            }
         } else {
-            slot = fd.addFrameSlot(key, FrameSlotKind.Object);
-            frame.setObject(slot, value);
+            slotKind = slot.getKind();
+        }
+        switch (slotKind) {
+            case Byte:
+                frame.setByte(slot, (byte) value);
+                break;
+            case Int:
+                frame.setInt(slot, (int) value);
+                break;
+            case Double:
+                frame.setDouble(slot, (double) value);
+                break;
+            case Object:
+                frame.setObject(slot, value);
+                break;
+            case Illegal:
+                break;
+            default:
+                throw new PutException(Message.GENERIC, "frame slot exception");
         }
     }
 

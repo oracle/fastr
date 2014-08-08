@@ -28,19 +28,14 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.nodes.Node.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "c", kind = PRIMITIVE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
-@NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
 @SuppressWarnings("unused")
 public abstract class Combine extends RBuiltinNode {
 
@@ -57,11 +52,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Child private PrecedenceNode precedenceNode;
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
     public abstract Object executeCombine(VirtualFrame frame, Object value);
-
-    public abstract String[] getArgNames();
 
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
@@ -75,11 +66,6 @@ public abstract class Combine extends RBuiltinNode {
             resultVector = resultVector.copy();
         }
         return resultVector;
-    }
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     protected Combine() {
@@ -193,7 +179,7 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization(guards = "hasArgNames")
     public RIntVector passArgs(int value) {
         controlVisibility();
-        return RDataFactory.createIntVector(new int[]{value}, true, RDataFactory.createStringVector(getArgNames(), true));
+        return RDataFactory.createIntVector(new int[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
@@ -205,7 +191,7 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization(guards = "hasArgNames")
     public RDoubleVector passArgs(double value) {
         controlVisibility();
-        return RDataFactory.createDoubleVector(new double[]{value}, true, RDataFactory.createStringVector(getArgNames(), true));
+        return RDataFactory.createDoubleVector(new double[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
@@ -217,7 +203,7 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization(guards = "hasArgNames")
     public RLogicalVector passArgs(byte value) {
         controlVisibility();
-        return RDataFactory.createLogicalVector(new byte[]{value}, true, RDataFactory.createStringVector(getArgNames(), true));
+        return RDataFactory.createLogicalVector(new byte[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
@@ -229,7 +215,7 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization(guards = "hasArgNames")
     public RStringVector passArgs(String value) {
         controlVisibility();
-        return RDataFactory.createStringVector(new String[]{value}, true, RDataFactory.createStringVector(getArgNames(), true));
+        return RDataFactory.createStringVector(new String[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
@@ -241,7 +227,7 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization(guards = "hasArgNames")
     public RRawVector passArgs(RRaw value) {
         controlVisibility();
-        return RDataFactory.createRawVector(new byte[]{value.getValue()}, RDataFactory.createStringVector(getArgNames(), true));
+        return RDataFactory.createRawVector(new byte[]{value.getValue()}, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
@@ -253,7 +239,7 @@ public abstract class Combine extends RBuiltinNode {
     @Specialization(guards = "hasArgNames")
     public RComplexVector passArgs(RComplex value) {
         controlVisibility();
-        return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, RDataFactory.createStringVector(getArgNames(), true));
+        return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     protected boolean isIntegerPrecedence(VirtualFrame frame, Object[] array) {
@@ -432,10 +418,10 @@ public abstract class Combine extends RBuiltinNode {
     public Object allLogicalArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castLogical(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castLogical(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castLogical(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castLogical(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeLogical(frame, current, other);
         }
         return current;
@@ -458,10 +444,10 @@ public abstract class Combine extends RBuiltinNode {
     public Object allIntArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castInteger(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castInteger(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castInteger(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castInteger(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeInteger(frame, current, other);
         }
         return current;
@@ -484,10 +470,10 @@ public abstract class Combine extends RBuiltinNode {
     public Object allDoubleArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castDouble(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castDouble(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castDouble(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castDouble(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeDouble(frame, current, other);
         }
         return current;
@@ -510,10 +496,10 @@ public abstract class Combine extends RBuiltinNode {
     public Object allComplexArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castComplex(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castComplex(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castComplex(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castComplex(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeComplex(frame, current, other);
         }
         return current;
@@ -536,10 +522,10 @@ public abstract class Combine extends RBuiltinNode {
     public Object allStringArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castString(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castString(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castString(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castString(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeString(frame, current, other);
         }
         return current;
@@ -562,10 +548,10 @@ public abstract class Combine extends RBuiltinNode {
     public Object allRawArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castRaw(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castRaw(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castRaw(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castRaw(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeRaw(frame, current, other);
         }
         return current;
@@ -587,17 +573,17 @@ public abstract class Combine extends RBuiltinNode {
     public Object listArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
-        Object current = castList(frame, namesMerge(currentVector, getArgNames()[0]));
+        Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
             RAbstractVector otherVector = castVector(frame, array[i]);
-            Object other = castList(frame, namesMerge(otherVector, getArgNames()[i]));
+            Object other = castList(frame, namesMerge(otherVector, getSuppliedArgsNames()[i]));
             current = foldOperation.executeList(frame, current, other);
         }
         return current;
     }
 
     public boolean hasArgNames() {
-        return getArgNames() != null;
+        return getSuppliedArgsNames() != null;
     }
 
     public boolean noArgNames() {

@@ -28,6 +28,7 @@ import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
@@ -45,36 +46,36 @@ public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 0)
-    public Object parse(RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
+    public Object parse(VirtualFrame frame, RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
             String[] lines = conn.readLines(0);
             return doParse(coalesce(lines));
         } catch (IOException | ParseException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 1)
-    public Object parse(RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
+    public Object parse(VirtualFrame frame, RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
             String[] lines = conn.readLines((int) n);
             return doParse(coalesce(lines));
         } catch (IOException | ParseException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 2, guards = "isText")
-    public Object parse(RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
+    public Object parse(VirtualFrame frame, RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
             return doParse(text);
         } catch (ParseException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 

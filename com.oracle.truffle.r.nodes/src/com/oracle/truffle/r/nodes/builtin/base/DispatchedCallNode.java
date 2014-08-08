@@ -26,12 +26,12 @@ public abstract class DispatchedCallNode extends RNode {
     protected Object[] args;
     protected RNode[] argNodes;
 
-    public static DispatchedCallNode create(final String genericName, final String dispatchType) {
-        return new UninitializedDispatchedCallNode(genericName, dispatchType);
+    public static DispatchedCallNode create(final String genericName, final String dispatchType, String[] suppliedArgsNames) {
+        return new UninitializedDispatchedCallNode(genericName, dispatchType, suppliedArgsNames);
     }
 
-    public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args) {
-        return new UninitializedDispatchedCallNode(genericName, dispatchType, args);
+    public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args, String[] suppliedArgsNames) {
+        return new UninitializedDispatchedCallNode(genericName, dispatchType, args, suppliedArgsNames);
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "RDotGroup is intended to be used as an identity")
@@ -53,21 +53,24 @@ public abstract class DispatchedCallNode extends RNode {
         protected final int depth;
         protected final String genericName;
         protected final String dispatchType;
+        protected final String[] suppliedArgsNames;
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType) {
+        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, String[] suppliedArgsNames) {
             this.genericName = genericName;
             this.depth = 0;
             this.dispatchType = dispatchType;
+            this.suppliedArgsNames = suppliedArgsNames;
         }
 
         private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
             this.genericName = copy.genericName;
             this.dispatchType = copy.dispatchType;
             this.depth = depth;
+            this.suppliedArgsNames = copy.suppliedArgsNames;
         }
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, final Object[] args) {
-            this(genericName, dispatchType);
+        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, final Object[] args, String[] suppliedArgsNames) {
+            this(genericName, dispatchType, suppliedArgsNames);
             this.args = args;
         }
 
@@ -90,7 +93,7 @@ public abstract class DispatchedCallNode extends RNode {
 
         protected DispatchNode createCurrentNode(RStringVector type) {
             if (this.dispatchType == RRuntime.USE_METHOD) {
-                return new UseMethodDispatchNode(this.genericName, type);
+                return new UseMethodDispatchNode(this.genericName, type, this.suppliedArgsNames);
             }
             if (this.dispatchType == RRuntime.NEXT_METHOD) {
                 return new NextMethodDispatchNode(this.genericName, type, this.args);

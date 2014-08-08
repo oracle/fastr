@@ -27,15 +27,14 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "options", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
-@NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "options", kind = SUBSTITUTE)
 /**
  * N.B. In the general case of option assignment via parameter names, the value may be of any type (i.e. {@code Object},
  * so we cannot (currently) specialize on any specific types, owing to the "stuck specialization" bug.
@@ -49,8 +48,6 @@ public abstract class Options extends RBuiltinNode {
     public Object[] getParameterNames() {
         return PARAMETER_NAMES;
     }
-
-    public abstract String[] getArgNames();
 
     // @Specialization
     private RList options(@SuppressWarnings("unused") RMissing x) {
@@ -68,13 +65,13 @@ public abstract class Options extends RBuiltinNode {
     }
 
     @Specialization
-    public Object options(Object args) {
+    public Object options(VirtualFrame frame, Object args) {
         controlVisibility();
         if (args instanceof RMissing) {
             return options((RMissing) args);
         } else {
             Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
-            String[] argNames = getArgNames();
+            String[] argNames = getSuppliedArgsNames();
             Object[] data = new Object[values.length];
             String[] names = new String[values.length];
             // getting
@@ -89,7 +86,7 @@ public abstract class Options extends RBuiltinNode {
                     } else if (value instanceof String) {
                         optionName = (String) value;
                     } else {
-                        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
+                        throw RError.error(frame, getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
                     }
                     Object optionVal = ROptions.getValue(optionName);
                     data[i] = optionVal == null ? RNull.instance : optionVal;

@@ -33,10 +33,9 @@ import com.oracle.truffle.r.runtime.*;
 public final class FunctionDefinitionNode extends RRootNode {
 
     /**
-     * The "parent" of this environment instance is the lexically enclosing environment when the
-     * function was defined.
+     * Identifies the lexical scope where this function is defined, through the "parent" field.
      */
-    private final REnvironment.FunctionDefinition descriptor;
+    private final REnvironment.FunctionDefinition funcEnv;
     private final RNode uninitializedBody;
     @Child private RNode body;
     private final String description;
@@ -56,17 +55,17 @@ public final class FunctionDefinitionNode extends RRootNode {
      */
     private final BranchProfile returnProfile = new BranchProfile();
 
-    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition descriptor, RNode body, Object[] parameterNames, String description, boolean substituteFrame) {
-        super(src, parameterNames, descriptor.getDescriptor());
-        this.descriptor = descriptor;
+    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
+        super(src, formals, funcEnv.getDescriptor());
+        this.funcEnv = funcEnv;
         this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
     }
 
-    public REnvironment getDescriptor() {
-        return descriptor;
+    public REnvironment.FunctionDefinition getEnv() {
+        return funcEnv;
     }
 
     @Override
@@ -98,7 +97,7 @@ public final class FunctionDefinitionNode extends RRootNode {
 
     @Override
     public RootNode split() {
-        return new FunctionDefinitionNode(getSourceSection(), descriptor, NodeUtil.cloneNode(uninitializedBody), getParameterNames(), description, false);
+        return new FunctionDefinitionNode(getSourceSection(), funcEnv, NodeUtil.cloneNode(uninitializedBody), getFormalArguments(), description, false);
     }
 
 }

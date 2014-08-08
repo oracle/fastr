@@ -184,5 +184,4 @@ public abstract class RNode extends Node {
     public static boolean areSameLength(RAbstractVector a, RAbstractVector b) {
         return a.getLength() == b.getLength();
     }
-
 }

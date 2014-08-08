@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class EnvFunctions {
 
-    @RBuiltin(name = "as.environment", kind = PRIMITIVE)
+    @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"})
     public abstract static class AsEnvironment extends RBuiltinNode {
 
         @Specialization
@@ -46,20 +46,20 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public REnvironment asEnvironment(double dpos) {
+        public REnvironment asEnvironment(VirtualFrame frame, double dpos) {
             controlVisibility();
-            return asEnvironment((int) dpos);
+            return asEnvironmentInt(frame, (int) dpos);
         }
 
         @Specialization
-        public REnvironment asEnvironment(int pos) {
+        public REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
             controlVisibility();
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
-                    return REnvironment.frameToEnvironment(callerFrame);
+                    return REnvironment.frameToEnvironment(callerFrame.materialize());
                 }
 
             }
@@ -69,14 +69,14 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
             }
         }
 
         @Specialization
-        public REnvironment asEnvironment(String name) {
+        public REnvironment asEnvironment(VirtualFrame frame, String name) {
             controlVisibility();
             String[] searchPath = REnvironment.searchPath();
             for (String e : searchPath) {
@@ -84,7 +84,7 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
         }
 
     }
@@ -126,10 +126,10 @@ public class EnvFunctions {
     public abstract static class ParentEnv extends RBuiltinNode {
 
         @Specialization
-        public REnvironment parentenv(REnvironment env) {
+        public REnvironment parentenv(VirtualFrame frame, REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
         }
@@ -140,10 +140,10 @@ public class EnvFunctions {
     public abstract static class SetParentEnv extends RBuiltinNode {
 
         @Specialization
-        public REnvironment setParentenv(REnvironment env, REnvironment parent) {
+        public REnvironment setParentenv(VirtualFrame frame, REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
             return env;
@@ -151,7 +151,7 @@ public class EnvFunctions {
 
     }
 
-    @RBuiltin(name = "is.environment", kind = PRIMITIVE)
+    @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class IsEnvironment extends RBuiltinNode {
 
         @Specialization
@@ -168,26 +168,28 @@ public class EnvFunctions {
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-            return REnvironment.frameToEnvironment(callerFrame);
+            return REnvironment.frameToEnvironment(callerFrame.materialize());
         }
 
         /**
-         * Returns the environment that {@code func} was created in.
+         * Returns the environment that {@code func} was created in. N.B. In current Truffle we
+         * cannot both have a specialization for {@link RFunction} and one for {@link Object}, but
+         * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
          */
         @Specialization(order = 1)
-        public REnvironment environment(RFunction func) {
+        public Object environment(Object funcArg) {
             controlVisibility();
-            Frame enclosing = func.getEnclosingFrame();
-            REnvironment env = RArguments.getEnvironment(enclosing);
-            return env == null ? REnvironment.lexicalChain(enclosing) : env;
+            if (funcArg instanceof RFunction) {
+                RFunction func = (RFunction) funcArg;
+                Frame enclosing = func.getEnclosingFrame();
+                REnvironment env = RArguments.getEnvironment(enclosing);
+                return env == null ? REnvironment.lexicalChain(enclosing.materialize()) : env;
+            } else {
+                // Not an error according to GnuR
+                return RNull.instance;
+            }
         }
 
-        @Specialization(order = 100)
-        public RNull environment(@SuppressWarnings("unused") Object x) {
-            controlVisibility();
-            // Not an error according to GnuR
-            return RNull.instance;
-        }
     }
 
     @RBuiltin(name = "environmentName", kind = INTERNAL)
@@ -223,7 +225,7 @@ public class EnvFunctions {
             // TODO this will eventually go away when R code fixed when promises available
             controlVisibility();
             // FIXME what if hash == FALSE?
-            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame), size);
+            return new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), size);
         }
 
         @Specialization

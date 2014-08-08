@@ -29,15 +29,15 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "sprintf", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "sprintf", kind = SUBSTITUTE)
 // TODO INTERNAL
 public abstract class Sprintf extends RBuiltinNode {
 
@@ -91,36 +91,36 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(order = 30)
-    public String sprintf(String fmt, double x) {
+    public String sprintf(VirtualFrame frame, String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
         if (f == 'x' || f == 'd') {
             if (Math.floor(x) == x) {
                 return format(fmt, (long) x);
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
         }
         return format(fmt, x);
     }
 
     @Specialization(order = 31, guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, double x) {
-        return sprintf(fmt.getDataAt(0), x);
+    public String sprintf(VirtualFrame frame, RAbstractStringVector fmt, double x) {
+        return sprintf(frame, fmt.getDataAt(0), x);
     }
 
     @Specialization(order = 40)
-    public RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
+    public RStringVector sprintf(VirtualFrame frame, String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
-            r[k] = sprintf(fmt, x.getDataAt(k));
+            r[k] = sprintf(frame, fmt, x.getDataAt(k));
         }
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(order = 41, guards = "fmtLengthOne")
-    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
-        return sprintf(fmt.getDataAt(0), x);
+    public RStringVector sprintf(VirtualFrame frame, RAbstractStringVector fmt, RAbstractDoubleVector x) {
+        return sprintf(frame, fmt.getDataAt(0), x);
     }
 
     @Specialization(order = 50)

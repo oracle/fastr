@@ -80,12 +80,12 @@ public abstract class MatMult extends RBuiltinNode {
     // double-double
 
     @Specialization(order = 10, guards = "matmat")
-    public RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
+    public RDoubleVector matmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
@@ -105,10 +105,10 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 11, guards = "vecvec")
-    public RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
+    public RDoubleVector vecvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         double result = 0.0;
         na.enable(true);
@@ -120,12 +120,12 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 12, guards = "matvec")
-    public RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
+    public RDoubleVector matvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(true);
         if (aCols != 1) {
@@ -153,12 +153,12 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 13, guards = "vecmat")
-    public RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
+    public RDoubleVector vecmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
         final int bCols = b.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (bRows != 1 && bRows != a.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(true);
         if (bRows != 1) {
@@ -188,12 +188,12 @@ public abstract class MatMult extends RBuiltinNode {
     // complex-complex
 
     @Specialization(order = 20, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractComplexVector a, RAbstractComplexVector b) {
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractComplexVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
@@ -203,7 +203,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int col = 0; col < bCols; ++col) {
                 RComplex x = RDataFactory.createComplexZero();
                 for (int k = 0; k < aCols; ++k) {
-                    x = add.doComplex(x, mult.doComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                    x = add.doComplex(frame, x, mult.doComplex(frame, a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
                     na.check(x);
                 }
                 final int index = 2 * (col * aRows + row);
@@ -215,27 +215,27 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 21, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractComplexVector b) {
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractComplexVector b) {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         RComplex result = RDataFactory.createComplexZero();
         na.enable(true);
         for (int k = 0; k < a.getLength(); ++k) {
-            result = add.doComplex(result, mult.doComplex(a.getDataAt(k), b.getDataAt(k)));
+            result = add.doComplex(frame, result, mult.doComplex(frame, a.getDataAt(k), b.getDataAt(k)));
             na.check(result);
         }
         return RDataFactory.createComplexVector(new double[]{result.getRealPart(), result.getImaginaryPart()}, na.neverSeenNA(), new int[]{1, 1});
     }
 
     @Specialization(order = 22, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractComplexVector a, RAbstractComplexVector b) {
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractComplexVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(true);
         if (aCols != 1) {
@@ -243,7 +243,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int row = 0; row < aRows; ++row) {
                 RComplex x = RDataFactory.createComplexZero();
                 for (int k = 0; k < b.getLength(); ++k) {
-                    x = add.doComplex(x, mult.doComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                    x = add.doComplex(frame, x, mult.doComplex(frame, a.getDataAt(k * aRows + row), b.getDataAt(k)));
                     na.check(x);
                 }
                 result[row << 1] = x.getRealPart();
@@ -254,7 +254,7 @@ public abstract class MatMult extends RBuiltinNode {
             double[] result = new double[aRows * b.getLength() << 1];
             for (int row = 0; row < aRows; ++row) {
                 for (int k = 0; k < b.getLength(); ++k) {
-                    RComplex x = mult.doComplex(a.getDataAt(row), b.getDataAt(k));
+                    RComplex x = mult.doComplex(frame, a.getDataAt(row), b.getDataAt(k));
                     na.check(x);
                     result[(k * aRows + row) << 1] = x.getRealPart();
                     result[(k * aRows + row) << 1 + 1] = x.getRealPart();
@@ -265,12 +265,12 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 23, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractComplexVector b) {
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractComplexVector b) {
         controlVisibility();
         final int bRows = b.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
         if (bRows != 1 && bRows != a.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(true);
         if (bRows != 1) {
@@ -278,7 +278,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int k = 0; k < bCols; ++k) {
                 RComplex x = RDataFactory.createComplexZero();
                 for (int row = 0; row < a.getLength(); ++row) {
-                    x = add.doComplex(x, mult.doComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                    x = add.doComplex(frame, x, mult.doComplex(frame, a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
                     na.check(x);
                 }
                 result[k << 1] = x.getRealPart();
@@ -289,7 +289,7 @@ public abstract class MatMult extends RBuiltinNode {
             double[] result = new double[(bCols * a.getLength()) << 1];
             for (int row = 0; row < a.getLength(); ++row) {
                 for (int k = 0; k < bCols; ++k) {
-                    RComplex x = mult.doComplex(a.getDataAt(row), b.getDataAt(k));
+                    RComplex x = mult.doComplex(frame, a.getDataAt(row), b.getDataAt(k));
                     na.check(x);
                     result[(k * a.getLength() + row) << 1] = x.getRealPart();
                     result[(k * a.getLength() + row) << 1 + 1] = x.getImaginaryPart();
@@ -302,12 +302,12 @@ public abstract class MatMult extends RBuiltinNode {
     // int-int
 
     @Specialization(order = 30, guards = "matmat")
-    public RIntVector matmatmult(RAbstractIntVector a, RAbstractIntVector b) {
+    public RIntVector matmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractIntVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
@@ -327,10 +327,10 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 31, guards = "vecvec")
-    public RIntVector vecvecmult(RAbstractIntVector a, RAbstractIntVector b) {
+    public RIntVector vecvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractIntVector b) {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         int result = 0;
         na.enable(result);
@@ -342,12 +342,12 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 32, guards = "matvec")
-    public RIntVector matvecmult(RAbstractIntVector a, RAbstractIntVector b) {
+    public RIntVector matvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractIntVector b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(true);
         if (aCols != 1) {
@@ -375,12 +375,12 @@ public abstract class MatMult extends RBuiltinNode {
     }
 
     @Specialization(order = 33, guards = "vecmat")
-    public RIntVector vecmatmult(RAbstractIntVector a, RAbstractIntVector b) {
+    public RIntVector vecmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractIntVector b) {
         controlVisibility();
         final int bCols = b.getDimensions()[1];
         final int bRows = b.getDimensions()[0];
         if (bRows != 1 && bRows != a.getLength()) {
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(true);
         if (bRows != 1) {
@@ -410,295 +410,295 @@ public abstract class MatMult extends RBuiltinNode {
     // logical-logical
 
     @Specialization(order = 40, guards = "matmat")
-    public RIntVector matmatmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return matmatmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+    public RIntVector matmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractLogicalVector b) {
+        return matmatmult(frame, RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
     }
 
     @Specialization(order = 41, guards = "vecvec")
-    public RIntVector vecvecmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return vecvecmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+    public RIntVector vecvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractLogicalVector b) {
+        return vecvecmult(frame, RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
     }
 
     @Specialization(order = 42, guards = "matvec")
-    public RIntVector matvecmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return matvecmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+    public RIntVector matvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractLogicalVector b) {
+        return matvecmult(frame, RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
     }
 
     @Specialization(order = 43, guards = "vecmat")
-    public RIntVector vecmatmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return vecmatmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+    public RIntVector vecmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractLogicalVector b) {
+        return vecmatmult(frame, RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
     }
 
     // to int
 
     @Specialization(order = 50, guards = "matmat")
-    public RIntVector matmatmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return matmatmult(RClosures.createLogicalToIntVector(a, na), b);
+    public RIntVector matmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractIntVector b) {
+        return matmatmult(frame, RClosures.createLogicalToIntVector(a, na), b);
     }
 
     @Specialization(order = 51, guards = "vecvec")
-    public RIntVector vecvecmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return vecvecmult(RClosures.createLogicalToIntVector(a, na), b);
+    public RIntVector vecvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractIntVector b) {
+        return vecvecmult(frame, RClosures.createLogicalToIntVector(a, na), b);
     }
 
     @Specialization(order = 52, guards = "matvec")
-    public RIntVector matvecmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return matvecmult(RClosures.createLogicalToIntVector(a, na), b);
+    public RIntVector matvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractIntVector b) {
+        return matvecmult(frame, RClosures.createLogicalToIntVector(a, na), b);
     }
 
     @Specialization(order = 53, guards = "vecmat")
-    public RIntVector vecmatmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return vecmatmult(RClosures.createLogicalToIntVector(a, na), b);
+    public RIntVector vecmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractIntVector b) {
+        return vecmatmult(frame, RClosures.createLogicalToIntVector(a, na), b);
     }
 
     @Specialization(order = 54, guards = "matmat")
-    public RIntVector matmatmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToIntVector(b, na));
+    public RIntVector matmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractLogicalVector b) {
+        return matmatmult(frame, a, RClosures.createLogicalToIntVector(b, na));
     }
 
     @Specialization(order = 55, guards = "vecvec")
-    public RIntVector vecvecmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToIntVector(b, na));
+    public RIntVector vecvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractLogicalVector b) {
+        return vecvecmult(frame, a, RClosures.createLogicalToIntVector(b, na));
     }
 
     @Specialization(order = 56, guards = "matvec")
-    public RIntVector matvecmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToIntVector(b, na));
+    public RIntVector matvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractLogicalVector b) {
+        return matvecmult(frame, a, RClosures.createLogicalToIntVector(b, na));
     }
 
     @Specialization(order = 57, guards = "vecmat")
-    public RIntVector vecmatmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToIntVector(b, na));
+    public RIntVector vecmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractLogicalVector b) {
+        return vecmatmult(frame, a, RClosures.createLogicalToIntVector(b, na));
     }
 
     // to complex
 
     @Specialization(order = 60, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createIntToComplexVector(a, na), b);
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractComplexVector b) {
+        return matmatmult(frame, RClosures.createIntToComplexVector(a, na), b);
     }
 
     @Specialization(order = 61, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createIntToComplexVector(a, na), b);
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractComplexVector b) {
+        return vecvecmult(frame, RClosures.createIntToComplexVector(a, na), b);
     }
 
     @Specialization(order = 62, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createIntToComplexVector(a, na), b);
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractComplexVector b) {
+        return matvecmult(frame, RClosures.createIntToComplexVector(a, na), b);
     }
 
     @Specialization(order = 63, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createIntToComplexVector(a, na), b);
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractComplexVector b) {
+        return vecmatmult(frame, RClosures.createIntToComplexVector(a, na), b);
     }
 
     @Specialization(order = 65, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return matmatmult(a, RClosures.createIntToComplexVector(b, na));
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractIntVector b) {
+        return matmatmult(frame, a, RClosures.createIntToComplexVector(b, na));
     }
 
     @Specialization(order = 66, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return vecvecmult(a, RClosures.createIntToComplexVector(b, na));
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractIntVector b) {
+        return vecvecmult(frame, a, RClosures.createIntToComplexVector(b, na));
     }
 
     @Specialization(order = 67, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return matvecmult(a, RClosures.createIntToComplexVector(b, na));
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractIntVector b) {
+        return matvecmult(frame, a, RClosures.createIntToComplexVector(b, na));
     }
 
     @Specialization(order = 68, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return vecmatmult(a, RClosures.createIntToComplexVector(b, na));
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractIntVector b) {
+        return vecmatmult(frame, a, RClosures.createIntToComplexVector(b, na));
     }
 
     @Specialization(order = 70, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createLogicalToComplexVector(a, na), b);
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractComplexVector b) {
+        return matmatmult(frame, RClosures.createLogicalToComplexVector(a, na), b);
     }
 
     @Specialization(order = 71, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createLogicalToComplexVector(a, na), b);
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractComplexVector b) {
+        return vecvecmult(frame, RClosures.createLogicalToComplexVector(a, na), b);
     }
 
     @Specialization(order = 72, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createLogicalToComplexVector(a, na), b);
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractComplexVector b) {
+        return matvecmult(frame, RClosures.createLogicalToComplexVector(a, na), b);
     }
 
     @Specialization(order = 73, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createLogicalToComplexVector(a, na), b);
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractComplexVector b) {
+        return vecmatmult(frame, RClosures.createLogicalToComplexVector(a, na), b);
     }
 
     @Specialization(order = 75, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToComplexVector(b, na));
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractLogicalVector b) {
+        return matmatmult(frame, a, RClosures.createLogicalToComplexVector(b, na));
     }
 
     @Specialization(order = 76, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToComplexVector(b, na));
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractLogicalVector b) {
+        return vecvecmult(frame, a, RClosures.createLogicalToComplexVector(b, na));
     }
 
     @Specialization(order = 77, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToComplexVector(b, na));
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractLogicalVector b) {
+        return matvecmult(frame, a, RClosures.createLogicalToComplexVector(b, na));
     }
 
     @Specialization(order = 78, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToComplexVector(b, na));
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractLogicalVector b) {
+        return vecmatmult(frame, a, RClosures.createLogicalToComplexVector(b, na));
     }
 
     @Specialization(order = 80, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createDoubleToComplexVector(a, na), b);
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractComplexVector b) {
+        return matmatmult(frame, RClosures.createDoubleToComplexVector(a, na), b);
     }
 
     @Specialization(order = 81, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createDoubleToComplexVector(a, na), b);
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractComplexVector b) {
+        return vecvecmult(frame, RClosures.createDoubleToComplexVector(a, na), b);
     }
 
     @Specialization(order = 82, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createDoubleToComplexVector(a, na), b);
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractComplexVector b) {
+        return matvecmult(frame, RClosures.createDoubleToComplexVector(a, na), b);
     }
 
     @Specialization(order = 83, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createDoubleToComplexVector(a, na), b);
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractComplexVector b) {
+        return vecmatmult(frame, RClosures.createDoubleToComplexVector(a, na), b);
     }
 
     @Specialization(order = 85, guards = "matmat")
-    public RComplexVector matmatmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return matmatmult(a, RClosures.createDoubleToComplexVector(b, na));
+    public RComplexVector matmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractDoubleVector b) {
+        return matmatmult(frame, a, RClosures.createDoubleToComplexVector(b, na));
     }
 
     @Specialization(order = 86, guards = "vecvec")
-    public RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return vecvecmult(a, RClosures.createDoubleToComplexVector(b, na));
+    public RComplexVector vecvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractDoubleVector b) {
+        return vecvecmult(frame, a, RClosures.createDoubleToComplexVector(b, na));
     }
 
     @Specialization(order = 87, guards = "matvec")
-    public RComplexVector matvecmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return matvecmult(a, RClosures.createDoubleToComplexVector(b, na));
+    public RComplexVector matvecmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractDoubleVector b) {
+        return matvecmult(frame, a, RClosures.createDoubleToComplexVector(b, na));
     }
 
     @Specialization(order = 88, guards = "vecmat")
-    public RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return vecmatmult(a, RClosures.createDoubleToComplexVector(b, na));
+    public RComplexVector vecmatmult(VirtualFrame frame, RAbstractComplexVector a, RAbstractDoubleVector b) {
+        return vecmatmult(frame, a, RClosures.createDoubleToComplexVector(b, na));
     }
 
     // to double
 
     @Specialization(order = 90, guards = "matmat")
-    public RDoubleVector matmatmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return matmatmult(RClosures.createIntToDoubleVector(a, na), b);
+    public RDoubleVector matmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractDoubleVector b) {
+        return matmatmult(frame, RClosures.createIntToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 91, guards = "vecvec")
-    public RDoubleVector vecvecmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return vecvecmult(RClosures.createIntToDoubleVector(a, na), b);
+    public RDoubleVector vecvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractDoubleVector b) {
+        return vecvecmult(frame, RClosures.createIntToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 92, guards = "matvec")
-    public RDoubleVector matvecmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return matvecmult(RClosures.createIntToDoubleVector(a, na), b);
+    public RDoubleVector matvecmult(VirtualFrame frame, RAbstractIntVector a, RAbstractDoubleVector b) {
+        return matvecmult(frame, RClosures.createIntToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 93, guards = "vecmat")
-    public RDoubleVector vecmatmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return vecmatmult(RClosures.createIntToDoubleVector(a, na), b);
+    public RDoubleVector vecmatmult(VirtualFrame frame, RAbstractIntVector a, RAbstractDoubleVector b) {
+        return vecmatmult(frame, RClosures.createIntToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 95, guards = "matmat")
-    public RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return matmatmult(a, RClosures.createIntToDoubleVector(b, na));
+    public RDoubleVector matmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractIntVector b) {
+        return matmatmult(frame, a, RClosures.createIntToDoubleVector(b, na));
     }
 
     @Specialization(order = 96, guards = "vecvec")
-    public RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return vecvecmult(a, RClosures.createIntToDoubleVector(b, na));
+    public RDoubleVector vecvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractIntVector b) {
+        return vecvecmult(frame, a, RClosures.createIntToDoubleVector(b, na));
     }
 
     @Specialization(order = 97, guards = "matvec")
-    public RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return matvecmult(a, RClosures.createIntToDoubleVector(b, na));
+    public RDoubleVector matvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractIntVector b) {
+        return matvecmult(frame, a, RClosures.createIntToDoubleVector(b, na));
     }
 
     @Specialization(order = 98, guards = "vecmat")
-    public RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return vecmatmult(a, RClosures.createIntToDoubleVector(b, na));
+    public RDoubleVector vecmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractIntVector b) {
+        return vecmatmult(frame, a, RClosures.createIntToDoubleVector(b, na));
     }
 
     @Specialization(order = 100, guards = "matmat")
-    public RDoubleVector matmatmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return matmatmult(RClosures.createLogicalToDoubleVector(a, na), b);
+    public RDoubleVector matmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractDoubleVector b) {
+        return matmatmult(frame, RClosures.createLogicalToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 101, guards = "vecvec")
-    public RDoubleVector vecvecmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return vecvecmult(RClosures.createLogicalToDoubleVector(a, na), b);
+    public RDoubleVector vecvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractDoubleVector b) {
+        return vecvecmult(frame, RClosures.createLogicalToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 102, guards = "matvec")
-    public RDoubleVector matvecmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return matvecmult(RClosures.createLogicalToDoubleVector(a, na), b);
+    public RDoubleVector matvecmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractDoubleVector b) {
+        return matvecmult(frame, RClosures.createLogicalToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 103, guards = "vecmat")
-    public RDoubleVector vecmatmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return vecmatmult(RClosures.createLogicalToDoubleVector(a, na), b);
+    public RDoubleVector vecmatmult(VirtualFrame frame, RAbstractLogicalVector a, RAbstractDoubleVector b) {
+        return vecmatmult(frame, RClosures.createLogicalToDoubleVector(a, na), b);
     }
 
     @Specialization(order = 105, guards = "matmat")
-    public RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToDoubleVector(b, na));
+    public RDoubleVector matmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractLogicalVector b) {
+        return matmatmult(frame, a, RClosures.createLogicalToDoubleVector(b, na));
     }
 
     @Specialization(order = 106, guards = "vecvec")
-    public RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToDoubleVector(b, na));
+    public RDoubleVector vecvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractLogicalVector b) {
+        return vecvecmult(frame, a, RClosures.createLogicalToDoubleVector(b, na));
     }
 
     @Specialization(order = 107, guards = "matvec")
-    public RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToDoubleVector(b, na));
+    public RDoubleVector matvecmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractLogicalVector b) {
+        return matvecmult(frame, a, RClosures.createLogicalToDoubleVector(b, na));
     }
 
     @Specialization(order = 108, guards = "vecmat")
-    public RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToDoubleVector(b, na));
+    public RDoubleVector vecmatmult(VirtualFrame frame, RAbstractDoubleVector a, RAbstractLogicalVector b) {
+        return vecmatmult(frame, a, RClosures.createLogicalToDoubleVector(b, na));
     }
 
     // errors
 
     @SuppressWarnings("unused")
     @Specialization(order = 200)
-    public RDoubleVector doRaw(RAbstractRawVector a, Object b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+    public RDoubleVector doRaw(VirtualFrame frame, RAbstractRawVector a, Object b) {
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 201)
-    public RDoubleVector doRaw(Object a, RAbstractRawVector b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+    public RDoubleVector doRaw(VirtualFrame frame, Object a, RAbstractRawVector b) {
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 205)
-    public RDoubleVector doString(RAbstractStringVector a, Object b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+    public RDoubleVector doString(VirtualFrame frame, RAbstractStringVector a, Object b) {
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 206)
-    public RDoubleVector doString(Object a, RAbstractStringVector b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+    public RDoubleVector doString(VirtualFrame frame, Object a, RAbstractStringVector b) {
+        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     // guards

@@ -20,11 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -32,9 +33,9 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "debug.tree", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.tree", kind = PRIMITIVE)
 @RBuiltinComment("Prints the Truffle tree of a function. Use debug.tree(a, TRUE) for more detailed output.")
-public abstract class DebugTreeBuiltin extends RBuiltinNode {
+public abstract class FastRTreeBuiltin extends RBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"function", "verbose"};
 
@@ -60,8 +61,8 @@ public abstract class DebugTreeBuiltin extends RBuiltinNode {
     }
 
     @Specialization
-    public RNull printTree(Object function, @SuppressWarnings("unused") Object verbose) {
+    public RNull printTree(VirtualFrame frame, Object function, @SuppressWarnings("unused") Object verbose) {
         controlVisibility();
-        throw RError.error(RError.Message.INVALID_VALUE, RRuntime.toString(function));
+        throw RError.error(frame, RError.Message.INVALID_VALUE, RRuntime.toString(function));
     }
 }

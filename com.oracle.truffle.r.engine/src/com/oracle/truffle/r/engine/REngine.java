@@ -27,12 +27,13 @@ import java.util.*;
 
 import org.antlr.runtime.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.*;
@@ -128,13 +129,13 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, envForFrame, printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, REnvironment.globalEnv(), printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult);
     }
 
     public class ParseException extends Exception {
@@ -190,7 +191,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object eval(RLanguage expr, VirtualFrame frame) {
-        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
+        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep());
         return runCall(callTarget, frame, false, false);
 
     }
@@ -201,9 +202,17 @@ public final class REngine implements RContext.Engine {
      * {@link VirtualFrame}, that is a logical clone of "f", evaluate in that, and then update "f"
      * on return.
      *
+     * N.B. The implementation should do its utmost to avoid calling this method as it is inherently
+     * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
+     * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
+     *
+     * TODO The check to patch the enclosing frame for {@code RFunctions} defined during the eval is
+     * painful and perhaps inadequate (should we be deep analysis of the result?). Can we find a way
+     * to avoid the patch? and get the enclosing frame correct on definition?
+     *
      */
     private static Object eval(RFunction function, RNode exprRep, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) throws PutException {
-        RootCallTarget callTarget = makeCallTarget(exprRep, REnvironment.globalEnv());
+        RootCallTarget callTarget = makeCallTarget(exprRep);
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createFunctionFrame(function);
         // We make the new frame look like it was a real call to "function".
@@ -211,31 +220,38 @@ public final class REngine implements RContext.Engine {
         RArguments.setFunction(vFrame, function);
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();
-        // Copy existing bindings
-        for (FrameSlot slot : envfd.getSlots()) {
+        // Copy existing bindings. Logically we want to clone the existing frame contents.
+        // N.B. Since FrameDescriptors can be shared between frames, the descriptor may
+        // contain slots that do not have values in the frame.
+        int i = 0;
+        for (; i < envfd.getSlots().size(); i++) {
+            FrameSlot slot = envfd.getSlots().get(i);
             FrameSlotKind slotKind = slot.getKind();
             FrameSlot vFrameSlot = vfd.addFrameSlot(slot.getIdentifier(), slotKind);
-            try {
-                switch (slotKind) {
-                    case Byte:
-                        vFrame.setByte(vFrameSlot, envFrame.getByte(slot));
-                        break;
-                    case Int:
-                        vFrame.setInt(vFrameSlot, envFrame.getInt(slot));
-                        break;
-                    case Double:
-                        vFrame.setDouble(vFrameSlot, envFrame.getDouble(slot));
-                        break;
-                    case Object:
-                        vFrame.setObject(vFrameSlot, envFrame.getObject(slot));
-                        break;
-                    case Illegal:
-                        break;
-                    default:
-                        throw new FrameSlotTypeException();
+            Object slotValue = envFrame.getValue(slot);
+            if (slotValue != null) {
+                try {
+                    switch (slotKind) {
+                        case Byte:
+                            vFrame.setByte(vFrameSlot, (byte) slotValue);
+                            break;
+                        case Int:
+                            vFrame.setInt(vFrameSlot, (int) slotValue);
+                            break;
+                        case Double:
+                            vFrame.setDouble(vFrameSlot, (double) slotValue);
+                            break;
+                        case Object:
+                            vFrame.setObject(vFrameSlot, slotValue);
+                            break;
+                        case Illegal:
+                            break;
+                        default:
+                            throw new FrameSlotTypeException();
+                    }
+                } catch (FrameSlotTypeException ex) {
+                    throw new RuntimeException("unexpected FrameSlot exception", ex);
                 }
-            } catch (FrameSlotTypeException ex) {
-                throw new RuntimeException("unexpected FrameSlot exception", ex);
             }
 
         }
@@ -243,14 +259,33 @@ public final class REngine implements RContext.Engine {
         if (result != null) {
             FrameDescriptor fd = vFrame.getFrameDescriptor();
             for (FrameSlot slot : fd.getSlots()) {
-                envir.put(slot.getIdentifier().toString(), vFrame.getValue(slot));
+                if (slot.getKind() != FrameSlotKind.Illegal) {
+                    // the put will take care of checking the slot type, so getValue is ok
+                    Object value = vFrame.getValue(slot);
+                    if (value != null) {
+                        if (value instanceof RFunction) {
+                            checkPatchRFunctionEnclosingFrame((RFunction) value, vFrame, envFrame);
+                        }
+                        envir.put(slot.getIdentifier().toString(), value);
+                    }
+                }
             }
+        }
+        if (result instanceof RFunction) {
+            checkPatchRFunctionEnclosingFrame((RFunction) result, vFrame, envFrame);
         }
         return result;
     }
 
-    public Object evalPromise(RPromise expr, VirtualFrame frame) throws RError {
-        RootCallTarget callTarget = makeCallTarget((RNode) expr.getRep(), REnvironment.emptyEnv());
+    private static void checkPatchRFunctionEnclosingFrame(RFunction func, Frame vFrame, MaterializedFrame envFrame) {
+        if (func.getEnclosingFrame() == vFrame) {
+            // this function's enclosing environment should be envFrame
+            func.setEnclosingFrame(envFrame);
+        }
+    }
+
+    public Object evalPromise(RPromise promise, VirtualFrame frame) throws RError {
+        RootCallTarget callTarget = makeCallTarget((RNode) promise.getRep());
         return runCall(callTarget, frame, false, false);
     }
 
@@ -265,9 +300,9 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
+    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult) {
         try {
-            return runCall(makeCallTarget(parseToRNode(stream, source), envForFrame), frame, printResult, true);
+            return runCall(makeCallTarget(parseToRNode(stream, source)), frame, printResult, true);
         } catch (RecognitionException | RuntimeException e) {
             context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -301,20 +336,47 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    private static boolean traceMakeCallTarget;
+
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
-     * {@link RootCallTarget} for it.
+     * {@link RootCallTarget} for it. We define the
+     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment to have the
+     * {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
+     * environments, i.e. is truly anonymous.
      *
-     * @param node
-     * @param enclosing the enclosing environment to use for the anonymous function (value probably
-     *            does not matter)
+     * N.B. For certain expressions, there might be some value in enclosing the wrapper function in
+     * a specific lexical scope. E.g., as a way to access names in the expression known to be
+     * defined in that scope.
+     *
+     * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
      */
     @SlowPath
-    private static RootCallTarget makeCallTarget(RNode node, REnvironment enclosing) {
-        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(enclosing);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, node, RArguments.EMPTY_OBJECT_ARRAY, "<main>", true);
+    private static RootCallTarget makeCallTarget(RNode body) {
+        if (traceMakeCallTarget) {
+            doTraceMakeCallTarget(body);
+        }
+        REnvironment.FunctionDefinition rootNodeEnvironment = new REnvironment.FunctionDefinition(REnvironment.emptyEnv());
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, rootNodeEnvironment, body, FormalArguments.NO_ARGS, "<wrapper>", true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
+    }
+
+    private static void doTraceMakeCallTarget(RNode body) {
+        String nodeClassName = body.getClass().getSimpleName();
+        SourceSection ss = body.getSourceSection();
+        String trace;
+        if (ss == null) {
+            if (body instanceof ConstantNode) {
+                trace = ((ConstantNode) body).getValue().toString();
+            } else {
+                trace = "not constant/no source";
+            }
+        } else {
+            trace = ss.toString();
+        }
+        RContext.getInstance().getConsoleHandler().printf("makeCallTarget: node: %s, %s%n", nodeClassName, trace);
+
     }
 
     /**
@@ -331,7 +393,7 @@ public final class REngine implements RContext.Engine {
             try {
                 result = callTarget.call(frame);
             } catch (ControlFlowException cfe) {
-                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                throw RError.error(frame, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
             if (printResult) {
                 printResult(result);

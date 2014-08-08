@@ -21,10 +21,16 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "rep_len", kind = SUBSTITUTE)
 public abstract class RepeatLength extends RBuiltinNode {
+    private final String[] PARAMETER_NAMES={"x", "length.out"};
+
+    @Override
+    protected Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {

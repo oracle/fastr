@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "class<-", kind = PRIMITIVE)
+@RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class UpdateClass extends RInvisibleBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
@@ -86,13 +86,13 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             if (dimensions != null) {
                 dimLength = dimensions.length;
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
             if (arg.isArray()) {
                 return setClass(arg, RNull.instance);
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
         RVector resultVector = arg.materializeNonSharedVector();
@@ -107,14 +107,14 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin()));
+            castTypeNode = insert(CastTypeNodeFactory.create(new RNode[2], this.getBuiltin(), getSuppliedArgsNames()));
         }
     }
 
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
     }
 }

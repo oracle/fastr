@@ -31,10 +31,9 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "stop", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "stop", kind = SUBSTITUTE)
 // TODO INTERNAL
 public abstract class Stop extends RBuiltinNode {
 
@@ -54,7 +53,7 @@ public abstract class Stop extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object stop(VirtualFrame frame, String msg, byte call, Object domain) {
         controlVisibility();
-        throw RError.error(frame, null, RError.Message.GENERIC, msg);
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
     @SlowPath
@@ -74,7 +73,7 @@ public abstract class Stop extends RBuiltinNode {
     @SuppressWarnings("unused")
     public Object stop(VirtualFrame frame, RStringVector msg, byte call, Object domain) {
         controlVisibility();
-        throw RError.error(frame, null, RError.Message.GENERIC, collapseStringVector(msg));
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, collapseStringVector(msg));
     }
 
 }

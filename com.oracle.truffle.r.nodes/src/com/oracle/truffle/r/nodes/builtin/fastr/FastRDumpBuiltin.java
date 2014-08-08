@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
@@ -41,9 +41,9 @@ import com.oracle.truffle.r.runtime.data.*;
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
  * .dot-file in the cwd
  */
-@RBuiltin(name = "debug.dump", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.dumptrees", kind = PRIMITIVE)
 @RBuiltinComment("Dumps Truffle trees to IGV if an IGV instance running. If igvDump == FALSE, tree is dumped into .dot file in the cwd.")
-public abstract class DebugDumpBuiltin extends RInvisibleBuiltinNode {
+public abstract class FastRDumpBuiltin extends RInvisibleBuiltinNode {
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"function", "igvDump", "verbose"};
 

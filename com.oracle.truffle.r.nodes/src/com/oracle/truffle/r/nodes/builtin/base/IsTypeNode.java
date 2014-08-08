@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -44,9 +45,9 @@ public abstract class IsTypeNode extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isType(RMissing value) {
+    public byte isType(VirtualFrame frame, RMissing value) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization

@@ -239,7 +239,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
+            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
     }
 
@@ -283,7 +283,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
+            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
     }
 
@@ -327,7 +327,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
+            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
     }
 
@@ -371,7 +371,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
+            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.COMPARISON_COMPLEX);
         }
 
     }

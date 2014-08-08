@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "cumsum", kind = PRIMITIVE)
+@RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class CumSum extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

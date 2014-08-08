@@ -104,20 +104,20 @@ substring <- function(text, first, last=1000000L)
 #  if(!is.character(x)) x <- as.character(x)
 #  .Internal(chartr(old, new, x))
 #}
-#tolower <- function(x)
-#{
-#  if(!is.character(x)) x <- as.character(x)
-#  .Internal(tolower(x))
-#}
-#toupper <- function(x)
-#{
-#  if(!is.character(x)) x <- as.character(x)
-#  .Internal(toupper(x))
-#}
-#
-#casefold <- function(x, upper = FALSE)
-#  if(upper) toupper(x) else tolower(x)
-#
+tolower <- function(x)
+{
+  if(!is.character(x)) x <- as.character(x)
+  .Internal(tolower(x))
+}
+toupper <- function(x)
+{
+  if(!is.character(x)) x <- as.character(x)
+  .Internal(toupper(x))
+}
+
+casefold <- function(x, upper = FALSE)
+  if(upper) toupper(x) else tolower(x)
+
 sQuote <- function(x)
 {
   if (!length(x)) return(character())

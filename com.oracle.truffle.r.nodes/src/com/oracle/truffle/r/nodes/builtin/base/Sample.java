@@ -15,6 +15,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -36,35 +37,35 @@ public abstract class Sample extends RBuiltinNode {
 
     @Specialization(order = 10, guards = "invalidFirstArgument")
     @SuppressWarnings("unused")
-    public RIntVector doSampleInvalidFirstArg(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
+    public RIntVector doSampleInvalidFirstArg(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
     }
 
     @Specialization(order = 20, guards = "invalidProb")
     @SuppressWarnings("unused")
-    public RIntVector doSampleInvalidProb(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_NUM_PROB);
+    public RIntVector doSampleInvalidProb(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_NUM_PROB);
     }
 
     @Specialization(order = 30, guards = "largerPopulation")
     @SuppressWarnings("unused")
-    public RIntVector doSampleLargerPopulation(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SAMPLE_LARGER_THAN_POPULATION);
+    public RIntVector doSampleLargerPopulation(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SAMPLE_LARGER_THAN_POPULATION);
     }
 
     @Specialization(order = 40, guards = "invalidSizeArgument")
     @SuppressWarnings("unused")
-    public RIntVector doSampleInvalidSize(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(size));
+    public RIntVector doSampleInvalidSize(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(size));
 
     }
 
     @Specialization(order = 1, guards = {"!invalidFirstArgument", "!invalidProb", "!largerPopulation", "!invalidSizeArgument", "withReplacement"})
-    public RIntVector doSampleWithReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    public RIntVector doSampleWithReplacement(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         // The following code is transcribed from GNU R src/main/random.c lines 493-501 in
         // function do_sample.
         double[] probArray = prob.getDataCopy();
-        fixupProbability(probArray, x, size, isRepeatable);
+        fixupProbability(frame, probArray, x, size, isRepeatable);
         int nc = 0;
         for (double aProb : probArray) {
             if (x * aProb > 0.1) {
@@ -80,28 +81,28 @@ public abstract class Sample extends RBuiltinNode {
     }
 
     @Specialization(order = 2, guards = {"!invalidFirstArgument", "!invalidProb", "!largerPopulation", "!invalidSizeArgument", "!withReplacement"})
-    public RIntVector doSampleNoReplacement(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+    public RIntVector doSampleNoReplacement(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
         double[] probArray = prob.getDataCopy();
-        fixupProbability(probArray, x, size, isRepeatable);
+        fixupProbability(frame, probArray, x, size, isRepeatable);
         return RDataFactory.createIntVector(probSampleWithoutReplace(x, probArray, size), RDataFactory.COMPLETE_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 50, guards = "invalidFirstArgumentNullProb")
-    public RIntVector doSampleInvalidFirstArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
+    public RIntVector doSampleInvalidFirstArgument(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RNull prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 60, guards = "invalidSizeArgument")
-    public RIntVector doSampleInvalidSizeArgument(final int x, final int size, final byte isRepeatable, final RNull prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(size));
+    public RIntVector doSampleInvalidSizeArgument(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RNull prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(size));
     }
 
     @SuppressWarnings("unused")
     @Specialization(order = 70, guards = "largerPopulation")
-    public RIntVector doSampleInvalidLargerPopulation(final int x, final int size, final byte isRepeatable, final RNull prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_NUM_PROB);
+    public RIntVector doSampleInvalidLargerPopulation(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RNull prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_NUM_PROB);
     }
 
     @Specialization(order = 80, guards = {"!invalidFirstArgumentNullProb", "!invalidSizeArgument", "!largerPopulation"})
@@ -132,20 +133,20 @@ public abstract class Sample extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(order = 100, guards = "invalidIsRepeatable")
-    public RIntVector doSampleInvalidIsRepeatable(final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(isRepeatable));
+    public RIntVector doSampleInvalidIsRepeatable(VirtualFrame frame, final int x, final int size, final byte isRepeatable, final RDoubleVector prob) {
+        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, RRuntime.toString(isRepeatable));
     }
 
-    private void fixupProbability(double[] probArray, int x, int size, byte isRepeatable) {
+    private void fixupProbability(VirtualFrame frame, double[] probArray, int x, int size, byte isRepeatable) {
         // The following code is transcribed from GNU R src/main/random.c lines 429-449
         int nonZeroProbCount = 0;
         double probSum = 0;
         for (double aProb : probArray) {
             if (!RRuntime.isFinite(aProb)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_PROB_VECTOR);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_IN_PROB_VECTOR);
             }
             if (aProb < 0) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_PROBABILITY);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NEGATIVE_PROBABILITY);
             }
             if (aProb > 0) {
                 probSum += aProb;
@@ -153,7 +154,7 @@ public abstract class Sample extends RBuiltinNode {
             }
         }
         if (nonZeroProbCount == 0 || (isRepeatable == RRuntime.LOGICAL_FALSE && size > nonZeroProbCount)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_POSITIVE_PROBABILITY);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.TOO_FEW_POSITIVE_PROBABILITY);
         }
         for (int i = 0; i < x; i++) {
             probArray[i] /= probSum;

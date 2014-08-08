@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.ffi.DLL.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
  * {@code .C} and {.Fortran} functions.
@@ -46,8 +46,6 @@ public class ForeignFunctions {
     public abstract static class Adapter extends RBuiltinNode {
         private static final Object[] PARAMETER_NAMES = new Object[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
-        public abstract String[] getArgNames();
-
         @Override
         public Object[] getParameterNames() {
             return PARAMETER_NAMES;
@@ -59,19 +57,19 @@ public class ForeignFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        protected int[] checkNAs(int argIndex, int[] data) throws RError {
+        protected int[] checkNAs(VirtualFrame frame, int argIndex, int[] data) throws RError {
             for (int i = 0; i < data.length; i++) {
                 if (RRuntime.isNA(data[i])) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
         }
 
-        protected double[] checkNAs(int argIndex, double[] data) throws RError {
+        protected double[] checkNAs(VirtualFrame frame, int argIndex, double[] data) throws RError {
             for (int i = 0; i < data.length; i++) {
                 if (!RRuntime.isFinite(data[i])) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
@@ -81,15 +79,14 @@ public class ForeignFunctions {
     /**
      * For now, just some special case functions that are built in to the implementation.
      */
-    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Fortran extends Adapter {
         private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
         private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")
         @Specialization(order = 0, guards = "dqrdc2")
-        public RList fortranDqrdc2(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        public RList fortranDqrdc2(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
                 RDoubleVector xVec = (RDoubleVector) args[0];
@@ -118,7 +115,7 @@ public class ForeignFunctions {
                 // @formatter:on
                 return RDataFactory.createList(data, DQRDC2_NAMES);
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
             }
         }
 
@@ -130,7 +127,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(order = 1, guards = "dqrcf")
-        public RList fortranDqrcf(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        public RList fortranDqrcf(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
                 RDoubleVector xVec = (RDoubleVector) args[0];
@@ -164,7 +161,7 @@ public class ForeignFunctions {
                 return RDataFactory.createList(data, DQRCF_NAMES);
 
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
             }
         }
 
@@ -174,8 +171,7 @@ public class ForeignFunctions {
 
     }
 
-    @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class C extends Adapter {
 
         private static final int SCALAR_DOUBLE = 0;
@@ -189,11 +185,11 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RList c(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        public RList c(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
             }
             boolean dupArgs = RRuntime.fromLogical(dup);
             boolean checkNA = RRuntime.fromLogical(naok);
@@ -204,10 +200,10 @@ public class ForeignFunctions {
                 Object arg = args[i];
                 if (arg instanceof RDoubleVector) {
                     argTypes[i] = VECTOR_DOUBLE;
-                    nativeArgs[i] = checkNAs(i + 1, ((RDoubleVector) arg).getDataCopy());
+                    nativeArgs[i] = checkNAs(frame, i + 1, ((RDoubleVector) arg).getDataCopy());
                 } else if (arg instanceof RIntVector) {
                     argTypes[i] = VECTOR_INT;
-                    nativeArgs[i] = checkNAs(i + 1, ((RIntVector) arg).getDataCopy());
+                    nativeArgs[i] = checkNAs(frame, i + 1, ((RIntVector) arg).getDataCopy());
                 } else if (arg instanceof RLogicalVector) {
                     argTypes[i] = VECTOR_LOGICAL;
                     // passed as int[]
@@ -217,27 +213,27 @@ public class ForeignFunctions {
                         // An NA is an error but the error handling happens in checkNAs
                         dataAsInt[j] = RRuntime.isNA(data[j]) ? RRuntime.INT_NA : data[j];
                     }
-                    nativeArgs[i] = checkNAs(i + 1, dataAsInt);
+                    nativeArgs[i] = checkNAs(frame, i + 1, dataAsInt);
                 } else if (arg instanceof Double) {
                     argTypes[i] = SCALAR_DOUBLE;
-                    nativeArgs[i] = checkNAs(i + 1, new double[]{(double) arg});
+                    nativeArgs[i] = checkNAs(frame, i + 1, new double[]{(double) arg});
                 } else if (arg instanceof Integer) {
                     argTypes[i] = SCALAR_INT;
-                    nativeArgs[i] = checkNAs(i + 1, new int[]{(int) arg});
+                    nativeArgs[i] = checkNAs(frame, i + 1, new int[]{(int) arg});
                 } else if (arg instanceof Byte) {
                     argTypes[i] = SCALAR_LOGICAL;
-                    nativeArgs[i] = checkNAs(i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
+                    nativeArgs[i] = checkNAs(frame, i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
+                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
             try {
                 RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
             } catch (Throwable t) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
-            RStringVector listNames = validateArgNames(args.length, getArgNames());
+            RStringVector listNames = validateArgNames(args.length, getSuppliedArgsNames());
             Object[] results = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
                 switch (argTypes[i]) {
@@ -288,8 +284,7 @@ public class ForeignFunctions {
     /**
      * For now, just some special case functions that are built in to the implementation.
      */
-    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, isCombine = true)
-    @NodeField(name = "argNames", type = String[].class)
+    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE)
     public abstract static class Call extends Adapter {
 
         @Child private CastComplexNode castComplex;
@@ -337,7 +332,7 @@ public class ForeignFunctions {
                     int n = zVec.getLength();
                     RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
                     if (maxf[0] == 0) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                     }
                     double[] work = new double[4 * maxf[0]];
                     int[] iwork = new int[maxp[0]];
@@ -352,7 +347,7 @@ public class ForeignFunctions {
                         if (d[i] > 1) {
                             RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(d[i], maxf, maxp);
                             if (maxf[0] == 0) {
-                                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                             }
                             if (maxf[0] > maxmaxf) {
                                 maxmaxf = maxf[0];

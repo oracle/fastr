@@ -22,18 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.lang.reflect.Array;
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNode.*;
-import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.*;
+import com.oracle.truffle.r.nodes.access.ReadVariableNode.BuiltinFunctionVariableNode;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -78,16 +75,18 @@ public abstract class RCallNode extends RNode {
      * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
      * original call.
      *
+     * @param frame TODO
      * @param src source section to use (from original call)
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
      *            {code .Internal}.
      * @param function the resolved {@link RFunction}.
+     * @param symbol The name of the function
      */
-    public static RCallNode createInternalCall(SourceSection src, RCallNode internalCallArg, RFunction function) {
-        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function);
+    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, Symbol symbol) {
+        BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, symbol);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
-        RCallNode result = current.createCacheNode(function);
+        RCallNode result = current.createCacheNode(frame, function);
         result.assignSourceSection(src);
         return result;
     }
@@ -121,6 +120,14 @@ public abstract class RCallNode extends RNode {
             return (RBuiltinRootNode) root;
         }
         return null;
+    }
+
+    protected <T extends Node> T replaceChild(T oldChild, T newChild) {
+        if (oldChild == null) {
+            return insert(newChild);
+        } else {
+            return oldChild.replace(newChild);
+        }
     }
 
     public abstract static class RootCallNode extends RCallNode {
@@ -233,14 +240,14 @@ public abstract class RCallNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return specialize(function).execute(frame, function);
+            return specialize(frame, function).execute(frame, function);
         }
 
-        private RCallNode specialize(RFunction function) {
+        private RCallNode specialize(VirtualFrame frame, RFunction function) {
             CompilerAsserts.neverPartOfCompilation();
 
             if (depth < INLINE_CACHE_SIZE) {
-                final RCallNode current = createCacheNode(function);
+                final RCallNode current = createCacheNode(frame, function);
                 final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
                 current.onCreate();
                 this.replace(cachedNode);
@@ -261,331 +268,147 @@ public abstract class RCallNode extends RNode {
             return parentNode;
         }
 
-        protected RCallNode createCacheNode(RFunction function) {
-            CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-            clonedArgs = permuteArguments(function, clonedArgs, clonedArgs.getNames());
-
+        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
+            // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
                 RBuiltinRootNode root = findBuiltinRootNode(callTarget);
                 if (root != null) {
-                    return root.inline(clonedArgs);
+                    // We inline the given arguments here, as builtins are executed inside the same
+                    // frame as they are called.
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, getEncapsulatingSourceSection());
+                    // TODO Set proper parent <-> child relations for arguments!!
+                    return root.inline(inlinedArgs);
                 }
             }
 
-            return new DispatchedCallNode(function, clonedArgs);
-        }
-
-        private CallArgumentsNode permuteArguments(RFunction function, CallArgumentsNode arguments, Object[] actualNames) {
-            RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-            final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
-            final boolean hasVarArgs = Arrays.asList(rootNode.getParameterNames()).contains("...");
-            if (!isBuiltin && !hasVarArgs && arguments.getArguments().length > rootNode.getParameterCount()) {
-                RNode unusedArgNode = arguments.getArguments()[rootNode.getParameterCount()];
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNUSED_ARGUMENT, unusedArgNode.getSourceSection().getCode());
-            }
-            RNode[] argumentNodes = arguments.getArguments();
-            RNode[] origArgumentNodes = argumentNodes;
-            // Handle named args and varargs
-            if (arguments.getNameCount() != 0 || hasVarArgs) {
-                RNode[] permuted = permuteArguments(argumentNodes, rootNode.getParameterNames(), actualNames, new VarArgsAsObjectArrayNodeFactory());
-                if (!isBuiltin) {
-                    for (int i = 0; i < permuted.length; i++) {
-                        if (permuted[i] == null) {
-                            permuted[i] = ConstantNode.create(RMissing.instance);
-                        }
-                    }
-                }
-                argumentNodes = permuted;
-            }
-            /*
-             * This is a temporary fix to create promises just for builtin functions that do not
-             * evaluate their arguments, e.g. expression, eval. We have do the check after
-             * permutation to get the correct index position. Unfortunately, ... args have been
-             * swept up into an array, so it's a bit trickier.
-             */
-            if (isBuiltin && !((RBuiltinRootNode) rootNode).evaluatesArgs()) {
-                RBuiltinRootNode builtinRootNode = (RBuiltinRootNode) rootNode;
-                RNode[] modifiedArgs = new RNode[argumentNodes.length];
-                int lix = 0; // logical index position
-                for (int i = 0; i < argumentNodes.length; i++) {
-                    RNode argumentNode = argumentNodes[i];
-                    if (argumentNode instanceof VarArgsAsObjectArrayNode) {
-                        VarArgsAsObjectArrayNode vArgumentNode = (VarArgsAsObjectArrayNode) argumentNode;
-                        RNode[] modifiedVArgumentNodes = new RNode[vArgumentNode.elementNodes.length];
-                        for (int j = 0; j < vArgumentNode.elementNodes.length; j++) {
-                            modifiedVArgumentNodes[j] = checkPromise(builtinRootNode, vArgumentNode.elementNodes[j], lix);
-                            lix++;
-                        }
-                        modifiedArgs[i] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
-                    } else {
-                        modifiedArgs[i] = checkPromise(builtinRootNode, argumentNode, lix);
-                        lix++;
-                    }
-                }
-                argumentNodes = modifiedArgs;
-            }
-            return origArgumentNodes == argumentNodes ? arguments : CallArgumentsNode.create(arguments.modeChange(), arguments.modeChangeForAll(), argumentNodes, arguments.getNames());
-        }
-
-        private static RNode checkPromise(RBuiltinRootNode builtinRootNode, RNode argNode, int lix) {
-            if (!builtinRootNode.evaluatesArg(lix)) {
-                return PromiseNode.create(argNode.getSourceSection(), new RLanguageRep(argNode));
+            // Now we need to distinguish: Do supplied arguments vary between calls?
+            boolean hasVarArgsInvolved = args.containsVarArgsSymbol() || ((RRootNode) function.getTarget().getRootNode()).getFormalArguments().hasVarArgs();
+            if (hasVarArgsInvolved) {
+                // Yes, maybe.
+                return new DispatchedVarArgsCallNode(function, args);
             } else {
-                return argNode;
+                // Nope! (peeewh)
+                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, getEncapsulatingSourceSection());
+                return new DispatchedCallNode(function, matchedArgs);
             }
-
         }
     }
 
+    /**
+     * A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no varargs).
+     */
     private static class DispatchedCallNode extends RCallNode {
 
-        @Child protected CallArgumentsNode arguments;
+        @Child protected MatchedArgumentsNode matchedArgs;
         @Child protected DirectCallNode call;
 
         protected final RFunction function;
 
-        DispatchedCallNode(RFunction function, CallArgumentsNode arguments) {
-            this.arguments = arguments;
+        DispatchedCallNode(RFunction function, MatchedArgumentsNode matchedArgs) {
+            this.matchedArgs = matchedArgs;
             this.function = function;
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            Object[] argsObject = RArguments.create(function, arguments.executeArray(frame));
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return call.call(frame, argsObject);
         }
-
     }
 
+    /**
+     * A {@link RCallNode} for calls to fixed {@link RFunction}s which have varargs in their
+     * {@link FormalArguments}. Varargs have to be matched again every call!
+     */
+    private static class DispatchedVarArgsCallNode extends RCallNode {
+
+        @Child protected CallArgumentsNode suppliedArgs;    // Is not executed!
+        @Child protected DirectCallNode call;
+        @Child protected MatchedArgumentsNode matchedArgs;
+
+        protected final RFunction function;
+
+        // TODO VARARGS! Enable on proper implementation
+// /**
+// * Remembers last function and last arguments rearrange signature.
+// */
+// private final ArgumentMatcher matcher;
+//
+// /**
+// * Used to speculate on non-changing argument order.
+// */
+// private final BranchProfile argsChangedProfile = new BranchProfile();
+
+        DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
+            this.suppliedArgs = suppliedArgs;
+            this.function = function;
+// this.matcher = new ArgumentMatcher();
+            this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
+            // Needs to be created every time as function (and thus its arguments)
+            // may change each call
+// if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
+// argsChangedProfile.enter();
+
+            // Create new MatchedArgumentsNode
+            MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
+            replaceChild(matchedArgs, newMatchedArgs);
+            matchedArgs = newMatchedArgs;
+// }
+
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
+            return call.call(frame, argsObject);
+        }
+    }
+
+    /**
+     * {@link RootCallNode} in case there is no fixed {@link RFunction} but an expression which
+     * first has to be evaluated.
+     */
     private static final class GenericCallNode extends RootCallNode {
 
-        @Child protected CallArgumentsNode arguments;
+        @Child protected CallArgumentsNode suppliedArgs;
         @Child protected IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
+        @Child protected MatchedArgumentsNode matchedArgs;
 
-        GenericCallNode(RNode functionNode, CallArgumentsNode arguments) {
+        /**
+         * Stores the function and arguments used for the last call and checks whether
+         * {@link ArgumentMatcher#argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)}
+         * .
+         */
+        private final ArgumentMatcher matcher;
+
+        /**
+         * Used to speculate on non-changing argument order.
+         */
+        private final BranchProfile argsOrFunctionChangedProfile = new BranchProfile();
+
+        GenericCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
             super(functionNode);
-            this.arguments = arguments;
+            this.suppliedArgs = suppliedArgs;
+            this.matcher = new ArgumentMatcher();
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction function) {
-            Object[] argsObject = RArguments.create(function, permuteArguments(function, arguments.executeArray(frame), arguments.getNames()));
+            // Needs to be created every time as function (and thus its arguments)
+            // may change each call
+            if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
+                argsOrFunctionChangedProfile.enter();
+
+                // Create new MatchedArgumentsNode
+                MatchedArgumentsNode newMatchedArgs = ArgumentMatcher.matchArguments(frame, function, suppliedArgs, getEncapsulatingSourceSection());
+                replaceChild(matchedArgs, newMatchedArgs);
+                matchedArgs = newMatchedArgs;
+            }
+
+            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame));
             return indirectCall.call(frame, function.getTarget(), argsObject);
         }
-
-        private Object[] permuteArguments(RFunction function, Object[] evaluatedArgs, Object[] actualNames) {
-            if (arguments.getNameCount() == 0) {
-                return evaluatedArgs;
-            }
-            return permuteArguments(evaluatedArgs, ((RRootNode) ((DefaultCallTarget) function.getTarget()).getRootNode()).getParameterNames(), actualNames, new VarArgsAsObjectArrayFactory());
-        }
-    }
-
-    public interface VarArgsFactory<T> {
-        T makeList(T[] elements, String[] names);
-    }
-
-    public static final class VarArgsAsListFactory implements VarArgsFactory<Object> {
-        public Object makeList(final Object[] elements, final String[] names) {
-            RList argList = RDataFactory.createList(elements);
-            if (names != null) {
-                argList.setNames(RDataFactory.createStringVector(names, true));
-            }
-            return argList;
-        }
-    }
-
-    public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
-        public Object makeList(final Object[] elements, final String[] names) {
-            if (elements.length > 1) {
-                return elements;
-            } else if (elements.length == 1) {
-                return elements[0];
-            } else {
-                return RMissing.instance;
-            }
-        }
-    }
-
-    public static final class VarArgsAsListNodeFactory implements VarArgsFactory<RNode> {
-        public RNode makeList(final RNode[] elements, final String[] names) {
-            if (elements.length > 1) {
-                return new VarArgsAsListNode(elements, names);
-            } else if (elements.length == 1) {
-                return elements[0];
-            } else {
-                return ConstantNode.create(RMissing.instance);
-            }
-        }
-    }
-
-    public abstract static class VarArgsNode extends RNode {
-        @Children protected final RNode[] elementNodes;
-
-        protected VarArgsNode(RNode[] elements) {
-            elementNodes = elements;
-        }
-
-        public final RNode[] getArgumentNodes() {
-            return elementNodes;
-        }
-    }
-
-    private static final class VarArgsAsListNode extends VarArgsNode {
-        private final String[] names;
-
-        private VarArgsAsListNode(RNode[] elements, String[] names) {
-            super(elements);
-            this.names = names;
-        }
-
-        @Override
-        public RList execute(VirtualFrame frame) {
-            Object[] evaluatedElements = new Object[elementNodes.length];
-            if (elementNodes.length > 0) {
-                executeElementNodes(frame, elementNodes, evaluatedElements);
-            }
-            RList argList = RDataFactory.createList(evaluatedElements);
-            if (names != null) {
-                argList.setNames(RDataFactory.createStringVector(names, true));
-            }
-            return argList;
-        }
-    }
-
-    public static final class VarArgsAsObjectArrayNodeFactory implements VarArgsFactory<RNode> {
-        public RNode makeList(final RNode[] elements, final String[] names) {
-            if (elements.length > 1) {
-                return new VarArgsAsObjectArrayNode(elements);
-            } else if (elements.length == 1) {
-                return elements[0];
-            } else {
-                return ConstantNode.create(RMissing.instance);
-            }
-        }
-    }
-
-    private static final class VarArgsAsObjectArrayNode extends VarArgsNode {
-        protected VarArgsAsObjectArrayNode(RNode[] elements) {
-            super(elements);
-        }
-
-        @Override
-        public Object[] execute(VirtualFrame frame) {
-            Object[] evaluatedElements = new Object[elementNodes.length];
-            if (elementNodes.length > 0) {
-                executeElementNodes(frame, elementNodes, evaluatedElements);
-            }
-            return evaluatedElements;
-        }
-    }
-
-    @ExplodeLoop
-    protected static void executeElementNodes(VirtualFrame frame, RNode[] elementNodes, Object[] evaluatedElements) {
-        for (int i = 0; i < elementNodes.length; i++) {
-            evaluatedElements[i] = elementNodes[i].execute(frame);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T> T[] permuteArguments(T[] arguments, Object[] parameterNames, Object[] actualNames, VarArgsFactory<T> listFactory) {
-        int varArgIndex = Arrays.asList(parameterNames).indexOf("...");
-        boolean hasVarArgs = varArgIndex != -1;
-        boolean hasArgNodes = arguments.getClass() == RNode[].class;
-        T[] resultArgs = (T[]) Array.newInstance(arguments.getClass().getComponentType(), hasVarArgs ? parameterNames.length : Math.max(parameterNames.length, arguments.length));
-        BitSet matchedNames = new BitSet(actualNames.length);
-        int unmatchedNameCount = 0;
-        int varArgMatches = 0;
-        boolean[] matchedArgs = new boolean[parameterNames.length];
-        for (int i = 0; i < actualNames.length; i++) {
-            if (actualNames[i] != null) {
-                RNode argNode = null;
-                if (hasArgNodes) {
-                    argNode = (RNode) arguments[i];
-                }
-                int parameterPosition = findParameterPosition(parameterNames, actualNames[i], matchedArgs, i, hasVarArgs, argNode);
-                if (parameterPosition >= 0) {
-                    if (parameterPosition >= varArgIndex) {
-                        /*
-                         * This argument matches to ...
-                         */
-                        ++varArgMatches;
-                    }
-                    resultArgs[parameterPosition] = arguments[i];
-                    matchedNames.set(i);
-                } else {
-                    unmatchedNameCount++;
-                }
-            }
-        }
-        /*
-         * To find the remaining arguments that can match to ... we should subtract sum of
-         * varArgIndex and number of variable arguments already matched from total number of
-         * arguments.
-         */
-        int varArgCount = arguments.length - (varArgIndex + varArgMatches);
-        if (varArgIndex >= 0 && varArgCount >= 0) {
-            T[] varArgsArray = (T[]) Array.newInstance(arguments.getClass().getComponentType(), varArgCount);
-            String[] namesArray = null;
-            if (unmatchedNameCount != 0) {
-                namesArray = new String[varArgCount];
-            }
-            int pos = 0;
-            for (int i = varArgIndex; i < arguments.length; i++) {
-                if (i > actualNames.length || !matchedNames.get(i)) {
-                    varArgsArray[pos] = arguments[i];
-                    if (namesArray != null) {
-                        namesArray[pos] = actualNames[i] != null ? String.valueOf(actualNames[i]) : "";
-                    }
-                    pos++;
-                }
-            }
-            resultArgs[varArgIndex] = listFactory.makeList(varArgsArray, namesArray);
-        }
-        int cursor = 0;
-        for (int i = 0; i < resultArgs.length && (!hasVarArgs || i < varArgIndex); i++) {
-            if (resultArgs[i] == null) {
-                while (cursor < actualNames.length && matchedNames.get(cursor)) {
-                    cursor++;
-                }
-                if (cursor < arguments.length) {
-                    resultArgs[i] = arguments[cursor++];
-                }
-            }
-        }
-        return resultArgs;
-    }
-
-    private int findParameterPosition(Object[] parameterNames, Object actualName, boolean[] matchedArgs, int argPos, boolean varArgs, RNode argNode) {
-        String name = RRuntime.toString(actualName);
-        int found = -1;
-        for (int i = 0; i < parameterNames.length; i++) {
-            if (parameterNames[i] != null) {
-                final String pn = RRuntime.toString(parameterNames[i]);
-                if (pn.equals(name)) {
-                    found = i;
-                    if (matchedArgs[found]) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FORMAL_MATCHED_MULTIPLE, pn);
-                    }
-                    matchedArgs[found] = true;
-                    break;
-                } else if (pn.startsWith(name)) {
-                    if (found >= 0) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + argPos);
-                    }
-                    found = i;
-                    if (matchedArgs[found]) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FORMAL_MATCHED_MULTIPLE, pn);
-                    }
-                    matchedArgs[found] = true;
-                }
-            }
-        }
-        if (found >= 0 || varArgs) {
-            return found;
-        }
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNUSED_ARGUMENT, argNode != null ? argNode.getSourceSection().getCode() : name);
     }
 }

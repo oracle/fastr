@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.debug;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
@@ -31,9 +31,9 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin(name = "debug.info", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.info", kind = PRIMITIVE)
 @RBuiltinComment("Prints this message.")
-public abstract class DebugInfoBuiltin extends RBuiltinNode {
+public abstract class FastRInfoBuiltin extends RBuiltinNode {
 
     @SlowPath
     @Specialization

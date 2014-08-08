@@ -28,6 +28,8 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -48,6 +50,8 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     // FIXME deal with omitted parameters: pos, imemdiate
 
     private static final Object[] PARAMETER_NAMES = new Object[]{"x", "value", "pos", "envir", "inherits", "immediate"};
+
+    private final BranchProfile[] slotFoundOnIteration = {new BranchProfile(), new BranchProfile(), new BranchProfile()};
 
     @Override
     public Object[] getParameterNames() {
@@ -79,53 +83,75 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return value;
     }
 
+    @ExplodeLoop
     @Specialization(order = 2, guards = {"noEnv", "doesInheritS"})
     @SuppressWarnings("unused")
-    public Object assignInherit(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos, RMissing environment, byte inherits, byte immediate) {
         controlVisibility();
-
-        MaterializedFrame frm = frame.materialize();
-
-        // find the frame to write to
-        FrameSlot slot = frm.getFrameDescriptor().findFrameSlot(x);
-        MaterializedFrame encl = frm;
-        while (slot == null && !REnvironment.isGlobalEnvFrame(frm)) {
-            frm = encl;
-            slot = frm.getFrameDescriptor().findFrameSlot(x);
-            encl = RArguments.getEnclosingFrame(frm);
+        MaterializedFrame materializedFrame = virtualFrame.materialize();
+        FrameSlot slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
+        int i = 0;
+        int iterationsAmount = CompilerAsserts.compilationConstant(slotFoundOnIteration.length);
+        for (; i < iterationsAmount; i++) {
+            if (isAppropriateFrameSlot(slot, materializedFrame)) {
+                addValueToFrame(variableName, variableValue, materializedFrame, slot);
+                return variableValue;
+            }
+            slotFoundOnIteration[i].enter();
+            materializedFrame = RArguments.getEnclosingFrame(materializedFrame);
+            slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         }
+        assignInheritGenericCase(materializedFrame, variableName, variableValue);
+        return variableValue;
+    }
 
-        if (slot == null) {
-            slot = frm.getFrameDescriptor().addFrameSlot(x);
+    private static Object assignInheritGenericCase(MaterializedFrame startFrame, String variableName, Object variableValue) {
+        MaterializedFrame materializedFrame = startFrame;
+        FrameSlot frameSlot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
+        while (!isAppropriateFrameSlot(frameSlot, materializedFrame)) {
+            materializedFrame = RArguments.getEnclosingFrame(materializedFrame);
+            frameSlot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         }
-        frm.setObject(slot, value);
-        return value;
+        addValueToFrame(variableName, variableValue, materializedFrame, frameSlot);
+        return variableValue;
+    }
+
+    private static void addValueToFrame(String variableName, Object variableValue, Frame frame, FrameSlot frameSlot) {
+        FrameSlot fs = frameSlot;
+        if (fs == null) {
+            fs = frame.getFrameDescriptor().addFrameSlot(variableName);
+        }
+        frame.setObject(fs, variableValue);
+    }
+
+    private static boolean isAppropriateFrameSlot(FrameSlot frameSlot, MaterializedFrame materializedFrame) {
+        return frameSlot != null || REnvironment.isGlobalEnvFrame(materializedFrame);
     }
 
     @Specialization(order = 10, guards = "!doesInherit")
     @SuppressWarnings("unused")
-    public Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignNoInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         if (pos == REnvironment.emptyEnv()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
         }
         try {
             pos.put(x, value);
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
         }
         return value;
     }
 
     @Specialization(order = 11, guards = "!doesInheritX")
     @SuppressWarnings("unused")
-    public Object assignNoInherit(String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
-        return assignNoInherit(x, value, envir, RMissing.instance, inherits, immediate);
+    public Object assignNoInherit(VirtualFrame frame, String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
+        return assignNoInherit(frame, x, value, envir, RMissing.instance, inherits, immediate);
     }
 
     @Specialization(order = 12, guards = "doesInherit")
     @SuppressWarnings("unused")
-    public Object assignInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         REnvironment env = pos;
         while (env != null) {
@@ -141,27 +167,27 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 REnvironment.globalEnv().put(x, value);
             }
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
         }
         return value;
     }
 
     @Specialization(order = 20, guards = "!doesInherit")
-    public Object assignNoInherit(RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignNoInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
-        return assignNoInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
+        return assignNoInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(order = 21, guards = "doesInherit")
-    public Object assignInherit(RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
-        return assignInherit(x.getDataAt(0), value, pos, envir, inherits, immediate);
+        return assignInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(order = 22, guards = "doesInheritX")
-    public Object assignInherit(RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
+    public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
         controlVisibility();
-        return assignInherit(x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);
+        return assignInherit(frame, x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);
     }
 
     @SuppressWarnings("unused")

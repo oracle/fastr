@@ -26,6 +26,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,6 +38,18 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Transpose extends RBuiltinNode {
+
+    private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
+
+    @Override
+    public Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    }
 
     private final NACheck check = NACheck.create();
 

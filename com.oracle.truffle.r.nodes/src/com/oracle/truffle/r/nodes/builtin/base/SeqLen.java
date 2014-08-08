@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "seq_len", kind = PRIMITIVE)
+@RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"})
 public abstract class SeqLen extends RBuiltinNode {
 
     @CreateCast("arguments")

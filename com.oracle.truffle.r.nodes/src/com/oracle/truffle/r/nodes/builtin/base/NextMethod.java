@@ -19,11 +19,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.LastParameterKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "NextMethod", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "NextMethod", kind = SUBSTITUTE)
 // TODO INTERNAL
 public abstract class NextMethod extends RBuiltinNode {
 
@@ -49,11 +48,11 @@ public abstract class NextMethod extends RBuiltinNode {
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
         if (genericName == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args);
+            DispatchedCallNode dcn = DispatchedCallNode.create(genericName, RRuntime.NEXT_METHOD, args, getSuppliedArgsNames());
             dispatchedCallNode = dispatchedCallNode == null ? insert(dcn) : dispatchedCallNode.replace(dcn);
             lastGenericName = genericName;
         }
@@ -74,11 +73,11 @@ public abstract class NextMethod extends RBuiltinNode {
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         return enclosingArg.getClassHierarchy();
     }

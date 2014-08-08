@@ -224,6 +224,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep_len(c(3.1415, 0.8), 1) }");
         assertEval("{ rep_len(c(2i+3, 4+2i), 4) }");
         assertEval("{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }");
+        // cases with named arguments:
+        assertEval("{rep_len(x=1:2, length.out=4)}");
+        assertEval("{rep_len(length.out=4, x=1:2)}");
+        assertEval("{rep_len(length.out=4, \"text\")}");
+        assertEval("{rep_len(4, x=\"text\")}");
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(x=x, length.out=length.out)}");
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(length.out=length.out, x=x)}");
     }
 
     @Test
@@ -683,10 +690,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sapply(list(1,2,3),function(x){x*2}) }");
 
         assertEval("{ sapply(1:3, function(x) { if (x==1) { 1 } else if (x==2) { integer() } else { TRUE } }) }");
-    }
 
-    @Test
-    public void testSapplyIgnore() {
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { as.raw(10) } }) }");
@@ -2644,6 +2648,13 @@ public class TestSimpleBuiltins extends TestBase {
     public void testInvisible() {
         assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
+    }
+
+    @Test
+    @Ignore
+    public void testInvisibleIgnore() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }
 
     @Test
@@ -2859,6 +2870,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"^.foo\"<-function(e1,e2){e1+e2};x^y}");
 
         assertEval("{x<-1;class(x)<-\"foo\";\"!.foo\"<-function(e1,e2){x};!x}");
+    }
+
+    @Test
+    @Ignore
+    public void testOpsGroupDispatchLs() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }
 
     @Test

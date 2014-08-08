@@ -22,20 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.util.*;
-
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "formals", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = "formals", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"fun"})
 // TODO revert to INTERNAL when promises are lazy
 public abstract class Formals extends RBuiltinNode {
     @Specialization
@@ -47,16 +41,17 @@ public abstract class Formals extends RBuiltinNode {
                 return RNull.instance;
             }
             FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
-            Object[] params = fdNode.getParameterNames();
-            if (params.length == 0) {
+            if (fdNode.getParameterCount() == 0) {
                 return RNull.instance;
             }
-            RNode[] defaults = getDefaults(fdNode);
+            FormalArguments formalArgs = fdNode.getFormalArguments();
+            String[] names = formalArgs.getNames();
+            RNode[] defaults = formalArgs.getDefaultArgs();
             Object succ = null;
-            for (int i = params.length - 1; i >= 0; i--) {
+            for (int i = names.length - 1; i >= 0; i--) {
                 RNode def = defaults[i];
                 Object defValue = def == null ? RMissing.instance : RDataFactory.createLanguage(def);
-                RPairList pl = new RPairList(defValue, succ, (String) params[i]);
+                RPairList pl = new RPairList(defValue, succ, names[i]);
                 succ = pl;
             }
             return succ;
@@ -69,47 +64,4 @@ public abstract class Formals extends RBuiltinNode {
         }
     }
 
-    @SlowPath
-    /**
-     * Return the AST for the default values off the arguments of {@code node}.
-     * TODO Should be easier with new function calling logic.
-     * */
-    private static RNode[] getDefaults(FunctionDefinitionNode node) {
-        WriteVariableNode[] formals = getFormals(node);
-        RNode[] result = new RNode[formals.length];
-        for (int i = 0; i < formals.length; i++) {
-            WriteVariableNode wvn = formals[i];
-            AccessArgumentNode arg = (AccessArgumentNode) (wvn.getRhs());
-            Node defaultValue = arg.getChildren().iterator().next();
-            if (!(defaultValue instanceof ConstantNode.ConstantMissingNode)) {
-                result[i] = (RNode) NodeUtil.cloneNode(defaultValue);
-            }
-
-        }
-        return result;
-    }
-
-    /**
-     * Return the formal arguments as an array of {@link WriteVariableNode} instances.
-     */
-    @SlowPath
-    private static WriteVariableNode[] getFormals(FunctionDefinitionNode node) {
-        int paramCount = node.getParameterCount();
-        WriteVariableNode[] result = new WriteVariableNode[paramCount];
-        Iterator<Node> iter = node.getChildren().iterator();
-        SequenceNode body = (SequenceNode) iter.next();
-        iter = body.getChildren().iterator();
-        int i = 0;
-        while (i < paramCount && iter.hasNext()) {
-            Node child = iter.next();
-            if (child instanceof WriteVariableNode) {
-                result[i] = (WriteVariableNode) child;
-            } else {
-                break;
-            }
-            i++;
-        }
-        return result;
-
-    }
 }

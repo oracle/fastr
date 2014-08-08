@@ -1,5 +1,5 @@
 suite=fastr
-mxversion=2.4.3
+mxversion=2.4.4
 
 library@JDK_TOOLS@path=${JAVA_HOME}/lib/tools.jar
 library@JDK_TOOLS@sha1=NOCHECK
@@ -119,6 +119,11 @@ project@com.oracle.truffle.r.test@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.test@javaCompliance=1.8
 project@com.oracle.truffle.r.test@annotationProcessors=com.oracle.truffle.r.test.ignore.processor
 project@com.oracle.truffle.r.test@workingSets=Truffle,FastR,Test
+
+# com.oracle.truffle.r.test.native
+project@com.oracle.truffle.r.test.native@sourceDirs=
+project@com.oracle.truffle.r.test.native@native=true
+project@com.oracle.truffle.r.test.native@workingSets=FastR
 
 # com.oracle.truffle.r.engine
 project@com.oracle.truffle.r.engine@sourceDirs=src

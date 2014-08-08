@@ -27,11 +27,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 
-@RBuiltin(name = "cbind", kind = SUBSTITUTE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE)
+@RBuiltin(name = "cbind", kind = SUBSTITUTE)
 // TODO Should be INTERNAL
 public final class Cbind extends RWrapperBuiltinNode {
     private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
@@ -47,7 +46,7 @@ public final class Cbind extends RWrapperBuiltinNode {
 
     @Override
     protected RNode createDelegate() {
-        Combine combine = CombineFactory.create(getArguments(), getBuiltin(), null);
+        Combine combine = CombineFactory.create(getArguments(), getBuiltin(), getSuppliedArgsNames());
         combine.setFoldOperation(new CbindFoldOperationNode());
         return combine;
     }

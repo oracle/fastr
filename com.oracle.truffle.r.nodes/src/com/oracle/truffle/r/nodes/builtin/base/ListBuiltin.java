@@ -27,25 +27,14 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RBuiltin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "list", kind = PRIMITIVE, lastParameterKind = LastParameterKind.VAR_ARGS_SPECIALIZE, isCombine = true)
-@NodeField(name = "argNames", type = String[].class)
+@RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."})
 // TODO Is it really worth having all the individual specializations given that we have to have one
 // for *every* type
 // and the code is essentially equivalent for each one?
 public abstract class ListBuiltin extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    public abstract String[] getArgNames();
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Specialization
     public RList list(@SuppressWarnings("unused") RMissing missing) {
@@ -121,7 +110,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     private RStringVector argNameVector() {
-        String[] argNames = getArgNames();
+        String[] argNames = getSuppliedArgsNames();
         if (argNames == null) {
             return null;
         }

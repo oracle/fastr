@@ -140,7 +140,7 @@ public abstract class CastTypeNode extends RInvisibleBuiltinNode {
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], getBuiltin()));
+            typeof = insert(TypeofFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
         }
     }
 
