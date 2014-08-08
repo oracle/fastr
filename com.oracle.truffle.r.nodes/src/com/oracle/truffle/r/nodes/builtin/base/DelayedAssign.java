@@ -76,7 +76,7 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
         }
     }
 
-    private REnvironment curEnv(VirtualFrame frame) {
+    private static REnvironment curEnv(VirtualFrame frame) {
         return REnvironment.frameToEnvironment(frame.materialize());
     }
 
