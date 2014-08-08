@@ -27,9 +27,11 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
+@NodeChild(value = "recursive", type = RNode.class)
 public abstract class PrecedenceNode extends UnaryNode {
 
     public static final int NO_PRECEDENCE = -1;
@@ -46,100 +48,114 @@ public abstract class PrecedenceNode extends UnaryNode {
         return RTypesGen.RTYPES.asInteger(execute(frame));
     }
 
-    public abstract int executeInteger(VirtualFrame frame, Object object);
+    public abstract int executeInteger(VirtualFrame frame, Object object, byte recursive);
 
     @Child PrecedenceNode precedenceNode;
 
-    private int precedenceRecursive(VirtualFrame frame, Object o) {
+    private int precedenceRecursive(VirtualFrame frame, Object o, byte recursive) {
         if (precedenceNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            precedenceNode = insert(PrecedenceNodeFactory.create(null));
+            precedenceNode = insert(PrecedenceNodeFactory.create(null, null));
         }
-        return precedenceNode.executeInteger(frame, o);
+        return precedenceNode.executeInteger(frame, o, recursive);
     }
 
     @Specialization
-    public int doNull(RNull val) {
+    public int doNull(RNull val, byte recursive) {
         return NO_PRECEDENCE;
     }
 
     @Specialization
-    public int doRaw(RRaw val) {
+    public int doRaw(RRaw val, byte recursive) {
         return RAW_PRECEDENCE;
     }
 
     @Specialization
-    public int doRawVector(RRawVector val) {
+    public int doRawVector(RRawVector val, byte recursive) {
         return RAW_PRECEDENCE;
     }
 
     @Specialization
-    public int doLogical(byte val) {
+    public int doLogical(byte val, byte recursive) {
         return LOGICAL_PRECEDENCE;
     }
 
     @Specialization
-    public int doLogical(RLogicalVector val) {
+    public int doLogical(RLogicalVector val, byte recursive) {
         return LOGICAL_PRECEDENCE;
     }
 
     @Specialization
-    public int doInt(int val) {
+    public int doInt(int val, byte recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    public int doComplex(RComplex val) {
+    public int doComplex(RComplex val, byte recursive) {
         return COMPLEX_PRECEDENCE;
     }
 
     @Specialization
-    public int doInt(RIntVector val) {
+    public int doInt(RIntVector val, byte recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    public int doInt(RIntSequence val) {
+    public int doInt(RIntSequence val, byte recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    public int doDouble(double val) {
+    public int doDouble(double val, byte recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    public int doDouble(RDoubleVector val) {
+    public int doDouble(RDoubleVector val, byte recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    public int doDouble(RDoubleSequence val) {
+    public int doDouble(RDoubleSequence val, byte recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    public int doComplex(RComplexVector val) {
+    public int doComplex(RComplexVector val, byte recursive) {
         return COMPLEX_PRECEDENCE;
     }
 
     @Specialization
-    public int doString(String val) {
+    public int doString(String val, byte recursive) {
         return STRING_PRECEDENCE;
     }
 
     @Specialization
-    public int doString(RStringVector val) {
+    public int doString(RStringVector val, byte recursive) {
         return STRING_PRECEDENCE;
     }
 
-    @Specialization
-    public int doList(RList val) {
+    @Specialization(order = 100, guards = "isRecursive")
+    public int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
+        int precedence = -1;
+        for (int i = 0; i < val.getLength(); ++i) {
+            Object data = val.getDataAt(i);
+            precedence = Math.max(precedence, precedenceRecursive(frame, val.getDataAtAsObject(i), recursive));
+        }
+        return precedence;
+    }
+
+    @Specialization(order = 110, guards = "!isRecursive")
+    public int doList(RList val, byte recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
-    public int doDataFrame(VirtualFrame frame, RDataFrame val) {
-        return precedenceRecursive(frame, val.getVector());
+    public int doDataFrame(VirtualFrame frame, RDataFrame val, byte recursive) {
+        return precedenceRecursive(frame, val.getVector(), recursive);
+    }
+
+    protected boolean isRecursive(RList val, byte recursive) {
+        return recursive == RRuntime.LOGICAL_TRUE;
     }
 }

@@ -587,18 +587,22 @@ public class RRuntime {
     public static String toString(Object object) {
         if (object instanceof Integer) {
             int intValue = (int) object;
-            if (intValue == INT_NA) {
+            if (isNA(intValue)) {
                 return STRING_NA;
             }
-            return intValue + "L";
+            return String.valueOf(intValue);
         } else if (object instanceof Double) {
             double doubleValue = (double) object;
             if (isNA(doubleValue)) {
                 return STRING_NA;
             }
             return String.valueOf(doubleValue);
-        } else if (object instanceof Boolean) {
-            return object == Boolean.TRUE ? "TRUE" : "FALSE";
+        } else if (object instanceof Byte) {
+            byte logicalValue = (byte) object;
+            if (isNA(logicalValue)) {
+                return STRING_NA;
+            }
+            return logicalValue == LOGICAL_TRUE ? "TRUE" : "FALSE";
         }
 
         return object.toString();
