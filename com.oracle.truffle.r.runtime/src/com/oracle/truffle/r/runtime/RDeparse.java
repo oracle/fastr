@@ -685,7 +685,7 @@ public class RDeparse {
                 break;
             case LGLSXP:
                 byte lgl = (byte) element;
-                state.append(lgl == RRuntime.LOGICAL_TRUE ? "TRUE" : (lgl == RRuntime.LOGICAL_TRUE ? "FALSE" : "NA"));
+                state.append(lgl == RRuntime.LOGICAL_TRUE ? "TRUE" : (lgl == RRuntime.LOGICAL_FALSE ? "FALSE" : "NA"));
                 break;
             case REALSXP:
                 String rep = Double.toString((double) element);
