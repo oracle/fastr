@@ -31019,11 +31019,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinformat_testformat22_c820a57c264fe254a61deb4122ce9c5a() {
-        assertEval("argv <- list('\abc', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
-    }
-
-    @Test
     public void TestrGenBuiltinformat_testformat23_02f91866c8ca2d894b4c94302ce7c0a1() {
         assertEval("argv <- list(c(NA, 2L, 4L, 7L), FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
@@ -31626,11 +31621,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestrGenBuiltingrepl_testgrepl11_94af6bace9fdd71cbe37d0ad44c816fb() {
         assertEval("argv <- list('^prepare_Rd', structure(character(0), class = 'checkRd'), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
-    }
-
-    @Test
-    public void TestrGenBuiltingrepl_testgrepl2_7e44e1ebefb7ff060f72e046a2eb2cb2() {
-        assertEval("argv <- list('\n', c('#### Cluster - Internal Utilities', '#### ============================ (new by Martin M\xe4chler)', '', '## This was size(); seems slightly useful in general', 'sizeDiss <- function(d)', '{', '    ## find 'n' for d == dissimilarity-like(<n obs.>), i.e. length(d)= n(n-1)/2', '    discr <- 1 + 8 * length(d)', '    sqrtdiscr <- round(sqrt(discr))', '    if(sqrtdiscr^2 == discr) (1 + sqrtdiscr)/2 else NA', '}', '', '## used in  ./agnes.q, ./clara.q,  ./diana.q  und ./pam.q :', '', 'lower.to.upper.tri.inds <- function(n)', '{', '    n1 <- as.integer(n - 1)', '    if(n1 < 1) stop(\''n' must be >= 2\')', '    else if(n1 == 1) 1L', '    else rep(1:n1, 1:n1) +', '        c(0, unlist(lapply(2:n1, function(k) cumsum(c(0, (n - 2):(n - k))))))', '}', '', 'upper.to.lower.tri.inds <- function(n)', '{', '    if((n2 <- as.integer(n - 2)) < 0) stop(\''n' must be >= 2\')', '    rep(1 + cumsum(0:n2), (n - 1):1) +', '\tunlist(lapply(0:n2, function(k) cumsum(k:n2)))', '}', '', '#### consider to *not* export these when I will use a name space :', '', 'meanabsdev <- function(y) mean(abs(y - mean(y, na.rm = TRUE)), na.rm = TRUE)'), FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grepl(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -36744,11 +36734,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinnamesassign_testnamesassign14_3a33a7e51628ae93dbbb31562eda2e68() {
-        assertEval("argv <- list(structure('\\abc\\', .Names = '1'), value = '1');`names<-`(argv[[1]],argv[[2]]);");
-    }
-
-    @Test
     public void TestrGenBuiltinnamesassign_testnamesassign15_3e225c9fab805c5b349c8be6d91fba69() {
         assertEval("argv <- list(structure(list(surname = structure(c(5L, 6L, 4L, 3L, 3L, 1L, 2L), .Label = c('McNeil', 'R Core', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'factor'), title = structure(c(2L, 5L, 4L, 6L, 7L, 3L, 1L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, 1L, NA, NA, NA, NA, 2L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('surname', 'title', 'other.author'), row.names = c(NA, -7L), class = 'data.frame'), value = c('surname', 'title', 'other.author'));`names<-`(argv[[1]],argv[[2]]);");
     }
@@ -39434,11 +39419,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestrGenBuiltinprintdefault_testprintdefault16_90c3aa6d0eadf7bd7028d415af429588() {
-        assertEval("argv <- list(structure(c('1', '2', '3', '\abc'), .Dim = c(1L, 4L), .Dimnames = list('1', c('V1', 'V2', 'V3', 'V4'))), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
-    }
-
-    @Test
     public void TestrGenBuiltinprintdefault_testprintdefault17_adf3e5b45d62c6143fa1b00e231ddc22() {
         assertEval("argv <- list(NULL, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
@@ -42011,11 +41991,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestrGenBuiltinsubset2_testsubset21_401728ff15faa0a563e033b207675e48() {
         assertEval("argv <- list(structure(list(par.vals = structure(c(43.6690361821048, 35.0518890362789, 30.2558850234373, 27.1664611723591, 24.9930921115624, 23.3776455926353, 22.122313646246, 21.1173217554787, 20.293145402391, 19.6041024133034, 19.0188803067124, 18.5152545044936, 18.0769941360739, 17.6919540860845, 17.3508558987268, 17.0464826391527, 0.924696372559026, 1.4577878275186, 1.99087928247818, 2.52397073743776, 3.05706219239734, 3.59015364735691, 4.12324510231649, 4.65633655727607, 5.18942801223565, 5.72251946719522, 6.2556109221548, 6.78870237711438, 7.32179383207396, 7.85488528703353, 8.38797674199311, 8.92106819695269), .Dim = c(16L, 2L), .Dimnames = list(NULL, c('ymax', 'xhalf')))), .Names = 'par.vals'), 1L);.subset2(argv[[1]],argv[[2]]);");
-    }
-
-    @Test
-    public void TestrGenBuiltinsubset2_testsubset210_26bf7637061243a7257ce2fd09f983f5() {
-        assertEval("argv <- list(structure(list(V1 = 1L, V2 = 2L, V3 = 3L, V4 = structure(1L, .Label = '\abc', class = 'factor')), .Names = c('V1', 'V2', 'V3', 'V4'), class = 'data.frame', row.names = c(NA, -1L)), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test

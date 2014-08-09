@@ -81,11 +81,6 @@ public class TestrGenBuiltinnamesassign extends TestBase {
     }
 
     @Test
-    public void testnamesassign14() {
-        assertEval("argv <- list(structure(\'\\\\abc\\\\\', .Names = \'1\'), value = \'1\');`names<-`(argv[[1]],argv[[2]]);");
-    }
-
-    @Test
     public void testnamesassign15() {
         assertEval("argv <- list(structure(list(surname = structure(c(5L, 6L, 4L, 3L, 3L, 1L, 2L), .Label = c(\'McNeil\', \'R Core\', \'Ripley\', \'Tierney\', \'Tukey\', \'Venables\'), class = \'factor\'), title = structure(c(2L, 5L, 4L, 6L, 7L, 3L, 1L), .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(c(NA, 1L, NA, NA, NA, NA, 2L), .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'surname\', \'title\', \'other.author\'), row.names = c(NA, -7L), class = \'data.frame\'), value = c(\'surname\', \'title\', \'other.author\'));`names<-`(argv[[1]],argv[[2]]);");
     }

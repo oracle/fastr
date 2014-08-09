@@ -91,11 +91,6 @@ public class TestrGenBuiltinprintdefault extends TestBase {
     }
 
     @Test
-    public void testprintdefault16() {
-        assertEval("argv <- list(structure(c(\'1\', \'2\', \'3\', \'\\abc\'), .Dim = c(1L, 4L), .Dimnames = list(\'1\', c(\'V1\', \'V2\', \'V3\', \'V4\'))), NULL, FALSE, NULL, NULL, TRUE, NULL, TRUE, FALSE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
-    }
-
-    @Test
     public void testprintdefault17() {
         assertEval("argv <- list(NULL, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }

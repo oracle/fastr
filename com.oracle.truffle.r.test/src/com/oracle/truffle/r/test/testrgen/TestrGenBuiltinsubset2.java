@@ -61,11 +61,6 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    public void testsubset210() {
-        assertEval("argv <- list(structure(list(V1 = 1L, V2 = 2L, V3 = 3L, V4 = structure(1L, .Label = \'\\abc\', class = \'factor\')), .Names = c(\'V1\', \'V2\', \'V3\', \'V4\'), class = \'data.frame\', row.names = c(NA, -1L)), 1L);.subset2(argv[[1]],argv[[2]]);");
-    }
-
-    @Test
     public void testsubset211() {
         assertEval("argv <- list(structure(list(V1 = structure(c(4L, 1L, 2L, 3L), .Label = c(\'1\', \'3\', \'6\', \'head\'), class = \'factor\'), V2 = c(NA, 2L, 4L, 7L), V3 = c(NA, NA, 5L, 8L), V4 = c(NA, NA, NA, 9L)), .Names = c(\'V1\', \'V2\', \'V3\', \'V4\'), class = \'data.frame\', row.names = c(NA, -4L)), 2L);.subset2(argv[[1]],argv[[2]]);");
     }
