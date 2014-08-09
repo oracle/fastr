@@ -95,14 +95,20 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         return new ReadCheckPromiseNode(rvn);
     }
 
-    protected boolean checkType(Object obj, String type) {
+    protected boolean checkType(Object objArg, String type) {
+        Object obj = objArg;
         if (type.equals(RRuntime.TYPE_ANY)) {
             return true;
         }
         if (obj instanceof RPromise) {
-            // since we do not know what type the evaluates to, it may match.
-            // we recover from a wrong type later
-            return true;
+            RPromise promise = (RPromise) obj;
+            if (!promise.isEvaluated()) {
+                // since we do not know what type the evaluates to, it may match.
+                // we recover from a wrong type later
+                return true;
+            } else {
+                obj = promise.getValue();
+            }
         }
         if (type.equals(RRuntime.TYPE_FUNCTION) || type.equals(RRuntime.TYPE_CLOSURE) || type.equals(RRuntime.TYPE_BUILTIN) || type.equals(RRuntime.TYPE_SPECIAL)) {
             return obj instanceof RFunction;
@@ -129,9 +135,12 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Child private ReadVariableNode readNode;
 
+        private final ReadVariableNode readNodeInitial;
+
         public ReadCheckPromiseNode(ReadVariableNode readNode) {
             super();
             this.readNode = readNode;
+            this.readNodeInitial = readNode;
         }
 
         @Override
@@ -156,10 +165,16 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (value != null && value instanceof RPromise) {
                 // Force promise execution to get (back to) the future! ;)
                 RPromise promise = (RPromise) value;
-                promise.evaluate(frame);
-
-                // Replace with ReadPromiseNode and execute it!
-                return replace(new ReadPromiseNode(getSymbol(), promise)).execute(frame);
+                Object promiseValue = promise.evaluate(frame);
+                if (checkType(promiseValue, ((HasMode) readNode).getMode())) {
+                    // Replace with ReadPromiseNode and execute it!
+                    return replace(new ReadPromiseNode(getSymbol(), promise)).execute(frame);
+                } else {
+                    // didn't match, restart the search from the beginning
+                    // N.B. since this promise has been evaluated it will
+                    // not match this time around
+                    return replace(readNodeInitial).execute(frame);
+                }
             }
 
             // Value is no promise: Replace with ReadVariableNode...
@@ -203,7 +218,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    public static final class UnresolvedReadVariableNode extends ReadVariableNode {
+    interface HasMode {
+        String getMode();
+    }
+
+    public static final class UnresolvedReadVariableNode extends ReadVariableNode implements HasMode {
 
         private final Symbol symbol;
         private final String mode;
@@ -282,6 +301,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Symbol getSymbol() {
             return symbol;
         }
+
+        public String getMode() {
+            return mode;
+        }
     }
 
     public static final class ReadVariableNonFrameNode extends ReadVariableNode {
@@ -332,7 +355,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    public static final class ReadVariableVirtualNode extends ReadVariableNode {
+    public static final class ReadVariableVirtualNode extends ReadVariableNode implements HasMode {
 
         @Child private ReadLocalVariableNode readNode;
         @Child private ReadVariableNode nextNode;
@@ -366,9 +389,13 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Symbol getSymbol() {
             return nextNode.getSymbol();
         }
+
+        public String getMode() {
+            return mode;
+        }
     }
 
-    public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode {
+    public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode implements HasMode {
         private final Symbol symbol;
         private final String mode;
         @Child ReadLocalVariableNode node;
@@ -403,6 +430,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Symbol getSymbol() {
             return symbol;
         }
+
+        public String getMode() {
+            return mode;
+        }
     }
 
     @NodeField(name = "symbol", type = Symbol.class)
@@ -435,7 +466,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    public static final class ReadVariableMaterializedNode extends ReadVariableNode {
+    public static final class ReadVariableMaterializedNode extends ReadVariableNode implements HasMode {
 
         @Child private ReadSuperVariableNode readNode;
         @Child private ReadVariableNode nextNode;
@@ -468,6 +499,10 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Override
         public Symbol getSymbol() {
             return nextNode.getSymbol();
+        }
+
+        public String getMode() {
+            return mode;
         }
     }
 
