@@ -34210,6 +34210,10 @@ Error in c(as.raw(10), as.raw(10), as.raw(10))^c(as.raw(10), as.raw(10),  :
 #f <- function(x) { x[1] = 2; }; x <- c(1L, 2L, 3L); f(x); x[1]
 [1] 1
 
+##com.oracle.truffle.r.test.simple.TestSimpleValues.testFunctionLookupFailure
+#{ f<-1; f() }
+Error: could not find function "f"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleValues.testMatrixAccess
 #x <- matrix(c(1,2,3,4),2) ; x[,2]
 [1] 3 4

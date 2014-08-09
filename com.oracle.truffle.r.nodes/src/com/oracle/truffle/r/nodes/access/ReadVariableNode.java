@@ -262,7 +262,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (lookupResult != null) {
                 return BuiltinFunctionVariableNodeFactory.create(lookupResult, symbol);
             } else {
-                return UnknownVariableNodeFactory.create(symbol);
+                return UnknownVariableNodeFactory.create(symbol, mode);
             }
         }
 
@@ -417,7 +417,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     return result;
                 }
             }
-            return replace(UnknownVariableNodeFactory.create(symbol)).execute(frame);
+            return replace(UnknownVariableNodeFactory.create(symbol, mode)).execute(frame);
         }
 
         @Override
@@ -617,16 +617,19 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    @NodeField(name = "symbol", type = Symbol.class)
-    public abstract static class UnknownVariableNode extends ReadVariableNode {
+    @NodeFields({@NodeField(name = "symbol", type = Symbol.class), @NodeField(name = "mode", type = String.class)})
+    public abstract static class UnknownVariableNode extends ReadVariableNode implements HasMode {
 
         @Override
         public abstract Symbol getSymbol();
 
+        @Override
+        public abstract String getMode();
+
         @Specialization
         public Object doObject(VirtualFrame frame) {
             controlVisibility();
-            throw RError.error(frame, RError.Message.UNKNOWN_OBJECT, getSymbol());
+            throw RError.error(frame, getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
         }
     }
 }
