@@ -168,7 +168,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                 Object promiseValue = promise.evaluate(frame);
                 if (checkType(promiseValue, ((HasMode) readNode).getMode())) {
                     // Replace with ReadPromiseNode and execute it!
-                    return replace(new ReadPromiseNode(getSymbol(), promise)).execute(frame);
+                    return replace(new ReadPromiseNode(getSymbol(), promise, readNode)).execute(frame);
                 } else {
                     // didn't match, restart the search from the beginning
                     // N.B. since this promise has been evaluated it will
@@ -179,7 +179,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
             // Value is no promise: Replace with ReadVariableNode...
             replace(readNode);
-            return value;   // ...and return it, as its already there.
+            return value;   // ...and return it, as it's already there.
         }
 
         @Override
@@ -195,20 +195,38 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         private final Symbol symbol;
         private final RPromise promise;
+        @Child private ReadVariableNode readNode;
 
-        public ReadPromiseNode(Symbol symbol, RPromise promise) {
+        public ReadPromiseNode(Symbol symbol, RPromise promise, ReadVariableNode readNode) {
             super();
             this.symbol = symbol;
             this.promise = promise;
+            this.readNode = readNode;
         }
 
         @Override
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
+            // TODO ASSUMPTION: Use has-changed-assumption OR is-promise assumption here when
+            // available and replace readNode.execute!
+            Object value = readNode.execute(frame);
+            if (value != promise) { // Does this compile?
+                // Value changed: It might know be a simple value - or another promise, created by
+                // delayedAssign, e.g.
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return replace(new ReadCheckPromiseNode(readNode)).execute(frame, enclosingFrame);
+            }
             return promise.getValue();
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
+            Object value = readNode.execute(frame);
+            if (value != promise) {
+                // Value changed: It might know be a simple value - or another promise, created by
+                // delayedAssign, e.g.
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                return replace(new ReadCheckPromiseNode(readNode)).execute(frame);
+            }
             return promise.getValue();
         }
 

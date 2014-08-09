@@ -15764,6 +15764,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testPromises_b6fbb8465490b39a24121d9c2576252a() {
+        assertEval("{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testPromisesIgnore_c7558b8584a0a8c1dff6c7ee5575ab52() {
         assertEval("{ f <- function(x = z) { z = 1 ; x } ; f() }");
     }

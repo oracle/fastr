@@ -13520,6 +13520,10 @@ Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
 [1] 20
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }
+[1] 57
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }
 [1] 1
 
