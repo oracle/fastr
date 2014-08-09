@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
+
 public final class RNull extends RScalar {
 
     public static final RNull instance = new RNull();
@@ -31,6 +33,6 @@ public final class RNull extends RScalar {
 
     @Override
     public String toString() {
-        return "NULL";
+        return RRuntime.NULL;
     }
 }

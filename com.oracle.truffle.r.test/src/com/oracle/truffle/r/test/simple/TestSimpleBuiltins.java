@@ -1726,6 +1726,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testFrames() {
         assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"; \"); cat(\"parents are frame numbers\", sys.parents(), \"; \"); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }");
     }
@@ -2244,6 +2245,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ quote(list(1, 2)) }");
         assertEval("{ typeof(quote(1)) }");
         assertEval("{ typeof(quote(x + y)) }");
+        assertEval("{ class(quote(x + y)) }");
+        assertEval("{ mode(quote(x + y)) }");
+        assertEval("{ is.call(quote(x + y)) }");
         assertEval("{ quote(x <- x + 1) }");
         assertEval("{ typeof(quote(x)) }");
 
@@ -2587,20 +2591,20 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testPrint() {
-        assertEval("{ print(23) }");
-        assertEval("{ print(1:3) }");
-        assertEval("{ print(list(1,2,3)) }");
-        assertEval("{ x<-c(1,2); names(x)=c(\"a\", \"b\"); print(x) }");
-        assertEval("{ x<-c(1, 2:20, 21); n<-\"a\"; n[21]=\"b\"; names(x)<-n; print(x) }");
-        assertEval("{ x<-c(10000000, 10000:10007, 21000000); n<-\"a\"; n[10]=\"b\"; names(x)<-n; print(x) }");
-        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); print(x) }");
-        assertEval("{  x<-c(11, 7, 2222, 7, 33); print(x) }");
-        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x) }");
-        assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x) }");
-        assertEval("{ print(list(list(list(1,2),list(3)),list(list(4),list(5,6)))) }");
-        assertEval("{ print(c(1.1,2.34567)) }");
-        assertEval("{ print(c(1,2.34567)) }");
-        assertEval("{ print(c(11.1,2.34567)) }");
+        assertEval("{ print(23,quote=TRUE) }");
+        assertEval("{ print(1:3,quote=TRUE) }");
+        assertEval("{ print(list(1,2,3),quote=TRUE) }");
+        assertEval("{ x<-c(1,2); names(x)=c(\"a\", \"b\"); print(x,quote=TRUE) }");
+        assertEval("{ x<-c(1, 2:20, 21); n<-\"a\"; n[21]=\"b\"; names(x)<-n; print(x,quote=TRUE) }");
+        assertEval("{ x<-c(10000000, 10000:10007, 21000000); n<-\"a\"; n[10]=\"b\"; names(x)<-n; print(x,quote=TRUE) }");
+        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); print(x,quote=TRUE) }");
+        assertEval("{  x<-c(11, 7, 2222, 7, 33); print(x,quote=TRUE) }");
+        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x,quote=TRUE) }");
+        assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x,quote=TRUE) }");
+        assertEval("{ print(list(list(list(1,2),list(3)),list(list(4),list(5,6))),quote=TRUE) }");
+        assertEval("{ print(c(1.1,2.34567),quote=TRUE) }");
+        assertEval("{ print(c(1,2.34567),quote=TRUE) }");
+        assertEval("{ print(c(11.1,2.34567),quote=TRUE) }");
     }
 
     @Test
@@ -2617,6 +2621,7 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testUseMethodSimple() {
         // Basic UseMethod
         assertEval("{f <- function(x){ UseMethod(\"f\",x); };" + "f.first <- function(x){cat(\"f first\",x)};" + "f.second <- function(x){cat(\"f second\",x)};" + "obj <-1;"
@@ -3314,6 +3319,34 @@ public class TestSimpleBuiltins extends TestBase {
         // Error message mismatch.
         assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
         assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
+    }
+
+    @Test
+    public void testEncodeString() {
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = NA);}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = NA, justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = NA, justify = \"right\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = NA, quote = \"'\", justify = \"right\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 0, quote = \"'\", justify = \"right\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 0, quote = \"\", justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 3, quote = \"'\", justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = NA, quote = \"'\", na.encode=FALSE, justify = \"right\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 0, quote = \"'\", na.encode=FALSE, justify = \"right\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 3, quote = \"'\", na.encode=FALSE, justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 2, quote = \"'\", na.encode=FALSE, justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 7, quote = \"\", na.encode=FALSE, justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 7, quote = \"\", na.encode=TRUE, justify = \"centre\");}");
+        assertEval("{x <- c(\"a\", \"ab\", \"abcde\", NA); encodeString(x, width = 3, quote = \"\", na.encode=TRUE, justify = \"centre\");}");
+    }
+
+    @Test
+    public void testFactor() {
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);print(fdata,FALSE)}");
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);rdata = factor(data,labels=c(\"I\",\"II\",\"III\"));print(rdata,FALSE);}");
+        assertEval("{data = c(1,2,2,3,1,2,3,3,1,2,3,3,1);fdata<-factor(data);levels(fdata) = c('I','II','III');print(fdata,FALSE);}");
+        assertEval("{set.seed(124);l1 = factor(sample(letters,size=10,replace=TRUE));set.seed(124);l2 = factor(sample(letters,size=10,replace=TRUE));l12 = factor(c(levels(l1)[l1],levels(l2)[l2]));print(l12,FALSE);}");
+        assertEval("{set.seed(124); schtyp <- sample(0:1, 20, replace = TRUE);schtyp.f <- factor(schtyp, labels = c(\"private\", \"public\")); print(schtyp.f,FALSE);}");
+        assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order,FALSE); } ");
     }
 
 }

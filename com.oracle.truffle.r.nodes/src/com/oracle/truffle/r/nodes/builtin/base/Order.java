@@ -50,7 +50,7 @@ public abstract class Order extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    public abstract Object executeDoubleVector(VirtualFrame frame, RDoubleVector vec, RMissing tie);
+    public abstract Object executeDoubleVector(VirtualFrame frame, Object vec, RMissing tie);
 
     @Child protected BooleanOperation eq = BinaryCompare.EQUAL.create();
     @Child protected BooleanOperation lt = BinaryCompare.LESS_THAN.create();

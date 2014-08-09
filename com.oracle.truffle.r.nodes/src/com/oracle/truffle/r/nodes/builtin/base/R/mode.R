@@ -15,13 +15,15 @@
 #  http://www.r-project.org/Licenses/
 
 mode <- function(x) {
-#    if(is.expression(x)) return("expression")
-#    if(is.call(x))
+    if(is.expression(x)) return("expression")
+    if(is.call(x))
+		return("call")
+		##TODO Fix deparse
 #        return(switch(deparse(x[[1L]])[1L],
 #                        "(" = "(",
 #                        ## otherwise
 #                        "call"))
-#    if(is.name(x)) "name" else
+    if(is.name(x)) "name" else
     switch(tx <- typeof(x),
 # TODO: fix implementation of switch
 #            double =, integer = "numeric", # 'real=' dropped, 2000/Jan/14

@@ -49,6 +49,8 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, RStringVector type);
 
+    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
+
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
         protected final int depth;
         protected final String genericName;
@@ -78,6 +80,12 @@ public abstract class DispatchedCallNode extends RNode {
         public Object execute(VirtualFrame frame, RStringVector type) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return specialize(type).execute(frame, type);
+        }
+
+        @Override
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return specialize(type).executeInternal(frame, type, args);
         }
 
         private DispatchedCallNode specialize(RStringVector type) {
@@ -114,6 +122,11 @@ public abstract class DispatchedCallNode extends RNode {
         public Object execute(VirtualFrame frame, RStringVector type) {
             return dcn.execute(frame, type);
         }
+
+        @Override
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
+            return dcn.executeInternal(frame, type, args);
+        }
     }
 
     private static final class CachedNode extends DispatchedCallNode {
@@ -137,6 +150,13 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         private static boolean isEqualType(final RStringVector one, final RStringVector two) {
+            if (one == null && two == null) {
+                return true;
+            }
+            if (one == null || two == null) {
+                return false;
+            }
+
             if (one.getLength() != two.getLength()) {
                 return false;
             }
@@ -146,6 +166,14 @@ public abstract class DispatchedCallNode extends RNode {
                 }
             }
             return true;
+        }
+
+        @Override
+        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+            if (isEqualType(this.type, aType)) {
+                return currentNode.executeInternal(frame, args);
+            }
+            return nextNode.executeInternal(frame, aType, args);
         }
     }
 
@@ -167,6 +195,11 @@ public abstract class DispatchedCallNode extends RNode {
         public Object execute(VirtualFrame frame, RStringVector type) {
             DispatchNode.FunctionCall aFuncCall = (DispatchNode.FunctionCall) aDispatchNode.execute(frame, type);
             return executeHelper(frame, aFuncCall);
+        }
+
+        @Override
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
+            return Utils.nyi();
         }
 
         private Object executeHelper(VirtualFrame frame, DispatchNode.FunctionCall aFuncCall) {

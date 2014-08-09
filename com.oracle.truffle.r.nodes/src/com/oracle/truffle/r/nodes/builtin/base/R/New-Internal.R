@@ -214,27 +214,30 @@ inherits <- function(x, what, which = FALSE)
 #NextMethod <- function(generic=NULL, object=NULL, ...)
 #  .Internal(NextMethod(generic, object,...))
 #
-#data.class <- function(x) {
-#  if (length(cl <- oldClass(x)))
-#    cl[1L]
-#  else {
-#    l <- length(dim(x))
-#    if (l == 2L) "matrix" else if(l) "array" else mode(x)
-#  }
-#}
-#
-#encodeString <- function(x, width = 0L, quote = "", na.encode = TRUE,
-#    justify = c("left", "right", "centre", "none"))
-#{
-#  at <- attributes(x)
-#  x <- as.character(x) # we want e.g. NULL to work
-#  attributes(x) <- at  # preserve names, dim etc
-#  oldClass(x) <- NULL  # but not class
+data.class <- function(x) {
+  if (length(cl <- oldClass(x)))
+    cl[1L]
+  else {
+    l <- length(dim(x))
+    if (l == 2L) "matrix" else if(l) "array" else mode(x)
+  }
+}
+
+encodeString <- function(x, width = 0L, quote = "", na.encode = TRUE,
+    justify = c("left", "right", "centre", "none"))
+{
+  at <- attributes(x)
+  x <- as.character(x) # we want e.g. NULL to work
+  attributes(x) <- at  # preserve names, dim etc
+  oldClass(x) <- NULL  # but not class
+  ##FIXME
 #  justify <- match(match.arg(justify),
 #      c("left", "right", "centre", "none")) - 1L
-#  .Internal(encodeString(x, width, quote, justify, na.encode))
-#}
-#
+  justify <- match(match.arg(justify,c("left", "right", "centre", "none")),
+       c("left", "right", "centre", "none")) - 1L
+  .Internal(encodeString(x, width, quote, justify, na.encode))
+}
+
 #l10n_info <- function() .Internal(l10n_info())
 #
 #iconv <- function(x, from = "", to = "", sub = NA, mark = TRUE, toRaw = FALSE)

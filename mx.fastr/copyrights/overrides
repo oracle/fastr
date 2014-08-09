@@ -12,6 +12,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Date.java
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Deparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchedCallNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/EncodeString.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright

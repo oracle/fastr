@@ -130,7 +130,7 @@ public abstract class Typeof extends RBuiltinNode {
     @Specialization()
     public String typeof(REnvironment env) {
         controlVisibility();
-        return "environment";
+        return RRuntime.TYPE_ENVIRONMENT;
     }
 
     @Specialization()
@@ -160,7 +160,7 @@ public abstract class Typeof extends RBuiltinNode {
     @Specialization
     public String typeof(RPairList pairlist) {
         controlVisibility();
-        return "pairlist";
+        return RRuntime.TYPE_PAIR_LIST;
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")

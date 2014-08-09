@@ -61,6 +61,5 @@ public abstract class Quote extends RBuiltinNode {
         } else {
             return RDataFactory.createLanguage(expr.getRep());
         }
-
     }
 }
