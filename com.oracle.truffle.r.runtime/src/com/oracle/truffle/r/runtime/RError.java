@@ -352,7 +352,7 @@ public final class RError extends RuntimeException {
         DATA_NOT_MULTIPLE_ROWS("data length [%d] is not a sub-multiple or multiple of the number of rows [%d]"),
         ARGUMENT_NOT_MATCH("supplied argument name '%s' does not match '%s'"),
         ARGUMENT_MISSING("argument \"%s\" is missing, with no default"),
-        UNKNOWN_FUNCTION("could not find function '%s'"),
+        UNKNOWN_FUNCTION("could not find function \"%s\""),
         UNKNOWN_FUNCTION_USE_METHOD("no applicable method for '%s' applied to an object of class '%s'"),
         UNKNOWN_OBJECT("object '%s' not found"),
         INVALID_ARGUMENT("invalid '%s' argument"),

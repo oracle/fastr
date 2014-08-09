@@ -224,6 +224,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ rep_len(c(3.1415, 0.8), 1) }");
         assertEval("{ rep_len(c(2i+3, 4+2i), 4) }");
         assertEval("{ x<-as.raw(16); y<-as.raw(5); rep_len(c(x, y), 5) }");
+        // cases with named arguments:
+        assertEval("{rep_len(x=1:2, length.out=4)}");
+        assertEval("{rep_len(length.out=4, x=1:2)}");
+        assertEval("{rep_len(length.out=4, \"text\")}");
+        assertEval("{rep_len(4, x=\"text\")}");
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(x=x, length.out=length.out)}");
+        assertEval("{x<-\"text\"; length.out<-4; rep_len(length.out=length.out, x=x)}");
     }
 
     @Test
@@ -683,10 +690,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ sapply(list(1,2,3),function(x){x*2}) }");
 
         assertEval("{ sapply(1:3, function(x) { if (x==1) { 1 } else if (x==2) { integer() } else { TRUE } }) }");
-    }
 
-    @Test
-    public void testSapplyIgnore() {
         assertEval("{ f<-function(g) { sapply(1:3, g) } ; f(function(x) { x*2 }) ; f(function(x) { TRUE }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { 5+10i } }) }");
         assertEval("{ sapply(1:2, function(i) { if (i==1) { as.raw(0) } else { as.raw(10) } }) }");
@@ -1865,17 +1869,53 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ unlist(list(1+1i, list(7+7i,42+42i)), recursive=FALSE) }");
         assertEval("{ unlist(list(1+1i, c(7,42))) }");
         assertEval("{ unlist(list(1+1i, list(7,42)), recursive=FALSE) }");
+
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,e=list(f=7))), recursive=TRUE) }");
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,list(f=7)))) }");
+        assertEval("{ x <- list(list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=c(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\"), \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\", \"11\"), \"4\"),\"5\")) ; unlist(x) }");
+
+        assertEval("{ names(unlist(list(list(list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(\"1\",\"2\"))))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\")))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\"))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\"), \"2\"))) }");
+        assertEval("{ unlist(list(a=list(\"0\", list(b=list(\"1\"))))) }");
+
+        assertEval("{ unlist(list(a=list(\"-1\", \"0\", b=list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\", \"3\"))) }");
+
+        assertEval("{ names(unlist(list(list(b=list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\", \"2\"))))) }");
+
+        assertEval("{ names(unlist(list(list(list(c=\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\", d=\"2\"))))) }");
+
+        assertEval("{ unlist(list()) }");
     }
 
     @Test
-    @Ignore
     public void testUnlistIgnore() {
         assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
         assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
 
         assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
-        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
         assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
 
         assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
@@ -2611,6 +2651,13 @@ public class TestSimpleBuiltins extends TestBase {
     public void testInvisible() {
         assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
+    }
+
+    @Test
+    @Ignore
+    public void testInvisibleIgnore() {
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
     }
 
     @Test
@@ -2827,6 +2874,12 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"^.foo\"<-function(e1,e2){e1+e2};x^y}");
 
         assertEval("{x<-1;class(x)<-\"foo\";\"!.foo\"<-function(e1,e2){x};!x}");
+    }
+
+    @Test
+    @Ignore
+    public void testOpsGroupDispatchLs() {
+        assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }
 
     @Test

@@ -25,6 +25,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "rep_len", kind = SUBSTITUTE)
 public abstract class RepeatLength extends RBuiltinNode {
+    private final String[] PARAMETER_NAMES={"x", "length.out"};
+
+    @Override
+    protected Object[] getParameterNames() {
+        return PARAMETER_NAMES;
+    }
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {

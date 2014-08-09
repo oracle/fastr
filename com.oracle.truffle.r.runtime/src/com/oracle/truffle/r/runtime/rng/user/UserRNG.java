@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.rng.user;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
@@ -50,9 +51,9 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
         userUnifInit = findSymbol(USER_UNIF_INIT, OPTIONAL);
         userUnifNSeed = findSymbol(USER_UNIF_INIT, OPTIONAL);
         userUnifSeedloc = findSymbol(USER_UNIF_INIT, OPTIONAL);
-        String libPath = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
+        DLLInfo libInfo = DLL.findLibraryContainingSymbol(USER_UNIF_RAND);
         userRngRFFI = RFFIFactory.getRFFI().getUserRngRFFI();
-        userRngRFFI.setLibrary(libPath);
+        userRngRFFI.setLibrary(libInfo.path);
         userRngRFFI.init(seed);
         if (userUnifSeedloc != 0 && userUnifNSeed == 0) {
             CompilerDirectives.transferToInterpreter();

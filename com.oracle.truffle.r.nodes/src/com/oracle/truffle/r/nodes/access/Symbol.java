@@ -34,12 +34,12 @@ public class Symbol {
     private final String name;
 
     /**
-     * Whether this is "..."
+     * Whether this is "...".
      */
     private final boolean isVarArg;
 
     /**
-     * Whether this is "..n"
+     * Whether this is "..n".
      */
     private final boolean isVarArgGetter;
 

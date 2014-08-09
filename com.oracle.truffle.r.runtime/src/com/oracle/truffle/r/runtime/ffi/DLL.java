@@ -112,18 +112,18 @@ public class DLL {
     }
 
     public static class SymbolInfo {
-        private final String libName;
+        private final DLLInfo libInfo;
         private final String symbol;
         private long address;
 
-        SymbolInfo(String libName, String symbol, long address) {
-            this.libName = libName;
+        SymbolInfo(DLLInfo libInfo, String symbol, long address) {
+            this.libInfo = libInfo;
             this.symbol = symbol;
             this.address = address;
         }
 
-        public String getLibName() {
-            return libName;
+        public DLLInfo getLibInfo() {
+            return libInfo;
         }
 
         public long getAddress() {
@@ -165,16 +165,16 @@ public class DLL {
         if (dllInfo == null) {
             return null;
         } else {
-            return new SymbolInfo(dllInfo.name, symbol, val);
+            return new SymbolInfo(dllInfo, symbol, val);
         }
     }
 
-    public static String findLibraryContainingSymbol(String symbol) {
+    public static DLLInfo findLibraryContainingSymbol(String symbol) {
         SymbolInfo symbolInfo = findSymbolInfo(symbol, null);
         if (symbolInfo == null) {
             return null;
         } else {
-            return symbolInfo.libName;
+            return symbolInfo.libInfo;
         }
     }
 }

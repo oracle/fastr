@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.gnur.*;
@@ -51,6 +52,16 @@ public class RPairList implements RAttributable, RAbstractContainer {
         this.cdr = cdr;
         this.tag = tag;
         this.type = type;
+    }
+
+    @Override
+    @SlowPath
+    public String toString() {
+        return String.format("type=%s, tag=%s, car=%s, cdr=%s", type, tag, toStringHelper(car), toStringHelper(cdr));
+    }
+
+    private static String toStringHelper(Object obj) {
+        return obj == null ? "null" : obj.getClass().getSimpleName();
     }
 
     public Object car() {

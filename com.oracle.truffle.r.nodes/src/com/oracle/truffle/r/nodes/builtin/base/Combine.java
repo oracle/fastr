@@ -70,7 +70,7 @@ public abstract class Combine extends RBuiltinNode {
 
     protected Combine() {
         this.foldOperation = new CombineFoldOperationNode();
-        this.precedenceNode = PrecedenceNodeFactory.create(null);
+        this.precedenceNode = PrecedenceNodeFactory.create(null, null);
     }
 
     protected Combine(Combine previousNode) {
@@ -277,7 +277,7 @@ public abstract class Combine extends RBuiltinNode {
     private int precedence(VirtualFrame frame, Object[] array) {
         int precedence = -1;
         for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, array[i]));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, array[i], RRuntime.LOGICAL_FALSE));
         }
         return precedence;
     }

@@ -38,9 +38,9 @@ public final class FormalArguments extends Arguments<RNode> {
     public static final FormalArguments NO_ARGS = new FormalArguments(new String[0], new RNode[0]);
 
     /**
-     * Serves as cache for {@link #hasVarArgs()}
+     * Serves as cache for {@link #hasVarArgs()}/{@link #getVarArgIndex()}.
      */
-    private Boolean hasVarArgs = null;
+    private final int varArgsIndex;
 
     /**
      * @param argumentsNames {@link #getNames()}
@@ -48,6 +48,7 @@ public final class FormalArguments extends Arguments<RNode> {
      */
     private FormalArguments(String[] argumentsNames, RNode[] defaultArguments) {
         super(defaultArguments, argumentsNames);
+        this.varArgsIndex = super.getVarArgIndex();
     }
 
     /**
@@ -65,11 +66,8 @@ public final class FormalArguments extends Arguments<RNode> {
     }
 
     @Override
-    public boolean hasVarArgs() {
-        if (hasVarArgs == null) {
-            hasVarArgs = super.hasVarArgs();
-        }
-        return hasVarArgs;
+    public int getVarArgIndex() {
+        return varArgsIndex;
     }
 
     /**

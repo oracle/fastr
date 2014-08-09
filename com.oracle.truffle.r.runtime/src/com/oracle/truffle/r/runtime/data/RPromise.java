@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -44,7 +45,7 @@ public class RPromise {
          * (!) frame regardless of their {@link PromiseType}(!!) and return their values immediately
          * (thus are no real promises).
          */
-        RAW,
+        INLINED,
 
         /**
          * This promise is an actual promise! It's value won't get evaluated until it's read.<br/>
@@ -70,13 +71,13 @@ public class RPromise {
     public enum PromiseType {
         /**
          * This promise is created for an argument that has been supplied to the function call and
-         * thus has to be evaluated inside the caller frame
+         * thus has to be evaluated inside the caller frame.
          */
         ARG_SUPPLIED,
 
         /**
          * This promise is created for an argument that was 'missing' at the function call and thus
-         * contains it's default value and has to be evaluated inside the _callee_ frame
+         * contains it's default value and has to be evaluated inside the _callee_ frame.
          */
         ARG_DEFAULT,
 
@@ -166,7 +167,7 @@ public class RPromise {
         if (env != null && env != RArguments.getEnvironment(frame)) {
             value = doEvalArgument();
         } else {
-            assert type == PromiseType.ARG_DEFAULT;
+// assert type == PromiseType.ARG_DEFAULT;
             value = doEvalArgument(frame);
         }
 
@@ -300,6 +301,7 @@ public class RPromise {
     }
 
     @Override
+    @SlowPath
     public String toString() {
         return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + exprRep.getRep() + ", " + value + ", " + isEvaluated + "]";
     }

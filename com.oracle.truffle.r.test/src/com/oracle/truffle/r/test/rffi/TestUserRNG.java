@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.test.rffi;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import java.nio.file.*;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import org.junit.*;
+
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.test.*;
 
-@RBuiltin(name = "length", kind = PRIMITIVE, parameterNames = {"x"})
-public abstract class Length extends RBuiltinNode {
-
-    public abstract int executeInt(VirtualFrame frame, Object vector);
-
-    @Specialization
-    @SuppressWarnings("unused")
-    public int getLength(RNull vector) {
-        controlVisibility();
-        return 0;
+/**
+ * Test for a user-defined random number generator. Implicitly tests {@code dyn.load} as well as the
+ * {@link UserRngRFFI} interface. We take care to use relative paths so the expected output file is
+ * portable.
+ */
+public class TestUserRNG extends TestBase {
+    @Test
+    public void testUserRNG() {
+        Path cwd = Paths.get(System.getProperty("user.dir"));
+        Path libPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native/urand/bin/liburand.so");
+        Path relLibPath = cwd.relativize(libPath);
+        assertTemplateEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{relLibPath.toString()}));
     }
-
-    @Specialization
-    public int getLength(RAbstractContainer vector) {
-        controlVisibility();
-        return vector.getLength();
-    }
-
 }

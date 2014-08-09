@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -38,19 +39,94 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 
 /**
  * <p>
- * An {@link ArgumentMatcher} knows the {@link FormalArguments} of a specific function and can
- * {@link #matchArguments(VirtualFrame, RFunction, CallArgumentsNode, SourceSection)} supplied
- * arguments to the formal ones.
- * </p>
- * The other match functions are used for special cases, where builtins make it necessary to
- * re-match parameters, e.g.:
+ * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
+ * {@link FormalArguments} of a specific function, see
+ * {@link #matchArguments(VirtualFrame, RFunction, CallArgumentsNode, SourceSection)}. The other
+ * match functions are used for special cases, where builtins make it necessary to re-match
+ * parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
  * 'UseMethod' and
  * {@link #matchArgumentsInlined(VirtualFrame, RFunction, CallArgumentsNode, SourceSection)} for
  * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
- *
+ * </p>
+ * Besides the static match functions {@link ArgumentMatcher} instances can also be used to check
+ * whether a re-matching of arguments is necessary, because either {@link RFunction} or
+ * {@link CallArgumentsNode} have changed using {@link #ArgumentMatcher()} and
+ * {@link #argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)}.
  */
 public class ArgumentMatcher {
+    /**
+     * Used in
+     * {@link #permuteArgumentsIndices(VirtualFrame, RFunction, Object[], String[], FormalArguments, SourceSection)}
+     * to denote "argument not set".
+     */
+    public static final int ARG_NOT_SET = -1;
+
+    /**
+     * Stored to check for changes.
+     */
+    private RFunction lastFunction = null;
+
+    /**
+     * Cached, so it can be used on the FastPath.
+     */
+    protected SourceSection encapsulatingSrc = null;
+
+    /**
+     * The {@link FormalArguments} for {@link #lastFunction}.
+     */
+    private FormalArguments formals = null;
+
+    /**
+     * The order the last
+     * {@link #permuteArgumentsIndices(VirtualFrame, RFunction, Object[], String[], FormalArguments, SourceSection)}
+     * yield.
+     *
+     * @see #argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)
+     */
+    private int[] lastIndices = null;
+
+    private final BranchProfile needsRematch = new BranchProfile();
+
+    /**
+     * Creates an instance of {@link ArgumentMatcher} for the decision whether an re-match is
+     * necessary or not, using
+     * {@link #argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)}.
+     */
+    public ArgumentMatcher() {
+    }
+
+    /**
+     * @param frame Current execution frame
+     * @param forFunction The function the supplied arguments should be matched for
+     * @param suppliedArgs The arguments supplied to this call
+     * @param srcNode The {@link RNode} which supplies its {@link SourceSection} for error reporting
+     * @return Whether the ordering of the supplied arguments has changed
+     */
+    public boolean argsNeedRematch(VirtualFrame frame, RFunction forFunction, CallArgumentsNode suppliedArgs, RNode srcNode) {
+        // First time, function changed?
+        if (lastIndices == null || lastFunction != forFunction) {
+            needsRematch.enter();
+
+            // Remember state
+            encapsulatingSrc = srcNode.getEncapsulatingSourceSection();
+            lastFunction = forFunction;
+            formals = ((RRootNode) forFunction.getTarget().getRootNode()).getFormalArguments();
+            lastIndices = ArgumentMatcher.permuteArgumentsIndices(frame, forFunction, suppliedArgs.getArguments(), suppliedArgs.getNames(), formals, encapsulatingSrc);
+            return true;
+        }
+
+        // Get indices for potential reordering and compare them
+        int[] newIndices = ArgumentMatcher.permuteArgumentsIndices(frame, forFunction, suppliedArgs.getArguments(), suppliedArgs.getNames(), formals, encapsulatingSrc);
+        if (!Arrays.equals(lastIndices, newIndices)) {
+            // Function stayed the same, supplied arguments changed: needs rematch!
+            lastIndices = newIndices;
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Match arguments supplied for a specific function call to the formal arguments and wraps them
      * in {@link PromiseNode}s. Used for calls to all functions parsed from R code
@@ -72,22 +148,20 @@ public class ArgumentMatcher {
             RNode arg = suppliedArgs.getArguments()[i];
 
             // Check for 'missing' arguments
-            {
-                RNode rvnArg = arg;
+            RNode rvnArg = arg;
 
-                // Eventually unfold WrapArgumentNode
-                if (rvnArg instanceof WrapArgumentNode) {
-                    rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
-                }
+            // Eventually unfold WrapArgumentNode
+            if (rvnArg instanceof WrapArgumentNode) {
+                rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
+            }
 
-                // ReadVariableNode denotes a symbol
-                if (rvnArg instanceof ReadVariableNode) {
-                    ReadVariableNode rvn = (ReadVariableNode) rvnArg;
-                    Symbol symbol = rvn.getSymbol();
-                    if (RMissingHelper.isMissingArgument(frame, symbol)) {
-                        suppliedEvaled[i] = null;
-                        continue;
-                    }
+            // ReadVariableNode denotes a symbol
+            if (rvnArg instanceof ReadVariableNode) {
+                ReadVariableNode rvn = (ReadVariableNode) rvnArg;
+                Symbol symbol = rvn.getSymbol();
+                if (RMissingHelper.isMissingArgument(frame, symbol)) {
+                    suppliedEvaled[i] = null;
+                    continue;
                 }
             }
 
@@ -287,6 +361,100 @@ public class ArgumentMatcher {
         }
 
         return resultArgs;
+    }
+
+    /**
+     * Similar to
+     * {@link #permuteArguments(VirtualFrame, RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection)}
+     * this method checks how arguments have to be rearranged BUT instead of performing the changes
+     * right away it returns the new indices for every supplied arguments as an {@code int[]}.
+     *
+     * @param frame carrier for error reporting
+     * @param function The function which should be called
+     * @param suppliedArgs The arguments given to this function call
+     * @param suppliedNames The names the arguments might have
+     * @param formals The {@link FormalArguments} this function has
+     * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
+     *
+     * @param <T> The type of the given arguments
+     * @return An array of {@code int} which holds for every supplied argument the formal argument
+     *         it has been matched to.
+     * @see #ARG_NOT_SET
+     */
+    protected static <T> int[] permuteArgumentsIndices(VirtualFrame frame, RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, SourceSection encapsulatingSrc) {
+        String[] formalNames = formals.getNames();
+
+        // Preparations
+        int varArgIndex = formals.getVarArgIndex();
+        boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
+
+        // Error check: Unused argument
+        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+        final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
+        if (!isBuiltin && !hasVarArgs && suppliedArgs.length > rootNode.getParameterCount()) {
+            RNode unusedArgNode = (RNode) suppliedArgs[rootNode.getParameterCount()];
+            throw RError.error(frame, encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, unusedArgNode.getSourceSection().getCode());
+        }
+
+        // Init result
+        int[] resultPos = new int[hasVarArgs ? formalNames.length : Math.max(formalNames.length, suppliedArgs.length)];
+        Arrays.fill(resultPos, ARG_NOT_SET);
+
+        // Start by finding a matching arguments by name
+        BitSet matchedSuppliedNames = new BitSet(suppliedNames.length);
+        BitSet matchedFormalArgs = new BitSet(formalNames.length);
+        int varArgMatches = 0;  // The nr of arguments that matches the vararg "..."
+        // si = suppliedIndex, fi = formalIndex
+        for (int si = 0; si < suppliedNames.length; si++) {
+            if (suppliedNames[si] == null) {
+                continue;
+            }
+
+            // Search for argument name inside formal arguments
+            int fi = findParameterPosition(frame, formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], encapsulatingSrc);
+            if (fi >= 0) {
+                // Supplied argument is matched!
+                if (fi >= varArgIndex) {
+                    // This argument matches to "..."
+                    ++varArgMatches;
+                }
+                resultPos[si] = fi;
+                matchedSuppliedNames.set(si);
+            }
+        }
+
+        /*
+         * Next, check for supplied arguments for vararg: To find the remaining arguments that can
+         * match to ... we should subtract sum of varArgIndex and number of variable arguments
+         * already matched from total number of arguments.
+         */
+        int varArgCount = suppliedArgs.length - (varArgIndex + varArgMatches);
+        if (varArgIndex >= 0 && varArgCount >= 0) {
+            // Every supplied argument that has not been matched or is longer then names list:
+            // Add to vararg!
+            int pos = 0;
+            for (int i = varArgIndex; i < suppliedArgs.length; i++) {
+                if (i > suppliedNames.length || !matchedSuppliedNames.get(i)) {
+                    resultPos[pos + varArgIndex] = i;
+                    pos++;
+                }
+            }
+        }
+
+        // Now fill arguments that have not been set 'by name' by order of their appearance
+        int cursor = 0;
+        for (int fi = 0; fi < resultPos.length && (!hasVarArgs || fi < varArgIndex); fi++) {
+            if (resultPos[fi] == ARG_NOT_SET) {
+                while (cursor < suppliedNames.length && matchedSuppliedNames.get(cursor)) {
+                    cursor++;
+                }
+                if (cursor < suppliedArgs.length) {
+                    resultPos[cursor++] = fi;
+                }
+            }
+        }
+
+        return resultPos;
     }
 
     /**
@@ -504,7 +672,7 @@ public class ArgumentMatcher {
     private static class BuiltinInitPromiseWrapper implements PromiseWrapper {
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
-            return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.RAW;
+            return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.INLINED;
         }
     }
 
