@@ -6589,32 +6589,37 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_79fb1d399e2b39a496dac5a9749fb873() {
+    public void TestSimpleBuiltins_testDelayedAssign_87d161302160393963ba6b1003b818c8() {
+        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_79fb1d399e2b39a496dac5a9749fb873() {
         assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_af327b1b6a16f6b664839a659452d6ff() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_af327b1b6a16f6b664839a659452d6ff() {
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_b0a8cc01cf8e5fc94f5e4084097107ad() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_b0a8cc01cf8e5fc94f5e4084097107ad() {
         assertEval("{ f <- function(...) { delayedAssign(\"x\", ..1) ; y <<- x } ; f(10) ; y }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_2650fc25df477fca9f65b4ae42030ddc() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_2650fc25df477fca9f65b4ae42030ddc() {
         assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_8c59e6c2915b2b15a962ae541292c0db() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_8c59e6c2915b2b15a962ae541292c0db() {
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testDelayedAssign_83064c7d347757ad66074441e8cfc90e() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_83064c7d347757ad66074441e8cfc90e() {
         assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
     }
 

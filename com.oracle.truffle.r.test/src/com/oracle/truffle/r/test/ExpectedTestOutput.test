@@ -6043,6 +6043,22 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 #{ length(array(dim=c(1,0,2,3))) }
 [1] 0
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", a+b); a <- 1 ; b <- 3 ; x }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", y); y <- 10; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() print ("outer");  g <- function() { delayedAssign("f", 1); f() }; g()}
+[1] "outer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x", y); y <- 10; x  } ; f() }
+[1] 10
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(TRUE) }
 [1] "TRUE"
