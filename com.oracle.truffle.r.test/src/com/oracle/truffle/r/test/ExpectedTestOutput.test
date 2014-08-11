@@ -6043,6 +6043,22 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 #{ length(array(dim=c(1,0,2,3))) }
 [1] 0
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", a+b); a <- 1 ; b <- 3 ; x }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", y); y <- 10; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() print ("outer");  g <- function() { delayedAssign("f", 1); f() }; g()}
+[1] "outer"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x", y); y <- 10; x  } ; f() }
+[1] 10
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(TRUE) }
 [1] "TRUE"
@@ -9737,6 +9753,31 @@ numeric(0)
 [1] "text" "text" "text" "text"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 0)}
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 1)}
+[1] "abcd"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 14)}
+ [1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"
+[11] "abcd" "efg"  "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 2)}
+[1] "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 7)}
+[1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 8)}
+[1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
 #{rep_len(length.out=4, "text")}
 [1] "text" "text" "text" "text"
 
@@ -10751,6 +10792,22 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ x<-character(); substr(x,integer(),3)<-NULL; x }
 character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("123456", first=2, last=4) }
+[1] "234"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("123456", first=2.8, last=4) }
+[1] "234"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("fastr", first=NA, last=2) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring(c("hello", "bye"), first=c(1,2,3), last=4) }
+[1] "hell" "ye"   "ll"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ `sum`(1:10) }
@@ -13518,6 +13575,10 @@ Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testMatching
 #{ x<-function(foo,bar){foo*bar} ; x(fo=10, bar=2) }
 [1] 20
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }
+[1] 57
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }

@@ -125,6 +125,17 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
+    public RStringVector repLen(RStringVector vectorToRepeat, int length) {
+        controlVisibility();
+        String[] result = new String[length];
+        int vectorToRepeatLength = vectorToRepeat.getLength();
+        for (int i = 0; i < length; i++) {
+            result[i] = vectorToRepeat.getDataAt(i % vectorToRepeatLength);
+        }
+        return RDataFactory.createStringVector(result, true);
+    }
+
+    @Specialization
     public RRawVector repLen(RRawVector value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
