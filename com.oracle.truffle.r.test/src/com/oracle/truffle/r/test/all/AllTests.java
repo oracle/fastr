@@ -10944,6 +10944,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testRepLen_8429224a33cc26907ae3f0e002b3d7a9() {
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 7)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_81b03b50821133ffb87b06692b01665e() {
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 14)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_3adbca74b8af3c026793e1946f29b25f() {
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 8)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_36703236ce021537228fca985495233a() {
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 0)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_384cd1468eadfe80fc5c51793f3b2b35() {
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 1)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testRepLen_5b20f822b44b9833616610e8b91bf41b() {
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 2)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testRev_4d0b89f7d5b9601a90230cf009915fc3() {
         assertEval("{ rev(1:3) }");
     }

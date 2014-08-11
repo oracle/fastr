@@ -1859,26 +1859,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_41302c9bd877c3627e699cd303bfef78() {
-        assertEval("{ substring(\"123456\", first=2, last=4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_747b32e2b791c976fc9b634a5aef6b23() {
-        assertEval("{ substring(\"123456\", first=2.8, last=4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_8ce15f4973c2ddb4ca609ef2c4836ab5() {
-        assertEval("{ substring(c(\"hello\", \"bye\"), first=c(1,2,3), last=4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_6dd56114a5d7ba502c449ca3c03308ae() {
-        assertEval("{ substring(\"fastr\", first=NA, last=2) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testSumIgnore_512304594d55f1330efacd6cc594cf7a() {
         assertEval("{ sum(0, 1[3]) }");
     }
