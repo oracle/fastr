@@ -2246,11 +2246,16 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDelayedAssign() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
         assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
         assertEval("{ f <- function() { delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
+        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
+    }
+
+    @Test
+    @Ignore
+    public void testDelayedAssignIgnore() {
         assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
         assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
