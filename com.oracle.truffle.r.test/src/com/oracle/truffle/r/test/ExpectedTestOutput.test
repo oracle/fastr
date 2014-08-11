@@ -9737,6 +9737,31 @@ numeric(0)
 [1] "text" "text" "text" "text"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 0)}
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 1)}
+[1] "abcd"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 14)}
+ [1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"
+[11] "abcd" "efg"  "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 2)}
+[1] "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 7)}
+[1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 8)}
+[1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
 #{rep_len(length.out=4, "text")}
 [1] "text" "text" "text" "text"
 
@@ -10751,6 +10776,22 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ x<-character(); substr(x,integer(),3)<-NULL; x }
 character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("123456", first=2, last=4) }
+[1] "234"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("123456", first=2.8, last=4) }
+[1] "234"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("fastr", first=NA, last=2) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring(c("hello", "bye"), first=c(1,2,3), last=4) }
+[1] "hell" "ye"   "ll"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ `sum`(1:10) }

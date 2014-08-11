@@ -231,6 +231,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{rep_len(4, x=\"text\")}");
         assertEval("{x<-\"text\"; length.out<-4; rep_len(x=x, length.out=length.out)}");
         assertEval("{x<-\"text\"; length.out<-4; rep_len(length.out=length.out, x=x)}");
+        // test string vector argument
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 7)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 14)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 8)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 0)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 1)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 2)}");
     }
 
     @Test
@@ -1125,7 +1132,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSubstringIgnore() {
         assertEval("{ substring(\"123456\", first=2, last=4) }");
         assertEval("{ substring(\"123456\", first=2.8, last=4) }");
