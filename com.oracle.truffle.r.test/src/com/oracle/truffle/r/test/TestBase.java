@@ -55,6 +55,7 @@ public class TestBase {
         private static File diffsOutputFile;
 
         private static final String GEN_EXPECTED = "gen-expected";
+        private static final String GEN_EXPECTED_QUIET = "gen-expected-quiet";
         private static final String CHECK_EXPECTED = "check-expected";
         private static final String EXPECTED = "expected=";
         private static final String GEN_FASTR = "gen-fastr=";
@@ -76,6 +77,7 @@ public class TestBase {
                 File fastROutputFile = null;
                 boolean checkExpected = false;
                 boolean genExpected = false;
+                boolean genExpectedQuiet = false;
                 if (arg != null) {
                     String[] args = arg.split(",");
                     for (String directive : args) {
@@ -87,6 +89,8 @@ public class TestBase {
                             diffsOutputFile = new File(new File(directive.replace(GEN_DIFFS, "")), TestOutputManager.TEST_DIFF_OUTPUT_FILE);
                         } else if (directive.equals(GEN_EXPECTED)) {
                             genExpected = true;
+                        } else if (directive.equals(GEN_EXPECTED_QUIET)) {
+                            genExpectedQuiet = true;
                         } else if (directive.equals(CHECK_EXPECTED)) {
                             checkExpected = true;
                         } else if (directive.equals(KEEP_TRAILING_WHITESPACEG)) {
@@ -98,7 +102,7 @@ public class TestBase {
                         }
                     }
                 }
-                expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected);
+                expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -153,7 +157,7 @@ public class TestBase {
                 Assert.fail("cannot find " + TestOutputManager.TEST_EXPECTED_OUTPUT_FILE + " resource");
             } else {
                 try {
-                    expectedOutputManager = new ExpectedTestOutputManager(new File(expectedTestOutputURL.getPath()), false, false);
+                    expectedOutputManager = new ExpectedTestOutputManager(new File(expectedTestOutputURL.getPath()), false, false, false);
                 } catch (IOException ex) {
                     Assert.fail("error reading: " + expectedTestOutputURL.getPath() + ": " + ex);
                 }
@@ -163,6 +167,7 @@ public class TestBase {
 
     private static class ExpectedTestOutputManager extends TestOutputManager {
         final boolean generate;
+
         /**
          * When {@code true}, indicates that test generation is in check only mode.
          */
@@ -174,10 +179,13 @@ public class TestBase {
 
         private boolean haveRSession;
 
-        protected ExpectedTestOutputManager(File outputFile, boolean generate, boolean checkOnly) throws IOException {
+        protected ExpectedTestOutputManager(File outputFile, boolean generate, boolean checkOnly, boolean genExpectedQuiet) throws IOException {
             super(outputFile);
             this.checkOnly = checkOnly;
             this.generate = generate;
+            if (genExpectedQuiet) {
+                localDiagnosticHandler.setQuiet();
+            }
             oldExpectedOutputFileContent = readTestOutputFile();
             if (generate) {
                 createRSession();
@@ -674,6 +682,8 @@ public class TestBase {
     private static final LocalDiagnosticHandler localDiagnosticHandler = new LocalDiagnosticHandler();
 
     private static class LocalDiagnosticHandler implements TestOutputManager.DiagnosticHandler {
+        private boolean quiet;
+
         // CheckStyle: stop system..print check
 
         public void warning(String msg) {
@@ -681,11 +691,17 @@ public class TestBase {
         }
 
         public void note(String msg) {
-            System.out.println("note: " + msg);
+            if (!quiet) {
+                System.out.println("note: " + msg);
+            }
         }
 
         public void error(String msg) {
             System.err.println("error: " + msg);
+        }
+
+        void setQuiet() {
+            quiet = true;
         }
 
     }
