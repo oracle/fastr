@@ -16064,6 +16064,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleIfEvaluator_testIfVisibility_623c4f9534806a63158804e058d093cb() {
+        assertEval("{ if (TRUE) invisible(23) else 23 }");
+    }
+
+    @Test
+    public void TestSimpleIfEvaluator_testIfVisibility_39dd9ca187b36acefd2b7bb24fbf9873() {
+        assertEval("{ if (TRUE) invisible(23) }");
+    }
+
+    @Test
+    public void TestSimpleIfEvaluator_testIfVisibility_01427999a084605da3b7f52f6cccf2d1() {
+        assertEval("{ if (FALSE) 23 else invisible(23) }");
+    }
+
+    @Test
     public void TestSimpleIfEvaluator_testIfWithoutElse_fda700832dfd7d9e6c06cb66fd9e25c8() {
         assertEval("if(TRUE) 1");
     }

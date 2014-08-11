@@ -13793,7 +13793,16 @@ In if (x) 1 else 2 :
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (FALSE) 23 else invisible(23) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
 #{ if (FALSE) 23 }
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (TRUE) invisible(23) else 23 }
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (TRUE) invisible(23) }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfWithoutElse
 #if(TRUE) 1
