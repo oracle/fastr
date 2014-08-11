@@ -140,7 +140,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public ReadCheckPromiseNode(ReadVariableNode readNode) {
             super();
             this.readNode = readNode;
-            this.readNodeInitial = readNode;
+            this.readNodeInitial = NodeUtil.cloneNode(readNode);
         }
 
         @Override
