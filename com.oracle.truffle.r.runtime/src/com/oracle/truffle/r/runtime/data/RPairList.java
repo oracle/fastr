@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
 public class RPairList implements RAttributable, RAbstractContainer {
     private Object car;
     private Object cdr;
-    private String tag;
+    private Object tag;
     private RAttributes attributes;
     /**
      * Denotes the (GnuR) typeof entity that the pairlist represents.
@@ -47,7 +47,7 @@ public class RPairList implements RAttributable, RAbstractContainer {
     /**
      * Variant used in unserialization to record the GnuR type the pairlist denotes.
      */
-    public RPairList(Object car, Object cdr, String tag, SEXPTYPE type) {
+    public RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
         this.car = car;
         this.cdr = cdr;
         this.tag = tag;
@@ -87,11 +87,11 @@ public class RPairList implements RAttributable, RAbstractContainer {
         return pl.car;
     }
 
-    public String getTag() {
+    public Object getTag() {
         return tag;
     }
 
-    public void setTag(String tag) {
+    public void setTag(Object tag) {
         this.tag = tag;
     }
 
@@ -157,7 +157,7 @@ public class RPairList implements RAttributable, RAbstractContainer {
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         int i = 0;
         while (pl != null) {
-            data[i] = pl.tag;
+            data[i] = (String) pl.tag;
             if (pl.tag == RRuntime.STRING_NA) {
                 complete = false;
             }
