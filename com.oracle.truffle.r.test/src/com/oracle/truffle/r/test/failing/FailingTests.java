@@ -639,47 +639,32 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_8ec95e38ecb3a999ffba3e7abc6ffb72() {
-        assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_e828fbbef10258dab93aa4d7350c38f9() {
-        assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_cedc0d1753c9e0fc71d5868f5654e3ef() {
-        assertEval("{ f <- function() { delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_79fb1d399e2b39a496dac5a9749fb873() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_79fb1d399e2b39a496dac5a9749fb873() {
         assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_af327b1b6a16f6b664839a659452d6ff() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_af327b1b6a16f6b664839a659452d6ff() {
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_b0a8cc01cf8e5fc94f5e4084097107ad() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_b0a8cc01cf8e5fc94f5e4084097107ad() {
         assertEval("{ f <- function(...) { delayedAssign(\"x\", ..1) ; y <<- x } ; f(10) ; y }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_2650fc25df477fca9f65b4ae42030ddc() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_2650fc25df477fca9f65b4ae42030ddc() {
         assertEval("{ f <- function() { delayedAssign(\"x\", 3); delayedAssign(\"x\", 2); x } ; f() }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_8c59e6c2915b2b15a962ae541292c0db() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_8c59e6c2915b2b15a962ae541292c0db() {
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testDelayedAssign_83064c7d347757ad66074441e8cfc90e() {
+    public void TestSimpleBuiltins_testDelayedAssignIgnore_83064c7d347757ad66074441e8cfc90e() {
         assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
     }
 
@@ -1856,26 +1841,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleBuiltins_testSubstitute_b6449119b833609315c063f2a2c5a363() {
         assertEval("{ f <- function(...) { substitute(list(...)) } ; f(x + z, a * b) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_41302c9bd877c3627e699cd303bfef78() {
-        assertEval("{ substring(\"123456\", first=2, last=4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_747b32e2b791c976fc9b634a5aef6b23() {
-        assertEval("{ substring(\"123456\", first=2.8, last=4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_8ce15f4973c2ddb4ca609ef2c4836ab5() {
-        assertEval("{ substring(c(\"hello\", \"bye\"), first=c(1,2,3), last=4) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testSubstringIgnore_6dd56114a5d7ba502c449ca3c03308ae() {
-        assertEval("{ substring(\"fastr\", first=NA, last=2) }");
     }
 
     @Ignore

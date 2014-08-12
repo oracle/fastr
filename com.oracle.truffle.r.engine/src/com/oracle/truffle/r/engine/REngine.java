@@ -411,6 +411,7 @@ public final class REngine implements RContext.Engine {
         return result;
     }
 
+    @SlowPath
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
@@ -419,6 +420,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
+    @SlowPath
     public void printRError(RError e) {
         context.getConsoleHandler().printErrorln(e.toString());
         reportWarnings(true);
@@ -436,6 +438,7 @@ public final class REngine implements RContext.Engine {
         }
     }
 
+    @SlowPath
     private static void reportWarnings(boolean inAddition) {
         List<String> evalWarnings = context.extractEvalWarnings();
         ConsoleHandler consoleHandler = context.getConsoleHandler();

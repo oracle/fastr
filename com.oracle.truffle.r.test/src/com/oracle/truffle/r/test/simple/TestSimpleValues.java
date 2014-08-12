@@ -174,4 +174,9 @@ public class TestSimpleValues extends TestBase {
         assertEval("{ .Platform$endian }");
     }
 
+    @Test
+    public void testFunctionLookupFailure() {
+        assertEval("{ f<-1; f() }");
+    }
+
 }

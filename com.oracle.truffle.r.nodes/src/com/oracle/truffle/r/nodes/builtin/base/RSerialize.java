@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * Serialize/unserialize.
  *
  */
-public final class RSerialize {
+public class RSerialize {
 
     private static class Flags {
         static final int IS_OBJECT_BIT_MASK = 1 << 8;
@@ -43,14 +43,35 @@ public final class RSerialize {
         boolean hasAttr;
         boolean hasTag;
 
-        static void decodeFlags(Flags flags, int flagsValue) {
+        static Flags decodeFlags(int flagsValue) {
+            Flags flags = new Flags();
             flags.value = flagsValue;
             flags.ptype = flagsValue & Flags.TYPE_MASK;
             flags.plevs = flagsValue >> Flags.LEVELS_SHIFT;
             flags.isObj = (flagsValue & IS_OBJECT_BIT_MASK) != 0;
             flags.hasAttr = (flagsValue & HAS_ATTR_BIT_MASK) != 0;
             flags.hasTag = (flagsValue & HAS_TAG_BIT_MASK) != 0;
+            return flags;
         }
+    }
+
+    /**
+     * Provides access to the underlying byte array.
+     */
+    private static class PByteArrayInputStream extends ByteArrayInputStream {
+
+        public PByteArrayInputStream(byte[] buf) {
+            super(buf);
+        }
+
+        byte[] getData() {
+            return buf;
+        }
+
+        int pos() {
+            return pos;
+        }
+
     }
 
     @SuppressWarnings("unused") private static final int MAX_PACKED_INDEX = Integer.MAX_VALUE >> 8;
@@ -64,10 +85,11 @@ public final class RSerialize {
         return i >> 8;
     }
 
-    private PStream stream;
+    protected PStream stream;
     private Object[] refTable = new Object[128];
     private int refTableIndex;
     @SuppressWarnings("unused") private final RFunction hook;
+    private static boolean trace;
 
     private RSerialize(RConnection conn) throws IOException {
         this(conn.getInputStream(), null);
@@ -79,14 +101,18 @@ public final class RSerialize {
         is.read(buf);
         switch (buf[0]) {
             case 'A':
+                // TODO error
                 break;
             case 'B':
+                // TODO error
                 break;
             case 'X':
                 stream = new XdrFormat(is);
                 break;
             case '\n':
+                // TODO special case in 'A'
             default:
+                // TODO error
         }
     }
 
@@ -114,12 +140,13 @@ public final class RSerialize {
     }
 
     public static Object unserialize(RConnection conn) throws IOException {
-        RSerialize instance = new RSerialize(conn);
+        RSerialize instance = trace ? new TracingRSerialize(conn) : new RSerialize(conn);
         return instance.unserialize();
     }
 
     public static Object unserialize(byte[] data, RFunction hook) throws IOException {
-        RSerialize instance = new RSerialize(new ByteArrayInputStream(data), hook);
+        InputStream is = new PByteArrayInputStream(data);
+        RSerialize instance = trace ? new TracingRSerialize(is, hook) : new RSerialize(is, hook);
         return instance.unserialize();
     }
 
@@ -134,9 +161,12 @@ public final class RSerialize {
         return result;
     }
 
-    private Object readItem() {
-        Flags flags = new Flags();
-        Flags.decodeFlags(flags, stream.readInt());
+    protected Object readItem() {
+        Flags flags = Flags.decodeFlags(stream.readInt());
+        return readItem(flags);
+    }
+
+    protected Object readItem(Flags flags) {
         Object result = null;
 
         SEXPTYPE type = SEXPTYPE.codeMap.get(flags.ptype);
@@ -162,9 +192,7 @@ public final class RSerialize {
 
             case NAMESPACESXP: {
                 RStringVector s = inStringVec(false);
-                addReadRef(findNamespace(s));
-
-                break;
+                return addReadRef(findNamespace(s));
             }
 
             case VECSXP: {
@@ -191,7 +219,11 @@ public final class RSerialize {
                 int[] data = new int[len];
                 boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
                 for (int i = 0; i < len; i++) {
-                    data[i] = stream.readInt();
+                    int intVal = stream.readInt();
+                    if (intVal == RRuntime.INT_NA) {
+                        complete = false;
+                    }
+                    data[i] = intVal;
                 }
                 result = RDataFactory.createIntVector(data, complete);
                 break;
@@ -202,7 +234,14 @@ public final class RSerialize {
                 byte[] data = new byte[len];
                 boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
                 for (int i = 0; i < len; i++) {
-                    data[i] = (byte) stream.readInt();
+                    int intVal = stream.readInt();
+                    if (intVal == RRuntime.INT_NA) {
+                        complete = false;
+                        data[i] = RRuntime.LOGICAL_NA;
+                    } else {
+                        data[i] = (byte) intVal;
+                    }
+
                 }
                 result = RDataFactory.createLogicalVector(data, complete);
                 break;
@@ -213,7 +252,11 @@ public final class RSerialize {
                 double[] data = new double[len];
                 boolean complete = RDataFactory.COMPLETE_VECTOR; // really?
                 for (int i = 0; i < len; i++) {
-                    data[i] = stream.readDouble();
+                    double doubleVal = stream.readDouble();
+                    if (doubleVal == RRuntime.DOUBLE_NA) {
+                        complete = false;
+                    }
+                    data[i] = doubleVal;
                 }
                 result = RDataFactory.createDoubleVector(data, complete);
                 break;
@@ -235,19 +278,20 @@ public final class RSerialize {
             case PROMSXP:
             case DOTSXP: {
                 Object attrItem = null;
-                RSymbol tagItem = null;
+                Object tagItem = null;
                 if (flags.hasAttr) {
                     attrItem = readItem();
 
                 }
                 if (flags.hasTag) {
-                    tagItem = (RSymbol) readItem();
+                    tagItem = readItem();
                 }
                 Object carItem = readItem();
                 Object cdrItem = readItem();
-                RPairList pairList = new RPairList(carItem, cdrItem, tagItem == null ? null : tagItem.getName(), type);
+                RPairList pairList = new RPairList(carItem, cdrItem, tagItem, type);
                 result = pairList;
                 if (attrItem != null) {
+                    assert false;
                     // Can't attribute a RPairList
                     // pairList.setAttr(name, value);
                 }
@@ -255,11 +299,17 @@ public final class RSerialize {
                     // must convert the RPairList to a FastR RFunction
                     // We could convert to an AST directly, but it is easier and more robust
                     // to deparse and reparse.
-                    String deparse = RDeparse.deparse((RPairList) result);
+                    RPairList rpl = (RPairList) result;
+                    String deparse = RDeparse.deparse(rpl);
                     try {
-                        // TODO is there a problem with the lexical environment?
+                        /*
+                         * The tag of result is the enclosing environment (from NAMESPACESEXP) for
+                         * the function. However the namespace is locked, so can't just eval there
+                         * (and overwrite the promise), so we fix the enclosing frame up on return.
+                         */
                         RExpression expr = RContext.getEngine().parse(deparse);
-                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.globalEnv(), 0));
+                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.emptyEnv(), 0));
+                        func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                         result = func;
                     } catch (RContext.Engine.ParseException | PutException ex) {
                         // denotes a deparse/eval error, which is an unrecoverable bug
@@ -301,9 +351,10 @@ public final class RSerialize {
                  */
                 RPairList pl = (RPairList) attr;
                 while (true) {
-                    String tag = pl.getTag();
+                    RSymbol tagSym = (RSymbol) pl.getTag();
+                    String tag = tagSym.getName();
                     Object car = pl.car();
-                    // Eventually we can just use the generic setAttr
+                    // TODO just use the generic setAttr
                     if (tag.equals(RRuntime.NAMES_ATTR_KEY)) {
                         vec.setNames(car);
                     } else if (tag.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
@@ -425,9 +476,14 @@ public final class RSerialize {
              * @param size of the buffer in bytes
              */
             Xdr(int size) {
-                this.buf = new byte[size];
-                this.size = size;
-                this.offset = 0;
+                this(new byte[size], 0);
+            }
+
+            Xdr(byte[] data, int offset) {
+                this.buf = data;
+                this.size = data.length;
+                this.offset = offset;
+
             }
 
             /**
@@ -579,21 +635,27 @@ public final class RSerialize {
 
         XdrFormat(InputStream is) throws IOException {
             super(is);
-            byte[] isbuf = new byte[4096];
-            xdr = new Xdr(0);
-            int count = 0;
-            // read entire stream
-            while (true) {
-                int nr = is.read(isbuf, 0, isbuf.length);
-                if (nr == -1) {
-                    break;
+            if (is instanceof PByteArrayInputStream) {
+                // we already have the data and we have read the beginning
+                PByteArrayInputStream pbis = (PByteArrayInputStream) is;
+                xdr = new Xdr(pbis.getData(), pbis.pos());
+            } else {
+                byte[] isbuf = new byte[16384];
+                xdr = new Xdr(0);
+                int count = 0;
+                // read entire stream
+                while (true) {
+                    int nr = is.read(isbuf, 0, isbuf.length);
+                    if (nr == -1) {
+                        break;
+                    }
+                    xdr.ensureCanAdd(nr);
+                    xdr.putRawBytes(isbuf, 0, nr);
+                    count += nr;
                 }
-                xdr.ensureCanAdd(nr);
-                xdr.putRawBytes(isbuf, 0, nr);
-                count += nr;
+                xdr.size = count;
+                xdr.offset = 0;
             }
-            xdr.size = count;
-            xdr.offset = 0;
         }
 
         @Override
@@ -611,5 +673,36 @@ public final class RSerialize {
         double readDouble() {
             return xdr.getDouble();
         }
+    }
+
+    /**
+     * Traces the items read for debugging.
+     */
+    private static final class TracingRSerialize extends RSerialize {
+        private int depth;
+
+        private TracingRSerialize(RConnection conn) throws IOException {
+            this(conn.getInputStream(), null);
+        }
+
+        private TracingRSerialize(InputStream is, RFunction hook) throws IOException {
+            super(is, hook);
+        }
+
+        @Override
+        protected Object readItem() {
+            // CheckStyle: stop system..print check
+            Flags flags = Flags.decodeFlags(stream.readInt());
+            SEXPTYPE type = SEXPTYPE.codeMap.get(flags.ptype);
+            for (int i = 0; i < depth; i++) {
+                System.out.print("  ");
+            }
+            System.out.printf("%d %s%n", depth, type);
+            depth++;
+            Object result = super.readItem(flags);
+            depth--;
+            return result;
+        }
+
     }
 }

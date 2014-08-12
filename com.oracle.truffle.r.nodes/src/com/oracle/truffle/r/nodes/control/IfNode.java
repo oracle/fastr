@@ -24,47 +24,53 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@SuppressWarnings("unused")
-@NodeChildren({@NodeChild("condition"), @NodeChild("thenPart"), @NodeChild("elsePart")})
-@NodeField(name = "elseGiven", type = boolean.class)
-public abstract class IfNode extends RNode implements VisibilityController {
+public class IfNode extends RNode implements VisibilityController {
 
-    protected abstract boolean isElseGiven();
+    @Child private ConvertBooleanNode condition;
+    @Child private RNode thenPart;
+    @Child private RNode elsePart;
+
+    private final boolean elseGiven;
+
+    protected IfNode(RNode condition, RNode thenPart, RNode elsePart) {
+        this.condition = ConvertBooleanNode.create(condition);
+        this.thenPart = thenPart;
+        this.elseGiven = elsePart != null;
+        this.elsePart = elseGiven ? elsePart : ConstantNode.create(RNull.instance);
+    }
+
+    public static IfNode create(RNode condition, RNode thenPart, RNode elsePart) {
+        return new IfNode(condition, thenPart, elsePart);
+    }
+
+    public static IfNode create(SourceSection src, RNode condition, RNode thenPart, RNode elsePart) {
+        IfNode i = create(condition, thenPart, elsePart);
+        i.assignSourceSection(src);
+        return i;
+    }
 
     /**
-     * Result visibility of an if node depends on whether there is an else branch or not, and on the
-     * condition. For instance, the expression {@code if (FALSE) 23} will evaluate to {@code NULL},
-     * but the result will not be printed in the shell. Conversely, {@code NULL} will be printed for
+     * Result visibility of an {@code if} expression is not only a property of the {@code if}
+     * builtin; it also depends on whether there is an else branch or not, and on the condition. For
+     * instance, the expression {@code if (FALSE) 23} will evaluate to {@code NULL}, but the result
+     * will not be printed in the shell. Conversely, {@code NULL} will be printed for
      * {@code if (FALSE) 23 else NULL} because the else branch is given.
      *
      * This means that we need to take care of visibility in this class, and do a double check of
-     * the condition and the presence of an else branch below in {@link #doObject}.
+     * the condition and the presence of an else branch below in {@link #execute}.
      */
-    private boolean isVisible;
+    private boolean isVisible = true;
 
     @Override
     public boolean getVisibility() {
         return isVisible;
-    }
-
-    public static RNode create(RNode condition, RNode thenPart, RNode elsePart) {
-        if (elsePart != null) {
-            return IfNodeFactory.create(condition, thenPart, elsePart, true);
-        } else {
-            return IfNodeFactory.create(condition, thenPart, ConstantNode.create(RNull.instance), false);
-        }
-    }
-
-    public static RNode create(SourceSection src, RNode condition, RNode thenPart, RNode elsePart) {
-        RNode i = create(condition, thenPart, elsePart);
-        i.assignSourceSection(src);
-        return i;
     }
 
     @CreateCast({"condition"})
@@ -72,22 +78,23 @@ public abstract class IfNode extends RNode implements VisibilityController {
         return ConvertBooleanNode.create(node);
     }
 
-    @ShortCircuit("thenPart")
-    public static boolean needsThenPart(byte condition) {
-        return condition == RRuntime.LOGICAL_TRUE;
-    }
-
-    @ShortCircuit("elsePart")
-    public static boolean needsElsePart(byte condition, boolean hasThenPart, Object value) {
-        return !hasThenPart;
-    }
-
-    @Specialization
-    public Object doObject(byte condition, boolean hasThen, Object left, boolean hasElse, Object right) {
+    @Override
+    public Object execute(VirtualFrame frame) {
+        byte cond = condition.executeByte(frame);
         if (!RContext.isHeadless()) {
-            isVisible = condition == RRuntime.LOGICAL_TRUE || isElseGiven();
+            isVisible = cond == RRuntime.LOGICAL_TRUE || elseGiven;
         }
         controlVisibility();
-        return hasThen ? left : right;
+        if (cond == RRuntime.LOGICAL_TRUE) {
+            return thenPart.execute(frame);
+        } else if (cond == RRuntime.LOGICAL_FALSE) {
+            if (elseGiven) {
+                return elsePart.execute(frame);
+            } else {
+                return RNull.instance;
+            }
+        }
+        // NA is the only remaining option
+        throw RError.error(frame, getSourceSection(), RError.Message.NA_UNEXP);
     }
 }

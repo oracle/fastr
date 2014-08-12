@@ -27,10 +27,10 @@ import java.util.*;
 
 /**
  * Supports the management of expected test output.
- * 
+ *
  * In the normal mode of operation (i.e. during unit testing) an existing file of expected outputs
  * is read and an optimized lookup map is created for use by {@link #getOutput(String)}.
- * 
+ *
  */
 public class TestOutputManager {
     /**
@@ -173,7 +173,7 @@ public class TestOutputManager {
         try (SaveBufferedReader in = new SaveBufferedReader(new FileReader(outputFile), content)) {
             // line format for element name: ##elementName
             // line format for input lines: #input
-            // output lines do not start with #
+            // output lines do not start with ##
             String line = in.readLine();
             while (true) {
                 if (line == null) {
@@ -191,7 +191,7 @@ public class TestOutputManager {
                 StringBuilder output = new StringBuilder();
                 while (true) {
                     line = in.readLine();
-                    if (line == null || line.startsWith("#")) {
+                    if (line == null || line.startsWith("##")) {
                         break;
                     }
                     output.append(line).append('\n');
@@ -207,11 +207,11 @@ public class TestOutputManager {
 
     /**
      * Writes the contents of {@link #testMaps} to {link #testOutputFile}.
-     * 
+     *
      * @param oldContent can be passed in to avoid the file update if the content would not change
      * @param checkOnly does not update the file but returns {@code true} if it would be updated. In
      *            this case, {@code oldContent} must be provided.
-     * 
+     *
      * @return {@code true} if the file was updated
      */
     public boolean writeTestOutputFile(String oldContent, boolean checkOnly) throws IOException {
@@ -311,7 +311,7 @@ public class TestOutputManager {
 
     /**
      * Generate a test result using GnuR.
-     * 
+     *
      * @param testElementName identification of the annotated test element, i.e.,
      *            {@code class.testmethod}.
      * @param testMethodName name of method invoking specific test

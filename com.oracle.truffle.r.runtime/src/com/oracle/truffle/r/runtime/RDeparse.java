@@ -55,8 +55,13 @@ public class RDeparse {
         IF,
         WHILE,
         FOR,
+        BREAK,
+        NEXT,
+        REPEAT,
+        FUNCTION,
         ASSIGN,
         CURLY,
+        PAREN,
         SUBSET,
         DOLLAR;
     }
@@ -88,6 +93,7 @@ public class RDeparse {
 
     }
 
+    // TODO COMPLETE THIS!
     // @formatter:off
     private static final Func[] FUNCTAB = new Func[]{
         new Func("+", new PPInfo(PP.BINARY, PREC_SUM, false)),
@@ -111,11 +117,19 @@ public class RDeparse {
         new Func("||", new PPInfo(PP.BINARY, 5, false)),
         new Func(":", new PPInfo(PP.BINARY2, 12, false)),
 
-        new Func("if", new PPInfo(PP.IF, 0, false)),
-        new Func("{", new PPInfo(PP.CURLY, 0, false)),
+        new Func("if", new PPInfo(PP.IF, 0, true)),
+        new Func("while", new PPInfo(PP.WHILE, 0, false)),
+        new Func("for", new PPInfo(PP.FOR, 0, false)),
+        new Func("repeat", new PPInfo(PP.REPEAT, 0, false)),
+        new Func("break", new PPInfo(PP.BREAK, 0, false)),
+        new Func("next", new PPInfo(PP.NEXT, 0, false)),
         new Func("return", new PPInfo(PP.RETURN, 0, false)),
+        new Func("function", new PPInfo(PP.FUNCTION, 0, false)),
+        new Func("{", new PPInfo(PP.CURLY, 0, false)),
+        new Func("(", new PPInfo(PP.PAREN, 0, false)),
         new Func("<-", new PPInfo(PP.ASSIGN, 1, true)),
         new Func("[", new PPInfo(PP.SUBSET, 17, false)),
+        new Func("[[", new PPInfo(PP.SUBSET, 17, false)),
         new Func("$", new PPInfo(PP.DOLLAR, 15, false)),
 
 
@@ -275,6 +289,34 @@ public class RDeparse {
                 break;
             }
 
+            case ENVSXP:
+            case VECSXP:
+            case EXPRSXP:
+                assert false;
+                break;
+
+            case LISTSXP: {
+                state.append("list(");
+                RPairList s = (RPairList) obj;
+                RPairList t = s;
+                while (t != null && t.cdr() != RNull.instance) {
+                    if (t.getTag() != null) {
+                        deparse2buff(state, t.getTag());
+                        state.append(" = ");
+                    }
+                    deparse2buff(state, t.car());
+                    state.append(", ");
+                    t = next(t);
+                }
+                if (t.getTag() != null) {
+                    deparse2buff(state, t.getTag());
+                    state.append(" = ");
+                }
+                deparse2buff(state, t.car());
+                state.append(')');
+                break;
+            }
+
             case LANGSXP: {
                 RPairList f = (RPairList) obj;
                 Object car = f.car();
@@ -305,22 +347,6 @@ public class RDeparse {
                         }
                     }
                     switch (fop.kind) {
-                        case CURLY: {
-                            state.append(op);
-                            state.incurly++;
-                            state.indent++;
-                            state.writeline();
-                            while (pl != null) {
-                                deparse2buff(state, pl.car());
-                                state.writeline();
-                                pl = next(pl);
-                            }
-                            state.indent--;
-                            state.append('}');
-                            state.incurly--;
-                            break;
-                        }
-
                         case ASSIGN: {
                             // TODO needsparens
                             deparse2buff(state, pl.car());
@@ -365,6 +391,29 @@ public class RDeparse {
                             break;
                         }
 
+                        case WHILE: {
+                            state.append("while (");
+                            deparse2buff(state, pl.car());
+                            state.append(") ");
+                            deparse2buff(state, pl.cadr());
+                            break;
+                        }
+
+                        case FOR: {
+                            state.append("for (");
+                            deparse2buff(state, pl.car());
+                            state.append(" in ");
+                            deparse2buff(state, pl.cadr());
+                            state.append(") ");
+                            deparse2buff(state, ((RPairList) pl.cdr()).cadr());
+                            break;
+                        }
+
+                        case REPEAT:
+                            state.append("repeat ");
+                            deparse2buff(state, pl.car());
+                            break;
+
                         case BINARY:
                         case BINARY2: {
                             // TODO parens
@@ -391,6 +440,28 @@ public class RDeparse {
                             break;
                         }
 
+                        case CURLY: {
+                            state.append(op);
+                            state.incurly++;
+                            state.indent++;
+                            state.writeline();
+                            while (pl != null) {
+                                deparse2buff(state, pl.car());
+                                state.writeline();
+                                pl = next(pl);
+                            }
+                            state.indent--;
+                            state.append('}');
+                            state.incurly--;
+                            break;
+                        }
+
+                        case PAREN:
+                            state.append('(');
+                            deparse2buff(state, pl.car());
+                            state.append(')');
+                            break;
+
                         case SUBSET: {
                             deparse2buff(state, pl.car());
                             state.append(op);
@@ -402,6 +473,14 @@ public class RDeparse {
                             }
                             break;
                         }
+
+                        case FUNCTION:
+                            state.append(op);
+                            state.append('(');
+                            args2buff(state, (RPairList) pl.car(), false, true);
+                            state.append(')');
+                            deparse2buff(state, pl.cadr());
+                            break;
 
                         case DOLLAR: {
                             // TODO needparens, etc
@@ -427,7 +506,16 @@ public class RDeparse {
                             state.append(')');
                             break;
                         }
+
+                        default:
+                            assert false;
                     }
+                } else if (carType == SEXPTYPE.CLOSXP || carType == SEXPTYPE.SPECIALSXP || carType == SEXPTYPE.BUILTINSXP) {
+                    // TODO needparens, etc
+                    deparse2buff(state, car);
+                    state.append('(');
+                    args2buff(state, (RPairList) cdr, false, false);
+                    state.append(')');
                 } else {
                     // lambda
                     if (parenthesizeCaller(car)) {
@@ -468,11 +556,18 @@ public class RDeparse {
 
     private static SEXPTYPE typeof(Object obj) {
         Class<?> klass = obj.getClass();
-        if (klass == RPairList.class) {
+        if (klass == String.class) {
+            return typeofSymbol((String) obj);
+        } else if (klass == RPairList.class) {
             return ((RPairList) obj).getType();
         } else {
             return SEXPTYPE.typeForClass(klass);
         }
+    }
+
+    private static SEXPTYPE typeofSymbol(@SuppressWarnings("unused") String s) {
+        assert false;
+        return null;
     }
 
     @SuppressWarnings("unused")
@@ -501,7 +596,7 @@ public class RDeparse {
         RPairList arglist = args;
         while (arglist != null) {
             if (arglist.getTag() != null) {
-                state.append(arglist.getTag());
+                state.append(((RSymbol) arglist.getTag()).getName());
                 if (formals) {
                     if (arglist.car() != RMissing.instance) {
                         state.append(" = ");
@@ -589,7 +684,8 @@ public class RDeparse {
                 state.append('"');
                 break;
             case LGLSXP:
-                state.append(RRuntime.fromLogical((byte) element) ? "TRUE" : "FALSE");
+                byte lgl = (byte) element;
+                state.append(lgl == RRuntime.LOGICAL_TRUE ? "TRUE" : (lgl == RRuntime.LOGICAL_FALSE ? "FALSE" : "NA"));
                 break;
             case REALSXP:
                 String rep = Double.toString((double) element);

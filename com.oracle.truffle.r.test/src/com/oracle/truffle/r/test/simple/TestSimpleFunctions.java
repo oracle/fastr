@@ -151,6 +151,7 @@ public class TestSimpleFunctions extends TestBase {
     @Test
     public void testPromises() {
         assertEval("{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }");
+        assertEval("{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }");
     }
 
     @Test
