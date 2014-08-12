@@ -17,6 +17,7 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -24,8 +25,14 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 //TODO: Implement permuting with DimNames
-@RBuiltin(name = "aperm", kind = INTERNAL)
+@RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "..."})
 public abstract class APerm extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    }
+
     @CreateCast("arguments")
     public RNode[] createCastPermute(RNode[] arguments) {
         RNode permVector = CastToVectorNodeFactory.create(arguments[1], false, false, false, false);

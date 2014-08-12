@@ -44,16 +44,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class SortFunctions {
 
-    @RBuiltin(name = "sort.list", kind = SUBSTITUTE)
+    @RBuiltin(name = "sort.list", kind = SUBSTITUTE, parameterNames = {"x", "partial", "na.last", "decreasing", "method"})
     // TODO Implement in R
     public abstract static class SortList extends RBuiltinNode {
-
-        private static final String[] PARAMETER_NAMES = new String[]{"x", "partial", "na.last", "decreasing", "method"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -84,7 +77,7 @@ public class SortFunctions {
         }
     }
 
-    @RBuiltin(name = "qsort", kind = INTERNAL)
+    @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "index.return"})
     // TODO full implementation in Java handling NAs
     public abstract static class QSort extends RBuiltinNode {
 

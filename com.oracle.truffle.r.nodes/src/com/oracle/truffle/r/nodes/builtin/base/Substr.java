@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "substr", kind = INTERNAL)
+@RBuiltin(name = "substr", kind = INTERNAL, parameterNames = {"x", "start", "stop"})
 public abstract class Substr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();

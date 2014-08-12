@@ -34,7 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "substr<-", kind = INTERNAL)
+@RBuiltin(name = "substr<-", kind = INTERNAL, parameterNames = {"x", "start", "stop", ""})
+// 2nd parameter is "value", but should not be matched against, so "")
 public abstract class UpdateSubstr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();

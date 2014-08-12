@@ -27,6 +27,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -73,8 +75,14 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.frame", kind = INTERNAL)
+    @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"})
     public abstract static class SysFrame extends FrameHelper {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(0)};
+        }
+
         @Specialization()
         public REnvironment sysFrame(VirtualFrame frame, int nd) {
             controlVisibility();
@@ -95,8 +103,14 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.parent", kind = INTERNAL)
+    @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"})
     public abstract static class SysParent extends RBuiltinNode {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(1)};
+        }
+
         @Specialization()
         public int sysParent(int nd) {
             controlVisibility();
@@ -115,8 +129,14 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.function", kind = INTERNAL)
+    @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"})
     public abstract static class SysFunction extends FrameHelper {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(0)};
+        }
+
         @Specialization()
         public Object sysFunction(VirtualFrame frame, int nd) {
             controlVisibility();
@@ -162,8 +182,14 @@ public class FrameFunctions {
     /**
      * The environment of the caller of the function that called parent.frame.
      */
-    @RBuiltin(name = "parent.frame", kind = INTERNAL)
+    @RBuiltin(name = "parent.frame", kind = INTERNAL, parameterNames = {"n"})
     public abstract static class ParentFrame extends FrameHelper {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(1)};
+        }
+
         @Specialization()
         public REnvironment parentFrame(VirtualFrame frame, double nd) {
             controlVisibility();

@@ -19,7 +19,7 @@
 
 gettext <- function(..., domain = NULL) {
     args <- lapply(list(...), as.character)
-    .Internal(gettext(domain, unlist(args)))
+    .Internal(gettext(unlist(args), domain = domain))
 }
 
 #bindtextdomain <- function(domain, dirname = NULL)

@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "is.data.frame", kind = SUBSTITUTE)
+@RBuiltin(name = "is.data.frame", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO revert to R
 @SuppressWarnings("unused")
 public abstract class IsDataFrame extends RBuiltinNode {

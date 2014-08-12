@@ -30,11 +30,12 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "toString", kind = SUBSTITUTE)
+@RBuiltin(name = "toString", kind = SUBSTITUTE, parameterNames = {"x", "..."})
 // TODO Implement in R
 @SuppressWarnings("unused")
 public abstract class ToString extends RBuiltinNode {
@@ -56,6 +57,12 @@ public abstract class ToString extends RBuiltinNode {
             recursiveToString.setIntL(intL);
         }
         return recursiveToString.executeString(frame, o);
+    }
+
+    @Override
+    public RNode[] getParameterValues() {
+        // x, ...
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
     // FIXME custom separators require breaking some rules

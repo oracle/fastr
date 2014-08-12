@@ -86,7 +86,7 @@ public abstract class RCallNode extends RNode {
         BuiltinFunctionVariableNode functionNode = BuiltinFunctionVariableNodeFactory.create(function, symbol);
         assert internalCallArg instanceof UninitializedCallNode;
         UninitializedCallNode current = new UninitializedCallNode(functionNode, ((UninitializedCallNode) internalCallArg).args);
-        RCallNode result = current.createCacheNode(frame, function);
+        RCallNode result = current.createCacheNode(frame, function, src);
         result.assignSourceSection(src);
         return result;
     }
@@ -247,7 +247,7 @@ public abstract class RCallNode extends RNode {
             CompilerAsserts.neverPartOfCompilation();
 
             if (depth < INLINE_CACHE_SIZE) {
-                final RCallNode current = createCacheNode(frame, function);
+                final RCallNode current = createCacheNode(frame, function, getEncapsulatingSourceSection());
                 final RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, new UninitializedCallNode(this), function);
                 current.onCreate();
                 this.replace(cachedNode);
@@ -268,7 +268,7 @@ public abstract class RCallNode extends RNode {
             return parentNode;
         }
 
-        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function) {
+        protected RCallNode createCacheNode(VirtualFrame frame, RFunction function, SourceSection debugSrc) {
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
@@ -276,7 +276,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, getEncapsulatingSourceSection());
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
                     // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
                 }
@@ -289,7 +289,7 @@ public abstract class RCallNode extends RNode {
                 return new DispatchedVarArgsCallNode(function, args);
             } else {
                 // Nope! (peeewh)
-                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, getEncapsulatingSourceSection());
+                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, debugSrc);
                 return new DispatchedCallNode(function, matchedArgs);
             }
         }

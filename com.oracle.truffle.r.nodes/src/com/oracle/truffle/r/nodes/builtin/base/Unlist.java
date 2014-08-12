@@ -26,18 +26,11 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistFactory.RecursiveLengthFactory;
 
-@RBuiltin(name = "unlist", kind = SUBSTITUTE)
+@RBuiltin(name = "unlist", kind = SUBSTITUTE, parameterNames = {"x", "recursive", "use.names"})
 // TODO INTERNAL
 public abstract class Unlist extends RBuiltinNode {
 
     // portions of the algorithm were transcribed from GNU R
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "recursive", "use.names"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

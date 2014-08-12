@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -43,8 +44,15 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO complete. This is sufficient for the b25 benchmark use.
  */
-@RBuiltin(name = "array", kind = INTERNAL)
+@RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"})
 public abstract class Array extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        // TODO What is the correct NA value for "data"???
+        // is inserted as cast, see below in "createCastDimensions"
+        return new RNode[]{ConstantNode.create(RRuntime.NA_HEADER), null, ConstantNode.create(RNull.instance)};
+    }
 
     @CreateCast({"arguments"})
     public RNode[] createCastDimensions(RNode[] children) {

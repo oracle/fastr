@@ -33,7 +33,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x"})
+@RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x", ""})
+// 2nd parameter is "value", but should not be matched against, so ""
 @SuppressWarnings("unused")
 public abstract class UpdateDim extends RInvisibleBuiltinNode {
 

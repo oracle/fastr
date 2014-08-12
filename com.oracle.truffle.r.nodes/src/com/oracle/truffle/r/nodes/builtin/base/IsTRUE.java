@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * Arguably unnecessary when {@code identical} is implemented, as {@code isTRUE(x)} is defined to be
  * {@code identical(TRUE, x}.
  */
-@RBuiltin(name = "isTRUE", kind = SUBSTITUTE)
+@RBuiltin(name = "isTRUE", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO revert to R
 public abstract class IsTRUE extends RBuiltinNode {
 
