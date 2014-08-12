@@ -16,22 +16,27 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinmakeunique extends TestBase {
 
     @Test
+    @Ignore
     public void testmakeunique1() {
         assertEval("argv <- list(c(\'A\', \'B\', \'C\', \'D\', \'E\', \'F\'), \'.\'); .Internal(make.unique(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testmakeunique2() {
         assertEval("argv <- list(c(\'b\', \'NA\', \'NA\'), \'.\'); .Internal(make.unique(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testmakeunique3() {
         assertEval("argv <- list(c(\'1\', \'2\', \'3\', \'6\', \'7\', \'7\', \'7\', \'8\', \'8\', \'10\', \'11\', \'12\', \'12\', \'12\', \'15\', \'15\', \'16\', \'17\', \'19\', \'20\', \'21\', \'21\', \'23\'), \'.\'); .Internal(make.unique(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testmakeunique4() {
         assertEval("argv <- list(character(0), \'.\'); .Internal(make.unique(argv[[1]], argv[[2]]))");
     }
 }
+

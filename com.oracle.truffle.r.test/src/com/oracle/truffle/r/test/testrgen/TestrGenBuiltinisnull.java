@@ -75,3 +75,4 @@ public class TestrGenBuiltinisnull extends TestBase {
         assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.null(argv[[1]]);");
     }
 }
+

@@ -106,6 +106,7 @@ public class TestrGenBuiltinisexpression extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testisexpression19() {
         assertEval("argv <- list(quote(print(.leap.seconds, tz = \'PST8PDT\')));is.expression(argv[[1]]);");
     }
@@ -130,3 +131,4 @@ public class TestrGenBuiltinisexpression extends TestBase {
         assertEval("argv <- list(3.97376540705816e-12);is.expression(argv[[1]]);");
     }
 }
+

@@ -16,6 +16,7 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinislist extends TestBase {
 
     @Test
+    @Ignore
     public void testislist1() {
         assertEval("argv <- list(structure(function (e1, e2) standardGeneric(\'/\', .Primitive(\'/\')), generic = structure(\'/\', package = \'base\'), package = \'base\', group = list(\'Arith\'), valueClass = character(0), signature = c(\'e1\', \'e2\'), default = .Primitive(\'/\'), skeleton = quote(.Primitive(\'/\')(e1, e2)), class = structure(\'standardGeneric\', package = \'methods\')));is.list(argv[[1]]);");
     }
@@ -51,6 +52,7 @@ public class TestrGenBuiltinislist extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testislist8() {
         assertEval("argv <- list(structure(list(title = structure(1L, .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(2L, .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'title\', \'other.author\'), row.names = 1L, class = \'data.frame\'));is.list(argv[[1]]);");
     }
@@ -160,3 +162,4 @@ public class TestrGenBuiltinislist extends TestBase {
         assertEval("argv <- list(structure(list(Employed = c(60.323, 61.122, 60.171, 61.187, 63.221, 63.639, 64.989, 63.761, 66.019, 67.857, 68.169, 66.513, 68.655, 69.564, 69.331, 70.551), GNP.deflator = c(83, 88.5, 88.2, 89.5, 96.2, 98.1, 99, 100, 101.2, 104.6, 108.4, 110.8, 112.6, 114.2, 115.7, 116.9), GNP = c(234.289, 259.426, 258.054, 284.599, 328.975, 346.999, 365.385, 363.112, 397.469, 419.18, 442.769, 444.546, 482.704, 502.601, 518.173, 554.894), Unemployed = c(235.6, 232.5, 368.2, 335.1, 209.9, 193.2, 187, 357.8, 290.4, 282.2, 293.6, 468.1, 381.3, 393.1, 480.6, 400.7), Armed.Forces = c(159, 145.6, 161.6, 165, 309.9, 359.4, 354.7, 335, 304.8, 285.7, 279.8, 263.7, 255.2, 251.4, 257.2, 282.7), Population = c(107.608, 108.632, 109.773, 110.929, 112.075, 113.27, 115.094, 116.219, 117.388, 118.734, 120.445, 121.95, 123.366, 125.368, 127.852, 130.081), Year = 1947:1962), .Names = c(\'Employed\', \'GNP.deflator\', \'GNP\', \'Unemployed\', \'Armed.Forces\', \'Population\', \'Year\'), terms = quote(Employed ~ GNP.deflator + GNP + Unemployed +     Armed.Forces + Population + Year), row.names = 1947:1962, class = \'data.frame\'));is.list(argv[[1]]);");
     }
 }
+

@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinbitwiseShiftR extends TestBase {
 
     @Test
+    @Ignore
     public void testbitwiseShiftR1() {
         assertEval("argv <- list(-1, 1:31); .Internal(bitwiseShiftR(argv[[1]], argv[[2]]))");
     }
 }
+

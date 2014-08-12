@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltingrowconst extends TestBase {
 
     @Test
+    @Ignore
     public void testgrowconst1() {
         assertEval("argv <- list(list(list())); .Internal(growconst(argv[[1]]))");
     }
 }
+

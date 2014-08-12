@@ -16,11 +16,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinpaste extends TestBase {
 
     @Test
+    @Ignore
     public void testpaste1() {
         assertEval("argv <- list(list(\'%%  ~~objects to See Also as\', \'\\\\code{\\\\link{~~fun~~}}, ~~~\'), \' \', NULL); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
+    @Ignore
     public void testpaste2() {
         assertEval("argv <- list(list(c(\'[\', \'cox.zph\', NA)), \' \', \'\\r\'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -41,6 +43,7 @@ public class TestrGenBuiltinpaste extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testpaste6() {
         assertEval("argv <- list(list(c(\'dotplot\', \'table\', NA)), \' \', \'\\r\'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
@@ -70,3 +73,4 @@ public class TestrGenBuiltinpaste extends TestBase {
         assertEval("argv <- list(list(character(0)), \' \', \'\'); .Internal(paste(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

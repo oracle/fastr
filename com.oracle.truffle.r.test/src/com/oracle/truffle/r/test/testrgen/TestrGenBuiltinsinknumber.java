@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinsinknumber extends TestBase {
 
     @Test
+    @Ignore
     public void testsinknumber1() {
         assertEval("argv <- list(FALSE); .Internal(sink.number(argv[[1]]))");
     }
 }
+

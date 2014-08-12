@@ -21,17 +21,21 @@ public class TestrGenBuiltinasin extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testasin2() {
         assertEval("argv <- list(c(2+0i, 2-0.0001i, -2+0i, -2+0.0001i));asin(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testasin3() {
         assertEval("argv <- list(logical(0));asin(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testasin4() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));asin(argv[[1]]);");
     }
 }
+

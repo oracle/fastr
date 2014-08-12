@@ -26,11 +26,13 @@ public class TestrGenBuiltiniscomplex extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testiscomplex3() {
         assertEval("argv <- list(structure(1:24, .Dim = 2:4));is.complex(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testiscomplex4() {
         assertEval("argv <- list(NA_complex_);is.complex(argv[[1]]);");
     }
@@ -50,3 +52,4 @@ public class TestrGenBuiltiniscomplex extends TestBase {
         assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.complex(argv[[1]]);");
     }
 }
+

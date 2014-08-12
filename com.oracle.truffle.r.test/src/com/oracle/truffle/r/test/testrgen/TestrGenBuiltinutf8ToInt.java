@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinutf8ToInt extends TestBase {
 
     @Test
+    @Ignore
     public void testutf8ToInt1() {
         assertEval("argv <- list(\'lasy\'); .Internal(utf8ToInt(argv[[1]]))");
     }
 }
+

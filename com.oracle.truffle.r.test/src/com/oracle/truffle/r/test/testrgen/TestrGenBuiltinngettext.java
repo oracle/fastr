@@ -25,3 +25,4 @@ public class TestrGenBuiltinngettext extends TestBase {
         assertEval("argv <- list(2L, \'%s is not TRUE\', \'%s are not all TRUE\', NULL); .Internal(ngettext(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }
+

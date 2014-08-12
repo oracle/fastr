@@ -16,12 +16,15 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinbeta extends TestBase {
 
     @Test
+    @Ignore
     public void testbeta1() {
         assertEval("argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testbeta2() {
         assertEval("argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 }
+

@@ -26,6 +26,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc3() {
         assertEval("argv <- list(0.1, 1e+60);c(argv[[1]],argv[[2]]);");
     }
@@ -46,6 +47,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc7() {
         assertEval("argv <- list(expression(data.frame), list(), check.names = TRUE, stringsAsFactors = TRUE);c(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
     }
@@ -56,11 +58,13 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc9() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'more columns than column names\', call = quote(read.table(\'foo6\', header = TRUE))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc10() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'supply both 'x' and 'y' or a matrix-like 'x'\', call = quote(cor(rnorm(10), NULL))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
@@ -76,31 +80,37 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc13() {
         assertEval("argv <- list(structure(1208822400, class = c(\'POSIXct\', \'POSIXt\')), structure(1209168000, class = c(\'POSIXct\', \'POSIXt\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc14() {
         assertEval("argv <- list(`Grand mean` = structure(103.87323943662, class = \'mtable\'), structure(list(N = structure(c(78.7365206866197, 98.5088731171753, 113.842206450509, 123.008873117175), .Dim = 4L, .Dimnames = structure(list(N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = \'N\'), class = \'mtable\'), `V:N` = structure(c(79.5323303457107, 86.1989970123773, 69.7732394366197, 98.0323303457106, 108.032330345711, 89.1989970123773, 114.198997012377, 116.698997012377, 110.365663679044, 124.365663679044, 126.365663679044, 118.032330345711), .Dim = 3:4, .Dimnames = structure(list(V = c(\'Golden.rain\', \'Marvellous\', \'Victory\'), N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = c(\'V\', \'N\')), class = \'mtable\')), .Names = c(\'N\', \'V:N\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc15() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'(converted from warning) NAs produced\', call = quote(rexp(2, numeric()))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc16() {
         assertEval("argv <- list(NULL, structure(list(other = structure(1:3, .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = \'other\'));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc17() {
         assertEval("argv <- list(logical(0), structure(1:10, .Tsp = c(1920.5, 1921.25, 12), class = \'ts\'), logical(0));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
+    @Ignore
     public void testc18() {
         assertEval("argv <- list(structure(list(V1 = c(1L, 1L, 2L, 3L), V2 = structure(c(1L, 1L, 2L, 3L), .Label = c(\'A\', \'D\', \'E\'), class = \'factor\'), V3 = c(6, 6, 9, 10)), .Names = c(\'V1\', \'V2\', \'V3\'), row.names = c(NA, 4L), class = \'data.frame\'), sep = \'\\r\');c(argv[[1]],argv[[2]]);");
     }
@@ -111,16 +121,19 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc20() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'non-numeric argument to mathematical function\', call = quote(log(\'a\'))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc21() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \''x' is empty\', call = quote(cor(Z[, FALSE], use = \'pairwise.complete.obs\', method = \'kendall\'))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc22() {
         assertEval("argv <- list(structure(list(N = structure(c(17, 18, 18, 18), .Dim = 4L, .Dimnames = structure(list(N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = \'N\'))), .Names = \'N\'), structure(list(`V:N` = structure(c(6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6), .Dim = 3:4, .Dimnames = structure(list(V = c(\'Golden.rain\', \'Marvellous\', \'Victory\'), N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = c(\'V\', \'N\')))), .Names = \'V:N\'));c(argv[[1]],argv[[2]]);");
     }
@@ -131,11 +144,13 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc24() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'undefined columns selected\', call = quote(`[.data.frame`(dd, , \'C\'))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc25() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'line 1 did not have 4 elements\', call = quote(scan(file, what, nmax, sep, dec, quote, skip, nlines, na.strings, flush, fill, strip.white, quiet, blank.lines.skip, multi.line, comment.char, allowEscapes, encoding))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
@@ -151,6 +166,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc28() {
         assertEval("argv <- list(NULL, structure(list(class = \'try-error\', condition = structure(list(message = \'(converted from warning) NAs produced\', call = quote(rnorm(1, sd = Inf))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))), .Names = c(\'class\', \'condition\')));c(argv[[1]],argv[[2]]);");
     }
@@ -161,26 +177,31 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc30() {
         assertEval("argv <- list(structure(c(2.8709968773466e-06, -0.000158359165766342, 0.00727428858396739, -0.000819679205658397, -0.000777694946526408, -0.00356554678621684, 0.000131355545630207, 0.0114265093267527, -0.000158359165766342, 5.43254707707774e-06, -0.000158630865337517, 9.73709585506688e-05, 0.000111529300368063, 5.13485783500411e-05, -6.33871099330885e-05, -0.000383481109923256, 0.00727428858396739, -0.000158630865337517, -1.56486391901245e-05, -0.00236056684784514, -0.00652700637569598, 0.00050199030070891, 0.00218994696407579, 0.0203300594009954, -0.000819679205658397, 9.73709585506688e-05, -0.00236056684784514, 7.93209373295412e-07, 0.00187235412049774, 0.00143329638746881, -3.6749249077872e-05, -0.0118829190788863, -0.000777694946526408, 0.000111529300368063, -0.00652700637569598, 0.00187235412049774, 4.25289264915918e-06, 0.00235407805712873, -0.000833270910443051, -0.00229252218256459, -0.00356554678621684, 5.13485783500411e-05, 0.00050199030070891, 0.00143329638746881, 0.00235407805712873, -3.00860514170775e-05, -0.00105162168837414, -0.00640852176345075, 0.000131355545630207, -6.33871099330885e-05, 0.00218994696407579, -3.6749249077872e-05, -0.000833270910443051, -0.00105162168837414, 2.63610545947479e-06, 0.00637158302982355, 0.0114265093267527, -0.000383481109923256, 0.0203300594009954, -0.0118829190788863, -0.00229252218256459, -0.00640852176345075, 0.00637158302982355, -9.55643771360926e-05), .Dim = c(8L, 8L), .Dimnames = list(c(\'height\', \'arm.span\', \'forearm\', \'lower.leg\', \'weight\', \'bitro.diameter\', \'chest.girth\', \'chest.width\'), c(\'height\', \'arm.span\', \'forearm\', \'lower.leg\', \'weight\', \'bitro.diameter\', \'chest.girth\', \'chest.width\'))));c(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testc31() {
         assertEval("argv <- list(c(-Inf, 2.17292368994844e-311, 4.34584737989688e-311, 8.69169475979376e-311, 1.73833895195875e-310, 3.4766779039175e-310, 6.953355807835e-310, 1.390671161567e-309, 2.781342323134e-309, 5.562684646268e-309, 1.1125369292536e-308, 2.2250738585072e-308, 4.4501477170144e-308, 8.90029543402881e-308, 1.78005908680576e-307, 2.2250738585072e-303, 2.2250738585072e-298, 1.79769313486232e+298, 1.79769313486232e+303, 2.24711641857789e+307, 4.49423283715579e+307, 8.98846567431158e+307, 1.79769313486232e+308, Inf, Inf), c(NaN, NA));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc32() {
         assertEval("argv <- list(list(structure(list(Ozone = c(NA, NA, NA, NA, NA, NA, 29L, NA, 71L, 39L, NA, NA, 23L, NA, NA, 21L, 37L, 20L, 12L, 13L, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA), Solar.R = c(286L, 287L, 242L, 186L, 220L, 264L, 127L, 273L, 291L, 323L, 259L, 250L, 148L, 332L, 322L, 191L, 284L, 37L, 120L, 137L, 150L, 59L, 91L, 250L, 135L, 127L, 47L, 98L, 31L, 138L), Wind = c(8.6, 9.7, 16.1, 9.2, 8.6, 14.3, 9.7, 6.9, 13.8, 11.5, 10.9, 9.2, 8, 13.8, 11.5, 14.9, 20.7, 9.2, 11.5, 10.3, 6.3, 1.7, 4.6, 6.3, 8, 8, 10.3, 11.5, 14.9, 8), Temp = c(78L, 74L, 67L, 84L, 85L, 79L, 82L, 87L, 90L, 87L, 93L, 92L, 82L, 80L, 79L, 77L, 72L, 65L, 73L, 76L, 77L, 76L, 76L, 76L, 75L, 78L, 73L, 80L, 77L, 83L), Month = c(6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L), Day = 1:30), .Names = c(\'Ozone\', \'Solar.R\', \'Wind\', \'Temp\', \'Month\', \'Day\'), row.names = 32:61, class = \'data.frame\')), structure(list(Oz.Z = structure(c(NA, NA, NA, NA, NA, NA, -0.0244094233987339, NA, 2.28228108778162, 0.52480260307278, NA, NA, -0.353936639281642, NA, NA, -0.463779044575945, 0.414960197778477, -0.518700247223096, -0.958069868400307, -0.903148665753156, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA), .Dim = c(30L, 1L), \'`scaled:center`\' = 29.4444444444444, \'`scaled:scale`\' = 18.2079042664931)), .Names = \'Oz.Z\'));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc33() {
         assertEval("argv <- list(list(\'*\', \' \', \'skipping installation test\', \'\\n\'), sep = \'\');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc34() {
         assertEval("argv <- list(\'exNSS4\', \'myLib\', structure(c(\'1.0\', NA, \'methods\', NA, NA, NA, NA, \'GPL (>= 2)\', NA, NA, NA, NA, NA, NA, \'3.0.1\'), .Names = c(\'Version\', NA, \'Depends\', NA, NA, NA, NA, \'License\', NA, NA, NA, NA, NA, NA, \'Built\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -206,6 +227,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc39() {
         assertEval("argv <- list(structure(list(c(1L, 2L, 4L), 1:3, c(2L, 1L)), class = c(\'package_version\', \'numeric_version\')));c(argv[[1]]);");
     }
@@ -216,6 +238,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc41() {
         assertEval("argv <- list(structure(list(1:3), class = c(\'package_version\', \'numeric_version\')), structure(list(c(2L, 1L)), class = c(\'package_version\', \'numeric_version\')));c(argv[[1]],argv[[2]]);");
     }
@@ -226,11 +249,13 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc43() {
         assertEval("argv <- list(list(structure(list(u = c(5, 10, 15, 20, 30, 40, 60, 80, 100), lot1 = c(118, 58, 42, 35, 27, 25, 21, 19, 18), lot2 = c(69, 35, 26, 21, 18, 16, 13, 12, 12)), .Names = c(\'u\', \'lot1\', \'lot2\'), row.names = c(NA, -9L), class = \'data.frame\')), structure(list(max.level = 0, give.attr = FALSE, digits = 3), .Names = c(\'max.level\', \'give.attr\', \'digits\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc44() {
         assertEval("argv <- list(list(structure(list(structure(\'vpl1\', class = c(\'vpListing\', \'gridVectorListing\', \'gridListing\')), structure(\'1\', class = c(\'vpUpListing\', \'gridVectorListing\', \'gridListing\'))), class = c(\'gridListListing\', \'gridListing\'))), list(structure(\'vpl2\', class = c(\'vpListing\', \'gridVectorListing\', \'gridListing\'))));c(argv[[1]],argv[[2]]);");
     }
@@ -246,16 +271,19 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc47() {
         assertEval("argv <- list(NULL, structure(list(names = structure(\'stats\', .Names = \'name\')), .Names = \'names\'));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc48() {
         assertEval("argv <- list(list(c(\'foo\', \'bar\'), FALSE, structure(list(a = 1, b = structure(c(1, 3, 2, 4), .Dim = c(2L, 2L)), c = \'foo\'), .Names = c(\'a\', \'b\', \'c\')), structure(list(1, \'foo\', structure(c(1, 3, 2, 4), .Dim = c(2L, 2L)), \'bar\'), .Dim = c(2L, 2L)), 0+1i, list(1, structure(c(1, 3, 2, 4), .Dim = c(2L, 2L)), \'foo\'), structure(c(1+2i, 5+0i, 3-4i, -6+0i), .Dim = c(2L, 2L)), c(1, 2, 3, 4, 5), 1, structure(c(1+1i, 3+1i, 2+1i, 4+1i, 5-1i, 7-1i, 6-1i, 8-1i), .Dim = c(2L, 2L, 2L)), structure(c(1, 3, 2, 4, 5, 7, 6, 8), .Dim = c(2L, 2L, 2L)), structure(c(1, 3, 2, 4), .Dim = c(2L, 2L))), list(structure(c(TRUE, FALSE, FALSE, TRUE), .Dim = c(2L, 2L))));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc49() {
         assertEval("argv <- list(c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA), structure(c(3.3032627879465, 3.28768675817403, 3.28198500972868, 3.26064954685429, 3.28230636466286, 3.29427556805693, 3.28140319515598, 3.31501132729969, 3.29996451963546, 3.3405648068776, 3.3615463372345, 3.37238152179651, 3.32652089130696, 3.31449399159178, 3.31051950313397, 3.29704421073007, 3.31063284281209, 3.31814807478072, 3.3100622663054, 3.33117177869743, 3.32172069914554, 3.34722215914612, 3.36040087649739, 3.36720656884446), .Tsp = c(1983, 1984.91666666667, 12), class = \'ts\'), logical(0));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -266,6 +294,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc51() {
         assertEval("argv <- list(list(\'1: In matrix(1:7, 3, 4) :\\n  data length [7] is not a sub-multiple or multiple of the number of rows [3]\'), list(), fill = TRUE);c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -281,6 +310,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc54() {
         assertEval("argv <- list(structure(list(x = structure(1:8, .Dim = structure(8L, .Names = \'voice.part\'))), .Names = \'x\'), list(4));c(argv[[1]],argv[[2]]);");
     }
@@ -291,11 +321,13 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc56() {
         assertEval("argv <- list(369.430769230769, 4.99999999999983);c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc57() {
         assertEval("argv <- list(structure(list(structure(list(title = \'boot: Bootstrap R (S-PLUS) Functions\', author = structure(list(structure(list(given = \'Angelo\', family = \'Canty\', role = \'aut\', email = NULL, comment = \'S original\'), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\')), structure(list(given = c(\'Brian\', \'D.\'), family = \'Ripley\', role = c(\'aut\', \'trl\', \'cre\'), email = \'ripley@stats.ox.ac.uk\', comment = \'R port, author of parallel support\'), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\'))), class = \'person\'),     year = \'2012\', note = \'R package version 1.3-4\', url = \'http://CRAN.R-project.org/package=boot\'), .Names = c(\'title\', \'author\', \'year\', \'note\', \'url\'), bibtype = \'Manual\', key = \'boot-package\')), class = \'bibentry\'), structure(list(structure(list(title = \'Bootstrap Methods and Their Applications\', author = structure(list(structure(list(given = c(\'Anthony\', \'C.\'), family = \'Davison\', role = \'aut\', email = NULL, comment = NULL), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\')), structure(list(    given = c(\'David\', \'V.\'), family = \'Hinkley\', role = \'aut\', email = NULL, comment = NULL), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\'))), class = \'person\'), year = \'1997\', publisher = \'Cambridge University Press\', address = \'Cambridge\', isbn = \'0-521-57391-2\', url = \'http://statwww.epfl.ch/davison/BMA/\'), .Names = c(\'title\', \'author\', \'year\', \'publisher\', \'address\', \'isbn\', \'url\'), bibtype = \'Book\', key = \'boot-book\')), class = \'bibentry\'));c(argv[[1]],argv[[2]]);");
     }
@@ -316,6 +348,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc61() {
         assertEval("argv <- list(structure(list(`ANY#ANY` = .Primitive(\'==\')), .Names = \'ANY#ANY\'), list());c(argv[[1]],argv[[2]]);");
     }
@@ -331,11 +364,13 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc64() {
         assertEval("argv <- list(structure(1386393974.25184, class = c(\'POSIXct\', \'POSIXt\')), structure(1386393974.25184, class = c(\'POSIXct\', \'POSIXt\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc65() {
         assertEval("argv <- list(\'BiocInstaller\', \'/home/lzhao/R/x86_64-unknown-linux-gnu-library/3.0\', structure(c(\'1.12.0\', NA, \'R (>= 3.0.0)\', NA, NA, \'RUnit, BiocGenerics\', NA, \'Artistic-2.0\', NA, NA, NA, NA, NA, NA, \'3.0.1\'), .Names = c(\'Version\', NA, \'Depends\', NA, NA, \'Suggests\', NA, \'License\', NA, NA, NA, NA, NA, NA, \'Built\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -346,6 +381,7 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc67() {
         assertEval("argv <- list(structure(c(0.06, 0.32, 0.63), .Names = c(\'0%\', \'25%\', \'50%\')), 909.591818181818, structure(c(0.905, 10000), .Names = c(\'75%\', \'100%\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
@@ -361,27 +397,33 @@ public class TestrGenBuiltinc extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testc70() {
         assertEval("argv <- list(structure(list(Topic = character(0), File = character(0)), .Names = c(\'Topic\', \'File\'), class = \'data.frame\', row.names = integer(0)), sep = \'\\r\');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc71() {
         assertEval("argv <- list(structure(list(Subject = structure(c(1L, 3L, 6L, 2L, 4L, 5L), .Label = c(\'1\', \'4\', \'2\', \'5\', \'6\', \'3\'), class = c(\'ordered\', \'factor\')), conc.0.25 = c(1.5, 2.03, 2.72, 1.85, 2.05, 2.31), conc.0.5 = c(0.94, 1.63, 1.49, 1.39, 1.04, 1.44), conc.0.75 = c(0.78, 0.71, 1.16, 1.02, 0.81, 1.03), conc.1 = c(0.48, 0.7, 0.8, 0.89, 0.39, 0.84), conc.1.25 = c(0.37, 0.64, 0.8, 0.59, 0.3, 0.64), conc.2 = c(0.19, 0.36, 0.39, 0.4, 0.23, 0.42)), row.names = c(1L, 12L, 23L, 34L, 45L, 56L), .Names = c(\'Subject\', \'conc.0.25\', \'conc.0.5\', \'conc.0.75\', \'conc.1\', \'conc.1.25\', \'conc.2\')), list(NULL));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc72() {
         assertEval("argv <- list(structure(list(x.limits = c(-2.46408176011189, 2.92512533057276), y.limits = structure(c(1386479490.57927, 1387608090.57927), class = c(\'POSIXct\', \'POSIXt\')), x.used.at = NULL, y.used.at = NULL, x.num.limit = NULL, y.num.limit = NULL, aspect.ratio = 1, prepanel.default = \'prepanel.default.xyplot\', prepanel = NULL), .Names = c(\'x.limits\', \'y.limits\', \'x.used.at\', \'y.used.at\', \'x.num.limit\', \'y.num.limit\', \'aspect.ratio\', \'prepanel.default\', \'prepanel\')), structure(list(index.cond = list(1:3),     perm.cond = 1L), .Names = c(\'index.cond\', \'perm.cond\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc73() {
         assertEval("argv <- list(structure(list(coefficients = structure(c(-0.0529307911108286, -0.200175675120066), .Names = c(\'(Intercept)\', \'xTRUE\')), residuals = structure(c(0.196977726701894, -0.102864715594501, -1.21764591766838, -0.425219263997792, 0.671048026430597, 1.41161034263987, 0.150318738887899, 0.440602402670198, 0.19930142564799, -1.32412876571778), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\')), effects = structure(c(0.483887391035467, -0.316505532770654, -1.29088865053614, -0.430233412486575, 0.597805293562832, 1.40659619415109, 0.0770760060201344, 0.435588254181415, 0.126058692780225, -1.32914291420656), .Names = c(\'(Intercept)\', \'xTRUE\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'\')), rank = 2L), .Names = c(\'coefficients\', \'residuals\', \'effects\', \'rank\')), structure(list(fitted.values = structure(c(-0.253106466230895, -0.0529307911108286, -0.253106466230895, -0.0529307911108285, -0.253106466230895, -0.0529307911108285, -0.253106466230895, -0.0529307911108285, -0.253106466230895, -0.0529307911108285), .Names = c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\')), assign = 0:1, qr = structure(list(qr = structure(c(-3.16227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, 0.316227766016838, -1.58113883008419, 1.58113883008419, -0.240253073352042, 0.392202458681634, -0.240253073352042, 0.392202458681634, -0.240253073352042, 0.392202458681634, -0.240253073352042, 0.392202458681634), .Dim = c(10L, 2L), .Dimnames = list(c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\'), c(\'(Intercept)\', \'xTRUE\')), assign = 0:1, contrasts = structure(list(x = \'contr.treatment\'), .Names = \'x\')), qraux = c(1.31622776601684, 1.39220245868163), pivot = 1:2, tol = 1e-07, rank = 2L), .Names = c(\'qr\', \'qraux\', \'pivot\', \'tol\', \'rank\'), class = \'qr\'), df.residual = 8L), .Names = c(\'fitted.values\', \'assign\', \'qr\', \'df.residual\')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testc74() {
         assertEval("argv <- list(structure(list(object = c(\'time\', \'status\')), .Names = \'object\'), structure(list(max.level = NA, vec.len = 4, digits.d = 3, nchar.max = 128, give.attr = TRUE, give.head = TRUE, width = 80L, envir = NULL, strict.width = \'no\', formatNum = function (x, ...) format(x, trim = TRUE, drop0trailing = TRUE, ...), list.len = 99), .Names = c(\'max.level\', \'vec.len\', \'digits.d\', \'nchar.max\', \'give.attr\', \'give.head\', \'width\', \'envir\', \'strict.width\', \'formatNum\', \'list.len\')), structure(list(give.length = TRUE, nest.lev = 2, indent.str = \'  .. ..\'), .Names = c(\'give.length\', \'nest.lev\', \'indent.str\')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
 }
+

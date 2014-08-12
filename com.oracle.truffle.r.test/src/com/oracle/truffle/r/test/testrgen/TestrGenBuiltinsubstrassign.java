@@ -21,7 +21,9 @@ public class TestrGenBuiltinsubstrassign extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testsubstrassign2() {
         assertEval("argv <- list(c(\'asfef\', \'qwerty\', \'yuiop[\', \'b\', \'stuff.blah.yech\'), 2L, 1000000L, c(\'..\', \'+++\')); .Internal(`substr<-`(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }
+

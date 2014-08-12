@@ -91,6 +91,7 @@ public class TestrGenBuiltinsum extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testsum16() {
         assertEval("argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
     }
@@ -101,6 +102,7 @@ public class TestrGenBuiltinsum extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testsum18() {
         assertEval("argv <- list(c(1073741824L, 1073741824L));sum(argv[[1]]);");
     }
@@ -120,3 +122,4 @@ public class TestrGenBuiltinsum extends TestBase {
         assertEval("argv <- list(structure(c(6L, 12L, 18L, 24L, 30L, 36L, 42L, 48L, 54L, 60L, 66L, 72L, 78L, 84L, 90L, 96L, 102L, 108L, 114L, 120L), .Dim = 4:5, .Dimnames = list(NULL, c(\'V5\', \'V6\', \'V7\', \'V8\', \'V9\'))));sum(argv[[1]]);");
     }
 }
+

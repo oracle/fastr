@@ -26,11 +26,13 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testnames3() {
         assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'));names(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testnames4() {
         assertEval("argv <- list(structure(list(A = NULL, B = NULL, `NA` = NULL), .Names = c(\'A\', \'B\', NA)));names(argv[[1]]);");
     }
@@ -41,16 +43,19 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testnames7() {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1, 20, 1), class = \'ts\'));names(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testnames8() {
         assertEval("argv <- list(structure(c(12L, 120L, 116L), .Dim = 3L, .Dimnames = structure(list(c(\'0-5yrs\', \'6-11yrs\', \'12+ yrs\')), .Names = \'\'), class = \'table\'));names(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testnames9() {
         assertEval("argv <- list(structure(list(sec = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), min = c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L), hour = c(20L, 19L, 19L, 19L, 19L, 19L, 19L, 19L, 19L, 20L, 20L, 20L, 20L, 19L, 19L, 19L, 20L, 20L, 20L, 19L, 20L, 19L, 19L, 19L, 20L), mday = c(30L, 31L, 31L, 31L, 31L, 31L, 31L, 31L, 31L, 30L, 30L, 30L, 30L, 31L, 31L, 31L, 30L, 30L, 30L, 31L, 30L, 31L, 31L, 31L, 30L), mon = c(5L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 11L, 5L, 5L, 5L, 5L, 11L, 11L, 11L, 5L, 5L, 5L, 11L, 5L, 11L, 11L, 11L, 5L), year = c(72L, 72L, 73L, 74L, 75L, 76L, 77L, 78L, 79L, 81L, 82L, 83L, 85L, 87L, 89L, 90L, 92L, 93L, 94L, 95L, 97L, 98L, 105L, 108L, 112L), wday = c(5L, 0L, 1L, 2L, 3L, 5L, 6L, 0L, 1L, 2L, 3L, 4L, 0L, 4L, 0L, 1L, 2L, 3L, 4L, 0L, 1L, 4L, 6L, 3L, 6L), yday = c(181L, 365L, 364L, 364L, 364L, 365L, 364L, 364L, 364L, 180L, 180L, 180L, 180L, 364L, 364L, 364L, 181L, 180L, 180L, 364L, 180L, 364L, 364L, 365L, 181L), isdst = c(1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 1L, 1L, 1L, 0L, 1L, 0L, 0L, 0L, 1L)), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = c(\'\', \'EST\', \'EDT\')));names(argv[[1]]);");
     }
@@ -86,6 +91,7 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testnames16() {
         assertEval("argv <- list(structure(list(), .Names = character(0)));names(argv[[1]]);");
     }
@@ -126,6 +132,7 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testnames24() {
         assertEval("argv <- list(structure(c(0.434200949779115, NA, 0.907914219551846, 0.907914219551846, 0.907914219551846, 0.434200949779115, 0.434200949779115), .Names = c(\'1\', NA, \'3\', \'4\', \'5\', \'6\', \'7\')));names(argv[[1]]);");
     }
@@ -171,6 +178,7 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testnames34() {
         assertEval("argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(\' 100\', \'-1e-13\', \' Inf\', \'-Inf\', \' NaN\', \'3.14\', \'  NA\')));names(argv[[1]]);");
     }
@@ -181,6 +189,7 @@ public class TestrGenBuiltinnames extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testnames36() {
         assertEval("argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\'), class = \'table\'));names(argv[[1]]);");
     }
@@ -195,3 +204,4 @@ public class TestrGenBuiltinnames extends TestBase {
         assertEval("argv <- list(structure(list(head = logical(0)), .Names = \'head\', class = \'data.frame\', row.names = integer(0)));names(argv[[1]]);");
     }
 }
+

@@ -41,12 +41,15 @@ public class TestrGenBuiltinceiling extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testceiling6() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));ceiling(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testceiling7() {
         assertEval("argv <- list(1e+05);ceiling(argv[[1]]);");
     }
 }
+

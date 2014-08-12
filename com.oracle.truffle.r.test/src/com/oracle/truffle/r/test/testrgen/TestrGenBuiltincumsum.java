@@ -21,31 +21,37 @@ public class TestrGenBuiltincumsum extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testcumsum2() {
         assertEval("argv <- list(structure(c(15L, 14L), .Names = c(\'bibentry\', NA)));cumsum(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testcumsum3() {
         assertEval("argv <- list(structure(c(79.3831968838961, 8.55983483385341e+101), .Names = c(\'\', \'\')));cumsum(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testcumsum4() {
         assertEval("argv <- list(structure(c(-191.999930599838, 7.71626352011359e-309), .Names = c(\'\', \'\')));cumsum(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testcumsum5() {
         assertEval("argv <- list(NULL);cumsum(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testcumsum6() {
         assertEval("argv <- list(structure(c(5L, 8L, 4L, 19L, 26L, 18L, 41L, 42L, 51L, 90L, 97L, 95L, 122L, 134L, 195L, 215L, 225L, 237L, 274L, 291L, 305L, 333L, 353L, 330L, 363L, 376L, 365L, 393L, 409L, 407L, 376L, 371L, 366L, 337L, 307L, 333L, 290L, 244L, 224L, 218L, 209L, 144L, 147L, 112L, 91L, 79L, 69L, 58L, 54L, 38L, 27L, 17L, 30L, 10L, 7L, 19L), .Dim = 56L, .Dimnames = structure(list(c(\'0\', \'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\', \'25\', \'26\', \'27\', \'28\', \'29\', \'30\', \'31\', \'32\', \'33\', \'34\', \'35\', \'36\', \'37\', \'38\', \'39\', \'40\', \'41\', \'42\', \'43\', \'44\', \'45\', \'46\', \'47\', \'48\', \'49\', \'50\', \'51\', \'52\', \'53\', \'54\', \'55\')), .Names = \'\'), class = \'table\'));cumsum(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testcumsum7() {
         assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')));cumsum(argv[[1]]);");
     }
@@ -56,11 +62,13 @@ public class TestrGenBuiltincumsum extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testcumsum9() {
         assertEval("argv <- list(structure(c(7, 7, 7, 7), .Dim = 4L, .Dimnames = list(c(\'Urban Female\', \'Urban Male\', \'Rural Female\', \'Rural Male\'))));cumsum(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testcumsum10() {
         assertEval("argv <- list(structure(c(-0.233567190135781, 1.27766471142225), .Names = c(\'Low|Medium\', \'Medium|High\')));cumsum(argv[[1]]);");
     }
@@ -90,3 +98,4 @@ public class TestrGenBuiltincumsum extends TestBase {
         assertEval("argv <- list(character(0));cumsum(argv[[1]]);");
     }
 }
+

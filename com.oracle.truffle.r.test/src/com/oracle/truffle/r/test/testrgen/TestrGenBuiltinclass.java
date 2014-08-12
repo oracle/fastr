@@ -16,6 +16,7 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinclass extends TestBase {
 
     @Test
+    @Ignore
     public void testclass1() {
         assertEval("argv <- list(structure(function (x) standardGeneric(\'exp\', .Primitive(\'exp\')), generic = structure(\'exp\', package = \'base\'), package = \'base\', group = list(\'Math\'), valueClass = character(0), signature = \'x\', default = .Primitive(\'exp\'), skeleton = quote(.Primitive(\'exp\')(x)), class = structure(\'standardGeneric\', package = \'methods\')));class(argv[[1]]);");
     }
@@ -36,6 +37,7 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass5() {
         assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')));class(argv[[1]]);");
     }
@@ -71,6 +73,7 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass12() {
         assertEval("argv <- list(structure(function (qr, y) .Call(sparseQR_resid_fitted, qr, y, TRUE), target = structure(c(\'sparseQR\', \'ddenseMatrix\'), .Names = c(\'qr\', \'y\'), package = c(\'Matrix\', \'Matrix\'), class = structure(\'signature\', package = \'methods\')), defined = structure(c(\'sparseQR\', \'ddenseMatrix\'), .Names = c(\'qr\', \'y\'), package = c(\'Matrix\', \'Matrix\'), class = structure(\'signature\', package = \'methods\')), generic = structure(\'qr.resid\', package = \'base\'), class = structure(\'MethodDefinition\', package = \'methods\')));class(argv[[1]]);");
     }
@@ -101,6 +104,7 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass18() {
         assertEval("argv <- list(structure(numeric(0), .Dim = 0L));class(argv[[1]]);");
     }
@@ -111,11 +115,13 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass20() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), .Dim = c(24L, 13L), .Dimnames = list(c(\'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\'), c(\'(Intercept)\', \'block2\', \'block3\', \'block4\', \'block5\', \'block6\', \'N1\', \'P1\', \'K1\', \'N1:P1\', \'N1:K1\', \'P1:K1\', \'N1:P1:K1\')), assign = c(0L, 1L, 1L, 1L, 1L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L), contrasts = structure(list(block = \'contr.treatment\', N = \'contr.treatment\', P = \'contr.treatment\', K = \'contr.treatment\'), .Names = c(\'block\', \'N\', \'P\', \'K\'))));class(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testclass21() {
         assertEval("argv <- list(.Primitive(\'dimnames<-\'));class(argv[[1]]);");
     }
@@ -126,6 +132,7 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass23() {
         assertEval("argv <- list(structure(function (a, b, ...) standardGeneric(\'solve\'), generic = structure(\'solve\', package = \'base\'), package = \'base\', group = list(), valueClass = character(0), signature = c(\'a\', \'b\'), default = structure(function (a, b, ...) UseMethod(\'solve\'), target = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'a\', package = \'methods\'), defined = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'a\', package = \'methods\'), generic = structure(\'solve\', package = \'base\'), class = structure(\'derivedDefaultMethod\', package = \'methods\')), skeleton = quote((function (a, b, ...) UseMethod(\'solve\'))(a, b, ...)), class = structure(\'standardGeneric\', package = \'methods\')));class(argv[[1]]);");
     }
@@ -136,16 +143,19 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass25() {
         assertEval("argv <- list(structure(function (x, type, ...) .Call(dgeMatrix_norm, as(x, \'dgeMatrix\'), type), target = structure(c(\'matrix\', \'character\'), .Names = c(\'x\', \'type\'), package = c(\'methods\', \'methods\'), class = structure(\'signature\', package = \'methods\')), defined = structure(c(\'matrix\', \'character\'), .Names = c(\'x\', \'type\'), package = c(\'methods\', \'methods\'), class = structure(\'signature\', package = \'methods\')), generic = structure(\'norm\', package = \'base\'), class = structure(\'MethodDefinition\', package = \'methods\')));class(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testclass26() {
         assertEval("argv <- list(structure(function (x, mode = \'any\') .Internal(as.vector(x, mode)), target = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'x\', package = \'methods\'), defined = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'x\', package = \'methods\'), generic = character(0), class = structure(\'MethodDefinition\', package = \'methods\')));class(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testclass27() {
         assertEval("argv <- list(structure(function (x, uplo) {    if (uplo == x@uplo) x else t(x)}, target = structure(c(\'nsCMatrix\', \'character\'), .Names = c(\'x\', \'uplo\'), package = c(\'Matrix\', \'methods\'), class = structure(\'signature\', package = \'methods\')), defined = structure(c(\'nsCMatrix\', \'character\'), .Names = c(\'x\', \'uplo\'), package = c(\'Matrix\', \'methods\'), class = structure(\'signature\', package = \'methods\')), generic = structure(\'forceSymmetric\', package = \'Matrix\'), class = structure(\'MethodDefinition\', package = \'methods\')));class(argv[[1]]);");
     }
@@ -156,7 +166,9 @@ public class TestrGenBuiltinclass extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testclass29() {
         assertEval("argv <- list(structure(1:10, .Tsp = c(1959.25, 1961.5, 4), class = \'ts\'));class(argv[[1]]);");
     }
 }
+

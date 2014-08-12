@@ -40,3 +40,4 @@ public class TestrGenBuiltinislogical extends TestBase {
         assertEval("argv <- list(structure(c(1, 0, 0, 0, NA, 6, 0, 0, 0, 14, 3, 0, 15, 0, 0, 8), .Dim = c(4L, 4L)));is.logical(argv[[1]]);");
     }
 }
+

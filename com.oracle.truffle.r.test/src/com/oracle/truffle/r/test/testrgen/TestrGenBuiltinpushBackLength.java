@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinpushBackLength extends TestBase {
 
     @Test
+    @Ignore
     public void testpushBackLength1() {
         assertEval("argv <- list(FALSE); .Internal(pushBackLength(argv[[1]]))");
     }
 }
+

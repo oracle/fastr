@@ -21,6 +21,7 @@ public class TestrGenBuiltinlog2 extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testlog22() {
         assertEval("argv <- list(FALSE);log2(argv[[1]]);");
     }
@@ -30,3 +31,4 @@ public class TestrGenBuiltinlog2 extends TestBase {
         assertEval("argv <- list(2.2250738585072e-308);log2(argv[[1]]);");
     }
 }
+

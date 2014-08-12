@@ -21,11 +21,13 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible2() {
         assertEval("argv <- list(structure(\'Error in cov(rnorm(10), NULL) : \\n  supply both 'x' and 'y' or a matrix-like 'x'\\n\', class = \'try-error\', condition = structure(list(message = \'supply both 'x' and 'y' or a matrix-like 'x'\', call = quote(cov(rnorm(10), NULL))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))));invisible(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testinvisible3() {
         assertEval("argv <- list(quote(Y ~ X));invisible(argv[[1]]);");
     }
@@ -36,6 +38,7 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible5() {
         assertEval("argv <- list(structure(c(\'Min.   : 1.000  \', \'1st Qu.: 9.000  \', \'Median :18.000  \', \'Mean   :14.742  \', \'3rd Qu.:20.000  \', \'Max.   :23.000  \', NA, \'Min.   :5.0000  \', \'1st Qu.:5.3000  \', \'Median :6.1000  \', \'Mean   :6.0841  \', \'3rd Qu.:6.6000  \', \'Max.   :7.7000  \', NA, \'Min.   :  1.000  \', \'1st Qu.: 24.250  \', \'Median : 56.500  \', \'Mean   : 56.928  \', \'3rd Qu.: 86.750  \', \'Max.   :117.000  \', \'NA's   :16  \', \'Min.   :  0.500  \', \'1st Qu.: 11.325  \', \'Median : 23.400  \', \'Mean   : 45.603  \', \'3rd Qu.: 47.550  \', \'Max.   :370.000  \', NA, \'Min.   :0.00300  \', \'1st Qu.:0.04425  \', \'Median :0.11300  \', \'Mean   :0.15422  \', \'3rd Qu.:0.21925  \', \'Max.   :0.81000  \', NA), .Dim = c(7L, 5L), .Dimnames = list(c(\'\', \'\', \'\', \'\', \'\', \'\', \'\'), c(\'    event\', \'     mag\', \'   station\', \'     dist\', \'    accel\')), class = \'table\'));invisible(argv[[1]]);");
     }
@@ -56,11 +59,13 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible9() {
         assertEval("argv <- list(quote(breaks ~ (wool + tension)^2));invisible(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testinvisible10() {
         assertEval("argv <- list(structure(list(surname = structure(1:5, .Label = c(\'McNeil\', \'Ripley\', \'Tierney\', \'Tukey\', \'Venables\'), class = \'factor\'), nationality = structure(c(1L, 2L, 3L, 3L, 1L), .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(c(1L, 1L, 1L, 2L, 1L), .Label = c(\'no\', \'yes\'), class = \'factor\'), title = structure(c(NA_integer_, NA_integer_, NA_integer_, NA_integer_, NA_integer_), .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(c(NA_integer_, NA_integer_, NA_integer_, NA_integer_, NA_integer_), .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\', \'title\', \'other.author\'), row.names = c(NA, -5L), class = \'data.frame\'));invisible(argv[[1]]);");
     }
@@ -76,6 +81,7 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible13() {
         assertEval("argv <- list(structure(function (...) new(\'test1\', ...), className = structure(\'test1\', package = \'.GlobalEnv\'), package = \'.GlobalEnv\', class = structure(\'classGeneratorFunction\', package = \'methods\')));invisible(argv[[1]]);");
     }
@@ -91,6 +97,7 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible16() {
         assertEval("argv <- list(structure(\'Error in cor(Z[, FALSE], use = \\\'pairwise.complete.obs\\\', method = \\\'kendall\\\') : \\n  'x' is empty\\n\', class = \'try-error\', condition = structure(list(message = \''x' is empty\', call = quote(cor(Z[, FALSE], use = \'pairwise.complete.obs\', method = \'kendall\'))), .Names = c(\'message\', \'call\'), class = c(\'simpleError\', \'error\', \'condition\'))));invisible(argv[[1]]);");
     }
@@ -116,6 +123,7 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible21() {
         assertEval("argv <- list(quote(~a + b:c + d + e + e:d));invisible(argv[[1]]);");
     }
@@ -171,6 +179,7 @@ public class TestrGenBuiltininvisible extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testinvisible32() {
         assertEval("argv <- list(structure(list(name = \'list\', objs = structure(list(`package:base` = .Primitive(\'list\'), .Primitive(\'list\')), .Names = c(\'package:base\', \'\')), where = c(\'package:base\', \'namespace:base\'), visible = c(TRUE, FALSE), dups = c(FALSE, TRUE)), .Names = c(\'name\', \'objs\', \'where\', \'visible\', \'dups\'), class = \'getAnywhere\'));invisible(argv[[1]]);");
     }
@@ -265,3 +274,4 @@ public class TestrGenBuiltininvisible extends TestBase {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), .Dim = c(10L, 2L), .Dimnames = list(NULL, c(\'tt\', \'tt + 1\')), .Tsp = c(1920.5, 1921.25, 12), class = c(\'mts\', \'ts\', \'matrix\')));invisible(argv[[1]]);");
     }
 }
+

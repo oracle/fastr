@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinstdin extends TestBase {
 
     @Test
+    @Ignore
     public void teststdin1() {
         assertEval(" .Internal(stdin())");
     }
 }
+

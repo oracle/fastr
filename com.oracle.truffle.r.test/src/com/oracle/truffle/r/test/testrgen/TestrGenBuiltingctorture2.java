@@ -16,12 +16,15 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltingctorture2 extends TestBase {
 
     @Test
+    @Ignore
     public void testgctorture21() {
         assertEval("argv <- list(NULL, NULL, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
+    @Ignore
     public void testgctorture22() {
         assertEval("argv <- list(FALSE, FALSE, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
+

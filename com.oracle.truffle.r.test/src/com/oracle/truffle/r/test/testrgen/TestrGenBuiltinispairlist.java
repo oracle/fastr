@@ -71,6 +71,7 @@ public class TestrGenBuiltinispairlist extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testispairlist12() {
         assertEval("argv <- list(structure(list(f = structure(c(1L, 1L, 1L), .Label = c(\'1\', \'2\'), class = \'factor\'), u = structure(12:14, unit = \'kg\', class = \'avector\')), .Names = c(\'f\', \'u\'), row.names = 2:4, class = \'data.frame\'));is.pairlist(argv[[1]]);");
     }
@@ -85,3 +86,4 @@ public class TestrGenBuiltinispairlist extends TestBase {
         assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.pairlist(argv[[1]]);");
     }
 }
+

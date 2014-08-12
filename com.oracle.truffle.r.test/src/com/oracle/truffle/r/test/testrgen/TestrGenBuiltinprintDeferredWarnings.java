@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinprintDeferredWarnings extends TestBase {
 
     @Test
+    @Ignore
     public void testprintDeferredWarnings1() {
         assertEval(" .Internal(printDeferredWarnings())");
     }
 }
+

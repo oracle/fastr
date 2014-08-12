@@ -126,6 +126,7 @@ public class TestrGenBuiltinisatomic extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testisatomic23() {
         assertEval("argv <- list(structure(1:3, .Label = c(\'4\', \'5\', \'6\'), class = \'factor\'));is.atomic(argv[[1]]);");
     }
@@ -171,7 +172,9 @@ public class TestrGenBuiltinisatomic extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testisatomic32() {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1, 20, 1), class = \'ts\'));is.atomic(argv[[1]]);");
     }
 }
+

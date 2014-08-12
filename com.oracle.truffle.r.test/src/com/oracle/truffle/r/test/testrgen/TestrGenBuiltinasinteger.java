@@ -21,11 +21,13 @@ public class TestrGenBuiltinasinteger extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testasinteger2() {
         assertEval("argv <- list(c(\'   33\', \'   34\', \'   35\', \'   36\', \'   37\', \'   38\', \'   18\', \'   19\', \'   20\', \'   21\', \'   22\', \'   23\', \'   36\', \'   37\', \'   38\', \'   39\'));as.integer(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testasinteger3() {
         assertEval("argv <- list(c(-Inf, -8.5, -2.83333333333333, -1.41666666666667, -0.85, -0.566666666666666, -0.404761904761905, -0.303571428571428, -0.236111111111111, -0.188888888888889));as.integer(argv[[1]]);");
     }
@@ -42,6 +44,7 @@ public class TestrGenBuiltinasinteger extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testasinteger7() {
         assertEval("argv <- list(NULL);as.integer(argv[[1]]);");
     }
@@ -57,11 +60,13 @@ public class TestrGenBuiltinasinteger extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testasinteger10() {
         assertEval("argv <- list(c(\'1\', NA, \'0\'));as.integer(argv[[1]]);");
     }
 
     @Test
+    @Ignore
     public void testasinteger11() {
         assertEval("argv <- list(c(\'3\', \'14159265358979\'));as.integer(argv[[1]]);");
     }
@@ -92,6 +97,7 @@ public class TestrGenBuiltinasinteger extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testasinteger17() {
         assertEval("argv <- list(structure(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA), .Names = c(\' 100\', \'-1e-13\', \' Inf\', \'-Inf\', \' NaN\', \'3.14\', \'  NA\')));as.integer(argv[[1]]);");
     }
@@ -111,3 +117,4 @@ public class TestrGenBuiltinasinteger extends TestBase {
         assertEval("argv <- list(39);as.integer(argv[[1]]);");
     }
 }
+

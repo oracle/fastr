@@ -21,6 +21,7 @@ public class TestrGenBuiltinisdouble extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testisdouble2() {
         assertEval("argv <- list(structure(1:7, .Names = c(\'a1\', \'a2\', \'a3\', \'a4\', \'a5\', \'a6\', \'a7\')));is.double(argv[[1]]);");
     }
@@ -36,7 +37,9 @@ public class TestrGenBuiltinisdouble extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testisdouble5() {
         assertEval("argv <- list(structure(1:24, .Dim = 2:4));is.double(argv[[1]]);");
     }
 }
+

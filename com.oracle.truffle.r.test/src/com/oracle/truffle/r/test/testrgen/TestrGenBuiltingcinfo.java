@@ -16,12 +16,15 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltingcinfo extends TestBase {
 
     @Test
+    @Ignore
     public void testgcinfo1() {
         assertEval("argv <- list(list()); .Internal(gcinfo(argv[[1]]))");
     }
 
     @Test
+    @Ignore
     public void testgcinfo2() {
         assertEval("argv <- list(FALSE); .Internal(gcinfo(argv[[1]]))");
     }
 }
+

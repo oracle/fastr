@@ -16,12 +16,15 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltincol extends TestBase {
 
     @Test
+    @Ignore
     public void testcol1() {
         assertEval("argv <- list(c(2L, 2L)); .Internal(col(argv[[1]]))");
     }
 
     @Test
+    @Ignore
     public void testcol3() {
         assertEval("argv <- list(c(1L, 0L)); .Internal(col(argv[[1]]))");
     }
 }
+

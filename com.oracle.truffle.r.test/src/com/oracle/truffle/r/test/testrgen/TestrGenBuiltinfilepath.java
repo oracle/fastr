@@ -16,27 +16,33 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinfilepath extends TestBase {
 
     @Test
+    @Ignore
     public void testfilepath1() {
         assertEval("argv <- list(list(\'/home/lzhao/hg/r-instrumented/tests/Packages/rpart/R\', \'summary.rpart.R\'), \'/\'); .Internal(file.path(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testfilepath2() {
         assertEval("argv <- list(list(\'/home/lzhao/hg/r-instrumented/src/library/parallel/R/unix\', c(\'forkCluster.R\', \'mcfork.R\', \'mclapply.R\', \'mcmapply.R\', \'mcparallel.R\', \'pvec.R\')), \'/\'); .Internal(file.path(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testfilepath3() {
         assertEval("argv <- list(list(\'/home/lzhao/hg/r-instrumented/tests/tcltk.Rcheck\', structure(\'tcltk\', .Names = \'Package\'), \'help\'), \'/\'); .Internal(file.path(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testfilepath4() {
         assertEval("argv <- list(list(character(0), \'DESCRIPTION\'), \'/\'); .Internal(file.path(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testfilepath5() {
         assertEval("argv <- list(list(structure(character(0), .Dim = c(0L, 0L))), \'/\'); .Internal(file.path(argv[[1]], argv[[2]]))");
     }
 }
+

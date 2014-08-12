@@ -66,6 +66,7 @@ public class TestrGenBuiltinislanguage extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testislanguage12() {
         assertEval("argv <- list(expression(sqrt(abs(`Standardized residuals`))));is.language(argv[[1]]);");
     }
@@ -116,6 +117,7 @@ public class TestrGenBuiltinislanguage extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testislanguage22() {
         assertEval("argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = \'ts\'));is.language(argv[[1]]);");
     }
@@ -130,3 +132,4 @@ public class TestrGenBuiltinislanguage extends TestBase {
         assertEval("argv <- list(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\');is.language(argv[[1]]);");
     }
 }
+

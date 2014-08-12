@@ -31,6 +31,7 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr5() {
         assertEval("argv <- list(structure(list(title = structure(1L, .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(2L, .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'title\', \'other.author\'), row.names = 1L, class = \'data.frame\'), \'row.names\');attr(argv[[1]],argv[[2]]);");
     }
@@ -46,6 +47,7 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr8() {
         assertEval("argv <- list(structure(c(72.8922646699554, 72.8922646699554, 72.8922646699554, 72.8922646699554, 72.8922646699554, 99.6344113579063, 99.6344113579063, 122.561298550713, 122.561298550713, 122.561298550713, 122.561298550713, 122.561298550713, 122.561298550713, 140.590935258431, 140.590935258431, 140.590935258431, 153.976908924618, 153.976908924618, 153.976908924618, 153.976908924618, 163.542360717164, 163.542360717164, 163.542360717164, 163.542360717164, 163.542360717164, 163.542360717164, 170.206309375934, 170.206309375934, 170.206309375934, 170.206309375934, 170.206309375934, 170.206309375934, 170.206309375934, 170.206309375934, 170.206309375934, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 174.771283819687, 177.863643456281, 177.863643456281, 177.863643456281, 177.863643456281, 177.863643456281, 181.334266157228, 182.262171017221), gradient = structure(c(0, 0, 0, 0, 0, 57.4245712142609, 57.4245712142609, 92.0663000396056, 92.0663000396056, 92.0663000396056, 92.0663000396056, 92.0663000396056, 92.0663000396056, 102.603355837019, 102.603355837019, 102.603355837019, 96.1864486469068, 96.1864486469068, 96.1864486469068, 96.1864486469068, 80.9127637202515, 80.9127637202515, 80.9127637202515, 80.9127637202515, 80.9127637202515, 80.9127637202515, 62.7567863240641, 62.7567863240641, 62.7567863240641, 62.7567863240641, 62.7567863240641, 62.7567863240641, 62.7567863240641, 62.7567863240641, 62.7567863240641, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 45.2165616754423, 29.9327435335998, 29.9327435335998, 29.9327435335998, 29.9327435335998, 29.9327435335998, 7.54853144661603, 0, 0.999999995832131, 0.999999995832131, 0.999999995832131, 0.999999995832131, 0.999999995832131, 0.900752404767751, 0.900752404767751, 0.72805882604922, 0.72805882604922, 0.72805882604922, 0.72805882604922, 0.72805882604922, 0.72805882604922, 0.546325339398677, 0.546325339398677, 0.546325339398677, 0.388712482407919, 0.388712482407919, 0.388712482407919, 0.388712482407919, 0.265313345750221, 0.265313345750221, 0.265313345750221, 0.265313345750221, 0.265313345750221, 0.265313345750221, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.174363797963106, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.109797198736723, 0.0650421524858363, 0.0650421524858363, 0.0650421524858363, 0.0650421524858363, 0.0650421524858363, 0.0138547080588812, -2.61666809427403e-08, 0, 0, 0, 0, 0, 0.186415683651876, 0.186415683651876, 0.381271875735367, 0.381271875735367, 0.381271875735367, 0.381271875735367, 0.381271875735367, 0.381271875735367, 0.552874143045278, 0.552874143045278, 0.552874143045278, 0.689351882872836, 0.689351882872836, 0.689351882872836, 0.689351882872836, 0.791184856858009, 0.791184856858009, 0.791184856858009, 0.791184856858009, 0.791184856858009, 0.791184856858009, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.864120807233518, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.914989166321596, 0.949854646587551, 0.949854646587551, 0.949854646587551, 0.949854646587551, 0.949854646587551, 0.989368022459573, 0.999999988297389), .Dim = c(52L, 3L))), \'gradient\');attr(argv[[1]],argv[[2]]);");
     }
@@ -56,11 +58,13 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr10() {
         assertEval("argv <- list(structure(list(Employed = c(60.323, 61.122, 60.171, 61.187, 63.221, 63.639, 64.989, 63.761, 66.019, 67.857, 68.169, 66.513, 68.655, 69.564, 69.331, 70.551), GNP.deflator = c(83, 88.5, 88.2, 89.5, 96.2, 98.1, 99, 100, 101.2, 104.6, 108.4, 110.8, 112.6, 114.2, 115.7, 116.9), GNP = c(234.289, 259.426, 258.054, 284.599, 328.975, 346.999, 365.385, 363.112, 397.469, 419.18, 442.769, 444.546, 482.704, 502.601, 518.173, 554.894), Unemployed = c(235.6, 232.5, 368.2, 335.1, 209.9, 193.2, 187, 357.8, 290.4, 282.2, 293.6, 468.1, 381.3, 393.1, 480.6, 400.7), Armed.Forces = c(159, 145.6, 161.6, 165, 309.9, 359.4, 354.7, 335, 304.8, 285.7, 279.8, 263.7, 255.2, 251.4, 257.2, 282.7), Population = c(107.608, 108.632, 109.773, 110.929, 112.075, 113.27, 115.094, 116.219, 117.388, 118.734, 120.445, 121.95, 123.366, 125.368, 127.852, 130.081), Year = 1947:1962), .Names = c(\'Employed\', \'GNP.deflator\', \'GNP\', \'Unemployed\', \'Armed.Forces\', \'Population\', \'Year\'), terms = quote(Employed ~ GNP.deflator + GNP + Unemployed +     Armed.Forces + Population + Year), row.names = 1947:1962, class = \'data.frame\'), \'terms\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr11() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0), .Dim = c(12L, 3L), .Dimnames = list(c(\'1\', \'3\', \'5\', \'7\', \'9\', \'11\', \'13\', \'15\', \'17\', \'19\', \'21\', \'23\'), c(\'(Intercept)\', \'M.userY\', \'TempLow\')), assign = 0:2, contrasts = structure(list(M.user = \'contr.treatment\', Temp = \'contr.treatment\'), .Names = c(\'M.user\', \'Temp\'))), \'contrasts\');attr(argv[[1]],argv[[2]]);");
     }
@@ -71,11 +75,13 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr13() {
         assertEval("argv <- list(quote(cbind(X, M) ~ 1), \'term.labels\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr14() {
         assertEval("argv <- list(structure(c(1L, 1L, 1L, 2L, 1L), .Label = c(\'no\', \'yes\'), class = \'factor\'), \'levels\');attr(argv[[1]],argv[[2]]);");
     }
@@ -91,6 +97,7 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr17() {
         assertEval("argv <- list(structure(c(0.5, 0.5, 0.5, 0.5), gradient = structure(c(NaN, NaN, NaN, NaN), .Dim = c(4L, 1L), .Dimnames = list(NULL, \'L75\'))), \'gradient\');attr(argv[[1]],argv[[2]]);");
     }
@@ -106,6 +113,7 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr20() {
         assertEval("argv <- list(structure(c(\'[[.bibentry\', \'[[.data.frame\', \'[[.Date\', \'[[.dendrogram\', \'[[.factor\', \'[[.numeric_version\', \'[[.pdf_doc\', \'[[.person\', \'[[.POSIXct\'), class = \'MethodsFunction\', info = structure(list(visible = c(FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, FALSE, FALSE, TRUE), from = structure(c(9L, 2L, 2L, 9L, 2L, 2L, 9L, 9L, 2L), .Label = c(\'CheckExEnv\', \'package:base\', \'package:datasets\', \'package:graphics\', \'package:grDevices\', \'package:methods\', \'package:stats\', \'package:utils\', \'registered S3method for [[\'), class = \'factor\')), .Names = c(\'visible\', \'from\'), row.names = c(\'[[.bibentry\', \'[[.data.frame\', \'[[.Date\', \'[[.dendrogram\', \'[[.factor\', \'[[.numeric_version\', \'[[.pdf_doc\', \'[[.person\', \'[[.POSIXct\'), class = \'data.frame\')), \'info\');attr(argv[[1]],argv[[2]]);");
     }
@@ -116,21 +124,25 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr22() {
         assertEval("argv <- list(structure(c(0, 3, 3, 0), .Dim = c(2L, 2L), counts = structure(c(0L, 0L, 1L, 0L, 0L, 1L, 0L, 0L, 0L, 2L, 2L, 0L), .Dim = c(2L, 2L, 3L), .Dimnames = list(NULL, NULL, c(\'ins\', \'del\', \'sub\'))), trafos = structure(c(\'MMMMMM\', \'SMMMSMD\', \'SMMMSMI\', \'MMMMMMM\'), .Dim = c(2L, 2L))), \'trafos\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr23() {
         assertEval("argv <- list(structure(list(y = c(73, 73, 70, 74, 75, 115, 105, 107, 124, 107, 116, 125, 102, 144, 178, 149, 177, 124, 157, 128, 169, 165, 186, 152, 181, 139, 173, 151, 138, 181, 152, 188, 173, 196, 180, 171, 188, 174, 198, 172, 176, 162, 188, 182, 182, 141, 191, 190, 159, 170, 163, 197), x = c(1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 11, 12), Ta = 1, Tb = 12), .Names = c(\'y\', \'x\', \'Ta\', \'Tb\'), terms = quote(~y +     x)), \'terms\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr24() {
         assertEval("argv <- list(structure(c(804.851443135267, 3.3994157758076, 28.3699038266834, 1.84375046462573), .Dim = c(2L, 2L), .Dimnames = list(c(\'(Intercept)\', \'day\'), c(\'Variance\', \'StdDev\')), formStr = \'pdLogChol(day)\', corr = structure(c(\'(Intr)\', \'-0.555\'), .Dim = c(2L, 1L), .Dimnames = list(c(\'(Intercept)\', \'day\'), \'Corr\'))), which = \'corr\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr25() {
         assertEval("argv <- list(structure(c(0.0319339476375948, 0.0319339476375948, 0.114405269727263, 0.114405269727263, 0.211060625790557, 0.211060625790557, 0.375868556643391, 0.375868556643391, 0.631987388405009, 0.631987388405009, 0.977771587733117, 0.977771587733117, 1.3655287091085, 1.3655287091085, 1.71941659701549, 1.71941659701549), gradient = structure(c(0.013379193963099, 0.013379193963099, 0.0479317593757097, 0.0479317593757097, 0.0884269330704518, 0.0884269330704518, 0.157475623779182, 0.157475623779182, 0.264780350605592, 0.264780350605592, 0.409651693312349, 0.409651693312349, 0.572108204994814, 0.572108204994814, 0.720374706438093, 0.720374706438093, -0.0298119721009501, -0.0298119721009501, -0.103062799493893, -0.103062799493893, -0.182048260790464, -0.182048260790464, -0.299644491810901, -0.299644491810901, -0.439656344689613, -0.439656344689613, -0.546177195068236, -0.546177195068236, -0.552869486814534, -0.552869486814534, -0.454930857067767, -0.454930857067767), .Dim = c(16L, 2L), .Dimnames = list(NULL, c(\'Asym\', \'xmid\')))), \'gradient\');attr(argv[[1]],argv[[2]]);");
     }
@@ -141,11 +153,13 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr27() {
         assertEval("argv <- list(structure(list(structure(list(structure(\'Print a varFunc Object\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\title\'), structure(list(structure(\'print.varFunc\', Rd_tag = \'VERB\')), Rd_tag = \'\\\\name\'), structure(list(structure(\'print.varFunc\', Rd_tag = \'VERB\')), Rd_tag = \'\\\\alias\'), structure(list(structure(\'print.varComb\', Rd_tag = \'VERB\')), Rd_tag = \'\\\\alias\'), structure(list(structure(\'models\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\keyword\'), structure(list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'  The class and the coefficients associated with \', Rd_tag = \'TEXT\'),     structure(list(structure(\'x\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' are printed.\\n\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\description\'), structure(list(structure(\'\\n\', Rd_tag = \'RCODE\'), structure(list(list(structure(\'print\', Rd_tag = \'TEXT\')), list(structure(\'varFunc\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\method\'), structure(\'(x, \', Rd_tag = \'RCODE\'), structure(list(), Rd_tag = \'\\\\dots\'), structure(\')\\n\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\usage\'), structure(list(structure(\'\\n\', Rd_tag = \'TEXT\'),     structure(\' \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'x\', Rd_tag = \'TEXT\')), list(structure(\'an object inheriting from class \', Rd_tag = \'TEXT\'), structure(list(structure(\'varFunc\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', representing a\\n\', Rd_tag = \'TEXT\'), structure(\' variance function structure.\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\' \', Rd_tag = \'TEXT\'), structure(list(list(structure(list(), Rd_tag = \'\\\\dots\')), list(structure(\'optional arguments passed to \', Rd_tag = \'TEXT\'),         structure(list(structure(\'print.default\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\'; see\\n\', Rd_tag = \'TEXT\'), structure(\'   the documentation on that method function.\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\arguments\'), structure(list(structure(\'Jos<U+00E9> Pinheiro and Douglas Bates \', Rd_tag = \'TEXT\'), structure(list(structure(\'bates@stat.wisc.edu\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\email\')), Rd_tag = \'\\\\author\'), structure(list(structure(list(    structure(list(structure(\'summary.varFunc\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\')), Rd_tag = \'\\\\code\')), Rd_tag = \'\\\\seealso\'), structure(list(structure(\'\\n\', Rd_tag = \'RCODE\'), structure(\'vf1 <- varPower(0.3, form = ~age)\\n\', Rd_tag = \'RCODE\'), structure(\'vf1 <- Initialize(vf1, Orthodont)\\n\', Rd_tag = \'RCODE\'), structure(\'print(vf1)\\n\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\examples\')), Rdfile = \'/home/lzhao/tmp/RtmptukZK0/R.INSTALL2ccc3a5cba55/nlme/man/print.varFunc.Rd\', class = \'Rd\', meta = structure(list(    docType = character(0)), .Names = \'docType\'), prepared = 3L), \'meta\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr28() {
         assertEval("argv <- list(structure(list(variable1 = c(1, 2, 2), variable2 = c(1, 1, 3)), .Names = c(\'variable1\', \'variable2\'), row.names = c(NA, -3L), class = \'data.frame\', variable.labels = structure(c(\'variable1\', \'variable2\'), .Names = c(\'variable1\', \'variable2\')), codepage = 20127L), \'variable.labels\');attr(argv[[1]],argv[[2]]);");
     }
@@ -161,16 +175,19 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr31() {
         assertEval("argv <- list(structure(c(2L, 1L, 3L), .Label = c(\'1\', \'2\', NA), class = c(\'ordered\', \'factor\')), \'levels\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr32() {
         assertEval("argv <- list(structure(1:10, date = structure(200171400, class = c(\'POSIXct\', \'POSIXt\'), tzone = \'\'), class = \'stamped\'), \'date\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr33() {
         assertEval("argv <- list(structure(c(49.9, 52.3, 49.4, 51.1, 49.4, 47.9, 49.8, 50.9, 49.3, 51.9, 50.8, 49.6, 49.3, 50.6, 48.4, 50.7, 50.9, 50.6, 51.5, 52.8, 51.8, 51.1, 49.8, 50.2, 50.4, 51.6, 51.8, 50.9, 48.8, 51.7, 51, 50.6, 51.7, 51.5, 52.1, 51.3, 51, 54, 51.4, 52.7, 53.1, 54.6, 52, 52, 50.9, 52.6, 50.2, 52.6, 51.6, 51.9, 50.5, 50.9, 51.7), .Tsp = c(1, 53, 1)), \'tsp\');attr(argv[[1]],argv[[2]]);");
     }
@@ -206,6 +223,7 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr40() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.0519265581680438, 0.0688412118115477, 0.0907383424760159, 0.11871257874736, 0.153851867351129, 0.197066627437879, 0.248849916275927, 0.309003712276245, 0.376411716520019, 0.448970177554117, 0.523767544415284, 0.560977234455458), .Dim = c(12L, 2L), gradient = structure(c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.00738389705040961, -0.00961449255414965, -0.0123746759217436, -0.0156916432890164, -0.0195255505224529, -0.0237326760503604, -0.0280361473696848, -0.032025323792521, -0.035205879677649, -0.0371062207595128, -0.0374120660881388, -0.0369391076611127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.142994094104604, 0.166962078687643, 0.190145150639427, 0.209729276540067, 0.221920901693929, 0.222272332097609, 0.206504915766748, 0.17183720786829, 0.11849125053358, 0.0506747206505475, -0.0237317230350864, -0.0603708169587119), .Dim = c(12L, 2L, 2L))), \'gradient\');attr(argv[[1]],argv[[2]]);");
     }
@@ -221,11 +239,13 @@ public class TestrGenBuiltinattr extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testattr43() {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), .Dim = c(10L, 2L), .Dimnames = list(NULL, c(\'tt\', \'tt + 1\')), .Tsp = c(1920.5, 1921.25, 12), class = c(\'mts\', \'ts\', \'matrix\')), \'tsp\');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
+    @Ignore
     public void testattr44() {
         assertEval("argv <- list(structure(c(2L, NA, NA, 4L, 3L, 2L, 1L, 5L, 5L, 6L), .Label = c(\'NA\', \'a\', \'b\', \'c\', \'d\', NA), class = \'factor\'), \'levels\');attr(argv[[1]],argv[[2]]);");
     }
@@ -235,3 +255,4 @@ public class TestrGenBuiltinattr extends TestBase {
         assertEval("argv <- list(c(35.2589338684655, 59.5005803666983, 12.4529321610302, 2.53579570262684, 10.370198579714, 42.0067149618146, 8.14319638132861, 34.0508943233725, 7.78517191057496, 26.9998965458032, 6.70435391953205, 3.62502215105156, 2.59277105754344, 14.4998960151485, 6.70435391953205, 5.8000097831969, 32.741875696675, 59.5015090627504, 13.5512565366133, 4.46460764999704, 9.62989278443572, 42.0073706103832, 8.86141045052292, 59.9511558158597, 7.22940551532861, 27.0003179651772, 7.29566488446303, 6.38233656214029, 2.40767880256155, 14.5001223322046, 7.29566488446303, 10.2116933242272), \'dim\');attr(argv[[1]],argv[[2]]);");
     }
 }
+

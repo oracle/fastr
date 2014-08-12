@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinPrimitive extends TestBase {
 
     @Test
+    @Ignore
     public void testPrimitive1() {
         assertEval("argv <- list(\'c\');.Primitive(argv[[1]]);");
     }
 }
+

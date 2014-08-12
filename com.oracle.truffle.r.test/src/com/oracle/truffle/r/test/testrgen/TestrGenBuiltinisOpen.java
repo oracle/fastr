@@ -16,12 +16,15 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinisOpen extends TestBase {
 
     @Test
+    @Ignore
     public void testisOpen1() {
         assertEval("argv <- list(structure(2L, class = c(\'terminal\', \'connection\')), 0L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testisOpen3() {
         assertEval("argv <- list(FALSE, 2L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 }
+

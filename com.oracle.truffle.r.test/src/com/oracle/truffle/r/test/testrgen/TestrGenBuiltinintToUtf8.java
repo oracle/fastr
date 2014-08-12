@@ -16,17 +16,21 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinintToUtf8 extends TestBase {
 
     @Test
+    @Ignore
     public void testintToUtf81() {
         assertEval("argv <- list(NULL, FALSE); .Internal(intToUtf8(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testintToUtf82() {
         assertEval("argv <- list(list(), FALSE); .Internal(intToUtf8(argv[[1]], argv[[2]]))");
     }
 
     @Test
+    @Ignore
     public void testintToUtf83() {
         assertEval("argv <- list(FALSE, FALSE); .Internal(intToUtf8(argv[[1]], argv[[2]]))");
     }
 }
+

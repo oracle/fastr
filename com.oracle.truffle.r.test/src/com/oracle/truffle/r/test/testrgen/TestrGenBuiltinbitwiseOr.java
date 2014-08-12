@@ -16,7 +16,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinbitwiseOr extends TestBase {
 
     @Test
+    @Ignore
     public void testbitwiseOr1() {
         assertEval("argv <- list(15L, 7L); .Internal(bitwiseOr(argv[[1]], argv[[2]]))");
     }
 }
+
