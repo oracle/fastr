@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Encapsulates all the builtins related to R environments as nested static classes.
@@ -76,8 +77,9 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public REnvironment asEnvironment(VirtualFrame frame, String name) {
+        public REnvironment asEnvironment(VirtualFrame frame, RAbstractStringVector nameVec) {
             controlVisibility();
+            String name = nameVec.getDataAt(0);
             String[] searchPath = REnvironment.searchPath();
             for (String e : searchPath) {
                 if (e.equals(name)) {
