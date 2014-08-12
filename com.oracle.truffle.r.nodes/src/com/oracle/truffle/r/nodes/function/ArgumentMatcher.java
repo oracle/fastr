@@ -296,26 +296,27 @@ public class ArgumentMatcher {
         BitSet matchedSuppliedNames = new BitSet(suppliedNames.length);
         BitSet matchedFormalArgs = new BitSet(formalNames.length);
         int unmatchedNameCount = 0; // The nr of formal arguments that have no supplied argument
-        int varArgMatches = 0;  // The nr of arguments that matches the vararg "..."
         // si = suppliedIndex, fi = formalIndex
+        int varArgCount = 0;
         for (int si = 0; si < suppliedNames.length; si++) {
             if (suppliedNames[si] == null) {
+                if (si >= varArgIndex) {
+                    // unnamed arguments past vararg index match to "..."
+                    varArgCount++;
+                }
                 continue;
             }
 
             // Search for argument name inside formal arguments
             int fi = findParameterPosition(frame, formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], encapsulatingSrc);
             if (fi >= 0) {
-                // Supplied argument is matched!
-                if (fi >= varArgIndex) {
-                    // This argument matches to "..."
-                    ++varArgMatches;
-                }
                 resultArgs[fi] = suppliedArgs[si];
                 matchedSuppliedNames.set(si);
             } else {
                 // Formal argument's name was not found in supplied list
                 unmatchedNameCount++;
+                // named unmatched arguments arguments match to "..."
+                varArgCount++;
             }
         }
 
@@ -324,7 +325,6 @@ public class ArgumentMatcher {
          * match to ... we should subtract sum of varArgIndex and number of variable arguments
          * already matched from total number of arguments.
          */
-        int varArgCount = suppliedArgs.length - (varArgIndex + varArgMatches);
         if (varArgIndex >= 0 && varArgCount >= 0) {
             // Create new nodes and names for vararg
             T[] varArgsArray = arrFactory.newArray(varArgCount);
@@ -336,8 +336,8 @@ public class ArgumentMatcher {
             // Every supplied argument that has not been matched or is longer then names list:
             // Add to vararg!
             int pos = 0;
-            for (int i = varArgIndex; i < suppliedArgs.length; i++) {
-                if (i > suppliedNames.length || !matchedSuppliedNames.get(i)) {
+            for (int i = 0; i < suppliedArgs.length; i++) {
+                if (i > suppliedNames.length || (!matchedSuppliedNames.get(i) && (i >= varArgIndex || suppliedNames[i] != null))) {
                     varArgsArray[pos] = suppliedArgs[i];
                     if (namesArray != null) {
                         namesArray[pos] = suppliedNames[i] != null ? suppliedNames[i] : "";
@@ -352,7 +352,8 @@ public class ArgumentMatcher {
         int cursor = 0;
         for (int fi = 0; fi < resultArgs.length && (!hasVarArgs || fi < varArgIndex); fi++) {
             if (resultArgs[fi] == null) {
-                while (cursor < suppliedNames.length && matchedSuppliedNames.get(cursor)) {
+                while (cursor < suppliedNames.length && suppliedNames[cursor] != null) {
+                    // find subsequent location of unnamed parameter
                     cursor++;
                 }
                 if (cursor < suppliedArgs.length) {
@@ -385,6 +386,8 @@ public class ArgumentMatcher {
     protected static <T> int[] permuteArgumentsIndices(VirtualFrame frame, RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, SourceSection encapsulatingSrc) {
         String[] formalNames = formals.getNames();
 
+        assert false;
+
         // Preparations
         int varArgIndex = formals.getVarArgIndex();
         boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
@@ -404,10 +407,14 @@ public class ArgumentMatcher {
         // Start by finding a matching arguments by name
         BitSet matchedSuppliedNames = new BitSet(suppliedNames.length);
         BitSet matchedFormalArgs = new BitSet(formalNames.length);
-        int varArgMatches = 0;  // The nr of arguments that matches the vararg "..."
         // si = suppliedIndex, fi = formalIndex
+        int varArgCount = 0;
         for (int si = 0; si < suppliedNames.length; si++) {
             if (suppliedNames[si] == null) {
+                if (si >= varArgIndex) {
+                    // unnamed arguments past vararg index match to "..."
+                    varArgCount++;
+                }
                 continue;
             }
 
@@ -415,12 +422,12 @@ public class ArgumentMatcher {
             int fi = findParameterPosition(frame, formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], encapsulatingSrc);
             if (fi >= 0) {
                 // Supplied argument is matched!
-                if (fi >= varArgIndex) {
-                    // This argument matches to "..."
-                    ++varArgMatches;
-                }
                 resultPos[si] = fi;
                 matchedSuppliedNames.set(si);
+            } else {
+                // Formal argument's name was not found in supplied list
+                // named unmatched arguments arguments match to "..."
+                varArgCount++;
             }
         }
 
@@ -429,13 +436,12 @@ public class ArgumentMatcher {
          * match to ... we should subtract sum of varArgIndex and number of variable arguments
          * already matched from total number of arguments.
          */
-        int varArgCount = suppliedArgs.length - (varArgIndex + varArgMatches);
         if (varArgIndex >= 0 && varArgCount >= 0) {
             // Every supplied argument that has not been matched or is longer then names list:
             // Add to vararg!
             int pos = 0;
             for (int i = varArgIndex; i < suppliedArgs.length; i++) {
-                if (i > suppliedNames.length || !matchedSuppliedNames.get(i)) {
+                if (i > suppliedNames.length || (!matchedSuppliedNames.get(i) && (i >= varArgIndex || suppliedNames[i] != null))) {
                     resultPos[pos + varArgIndex] = i;
                     pos++;
                 }
@@ -446,7 +452,8 @@ public class ArgumentMatcher {
         int cursor = 0;
         for (int fi = 0; fi < resultPos.length && (!hasVarArgs || fi < varArgIndex); fi++) {
             if (resultPos[fi] == ARG_NOT_SET) {
-                while (cursor < suppliedNames.length && matchedSuppliedNames.get(cursor)) {
+                while (cursor < suppliedNames.length && suppliedNames[cursor] != null) {
+                    // find subsequent location of unnamed parameter
                     cursor++;
                 }
                 if (cursor < suppliedArgs.length) {

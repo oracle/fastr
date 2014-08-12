@@ -37,19 +37,19 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isIncomparable", "!isFromLast"}, order = 0)
+    @Specialization(guards = {"!isIncomparable", "!isFromLast", "!empty"}, order = 0)
     public int anyDuplicatedFalseIncomparablesFromStart(RAbstractVector x, byte incomparables, byte fromLast) {
         return getIndexFromStart(x);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isIncomparable", "isFromLast"}, order = 1)
+    @Specialization(guards = {"!isIncomparable", "isFromLast", "!empty"}, order = 1)
     public int anyDuplicatedFalseIncomparablesFromLast(RAbstractVector x, byte incomparables, byte fromLast) {
         return getIndexFromLast(x);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"isIncomparable", "!isFromLast"}, order = 2)
+    @Specialization(guards = {"isIncomparable", "!isFromLast", "!empty"}, order = 2)
     public int anyDuplicatedTrueIncomparablesFromStart(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
         initTypeof();
         initCastTypeNode();
@@ -58,7 +58,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"isIncomparable", "isFromLast"}, order = 3)
+    @Specialization(guards = {"isIncomparable", "isFromLast", "!empty"}, order = 3)
     public int anyDuplicatedTrueIncomparablesFromLast(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
         initTypeof();
         initCastTypeNode();
@@ -66,7 +66,7 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
-    @Specialization(guards = "!isFromLast", order = 4)
+    @Specialization(guards = {"!isFromLast", "!empty"}, order = 4)
     public int anyDuplicatedFromStart(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, @SuppressWarnings("unused") byte fromLast) {
         initTypeof();
         initCastTypeNode();
@@ -74,12 +74,18 @@ public abstract class AnyDuplicated extends RBuiltinNode {
         return getIndexFromStart(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
     }
 
-    @Specialization(guards = "isFromLast", order = 5)
+    @Specialization(guards = {"isFromLast", "!empty"}, order = 5)
     public int anyDuplicatedFromLast(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, @SuppressWarnings("unused") byte fromLast) {
         initTypeof();
         initCastTypeNode();
         String xType = typeof.execute(frame, x);
         return getIndexFromLast(x, (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType)));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "empty", order = 10)
+    public int anyDuplicatedEmpty(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
+        return 0;
     }
 
     @SlowPath
@@ -164,6 +170,10 @@ public abstract class AnyDuplicated extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected boolean isFromLast(VirtualFrame frame, RAbstractVector x, RAbstractVector incomparables, byte fromLast) {
         return fromLast == RRuntime.LOGICAL_TRUE;
+    }
+
+    protected boolean empty(RAbstractVector x) {
+        return x.getLength() == 0;
     }
 
     private void initCastTypeNode() {

@@ -13237,6 +13237,11 @@ $row.names
 #{ typeof(a~b) }
 [1] "language"
 
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testArgs
+#{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm="x") }
+[1] FALSE
+[1] "x"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testBinding
 #{ f <- function(func, a) { func(a) && TRUE } ; g <- function(x) {TRUE} ; f(g, 5) ; f(is.na, 4)  }
 [1] FALSE

@@ -244,4 +244,9 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[2]](1) }");
     }
 
+    @Test
+    public void testArgs() {
+        assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm=\"x\") }");
+    }
+
 }
