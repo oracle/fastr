@@ -146,18 +146,34 @@ public abstract class RBuiltinPackage {
 
     @SuppressWarnings("unchecked")
     protected final void loadBuiltins() {
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), ".")))) {
-            String line;
-            while ((line = r.readLine()) != null) {
-                if (line.endsWith(".class")) {
-                    Class<?> clazz = Class.forName(getClass().getPackage().getName() + "." + line.replace(".class", ""));
-                    if (clazz.getAnnotation(RBuiltin.class) != null) {
+        boolean useFile = System.getProperty("fastr.builtins.file") != null;
+        if (useFile) {
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), "RBUILTINS");
+            if (is != null) {
+                try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        Class<?> clazz = Class.forName(line);
                         load((Class<? extends RBuiltinNode>) clazz);
                     }
+                } catch (IOException | ClassNotFoundException ex) {
+                    Utils.fail("error loading RBuiltin classes from " + getClass().getSimpleName() + " : " + ex);
                 }
             }
-        } catch (IOException | ClassNotFoundException ex) {
-            Utils.fail("error loading RBuiltin classes from " + getClass().getSimpleName() + " : " + ex);
+        } else {
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), ".")))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    if (line.endsWith(".class")) {
+                        Class<?> clazz = Class.forName(getClass().getPackage().getName() + "." + line.replace(".class", ""));
+                        if (clazz.getAnnotation(RBuiltin.class) != null) {
+                            load((Class<? extends RBuiltinNode>) clazz);
+                        }
+                    }
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                Utils.fail("error loading RBuiltin classes from " + getClass().getSimpleName() + " : " + ex);
+            }
         }
 
     }

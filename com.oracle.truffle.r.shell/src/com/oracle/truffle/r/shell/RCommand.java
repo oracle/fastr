@@ -157,7 +157,9 @@ public class RCommand {
             System.out.println(RRuntime.WELCOME_MESSAGE);
         }
         try {
+            long start = System.currentTimeMillis();
             VirtualFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
+            console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
                 String line = console.readLine();
                 if (line == null) {

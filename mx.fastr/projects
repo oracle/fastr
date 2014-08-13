@@ -97,12 +97,19 @@ project@com.oracle.truffle.r.parser@javaCompliance=1.8
 project@com.oracle.truffle.r.parser@annotationProcessors=com.oracle.truffle.r.parser.processor
 project@com.oracle.truffle.r.parser@workingSets=Truffle,FastR
 
+# com.oracle.truffle.r.nodes.processor
+project@com.oracle.truffle.r.nodes.processor@sourceDirs=src
+project@com.oracle.truffle.r.nodes.processor@dependencies=com.oracle.truffle.r.runtime,JDK_TOOLS
+project@com.oracle.truffle.r.nodes.processor@checkstyle=com.oracle.truffle.r.runtime
+project@com.oracle.truffle.r.nodes.processor@javaCompliance=1.8
+project@com.oracle.truffle.r.nodes.processor@workingSets=Truffle,FastR
+
 # com.oracle.truffle.r.nodes
 project@com.oracle.truffle.r.nodes@sourceDirs=src
 project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser,com.oracle.truffle.r.options
 project@com.oracle.truffle.r.nodes@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.nodes@javaCompliance=1.8
-project@com.oracle.truffle.r.nodes@annotationProcessors=com.oracle.truffle.dsl.processor
+project@com.oracle.truffle.r.nodes@annotationProcessors=com.oracle.truffle.dsl.processor,com.oracle.truffle.r.nodes.processor
 project@com.oracle.truffle.r.nodes@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.test.ignore.processor
