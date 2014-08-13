@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.*;
+import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is exactly one
@@ -77,6 +78,7 @@ public final class REngine implements RContext.Engine {
         childTimes = new long[]{0, 0};
         Locale.setDefault(Locale.ROOT);
         FastROptions.initialize();
+        Load_RFFIFactory.initialize();
         RPerfAnalysis.initialize();
         crashOnFatalError = crashOnFatalErrorArg;
         builtinLookup = RBuiltinPackages.getInstance();
