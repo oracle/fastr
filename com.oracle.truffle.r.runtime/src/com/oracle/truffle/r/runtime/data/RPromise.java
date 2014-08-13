@@ -177,6 +177,7 @@ public class RPromise {
         return value;
     }
 
+    @SlowPath
     protected Object doEvalArgument() {
         Object result = null;
         assert env != null;
