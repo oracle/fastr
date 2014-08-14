@@ -80,7 +80,6 @@ public abstract class Ls extends RBuiltinNode {
     @SuppressWarnings("unused")
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, String pattern) {
         controlVisibility();
-        // this is the ls() specialisation
         return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), compile(pattern));
     }
 
