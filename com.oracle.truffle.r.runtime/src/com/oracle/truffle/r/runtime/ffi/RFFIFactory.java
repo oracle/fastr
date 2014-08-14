@@ -25,44 +25,15 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Factory class for the different possible implementations of the {@link RFFI} interface.
- * Specification is based on system property {@value #FACTORY_CLASS_PROPERTY}. Current default is a
- * JNR-based implementation.
+ * Factory class for the different possible implementations of the {@link RFFI} interface. The
+ * choice of factory is made by the R engine and set here by the call to {@link #setRFFIFactory}.
  */
 public abstract class RFFIFactory {
 
-    private static final String FACTORY_CLASS_PROPERTY = "fastr.ffi.factory.class";
-    private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.runtime.ffi.";
-    private static final String SUFFIX = "_RFFIFactory";
-    private static final String DEFAULT_FACTORY = "jnr";
-    private static final String DEFAULT_FACTORY_CLASS = mapSimpleName(DEFAULT_FACTORY);
+    protected static RFFI theRFFI;
 
-    static {
-        String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
-        if (prop != null) {
-            if (!prop.contains(".")) {
-                // simple name
-                prop = mapSimpleName(prop);
-            }
-        } else {
-            prop = DEFAULT_FACTORY_CLASS;
-        }
-        try {
-            theFactory = (RFFIFactory) Class.forName(prop).newInstance();
-        } catch (Exception ex) {
-            Utils.fail("Failed to instantiate class: " + prop);
-        }
-    }
-
-    protected static RFFIFactory theFactory;
-    protected static final RFFI theRFFI = theFactory.createRFFI();
-
-    private static String mapSimpleName(String simpleName) {
-        return PACKAGE_PREFIX + simpleName + "." + simpleName.toUpperCase() + SUFFIX;
-    }
-
-    protected static RFFIFactory getFactory() {
-        return theFactory;
+    public static void setRFFIFactory(RFFIFactory factory) {
+        theRFFI = factory.createRFFI();
     }
 
     public static RFFI getRFFI() {

@@ -30,6 +30,7 @@ import java.util.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
 import jline.console.*;
 
@@ -37,7 +38,17 @@ import jline.console.*;
  * Emulates the (Gnu)R command as precisely as possible.
  */
 public class RCommand {
-    // CheckStyle: stop system..print check
+
+    /**
+     * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
+     * VM. The decision is node made directly in {@link RFFIFactory} to avoid some project
+     * dependencies that cause build problems.
+     */
+    static {
+        RFFIFactory.setRFFIFactory(Load_RFFIFactory.initialize());
+    }
+
+// CheckStyle: stop system..print check
 
     public static void main(String[] args) {
         RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
