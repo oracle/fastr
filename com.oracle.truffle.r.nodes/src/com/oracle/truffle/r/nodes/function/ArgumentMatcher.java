@@ -219,11 +219,13 @@ public class ArgumentMatcher {
      *         with default values (in the form of {@link RPromise}s where needed)
      */
     public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection encapsulatingSrc) {
-        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
+        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+        FormalArguments formals = rootNode.getFormalArguments();
         Object[] evaledArgs = permuteArguments(frame, function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(),
                         encapsulatingSrc);
 
         // Replace RMissing with default value!
+        RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
         RNode[] defaultArgs = formals.getDefaultArgs();
         for (int i = 0; i < defaultArgs.length; i++) {
             Object evaledArg = evaledArgs[i];
@@ -237,8 +239,11 @@ public class ArgumentMatcher {
                 } else {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
-                    evaledArgs[i] = RPromise.create(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultArg);
+                    evaledArgs[i] = RPromise.create(EvalPolicy.STRICT, PromiseType.ARG_DEFAULT, null, defaultArg);
                 }
+            } else if ((builtinRootNode == null || builtinRootNode.evaluatesArg(i)) && evaledArg instanceof RPromise) {
+                RPromise promise = (RPromise) evaledArg;
+                evaledArgs[i] = promise.evaluate(frame);
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getNames());

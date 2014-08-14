@@ -49,30 +49,41 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     }
 
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
-        // Extract arguments from current frame...
+        // Extract arguments and names from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
         int argListSize = argCount;
         ArrayList<Object> argList = new ArrayList<>(argListSize);
+        ArrayList<String> argNamesList = new ArrayList<>(argListSize);
+        int frameNamesLength = RArguments.getNamesLength(frame);
         int fi = 0;
         for (; fi < argCount; ++fi) {
             Object arg = RArguments.getArgument(frame, fi);
             if (arg instanceof Object[]) {
+                // Unwrap arguments and names
                 Object[] varArgs = (Object[]) arg;
-                argListSize += varArgs.length;
-                argList.ensureCapacity(argListSize);
+                Object namesArr = fi > frameNamesLength ? RArguments.getName(frame, fi) : null;
+                String[] varArgNames = namesArr instanceof String[] ? (String[]) namesArr : null;
 
-                for (Object varArg : varArgs) {
-                    addArg(frame, argList, varArg);
+                // Adjust list sizes
+                argListSize += varArgs.length - 1;
+                argList.ensureCapacity(argListSize);
+                argNamesList.ensureCapacity(argListSize);
+
+                // Add single element
+                for (int i = 0; i < varArgs.length; i++) {
+                    addArg(frame, argList, varArgs[i]);
+                    argNamesList.add(varArgNames != null ? varArgNames[i] : null);
                 }
             } else {
                 addArg(frame, argList, arg);
+                String name = frameNamesLength > fi ? RRuntime.toString(RArguments.getName(frame, fi)) : null;
+                argNamesList.add(name);
             }
         }
-
-        // ...and use them as 'supplied' arguments...
-        String[] calledSuppliedNames = suppliedArgsNames;
-        // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
+        // ..
+        String[] argNames = suppliedArgsNames;  // argNamesList.toArray(new
+// String[argNamesList.size()]);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), argNames);
 
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());

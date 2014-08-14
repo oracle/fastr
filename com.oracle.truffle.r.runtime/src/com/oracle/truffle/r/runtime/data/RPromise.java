@@ -167,12 +167,12 @@ public class RPromise {
         if (env != null && env != RArguments.getEnvironment(frame)) {
             value = doEvalArgument();
         } else {
-// assert type == PromiseType.ARG_DEFAULT;
             value = doEvalArgument(frame);
         }
 
         isEvaluated = true;
         env = null; // REnvironment and associated frame are no longer needed after execution
+        // TODO set NAMED = 2
         CompilerDirectives.transferToInterpreterAndInvalidate();
         return value;
     }
@@ -225,7 +225,7 @@ public class RPromise {
      *         {@link #updateEnv(REnvironment)})
      */
     public boolean needsCalleeFrame() {
-        return evalPolicy != EvalPolicy.STRICT && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
+        return evalPolicy == EvalPolicy.PROMISED && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
     }
 
     /**

@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunction
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
+import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -92,7 +93,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         } else {
             rvn = new UnResolvedReadLocalVariableNode(symbol, mode);
         }
-        return new ReadCheckPromiseNode(rvn);
+
+        return ResolvePromiseNodeFactory.create(rvn, symbol);
     }
 
     protected boolean checkType(Object objArg, String type) {
@@ -127,112 +129,36 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
     public abstract Symbol getSymbol();
 
-    /**
-     * Checks every value read from a variable whether it is a {@link RPromise} or not. If yes, it
-     * replaces itself with a {@link ReadPromiseNode}, else with a standard {@link ReadVariableNode}
-     */
-    public static class ReadCheckPromiseNode extends ReadVariableNode {
-
-        @Child private ReadVariableNode readNode;
-
-        private final ReadVariableNode readNodeInitial;
-
-        public ReadCheckPromiseNode(ReadVariableNode readNode) {
-            super();
-            this.readNode = readNode;
-            this.readNodeInitial = NodeUtil.cloneNode(readNode);
+    @NodeChild(value = "readNode", type = ReadVariableNode.class)
+    @NodeField(name = "symbol", type = Symbol.class)
+    public abstract static class ResolvePromiseNode extends ReadVariableNode {
+        @Specialization
+        public Object doValue(VirtualFrame frame, RPromise promise) {
+            return promise.evaluate(frame);
         }
 
-        @Override
-        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-
-            Object value = readNode.execute(frame, enclosingFrame);
-            return specializeAndExecute(frame, value);
+        @Specialization
+        public int doValue(int value) {
+            return value;
         }
 
-        @Override
-        public Object execute(VirtualFrame frame) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-
-            Object value = readNode.execute(frame);
-            return specializeAndExecute(frame, value);
+        @Specialization
+        public double doValue(double value) {
+            return value;
         }
 
-        private Object specializeAndExecute(VirtualFrame frame, Object value) {
-            CompilerAsserts.neverPartOfCompilation();
-
-            if (value != null && value instanceof RPromise) {
-                // Force promise execution to get (back to) the future! ;)
-                RPromise promise = (RPromise) value;
-                Object promiseValue = promise.evaluate(frame);
-                if (checkType(promiseValue, ((HasMode) readNode).getMode())) {
-                    // Replace with ReadPromiseNode and execute it!
-                    return replace(new ReadPromiseNode(getSymbol(), promise, readNode)).execute(frame);
-                } else {
-                    // didn't match, restart the search from the beginning
-                    // N.B. since this promise has been evaluated it will
-                    // not match this time around
-                    return replace(readNodeInitial).execute(frame);
-                }
-            }
-
-            // Value is no promise: Replace with ReadVariableNode...
-            replace(readNode);
-            return value;   // ...and return it, as it's already there.
+        @Specialization
+        public byte doValue(byte value) {
+            return value;
         }
 
-        @Override
-        public Symbol getSymbol() {
-            return readNode.getSymbol();
-        }
-    }
-
-    /**
-     * Simply longs for its {@link RPromise} and retrieves the already calculated value
-     */
-    public static class ReadPromiseNode extends ReadVariableNode {
-
-        private final Symbol symbol;
-        private final RPromise promise;
-        @Child private ReadVariableNode readNode;
-
-        public ReadPromiseNode(Symbol symbol, RPromise promise, ReadVariableNode readNode) {
-            super();
-            this.symbol = symbol;
-            this.promise = promise;
-            this.readNode = readNode;
+        @Specialization(guards = "!isPromise")
+        public Object doValue(Object obj) {
+            return obj;
         }
 
-        @Override
-        public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
-            // TODO ASSUMPTION: Use has-changed-assumption OR is-promise assumption here when
-            // available and replace readNode.execute!
-            Object value = readNode.execute(frame);
-            if (value != promise) { // Does this compile?
-                // Value changed: It might know be a simple value - or another promise, created by
-                // delayedAssign, e.g.
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new ReadCheckPromiseNode(readNode)).execute(frame, enclosingFrame);
-            }
-            return promise.getValue();
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            Object value = readNode.execute(frame);
-            if (value != promise) {
-                // Value changed: It might know be a simple value - or another promise, created by
-                // delayedAssign, e.g.
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new ReadCheckPromiseNode(readNode)).execute(frame);
-            }
-            return promise.getValue();
-        }
-
-        @Override
-        public Symbol getSymbol() {
-            return symbol;
+        public boolean isPromise(Object obj) {
+            return obj instanceof RPromise;
         }
     }
 

@@ -162,7 +162,12 @@ public class PromiseNode extends RNode {
                     varArgs[i] = promise.evaluate(frame);
                 }
                 return varArgs;
-            } else {
+            }
+// else if (obj instanceof RPromise) {
+// RPromise promise = (RPromise) obj;
+// return promise.evaluate(frame);
+// }
+            else {
                 return obj;
             }
         }
@@ -187,7 +192,19 @@ public class PromiseNode extends RNode {
         public Object execute(VirtualFrame frame) {
             // builtin.inline: We do re-evaluation every execute inside the caller frame, based on
             // the assumption that the evaluation of default values should have no side effects
-            return defaultExpr.execute(frame);
+            Object obj = defaultExpr.execute(frame);
+            if (obj instanceof Object[]) {
+                // TODO Move this up the hierarchy!
+                // Evaluate nested
+                Object[] varArgs = (Object[]) obj;
+                for (int i = 0; i < varArgs.length; i++) {
+                    RPromise promise = (RPromise) varArgs[i];
+                    varArgs[i] = promise.evaluate(frame);
+                }
+                return varArgs;
+            } else {
+                return obj;
+            }
         }
     }
 
