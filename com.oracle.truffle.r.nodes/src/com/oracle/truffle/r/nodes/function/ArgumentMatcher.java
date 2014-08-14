@@ -148,30 +148,42 @@ public class ArgumentMatcher {
         for (int i = 0; i < suppliedEvaled.length; i++) {
             RNode arg = suppliedArgs.getArguments()[i];
 
-            // Check for 'missing' arguments
-            RNode rvnArg = arg;
-
-            // Eventually unfold WrapArgumentNode
-            if (rvnArg instanceof WrapArgumentNode) {
-                rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
-            }
-
-            // ReadVariableNode denotes a symbol
-            if (rvnArg instanceof ReadVariableNode) {
-                ReadVariableNode rvn = (ReadVariableNode) rvnArg;
-                Symbol symbol = rvn.getSymbol();
-                if (RMissingHelper.isMissingArgument(frame, symbol)) {
-                    suppliedEvaled[i] = null;
-                    continue;
-                }
-            }
-
-            suppliedEvaled[i] = arg;
+            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
+            suppliedEvaled[i] = isMissingSymbol(frame, arg) ? null : arg;
         }
 
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         RNode[] wrappedArgs = matchNodes(frame, function, suppliedEvaled, suppliedArgs.getNames(), encapsulatingSrc, false);
         return MatchedArgumentsNode.create(wrappedArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+    }
+
+    /**
+     * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
+     * denote symbols
+     *
+     * @param frame {@link VirtualFrame}
+     * @param arg {@link RNode}
+     * @return Whether the given argument denotes a 'missing' symbol in the context of the given
+     *         frame
+     */
+    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
+        RNode rvnArg = arg;
+
+        if (rvnArg instanceof WrapArgumentNode) {
+            rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
+        }
+
+        // ReadVariableNode denotes a symbol
+        if (rvnArg instanceof ReadVariableNode) {
+            ReadVariableNode rvn = (ReadVariableNode) rvnArg;
+            Symbol symbol = rvn.getSymbol();
+            Object obj = RMissingHelper.getMissingValue(frame, symbol);
+            // Symbol == missingArgument?
+            if (obj == RMissing.instance) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -218,7 +230,6 @@ public class ArgumentMatcher {
             if (evaledArg == null) {
                 // This is the case whenever there is a new parameter introduced in front of a
                 // vararg in the specific version of a generic
-                // TODO STRICT!
                 RNode defaultArg = formals.getDefaultArg(i);
                 if (defaultArg == null) {
                     // If neither supplied nor default argument
@@ -226,7 +237,7 @@ public class ArgumentMatcher {
                 } else {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
-                    evaledArgs[i] = RPromise.create(EvalPolicy.STRICT, PromiseType.ARG_DEFAULT, null, defaultArg);
+                    evaledArgs[i] = RPromise.create(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultArg);
                 }
             }
         }
@@ -243,7 +254,7 @@ public class ArgumentMatcher {
      * @param suppliedArgs The arguments supplied to the call
      * @param suppliedNames The names for the arguments supplied to the call
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
-     * @param isForInlinedBuilin Whether the arguments are passed into an inlined builtin and need
+     * @param isForInlinedBuiltin Whether the arguments are passed into an inlined builtin and need
      *            special treatment
      *
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
@@ -251,12 +262,12 @@ public class ArgumentMatcher {
      * @see #permuteArguments(VirtualFrame, RFunction, Object[], String[], FormalArguments,
      *      VarArgsFactory, ArrayFactory, SourceSection)
      */
-    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuilin) {
+    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuiltin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(frame, function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
-        PromiseWrapper wrapper = isForInlinedBuilin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
+        PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
         return wrapInPromises(function, resultArgs, formals, wrapper);
     }
 
@@ -787,8 +798,7 @@ public class ArgumentMatcher {
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
-            // TODO Strict!
-            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : function.getUsePromises() ? EvalPolicy.PROMISED : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
+            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : EvalPolicy.PROMISED;
         }
     }
 

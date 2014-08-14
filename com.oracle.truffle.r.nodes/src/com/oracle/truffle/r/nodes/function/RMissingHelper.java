@@ -81,22 +81,10 @@ public class RMissingHelper {
     public static boolean isMissingArgument(Frame frame, Symbol symbol) {
         // TODO IsDotDotSymbol: Anything special to do here?
 
-        Object value = null;
-
-        // Check binding
-        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(symbol.getName());
-        if (frameSlot == null) {
-            return false;
-        }
-
         // Check symbols value
-        try {
-            value = frame.getObject(frameSlot);
-            if (value == RMissing.instance) {
-                return true;
-            }
-        } catch (FrameSlotTypeException e) {
-            return false;
+        Object value = getMissingValue(frame, symbol);
+        if (value == RMissing.instance) {
+            return true;
         }
 
         // Check for Promise
@@ -106,6 +94,21 @@ public class RMissingHelper {
         }
 
         return false;
+    }
+
+    public static Object getMissingValue(Frame frame, Symbol symbol) {
+        // Check binding
+        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(symbol.getName());
+        if (frameSlot == null) {
+            return null;
+        }
+
+        // Check symbols value
+        try {
+            return frame.getObject(frameSlot);
+        } catch (FrameSlotTypeException e) {
+            return null;
+        }
     }
 
     /**

@@ -335,8 +335,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, Symbol symbol) {
             this.readNode = readNode;
             this.unresolvedNode = unresolvedNode;
-            this.absentFrameSlotNodes = wrapAssumptions(assumptions);
             this.symbol = symbol;
+            this.absentFrameSlotNodes = wrapAssumptions(assumptions);
         }
 
         private AbsentFrameSlotNode[] wrapAssumptions(List<Assumption> assumptions) {
