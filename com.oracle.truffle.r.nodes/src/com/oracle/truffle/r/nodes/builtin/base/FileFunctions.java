@@ -80,7 +80,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.info", kind = INTERNAL)
+    @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn"})
     public abstract static class FileInfo extends RBuiltinNode {
         private static final String[] NAMES = new String[]{"size", "isdir", "mode", "mtime", "ctime", "atime", "uid", "gid", "uname", "grname"};
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
