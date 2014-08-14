@@ -26,7 +26,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 
 /**
- * @see com.oracle.truffle.r.nodes.builtin.base.Combine
+ * See {@code com.oracle.truffle.r.nodes.builtin.base.Combine}
  */
 public abstract class FoldOperationNode extends RNode {
 

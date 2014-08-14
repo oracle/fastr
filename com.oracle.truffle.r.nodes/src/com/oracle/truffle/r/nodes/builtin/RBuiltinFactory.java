@@ -31,10 +31,10 @@ public class RBuiltinFactory {
     private String[] builtinNames;
     private RBuiltin builtin;
     private Object[] constantArguments;
-    private RBuiltinPackage pkg;
+    private Object pkg;
     private REnvironment env;
 
-    public RBuiltinFactory(String[] names, RBuiltin builtin, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, RBuiltinPackage pkg) {
+    public RBuiltinFactory(String[] names, RBuiltin builtin, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, Object pkg) {
         this.builtinNames = names;
         this.builtin = builtin;
         this.factory = factory;
@@ -67,7 +67,7 @@ public class RBuiltinFactory {
         return builtinNames;
     }
 
-    RBuiltinPackage getPackage() {
+    Object getPackage() {
         return pkg;
     }
 

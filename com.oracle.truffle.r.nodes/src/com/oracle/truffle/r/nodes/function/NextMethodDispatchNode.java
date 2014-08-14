@@ -9,7 +9,7 @@
  * All rights reserved.
  */
 
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 

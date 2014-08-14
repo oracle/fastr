@@ -9,12 +9,11 @@
  * All rights reserved.
  */
 
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class DispatchNode extends RNode {

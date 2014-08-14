@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
