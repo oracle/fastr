@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -78,6 +79,7 @@ public class RMissingHelper {
      * @param symbol The {@link Symbol} which to check
      * @return See {@link #isMissingSymbol(RPromise)}
      */
+    @SlowPath
     public static boolean isMissingArgument(Frame frame, Symbol symbol) {
         // TODO IsDotDotSymbol: Anything special to do here?
 
@@ -116,6 +118,7 @@ public class RMissingHelper {
      *            {@link #isMissingArgument(Frame, Symbol)}.
      * @return Whether the given {@link RPromise} represents a symbol that is 'missing' in its frame
      */
+    @SlowPath
     public static boolean isMissingSymbol(RPromise promise) {
         boolean result = false;
         // Missing RPromises throw an error on evaluation, so this might only be checked if it has

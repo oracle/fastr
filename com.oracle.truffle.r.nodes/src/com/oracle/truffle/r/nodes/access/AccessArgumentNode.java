@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -44,6 +45,9 @@ public class AccessArgumentNode extends RNode {
      * function and provides them with a - lazy created - instance of the callee environment.
      */
     private final EnvProvider envProvider;
+
+    private final BranchProfile needsCalleeFrame = new BranchProfile();
+    private final BranchProfile strictEvaluation = new BranchProfile();
 
     public AccessArgumentNode(int index, EnvProvider envProvider) {
         this.index = index;
@@ -71,6 +75,7 @@ public class AccessArgumentNode extends RNode {
 
         // Check whether it is necessary to create a callee REnvironment for the promise
         if (promise.needsCalleeFrame()) {
+            needsCalleeFrame.enter();
             // In this case the promise might lack the proper REnvironment, as it was created before
             // the environment was
             promise.updateEnv(envProvider.getREnvironmentFor(frame));
@@ -78,6 +83,7 @@ public class AccessArgumentNode extends RNode {
 
         // Now force evaluation for STRICT
         if (promise.getEvalPolicy() == EvalPolicy.STRICT) {
+            strictEvaluation.enter();
             return promise.evaluate(frame);
         }
         return promiseObj;
