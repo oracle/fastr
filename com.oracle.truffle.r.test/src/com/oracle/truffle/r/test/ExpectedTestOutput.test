@@ -6827,6 +6827,10 @@ Error in rm("foo", envir = baseenv()) :
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ e1 <- new.env(); assign("x", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }
+[1] 100
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ eval(2 ^ 2 ^ 3)}
 [1] 256
 
