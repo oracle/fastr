@@ -85,6 +85,10 @@ public class BuiltinProcessor extends AbstractProcessor {
             note("BuiltinProcessor.process added=" + added);
         } catch (Exception ex) {
             error("error generating RBUILTINS: " + ex);
+            StackTraceElement[] elements = ex.getStackTrace();
+            for (StackTraceElement element : elements) {
+                error(element.toString());
+            }
         }
         return true;
     }
@@ -94,7 +98,7 @@ public class BuiltinProcessor extends AbstractProcessor {
             String packageName = packageBuiltins.packageElement.getQualifiedName().toString();
             SortedSet<String> classNames = readBuiltinsClass(packageName);
             JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + ".RBuiltinClasses");
-            try (PrintWriter wr = new PrintWriter(new BufferedWriter(new FileWriter(srcLocator.toUri().getPath())))) {
+            try (PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()))) {
                 wr.printf("package %s;%n", packageName);
                 wr.println("public final class RBuiltinClasses {");
                 wr.println("    public static final Class<?>[] RBUILTIN_CLASSES = {");
@@ -129,6 +133,7 @@ public class BuiltinProcessor extends AbstractProcessor {
                     }
                 }
             }
+            locator.delete();
         }
         return classNames;
     }
