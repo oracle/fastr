@@ -113,7 +113,7 @@ def _fastr_gate_body(args, tasks):
     junit(['--tests', _default_unit_tests(), '--check-expected-output'])
     tasks.append(t.stop())
     t = mx.GateTask('UnitTests: simple')
-    rc = junit(['--tests', _default_unit_tests()])
+    rc = junit(['--tests', _default_testgen_tests()])
     if rc != 0:
         mx.abort('unit tests failed')
     tasks.append(t.stop())
@@ -241,10 +241,13 @@ def junit_simple(args):
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
+def _default_testgen_tests():
+    return _default_unit_tests() + ',' + 'com.oracle.truffle.r.test.testrgen'
+
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
     parser = ArgumentParser(prog='r testgen')
-    parser.add_argument('--tests', action='store', default=_default_unit_tests(), help='pattern to match test classes')
+    parser.add_argument('--tests', action='store', default=_default_testgen_tests(), help='pattern to match test classes')
     args = parser.parse_args(args)
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
