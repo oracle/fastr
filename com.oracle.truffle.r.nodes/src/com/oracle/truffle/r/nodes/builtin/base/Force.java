@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "force", kind = SUBSTITUTE)
+@RBuiltin(name = "force", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO revert to R (promises)
 public abstract class Force extends RBuiltinNode {
 

@@ -25,11 +25,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "cov", kind = SUBSTITUTE)
+@RBuiltin(name = "cov", kind = SUBSTITUTE, parameterNames = {"x", "y", "use", "method"})
 public abstract class Cov extends Covcor {
+
+    @Override
+    public RNode[] getParameterValues() {
+        // x, y = NULL, use = "everything", method = c("pearson", "kendall", "spearman")
+        // TODO Is there a constant for "everyting"?
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance), ConstantNode.create("everything"),
+                        ConstantNode.create(RDataFactory.createStringVector(new String[]{"pearson", "kendall", "spearman"}, true))};
+    }
 
     @Specialization
     public RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2) {

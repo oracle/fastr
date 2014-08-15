@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "typeof", kind = SUBSTITUTE)
+@RBuiltin(name = "typeof", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
@@ -130,7 +130,7 @@ public abstract class Typeof extends RBuiltinNode {
     @Specialization()
     public String typeof(REnvironment env) {
         controlVisibility();
-        return "environment";
+        return RRuntime.TYPE_ENVIRONMENT;
     }
 
     @Specialization()
@@ -160,7 +160,7 @@ public abstract class Typeof extends RBuiltinNode {
     @Specialization
     public String typeof(RPairList pairlist) {
         controlVisibility();
-        return "pairlist";
+        return RRuntime.TYPE_PAIR_LIST;
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")

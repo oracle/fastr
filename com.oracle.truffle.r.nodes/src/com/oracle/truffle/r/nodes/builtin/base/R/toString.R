@@ -1,4 +1,4 @@
-#  File src/library/base/R/stop.R
+#  File src/library/base/R/toString.R
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
@@ -16,17 +16,17 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+#functions to convert their first argument to strings
+toString <- function(x, ...) UseMethod("toString")
 
-gettext <- function(..., domain = NULL) {
-    args <- lapply(list(...), as.character)
-    .Internal(gettext(unlist(args), domain = domain))
+toString.default <- function(x, width = NULL, ...)
+{
+    string <- paste(x, collapse=", ")
+    if( missing(width) || is.null(width) || width == 0) return(string)
+    if( width < 0 ) stop("'width' must be positive")
+    if(nchar(string, type = "w") > width) {
+        width <- max(6, width) ## Leave something!
+        string <- paste0(strtrim(string, width - 4), "....")
+    }
+    string
 }
-
-#bindtextdomain <- function(domain, dirname = NULL)
-#    .Internal(bindtextdomain(domain, dirname))
-
-ngettext <- function(n, msg1, msg2, domain = NULL)
-    .Internal(ngettext(n, msg1, msg2, domain))
-
-gettextf <- function(fmt, ..., domain = NULL)
-    sprintf(gettext(fmt, domain = domain), ...)

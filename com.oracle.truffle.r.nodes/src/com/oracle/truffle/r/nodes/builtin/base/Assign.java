@@ -90,9 +90,8 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         controlVisibility();
         MaterializedFrame materializedFrame = virtualFrame.materialize();
         FrameSlot slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
-        int i = 0;
         int iterationsAmount = CompilerAsserts.compilationConstant(slotFoundOnIteration.length);
-        for (; i < iterationsAmount; i++) {
+        for (int i=0; i < iterationsAmount; i++) {
             if (isAppropriateFrameSlot(slot, materializedFrame)) {
                 addValueToFrame(variableName, variableValue, materializedFrame, slot);
                 return variableValue;

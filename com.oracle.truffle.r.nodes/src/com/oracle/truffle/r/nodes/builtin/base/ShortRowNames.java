@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "shortRowNames", kind = INTERNAL)
+@RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"})
 public abstract class ShortRowNames extends RBuiltinNode {
 
     @CreateCast({"arguments"})

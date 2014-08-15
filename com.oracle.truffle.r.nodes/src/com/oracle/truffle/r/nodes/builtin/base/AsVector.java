@@ -35,11 +35,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "as.vector", kind = SUBSTITUTE)
+@RBuiltin(name = "as.vector", kind = SUBSTITUTE, parameterNames = {"x", "mode"})
 // TODO should be INTERNAL
 public abstract class AsVector extends RBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"x", "mode"};
 
     @Child private CastIntegerNode castInteger;
     @Child private CastDoubleNode castDouble;
@@ -112,11 +110,6 @@ public abstract class AsVector extends RBuiltinNode {
             castList = insert(CastListNodeFactory.create(null, true, false, false));
         }
         return castList.executeList(frame, operand);
-    }
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     @Override

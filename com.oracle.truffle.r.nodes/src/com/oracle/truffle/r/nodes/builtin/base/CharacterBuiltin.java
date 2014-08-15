@@ -25,14 +25,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "character", kind = SUBSTITUTE)
+@RBuiltin(name = "character", kind = SUBSTITUTE, parameterNames = {"length"})
 // TODO Implement in R
 public abstract class CharacterBuiltin extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(0)};
+    }
 
     @Specialization
     public Object createCharacterVector(int length) {

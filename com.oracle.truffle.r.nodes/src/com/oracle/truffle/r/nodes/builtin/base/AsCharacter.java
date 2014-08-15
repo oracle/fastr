@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -38,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class AsCharacter extends RBuiltinNode {
 
     @Child CastStringNode castStringNode;
+    @Child DispatchedCallNode dcn;
 
     private void initCast() {
         if (castStringNode == null) {
@@ -107,7 +109,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(0);
     }
 
-    @Specialization
+    @Specialization(guards = "!isObject")
     public RStringVector doStringVector(VirtualFrame frame, RStringVector vector) {
         controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
@@ -119,9 +121,27 @@ public abstract class AsCharacter extends RBuiltinNode {
         throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
     }
 
-    @Specialization
+    @Specialization(guards = "!isObject")
     public RStringVector doVector(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         return castStringVector(frame, vector);
+    }
+
+    @Specialization(guards = "isObject")
+    public Object doObject(VirtualFrame frame, RAbstractVector vector) {
+        controlVisibility();
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(DispatchedCallNode.create("as.character", RRuntime.USE_METHOD, this.getSuppliedArgsNames()));
+        }
+        try {
+            return dcn.executeInternal(frame, vector.getClassHierarchy(), new Object[]{vector});
+        } catch (RError e) {
+            return castStringVector(frame, vector);
+        }
+    }
+
+    protected boolean isObject(VirtualFrame frame, RAbstractVector vector) {
+        return vector.isObject();
     }
 }

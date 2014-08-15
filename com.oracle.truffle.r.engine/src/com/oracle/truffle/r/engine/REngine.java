@@ -215,8 +215,8 @@ public final class REngine implements RContext.Engine {
         RootCallTarget callTarget = makeCallTarget(exprRep);
         MaterializedFrame envFrame = envir.getFrame();
         VirtualFrame vFrame = RRuntime.createFunctionFrame(function);
-        // We make the new frame look like it was a real call to "function".
-        RArguments.setEnclosingFrame(vFrame, function.getEnclosingFrame());
+        RArguments.setEnclosingFrame(vFrame, RArguments.getEnclosingFrame(envFrame));
+        // We make the new frame look like it was a real call to "function" (why?)
         RArguments.setFunction(vFrame, function);
         FrameDescriptor envfd = envFrame.getFrameDescriptor();
         FrameDescriptor vfd = vFrame.getFrameDescriptor();
@@ -415,8 +415,8 @@ public final class REngine implements RContext.Engine {
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
-            RFunction function = builtinLookup.lookup("print");
-            function.getTarget().call(RArguments.create(function, new Object[]{result}));
+            RFunction function = (RFunction) REnvironment.baseEnv().get("print");
+            function.getTarget().call(RArguments.create(function, new Object[]{result, RRuntime.asLogical(true)}));
         }
     }
 

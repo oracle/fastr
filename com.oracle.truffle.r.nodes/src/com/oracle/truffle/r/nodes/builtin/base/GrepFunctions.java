@@ -29,6 +29,8 @@ import java.util.regex.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -85,8 +87,17 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grep", kind = INTERNAL)
+    @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
     public abstract static class Grep extends ExtraArgsChecker {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, x, ignore.case = FALSE, perl = FALSE, value = FALSE, fixed = FALSE, useBytes
+            // = FALSE, invert = FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization
         public RIntVector grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
@@ -126,8 +137,15 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grepl", kind = INTERNAL)
+    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class GrepL extends ExtraArgsChecker {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization
         public Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
@@ -142,8 +160,16 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "sub", kind = INTERNAL)
+    @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class Sub extends ExtraArgsChecker {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, replacement, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes =
+// FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization(order = 1)
         public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
@@ -194,8 +220,16 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "gsub", kind = INTERNAL)
+    @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class GSub extends Sub {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, replacement, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes =
+// FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization(order = 1)
         @Override
@@ -222,8 +256,15 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "regexpr", kind = INTERNAL)
+    @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class Regexp extends ExtraArgsChecker {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, text, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization
         public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
@@ -257,8 +298,15 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "gregexpr", kind = INTERNAL)
+    @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"})
     public abstract static class Gregexpr extends Regexp {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, text, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization
         @Override
@@ -283,8 +331,18 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "agrep", kind = INTERNAL)
+    @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "value", "fixed", "useBytes"})
     public abstract static class AGrep extends ExtraArgsChecker {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, x, max.distance = 0.1, costs = NULL, ignore.case = FALSE, value = FALSE,
+            // fixed = TRUE, useBytes = FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(0.1d), ConstantNode.create(RNull.instance),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         public Object aGrep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
@@ -312,8 +370,17 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "agrepl", kind = INTERNAL)
+    @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "max.distance", "costs", "ignore.case", "fixed", "useBytes"})
     public abstract static class AGrepL extends ExtraArgsChecker {
+
+        @Override
+        public RNode[] getParameterValues() {
+            // pattern, x, max.distance = 0.1, costs = NULL, ignore.case = FALSE, fixed = TRUE,
+// useBytes = FALSE
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(0.1d), ConstantNode.create(RNull.instance),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         public Object aGrep(String patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {

@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "%*%", kind = PRIMITIVE)
+@RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""})
 public abstract class MatMult extends RBuiltinNode {
 
     @Child protected BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);

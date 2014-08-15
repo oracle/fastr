@@ -22,12 +22,15 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetClass extends RBuiltinNode {
 
-    @Specialization
+    @Specialization(guards = "isObject", order = 0)
+    public Object getClassForObject(RAbstractContainer arg) {
+        controlVisibility();
+        return arg.getClassHierarchy();
+    }
+
+    @Specialization(guards = "!isObject", order = 1)
     public Object getClass(RAbstractContainer arg) {
         controlVisibility();
-        if (arg.isObject()) {
-            return arg.getClassHierarchy();
-        }
         final String klass = arg.getClassHierarchy().getDataAt(0);
         if (klass.equals(RRuntime.TYPE_DOUBLE)) {
             return RRuntime.TYPE_NUMERIC;
@@ -45,6 +48,40 @@ public abstract class GetClass extends RBuiltinNode {
     public Object getClass(@SuppressWarnings("unused") RFormula arg) {
         controlVisibility();
         return RRuntime.TYPE_FORMULA;
+    }
+
+    @Specialization
+    public Object getClass(@SuppressWarnings("unused") RNull arg) {
+        controlVisibility();
+        return RRuntime.NULL;
+    }
+
+    @Specialization
+    public Object getClass(@SuppressWarnings("unused") RSymbol arg) {
+        controlVisibility();
+        return RRuntime.CLASS_SYMBOL;
+    }
+
+    @Specialization
+    public Object getClass(@SuppressWarnings("unused") REnvironment arg) {
+        controlVisibility();
+        return RRuntime.TYPE_ENVIRONMENT;
+    }
+
+    @Specialization
+    public Object getClass(@SuppressWarnings("unused") RPairList arg) {
+        controlVisibility();
+        return RRuntime.TYPE_PAIR_LIST;
+    }
+
+    @Specialization
+    public Object getClass(@SuppressWarnings("unused") RLanguage arg) {
+        controlVisibility();
+        return RRuntime.CLASS_LANGUAGE;
+    }
+
+    protected boolean isObject(RAbstractContainer arg) {
+        return arg.isObject();
     }
 
     public abstract Object execute(VirtualFrame frame, RAbstractVector o);

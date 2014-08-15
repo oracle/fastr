@@ -14,6 +14,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Date.java
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Deparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/DispatchedCallNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/EncodeString.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/GroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright
@@ -22,6 +23,7 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/IsArray.j
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactor.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/LaFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/HiddenInternalFunctions.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/IsCall.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/NextMethodDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/OpsGroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/builtin/base/Prod.java,purdue.copyright

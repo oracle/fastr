@@ -65,4 +65,34 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     public RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
     }
+
+    @Specialization
+    public RStringVector getClassHr(@SuppressWarnings("unused") RFunction arg) {
+        return RDataFactory.createStringVector(RRuntime.TYPE_FUNCTION);
+    }
+
+    @Specialization
+    public RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
+        return RDataFactory.createStringVector(RRuntime.NULL);
+    }
+
+    @Specialization
+    public RStringVector getClassHr(@SuppressWarnings("unused") RSymbol arg) {
+        return RDataFactory.createStringVector(RRuntime.CLASS_SYMBOL);
+    }
+
+    @Specialization
+    public RStringVector getClassHr(@SuppressWarnings("unused") REnvironment arg) {
+        return RDataFactory.createStringVector(RRuntime.TYPE_ENVIRONMENT);
+    }
+
+    @Specialization
+    public RStringVector getClassHr(@SuppressWarnings("unused") RPairList arg) {
+        return RDataFactory.createStringVector(RRuntime.TYPE_PAIR_LIST);
+    }
+
+    @Specialization
+    public RStringVector getClassHr(@SuppressWarnings("unused") RLanguage arg) {
+        return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
+    }
 }

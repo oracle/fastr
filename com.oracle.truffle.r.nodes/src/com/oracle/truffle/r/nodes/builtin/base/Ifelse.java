@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
-@RBuiltin(name = "ifelse", kind = SUBSTITUTE)
+@RBuiltin(name = "ifelse", kind = SUBSTITUTE, parameterNames = {"test", "yes", "no"})
 // TODO revert to R
 public abstract class Ifelse extends RBuiltinNode {
 

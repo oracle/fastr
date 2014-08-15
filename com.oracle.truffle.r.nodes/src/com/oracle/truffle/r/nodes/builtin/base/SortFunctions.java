@@ -44,16 +44,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class SortFunctions {
 
-    @RBuiltin(name = "sort.list", kind = SUBSTITUTE)
+    @RBuiltin(name = "sort.list", kind = SUBSTITUTE, parameterNames = {"x", "partial", "na.last", "decreasing", "method"})
     // TODO Implement in R
     public abstract static class SortList extends RBuiltinNode {
-
-        private static final String[] PARAMETER_NAMES = new String[]{"x", "partial", "na.last", "decreasing", "method"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -61,17 +54,17 @@ public class SortFunctions {
                             ConstantNode.create(RMissing.instance)};
         }
 
-        @Child Order doubleOrder;
+        @Child Order order;
 
         @SuppressWarnings("unused")
         @Specialization
-        public RIntVector sortList(VirtualFrame frame, RDoubleVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
+        public RIntVector sortList(VirtualFrame frame, RAbstractVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
             controlVisibility();
-            if (doubleOrder == null) {
+            if (order == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+                order = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
             }
-            RIntVector result = (RIntVector) doubleOrder.executeDoubleVector(frame, vec, RMissing.instance);
+            RIntVector result = (RIntVector) order.executeDoubleVector(frame, vec, RMissing.instance);
             if (RRuntime.fromLogical(decreasing)) {
                 int[] data = result.getDataWithoutCopying();
                 int[] rdata = new int[data.length];
@@ -84,7 +77,7 @@ public class SortFunctions {
         }
     }
 
-    @RBuiltin(name = "qsort", kind = INTERNAL)
+    @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "index.return"})
     // TODO full implementation in Java handling NAs
     public abstract static class QSort extends RBuiltinNode {
 

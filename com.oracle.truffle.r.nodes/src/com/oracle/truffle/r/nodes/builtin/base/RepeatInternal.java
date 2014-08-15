@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "rep.int", kind = SUBSTITUTE)
+@RBuiltin(name = "rep.int", kind = SUBSTITUTE, parameterNames = {"x", "times"})
 // TODO INTERNAL
 public abstract class RepeatInternal extends RBuiltinNode {
 

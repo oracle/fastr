@@ -37,7 +37,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findTargetFunction(frame, callerFrame);
         }
-        return executeHelper(frame, callerFrame);
+        return executeHelper(frame, callerFrame, extractArgs(frame));
     }
 
     @Override
@@ -45,17 +45,32 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         this.type = aType;
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         findTargetFunction(frame, callerFrame);
-        return executeHelper(frame, callerFrame);
+        return executeHelper(frame, callerFrame, extractArgs(frame));
     }
 
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
+    @Override
+    public Object executeInternal(VirtualFrame frame, Object[] args) {
+        if (targetFunction == null) {
+            findTargetFunction(frame, frame);
+        }
+        return executeHelper(frame, frame, args);
+    }
+
+    @Override
+    public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+        this.type = aType;
+        findTargetFunction(frame, frame);
+        return executeHelper(frame, frame, args);
+    }
+
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args) {
         // Extract arguments from current frame...
-        int argCount = RArguments.getArgumentsLength(frame);
+        int argCount = args.length;
         int argListSize = argCount;
         ArrayList<Object> argList = new ArrayList<>(argListSize);
         int fi = 0;
         for (; fi < argCount; ++fi) {
-            Object arg = RArguments.getArgument(frame, fi);
+            Object arg = args[fi];
             if (arg instanceof Object[]) {
                 Object[] varArgs = (Object[]) arg;
                 argListSize += varArgs.length;
@@ -73,11 +88,17 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         String[] calledSuppliedNames = suppliedArgsNames;
         // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
-
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
-
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs());
+    }
+
+    private static Object[] extractArgs(VirtualFrame frame) {
+        Object[] args = new Object[RArguments.getArgumentsLength(frame)];
+        for (int i = 0; i < args.length; ++i) {
+            args[i] = RArguments.getArgument(frame, i);
+        }
+        return args;
     }
 
     private static void addArg(VirtualFrame frame, List<Object> values, Object value) {
@@ -98,8 +119,15 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 
-    @SlowPath
     private void findTargetFunction(VirtualFrame frame, Frame callerFrame) {
+        findTargetFunctionLookup(callerFrame);
+        if (targetFunction == null) {
+            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+        }
+    }
+
+    @SlowPath
+    private void findTargetFunctionLookup(Frame callerFrame) {
         for (int i = 0; i < this.type.getLength(); ++i) {
             findFunction(this.genericName, this.type.getDataAt(i), callerFrame);
             if (targetFunction != null) {
@@ -116,11 +144,9 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 break;
             }
         }
-        if (targetFunction == null) {
-            findFunction(this.genericName, RRuntime.DEFAULT, callerFrame);
-            if (targetFunction == null) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
-            }
+        if (targetFunction != null) {
+            return;
         }
+        findFunction(this.genericName, RRuntime.DEFAULT, callerFrame);
     }
 }

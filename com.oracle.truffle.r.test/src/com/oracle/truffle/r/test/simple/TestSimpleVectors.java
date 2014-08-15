@@ -2072,11 +2072,17 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testUpdateOther() {
         assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
         assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
-        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
+    }
+
+    @Test
+    @Ignore
+    public void testTmpUpdate() {
+        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
     }
 }

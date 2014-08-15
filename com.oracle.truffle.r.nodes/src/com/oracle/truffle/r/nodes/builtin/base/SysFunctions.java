@@ -29,6 +29,8 @@ import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -48,8 +50,13 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.getenv", kind = INTERNAL)
+    @RBuiltin(name = "Sys.getenv", kind = INTERNAL, parameterNames = {"x", "unset", "names"})
     public abstract static class SysGetenv extends RBuiltinNode {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(""), ConstantNode.create(RRuntime.LOGICAL_NA)};
+        }
 
         @Specialization
         public Object sysGetEnv(RAbstractStringVector x, String unset) {
@@ -91,14 +98,13 @@ public class SysFunctions {
 
     }
 
-    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE)
+    @RBuiltin(name = "Sys.setenv", kind = SUBSTITUTE, parameterNames = {"..."})
     // TODO INTERNAL when argument names available in list(...)
     public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
-        private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
 
         @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance)};
         }
 
         @Specialization
@@ -134,8 +140,9 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL)
+    @RBuiltin(name = "Sys.unsetenv", kind = INTERNAL, parameterNames = {"x"})
     public abstract static class SysUnSetEnv extends RInvisibleBuiltinNode {
+
         @Specialization
         public RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
             byte[] data = new byte[argVec.getLength()];
@@ -146,7 +153,7 @@ public class SysFunctions {
         }
     }
 
-    @RBuiltin(name = "Sys.sleep", kind = INTERNAL)
+    @RBuiltin(name = "Sys.sleep", kind = INTERNAL, parameterNames = {"time"})
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
         @Specialization(order = 0)
@@ -206,7 +213,7 @@ public class SysFunctions {
     /**
      * TODO: Handle ~ expansion which is not handled by POSIX.
      */
-    @RBuiltin(name = "Sys.readlink", kind = INTERNAL)
+    @RBuiltin(name = "Sys.readlink", kind = INTERNAL, parameterNames = {"paths"})
     public abstract static class SysReadlink extends RBuiltinNode {
 
         @Specialization(order = 0)

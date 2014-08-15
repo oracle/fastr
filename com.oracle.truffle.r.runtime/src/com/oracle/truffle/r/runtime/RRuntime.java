@@ -93,6 +93,10 @@ public class RRuntime {
     public static final String TYPE_DATA_FRAME = new String("data.frame");
     public static final String TYPE_FACTOR = new String("factor");
     public static final String TYPE_SYMBOL = new String("symbol");
+    public static final String CLASS_SYMBOL = new String("name");
+    public static final String TYPE_ENVIRONMENT = new String("environment");
+    public static final String TYPE_PAIR_LIST = new String("pairlist");
+    public static final String CLASS_LANGUAGE = new String("call");
     // Defunct types
     public static final String REAL = new String("real");
     public static final String SINGLE = new String("single");
@@ -151,6 +155,8 @@ public class RRuntime {
     public static final String SYSTEM_DATE_FORMAT = "EEE MMM dd HH:mm:ss yyyy";
 
     public static final String DROP_DIM_ARG_NAME = "drop";
+
+    public static final String NULL = "NULL";
 
     /**
      * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the

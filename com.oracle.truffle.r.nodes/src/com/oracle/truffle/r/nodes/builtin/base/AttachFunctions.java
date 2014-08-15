@@ -26,6 +26,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.DetachException;
@@ -36,10 +38,16 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * TODO The specialization signatures are weird owing to issues with named parameter handling.
  */
 public class AttachFunctions {
-    @RBuiltin(name = "attach", kind = INTERNAL)
+    @RBuiltin(name = "attach", kind = INTERNAL, parameterNames = {"what", "pos", "name", "warn.conflicts"})
     public abstract static class Attach extends RInvisibleBuiltinNode {
 
         private static final String POS_WARNING = "*** 'pos=1' is not possible; setting 'pos=2' for now.\n" + "*** Note that 'pos=1' will give an error in the future";
+
+        // TODO 3rd parameter "name" has default "deparse(substitute(what)"
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(2), null, ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         @Specialization(order = 0)
         public REnvironment doAttach(@SuppressWarnings("unused") RNull what, int pos, String name) {
@@ -129,8 +137,15 @@ public class AttachFunctions {
         }
     }
 
-    @RBuiltin(name = "detach", kind = INTERNAL)
+    @RBuiltin(name = "detach", kind = INTERNAL, parameterNames = {"name", "pos", "unload", "character.only", "force"})
     public abstract static class Detach extends RInvisibleBuiltinNode {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(2), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         public Object doDetach1(VirtualFrame frame, int name, int pos, byte unload, byte characterOnly, byte force) {

@@ -18,17 +18,25 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL)
+@RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "..."})
 public abstract class AnyDuplicated extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
     @Child private Typeof typeof;
+
+    @Override
+    public RNode[] getParameterValues() {
+        // x, incomparables = FALSE, ...
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance)};
+    }
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {

@@ -35,7 +35,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which"})
+@RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", ""})
+// 2nd parameter is "value", but should not be matched against, so ""
 @SuppressWarnings("unused")
 public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 

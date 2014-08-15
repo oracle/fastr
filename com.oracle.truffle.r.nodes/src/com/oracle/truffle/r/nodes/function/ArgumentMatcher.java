@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -209,7 +210,6 @@ public class ArgumentMatcher {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         Object[] evaledArgs = permuteArguments(frame, function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(),
                         encapsulatingSrc);
-
         // Replace RMissing with default value!
         RNode[] defaultArgs = formals.getDefaultArgs();
         for (int i = 0; i < defaultArgs.length; i++) {
@@ -283,27 +283,14 @@ public class ArgumentMatcher {
         int varArgIndex = formals.getVarArgIndex();
         boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
 
-        // Error check: Unused argument
-        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-        final boolean isBuiltin = rootNode instanceof RBuiltinRootNode;
-        if (!isBuiltin && !hasVarArgs && suppliedArgs.length > rootNode.getParameterCount()) {
-            RNode unusedArgNode = (RNode) suppliedArgs[rootNode.getParameterCount()];
-            throw RError.error(frame, encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, unusedArgNode.getSourceSection().getCode());
-        }
-
-        // Start by finding a matching arguments by name
-        T[] resultArgs = arrFactory.newArray(hasVarArgs ? formalNames.length : Math.max(formalNames.length, suppliedArgs.length));
-        BitSet matchedSuppliedNames = new BitSet(suppliedNames.length);
+        // MATCH by exact name
+        T[] resultArgs = arrFactory.newArray(formalNames.length);
+        BitSet matchedSuppliedArgs = new BitSet(suppliedNames.length);
         BitSet matchedFormalArgs = new BitSet(formalNames.length);
-        int unmatchedNameCount = 0; // The nr of formal arguments that have no supplied argument
+        int unmatchedNameCount = 0; // The nr of named supplied args that do not match
         // si = suppliedIndex, fi = formalIndex
-        int varArgCount = 0;
         for (int si = 0; si < suppliedNames.length; si++) {
             if (suppliedNames[si] == null) {
-                if (si >= varArgIndex) {
-                    // unnamed arguments past vararg index match to "..."
-                    varArgCount++;
-                }
                 continue;
             }
 
@@ -311,58 +298,163 @@ public class ArgumentMatcher {
             int fi = findParameterPosition(frame, formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], encapsulatingSrc);
             if (fi >= 0) {
                 resultArgs[fi] = suppliedArgs[si];
-                matchedSuppliedNames.set(si);
+                matchedSuppliedArgs.set(si);
             } else {
-                // Formal argument's name was not found in supplied list
+                // Named supplied arg that has no match: Vararg candidate!
                 unmatchedNameCount++;
-                // named unmatched arguments arguments match to "..."
-                varArgCount++;
             }
         }
 
-        /*
-         * Next, check for supplied arguments for vararg: To find the remaining arguments that can
-         * match to ... we should subtract sum of varArgIndex and number of variable arguments
-         * already matched from total number of arguments.
-         */
-        if (varArgIndex >= 0 && varArgCount >= 0) {
-            // Create new nodes and names for vararg
+        // TODO MATCH by partial name
+
+        // MATCH by position
+        UnmatchedSuppliedIterator<T> siCursor = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
+        for (int fi = 0; fi < resultArgs.length; fi++) {
+            // Unmatched?
+            if (!matchedFormalArgs.get(fi)) {
+                while (siCursor.hasNext() && siCursor.nextIndex() < suppliedNames.length && suppliedNames[siCursor.nextIndex()] != null) {
+                    // Slide over named parameters and find subsequent location of unnamed parameter
+                    siCursor.next();
+                }
+                boolean followsDots = hasVarArgs && fi >= varArgIndex;
+                if (siCursor.hasNext() && !followsDots) {
+                    resultArgs[fi] = siCursor.next();
+
+                    // set formal status AND "remove" supplied arg from list
+                    matchedFormalArgs.set(fi);
+                    siCursor.remove();
+                }
+            }
+        }
+
+        // MATCH rest to vararg "..."
+        if (hasVarArgs) {
+            int varArgCount = suppliedArgs.length - matchedSuppliedArgs.cardinality();
+
+            // Create vararg array (+ names if necessary)
             T[] varArgsArray = arrFactory.newArray(varArgCount);
             String[] namesArray = null;
             if (unmatchedNameCount != 0) {
                 namesArray = new String[varArgCount];
             }
 
-            // Every supplied argument that has not been matched or is longer then names list:
-            // Add to vararg!
+            // Add every supplied argument that has not been matched
             int pos = 0;
-            for (int i = 0; i < suppliedArgs.length; i++) {
-                if (i > suppliedNames.length || (!matchedSuppliedNames.get(i) && (i >= varArgIndex || suppliedNames[i] != null))) {
-                    varArgsArray[pos] = suppliedArgs[i];
-                    if (namesArray != null) {
-                        namesArray[pos] = suppliedNames[i] != null ? suppliedNames[i] : "";
-                    }
-                    pos++;
+            UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
+            while (si.hasNext()) {
+                varArgsArray[pos] = si.next();
+                si.remove();
+                if (namesArray != null) {
+                    String suppliedName = suppliedNames[si.lastIndex()];
+                    namesArray[pos] = suppliedName != null ? suppliedName : "";
                 }
+                pos++;
             }
             resultArgs[varArgIndex] = listFactory.makeList(varArgsArray, namesArray);
         }
 
-        // Now fill arguments that have not been set 'by name' by order of their appearance
-        int cursor = 0;
-        for (int fi = 0; fi < resultArgs.length && (!hasVarArgs || fi < varArgIndex); fi++) {
-            if (resultArgs[fi] == null) {
-                while (cursor < suppliedNames.length && suppliedNames[cursor] != null) {
-                    // find subsequent location of unnamed parameter
-                    cursor++;
+        // Error check: Unused argument?
+        int leftoverCount = suppliedArgs.length - matchedSuppliedArgs.cardinality();
+        if (leftoverCount > 0) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+
+            UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
+
+            // UNUSED_ARGUMENT(S)?
+            if (leftoverCount == 1) {
+                // TODO Check for precise error messages
+                String argStr = arrFactory.debugString(si.next());
+                // TODO This is a HACK, remove it when proper vararg unwrapping is implemented!
+                if (argStr.equals(ArgumentsTrait.VARARG_NAME)) {
+                    return resultArgs;
                 }
-                if (cursor < suppliedArgs.length) {
-                    resultArgs[fi] = suppliedArgs[cursor++];
-                }
+                throw RError.error(frame, encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, argStr);
             }
+
+            // Create error message:
+            T[] debugArgs = arrFactory.newArray(leftoverCount);
+            int pos = 0;
+            while (si.hasNext()) {
+                debugArgs[pos++] = si.next();
+            }
+
+            // TODO Check for precise error messages
+            String debugStr = arrFactory.debugString(debugArgs);
+            throw RError.error(frame, encapsulatingSrc, RError.Message.UNUSED_ARGUMENTS, debugStr);
         }
 
         return resultArgs;
+    }
+
+    /**
+     * Used in
+     * {@link ArgumentMatcher#permuteArguments(VirtualFrame, RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection)}
+     * for iteration over suppliedArgs
+     *
+     * @param <T>
+     */
+    private static class UnmatchedSuppliedIterator<T> implements Iterator<T> {
+        private static final int NO_MORE_ARGS = -1;
+        private int si = 0;
+        private int lastSi = 0;
+        private final T[] suppliedArgs;
+        private final BitSet matchedSuppliedArgs;
+
+        public UnmatchedSuppliedIterator(T[] suppliedArgs, BitSet matchedSuppliedArgs) {
+            this.suppliedArgs = suppliedArgs;
+            this.matchedSuppliedArgs = matchedSuppliedArgs;
+        }
+
+        /**
+         * @return Index of the argument returned by the last {@link #next()} call.
+         */
+        public int lastIndex() {
+            return lastSi;
+        }
+
+        /**
+         * @return The argument which is going to be returned from the next {@link #next()} call.
+         * @throws NoSuchElementException If {@link #hasNext()} == true!
+         */
+        public int nextIndex() {
+            int next = getNextIndex(si);
+            if (next == NO_MORE_ARGS) {
+                throw new NoSuchElementException();
+            }
+            return next;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return getNextIndex(si) != NO_MORE_ARGS;
+        }
+
+        private int getNextIndex(int from) {
+            if (from == NO_MORE_ARGS) {
+                return NO_MORE_ARGS;
+            }
+            int next = matchedSuppliedArgs.nextClearBit(from);
+            if (next == NO_MORE_ARGS || next >= suppliedArgs.length) {
+                return NO_MORE_ARGS;
+            }
+            return next;
+        }
+
+        @Override
+        public T next() {
+            int next = getNextIndex(si);
+            if (next == NO_MORE_ARGS) {
+                throw new NoSuchElementException();
+            }
+            lastSi = next;
+            si = getNextIndex(next + 1);
+            return suppliedArgs[lastSi];
+        }
+
+        @Override
+        public void remove() {
+            matchedSuppliedArgs.set(lastSi);
+        }
     }
 
     /**
@@ -511,7 +603,6 @@ public class ArgumentMatcher {
         if (found >= 0 || hasVarArgs) {
             return found;
         }
-
         // Error!
         String debugSrc = suppliedName;
         if (debugArgNode instanceof RNode) {
@@ -622,6 +713,18 @@ public class ArgumentMatcher {
          * @return A fresh (type safe) array of type T
          */
         T[] newArray(int length);
+
+        /**
+         * @param args
+         * @return A {@link String} containing debug names of all given args
+         */
+        String debugString(T[] args);
+
+        default String debugString(T arg) {
+            T[] args = newArray(1);
+            args[0] = arg;
+            return debugString(args);
+        }
     }
 
     /**
@@ -631,6 +734,11 @@ public class ArgumentMatcher {
         public RNode[] newArray(int length) {
             return new RNode[length];
         }
+
+        public String debugString(RNode[] args) {
+            SourceSection src = Utils.sourceBoundingBox(args);
+            return String.valueOf(src);
+        }
     }
 
     /**
@@ -639,6 +747,17 @@ public class ArgumentMatcher {
     private static class ObjectArrayFactory implements ArrayFactory<Object> {
         public Object[] newArray(int length) {
             return new Object[length];
+        }
+
+        public String debugString(Object[] args) {
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < args.length; i++) {
+                b.append(String.valueOf(args[i]));
+                if (i != args.length - 1) {
+                    b.append(", ");
+                }
+            }
+            return b.toString();
         }
     }
 
