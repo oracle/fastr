@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -32,6 +33,7 @@ public abstract class EncodeString extends RBuiltinNode {
     }
 
     private final NACheck na = NACheck.create();
+    private BranchProfile everSeenNA = new BranchProfile();
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
@@ -86,6 +88,7 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
+                everSeenNA.enter();
                 if (quoteEl.isEmpty()) {
                     currentEl = concat("<", currentEl, ">");
                 }
@@ -106,6 +109,7 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
+                everSeenNA.enter();
                 result[i] = currentEl;
             } else {
                 result[i] = format(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
@@ -123,8 +127,9 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
+                everSeenNA.enter();
                 if (quoteEl.isEmpty()) {
-                    currentEl = "<" + currentEl + ">";
+                    currentEl = concat("<", currentEl, ">");
                 }
                 result[i] = format(concat("%", maxElWidth, "s"), currentEl);
             } else {
@@ -143,6 +148,7 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
+                everSeenNA.enter();
                 result[i] = currentEl;
             } else {
                 result[i] = format(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
@@ -164,6 +170,7 @@ public abstract class EncodeString extends RBuiltinNode {
             final String curEl = x.getDataAt(i);
             int totalPadding = padding - curEl.length();
             if (RRuntime.isNA(curEl)) {
+                everSeenNA.enter();
                 if (quoteEl.isEmpty()) {
                     // Accounting for <> in <NA>
                     totalPadding -= 2;
@@ -189,6 +196,7 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             final String curEl = x.getDataAt(i);
             if (RRuntime.isNA(curEl)) {
+                everSeenNA.enter();
                 result[i] = curEl;
             } else {
                 final int totalPadding = padding - curEl.length();
@@ -216,12 +224,13 @@ public abstract class EncodeString extends RBuiltinNode {
     }
 
     @SlowPath
-    private static String addPadding(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
+    private String addPadding(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
         final StringBuffer sb = new StringBuffer();
         for (int j = 0; j < leftPadding; ++j) {
             sb.append(" ");
         }
         if (RRuntime.isNA(el)) {
+            everSeenNA.enter();
             if (quoteEl.isEmpty()) {
                 sb.append("<");
                 sb.append(el);
@@ -248,9 +257,10 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
+                everSeenNA.enter();
                 result[i] = new String(currentEl);
             } else {
-                result[i] = quoteEl + currentEl + quoteEl;
+                result[i] = concat(quoteEl, currentEl, quoteEl);
             }
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
@@ -264,9 +274,10 @@ public abstract class EncodeString extends RBuiltinNode {
         for (int i = 0; i < x.getLength(); ++i) {
             final String currentEl = x.getDataAt(i);
             if (RRuntime.isNA(currentEl)) {
+                everSeenNA.enter();
                 result[i] = currentEl;
             } else {
-                result[i] = quoteEl + currentEl + quoteEl;
+                result[i] = concat(quoteEl, currentEl, quoteEl);
             }
         }
         return RDataFactory.createStringVector(result, na.neverSeenNA());

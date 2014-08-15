@@ -131,6 +131,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     public Object doObject(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(DispatchedCallNode.create("as.character", RRuntime.USE_METHOD, this.getSuppliedArgsNames()));
         }
         try {
