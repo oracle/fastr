@@ -32,6 +32,17 @@ import javax.tools.*;
 
 import com.oracle.truffle.r.runtime.*;
 
+/**
+ * Analyzes classes annotated with {@code RBuiltin} and generates/updates a per-R-package class
+ * {@code RBuiltinClasses} that is used to drive the loading process on FastR startup. When the
+ * builtins are complete, this AP can be retired and the generated class migrated to the versioned
+ * source repository.
+ *
+ * The AP could also check builtins for invariants. None are currently defined.
+ *
+ * N.B. the AP cannot handle deleted builtins gracefully. Deleted builtins will manifest as
+ * compilation errors in {@code RBuiltinClasses}.
+ */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.runtime.RBuiltin")
 public class BuiltinProcessor extends AbstractProcessor {
@@ -96,9 +107,17 @@ public class BuiltinProcessor extends AbstractProcessor {
     private void writeBuiltinsFiles() throws IOException {
         for (PackageBuiltins packageBuiltins : map.values()) {
             String packageName = packageBuiltins.packageElement.getQualifiedName().toString();
+            // Read the previous file content if any
             SortedSet<String> classNames = readBuiltinsClass(packageName);
+            // add in the classes from this step
+            for (TypeElement builtinClassElement : packageBuiltins.builtinClassElements) {
+                String qualName = builtinClassElement.getQualifiedName().toString();
+                classNames.add(qualName);
+            }
+            // write out the class
             JavaFileObject srcLocator = processingEnv.getFiler().createSourceFile(packageName + ".RBuiltinClasses");
             try (PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()))) {
+                wr.println("// DO NOT EDIT, generated automatically");
                 wr.printf("package %s;%n", packageName);
                 wr.println("public final class RBuiltinClasses {");
                 wr.println("    public static final Class<?>[] RBUILTIN_CLASSES = {");
