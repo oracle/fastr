@@ -37,16 +37,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "sprintf", kind = SUBSTITUTE)
+@RBuiltin(name = "sprintf", kind = SUBSTITUTE, parameterNames = {"fmt", "..."})
 // TODO INTERNAL
 public abstract class Sprintf extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"fmt", "..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

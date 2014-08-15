@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "options", kind = SUBSTITUTE)
+@RBuiltin(name = "options", kind = SUBSTITUTE, parameterNames = {"..."})
 /**
  * N.B. In the general case of option assignment via parameter names, the value may be of any type (i.e. {@code Object},
  * so we cannot (currently) specialize on any specific types, owing to the "stuck specialization" bug.
@@ -42,12 +42,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * TODO Revert to {@code INTERNAL} when argument names available.
  */
 public abstract class Options extends RBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     // @Specialization
     private RList options(@SuppressWarnings("unused") RMissing x) {

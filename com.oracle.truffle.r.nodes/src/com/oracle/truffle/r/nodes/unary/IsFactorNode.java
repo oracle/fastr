@@ -15,30 +15,28 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class IsFactor extends RInvisibleBuiltinNode {
-    @Child Typeof typeof;
-    @Child Inherits inherits;
+public abstract class IsFactorNode extends UnaryNode {
+    @Child TypeofNode typeofNode;
+    @Child InheritsNode inheritsNode;
 
     public abstract byte execute(VirtualFrame frame, Object x);
 
     @Specialization
     public byte isFactor(VirtualFrame frame, Object x) {
-        if (typeof == null) {
+        if (typeofNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
+            typeofNode = insert(TypeofNodeFactory.create(null));
         }
-        if (!typeof.execute(frame, x).equals(RRuntime.TYPE_INTEGER)) {
+        if (!typeofNode.execute(frame, x).equals(RRuntime.TYPE_INTEGER)) {
             return RRuntime.LOGICAL_FALSE;
         }
-        if (inherits == null) {
+        if (inheritsNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inherits = insert(InheritsFactory.create(new RNode[3], this.getBuiltin(), getSuppliedArgsNames()));
+            inheritsNode = insert(InheritsNodeFactory.create(new RNode[3], null, null));
         }
-        return inherits.execute(frame, x, RDataFactory.createStringVector(RRuntime.TYPE_FACTOR), RRuntime.LOGICAL_FALSE);
+        return inheritsNode.execute(frame, x, RDataFactory.createStringVector(RRuntime.TYPE_FACTOR));
     }
 }

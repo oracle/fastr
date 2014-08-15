@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class SerializeFunctions {
 
-    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL)
+    @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
         @Specialization
         public Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {

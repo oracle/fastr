@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "license", aliases = {"licence"}, kind = SUBSTITUTE)
+@RBuiltin(name = "license", aliases = {"licence"}, kind = SUBSTITUTE, parameterNames = {})
 public abstract class License extends RInvisibleBuiltinNode {
 
     @Specialization

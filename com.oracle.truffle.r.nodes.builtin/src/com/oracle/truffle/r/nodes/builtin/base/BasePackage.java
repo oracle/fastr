@@ -31,14 +31,10 @@ public class BasePackage extends RBuiltinPackage {
 
     public BasePackage() {
         /*
-         * UnaryNotNode is defined as an RBuiltin but it is not in "base" so it isn't loaded
-         * automatically
-         */
-        load(UnaryNotNode.class);
-        /*
          * Primitive operations (these are really builtins, but not currently defined that way, so
-         * we fake it)
+         * we fake it). N.B. UnaryNotNode is annotated, but not loaded automatically.
          */
+        load(UnaryNotNode.class).setRBuiltin(UnaryNotNode.class);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.AddBuiltin.class).arguments(BinaryArithmetic.ADD, null);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.SubtractBuiltin.class).arguments(BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE);
         load(BinaryArithmeticNode.class).setRBuiltin(BinaryArithmetic.DivBuiltin.class).arguments(BinaryArithmetic.DIV, null);

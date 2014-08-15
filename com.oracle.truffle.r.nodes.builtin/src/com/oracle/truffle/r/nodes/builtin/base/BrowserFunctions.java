@@ -136,13 +136,6 @@ public class BrowserFunctions {
     }
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
-        private static final String[] PARAMETER_NAMES = new String[]{"n"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
-
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(1)};
@@ -164,7 +157,7 @@ public class BrowserFunctions {
 
     }
 
-    @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
         public String browserText(VirtualFrame frame, int n) {
@@ -179,7 +172,7 @@ public class BrowserFunctions {
         }
     }
 
-    @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
         public Object browserCondition(VirtualFrame frame, int n) {
@@ -194,7 +187,7 @@ public class BrowserFunctions {
         }
     }
 
-    @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
         @Specialization
         public RNull browserSetDebug(@SuppressWarnings("unused") int n) {

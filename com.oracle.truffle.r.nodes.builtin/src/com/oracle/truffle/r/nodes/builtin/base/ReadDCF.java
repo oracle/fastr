@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = ".readDCF", kind = INTERNAL)
+@RBuiltin(name = ".readDCF", kind = INTERNAL, parameterNames = {"conn", "fields", "keepwhite"})
 public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization

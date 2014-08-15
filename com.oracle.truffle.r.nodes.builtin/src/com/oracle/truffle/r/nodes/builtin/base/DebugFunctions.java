@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * Placeholders for the debug functions.
  */
 public class DebugFunctions {
-    @RBuiltin(name = "debug", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "debug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class Debug extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -43,7 +43,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "debugonce", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "debugonce", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun", "text", "condition"})
     public abstract static class DebugOnce extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -54,7 +54,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "undebug", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "undebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class UnDebug extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
@@ -65,7 +65,7 @@ public class DebugFunctions {
         }
     }
 
-    @RBuiltin(name = "isdebugged", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "isdebugged", kind = RBuiltinKind.INTERNAL, parameterNames = {"fun"})
     public abstract static class IsDebugged extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

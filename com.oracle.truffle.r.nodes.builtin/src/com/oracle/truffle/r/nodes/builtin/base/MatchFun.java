@@ -34,18 +34,11 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "match.fun", kind = SUBSTITUTE)
+@RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"})
 // TODO revert to R
 public abstract class MatchFun extends RBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"fun", "descend"};
-
     @CompilationFinal protected String lastFun;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

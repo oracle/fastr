@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
-@RBuiltin(name = "setwd", kind = INTERNAL)
+@RBuiltin(name = "setwd", kind = INTERNAL, parameterNames = "path")
 public abstract class Setwd extends RInvisibleBuiltinNode {
 
     @Specialization

@@ -23,20 +23,14 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "NextMethod", kind = SUBSTITUTE)
+@RBuiltin(name = "NextMethod", kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
 // TODO INTERNAL
 public abstract class NextMethod extends RBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"generic", "object", "..."};
     @Child protected DispatchedCallNode dispatchedCallNode;
     @Child protected ReadVariableNode rvnClass;
     @Child protected ReadVariableNode rvnGeneric;
     protected String lastGenericName;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

@@ -33,16 +33,9 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "stop", kind = SUBSTITUTE)
+@RBuiltin(name = "stop", kind = SUBSTITUTE, parameterNames = {"...", "call.", "domain"})
 // TODO INTERNAL
 public abstract class Stop extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"...", "call.", "domain"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

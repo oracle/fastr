@@ -14,9 +14,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -31,7 +29,7 @@ public abstract class CastTypeNode extends RInvisibleBuiltinNode {
     @Child private CastRawNode castRawNode;
     @Child private CastListNode castListNode;
     @Child private CastToVectorNode castToVectorNode;
-    @Child private Typeof typeof;
+    @Child private TypeofNode typeof;
 
     public abstract Object execute(VirtualFrame frame, final Object value, final String type);
 
@@ -140,7 +138,7 @@ public abstract class CastTypeNode extends RInvisibleBuiltinNode {
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            typeof = insert(TypeofNodeFactory.create(null));
         }
     }
 

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "crossprod", kind = INTERNAL)
+@RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"})
 public abstract class Crossprod extends RBuiltinNode {
 
     // TODO: this is supposed to be slightly faster than t(x) %*% y but for now it should suffice

@@ -7484,6 +7484,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEval_18a57a80600eee4b234b2842bb7b149d() {
+        assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEvalIgnore_a2bb4f39d740a0564a45a2fa5a7f8259() {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
     }
@@ -23339,6 +23344,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testTmpUpdate_f6ccb4168af3fd4313e35696afc3f2f5() {
+        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
+    }
+
+    @Test
     public void TestSimpleVectors_testUpdateOther_eea525ae4479446e708a52622475cd5b() {
         assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
     }
@@ -23351,11 +23361,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testUpdateOther_8f47617a6b12ce7fa5b41d5ce455b89e() {
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testUpdateOther_f6ccb4168af3fd4313e35696afc3f2f5() {
-        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
     }
 
     @Test

@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "format", kind = INTERNAL)
+@RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific"})
 public abstract class Format extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;
@@ -66,18 +66,11 @@ public abstract class Format extends RBuiltinNode {
         return (RAbstractIntVector) castInteger.executeCast(frame, operand);
     }
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
         // TODO figure out to get a frame for the error
-        if (children.length != PARAMETER_NAMES.length) {
-            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(format)", PARAMETER_NAMES.length);
+        if (children.length != getBuiltin().getRBuiltin().parameterNames().length) {
+            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(format)", getBuiltin().getRBuiltin().parameterNames().length);
         }
         RNode[] newChildren = new RNode[children.length];
         // cast to vector as appropriate to eliminate NULL values

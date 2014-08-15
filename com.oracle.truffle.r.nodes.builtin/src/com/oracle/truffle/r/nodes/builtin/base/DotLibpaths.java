@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * </pre>
  *
  */
-@RBuiltin(name = ".libPaths", kind = SUBSTITUTE)
+@RBuiltin(name = ".libPaths", kind = SUBSTITUTE, parameterNames = {"new"})
 public abstract class DotLibpaths extends RBuiltinNode {
     @Specialization(order = 0)
     public Object libPathsVec(@SuppressWarnings("unused") RMissing missing) {

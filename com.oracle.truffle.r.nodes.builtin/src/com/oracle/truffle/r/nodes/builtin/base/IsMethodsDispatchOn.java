@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE)
+@RBuiltin(name = ".isMethodsDispatchOn", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
 public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
     @Specialization

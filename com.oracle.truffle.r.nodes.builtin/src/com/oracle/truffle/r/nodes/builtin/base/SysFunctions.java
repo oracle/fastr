@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class SysFunctions {
 
-    @RBuiltin(name = "Sys.getpid", kind = INTERNAL)
+    @RBuiltin(name = "Sys.getpid", kind = INTERNAL, parameterNames = {})
     public abstract static class SysGetpid extends RBuiltinNode {
 
         @Specialization

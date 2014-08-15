@@ -34,17 +34,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * A temporary substitution to work around bug with {@code list(...)} used in R version.
  */
-@RBuiltin(name = "structure", kind = SUBSTITUTE)
+@RBuiltin(name = "structure", kind = SUBSTITUTE, parameterNames = {".Data", "..."})
 public abstract class Structure extends RBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{".Data", "..."};
-
-// private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @SuppressWarnings("unused")
     @Specialization
     public Object structure(VirtualFrame frame, RMissing obj, RMissing args) {

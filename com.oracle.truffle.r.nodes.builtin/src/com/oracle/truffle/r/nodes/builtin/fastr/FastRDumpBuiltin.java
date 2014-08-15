@@ -41,19 +41,12 @@ import com.oracle.truffle.r.runtime.data.*;
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
  * .dot-file in the cwd
  */
-@RBuiltin(name = "fastr.dumptrees", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.dumptrees", kind = PRIMITIVE, parameterNames = {"func", "igvDump", "verbose"})
 @RBuiltinComment("Dumps Truffle trees to IGV if an IGV instance running. If igvDump == FALSE, tree is dumped into .dot file in the cwd.")
 public abstract class FastRDumpBuiltin extends RInvisibleBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"function", "igvDump", "verbose"};
-
     private static final int FUNCTION_LENGTH_LIMIT = 40;
     private static final String DOT_TREE_FILE_NAME = "tree.dot";
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

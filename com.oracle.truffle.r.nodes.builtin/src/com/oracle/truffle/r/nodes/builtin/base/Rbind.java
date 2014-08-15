@@ -30,16 +30,9 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin(name = "rbind", kind = SUBSTITUTE)
+@RBuiltin(name = "rbind", kind = SUBSTITUTE, parameterNames = {"..."})
 // TODO INTERNAL
 public final class Rbind extends RWrapperBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     public Rbind(RBuiltinNode prev) {
         super(prev);

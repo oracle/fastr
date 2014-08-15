@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "normalizePath", kind = INTERNAL)
+@RBuiltin(name = "normalizePath", kind = INTERNAL, parameterNames = {"path", "winslash", "mustwork"})
 public abstract class NormalizePath extends RBuiltinNode {
 
     @Specialization

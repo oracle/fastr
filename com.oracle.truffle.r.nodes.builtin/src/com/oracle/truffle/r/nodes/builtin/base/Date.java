@@ -18,7 +18,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin(name = "date", kind = RBuiltinKind.INTERNAL)
+@RBuiltin(name = "date", kind = RBuiltinKind.INTERNAL, parameterNames = {})
 public abstract class Date extends RBuiltinNode {
 
     @Specialization

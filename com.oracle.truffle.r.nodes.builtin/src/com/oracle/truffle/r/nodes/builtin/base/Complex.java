@@ -32,16 +32,9 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "complex", kind = SUBSTITUTE)
+@RBuiltin(name = "complex", kind = SUBSTITUTE, parameterNames = {"length.out", "real", "imaginary", "modulus", "argument"})
 // TODO INTERNAL
 public abstract class Complex extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"length.out", "real", "imaginary", "modulus", "argument"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

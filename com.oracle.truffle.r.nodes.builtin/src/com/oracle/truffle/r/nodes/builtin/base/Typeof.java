@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -34,154 +35,16 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
+    @Child TypeofNode typeofNode;
 
     public abstract String execute(VirtualFrame frame, Object x);
 
     @Specialization
-    public String typeof(RNull vector) {
-        controlVisibility();
-        return "NULL";
+    public String typeof(VirtualFrame frame, Object obj) {
+        if (typeofNode == null) {
+            typeofNode = insert(TypeofNodeFactory.create(null));
+        }
+        return typeofNode.execute(frame, obj);
     }
 
-    @Specialization
-    public String typeof(byte x) {
-        controlVisibility();
-        return "logical";
-    }
-
-    @Specialization
-    public String typeof(int s) {
-        controlVisibility();
-        return "integer";
-    }
-
-    @Specialization
-    public String typeof(double x) {
-        controlVisibility();
-        return "double";
-    }
-
-    @Specialization
-    public String typeof(RComplex x) {
-        controlVisibility();
-        return "complex";
-    }
-
-    @Specialization
-    public String typeof(RRaw x) {
-        controlVisibility();
-        return "raw";
-    }
-
-    @Specialization
-    public String typeof(String x) {
-        controlVisibility();
-        return "character";
-    }
-
-    @Specialization
-    public String typeof(RIntSequence vector) {
-        controlVisibility();
-        return "integer";
-    }
-
-    @Specialization
-    public String typeof(RLogicalVector vector) {
-        controlVisibility();
-        return "logical";
-    }
-
-    @Specialization
-    public String typeof(RIntVector vector) {
-        controlVisibility();
-        return "integer";
-    }
-
-    @Specialization
-    public String typeof(RDoubleVector vector) {
-        controlVisibility();
-        return "double";
-    }
-
-    @Specialization
-    public String typeof(RStringVector vector) {
-        controlVisibility();
-        return "character";
-    }
-
-    @Specialization
-    public String typeof(RComplexVector vector) {
-        controlVisibility();
-        return "complex";
-    }
-
-    @Specialization
-    public String typeof(RRawVector vector) {
-        controlVisibility();
-        return "raw";
-    }
-
-    @Specialization
-    public String typeof(RList list) {
-        controlVisibility();
-        return "list";
-    }
-
-    @Specialization()
-    public String typeof(REnvironment env) {
-        controlVisibility();
-        return "environment";
-    }
-
-    @Specialization()
-    public String typeof(RSymbol symbol) {
-        controlVisibility();
-        return "symbol";
-    }
-
-    @Specialization()
-    public String typeof(RLanguage language) {
-        controlVisibility();
-        return "language";
-    }
-
-    @Specialization()
-    public String typeof(RPromise promise) {
-        controlVisibility();
-        return "promise";
-    }
-
-    @Specialization()
-    public String typeof(RExpression symbol) {
-        controlVisibility();
-        return "expression";
-    }
-
-    @Specialization
-    public String typeof(RPairList pairlist) {
-        controlVisibility();
-        return "pairlist";
-    }
-
-    @Specialization(order = 100, guards = "isFunctionBuiltin")
-    public String typeofBuiltin(RFunction obj) {
-        controlVisibility();
-        return "builtin";
-    }
-
-    @Specialization(order = 101, guards = "!isFunctionBuiltin")
-    public String typeofClosure(RFunction obj) {
-        controlVisibility();
-        return "closure";
-    }
-
-    @Specialization
-    public String typeofFormula(RFormula f) {
-        controlVisibility();
-        return "language";
-    }
-
-    public static boolean isFunctionBuiltin(RFunction fun) {
-        return fun.isBuiltin();
-    }
 }

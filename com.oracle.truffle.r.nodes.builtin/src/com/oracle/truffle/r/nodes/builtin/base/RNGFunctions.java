@@ -90,7 +90,7 @@ public class RNGFunctions {
 
     }
 
-    @RBuiltin(name = "RNGkind", kind = INTERNAL)
+    @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"})
     public abstract static class RNGkind extends RBuiltinNode {
 
         @Specialization(order = 0)

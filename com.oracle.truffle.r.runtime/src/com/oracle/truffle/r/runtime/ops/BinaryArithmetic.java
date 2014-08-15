@@ -171,7 +171,6 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
-    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE)
     public static class Add extends BinaryArithmetic {
 
         public Add() {

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.generate;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
 public class FastRSession implements RSession {
 
@@ -96,6 +97,7 @@ public class FastRSession implements RSession {
 
     public FastRSession() {
         consoleHandler = new ConsoleHandler();
+        RFFIFactory.setRFFIFactory(Load_RFFIFactory.initialize());
         REnvVars.initialize();
         REngine.initialize(new String[0], consoleHandler, false, false);
     }

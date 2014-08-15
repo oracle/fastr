@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE)
+@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"...", "list", "pos", "envir", "inherits"})
 // TODO remove should be INTERNAL and rm is in R
 public abstract class Rm extends RInvisibleBuiltinNode {
 
@@ -46,13 +46,6 @@ public abstract class Rm extends RInvisibleBuiltinNode {
     private static RNode[] getParameterValues0() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RDataFactory.createStringVector(0)), ConstantNode.create(-1), ConstantNode.create(RMissing.instance),
                         ConstantNode.create(RRuntime.LOGICAL_FALSE)};
-    }
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"...", "list", "pos", "envir", "inherits"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     @Override

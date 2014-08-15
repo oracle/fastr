@@ -30,7 +30,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
 
     @Child private Typeof typeof;
     @Child private CastTypeNode castTypeNode;
-    @Child private IsFactor isFactor;
+    @Child private IsFactorNode isFactor;
 
     @Specialization(order = 0, guards = {"!isReal", "!isSingle"})
     public Object update(VirtualFrame frame, final Object x, final String value) {
@@ -45,7 +45,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
+            isFactor = insert(IsFactorNodeFactory.create(null));
         }
         if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);

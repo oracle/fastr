@@ -125,7 +125,7 @@ public class EvalFunctions {
         }
     }
 
-    @RBuiltin(name = "eval", kind = SUBSTITUTE)
+    @RBuiltin(name = "eval", kind = SUBSTITUTE, parameterNames = {"expr", "envir", "enclosing"})
     public abstract static class Eval extends EvalAdapter {
 
         @Specialization
@@ -141,7 +141,7 @@ public class EvalFunctions {
 
     }
 
-    @RBuiltin(name = "evalq", nonEvalArgs = {0}, kind = SUBSTITUTE)
+    @RBuiltin(name = "evalq", nonEvalArgs = {0}, kind = SUBSTITUTE, parameterNames = {"expr", "envir", "enclosing"})
     public abstract static class EvalQuote extends EvalAdapter {
 
         @Specialization
@@ -160,7 +160,7 @@ public class EvalFunctions {
 
     }
 
-    @RBuiltin(name = "local", nonEvalArgs = {0}, kind = SUBSTITUTE)
+    @RBuiltin(name = "local", nonEvalArgs = {0}, kind = SUBSTITUTE, parameterNames = {"expr", "envir"})
     public abstract static class Local extends EvalAdapter {
         @SuppressWarnings("hiding") protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir"};
 

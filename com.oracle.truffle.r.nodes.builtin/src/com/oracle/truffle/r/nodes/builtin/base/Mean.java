@@ -34,15 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "mean.default", kind = SUBSTITUTE)
+@RBuiltin(name = "mean.default", kind = SUBSTITUTE, parameterNames = {"x", "trim", "na.rm", "..."})
 public abstract class Mean extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "trim", "na.rm", "..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

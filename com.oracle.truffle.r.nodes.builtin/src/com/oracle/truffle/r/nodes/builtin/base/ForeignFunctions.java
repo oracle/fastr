@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
  */
 public class ForeignFunctions {
     public abstract static class Adapter extends RBuiltinNode {
-        private static final Object[] PARAMETER_NAMES = new Object[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
+        protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
         @Override
         public Object[] getParameterNames() {
@@ -79,7 +79,7 @@ public class ForeignFunctions {
     /**
      * For now, just some special case functions that are built in to the implementation.
      */
-    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"})
     public abstract static class Fortran extends Adapter {
         private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
         private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
@@ -171,7 +171,7 @@ public class ForeignFunctions {
 
     }
 
-    @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"})
     public abstract static class C extends Adapter {
 
         private static final int SCALAR_DOUBLE = 0;
@@ -284,7 +284,7 @@ public class ForeignFunctions {
     /**
      * For now, just some special case functions that are built in to the implementation.
      */
-    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
     public abstract static class Call extends Adapter {
 
         @Child private CastComplexNode castComplex;

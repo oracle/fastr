@@ -39,7 +39,7 @@ public class DynLoadFunctions {
     private static final String DLLINFO_CLASS = "DLLInfo";
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
 
-    @RBuiltin(name = "dyn.load", kind = INTERNAL)
+    @RBuiltin(name = "dyn.load", kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
         @Specialization
         public RList doDynLoad(VirtualFrame frame, RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
@@ -65,7 +65,7 @@ public class DynLoadFunctions {
         }
     }
 
-    @RBuiltin(name = "dyn.unload", kind = INTERNAL)
+    @RBuiltin(name = "dyn.unload", kind = INTERNAL, parameterNames = {"lib"})
     public abstract static class DynUnload extends RInvisibleBuiltinNode {
         @Specialization
         public RNull doDynunload(VirtualFrame frame, String lib) {
@@ -81,7 +81,7 @@ public class DynLoadFunctions {
     }
 
     // TODO remove .dynLibs when missing functionality (local) is available
-    @RBuiltin(name = "getLoadedDLLs", aliases = {".dynlibs"}, kind = INTERNAL)
+    @RBuiltin(name = "getLoadedDLLs", aliases = {".dynlibs"}, kind = INTERNAL, parameterNames = {})
     public abstract static class GetLoadedDLLs extends RBuiltinNode {
         @Specialization
         public RList doGetLoadedDLLs() {
@@ -108,7 +108,7 @@ public class DynLoadFunctions {
         return dllInfo;
     }
 
-    @RBuiltin(name = "is.loaded", kind = INTERNAL)
+    @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "package", "type"})
     public abstract static class IsLoaded extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization

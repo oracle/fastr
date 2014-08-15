@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 // TODO Implement properly, this is a simple implementation that works when the function is a builtin,
 // the environment doesn't matter, and named argument matching isn't required
-@RBuiltin(name = "do.call", kind = INTERNAL)
+@RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"name", "args", "env"})
 public abstract class DoCall extends RBuiltinNode {
     @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 

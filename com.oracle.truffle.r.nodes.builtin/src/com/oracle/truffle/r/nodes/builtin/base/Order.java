@@ -34,16 +34,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "order", kind = SUBSTITUTE)
+@RBuiltin(name = "order", kind = SUBSTITUTE, parameterNames = {"x", "tie"})
 // TODO INTERNAL
 public abstract class Order extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "tie"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

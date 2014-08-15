@@ -33,16 +33,9 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "fastr.tree", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.tree", kind = PRIMITIVE, parameterNames = {"func", "verbose"})
 @RBuiltinComment("Prints the Truffle tree of a function. Use debug.tree(a, TRUE) for more detailed output.")
 public abstract class FastRTreeBuiltin extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"function", "verbose"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

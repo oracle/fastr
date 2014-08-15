@@ -32,16 +32,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "upper.tri", kind = SUBSTITUTE)
+@RBuiltin(name = "upper.tri", kind = SUBSTITUTE, parameterNames = {"x", "diag"})
 // TODO Implement in R
 public abstract class UpperTri extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "diag"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

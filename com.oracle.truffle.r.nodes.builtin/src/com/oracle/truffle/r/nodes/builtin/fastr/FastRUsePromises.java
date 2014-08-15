@@ -31,15 +31,8 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "fastr.use.promises", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.use.promises", kind = PRIMITIVE, parameterNames = {"func"})
 public abstract class FastRUsePromises extends RInvisibleBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"function"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance)};

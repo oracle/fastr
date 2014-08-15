@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
-@RBuiltin(name = "getwd", kind = INTERNAL)
+@RBuiltin(name = "getwd", kind = INTERNAL, parameterNames = {})
 public abstract class Getwd extends RBuiltinNode {
 
     @Specialization

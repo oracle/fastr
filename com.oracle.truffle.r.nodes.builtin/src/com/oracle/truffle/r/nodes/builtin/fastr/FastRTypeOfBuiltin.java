@@ -28,7 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin(name = "fastr.typeof", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.typeof", kind = PRIMITIVE, parameterNames = {"x"})
 @RBuiltinComment("Returns a simple string representation of the internal runtime type of a value.")
 public abstract class FastRTypeOfBuiltin extends RBuiltinNode {
 

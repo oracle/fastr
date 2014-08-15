@@ -2387,6 +2387,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ ne <- new.env(); eval(x <- 1, ne); ls() }");
         assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
         assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
+        assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
     }
 
     @Test
@@ -2883,7 +2884,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testOpsGroupDispatchLs() {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }

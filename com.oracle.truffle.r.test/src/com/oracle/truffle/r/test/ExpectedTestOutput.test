@@ -6827,6 +6827,10 @@ Error in rm("foo", envir = baseenv()) :
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ e1 <- new.env(); assign("x", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }
+[1] 100
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ eval(2 ^ 2 ^ 3)}
 [1] 256
 
@@ -8745,6 +8749,10 @@ attr(,"class")
 [1] 7
 attr(,"class")
 [1] "fooX"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatchLs
+#{x<-1;y<-7;class(x)<-"foo";class(y)<-"foo";"*.foo"<-function(e1,e2){min(e1,e2)}; ls()}
+[1] "*.foo" "x"     "y"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOrder
 #{ order(c("a","c","b","d","e","f")) }
@@ -54975,10 +54983,6 @@ $X
 #{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }
 [1] 100 200
 [1] 4 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleVectors.testUpdateOther
-#{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }
-[1] 42  2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 # { f <- function(b,i) { b[i] } ; f(c(a=1,b=2,c=3), c(TRUE,NA)) }

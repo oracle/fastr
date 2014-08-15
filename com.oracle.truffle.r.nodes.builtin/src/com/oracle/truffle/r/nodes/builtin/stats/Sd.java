@@ -34,16 +34,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "sd", kind = SUBSTITUTE)
+@RBuiltin(name = "sd", kind = SUBSTITUTE, parameterNames = {"x", "na.rm"})
 // TODO Implement in R
 public abstract class Sd extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "na.rm"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

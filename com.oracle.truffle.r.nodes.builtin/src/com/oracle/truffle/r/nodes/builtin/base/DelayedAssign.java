@@ -32,16 +32,9 @@ import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "delayedAssign", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {1})
+@RBuiltin(name = "delayedAssign", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"x", "value", "eval.env", "assign.env"}, nonEvalArgs = {1})
 // TODO kind==INTERNAL when promises generally available
 public abstract class DelayedAssign extends RInvisibleBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"x", "value", "eval.env", "assign.env"};
-
-    @Override
-    public String[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

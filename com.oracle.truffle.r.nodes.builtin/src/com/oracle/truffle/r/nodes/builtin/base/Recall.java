@@ -36,16 +36,9 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "Recall", kind = SUBSTITUTE)
+@RBuiltin(name = "Recall", kind = SUBSTITUTE, parameterNames = {"..."})
 // TODO INTERNAL
 public class Recall extends RCustomBuiltinNode {
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
-
     @Child private DirectCallNode callNode;
     @CompilationFinal private RFunction function;
 

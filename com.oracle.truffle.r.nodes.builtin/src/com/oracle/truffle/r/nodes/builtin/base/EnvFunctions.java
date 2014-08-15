@@ -93,7 +93,7 @@ public class EnvFunctions {
 
     }
 
-    @RBuiltin(name = "emptyenv", kind = PRIMITIVE)
+    @RBuiltin(name = "emptyenv", kind = PRIMITIVE, parameterNames = {})
     public abstract static class EmptyEnv extends RBuiltinNode {
 
         @Specialization
@@ -103,7 +103,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "globalenv", kind = PRIMITIVE)
+    @RBuiltin(name = "globalenv", kind = PRIMITIVE, parameterNames = {})
     public abstract static class GlobalEnv extends RBuiltinNode {
 
         @Specialization
@@ -116,7 +116,7 @@ public class EnvFunctions {
     /**
      * Returns the "package:base" environment.
      */
-    @RBuiltin(name = "baseenv", kind = PRIMITIVE)
+    @RBuiltin(name = "baseenv", kind = PRIMITIVE, parameterNames = {})
     public abstract static class BaseEnv extends RBuiltinNode {
 
         @Specialization
@@ -255,7 +255,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "search", kind = SUBSTITUTE)
+    @RBuiltin(name = "search", kind = SUBSTITUTE, parameterNames = {})
     // TODO INTERNAL
     public abstract static class Search extends RBuiltinNode {
         @Specialization

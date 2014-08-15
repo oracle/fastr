@@ -33,16 +33,9 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "is.unsorted", kind = SUBSTITUTE)
+@RBuiltin(name = "is.unsorted", kind = SUBSTITUTE, parameterNames = {"x", "na.rm", "strictly"})
 // TODO INTERNAL
 public abstract class IsUnsorted extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "na.rm", "strictly"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

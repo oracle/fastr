@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "commandArgs", kind = INTERNAL)
+@RBuiltin(name = "commandArgs", kind = INTERNAL, parameterNames = {})
 public abstract class CommandArgs extends RBuiltinNode {
 
     @Specialization

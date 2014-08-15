@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * parse(file, n, text, prompt, srcfile, encoding)
  * </pre>
  */
-@RBuiltin(name = "parse", kind = INTERNAL)
+@RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"})
 public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")

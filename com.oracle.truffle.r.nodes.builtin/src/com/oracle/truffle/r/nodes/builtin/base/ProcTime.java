@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "proc.time", kind = PRIMITIVE)
+@RBuiltin(name = "proc.time", kind = PRIMITIVE, parameterNames = {})
 public abstract class ProcTime extends RBuiltinNode {
 
     private static String[] NAMES = new String[]{"user.self", "sys.self", "elapsed", "user.child", "sys.child"};

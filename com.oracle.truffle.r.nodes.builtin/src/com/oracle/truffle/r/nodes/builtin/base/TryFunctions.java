@@ -35,15 +35,8 @@ import com.oracle.truffle.r.runtime.data.*;
  * errors or finallys.
  */
 public class TryFunctions {
-    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {0})
+    @RBuiltin(name = "try", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "silent"}, nonEvalArgs = {0})
     public abstract static class Try extends RBuiltinNode {
-
-        private static final String[] PARAMETER_NAMES = new String[]{"expr", "silent"};
-
-        @Override
-        public String[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -57,16 +50,9 @@ public class TryFunctions {
         }
     }
 
-    @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, nonEvalArgs = {-1})
+    // Ignoring finally completely
+    @RBuiltin(name = "tryCatch", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"expr", "..."}, nonEvalArgs = {-1})
     public abstract static class TryCatch extends RBuiltinNode {
-
-        // Ignoring finally completely
-        private static final String[] PARAMETER_NAMES = new String[]{"expr", "..."};
-
-        @Override
-        public String[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {

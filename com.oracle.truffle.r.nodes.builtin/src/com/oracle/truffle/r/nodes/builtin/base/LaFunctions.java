@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
  */
 public class LaFunctions {
 
-    @RBuiltin(name = "La_version", kind = INTERNAL)
+    @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {})
     public abstract static class Version extends RBuiltinNode {
         @Specialization
         @SlowPath
@@ -44,7 +44,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_rg", kind = INTERNAL)
+    @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"})
     public abstract static class Rg extends RBuiltinNode {
 
         private static final String[] NAMES = new String[]{"values", "vectors"};
@@ -123,7 +123,7 @@ public class LaFunctions {
 
     }
 
-    @RBuiltin(name = "La_qr", kind = INTERNAL)
+    @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"})
     public abstract static class Qr extends RBuiltinNode {
         private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
 
@@ -169,7 +169,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "qr_coef_real", kind = INTERNAL)
+    @RBuiltin(name = "qr_coef_real", kind = INTERNAL, parameterNames = {"q", "b"})
     public abstract static class QrCoefReal extends RBuiltinNode {
 
         private static final char SIDE = 'L';
@@ -228,7 +228,7 @@ public class LaFunctions {
 
     }
 
-    @RBuiltin(name = "det_ge_real", kind = INTERNAL)
+    @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"})
     public abstract static class DetGeReal extends RBuiltinNode {
 
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(new String[]{"modulus", "sign"}, RDataFactory.COMPLETE_VECTOR);
@@ -291,7 +291,7 @@ public class LaFunctions {
         }
     }
 
-    @RBuiltin(name = "La_chol", kind = INTERNAL)
+    @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"})
     public abstract static class LaChol extends RBuiltinNode {
         @Specialization
         public RDoubleVector doDetGeReal(VirtualFrame frame, RDoubleVector aIn, byte pivot, double tol) {

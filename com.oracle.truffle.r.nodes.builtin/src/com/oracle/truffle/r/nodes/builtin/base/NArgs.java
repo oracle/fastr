@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 // TODO Figure out how to distinguish f(,,a) from f(a) - RMissing is used in both contexts
-@RBuiltin(name = "nargs", kind = PRIMITIVE)
+@RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {})
 public abstract class NArgs extends RBuiltinNode {
     @Specialization
     public int doNArgs(VirtualFrame frame) {

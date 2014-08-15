@@ -25,14 +25,12 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
 public abstract class CastSymbolNode extends CastNode {
-    @Child private ToString toString = ToStringFactory.create(new RNode[1], null, null);
+    @Child private ToStringNode toString = ToStringNodeFactory.create(null);
 
     public abstract Object executeSymbol(VirtualFrame frame, Object o);
 

@@ -34,17 +34,10 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "t.default", kind = SUBSTITUTE)
+@RBuiltin(name = "t.default", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Transpose extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

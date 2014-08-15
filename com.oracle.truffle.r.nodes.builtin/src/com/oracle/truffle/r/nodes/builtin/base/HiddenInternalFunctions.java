@@ -41,7 +41,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from GnuR {@code do_makeLazy} in src/main/builtin.c.
      */
-    @RBuiltin(name = "makeLazy", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "makeLazy", kind = RBuiltinKind.INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"})
     public abstract static class MakeLazy extends RBuiltinNode {
         @Child Eval eval;
 
@@ -89,7 +89,7 @@ public class HiddenInternalFunctions {
      * This function copies values of variables from one environment to another environment,
      * possibly with different names. Promises are not forced and active bindings are preserved.
      */
-    @RBuiltin(name = "importIntoEnv", kind = INTERNAL)
+    @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"})
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Specialization
         public RNull importIntoEnv(VirtualFrame frame, REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
@@ -124,7 +124,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from {@code lazyLoaadDBFetch} in src/serialize.c.
      */
-    @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE)
+    @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "dtafile", "compressed", "envhook"})
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
         @Child CastIntegerNode castIntNode;

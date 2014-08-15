@@ -34,20 +34,13 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "exists", kind = SUBSTITUTE)
+@RBuiltin(name = "exists", kind = SUBSTITUTE, parameterNames = {"x", "where", "envir", "frame", "mode", "inherits"})
 // TODO INTERNAL, interpret mode parameter
 public abstract class Exists extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "where", "envir", "frame", "mode", "inherits"};
 
     @Child protected Get getNode;
     @CompilationFinal protected String lastName;
     @CompilationFinal protected boolean lastLookup;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

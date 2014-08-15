@@ -32,11 +32,9 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "print", kind = SUBSTITUTE)
+@RBuiltin(name = "print", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO revert to R
 public abstract class Print extends RInvisibleBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
     private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
 
@@ -44,11 +42,6 @@ public abstract class Print extends RInvisibleBuiltinNode {
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);
-    }
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
     }
 
     @Override

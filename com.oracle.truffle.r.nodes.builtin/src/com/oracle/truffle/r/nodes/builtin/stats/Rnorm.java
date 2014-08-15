@@ -25,16 +25,9 @@ import com.oracle.truffle.r.runtime.rng.*;
 /*
  * Logic derived from GNU-R, see inline comments.
  */
-@RBuiltin(name = "rnorm", kind = SUBSTITUTE)
+@RBuiltin(name = "rnorm", kind = SUBSTITUTE, parameterNames = {"n", "mean", "sd"})
 // TODO INTERNAL
 public abstract class Rnorm extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"n", "mean", "sd"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

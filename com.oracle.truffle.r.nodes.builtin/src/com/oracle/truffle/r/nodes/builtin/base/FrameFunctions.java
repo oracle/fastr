@@ -66,7 +66,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.nframe", kind = INTERNAL)
+    @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
     public abstract static class SysNFrame extends RBuiltinNode {
         @Specialization()
         public int sysNFrame() {
@@ -157,7 +157,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.parents", kind = INTERNAL)
+    @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {})
     public abstract static class SysParents extends FrameHelper {
         @Specialization()
         public RIntVector sysParents() {
@@ -171,7 +171,7 @@ public class FrameFunctions {
         }
     }
 
-    @RBuiltin(name = "sys.frames", kind = INTERNAL)
+    @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
     public abstract static class SysFrames extends FrameHelper {
         @Specialization()
         public Object sysFrames() {

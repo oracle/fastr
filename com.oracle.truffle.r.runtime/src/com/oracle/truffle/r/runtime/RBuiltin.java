@@ -38,9 +38,9 @@ public @interface RBuiltin {
     String name();
 
     /**
-     * The parameter names.
+     * The parameter names. No default, as, at a minimum, the number is required information.
      */
-    String[] parameterNames() default {};
+    String[] parameterNames();
 
     /**
      * A list of aliases for {@code name()}.

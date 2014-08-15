@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "assign", kind = SUBSTITUTE)
+@RBuiltin(name = "assign", kind = SUBSTITUTE, parameterNames = {"x", "value", "pos", "envir", "inherits", "immediate"})
 // TODO INTERNAL
 public abstract class Assign extends RInvisibleBuiltinNode {
 
@@ -49,14 +49,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     // FIXME deal with omitted parameters: pos, imemdiate
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "value", "pos", "envir", "inherits", "immediate"};
-
     private final BranchProfile[] slotFoundOnIteration = {new BranchProfile(), new BranchProfile(), new BranchProfile()};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {
@@ -91,7 +84,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         MaterializedFrame materializedFrame = virtualFrame.materialize();
         FrameSlot slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
         int iterationsAmount = CompilerAsserts.compilationConstant(slotFoundOnIteration.length);
-        for (int i=0; i < iterationsAmount; i++) {
+        for (int i = 0; i < iterationsAmount; i++) {
             if (isAppropriateFrameSlot(slot, materializedFrame)) {
                 addValueToFrame(variableName, variableValue, materializedFrame, slot);
                 return variableValue;

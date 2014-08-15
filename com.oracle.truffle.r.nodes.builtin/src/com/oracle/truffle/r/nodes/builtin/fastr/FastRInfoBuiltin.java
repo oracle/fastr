@@ -31,7 +31,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-@RBuiltin(name = "fastr.info", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.info", kind = PRIMITIVE, parameterNames = {})
 @RBuiltinComment("Prints this message.")
 public abstract class FastRInfoBuiltin extends RBuiltinNode {
 

@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "get", kind = SUBSTITUTE)
+@RBuiltin(name = "get", kind = SUBSTITUTE, parameterNames = {"x", "pos", "envir", "mode", "inherits"})
 // TODO INTERNAL
 public abstract class Get extends RBuiltinNode {
 
@@ -43,18 +43,11 @@ public abstract class Get extends RBuiltinNode {
     // 1. handle mode parameter (we should perhaps guard against mode being set in call right now)
     // 2. revert to .Internal using get.R
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"x", "pos", "envir", "mode", "inherits"};
-
     @Child protected ReadVariableNode lookUpInherit;
     @Child protected ReadVariableNode lookUpNoInherit;
 
     @CompilationFinal protected String lastX;
     @CompilationFinal protected String lastMode;
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

@@ -68,7 +68,7 @@ public abstract class ConnectionFunctions {
 
     private static StdinConnection stdin;
 
-    @RBuiltin(name = "stdin", kind = INTERNAL)
+    @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdin extends RInvisibleBuiltinNode {
         @Specialization
         public RConnection stdin() {
@@ -128,7 +128,7 @@ public abstract class ConnectionFunctions {
 
     }
 
-    @RBuiltin(name = "file", kind = INTERNAL)
+    @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})
     public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
@@ -155,7 +155,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "gzfile", kind = INTERNAL)
+    @RBuiltin(name = "gzfile", kind = INTERNAL, parameterNames = {"description", "open", "encoding", "compression"})
     public abstract static class GZFile extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
@@ -172,7 +172,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", kind = PRIMITIVE)
+    @RBuiltin(name = "close", kind = PRIMITIVE, parameterNames = {"con"})
     // TODO Internal
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
@@ -183,7 +183,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "readLines", kind = INTERNAL)
+    @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding"})
     public abstract static class ReadLines extends RBuiltinNode {
         @Specialization
         public Object readLines(VirtualFrame frame, RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {

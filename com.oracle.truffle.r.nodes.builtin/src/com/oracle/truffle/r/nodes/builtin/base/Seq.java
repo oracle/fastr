@@ -35,18 +35,11 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE)
+@RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
 // Implement in R, but seq.int is PRIMITIVE (and may have to contain most, if not all, of the code
 // below)
 @SuppressWarnings("unused")
 public abstract class Seq extends RBuiltinNode {
-
-    private static final Object[] PARAMETER_NAMES = new Object[]{"from", "to", "by", "length.out", "along.with"};
-
-    @Override
-    public Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

@@ -35,7 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "fastr.source", kind = PRIMITIVE)
+@RBuiltin(name = "fastr.source", kind = PRIMITIVE, parameterNames = {"func"})
 @RBuiltinComment("Returns the source code associated with a function, and for all of its nodes.")
 public abstract class FastRSource extends RBuiltinNode {
 

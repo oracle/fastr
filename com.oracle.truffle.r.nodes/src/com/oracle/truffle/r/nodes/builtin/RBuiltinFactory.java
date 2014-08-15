@@ -55,7 +55,6 @@ public class RBuiltinFactory {
     }
 
     void setRBuiltin(RBuiltin builtin) {
-        assert this.builtin == null;
         this.builtin = builtin;
     }
 
