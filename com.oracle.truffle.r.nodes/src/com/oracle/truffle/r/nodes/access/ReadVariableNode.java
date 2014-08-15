@@ -409,8 +409,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             throw new UnsupportedOperationException();
         }
 
-        public static ReadVariableNode create(SourceSection src, String symbol, String mode) {
-            return new ReadVariableSuperMaterializedNode(ReadVariableNode.create(src, symbol, mode, false));
+        public static ReadVariableNode create(SourceSection src, String symbolStr, String mode) {
+            Symbol symbol = Symbol.create(symbolStr);
+            ReadVariableNode rvn = new UnresolvedReadVariableNode(symbol, mode, false);
+            rvn.assignSourceSection(src);
+            return ResolvePromiseNodeFactory.create(new ReadVariableSuperMaterializedNode(rvn), symbol);
         }
 
         @Override
