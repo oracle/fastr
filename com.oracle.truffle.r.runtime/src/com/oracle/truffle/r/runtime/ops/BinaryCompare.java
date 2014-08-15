@@ -29,27 +29,27 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class BinaryCompare extends BooleanOperation {
 
     /* Fake RBuiltins to unify the compare operations */
-    @RBuiltin(name = "==", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "==", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class EqualBuiltin {
     }
 
-    @RBuiltin(name = "!=", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "!=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class NotEqualBuiltin {
     }
 
-    @RBuiltin(name = ">=", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = ">=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class GreaterEqualBuiltin {
     }
 
-    @RBuiltin(name = ">", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = ">", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class GreaterBuiltin {
     }
 
-    @RBuiltin(name = "<=", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "<=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class LessEqualBuiltin {
     }
 
-    @RBuiltin(name = "<", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "<", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class LessBuiltin {
     }
 

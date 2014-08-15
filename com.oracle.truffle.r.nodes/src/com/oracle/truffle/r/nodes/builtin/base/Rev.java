@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "rev", aliases = {"rev.default"}, kind = SUBSTITUTE)
+@RBuiltin(name = "rev", aliases = {"rev.default"}, kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO implement in R
 public abstract class Rev extends RBuiltinNode {
 

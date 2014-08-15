@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -22,7 +23,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "encodeString", kind = RBuiltinKind.INTERNAL)
+@RBuiltin(name = "encodeString", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "width", "quote", "justify", "na.encode"})
 public abstract class EncodeString extends RBuiltinNode {
 
     private static enum JUSTIFY {
@@ -34,6 +35,11 @@ public abstract class EncodeString extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
     private BranchProfile everSeenNA = new BranchProfile();
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(""), ConstantNode.create("left"), ConstantNode.create(RRuntime.TRUE)};
+    }
 
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {

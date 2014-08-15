@@ -41,8 +41,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class FileFunctions {
 
-    @RBuiltin(name = "file.create", kind = INTERNAL)
+    @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"...", "showWarnings"})
     public abstract static class FileCreate extends RBuiltinNode {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        }
 
         @Specialization
         public Object doFileCreate(RAbstractStringVector vec, byte showWarnings) {
@@ -75,7 +80,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.info", kind = INTERNAL)
+    @RBuiltin(name = "file.info", kind = INTERNAL, parameterNames = {"fn"})
     public abstract static class FileInfo extends RBuiltinNode {
         private static final String[] NAMES = new String[]{"size", "isdir", "mode", "mtime", "ctime", "atime", "uid", "gid", "uname", "grname"};
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
@@ -151,7 +156,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.link", kind = INTERNAL)
+    @RBuiltin(name = "file.link", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileLink extends FileLinkAdaptor {
         @Specialization
         public Object doFileLink(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -166,7 +171,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.symlink", kind = INTERNAL)
+    @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileSymLink extends FileLinkAdaptor {
         @Specialization
         public Object doFileSymLink(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -181,7 +186,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.remove", kind = INTERNAL)
+    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"..."})
     public abstract static class FileRemove extends RBuiltinNode {
 
         @Specialization
@@ -211,7 +216,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.rename", kind = INTERNAL)
+    @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
         public Object doFileRename(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -246,7 +251,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.exists", kind = INTERNAL)
+    @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"..."})
     public abstract static class FileExists extends RBuiltinNode {
 
         @Specialization
@@ -274,8 +279,14 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "list.files", kind = INTERNAL)
+    @RBuiltin(name = "list.files", kind = INTERNAL, parameterNames = {"path", "pattern", "all.files", "full.names", "recursive", "ignore.case", "include.dirs", "no.."})
     public abstract static class ListFiles extends RBuiltinNode {
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create("."), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+        }
 
         // @formatter:off
         @SuppressWarnings("unused")
@@ -322,14 +333,8 @@ public class FileFunctions {
 
     // TODO make .Internal, when resolving .Platform in files.R is fixed
     // TODO handle the general case, which is similar to paste
-    @RBuiltin(name = "file.path", kind = SUBSTITUTE)
+    @RBuiltin(name = "file.path", kind = SUBSTITUTE, parameterNames = {"...", "fsep"})
     public abstract static class FilePath extends RBuiltinNode {
-        private static final Object[] PARAMETER_NAMES = new Object[]{"...", "fsep"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
 
         @Override
         public RNode[] getParameterValues() {
@@ -430,7 +435,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "dirname", kind = INTERNAL)
+    @RBuiltin(name = "dirname", kind = INTERNAL, parameterNames = {"path"})
     public abstract static class DirName extends XyzNameAdapter {
         private static class ParentPathFunction extends XyzNameAdapter.PathFunction {
 
@@ -451,7 +456,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "basename", kind = INTERNAL)
+    @RBuiltin(name = "basename", kind = INTERNAL, parameterNames = {"path"})
     public abstract static class BaseName extends XyzNameAdapter {
         private static class BasePathFunction extends XyzNameAdapter.PathFunction {
 

@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.stats;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,8 +35,14 @@ import com.oracle.truffle.r.runtime.rng.*;
 /**
  * TODO GnuR checks/updates {@code .Random.seed} across this call.
  */
-@RBuiltin(name = "runif", kind = SUBSTITUTE)
+@RBuiltin(name = "runif", kind = SUBSTITUTE, parameterNames = {"n", "min", "max"})
 public abstract class Runif extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        // n, min = 0, max = 1
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(1)};
+    }
 
     @Specialization
     public RDoubleVector runif(int n) {

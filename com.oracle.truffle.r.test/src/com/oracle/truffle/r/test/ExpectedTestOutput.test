@@ -6043,6 +6043,18 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 #{ length(array(dim=c(1,0,2,3))) }
 [1] 0
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", a+b); a <- 1 ; b <- 3 ; x }
+[1] 4
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ delayedAssign("x", y); y <- 10; x }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDelayedAssign
+#{ f <- function() { delayedAssign("x", y); y <- 10; x  } ; f() }
+[1] 10
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ deparse(TRUE) }
 [1] "TRUE"
@@ -6865,6 +6877,10 @@ Error in rm("foo", envir = baseenv()) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ a <- 1; eval(expression(a + 1)) }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
+#{ e1 <- new.env(); assign("x", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }
+[1] 100
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testEval
 #{ eval(2 ^ 2 ^ 3)}
@@ -8815,6 +8831,10 @@ attr(,"class")
 attr(,"class")
 [1] "fooX"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOpsGroupDispatchLs
+#{x<-1;y<-7;class(x)<-"foo";class(y)<-"foo";"*.foo"<-function(e1,e2){min(e1,e2)}; ls()}
+[1] "*.foo" "x"     "y"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOrder
 #{ order(c("a","c","b","d","e","f")) }
 [1] 1 3 2 4 5 6
@@ -9834,6 +9854,31 @@ numeric(0)
 [1] "text" "text" "text" "text"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 0)}
+character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 1)}
+[1] "abcd"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 14)}
+ [1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"
+[11] "abcd" "efg"  "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 2)}
+[1] "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 7)}
+[1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
+#{rep_len(c("abcd", "efg"), 8)}
+[1] "abcd" "efg"  "abcd" "efg"  "abcd" "efg"  "abcd" "efg"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testRepLen
 #{rep_len(length.out=4, "text")}
 [1] "text" "text" "text" "text"
 
@@ -10848,6 +10893,22 @@ character(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstring
 #{ x<-character(); substr(x,integer(),3)<-NULL; x }
 character(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("123456", first=2, last=4) }
+[1] "234"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("123456", first=2.8, last=4) }
+[1] "234"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring("fastr", first=NA, last=2) }
+[1] NA
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSubstringIgnore
+#{ substring(c("hello", "bye"), first=c(1,2,3), last=4) }
+[1] "hell" "ye"   "ll"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testSum
 #{ `sum`(1:10) }
@@ -13327,6 +13388,10 @@ $row.names
 #{ typeof(a~b) }
 [1] "language"
 
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testArgs
+#{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm="x") }
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testBinding
 #{ f <- function(func, a) { func(a) && TRUE } ; g <- function(x) {TRUE} ; f(g, 5) ; f(is.na, 4)  }
 [1] FALSE
@@ -13610,6 +13675,10 @@ Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
 [1] 20
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }
+[1] 57
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }
 [1] 1
 
@@ -13822,7 +13891,16 @@ In if (x) 1 else 2 :
 NULL
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (FALSE) 23 else invisible(23) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
 #{ if (FALSE) 23 }
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (TRUE) invisible(23) else 23 }
+
+##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfVisibility
+#{ if (TRUE) invisible(23) }
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testIfWithoutElse
 #if(TRUE) 1

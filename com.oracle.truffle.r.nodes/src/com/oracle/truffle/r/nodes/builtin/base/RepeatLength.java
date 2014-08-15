@@ -23,14 +23,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "rep_len", kind = SUBSTITUTE)
+@RBuiltin(name = "rep_len", kind = SUBSTITUTE, parameterNames = {"x", "length.out"})
 public abstract class RepeatLength extends RBuiltinNode {
-    private final String[] PARAMETER_NAMES={"x", "length.out"};
-
-    @Override
-    protected Object[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @CreateCast("arguments")
     protected RNode[] castStatusArgument(RNode[] arguments) {
@@ -122,6 +116,17 @@ public abstract class RepeatLength extends RBuiltinNode {
             array[i] = value.getDataAt(j);
         }
         return RDataFactory.createDoubleVector(array, value.isComplete());
+    }
+
+    @Specialization
+    public RStringVector repLen(RStringVector vectorToRepeat, int length) {
+        controlVisibility();
+        String[] result = new String[length];
+        int vectorToRepeatLength = vectorToRepeat.getLength();
+        for (int i = 0; i < length; i++) {
+            result[i] = vectorToRepeat.getDataAt(i % vectorToRepeatLength);
+        }
+        return RDataFactory.createStringVector(result, true);
     }
 
     @Specialization

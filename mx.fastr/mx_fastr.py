@@ -193,6 +193,9 @@ def _junit_r_harness(args, vmArgs, junitArgs):
         if args.keep_trailing_whitespace:
             runlistener_arg = add_arg_separator()
             runlistener_arg += 'keep-trailing-whitespace'
+        if args.gen_expected_quiet:
+            runlistener_arg = add_arg_separator()
+            runlistener_arg += 'gen-expected-quiet'
 
     if args.gen_diff_output:
         runlistener_arg = add_arg_separator()
@@ -220,6 +223,7 @@ def junit(args):
     '''run R Junit tests'''
     parser = ArgumentParser(prog='r junit')
     parser.add_argument('--gen-expected-output', action='store_true', help='generate/update expected test output file')
+    parser.add_argument('--gen-expected-quiet', action='store_true', help='suppress output on new tests being added')
     parser.add_argument('--keep-trailing-whitespace', action='store_true', help='keep trailing whitespace in expected test output file')
     parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
     parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file')
@@ -239,12 +243,18 @@ def _default_unit_tests():
 
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
+    parser = ArgumentParser(prog='r testgen')
+    parser.add_argument('--tests', action='store', default=_default_unit_tests(), help='pattern to match test classes')
+    args = parser.parse_args(args)
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
     mx.clean(['--no-dist', ] + testOnly)
     mx.build(testOnly)
     # now just invoke junit with the appropriate options
-    junit(args + ['--tests', _default_unit_tests(), '--gen-expected-output'])
+    mx.log("generating expected output for packages: ")
+    for pkg in args.tests.split(','):
+        mx.log("    " + str(pkg))
+    junit(['--tests', args.tests, '--gen-expected-output', '--gen-expected-quiet'])
 
 def unittest(args):
     print "use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests"

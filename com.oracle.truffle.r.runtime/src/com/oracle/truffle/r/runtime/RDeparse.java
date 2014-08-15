@@ -596,7 +596,7 @@ public class RDeparse {
         RPairList arglist = args;
         while (arglist != null) {
             if (arglist.getTag() != null) {
-                state.append(arglist.getTag());
+                state.append(((RSymbol) arglist.getTag()).getName());
                 if (formals) {
                     if (arglist.car() != RMissing.instance) {
                         state.append(" = ");

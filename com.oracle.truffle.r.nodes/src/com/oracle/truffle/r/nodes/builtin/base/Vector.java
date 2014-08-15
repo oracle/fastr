@@ -29,14 +29,21 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "vector", kind = INTERNAL)
+@RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
 public abstract class Vector extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        // mode = "logical", length = 0
+        return new RNode[]{ConstantNode.create(RRuntime.TYPE_LOGICAL), ConstantNode.create(0)};
+    }
 
     @CreateCast("arguments")
     protected RNode[] castLength(RNode[] arguments) {

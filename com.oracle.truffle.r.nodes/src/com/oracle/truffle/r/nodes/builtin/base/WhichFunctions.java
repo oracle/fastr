@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -39,8 +40,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class WhichFunctions {
 
-    @RBuiltin(name = "which", kind = INTERNAL)
+    @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x", "arr.ind", "useNames"})
     public abstract static class Which extends RBuiltinNode {
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        }
 
         @Specialization
         public RIntVector which(RAbstractLogicalVector x) {
@@ -59,7 +65,7 @@ public class WhichFunctions {
         }
     }
 
-    @RBuiltin(name = "which.max", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "which.max", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
     public abstract static class WhichMax extends RBuiltinNode {
 
         @CreateCast("arguments")
@@ -84,7 +90,7 @@ public class WhichFunctions {
 
     }
 
-    @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL)
+    @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
     public abstract static class WhichMin extends RBuiltinNode {
 
         @CreateCast("arguments")

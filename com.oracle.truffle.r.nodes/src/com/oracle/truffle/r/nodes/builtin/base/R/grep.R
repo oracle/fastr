@@ -35,8 +35,7 @@ grepl <-
                                 fixed = FALSE, useBytes = FALSE)
 {
         if(!is.character(x)) x <- as.character(x)
-        .Internal(grepl(as.character(pattern), x, ignore.case, FALSE,
-                                        perl, fixed, useBytes, FALSE))
+        .Internal(grepl(as.character(pattern), x, ignore.case, perl, fixed, useBytes))
 }
 
 sub <-

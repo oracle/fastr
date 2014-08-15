@@ -34,7 +34,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "diag<-", kind = SUBSTITUTE)
+@RBuiltin(name = "diag<-", kind = SUBSTITUTE, parameterNames = {"x", ""})
+// 2nd parameter is "value", but should not be matched against, so "")
 // TODO Implement in R
 public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 

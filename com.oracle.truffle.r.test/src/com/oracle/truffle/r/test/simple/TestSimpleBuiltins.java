@@ -231,6 +231,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{rep_len(4, x=\"text\")}");
         assertEval("{x<-\"text\"; length.out<-4; rep_len(x=x, length.out=length.out)}");
         assertEval("{x<-\"text\"; length.out<-4; rep_len(length.out=length.out, x=x)}");
+        // test string vector argument
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 7)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 14)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 8)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 0)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 1)}");
+        assertEval("{rep_len(c(\"abcd\", \"efg\"), 2)}");
     }
 
     @Test
@@ -1125,7 +1132,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSubstringIgnore() {
         assertEval("{ substring(\"123456\", first=2, last=4) }");
         assertEval("{ substring(\"123456\", first=2.8, last=4) }");
@@ -2241,11 +2247,16 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDelayedAssign() {
         assertEval("{ delayedAssign(\"x\", y); y <- 10; x }");
         assertEval("{ delayedAssign(\"x\", a+b); a <- 1 ; b <- 3 ; x }");
         assertEval("{ f <- function() { delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
+    }
+
+    @Test
+    @Ignore
+    public void testDelayedAssignIgnore() {
+        assertEval("{ f <- function() print (\"outer\");  g <- function() { delayedAssign(\"f\", 1); f() }; g()}");
         assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
         assertEvalError("{ f <- function() { delayedAssign(\"x\", y); delayedAssign(\"y\", x) ; x } ; f() }");
@@ -2380,6 +2391,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ ne <- new.env(); eval(x <- 1, ne); ls() }");
         assertEval("{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }");
         assertEval("{ ne <- new.env(); evalq(envir=ne, expr=x <- 1); ls(ne) }");
+        assertEval("{ e1 <- new.env(); assign(\"x\", 100, e1); e2 <- new.env(parent = e1); evalq(x, e2) }");
     }
 
     @Test
@@ -2877,7 +2889,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testOpsGroupDispatchLs() {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"*.foo\"<-function(e1,e2){min(e1,e2)}; ls()}");
     }

@@ -73,6 +73,10 @@ import com.oracle.truffle.r.runtime.envframe.*;
  * "imports" environment. The parent of "package:base" is the empty environment, but the parent of
  * "namespace:base" is the global environment.
  *
+ * TODO retire the {@code Package}, {@code Namespace} and {@code Imports} classes as they are only
+ * used by the builtin packages, and will be completely redundant when they are loaded from
+ * serialized package meta-data as will happen in due course.
+ *
  */
 public abstract class REnvironment implements RAttributable {
     public enum PackageKind {
@@ -486,14 +490,27 @@ public abstract class REnvironment implements RAttributable {
         if (this instanceof Namespace) {
             return true;
         } else {
-            Object value = frameAccess.get(NAMESPACE_KEY);
-            if (value != null && value instanceof REnvironment) {
-                REnvironment info = (REnvironment) value;
-                Object spec = info.frameAccess.get("spec");
-                return (spec != null) && spec instanceof RStringVector && ((RStringVector) spec).getLength() > 0;
-            }
-            return false;
+            RStringVector spec = getNamespaceSpec();
+            return spec != null;
         }
+    }
+
+    /**
+     * Return the "spec" attribute of the "info" env in a namespace or {@code null} if not found.
+     */
+    private RStringVector getNamespaceSpec() {
+        Object value = frameAccess.get(NAMESPACE_KEY);
+        if (value != null && value instanceof REnvironment) {
+            REnvironment info = (REnvironment) value;
+            Object spec = info.frameAccess.get("spec");
+            if ((spec != null) && spec instanceof RStringVector) {
+                RStringVector infoVec = (RStringVector) spec;
+                if (infoVec.getLength() > 0) {
+                    return infoVec;
+                }
+            }
+        }
+        return null;
     }
 
     @SlowPath
@@ -573,10 +590,20 @@ public abstract class REnvironment implements RAttributable {
     }
 
     protected String getPrintNameHelper() {
-        if (name.equals(UNNAMED)) {
-            return String.format("%#x", hashCode());
+        String attrName = getName();
+        if (name.equals(UNNAMED) && attrName.equals(UNNAMED)) {
+            /*
+             * namespaces are a special case; they have no name attribute, but they print with the
+             * name which is buried.
+             */
+            RStringVector spec = getNamespaceSpec();
+            if (spec != null) {
+                return "namespace:" + spec.getDataAt(0);
+            } else {
+                return String.format("%#x", hashCode());
+            }
         } else {
-            return getName();
+            return attrName;
         }
     }
 

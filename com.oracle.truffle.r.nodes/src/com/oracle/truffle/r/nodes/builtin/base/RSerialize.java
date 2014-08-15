@@ -192,9 +192,7 @@ public class RSerialize {
 
             case NAMESPACESXP: {
                 RStringVector s = inStringVec(false);
-                addReadRef(findNamespace(s));
-
-                break;
+                return addReadRef(findNamespace(s));
             }
 
             case VECSXP: {
@@ -280,19 +278,20 @@ public class RSerialize {
             case PROMSXP:
             case DOTSXP: {
                 Object attrItem = null;
-                RSymbol tagItem = null;
+                Object tagItem = null;
                 if (flags.hasAttr) {
                     attrItem = readItem();
 
                 }
                 if (flags.hasTag) {
-                    tagItem = (RSymbol) readItem();
+                    tagItem = readItem();
                 }
                 Object carItem = readItem();
                 Object cdrItem = readItem();
-                RPairList pairList = new RPairList(carItem, cdrItem, tagItem == null ? null : tagItem.getName(), type);
+                RPairList pairList = new RPairList(carItem, cdrItem, tagItem, type);
                 result = pairList;
                 if (attrItem != null) {
+                    assert false;
                     // Can't attribute a RPairList
                     // pairList.setAttr(name, value);
                 }
@@ -300,11 +299,17 @@ public class RSerialize {
                     // must convert the RPairList to a FastR RFunction
                     // We could convert to an AST directly, but it is easier and more robust
                     // to deparse and reparse.
-                    String deparse = RDeparse.deparse((RPairList) result);
+                    RPairList rpl = (RPairList) result;
+                    String deparse = RDeparse.deparse(rpl);
                     try {
-                        // TODO is there a problem with the lexical environment?
+                        /*
+                         * The tag of result is the enclosing environment (from NAMESPACESEXP) for
+                         * the function. However the namespace is locked, so can't just eval there
+                         * (and overwrite the promise), so we fix the enclosing frame up on return.
+                         */
                         RExpression expr = RContext.getEngine().parse(deparse);
-                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.globalEnv(), 0));
+                        RFunction func = (RFunction) RContext.getEngine().eval(expr, new REnvironment.NewEnv(REnvironment.emptyEnv(), 0));
+                        func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                         result = func;
                     } catch (RContext.Engine.ParseException | PutException ex) {
                         // denotes a deparse/eval error, which is an unrecoverable bug
@@ -346,9 +351,10 @@ public class RSerialize {
                  */
                 RPairList pl = (RPairList) attr;
                 while (true) {
-                    String tag = pl.getTag();
+                    RSymbol tagSym = (RSymbol) pl.getTag();
+                    String tag = tagSym.getName();
                     Object car = pl.car();
-                    // Eventually we can just use the generic setAttr
+                    // TODO just use the generic setAttr
                     if (tag.equals(RRuntime.NAMES_ATTR_KEY)) {
                         vec.setNames(car);
                     } else if (tag.equals(RRuntime.DIMNAMES_ATTR_KEY)) {

@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,8 +35,14 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @SuppressWarnings("unused")
-@RBuiltin(name = "ngettext", kind = INTERNAL)
+@RBuiltin(name = "ngettext", kind = INTERNAL, parameterNames = {"n", "msg1", "msg2", "domain"})
 public abstract class NGetText extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        // n, msg1, msg2, domain = NULL
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance)};
+    }
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {

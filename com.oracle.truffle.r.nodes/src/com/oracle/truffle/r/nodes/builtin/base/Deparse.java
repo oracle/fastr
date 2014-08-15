@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -21,11 +22,21 @@ import com.oracle.truffle.r.runtime.data.*;
 
 // Part of this transcribed from GnuR src/main/deparse.c
 
-@RBuiltin(name = "deparse", kind = RBuiltinKind.INTERNAL)
+@RBuiltin(name = "deparse", kind = RBuiltinKind.INTERNAL, parameterNames = {"expr", "width.cutoff", "backtick", "control", "nlines"})
 public abstract class Deparse extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        // expr, width.cutoff = 60L, backtick = mode(expr) %in% c("call", "expression", "(",
+        // "function"), control = c("keepInteger", "showAttributes", "keepNA"), nlines = -1L
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(60), ConstantNode.create(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)),
+                        ConstantNode.create(RDataFactory.createStringVector(new String[]{"keepInteger", "showAttributes", "keepNA"}, true)), ConstantNode.create(-1)};
+    }
+
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         arguments[2] = CastLogicalNodeFactory.create(arguments[2], false, false, false);
+        // TODO Introduce default value for backtick if argument[3] == RMissing!
         arguments[3] = CastIntegerNodeFactory.create(arguments[3], false, false, false);
         return arguments;
     }

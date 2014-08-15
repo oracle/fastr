@@ -151,6 +151,7 @@ public class TestSimpleFunctions extends TestBase {
     @Test
     public void testPromises() {
         assertEval("{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }");
+        assertEval("{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }");
     }
 
     @Test
@@ -244,4 +245,14 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[2]](1) }");
     }
 
+    @Test
+    public void testArgs() {
+        assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm=\"x\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testArgsIgnore() {
+        assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm=\"x\") }");
+    }
 }

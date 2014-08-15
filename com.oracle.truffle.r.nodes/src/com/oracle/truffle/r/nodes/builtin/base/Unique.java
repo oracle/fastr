@@ -27,20 +27,30 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "unique", kind = INTERNAL)
+// Implements default S3 method
+@RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax", "..."})
 // TODO A more efficient implementation is in order; GNU R uses hash tables so perhaps we should
 // consider using one of the existing libraries that offer hash table implementations for primitive
 // types
 public abstract class Unique extends RBuiltinNode {
 
+    @Override
+    public RNode[] getParameterValues() {
+        // x, incomparables = FALSE, fromLast = FALSE, nmax = NA, ...
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.INT_NA),
+                        ConstantNode.create(RMissing.instance)};
+    }
+
     @SuppressWarnings("unused")
     @Specialization
-    public RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax) {
+    public RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ArrayList<String> dataList = new ArrayList<>(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             String s = vec.getDataAt(i);
@@ -183,7 +193,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax) {
+    public RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         IntArray dataList = new IntArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             int val = vec.getDataAt(i);
@@ -196,7 +206,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax) {
+    public RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         DoubleArray dataList = new DoubleArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             double val = vec.getDataAt(i);
@@ -209,7 +219,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax) {
+    public RLogicalVector doUnique(RAbstractLogicalVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             byte val = vec.getDataAt(i);
@@ -222,7 +232,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax) {
+    public RComplexVector doUnique(RAbstractComplexVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             RComplex s = vec.getDataAt(i);
@@ -235,7 +245,7 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax) {
+    public RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ByteArray dataList = new ByteArray(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
             byte val = vec.getDataAt(i).getValue();

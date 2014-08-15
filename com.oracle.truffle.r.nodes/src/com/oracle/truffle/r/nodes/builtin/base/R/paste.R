@@ -17,9 +17,9 @@
 #  http://www.r-project.org/Licenses/
 
 paste <- function (..., sep = " ", collapse = NULL)
-  .Internal(paste(list(...), sep, collapse))
+  .Internal(paste(list(...), sep = sep, collapse = collapse))
 paste0 <- function(..., collapse = NULL)
-  .Internal(paste0(list(...), collapse))
+  .Internal(paste0(list(...), collapse = collapse))
 
 ##=== Could we extend  paste(.) to (optionally) accept a
 ##    2-vector for collapse ?   With the following functionality

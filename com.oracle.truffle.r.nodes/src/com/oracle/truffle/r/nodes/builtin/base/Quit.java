@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "quit", kind = INTERNAL)
+@RBuiltin(name = "quit", kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
 public abstract class Quit extends RInvisibleBuiltinNode {
 
     @CreateCast("arguments")

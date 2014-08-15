@@ -28,17 +28,25 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "paste", kind = INTERNAL)
+@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"...", "sep", "collapse"})
 public abstract class Paste extends RBuiltinNode {
 
     public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
     @Child CastStringNode castCharacterNode;
+
+    @Override
+    public RNode[] getParameterValues() {
+        // ..., sep = " ", collapse = NULL
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(" "), ConstantNode.create(RNull.instance)};
+    }
 
     private String castCharacter(VirtualFrame frame, Object o) {
         if (castCharacterNode == null) {
@@ -59,6 +67,11 @@ public abstract class Paste extends RBuiltinNode {
         } else {
             return (RStringVector) ret;
         }
+    }
+
+    @Specialization
+    public RStringVector pasteList(VirtualFrame frame, RList values, String sep, RNull collapse) {
+        return pasteList(frame, values, sep, (Object) collapse);
     }
 
     @Specialization

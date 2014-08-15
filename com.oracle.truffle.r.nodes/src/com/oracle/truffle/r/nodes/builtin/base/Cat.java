@@ -32,6 +32,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -53,14 +54,14 @@ public abstract class Cat extends RInvisibleBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Child private ToString toString;
+    @Child private ToStringNode toString;
 
     @CompilationFinal private String currentSep;
 
     private void ensureToString(String sep) {
         if (toString == null || !sep.equals(currentSep)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            toString = insert(ToStringFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            toString = insert(ToStringNodeFactory.create(null));
             toString.setSeparator(sep);
             toString.setQuotes(false);
             toString.setIntL(false);

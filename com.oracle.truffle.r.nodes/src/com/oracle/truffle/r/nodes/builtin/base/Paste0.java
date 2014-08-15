@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,10 +37,16 @@ import com.oracle.truffle.r.runtime.data.*;
  * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
  * efficient.
  */
-@RBuiltin(name = "paste0", kind = INTERNAL)
+@RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"...", "collapse"})
 public abstract class Paste0 extends RBuiltinNode {
 
     @Child Paste pasteNode;
+
+    @Override
+    public RNode[] getParameterValues() {
+        // ..., collapse = NULL
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance)};
+    }
 
     private Object paste(VirtualFrame frame, RList values, Object collapse) {
         if (pasteNode == null) {

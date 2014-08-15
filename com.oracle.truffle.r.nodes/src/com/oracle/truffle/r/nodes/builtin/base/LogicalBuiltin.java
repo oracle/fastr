@@ -25,13 +25,20 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "logical", kind = SUBSTITUTE)
-// TODO revert to R
+@RBuiltin(name = "logical", kind = SUBSTITUTE, parameterNames = {"length"})
+// TODO Implement in R
 public abstract class LogicalBuiltin extends RBuiltinNode {
+
+    @Override
+    public RNode[] getParameterValues() {
+        return new RNode[]{ConstantNode.create(0)};
+    }
 
     @Specialization
     public Object createLogicalVector(int length) {

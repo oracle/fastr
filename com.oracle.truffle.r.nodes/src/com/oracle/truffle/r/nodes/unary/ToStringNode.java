@@ -20,26 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
-
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "toString", kind = SUBSTITUTE)
-// TODO Implement in R
-@SuppressWarnings("unused")
-public abstract class ToString extends RBuiltinNode {
+public abstract class ToStringNode extends UnaryNode {
 
-    @Child ToString recursiveToString;
+    @Child ToStringNode recursiveToString;
 
     @CompilationFinal private boolean quotes = true;
 
@@ -50,7 +43,7 @@ public abstract class ToString extends RBuiltinNode {
     private String toStringRecursive(VirtualFrame frame, Object o) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            recursiveToString = insert(ToStringNodeFactory.create(null));
             recursiveToString.setSeparator(separator);
             recursiveToString.setQuotes(quotes);
             recursiveToString.setIntL(intL);
@@ -61,11 +54,11 @@ public abstract class ToString extends RBuiltinNode {
     // FIXME custom separators require breaking some rules
     // FIXME separator should be a @NodeField - not possible as default values cannot be set
 
-    public ToString() {
+    public ToStringNode() {
         this.separator = DEFAULT_SEPARATOR;
     }
 
-    public ToString(ToString prev) {
+    public ToStringNode(ToStringNode prev) {
         this.separator = prev.separator;
         this.quotes = prev.quotes;
         this.intL = prev.intL;
@@ -101,51 +94,43 @@ public abstract class ToString extends RBuiltinNode {
     }
 
     @Specialization
-    public String toString(RNull vector) {
-        controlVisibility();
+    public String toString(@SuppressWarnings("unused") RNull vector) {
         return "NULL";
     }
 
     @Specialization
     public String toString(RFunction function) {
-        controlVisibility();
         return RRuntime.toString(function);
     }
 
     @Specialization
     public String toString(RComplex complex) {
-        controlVisibility();
         return complex.toString();
     }
 
     @Specialization
     public String toString(RRaw raw) {
-        controlVisibility();
         return raw.toString();
     }
 
     @Specialization()
     public String toString(int operand) {
-        controlVisibility();
         return RRuntime.intToString(operand, intL);
     }
 
     @Specialization
     public String toString(double operand) {
-        controlVisibility();
         return RRuntime.doubleToString(operand);
     }
 
     @Specialization
     public String toString(byte operand) {
-        controlVisibility();
         return RRuntime.logicalToString(operand);
     }
 
     @SlowPath
     @Specialization(order = 100)
     public String toString(RIntVector vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "integer(0)";
@@ -163,7 +148,6 @@ public abstract class ToString extends RBuiltinNode {
     @SlowPath
     @Specialization(order = 200)
     public String toString(RDoubleVector vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "numeric(0)";
@@ -181,7 +165,6 @@ public abstract class ToString extends RBuiltinNode {
     @SlowPath
     @Specialization
     public String toString(RStringVector vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "character(0)";
@@ -199,7 +182,6 @@ public abstract class ToString extends RBuiltinNode {
     @SlowPath
     @Specialization(order = 300)
     public String toString(RLogicalVector vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "logical(0)";
@@ -217,7 +199,6 @@ public abstract class ToString extends RBuiltinNode {
     @SlowPath
     @Specialization
     public String toString(RRawVector vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "raw(0)";
@@ -235,7 +216,6 @@ public abstract class ToString extends RBuiltinNode {
     @SlowPath
     @Specialization(order = 500)
     public String toString(RComplexVector vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "complex(0)";
@@ -253,7 +233,6 @@ public abstract class ToString extends RBuiltinNode {
     @SlowPath
     @Specialization(order = 600)
     public String toString(VirtualFrame frame, RList vector) {
-        controlVisibility();
         int length = vector.getLength();
         if (length == 0) {
             return "list()";
@@ -280,19 +259,16 @@ public abstract class ToString extends RBuiltinNode {
 
     @Specialization
     public String toString(VirtualFrame frame, RIntSequence vector) {
-        controlVisibility();
         return toStringRecursive(frame, vector.createVector());
     }
 
     @Specialization
     public String toString(VirtualFrame frame, RDoubleSequence vector) {
-        controlVisibility();
         return toStringRecursive(frame, vector.createVector());
     }
 
     @Specialization
     public String toString(REnvironment env) {
-        controlVisibility();
         return env.toString();
     }
 

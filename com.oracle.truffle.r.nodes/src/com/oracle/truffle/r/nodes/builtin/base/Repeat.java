@@ -40,18 +40,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // FIXME honour times in case length.out is given but NA
 // FIXME honour "each" parameter
 
-@RBuiltin(name = "rep", kind = PRIMITIVE)
+@RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
 public abstract class Repeat extends RBuiltinNode {
-
-    private static final String[] PARAMETER_NAMES = new String[]{"x", "times", "length.out", "each"};
 
     BranchProfile withNames = new BranchProfile();
     BranchProfile noNames = new BranchProfile();
-
-    @Override
-    public String[] getParameterNames() {
-        return PARAMETER_NAMES;
-    }
 
     @Override
     public RNode[] getParameterValues() {

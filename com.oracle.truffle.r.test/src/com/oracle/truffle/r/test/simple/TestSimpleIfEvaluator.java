@@ -96,6 +96,9 @@ public class TestSimpleIfEvaluator extends TestBase {
     public void testIfVisibility() {
         assertEval("{ if (FALSE) 23 }");
         assertEval("{ if (FALSE) 23 else NULL }");
+        assertEval("{ if (TRUE) invisible(23) else 23 }");
+        assertEval("{ if (TRUE) invisible(23) }");
+        assertEval("{ if (FALSE) 23 else invisible(23) }");
     }
 
 }

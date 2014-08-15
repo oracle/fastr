@@ -30,19 +30,19 @@ public abstract class BinaryLogic extends BooleanOperation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "&&", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "&&", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class NonVectorAndBuiltin {
     }
 
-    @RBuiltin(name = "||", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "||", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class NonVectorOrBuiltin {
     }
 
-    @RBuiltin(name = "&", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "&", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class AndBuiltin {
     }
 
-    @RBuiltin(name = "|", kind = RBuiltinKind.PRIMITIVE)
+    @RBuiltin(name = "|", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class OrBuiltin {
     }
 
