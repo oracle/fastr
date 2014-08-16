@@ -32,4 +32,14 @@ public abstract class DispatchNode extends RNode {
     }
 
     public abstract Object execute(VirtualFrame frame, RStringVector aType);
+
+    @SuppressWarnings("unused")
+    public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
+        throw new AssertionError();
+    }
+
+    @SuppressWarnings("unused")
+    public Object executeInternal(VirtualFrame frame, Object[] args) {
+        throw new AssertionError();
+    }
 }

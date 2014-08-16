@@ -108,7 +108,7 @@ public abstract class TypeofNode extends UnaryNode {
 
     @Specialization()
     public String typeof(REnvironment env) {
-        return "environment";
+        return RRuntime.TYPE_ENVIRONMENT;
     }
 
     @Specialization()
@@ -133,7 +133,7 @@ public abstract class TypeofNode extends UnaryNode {
 
     @Specialization
     public String typeof(RPairList pairlist) {
-        return "pairlist";
+        return RRuntime.TYPE_PAIR_LIST;
     }
 
     @Specialization(order = 100, guards = "isFunctionBuiltin")

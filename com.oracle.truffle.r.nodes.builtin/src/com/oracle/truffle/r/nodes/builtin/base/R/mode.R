@@ -15,26 +15,28 @@
 #  http://www.r-project.org/Licenses/
 
 mode <- function(x) {
-#    if(is.expression(x)) return("expression")
-#    if(is.call(x))
+	if(is.expression(x)) return("expression")
+	if(is.call(x))
+		return("call")
+	##TODO Fix deparse
 #        return(switch(deparse(x[[1L]])[1L],
 #                        "(" = "(",
 #                        ## otherwise
 #                        "call"))
-#    if(is.name(x)) "name" else
-    switch(tx <- typeof(x),
+	if(is.name(x)) "name" else
+		switch(tx <- typeof(x),
 # TODO: fix implementation of switch
 #            double =, integer = "numeric", # 'real=' dropped, 2000/Jan/14
 #            closure =, builtin =, special = "function",
-            double ="numeric", integer = "numeric", # 'real=' dropped, 2000/Jan/14
-            closure ="function", builtin ="function", special = "function",
-            ## otherwise
-            tx)
+				double ="numeric", integer = "numeric", # 'real=' dropped, 2000/Jan/14
+				closure ="function", builtin ="function", special = "function",
+				## otherwise
+				tx)
 }
 
 storage.mode <- function(x)
-    switch(tx <- typeof(x),
-        #TODO:switch should be able to handle missing args.
-        closure = "function" , builtin = "function", special = "function",
-        ## otherwise
-        tx)
+	switch(tx <- typeof(x),
+			#TODO:switch should be able to handle missing args.
+			closure = "function" , builtin = "function", special = "function",
+			## otherwise
+			tx)

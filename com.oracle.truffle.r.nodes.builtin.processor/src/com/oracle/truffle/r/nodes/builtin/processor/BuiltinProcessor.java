@@ -152,7 +152,6 @@ public class BuiltinProcessor extends AbstractProcessor {
                     }
                 }
             }
-            locator.delete();
         }
         return classNames;
     }

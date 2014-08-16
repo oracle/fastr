@@ -32,13 +32,13 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "print", kind = SUBSTITUTE, parameterNames = {"x"})
+@RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "quote"})
 // TODO revert to R
 public abstract class Print extends RInvisibleBuiltinNode {
 
-    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
+    private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.TRUE)};
 
-    @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, false);
+    @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, false);
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);
@@ -50,8 +50,8 @@ public abstract class Print extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object print(VirtualFrame frame, Object o) {
-        String s = (String) prettyPrinter.executeString(frame, o, null);
+    public Object print(VirtualFrame frame, Object o, byte quote) {
+        String s = (String) prettyPrinter.executeString(frame, o, null, quote);
         if (s != null && !s.isEmpty()) {
             printHelper(s);
         }

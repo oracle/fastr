@@ -417,8 +417,8 @@ public final class REngine implements RContext.Engine {
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
             // TODO cache this
-            RFunction function = builtinLookup.lookup("print");
-            function.getTarget().call(RArguments.create(function, new Object[]{result}));
+            RFunction function = (RFunction) REnvironment.baseEnv().get("print");
+            function.getTarget().call(RArguments.create(function, new Object[]{result, RRuntime.asLogical(true)}));
         }
     }
 

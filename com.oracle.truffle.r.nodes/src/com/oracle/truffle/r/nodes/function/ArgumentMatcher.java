@@ -210,7 +210,6 @@ public class ArgumentMatcher {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         Object[] evaledArgs = permuteArguments(frame, function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(),
                         encapsulatingSrc);
-
         // Replace RMissing with default value!
         RNode[] defaultArgs = formals.getDefaultArgs();
         for (int i = 0; i < defaultArgs.length; i++) {
@@ -604,7 +603,6 @@ public class ArgumentMatcher {
         if (found >= 0 || hasVarArgs) {
             return found;
         }
-
         // Error!
         String debugSrc = suppliedName;
         if (debugArgNode instanceof RNode) {

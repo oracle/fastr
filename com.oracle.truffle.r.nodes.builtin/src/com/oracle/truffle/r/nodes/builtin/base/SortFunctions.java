@@ -54,17 +54,17 @@ public class SortFunctions {
                             ConstantNode.create(RMissing.instance)};
         }
 
-        @Child Order doubleOrder;
+        @Child Order order;
 
         @SuppressWarnings("unused")
         @Specialization
-        public RIntVector sortList(VirtualFrame frame, RDoubleVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
+        public RIntVector sortList(VirtualFrame frame, RAbstractVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
             controlVisibility();
-            if (doubleOrder == null) {
+            if (order == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                doubleOrder = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+                order = insert(OrderFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
             }
-            RIntVector result = (RIntVector) doubleOrder.executeDoubleVector(frame, vec, RMissing.instance);
+            RIntVector result = (RIntVector) order.executeDoubleVector(frame, vec, RMissing.instance);
             if (RRuntime.fromLogical(decreasing)) {
                 int[] data = result.getDataWithoutCopying();
                 int[] rdata = new int[data.length];

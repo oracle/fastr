@@ -2072,6 +2072,7 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testUpdateOther() {
         assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
         assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");

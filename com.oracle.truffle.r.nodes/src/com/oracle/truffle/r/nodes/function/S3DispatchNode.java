@@ -42,7 +42,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         if (lookup == null || !functionName.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastFun = functionName;
-            ReadVariableNode rvn = ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false);
+            ReadVariableNode rvn = ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false, true);
             lookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
         }
         Object func = targetFunction = null;

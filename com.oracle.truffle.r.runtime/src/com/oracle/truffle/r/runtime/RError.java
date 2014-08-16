@@ -507,7 +507,10 @@ public final class RError extends RuntimeException {
         RNG_READ_SEEDS("cannot read seeds unless 'user_unif_nseed' is supplied"),
         RNG_SYMBOL("%s not found in user rng library"),
         CUMMAX_UNDEFINED_FOR_COMPLEX("'cummin' not defined for complex numbers"),
-        CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers");
+        CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
+        NMAX_LESS_THAN_ONE("'nmax' must be positive"),
+        CHAR_VEC_ARGUMENT("a character vector argument expected"),
+        QUOTE_G_ONE("only the first character of 'quote' will be used");
 
         public final String message;
         private final boolean hasArgs;
