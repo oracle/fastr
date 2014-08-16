@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -39,4 +40,3 @@ public class TestrGenBuiltincomment extends TestBase {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4, comment = c(\'This is my very important data from experiment #0234\', \'Jun 5, 1998\'))); .Internal(comment(argv[[1]]))");
     }
 }
-

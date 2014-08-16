@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -21,4 +22,3 @@ public class TestrGenBuiltinutf8ToInt extends TestBase {
         assertEval("argv <- list(\'lasy\'); .Internal(utf8ToInt(argv[[1]]))");
     }
 }
-

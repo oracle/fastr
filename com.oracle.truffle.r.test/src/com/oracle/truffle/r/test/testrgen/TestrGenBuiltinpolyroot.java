@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -51,4 +52,3 @@ public class TestrGenBuiltinpolyroot extends TestBase {
         assertEval("argv <- list(c(1, 8, 28, 56, 70, 56, 28, 8, 1)); .Internal(polyroot(argv[[1]]))");
     }
 }
-

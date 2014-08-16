@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -159,4 +160,3 @@ public class TestrGenBuiltinsubset extends TestBase {
         assertEval("argv <- list(structure(list(size = 131, isdir = FALSE, mode = structure(436L, class = \'octmode\'), mtime = structure(1386583148.91412, class = c(\'POSIXct\', \'POSIXt\')), ctime = structure(1386583148.91712, class = c(\'POSIXct\', \'POSIXt\')), atime = structure(1386583149.16512, class = c(\'POSIXct\', \'POSIXt\')), uid = 501L, gid = 501L, uname = \'lzhao\', grname = \'lzhao\'), .Names = c(\'size\', \'isdir\', \'mode\', \'mtime\', \'ctime\', \'atime\', \'uid\', \'gid\', \'uname\', \'grname\'), class = \'data.frame\', row.names = \'startup.Rs\'), \'mtime\');.subset(argv[[1]],argv[[2]]);");
     }
 }
-

@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -39,4 +40,3 @@ public class TestrGenBuiltinasinh extends TestBase {
         assertEval("argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));asinh(argv[[1]]);");
     }
 }
-

@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -93,4 +94,3 @@ public class TestrGenBuiltinasPOSIXct extends TestBase {
         assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = c(2L, 4L, 6L, 8L, 10L, 12L, 14L, 16L, 18L, 20L, 22L, 24L, 26L, 28L, 30L, 32L), mon = 1L, year = 102L, wday = 6L, yday = 32L, isdst = -1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = c(\'\', \'EST\', \'EDT\')), \'\'); .Internal(as.POSIXct(argv[[1]], argv[[2]]))");
     }
 }
-

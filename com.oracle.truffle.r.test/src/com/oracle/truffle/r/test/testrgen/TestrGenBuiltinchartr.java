@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -39,4 +40,3 @@ public class TestrGenBuiltinchartr extends TestBase {
         assertEval("argv <- list(\'.\', \'.\', character(0)); .Internal(chartr(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

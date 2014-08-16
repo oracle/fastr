@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -69,4 +70,3 @@ public class TestrGenBuiltiniconv extends TestBase {
         assertEval("argv <- list(structure(c(\'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\', \'Q.1 Opinion of president's job performance\'), .Names = c(\'Q1_MISSING_NONE\', \'Q1_MISSING_1\', \'Q1_MISSING_2\', \'Q1_MISSING_3\', \'Q1_MISSING_RANGE\', \'Q1_MISSING_LOW\', \'Q1_MISSING_HIGH\', \'Q1_MISSING_RANGE_1\', \'Q1_MISSING_LOW_1\', \'Q1_MISSING_HIGH_1\')), \'latin1\', \'\', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 }
-

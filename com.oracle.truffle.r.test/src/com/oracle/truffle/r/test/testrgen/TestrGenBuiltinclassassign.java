@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -127,4 +128,3 @@ public class TestrGenBuiltinclassassign extends TestBase {
         assertEval("argv <- list(structure(function (obj, force = FALSE) standardGeneric(\'unname\'), target = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'obj\', package = \'methods\'), defined = structure(\'ANY\', class = structure(\'signature\', package = \'methods\'), .Names = \'obj\', package = \'methods\'), generic = character(0), class = structure(\'MethodDefinition\', package = \'methods\')), value = structure(\'MethodDefinition\', package = \'methods\'));`class<-`(argv[[1]],argv[[2]]);");
     }
 }
-

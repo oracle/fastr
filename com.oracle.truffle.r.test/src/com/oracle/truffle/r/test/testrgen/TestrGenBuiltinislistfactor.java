@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -183,4 +184,3 @@ public class TestrGenBuiltinislistfactor extends TestBase {
         assertEval("argv <- list(structure(list(`1 sec` = 345600, `2 secs` = 172800, `5 secs` = 69120, `10 secs` = 34560, `15 secs` = 23040, `30 secs` = 11520, `1 min` = 5760, `2 mins` = 2880, `5 mins` = 1152, `10 mins` = 576, `15 mins` = 384, `30 mins` = 192, `1 hour` = 96, `3 hours` = 32, `6 hours` = 16, `12 hours` = 8, `1 DSTday` = 4, `2 DSTdays` = 2, `1 week` = 0.571428571428571, halfmonth = 0.262833675564682, `1 month` = 0.131416837782341, `3 months` = 0.0438056125941136, `6 months` = 0.0219028062970568, `1 year` = 0.0109514031485284,     `2 years` = 0.0054757015742642, `5 years` = 0.00219028062970568, `10 years` = 0.00109514031485284, `20 years` = 0.00054757015742642, `50 years` = 0.000219028062970568, `100 years` = 0.000109514031485284, `200 years` = 5.4757015742642e-05, `500 years` = 2.19028062970568e-05, `1000 years` = 1.09514031485284e-05), .Names = c(\'1 sec\', \'2 secs\', \'5 secs\', \'10 secs\', \'15 secs\', \'30 secs\', \'1 min\', \'2 mins\', \'5 mins\', \'10 mins\', \'15 mins\', \'30 mins\', \'1 hour\', \'3 hours\', \'6 hours\', \'12 hours\', \'1 DSTday\', \'2 DSTdays\', \'1 week\', \'halfmonth\', \'1 month\', \'3 months\', \'6 months\', \'1 year\', \'2 years\', \'5 years\', \'10 years\', \'20 years\', \'50 years\', \'100 years\', \'200 years\', \'500 years\', \'1000 years\')), FALSE); .Internal(islistfactor(argv[[1]], argv[[2]]))");
     }
 }
-

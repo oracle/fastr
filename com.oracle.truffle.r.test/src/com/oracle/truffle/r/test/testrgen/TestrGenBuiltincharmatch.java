@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -63,4 +64,3 @@ public class TestrGenBuiltincharmatch extends TestBase {
         assertEval("argv <- list(character(0), c(\'semiTransparency\', \'transparentBackground\', \'rasterImage\', \'capture\', \'locator\', \'events\'), 0L); .Internal(charmatch(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

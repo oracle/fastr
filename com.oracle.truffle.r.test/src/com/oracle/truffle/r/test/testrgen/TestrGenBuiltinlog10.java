@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -54,4 +55,3 @@ public class TestrGenBuiltinlog10 extends TestBase {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(20L, 0L), .Dimnames = list(c(\'ant\', \'bee\', \'cat\', \'cpl\', \'chi\', \'cow\', \'duc\', \'eag\', \'ele\', \'fly\', \'fro\', \'her\', \'lio\', \'liz\', \'lob\', \'man\', \'rab\', \'sal\', \'spi\', \'wha\'), NULL)));log10(argv[[1]]);");
     }
 }
-

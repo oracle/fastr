@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -81,4 +82,3 @@ public class TestrGenBuiltinrank extends TestBase {
         assertEval("argv <- list(structure(c(4, 7, 6, 0, 0, 2, 4, 9, 3, 6, 0, 1, 5.5, 0.5, 4.5, 5.5, 0.5, 2.5, 0.5, 0.5, 2.5, 4.5, 9.5, 3.5, 1.5, 0.5, 5.5, 0.5, 1.5, 0.5, 0.5, 0.5, 1.5, 1.5, 0.5, 2.5, 2, 0, 7, 1, 1, 2, 0, 0, 0, 0, 3, 1, 0, 2, 0, 2, 0, 3, 2, 2, 0, 1, 3, 1, 4, 6, 0, 7, 0, 1, 2, 5, 11, 11, 9, 2), .Dim = 72L, .Dimnames = list(c(\'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'A\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'B\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'C\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'D\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'E\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\', \'F\'))), 72L, \'average\'); .Internal(rank(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

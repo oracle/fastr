@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -75,4 +76,3 @@ public class TestrGenBuiltinascomplex extends TestBase {
         assertEval("argv <- list(NULL, NULL);as.complex(argv[[1]],argv[[2]]);");
     }
 }
-

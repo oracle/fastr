@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -51,4 +52,3 @@ public class TestrGenBuiltinArg extends TestBase {
         assertEval("argv <- list(FALSE);Arg(argv[[1]]);");
     }
 }
-

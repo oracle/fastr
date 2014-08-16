@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -69,4 +70,3 @@ public class TestrGenBuiltinDate2POSIXlt extends TestBase {
         assertEval("argv <- list(structure(c(11354, 11382, 11413), class = \'Date\')); .Internal(Date2POSIXlt(argv[[1]]))");
     }
 }
-

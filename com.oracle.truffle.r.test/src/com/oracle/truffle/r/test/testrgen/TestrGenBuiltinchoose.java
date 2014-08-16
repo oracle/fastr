@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -39,4 +40,3 @@ public class TestrGenBuiltinchoose extends TestBase {
         assertEval("argv <- list(0.5, 0:10); .Internal(choose(argv[[1]], argv[[2]]))");
     }
 }
-

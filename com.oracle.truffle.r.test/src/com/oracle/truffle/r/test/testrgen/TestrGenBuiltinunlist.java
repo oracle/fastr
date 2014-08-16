@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -309,4 +310,3 @@ public class TestrGenBuiltinunlist extends TestBase {
         assertEval("argv <- list(list(structure(list(x = 1L, y = structure(1L, .Label = c(\'A\', \'D\', \'E\'), class = \'factor\'), z = 6), .Names = c(\'x\', \'y\', \'z\'), row.names = 1L, class = \'data.frame\'), structure(list(), .Names = character(0), row.names = 1L, class = \'data.frame\')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

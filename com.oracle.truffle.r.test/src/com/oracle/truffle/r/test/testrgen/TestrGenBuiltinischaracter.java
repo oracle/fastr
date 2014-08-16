@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -55,4 +56,3 @@ public class TestrGenBuiltinischaracter extends TestBase {
         assertEval("argv <- list(structure(c(238L, 154L, 73L), .Dim = c(3L, 1L), .Dimnames = list(c(\'red\', \'green\', \'blue\'), NULL)));is.character(argv[[1]]);");
     }
 }
-

@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -132,4 +133,3 @@ public class TestrGenBuiltinislanguage extends TestBase {
         assertEval("argv <- list(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\');is.language(argv[[1]]);");
     }
 }
-

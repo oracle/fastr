@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -45,4 +46,3 @@ public class TestrGenBuiltinfilepath extends TestBase {
         assertEval("argv <- list(list(structure(character(0), .Dim = c(0L, 0L))), \'/\'); .Internal(file.path(argv[[1]], argv[[2]]))");
     }
 }
-

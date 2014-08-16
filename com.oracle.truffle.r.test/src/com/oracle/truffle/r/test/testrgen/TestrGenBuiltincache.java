@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -27,4 +28,3 @@ public class TestrGenBuiltincache extends TestBase {
         assertEval("argv <- list(\'numeric\', c(\'numeric\', \'vector\', \'atomicVector\'));.cache_class(argv[[1]],argv[[2]]);");
     }
 }
-

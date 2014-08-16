@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -27,4 +28,3 @@ public class TestrGenBuiltinlazyLoadDBflush extends TestBase {
         assertEval("argv <- list(\'/home/lzhao/hg/r-instrumented/library/stats4/R/stats4.rdb\'); .Internal(lazyLoadDBflush(argv[[1]]))");
     }
 }
-

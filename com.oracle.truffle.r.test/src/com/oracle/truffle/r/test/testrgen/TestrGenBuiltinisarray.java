@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -138,4 +139,3 @@ public class TestrGenBuiltinisarray extends TestBase {
         assertEval("argv <- list(c(0.568, 1.432, -1.08, 1.08));is.array(argv[[1]]);");
     }
 }
-

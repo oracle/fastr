@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -117,4 +118,3 @@ public class TestrGenBuiltinasinteger extends TestBase {
         assertEval("argv <- list(39);as.integer(argv[[1]]);");
     }
 }
-

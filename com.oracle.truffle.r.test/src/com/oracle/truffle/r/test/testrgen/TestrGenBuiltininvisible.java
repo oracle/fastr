@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -274,4 +275,3 @@ public class TestrGenBuiltininvisible extends TestBase {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), .Dim = c(10L, 2L), .Dimnames = list(NULL, c(\'tt\', \'tt + 1\')), .Tsp = c(1920.5, 1921.25, 12), class = c(\'mts\', \'ts\', \'matrix\')));invisible(argv[[1]]);");
     }
 }
-

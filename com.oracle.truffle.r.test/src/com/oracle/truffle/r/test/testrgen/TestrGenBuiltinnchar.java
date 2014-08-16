@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -76,4 +77,3 @@ public class TestrGenBuiltinnchar extends TestBase {
         assertEval("argv <- list(structure(c(\'rpart\', \'recommended\', \'4.1-1\', \'2013-03-20\', \'c(person(\\\'Terry\\\', \\\'Therneau\\\', role = \\\'aut\\\',\\n\\t             email = \\\'therneau@mayo.edu\\\'),\\n             person(\\\'Beth\\\', \\\'Atkinson\\\', role = \\\'aut\\\',\\t\\n\\t             email = \\\'atkinson@mayo.edu\\\'),\\n             person(\\\'Brian\\\', \\\'Ripley\\\', role = c(\\\'aut\\\', \\\'trl\\\', \\\'cre\\\'),\\n                    email = \\\'ripley@stats.ox.ac.uk\\\',\\n\\t\\t   comment = \\\'author of R port\\\'))\', \'Recursive partitioning and regression trees\', \'Recursive Partitioning\', \'R (>= 2.14.0), graphics, stats, grDevices\', \'survival\', \'GPL-2 | GPL-3\', \'yes\', \'yes\', \'Maintainers are not available to give advice on using a package\\nthey did not author.\', \'2013-03-20 07:27:05 UTC; ripley\', \'Terry Therneau [aut],\\n  Beth Atkinson [aut],\\n  Brian Ripley [aut, trl, cre] (author of R port)\', \'Brian Ripley <ripley@stats.ox.ac.uk>\'), .Names = c(\'Package\', \'Priority\', \'Version\', \'Date\', \'Authors@R\', \'Description\', \'Title\', \'Depends\', \'Suggests\', \'License\', \'LazyData\', \'ByteCompile\', \'Note\', \'Packaged\', \'Author\', \'Maintainer\')), \'c\', TRUE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

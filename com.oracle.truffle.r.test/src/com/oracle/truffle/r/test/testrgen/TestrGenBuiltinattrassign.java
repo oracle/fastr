@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -111,4 +112,3 @@ public class TestrGenBuiltinattrassign extends TestBase {
         assertEval("argv <- list(structure(c(0, -187, -34, 0, 165, 0, -95, 121, 107, 0, 41, 0, 0, 93, 0), .Dim = c(5L, 3L)), \'dimnames\', value = NULL);`attr<-`(argv[[1]],argv[[2]],argv[[3]]);");
     }
 }
-

@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -33,4 +34,3 @@ public class TestrGenBuiltinmerge extends TestBase {
         assertEval("argv <- list(c(0L, 0L, 0L, 3L, 4L), c(0L, 0L, 0L, 3L, 4L), FALSE, FALSE); .Internal(merge(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }
-

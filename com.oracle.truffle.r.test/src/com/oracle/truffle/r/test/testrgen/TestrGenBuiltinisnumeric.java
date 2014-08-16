@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -130,4 +131,3 @@ public class TestrGenBuiltinisnumeric extends TestBase {
         assertEval("argv <- list(structure(c(-3.001e+155, -1.067e+107, -1.976e+62, -9.961e+152, -2.059e+23, 0.5104), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\'), class = c(\'summaryDefault\', \'table\')));is.numeric(argv[[1]]);");
     }
 }
-

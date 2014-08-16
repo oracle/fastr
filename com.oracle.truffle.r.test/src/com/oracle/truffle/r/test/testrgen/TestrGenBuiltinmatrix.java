@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -279,4 +280,3 @@ public class TestrGenBuiltinmatrix extends TestBase {
         assertEval("argv <- list(structure(list(a1 = 1:3, a2 = 4:6, a3 = 3.14159265358979, a4 = c(\'a\', \'b\', \'c\')), .Names = c(\'a1\', \'a2\', \'a3\', \'a4\')), 2, 2, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 }
-

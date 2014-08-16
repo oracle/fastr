@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -33,4 +34,3 @@ public class TestrGenBuiltinseterrmessage extends TestBase {
         assertEval("argv <- list(\'Error in validObject(.Object) : \\n  invalid class “trackCurve” object: Unequal x,y lengths: 20, 10\\n\'); .Internal(seterrmessage(argv[[1]]))");
     }
 }
-

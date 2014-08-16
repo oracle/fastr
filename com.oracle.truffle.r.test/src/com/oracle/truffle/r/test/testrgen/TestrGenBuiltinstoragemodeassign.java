@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -44,4 +45,3 @@ public class TestrGenBuiltinstoragemodeassign extends TestBase {
         assertEval("argv <- list(structure(c(2.5, 0, 0.75, 0, 2.5, -2.5, 0.75, -2.5, 2.8), .Dim = c(3L, 3L)), value = \'double\');`storage.mode<-`(argv[[1]],argv[[2]]);");
     }
 }
-

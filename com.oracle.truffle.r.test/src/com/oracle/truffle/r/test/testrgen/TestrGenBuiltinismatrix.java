@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -128,4 +129,3 @@ public class TestrGenBuiltinismatrix extends TestBase {
         assertEval("argv <- list(structure(c(NA, NA, NA, NA), .Dim = c(1L, 4L), .Dimnames = list(\'x\', c(\'Estimate\', \'Std. Error\', \'t value\', \'Pr(>|t|)\'))));is.matrix(argv[[1]]);");
     }
 }
-

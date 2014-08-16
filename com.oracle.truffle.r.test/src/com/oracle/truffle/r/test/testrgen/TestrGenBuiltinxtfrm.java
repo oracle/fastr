@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -93,4 +94,3 @@ public class TestrGenBuiltinxtfrm extends TestBase {
         assertEval("argv <- list(structure(c(607L, 30L, 3L, 11L, 44L, 67L, 17L, 16L, 67L, 6L, 1L, 13L, 672L, 46L, 8L, 18L, 10L, 22L, 16L, 5L, 55L, 2L), .Dim = 22L, .Dimnames = structure(list(c(\'BUG FIXES\', \'C-LEVEL FACILITIES\', \'CODE MIGRATION\', \'COMPRESSION\', \'DEPRECATED & DEFUNCT\', \'DEPRECATED AND DEFUNCT\', \'GRAPHICS DEVICES\', \'HELP & Rd FILE CHANGES\', \'INSTALLATION\', \'INTERNATIONALIZATION\', \'LICENCE\', \'LONG VECTORS\', \'NEW FEATURES\', \'PACKAGE INSTALLATION\', \'PACKAGE parallel\', \'PERFORMANCE IMPROVEMENTS\', \'REGULAR EXPRESSIONS\', \'SIGNIFICANT USER-VISIBLE CHANGES\', \'SWEAVE & VIGNETTES\', \'SWEAVE CHANGES\', \'UTILITIES\', \'WINDOWS-SPECIFIC CHANGES\')), .Names = \'\'), class = \'table\'));xtfrm(argv[[1]]);");
     }
 }
-

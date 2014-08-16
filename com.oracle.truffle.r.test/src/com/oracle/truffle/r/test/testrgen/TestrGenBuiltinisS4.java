@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -117,4 +118,3 @@ public class TestrGenBuiltinisS4 extends TestBase {
         assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'));isS4(argv[[1]]);");
     }
 }
-

@@ -110,10 +110,10 @@ def _fastr_gate_body(args, tasks):
 
     # check that the expected test output file is up to date
     t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
-    junit(['--tests', _default_unit_tests(), '--check-expected-output'])
+    junit(['--tests', _default_testgen_tests(), '--check-expected-output'])
     tasks.append(t.stop())
     t = mx.GateTask('UnitTests: simple')
-    rc = junit(['--tests', _default_testgen_tests()])
+    rc = junit(['--tests', _default_unit_tests()])
     if rc != 0:
         mx.abort('unit tests failed')
     tasks.append(t.stop())
@@ -238,6 +238,9 @@ def junit(args):
 def junit_simple(args):
     return junit(['--tests', _default_unit_tests()] + args)
 
+def junit_default(args):
+    return junit(['--tests', _default_testgen_tests()] + args)
+
 def _default_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
@@ -344,6 +347,7 @@ def mx_init(suite):
         'gate' : [gate, ''],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
+        'junitdefault' : [junit_default, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],

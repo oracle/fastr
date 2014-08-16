@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -87,4 +88,3 @@ public class TestrGenBuiltindfltWarn extends TestBase {
         assertEval("argv <- list(\'incomplete final line found by readTableHeader on 'foo4'\', quote(read.table(\'foo4\', header = TRUE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 }
-

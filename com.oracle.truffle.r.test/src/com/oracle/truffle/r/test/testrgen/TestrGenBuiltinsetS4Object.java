@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -99,4 +100,3 @@ public class TestrGenBuiltinsetS4Object extends TestBase {
         assertEval("argv <- list(structure(function (x, y, ...) UseMethod(\'plot\'), target = structure(character(0), .Names = character(0), package = character(0), class = structure(\'signature\', package = \'methods\')), defined = structure(character(0), .Names = character(0), package = character(0), class = structure(\'signature\', package = \'methods\')), generic = character(0), class = structure(\'derivedDefaultMethod\', package = \'methods\')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

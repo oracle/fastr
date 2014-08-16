@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -117,4 +118,3 @@ public class TestrGenBuiltinmean extends TestBase {
         assertEval("argv <- list(c(1.77635683940025e-15, 7.105427357601e-14, 4.54747350886464e-13, 4.54747350886464e-13, 1.81898940354586e-12, 7.27595761418343e-12, 7.27595761418343e-12, 1.45519152283669e-11, 2.91038304567337e-11, 5.82076609134674e-11)); .Internal(mean(argv[[1]]))");
     }
 }
-

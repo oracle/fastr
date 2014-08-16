@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -31,4 +32,3 @@ public class TestrGenBuiltinlog2 extends TestBase {
         assertEval("argv <- list(2.2250738585072e-308);log2(argv[[1]]);");
     }
 }
-

@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -52,4 +53,3 @@ public class TestrGenBuiltinvector extends TestBase {
         assertEval("argv <- list(\'list\', structure(1L, .Names = \'\\\\c\')); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 }
-

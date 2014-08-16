@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -81,4 +82,3 @@ public class TestrGenBuiltindrop extends TestBase {
         assertEval("argv <- list(structure(c(\' 16\', \' 16\', \'144\', \' 16\', \' 16\', \'128\', \' 16\', \' 16\', \'112\', \' 16\'), .Dim = 10L, .Dimnames = structure(list(c(\'1\', \'6\', \'7\', \'8\', \'13\', \'14\', \'15\', \'20\', \'21\', \'22\')), .Names = \'\'))); .Internal(drop(argv[[1]]))");
     }
 }
-

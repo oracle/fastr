@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -201,4 +202,3 @@ public class TestrGenBuiltinrange extends TestBase {
         assertEval("argv <- list(structure(c(1, 0.666666666666667, 0.333333333333333, 0, -0.333333333333333, -0.666666666666667, -1, -1.33333333333333, -1.66666666666667, 1.5, 1, 0.5, 0, -0.5, -1, -1.5, -2, -2.5, 3, 2, 1, 0, -1, -2, -3, -4, -5, -Inf, -Inf, -Inf, NaN, Inf, Inf, Inf, Inf, Inf, -3, -2, -1, 0, 1, 2, 3, 4, 5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, -1, -0.666666666666667, -0.333333333333333, 0, 0.333333333333333, 0.666666666666667, 1, 1.33333333333333, 1.66666666666667, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1, 1.25, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1), .Dim = c(9L, 9L)), na.rm = TRUE);range(argv[[1]],argv[[2]]);");
     }
 }
-

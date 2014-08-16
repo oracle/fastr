@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -72,4 +73,3 @@ public class TestrGenBuiltincumprod extends TestBase {
         assertEval("argv <- list(c(0.982149602642989, 0.91866776738084, 0.859369083800704, 0.921182928974104));cumprod(argv[[1]]);");
     }
 }
-

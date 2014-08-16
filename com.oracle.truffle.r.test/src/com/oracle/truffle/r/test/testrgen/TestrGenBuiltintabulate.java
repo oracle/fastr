@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -51,4 +52,3 @@ public class TestrGenBuiltintabulate extends TestBase {
         assertEval("argv <- list(integer(0), 0L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
 }
-

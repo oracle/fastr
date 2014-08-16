@@ -5,6 +5,7 @@
  * 
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
+ *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.testrgen;
@@ -20,4 +21,3 @@ public class TestrGenBuiltinfileremove extends TestBase {
         assertEval("argv <- list(character(0)); .Internal(file.remove(argv[[1]]))");
     }
 }
-
