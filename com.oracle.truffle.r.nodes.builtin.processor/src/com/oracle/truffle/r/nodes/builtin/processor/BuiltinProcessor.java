@@ -30,8 +30,6 @@ import javax.lang.model.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
 
-import com.oracle.truffle.r.runtime.*;
-
 /**
  * Analyzes classes annotated with {@code RBuiltin} and generates/updates a per-R-package class
  * {@code RBuiltinClasses} that is used to drive the loading process on FastR startup. When the
@@ -42,6 +40,9 @@ import com.oracle.truffle.r.runtime.*;
  *
  * N.B. the AP cannot handle deleted builtins gracefully. Deleted builtins will manifest as
  * compilation errors in {@code RBuiltinClasses}.
+ *
+ * N.B. We explicitly avoid depending statically on the {@code RBuiltin} class as that causes this
+ * AP to reference projects in Graal, which has undesirable build consequences.
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.runtime.RBuiltin")
@@ -82,7 +83,8 @@ public class BuiltinProcessor extends AbstractProcessor {
             }
             boolean added = false;
             note("BuiltinProcessor: analyzing RBuiltins");
-            for (Element element : roundEnv.getElementsAnnotatedWith(RBuiltin.class)) {
+            TypeElement rBuiltinType = processingEnv.getElementUtils().getTypeElement("com.oracle.truffle.r.runtime.RBuiltin");
+            for (Element element : roundEnv.getElementsAnnotatedWith(rBuiltinType)) {
                 TypeElement classElement = (TypeElement) element;
                 PackageElement packageElement = getPackage(classElement);
                 PackageBuiltins packageBuiltins = map.get(packageElement);

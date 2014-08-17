@@ -99,14 +99,14 @@ project@com.oracle.truffle.r.parser@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.nodes.builtin.processor
 project@com.oracle.truffle.r.nodes.builtin.processor@sourceDirs=src
-project@com.oracle.truffle.r.nodes.builtin.processor@dependencies=com.oracle.truffle.r.runtime,JDK_TOOLS
+project@com.oracle.truffle.r.nodes.builtin.processor@dependencies=JDK_TOOLS
 project@com.oracle.truffle.r.nodes.builtin.processor@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.nodes.builtin.processor@javaCompliance=1.8
 project@com.oracle.truffle.r.nodes.builtin.processor@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.nodes
 project@com.oracle.truffle.r.nodes@sourceDirs=src
-project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.r.options,com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser,com.oracle.graal.debug
+project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.r.options,com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser
 project@com.oracle.truffle.r.nodes@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.nodes@javaCompliance=1.8
 project@com.oracle.truffle.r.nodes@annotationProcessors=com.oracle.truffle.dsl.processor
@@ -114,7 +114,7 @@ project@com.oracle.truffle.r.nodes@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.nodes.builtin
 project@com.oracle.truffle.r.nodes.builtin@sourceDirs=src
-project@com.oracle.truffle.r.nodes.builtin@dependencies=com.oracle.truffle.r.options,com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser,com.oracle.truffle.r.nodes,com.oracle.graal.debug
+project@com.oracle.truffle.r.nodes.builtin@dependencies=com.oracle.graal.debug,com.oracle.truffle.r.nodes
 project@com.oracle.truffle.r.nodes.builtin@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.nodes.builtin@javaCompliance=1.8
 project@com.oracle.truffle.r.nodes.builtin@annotationProcessors=com.oracle.truffle.dsl.processor,com.oracle.truffle.r.nodes.builtin.processor
