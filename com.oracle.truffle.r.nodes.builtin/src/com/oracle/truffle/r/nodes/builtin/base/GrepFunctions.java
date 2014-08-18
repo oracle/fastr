@@ -267,10 +267,10 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             int[] result = new int[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 result[i] = findIndex(pattern, vector.getDataAt(i)).get(0);
@@ -310,10 +310,10 @@ public class GrepFunctions {
 
         @Specialization
         @Override
-        public Object regexp(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        public Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
-            String pattern = RegExp.checkPreDefinedClasses(patternArg);
+            String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i)));
@@ -345,7 +345,7 @@ public class GrepFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object aGrep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+        public Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
             controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
@@ -355,8 +355,9 @@ public class GrepFunctions {
             }
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
+            String pattern = patternArg.getDataAt(0);
             for (int i = 0; i < vector.getLength(); i++) {
-                if (patternArg.equals(vector.getDataAt(i))) {
+                if (pattern.equals(vector.getDataAt(i))) {
                     tmp[i] = i + 1;
                     numMatches++;
                 }
@@ -383,13 +384,14 @@ public class GrepFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object aGrep(String patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+        public Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
             controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
             byte[] data = new byte[vector.getLength()];
+            String pattern = patternArg.getDataAt(0);
             for (int i = 0; i < vector.getLength(); i++) {
-                data[i] = RRuntime.asLogical(patternArg.equals(vector.getDataAt(i)));
+                data[i] = RRuntime.asLogical(pattern.equals(vector.getDataAt(i)));
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
