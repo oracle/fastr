@@ -30,7 +30,8 @@ lazyLoadDBexec <- function(filebase, fun, filter)
     ## - not that this version is actually used to load base
     ##
     glue <- function (..., sep = " ", collapse = NULL)
-        .Internal(paste(list(...), sep, collapse))
+		# argument hack as per standard pase
+        .Internal(paste(list(...), sep = sep, collapse = collapse))
     readRDS <- function (file) {
         halt <- function (message) .Internal(stop(TRUE, message))
         gzfile <- function (description, open)
