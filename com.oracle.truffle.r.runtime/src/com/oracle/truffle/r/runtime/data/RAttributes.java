@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -379,7 +380,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
     }
 
-    private static boolean stats;
+    @CompilationFinal private static boolean stats;
 
     public static class PerfHandler implements RPerfAnalysis.Handler {
         public void initialize() {
