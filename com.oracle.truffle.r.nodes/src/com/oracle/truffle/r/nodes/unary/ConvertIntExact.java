@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@PolymorphicLimit(1)
+//@PolymorphicLimit(1)
 public abstract class ConvertIntExact extends UnaryNode {
 
     public abstract Object execute(VirtualFrame frame, Object operand);
@@ -56,7 +56,7 @@ public abstract class ConvertIntExact extends UnaryNode {
         }
     }
 
-    @Generic
+    @Fallback
     public int doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());

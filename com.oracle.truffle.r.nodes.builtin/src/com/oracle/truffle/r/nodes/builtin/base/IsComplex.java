@@ -46,7 +46,6 @@ public abstract class IsComplex extends IsTypeNode {
     }
 
     @Specialization
-    @Override
     public byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof RComplex || value instanceof RComplexVector);

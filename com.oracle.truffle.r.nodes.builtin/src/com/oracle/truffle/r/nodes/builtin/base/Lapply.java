@@ -41,7 +41,7 @@ public abstract class Lapply extends RBuiltinNode {
         return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
-    @Specialization
+    @Specialization(guards = "!argMissing")
     public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
         Object[] combinedArgs = new Object[]{null, optionalArg};
         return lapplyHelper(frame, x, fun, combinedArgs);
@@ -71,5 +71,10 @@ public abstract class Lapply extends RBuiltinNode {
             result[i] = funCall.call(frame, fun.getTarget(), arguments);
         }
         return result;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean argMissing(RAbstractVector x, RFunction fun, Object optionalArg) {
+        return optionalArg == RMissing.instance;
     }
 }

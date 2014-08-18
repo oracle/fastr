@@ -39,7 +39,7 @@ public abstract class IsAtomic extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization
+    @Specialization(guards = "!isListVector")
     public byte isAtomic(@SuppressWarnings("unused") RAbstractVector arg) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
@@ -55,6 +55,10 @@ public abstract class IsAtomic extends RBuiltinNode {
     public byte isAtomic(@SuppressWarnings("unused") RList arg) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    protected boolean isListVector(RAbstractVector arg) {
+        return arg.getElementClass() == Object.class;
     }
 
 }

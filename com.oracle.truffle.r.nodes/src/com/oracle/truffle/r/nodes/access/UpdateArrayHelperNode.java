@@ -283,14 +283,15 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    @Specialization(order = 22, guards = "isPosZero")
-    RAbstractVector updateZero(VirtualFrame frame, Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
-        if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
-        } else {
-            return vector;
-        }
-    }
+// @Specialization(order = 22, guards = "isPosZero")
+// RAbstractVector updateZero(VirtualFrame frame, Object v, RNull value, int recLevel, int position,
+// RAbstractVector vector) {
+// if (!isSubset) {
+// throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+// } else {
+// return vector;
+// }
+// }
 
     private int getSrcArrayBase(VirtualFrame frame, int pos, int accSrcDimensions) {
         if (posNACheck.check(pos)) {

@@ -312,7 +312,7 @@ public class ForeignFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
             }
-            return castVector.executeRAbstractVector(frame, value);
+            return (RAbstractVector) castVector.executeObject(frame, value);
         }
 
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)

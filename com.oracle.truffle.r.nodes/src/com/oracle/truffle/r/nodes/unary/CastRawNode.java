@@ -307,7 +307,7 @@ public abstract class CastRawNode extends CastNode {
         return operand;
     }
 
-    @Generic
+    @Fallback
     public int doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());

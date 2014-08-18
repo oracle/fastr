@@ -51,7 +51,7 @@ public abstract class Paste0 extends RBuiltinNode {
     private Object paste(VirtualFrame frame, RList values, Object collapse) {
         if (pasteNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pasteNode = insert(PasteFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            pasteNode = insert(PasteFactory.create(new RNode[3], getBuiltin(), getSuppliedArgsNames()));
         }
         return pasteNode.executeList(frame, values, "", collapse);
     }

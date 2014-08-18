@@ -83,7 +83,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     }
 
     @Specialization(order = 8, guards = "isNA")
-    public int doLogicalNA(@SuppressWarnings("unused") int operand) {
+    public int doLogicalNA(@SuppressWarnings("unused") byte operand) {
         return RRuntime.INT_NA;
     }
 

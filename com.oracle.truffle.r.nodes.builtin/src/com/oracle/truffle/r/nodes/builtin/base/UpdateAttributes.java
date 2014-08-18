@@ -47,7 +47,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private void updateNamesStringVector(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            updateNames = insert(UpdateNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
         }
         updateNames.executeStringVector(frame, vector, o);
     }
@@ -65,7 +65,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
         }
-        return castVector.executeRAbstractVector(frame, value);
+        return (RAbstractVector) castVector.executeObject(frame, value);
     }
 
     private RList castList(VirtualFrame frame, Object value) {
@@ -166,7 +166,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Generic
+    @Fallback
     public RList doOther(VirtualFrame frame, Object vector, Object operand) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_LIST_OR_NULL);

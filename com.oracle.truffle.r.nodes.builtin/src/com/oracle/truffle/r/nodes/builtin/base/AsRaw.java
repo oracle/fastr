@@ -117,7 +117,7 @@ public abstract class AsRaw extends RBuiltinNode {
         return value;
     }
 
-    @Specialization
+    @Specialization(guards = {"!isListVector", "!isRawVector"})
     public RRawVector asRaw(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         return castRawVector(frame, vector);
@@ -138,5 +138,13 @@ public abstract class AsRaw extends RBuiltinNode {
             result.updateDataAt(i, castRaw(frame, value.getDataAt(i)));
         }
         return result;
+    }
+
+    protected boolean isListVector(RAbstractVector vector) {
+        return vector.getElementClass() == Object.class;
+    }
+
+    protected boolean isRawVector(RAbstractVector vector) {
+        return vector.getElementClass() == RRaw.class;
     }
 }

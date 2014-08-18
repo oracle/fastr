@@ -197,33 +197,50 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return ResolvedWriteLocalVariableNodeFactory.create(rhs, isArgWrite, frameSlot, mode);
         }
 
-        @Specialization(guards = "isBooleanKind")
+        @Specialization(guards = "isFrameBooleanKind")
         public byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
             frame.setByte(frameSlot, value);
             return value;
         }
 
-        @Specialization(guards = "isIntegerKind")
+        @Specialization(guards = "isFrameIntegerKind")
         public int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
             frame.setInt(frameSlot, value);
             return value;
         }
 
-        @Specialization(guards = "isDoubleKind")
+        @Specialization(guards = "isFrameDoubleKind")
         public double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
             frame.setDouble(frameSlot, value);
             return value;
         }
 
-        @Specialization(guards = "isObjectKind")
+        @Specialization(guards = "isFrameObjectKind")
         public Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
             super.writeObjectValue(frame, frame, frameSlot, value, getMode(), false);
             return value;
         }
+
+        protected static boolean isFrameBooleanKind(FrameSlot frameSlot, @SuppressWarnings("unused") byte value) {
+            return isBooleanKind(frameSlot);
+        }
+
+        protected static boolean isFrameIntegerKind(FrameSlot frameSlot, @SuppressWarnings("unused") int value) {
+            return isIntegerKind(frameSlot);
+        }
+
+        protected static boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
+            return isDoubleKind(frameSlot);
+        }
+
+        protected static boolean isFrameObjectKind(FrameSlot frameSlot, @SuppressWarnings("unused") Object value) {
+            return isObjectKind(frameSlot);
+        }
+
     }
 
     public abstract static class AbstractWriteSuperVariableNode extends WriteVariableNode {
@@ -339,47 +356,47 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         public abstract Mode getMode();
 
-        @Specialization(guards = "isBooleanKind")
+        @Specialization(guards = "isFrameBooleanKind")
         public byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setByte(frameSlot, value);
             return value;
         }
 
-        @Specialization(guards = "isIntegerKind")
+        @Specialization(guards = "isFrameIntegerKind")
         public int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setInt(frameSlot, value);
             return value;
         }
 
-        @Specialization(guards = "isDoubleKind")
+        @Specialization(guards = "isFrameDoubleKind")
         public double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setDouble(frameSlot, value);
             return value;
         }
 
-        @Specialization(guards = "isObjectKind")
+        @Specialization(guards = "isFrameObjectKind")
         public Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             super.writeObjectValue(frame, enclosingFrame, frameSlot, value, getMode(), true);
             return value;
         }
 
-        protected static boolean isBooleanKind(Object arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected static boolean isFrameBooleanKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isBooleanKind(frameSlot);
         }
 
-        protected static boolean isIntegerKind(Object arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected static boolean isFrameIntegerKind(int arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isIntegerKind(frameSlot);
         }
 
-        protected static boolean isDoubleKind(Object arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected static boolean isFrameDoubleKind(double arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isDoubleKind(frameSlot);
         }
 
-        protected static boolean isObjectKind(Object arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
+        protected static boolean isFrameObjectKind(Object arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
             return isObjectKind(frameSlot);
         }
     }

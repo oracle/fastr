@@ -34,7 +34,7 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
-    @Specialization
+    @Specialization(guards = "!isStringVector")
     public Object setClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
@@ -49,13 +49,6 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(RAbstractContainer arg, RStringVector className) {
-        controlVisibility();
-        RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
-    }
-
-    @Specialization
     public Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
@@ -63,7 +56,7 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(VirtualFrame frame, RAbstractVector arg, String className) {
+    public Object setClass(VirtualFrame frame, RAbstractContainer arg, String className) {
         controlVisibility();
         initTypeof();
         if (!arg.isObject()) {
@@ -78,11 +71,12 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
         if (result != null) {
             return setClass((RAbstractVector) result, RNull.instance);
         }
+        RVector resultVector = arg.materializeNonSharedVector();
         if (className.equals(RRuntime.TYPE_MATRIX)) {
-            if (arg.isMatrix()) {
-                return setClass(arg, RNull.instance);
+            if (resultVector.isMatrix()) {
+                return setClass(resultVector, RNull.instance);
             }
-            final int[] dimensions = arg.getDimensions();
+            final int[] dimensions = resultVector.getDimensions();
             int dimLength = 0;
             if (dimensions != null) {
                 dimLength = dimensions.length;
@@ -90,14 +84,20 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
-            if (arg.isArray()) {
-                return setClass(arg, RNull.instance);
+            if (resultVector.isArray()) {
+                return setClass(resultVector, RNull.instance);
             }
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
-        RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);
+    }
+
+    @Specialization
+    public Object setClass(RAbstractContainer arg, RStringVector className) {
+        controlVisibility();
+        RVector resultVector = arg.materializeNonSharedVector();
+        return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
     }
 
     public Object setClass(RFunction arg, @SuppressWarnings("unused") Object className) {
@@ -117,5 +117,9 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeof = insert(TypeofFactory.create(new RNode[1], this.getBuiltin(), getSuppliedArgsNames()));
         }
+    }
+
+    protected boolean isStringVector(@SuppressWarnings("unused") RAbstractContainer arg, RAbstractVector className) {
+        return className.getElementClass() == RString.class;
     }
 }

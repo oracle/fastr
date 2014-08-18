@@ -299,7 +299,7 @@ public abstract class CastLogicalNode extends CastNode {
         throw RError.error(frame, this.getSourceSection(), RError.Message.LIST_COERCION, "logical");
     }
 
-    @Generic
+    @Fallback
     public int doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());

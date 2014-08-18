@@ -370,7 +370,7 @@ public abstract class CastDoubleNode extends CastNode {
         throw RError.error(frame, this.getSourceSection(), RError.Message.LIST_COERCION, "numeric");
     }
 
-    @Generic
+    @Fallback
     public double doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());

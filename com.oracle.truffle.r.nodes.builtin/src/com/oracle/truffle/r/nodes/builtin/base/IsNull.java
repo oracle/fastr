@@ -39,7 +39,6 @@ public abstract class IsNull extends IsTypeNode {
     }
 
     @Specialization
-    @Override
     public byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof RNull);

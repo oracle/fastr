@@ -271,7 +271,7 @@ public abstract class CastComplexNode extends CastNode {
         return ret;
     }
 
-    @Generic
+    @Fallback
     public int doOther(Object operand) {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());

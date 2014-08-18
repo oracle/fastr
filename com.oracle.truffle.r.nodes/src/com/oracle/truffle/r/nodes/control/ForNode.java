@@ -57,57 +57,6 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, RIntSequence range) {
-        int count = 0;
-        try {
-            for (int i = 0, pos = range.getStart(); i < range.getLength(); i++, pos += range.getStride()) {
-                cvar.execute(frame, pos);
-                try {
-                    body.execute(frame);
-                    if (CompilerDirectives.inInterpreter()) {
-                        count++;
-                    }
-                } catch (NextException e) {
-                }
-            }
-        } catch (BreakException e) {
-        } finally {
-            if (CompilerDirectives.inInterpreter()) {
-                reportLoopCount(count);
-            }
-        }
-        return RNull.instance;
-    }
-
-    @Specialization
-    public Object doSequence(VirtualFrame frame, RAbstractVector vector) {
-        int count = 0;
-        try {
-            for (int i = 0; i < vector.getLength(); ++i) {
-                cvar.execute(frame, vector.getDataAtAsObject(i));
-                try {
-                    body.execute(frame);
-                    if (CompilerDirectives.inInterpreter()) {
-                        count++;
-                    }
-                } catch (NextException e) {
-                }
-            }
-        } catch (BreakException e) {
-        } finally {
-            if (CompilerDirectives.inInterpreter()) {
-                reportLoopCount(count);
-            }
-        }
-        return RNull.instance;
-    }
-
-    @Specialization
-    public Object doSequence(VirtualFrame frame, RExpression expr) {
-        return doSequence(frame, expr.getList());
-    }
-
-    @Specialization
     public Object doSequence(VirtualFrame frame, int x) {
         int count = 0;
         try {
@@ -169,4 +118,56 @@ public abstract class ForNode extends LoopNode {
         }
         return RNull.instance;
     }
+
+    @Specialization
+    public Object doSequence(VirtualFrame frame, RIntSequence range) {
+        int count = 0;
+        try {
+            for (int i = 0, pos = range.getStart(); i < range.getLength(); i++, pos += range.getStride()) {
+                cvar.execute(frame, pos);
+                try {
+                    body.execute(frame);
+                    if (CompilerDirectives.inInterpreter()) {
+                        count++;
+                    }
+                } catch (NextException e) {
+                }
+            }
+        } catch (BreakException e) {
+        } finally {
+            if (CompilerDirectives.inInterpreter()) {
+                reportLoopCount(count);
+            }
+        }
+        return RNull.instance;
+    }
+
+    @Specialization
+    public Object doSequence(VirtualFrame frame, RAbstractVector vector) {
+        int count = 0;
+        try {
+            for (int i = 0; i < vector.getLength(); ++i) {
+                cvar.execute(frame, vector.getDataAtAsObject(i));
+                try {
+                    body.execute(frame);
+                    if (CompilerDirectives.inInterpreter()) {
+                        count++;
+                    }
+                } catch (NextException e) {
+                }
+            }
+        } catch (BreakException e) {
+        } finally {
+            if (CompilerDirectives.inInterpreter()) {
+                reportLoopCount(count);
+            }
+        }
+        return RNull.instance;
+    }
+
+    @Specialization
+    public Object doSequence(VirtualFrame frame, RExpression expr) {
+        return doSequence(frame, expr.getList());
+    }
+
 }

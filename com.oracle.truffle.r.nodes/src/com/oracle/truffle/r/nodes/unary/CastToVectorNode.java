@@ -30,8 +30,6 @@ import com.oracle.truffle.api.frame.*;
 @NodeField(name = "nonVectorPreserved", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
 
-    public abstract RAbstractVector executeRAbstractVector(VirtualFrame frame, Object value);
-
     public abstract Object executeObject(VirtualFrame frame, Object value);
 
     public abstract boolean isNonVectorPreserved();

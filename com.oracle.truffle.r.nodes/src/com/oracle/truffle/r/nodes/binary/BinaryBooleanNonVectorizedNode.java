@@ -285,7 +285,7 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
-        @Specialization(guards = "isZeroLength")
+        @Specialization(guards = {"isZeroLength", "!isStringVector", "!isRawVector"})
         public byte doLogical(RAbstractVector operand) {
             return RRuntime.LOGICAL_NA;
         }
@@ -322,6 +322,14 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
 
         boolean isZeroLength(RAbstractVector operand) {
             return operand.getLength() == 0;
+        }
+
+        boolean isStringVector(RAbstractVector vector) {
+            return vector.getElementClass() == RString.class;
+        }
+
+        boolean isRawVector(RAbstractVector vector) {
+            return vector.getElementClass() == RRaw.class;
         }
     }
 }

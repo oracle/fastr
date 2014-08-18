@@ -26,10 +26,8 @@ import static com.oracle.graal.compiler.common.UnsafeAccess.*;
 
 import java.io.*;
 
-import com.oracle.graal.api.code.*;
-import com.oracle.graal.api.runtime.*;
-import com.oracle.graal.compiler.target.*;
-import com.oracle.graal.runtime.*;
+import com.oracle.nfi.*;
+import com.oracle.nfi.api.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -96,8 +94,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     @Override
     protected RFFI createRFFI() {
         try {
-            RuntimeProvider runtimeProvider = Graal.getRequiredCapability(RuntimeProvider.class);
-            nfi = ((HostBackend) runtimeProvider.getHostBackend()).getNativeFunctionInterface();
+            nfi = NativeFunctionInterfaceRuntime.getNativeFunctionInterface();
             malloc = nfi.getFunctionHandle("malloc", long.class, int.class);
             free = nfi.getFunctionHandle("free", void.class, long.class);
             readlink = nfi.getFunctionHandle("readlink", int.class, long.class, long.class, int.class);

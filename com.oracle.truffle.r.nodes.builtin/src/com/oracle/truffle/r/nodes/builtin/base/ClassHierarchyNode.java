@@ -36,11 +36,6 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     public abstract RStringVector execute(VirtualFrame frame, Object arg);
 
-    @Specialization(order = 0)
-    public RStringVector getClassHr(RAbstractContainer arg) {
-        return arg.getClassHierarchy();
-    }
-
     @Specialization
     public RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
@@ -95,4 +90,10 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     public RStringVector getClassHr(@SuppressWarnings("unused") RLanguage arg) {
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
+
+    @Specialization()
+    public RStringVector getClassHr(RAbstractContainer arg) {
+        return arg.getClassHierarchy();
+    }
+
 }
