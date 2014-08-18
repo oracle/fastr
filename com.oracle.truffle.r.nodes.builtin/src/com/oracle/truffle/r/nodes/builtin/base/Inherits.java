@@ -45,6 +45,18 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
+    @Specialization
+    public Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public Object doesInherit(REnvironment x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
     public boolean whichFalse(RAbstractVector x, RAbstractStringVector what, byte which) {
         return which != RRuntime.LOGICAL_TRUE;
     }
