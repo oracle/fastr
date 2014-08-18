@@ -110,10 +110,10 @@ def _fastr_gate_body(args, tasks):
 
     # check that the expected test output file is up to date
     t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
-    junit(['--tests', _default_unit_tests(), '--check-expected-output'])
+    junit(['--tests', _simple_unit_tests(), '--check-expected-output'])
     tasks.append(t.stop())
     t = mx.GateTask('UnitTests: simple')
-    rc = junit(['--tests', _default_unit_tests()])
+    rc = junit(['--tests', _simple_unit_tests()])
     if rc != 0:
         mx.abort('unit tests failed')
     tasks.append(t.stop())
@@ -236,15 +236,24 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    return junit(['--tests', _default_unit_tests()] + args)
+    return junit(['--tests', _simple_unit_tests()] + args)
 
-def _default_unit_tests():
+def junit_default(args):
+    return junit(['--tests', _all_unit_tests()] + args)
+
+def _simple_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
+
+def _testgen_unit_tests():
+    return 'com.oracle.truffle.r.test.testrgen'
+
+def _all_unit_tests():
+    return _simple_unit_tests() + ',' + _testgen_unit_tests()
 
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
     parser = ArgumentParser(prog='r testgen')
-    parser.add_argument('--tests', action='store', default=_default_unit_tests(), help='pattern to match test classes')
+    parser.add_argument('--tests', action='store', default=_all_unit_tests(), help='pattern to match test classes')
     args = parser.parse_args(args)
     # clean the test project to invoke the test analyzer AP
     testOnly = ['--projects', 'com.oracle.truffle.r.test']
@@ -341,6 +350,7 @@ def mx_init(suite):
         'gate' : [gate, ''],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
+        'junitdefault' : [junit_default, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],
