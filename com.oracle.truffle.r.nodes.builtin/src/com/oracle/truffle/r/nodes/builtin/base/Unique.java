@@ -50,6 +50,12 @@ public abstract class Unique extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    public RNull doUnique(RNull vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
+        return vec;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
     public RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, byte nmax, RMissing vararg) {
         ArrayList<String> dataList = new ArrayList<>(vec.getLength());
         for (int i = 0; i < vec.getLength(); i++) {
