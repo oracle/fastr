@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
-    private static final Map<String, RBuiltinPackage> packages = new HashMap<>(5);
+    private static final HashMap<String, RBuiltinPackage> packages = new HashMap<>(5);
 
     private static final RBuiltinPackages instance = new RBuiltinPackages();
 

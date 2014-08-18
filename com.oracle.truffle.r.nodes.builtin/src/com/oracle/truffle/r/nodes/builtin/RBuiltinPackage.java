@@ -69,8 +69,8 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    private static final Map<String, List<Component>> rSources = new HashMap<>();
-    private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
+    private static final HashMap<String, ArrayList<Component>> rSources = new HashMap<>();
+    private static final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
     private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
@@ -84,7 +84,7 @@ public abstract class RBuiltinPackage {
             if (is == null) {
                 return;
             }
-            List<Component> componentList = new ArrayList<>();
+            ArrayList<Component> componentList = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = r.readLine()) != null) {
@@ -134,7 +134,7 @@ public abstract class RBuiltinPackage {
                 factory.setEnv(env);
             }
         }
-        List<Component> sources = rSources.get(getName());
+        ArrayList<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
                 RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false);
