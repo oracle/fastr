@@ -148,7 +148,7 @@ public abstract class ConnectionFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 100)
+        @Specialization
         public Object file(VirtualFrame frame, Object description, Object open, Object blocking, Object encoding, Object raw) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
@@ -200,7 +200,7 @@ public abstract class ConnectionFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 100)
+        @Specialization
         public Object readLines(VirtualFrame frame, Object con, Object n, Object ok, Object warn, Object encoding) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);

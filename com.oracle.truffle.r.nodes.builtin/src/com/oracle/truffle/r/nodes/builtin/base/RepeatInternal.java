@@ -105,7 +105,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
         return RDataFactory.createStringVector(array, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public RStringVector repInt(VirtualFrame frame, RStringVector value, RIntVector timesVec) {
         controlVisibility();
         int valueLength = value.getLength();
@@ -140,7 +140,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
         return RDataFactory.createStringVector(array, value.isComplete());
     }
 
-    @Specialization(order = 11)
+    @Specialization
     public RList repList(RList value, int times) {
         controlVisibility();
         int oldLength = value.getLength();

@@ -53,7 +53,7 @@ public abstract class Order extends RBuiltinNode {
 
     // specialisations for one parameter
 
-    @Specialization(order = 10)
+    @Specialization
     public RIntVector order(RStringVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         String[] xs = x.getDataCopy();
@@ -62,7 +62,7 @@ public abstract class Order extends RBuiltinNode {
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 20)
+    @Specialization
     public RIntVector order(RDoubleVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         double[] xs = x.getDataCopy();
@@ -71,7 +71,7 @@ public abstract class Order extends RBuiltinNode {
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 30)
+    @Specialization
     public RIntVector order(RIntVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         int[] xs = x.getDataCopy();
@@ -80,13 +80,13 @@ public abstract class Order extends RBuiltinNode {
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 31)
+    @Specialization
     public RIntVector order(RIntVector x, @SuppressWarnings("unused") RNull nul) {
         controlVisibility();
         return order(x, RMissing.instance);
     }
 
-    @Specialization(order = 40)
+    @Specialization
     public RIntVector order(RComplexVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         double[] xs = x.getDataCopy();
@@ -97,7 +97,7 @@ public abstract class Order extends RBuiltinNode {
 
     // specialisations for vector and tie parameters
 
-    @Specialization(order = 100)
+    @Specialization
     public RIntVector order(RIntVector x, RStringVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
@@ -108,7 +108,7 @@ public abstract class Order extends RBuiltinNode {
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 110)
+    @Specialization
     public RIntVector order(RDoubleVector x, RStringVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
@@ -119,7 +119,7 @@ public abstract class Order extends RBuiltinNode {
         return RDataFactory.createIntVector(ord, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 120)
+    @Specialization
     public RIntVector order(RDoubleVector x, RDoubleVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();

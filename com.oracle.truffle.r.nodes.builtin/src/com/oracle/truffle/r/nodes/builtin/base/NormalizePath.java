@@ -77,7 +77,7 @@ public abstract class NormalizePath extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 100)
+    @Specialization
     public Object doNormalizePath(VirtualFrame frame, Object path, Object winslash, Object mustWork) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);

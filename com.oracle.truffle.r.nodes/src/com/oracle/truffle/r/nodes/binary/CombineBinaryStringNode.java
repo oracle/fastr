@@ -35,32 +35,32 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public String combine(RNull left, String right) {
         return right;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public String combine(String left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RStringVector combine(RStringVector left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RStringVector combine(RNull left, RStringVector right) {
         return right;
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RStringVector combine(String left, String right) {
         return RDataFactory.createStringVector(new String[]{left, right}, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public RStringVector combine(RStringVector left, String right) {
         int dataLength = left.getLength();
         String[] result = new String[dataLength + 1];
@@ -71,7 +71,7 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
         return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR, combineNames(left, false));
     }
 
-    @Specialization(order = 7)
+    @Specialization
     public RStringVector combine(String left, RStringVector right) {
         int dataLength = right.getLength();
         String[] result = new String[dataLength + 1];
@@ -82,7 +82,7 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
         return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR, combineNames(right, true));
     }
 
-    @Specialization(order = 8)
+    @Specialization
     public RStringVector combine(RStringVector left, RStringVector right) {
         return (RStringVector) genericCombine(left, right);
     }

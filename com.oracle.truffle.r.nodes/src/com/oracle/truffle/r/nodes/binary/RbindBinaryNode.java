@@ -39,18 +39,18 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 3)
+    @Specialization
     public RAbstractVector rbind(RAbstractVector left, RNull right) {
         return left.copyWithNewDimensions(getDimensions(left));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 4)
+    @Specialization
     public RAbstractVector rbind(RNull left, RAbstractVector right) {
         return right.copyWithNewDimensions(getDimensions(right));
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public RAbstractVector rbind(RAbstractVector left, RAbstractVector right) {
         return genericRbind(left.materialize(), right.materialize());
     }

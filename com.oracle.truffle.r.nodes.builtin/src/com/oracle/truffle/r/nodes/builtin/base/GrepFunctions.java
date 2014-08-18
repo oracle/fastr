@@ -171,7 +171,7 @@ public class GrepFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
 
-        @Specialization(order = 1)
+        @Specialization
         public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -179,7 +179,7 @@ public class GrepFunctions {
             return replaceMatch(pattern, replacement, x);
         }
 
-        @Specialization(order = 10)
+        @Specialization
         public RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -187,7 +187,7 @@ public class GrepFunctions {
             return doSub(pattern, replacement, vector);
         }
 
-        @Specialization(order = 12)
+        @Specialization
         public RStringVector sub(RStringVector patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -196,7 +196,7 @@ public class GrepFunctions {
             return doSub(pattern, replacement, vector);
         }
 
-        @Specialization(order = 13)
+        @Specialization
         public RStringVector sub(String patternArg, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
@@ -231,7 +231,7 @@ public class GrepFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
 
-        @Specialization(order = 1)
+        @Specialization
         @Override
         public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
@@ -240,7 +240,7 @@ public class GrepFunctions {
             return replaceMatch(pattern, replacement, x);
         }
 
-        @Specialization(order = 2)
+        @Specialization
         public String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);

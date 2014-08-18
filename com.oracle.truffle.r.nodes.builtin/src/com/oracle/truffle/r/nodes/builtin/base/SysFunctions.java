@@ -90,7 +90,7 @@ public class SysFunctions {
             }
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object sysGetEnvGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
@@ -156,14 +156,14 @@ public class SysFunctions {
     @RBuiltin(name = "Sys.sleep", kind = INTERNAL, parameterNames = {"time"})
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
-        @Specialization(order = 0)
+        @Specialization
         public Object sysSleep(double seconds) {
             controlVisibility();
             sleep(convertToMillis(seconds));
             return RNull.instance;
         }
 
-        @Specialization(order = 1)
+        @Specialization
         public Object sysSleep(VirtualFrame frame, String secondsString) {
             controlVisibility();
             long millis = convertToMillis(checkValidString(frame, secondsString));
@@ -171,7 +171,7 @@ public class SysFunctions {
             return RNull.instance;
         }
 
-        @Specialization(order = 2, guards = "lengthOne")
+        @Specialization(guards = "lengthOne")
         public Object sysSleep(VirtualFrame frame, RStringVector secondsVector) {
             controlVisibility();
             long millis = convertToMillis(checkValidString(frame, secondsVector.getDataAt(0)));
@@ -183,7 +183,7 @@ public class SysFunctions {
             return vec.getLength() == 1;
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object sysSleep(VirtualFrame frame, @SuppressWarnings("unused") Object arg) throws RError {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
@@ -216,13 +216,13 @@ public class SysFunctions {
     @RBuiltin(name = "Sys.readlink", kind = INTERNAL, parameterNames = {"paths"})
     public abstract static class SysReadlink extends RBuiltinNode {
 
-        @Specialization(order = 0)
+        @Specialization
         public Object sysReadLink(String path) {
             controlVisibility();
             return RDataFactory.createStringVector(doSysReadLink(path));
         }
 
-        @Specialization(order = 1)
+        @Specialization
         public Object sysReadlink(RStringVector vector) {
             controlVisibility();
             String[] paths = new String[vector.getLength()];
@@ -254,7 +254,7 @@ public class SysFunctions {
             return s;
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object sysReadlinkGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");

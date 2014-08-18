@@ -31,27 +31,27 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /** Takes only RNull, int or RIntVector as arguments. Use CastIntegerNode to cast the operands. */
 public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
 
-    @Specialization(order = 0)
+    @Specialization
     public RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RAbstractIntVector combine(RNull left, RAbstractIntVector right) {
         return right;
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RAbstractIntVector combine(RAbstractIntVector left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RIntVector combine(int left, int right) {
         return RDataFactory.createIntVector(new int[]{left, right}, RRuntime.isComplete(left) && RRuntime.isComplete(right));
     }
 
-    @Specialization(order = 9)
+    @Specialization
     public RIntVector combine(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();

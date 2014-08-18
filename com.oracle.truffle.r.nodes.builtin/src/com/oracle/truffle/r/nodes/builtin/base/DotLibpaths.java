@@ -54,13 +54,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 @RBuiltin(name = ".libPaths", kind = SUBSTITUTE, parameterNames = {"new"})
 public abstract class DotLibpaths extends RBuiltinNode {
-    @Specialization(order = 0)
+    @Specialization
     public Object libPathsVec(@SuppressWarnings("unused") RMissing missing) {
         controlVisibility();
         return RDataFactory.createStringVector(LibPaths.dotLibPaths(), RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public Object libPathsVec(RAbstractStringVector pathVec) {
         controlVisibility();
         ArrayList<String> resultsList = new ArrayList<>(pathVec.getLength());
@@ -94,7 +94,7 @@ public abstract class DotLibpaths extends RBuiltinNode {
         return array;
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public Object libPathsGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");

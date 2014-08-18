@@ -54,7 +54,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return semantics.isNullInt();
     }
 
-    @Specialization(order = 1, guards = "isNullInt")
+    @Specialization(guards = "isNullInt")
     public int doInt(@SuppressWarnings("unused") RNull operand) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
@@ -62,7 +62,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return semantics.getIntStart();
     }
 
-    @Specialization(order = 2, guards = "!isNullInt")
+    @Specialization(guards = "!isNullInt")
     public double doDouble(@SuppressWarnings("unused") RNull operand) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
@@ -70,19 +70,19 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return semantics.getDoubleStart();
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public int doInt(int operand) {
         na.enable(operand);
         return na.check(operand) ? RRuntime.INT_NA : arithmetic.op(semantics.getIntStart(), operand);
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public double doDouble(double operand) {
         na.enable(operand);
         return na.check(operand) ? RRuntime.DOUBLE_NA : arithmetic.op(semantics.getDoubleStart(), operand);
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public int doIntVector(RIntVector operand) {
         int result = semantics.getIntStart();
         na.enable(operand);
@@ -102,7 +102,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return result;
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public double doDoubleVector(RDoubleVector operand) {
         double result = semantics.getDoubleStart();
         na.enable(operand);
@@ -122,7 +122,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return result;
     }
 
-    @Specialization(order = 7)
+    @Specialization
     public int doLogicalVector(RLogicalVector operand) {
         int result = semantics.getIntStart();
         na.enable(operand);
@@ -142,7 +142,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return result;
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public int doIntSequence(RIntSequence operand) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
@@ -161,7 +161,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return result;
     }
 
-    @Specialization(order = 11)
+    @Specialization
     public double doDoubleSequence(RDoubleSequence operand) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
@@ -180,7 +180,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return result;
     }
 
-    @Specialization(order = 12)
+    @Specialization
     public RComplex doComplexVector(RComplexVector operand) {
         RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
         int i = 0;
@@ -203,7 +203,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     // does not work for String-s as, in particular, we cannot supply the (lexicographically)
     // "largest" String for the implementation of max function
 
-    @Specialization(order = 15, guards = "empty")
+    @Specialization(guards = "empty")
     public String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
@@ -211,12 +211,12 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return semantics.getStringStart();
     }
 
-    @Specialization(order = 16, guards = "lengthOne")
+    @Specialization(guards = "lengthOne")
     public String doStringVectorOneElem(RStringVector operand) {
         return operand.getDataAt(0);
     }
 
-    @Specialization(order = 17, guards = "longerThanOne")
+    @Specialization(guards = "longerThanOne")
     public String doStringVector(RStringVector operand) {
         String result = operand.getDataAt(0);
         na.enable(result);

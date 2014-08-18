@@ -50,7 +50,7 @@ public abstract class Attr extends RBuiltinNode {
         return val;
     }
 
-    @Specialization(order = 1, guards = "!isRowNamesAttr")
+    @Specialization(guards = "!isRowNamesAttr")
     public Object attr(RAbstractContainer container, String name) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
@@ -75,7 +75,7 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 2, guards = "isRowNamesAttr")
+    @Specialization(guards = "isRowNamesAttr")
     public Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
@@ -86,18 +86,18 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 10, guards = {"!emptyName", "isRowNamesAttr"})
+    @Specialization(guards = {"!emptyName", "isRowNamesAttr"})
     public Object attrRowNames(RAbstractContainer container, RStringVector name) {
         return attrRowNames(container, name.getDataAt(0));
     }
 
-    @Specialization(order = 11, guards = {"!emptyName", "!isRowNamesAttr"})
+    @Specialization(guards = {"!emptyName", "!isRowNamesAttr"})
     public Object attr(RAbstractContainer container, RStringVector name) {
         return attr(container, name.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 12, guards = "emptyName")
+    @Specialization(guards = "emptyName")
     public Object attrEmtpyName(VirtualFrame frame, RAbstractContainer container, RStringVector name) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);

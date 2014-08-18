@@ -135,7 +135,7 @@ public abstract class PrecedenceNode extends UnaryNode {
         return STRING_PRECEDENCE;
     }
 
-    @Specialization(order = 100, guards = "isRecursive")
+    @Specialization(guards = "isRecursive")
     public int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); ++i) {
@@ -145,7 +145,7 @@ public abstract class PrecedenceNode extends UnaryNode {
         return precedence;
     }
 
-    @Specialization(order = 110, guards = "!isRecursive")
+    @Specialization(guards = "!isRecursive")
     public int doList(RList val, byte recursive) {
         return LIST_PRECEDENCE;
     }

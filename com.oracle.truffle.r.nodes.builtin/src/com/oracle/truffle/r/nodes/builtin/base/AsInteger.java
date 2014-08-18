@@ -113,7 +113,7 @@ public abstract class AsInteger extends RBuiltinNode {
         return RRuntime.INT_NA;
     }
 
-    @Specialization(order = 71)
+    @Specialization
     public RIntVector asInteger(RIntVector vector) {
         controlVisibility();
         return RDataFactory.createIntVector(vector.getDataCopy(), vector.isComplete());

@@ -48,7 +48,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
         return (RAbstractIntVector) castInteger.executeCast(frame, vector);
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RAbstractVector updateDim(RAbstractVector vector, RNull dimensions) {
         controlVisibility();
         RVector result = vector.materialize();
@@ -56,7 +56,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
         return result;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
         controlVisibility();
         if (dimensions.getLength() == 0) {

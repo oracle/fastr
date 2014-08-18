@@ -65,13 +65,13 @@ public abstract class Crossprod extends RBuiltinNode {
         return matMult(frame, transpose(frame, a), b);
     }
 
-    @Specialization(order = 1, guards = "!matdouble")
+    @Specialization(guards = "!matdouble")
     public Object crossprod(VirtualFrame frame, RAbstractVector b, @SuppressWarnings("unused") RNull a) {
         controlVisibility();
         return matMult(frame, transpose(frame, b), b);
     }
 
-    @Specialization(order = 2, guards = "matdouble")
+    @Specialization(guards = "matdouble")
     public Object crossprodDoubleMatrix(RAbstractDoubleVector a, @SuppressWarnings("unused") RNull b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];

@@ -37,7 +37,7 @@ public abstract class NextMethod extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(order = 0)
+    @Specialization
     public Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
         controlVisibility();
         final RStringVector type = readType(frame);
@@ -54,13 +54,13 @@ public abstract class NextMethod extends RBuiltinNode {
         return dispatchedCallNode.execute(frame, type);
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, null, null, new Object[0]);
     }
 
-    @Specialization(order = 11)
+    @Specialization
     public Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, generic, obj, new Object[0]);

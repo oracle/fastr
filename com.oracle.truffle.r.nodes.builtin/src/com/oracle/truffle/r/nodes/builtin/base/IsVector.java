@@ -42,47 +42,47 @@ public abstract class IsVector extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1)
+    @Specialization
     public byte isNull(RNull operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 10)
+    @Specialization
     public byte isNull(RDataFrame operand, Object mode) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 50, guards = {"namesOnlyOrNoAttr", "modeIsAnyOrMatches"})
+    @Specialization(guards = {"namesOnlyOrNoAttr", "modeIsAnyOrMatches"})
     public byte isList(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 51, guards = {"namesOnlyOrNoAttr", "!modeIsAnyOrMatches"})
+    @Specialization(guards = {"namesOnlyOrNoAttr", "!modeIsAnyOrMatches"})
     public byte isNotVector(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 52, guards = "!namesOnlyOrNoAttr")
+    @Specialization(guards = "!namesOnlyOrNoAttr")
     public byte isVectorAttr(RAbstractVector x, String mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1000, guards = "namesOnlyOrNoAttr")
+    @Specialization(guards = "namesOnlyOrNoAttr")
     public byte isVector(RAbstractVector x, RMissing mode) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1001, guards = "!namesOnlyOrNoAttr")
+    @Specialization(guards = "!namesOnlyOrNoAttr")
     public byte isVectorAttr(RAbstractVector x, RMissing mode) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;

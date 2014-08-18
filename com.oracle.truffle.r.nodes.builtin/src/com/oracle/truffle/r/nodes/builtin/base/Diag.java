@@ -50,13 +50,13 @@ public abstract class Diag extends RBuiltinNode {
         return new RNode[]{children[0], CastIntegerNodeFactory.create(children[1], false, false, false), CastIntegerNodeFactory.create(children[2], false, false, false)};
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RNull dim(RNull vector, int rows, int cols) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public RIntVector dim(int val, int rows, int cols) {
         controlVisibility();
         int[] data = new int[rows * cols];
@@ -66,12 +66,12 @@ public abstract class Diag extends RBuiltinNode {
         return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR, new int[]{rows, cols});
     }
 
-    @Specialization(order = 11)
+    @Specialization
     public RIntVector dim(int val, int rows, RMissing cols) {
         return dim(val, rows, rows);
     }
 
-    @Specialization(order = 20)
+    @Specialization
     public RDoubleVector dim(double val, int rows, int cols) {
         controlVisibility();
         double[] data = new double[rows * cols];
@@ -81,12 +81,12 @@ public abstract class Diag extends RBuiltinNode {
         return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR, new int[]{rows, cols});
     }
 
-    @Specialization(order = 21)
+    @Specialization
     public RDoubleVector dim(double val, int rows, RMissing cols) {
         return dim(val, rows, rows);
     }
 
-    @Specialization(order = 30)
+    @Specialization
     public RLogicalVector dim(byte val, int rows, int cols) {
         controlVisibility();
         byte[] data = new byte[rows * cols];
@@ -96,12 +96,12 @@ public abstract class Diag extends RBuiltinNode {
         return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, new int[]{rows, cols});
     }
 
-    @Specialization(order = 31)
+    @Specialization
     public RLogicalVector dim(byte val, int rows, RMissing cols) {
         return dim(val, rows, rows);
     }
 
-    @Specialization(order = 100, guards = "isMatrix")
+    @Specialization(guards = "isMatrix")
     public RIntVector dimWithDimensions(RIntVector vector, Object rows, Object cols) {
         controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
@@ -118,7 +118,7 @@ public abstract class Diag extends RBuiltinNode {
         return RDataFactory.createIntVector(result, check.neverSeenNA());
     }
 
-    @Specialization(order = 110, guards = "isMatrix")
+    @Specialization(guards = "isMatrix")
     public RDoubleVector dimWithDimensions(RDoubleVector vector, Object rows, Object cols) {
         controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);

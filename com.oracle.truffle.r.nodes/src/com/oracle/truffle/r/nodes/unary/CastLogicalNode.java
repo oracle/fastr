@@ -142,7 +142,7 @@ public abstract class CastLogicalNode extends CastNode {
         return performAbstractDoubleVector(operand);
     }
 
-    @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RLogicalVector doStringVectorDims(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
@@ -152,7 +152,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RLogicalVector doStringVectorNames(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
@@ -162,7 +162,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RLogicalVector doStringVectorDimsNames(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
@@ -172,7 +172,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 104, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RLogicalVector doStringVector(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
@@ -182,7 +182,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RLogicalVector doComplexVectorDims(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
@@ -192,7 +192,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RLogicalVector doComplexVectorNames(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
@@ -202,7 +202,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RLogicalVector doComplexVectorDimsNames(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
@@ -212,7 +212,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 108, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RLogicalVector doComplexVector(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
@@ -222,7 +222,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RLogicalVector doRawVectorDims(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
@@ -232,7 +232,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RLogicalVector doRawVectorNames(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
@@ -242,7 +242,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RLogicalVector doRawVectorDimsNames(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions(), operand.getNames());
@@ -252,7 +252,7 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 112, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RLogicalVector doRawVector(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR);

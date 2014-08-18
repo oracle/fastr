@@ -129,7 +129,7 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @SlowPath
-    @Specialization(order = 100)
+    @Specialization
     public String toString(RIntVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -146,7 +146,7 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @SlowPath
-    @Specialization(order = 200)
+    @Specialization
     public String toString(RDoubleVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -180,7 +180,7 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @SlowPath
-    @Specialization(order = 300)
+    @Specialization
     public String toString(RLogicalVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -214,7 +214,7 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @SlowPath
-    @Specialization(order = 500)
+    @Specialization
     public String toString(RComplexVector vector) {
         int length = vector.getLength();
         if (length == 0) {
@@ -231,7 +231,7 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @SlowPath
-    @Specialization(order = 600)
+    @Specialization
     public String toString(VirtualFrame frame, RList vector) {
         int length = vector.getLength();
         if (length == 0) {

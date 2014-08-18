@@ -46,7 +46,7 @@ public abstract class Apply extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(order = 1, guards = "rowMargin")
+    @Specialization(guards = "rowMargin")
     @SuppressWarnings("unused")
     public Object applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
         controlVisibility();
@@ -65,7 +65,7 @@ public abstract class Apply extends RBuiltinNode {
         return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 2, guards = "colMargin")
+    @Specialization(guards = "colMargin")
     @SuppressWarnings("unused")
     public Object applyCols(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
         controlVisibility();
@@ -84,7 +84,7 @@ public abstract class Apply extends RBuiltinNode {
         return RDataFactory.createObjectVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 3, guards = "rowMarginInt")
+    @Specialization(guards = "rowMarginInt")
     @SuppressWarnings("unused")
     public Object applyRows(VirtualFrame frame, RLogicalVector x, int margin, RFunction fun, Object args) {
         controlVisibility();

@@ -86,7 +86,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1, guards = "wrongArgsObject")
+    @Specialization(guards = "wrongArgsObject")
     String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RLogicalVector sciVec) {
         return null;
@@ -107,7 +107,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 10, guards = "!wrongArgs")
+    @Specialization(guards = "!wrongArgs")
     RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
@@ -163,7 +163,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 20, guards = "!wrongArgs")
+    @Specialization(guards = "!wrongArgs")
     RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
@@ -218,7 +218,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 30, guards = "!wrongArgs")
+    @Specialization(guards = "!wrongArgs")
     RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;

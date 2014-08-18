@@ -59,7 +59,7 @@ public abstract class Repeat extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(order = 0)
+    @Specialization
     @SuppressWarnings("unused")
     public RNull repeat(VirtualFrame frame, RNull value, Object times, Object lengthOut, Object each) {
         controlVisibility();
@@ -73,7 +73,7 @@ public abstract class Repeat extends RBuiltinNode {
     // * if length.out is given (it supersedes times)
     //
 
-    @Specialization(order = 10)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector repeat(int value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -82,19 +82,19 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createIntVector(array, RRuntime.isComplete(value));
     }
 
-    @Specialization(order = 11, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public int repeatLengthNA(int value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 12, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RIntVector repeat(int value, Object times, int lengthOut, Object each) {
         return repeat(value, lengthOut, RMissing.instance, each);
     }
 
-    @Specialization(order = 20)
+    @Specialization
     @SuppressWarnings("unused")
     public RDoubleVector repeat(double value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -103,19 +103,19 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createDoubleVector(array, RRuntime.isComplete(value));
     }
 
-    @Specialization(order = 21, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public double repeatLengthNA(double value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 23, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RDoubleVector repeat(double value, Object times, int lengthOut, Object each) {
         return repeat(value, lengthOut, RMissing.instance, each);
     }
 
-    @Specialization(order = 30)
+    @Specialization
     @SuppressWarnings("unused")
     public RRawVector repeat(RRaw value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -124,19 +124,19 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createRawVector(array);
     }
 
-    @Specialization(order = 31, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RRaw repeatLengthNA(RRaw value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 32, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RRawVector repeat(RRaw value, Object times, int lengthOut, Object each) {
         return repeat(value, lengthOut, RMissing.instance, each);
     }
 
-    @Specialization(order = 40)
+    @Specialization
     @SuppressWarnings("unused")
     public RComplexVector repeat(RComplex value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -149,19 +149,19 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createComplexVector(array, !value.isNA());
     }
 
-    @Specialization(order = 41, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RComplex repeatLengthNA(RComplex value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 42, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RComplexVector repeat(RComplex value, Object times, int lengthOut, Object each) {
         return repeat(value, lengthOut, RMissing.instance, each);
     }
 
-    @Specialization(order = 50)
+    @Specialization
     @SuppressWarnings("unused")
     public RStringVector repeat(String value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -170,19 +170,19 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createStringVector(array, !RRuntime.isNA(value));
     }
 
-    @Specialization(order = 51, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public String repeatLengthNA(String value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 52, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RStringVector repeat(String value, Object times, int lengthOut, Object each) {
         return repeat(value, lengthOut, RMissing.instance, each);
     }
 
-    @Specialization(order = 60)
+    @Specialization
     @SuppressWarnings("unused")
     public RLogicalVector repeat(byte value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -191,13 +191,13 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createLogicalVector(array, value != RRuntime.LOGICAL_NA);
     }
 
-    @Specialization(order = 61, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public byte repeatLengthNA(byte value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 62, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RLogicalVector repeat(byte value, Object times, int lengthOut, Object each) {
         return repeat(value, lengthOut, RMissing.instance, each);
@@ -232,7 +232,7 @@ public abstract class Repeat extends RBuiltinNode {
         return RDataFactory.createStringVector(names, oldNames.isComplete());
     }
 
-    @Specialization(order = 100)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector repeat(RAbstractIntVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -253,13 +253,13 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 102, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RAbstractIntVector repeatLengthNA(RAbstractIntVector value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 103, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RIntVector repeat(RAbstractIntVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
@@ -276,7 +276,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 110)
+    @Specialization
     @SuppressWarnings("unused")
     public RDoubleVector repeat(RAbstractDoubleVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -297,13 +297,13 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 111, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RAbstractDoubleVector repeatLengthNA(RAbstractDoubleVector value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 112, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RDoubleVector repeat(RAbstractDoubleVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
@@ -320,7 +320,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 120)
+    @Specialization
     @SuppressWarnings("unused")
     public RRawVector repeat(RRawVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -341,13 +341,13 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 121, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RRawVector repeatLengthNA(RRawVector value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 122, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RRawVector repeat(RRawVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
@@ -364,7 +364,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 130)
+    @Specialization
     @SuppressWarnings("unused")
     public RComplexVector repeat(RComplexVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -388,13 +388,13 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 131, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RComplexVector repeatLengthNA(RComplexVector value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 132, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RComplexVector repeat(RComplexVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
@@ -414,7 +414,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 140)
+    @Specialization
     @SuppressWarnings("unused")
     public RLogicalVector repeat(RAbstractLogicalVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -435,13 +435,13 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 141, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RAbstractLogicalVector repeatLengthNA(RAbstractLogicalVector value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 142, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RLogicalVector repeat(RAbstractLogicalVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
@@ -458,7 +458,7 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 150)
+    @Specialization
     @SuppressWarnings("unused")
     public RStringVector repeat(RAbstractStringVector value, int times, RMissing lengthOut, Object each) {
         controlVisibility();
@@ -479,13 +479,13 @@ public abstract class Repeat extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 151, guards = "lengthNA")
+    @Specialization(guards = "lengthNA")
     @SuppressWarnings("unused")
     public RAbstractStringVector repeatLengthNA(RAbstractStringVector value, Object times, int lengthOut, Object each) {
         return value;
     }
 
-    @Specialization(order = 152, guards = "!lengthNA")
+    @Specialization(guards = "!lengthNA")
     @SuppressWarnings("unused")
     public RStringVector repeat(RAbstractStringVector value, Object times, int lengthOut, Object each) {
         controlVisibility();
@@ -518,7 +518,7 @@ public abstract class Repeat extends RBuiltinNode {
         return names;
     }
 
-    @Specialization(order = 500)
+    @Specialization
     @SuppressWarnings("unused")
     public RAbstractVector repeatTV(VirtualFrame frame, RAbstractVector value, RIntVector times, RMissing lengthOut, Object each) {
         controlVisibility();

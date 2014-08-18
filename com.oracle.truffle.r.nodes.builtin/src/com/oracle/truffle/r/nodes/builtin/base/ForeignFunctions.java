@@ -85,7 +85,7 @@ public class ForeignFunctions {
         private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")
-        @Specialization(order = 0, guards = "dqrdc2")
+        @Specialization(guards = "dqrdc2")
         public RList fortranDqrdc2(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
@@ -126,7 +126,7 @@ public class ForeignFunctions {
         private static final RStringVector DQRCF_NAMES = RDataFactory.createStringVector(new String[]{E, E, E, E, E, E, "coef", "info"}, RDataFactory.COMPLETE_VECTOR);
 
         @SuppressWarnings("unused")
-        @Specialization(order = 1, guards = "dqrcf")
+        @Specialization(guards = "dqrcf")
         public RList fortranDqrcf(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
@@ -317,7 +317,7 @@ public class ForeignFunctions {
 
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
-        @Specialization(order = 1, guards = "fft")
+        @Specialization(guards = "fft")
         public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
             controlVisibility();
             RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
@@ -397,7 +397,7 @@ public class ForeignFunctions {
 
         // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
-        @Specialization(order = 2, guards = "methodsPackageMetaName")
+        @Specialization(guards = "methodsPackageMetaName")
         public String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args) {
             controlVisibility();
             // TODO proper error checks

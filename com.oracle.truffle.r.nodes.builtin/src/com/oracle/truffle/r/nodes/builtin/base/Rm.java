@@ -53,7 +53,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         return getParameterValues0();
     }
 
-    @Specialization(order = 0)
+    @Specialization
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
@@ -61,7 +61,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
@@ -72,7 +72,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
@@ -84,7 +84,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     @SuppressWarnings("unused")
     public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();

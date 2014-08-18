@@ -68,91 +68,91 @@ public abstract class Seq extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 0, guards = {"startLengthOne", "toLengthOne", "zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "zero"})
     public int seqZero(VirtualFrame frame, RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
 
-    @Specialization(order = 1, guards = {"startLengthOne", "toLengthOne", "zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "zero"})
     public int seqZer0(RAbstractDoubleVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
 
-    @Specialization(order = 2, guards = {"startLengthOne", "toLengthOne", "zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "zero"})
     public int seqZero(RAbstractIntVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
 
-    @Specialization(order = 3, guards = {"startLengthOne", "toLengthOne", "zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "zero"})
     public double seq(RAbstractDoubleVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
 
-    @Specialization(order = 5, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RIntSequence seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createIntSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
     }
 
-    @Specialization(order = 10, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RIntSequence seq(RAbstractIntVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createIntSequence(start.getDataAt(0), stride, Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
     }
 
-    @Specialization(order = 12, guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     public RDoubleVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return getVectorWithComputedStride(RRuntime.int2double(start.getDataAt(0)), RRuntime.int2double(to.getDataAt(0)), RRuntime.int2double(lengthOut), ascending(start, to));
     }
 
-    @Specialization(order = 13, guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     public RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)), RRuntime.logical2double(to.getDataAt(0)), RRuntime.int2double(lengthOut), ascending(start, to));
     }
 
-    @Specialization(order = 14, guards = {"startLengthOne", "toLengthOne", "lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "lengthZero"})
     public RIntVector seqLengthZero(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 15, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractIntVector start, RAbstractIntVector to, double stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(RRuntime.int2double(start.getDataAt(0)), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride)) + 1);
     }
 
-    @Specialization(order = 17, guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     public RDoubleVector seq(RAbstractIntVector start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return getVectorWithComputedStride(RRuntime.int2double(start.getDataAt(0)), RRuntime.int2double(to.getDataAt(0)), lengthOut, ascending(start, to));
     }
 
-    @Specialization(order = 18, guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     public RDoubleVector seq(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return getVectorWithComputedStride(RRuntime.logical2double(start.getDataAt(0)), RRuntime.logical2double(to.getDataAt(0)), lengthOut, ascending(start, to));
     }
 
-    @Specialization(order = 19, guards = {"startLengthOne", "toLengthOne", "lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "lengthZero"})
     public RIntVector seqLengthZero(RAbstractLogicalVector start, RAbstractLogicalVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 31, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractIntVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
     }
 
-    @Specialization(order = 40, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractIntVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         int length = (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) / stride;
@@ -162,151 +162,151 @@ public abstract class Seq extends RBuiltinNode {
         return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, length);
     }
 
-    @Specialization(order = 45, guards = "!startEmpty")
+    @Specialization(guards = "!startEmpty")
     public RIntSequence seqFromOneArg(RAbstractIntVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         // GNU R really does that (take the length of start to create a sequence)
         return RDataFactory.createIntSequence(1, 1, start.getLength());
     }
 
-    @Specialization(order = 46, guards = "startEmpty")
+    @Specialization(guards = "startEmpty")
     public RIntVector seqFromOneArgEmpty(RAbstractIntVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 50, guards = "!startEmpty")
+    @Specialization(guards = "!startEmpty")
     public RIntSequence seqFromOneArg(RAbstractLogicalVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         // GNU R really does that (take the length of start to create a sequence)
         return RDataFactory.createIntSequence(1, 1, start.getLength());
     }
 
-    @Specialization(order = 51, guards = "startEmpty")
+    @Specialization(guards = "startEmpty")
     public RIntVector seqFromOneArgEmpty(RAbstractLogicalVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 55, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
     }
 
-    @Specialization(order = 60, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractIntVector to, int stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1);
     }
 
-    @Specialization(order = 91, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), ascending(start, to) ? 1 : -1, (int) Math.abs(to.getDataAt(0) - start.getDataAt(0)) + 1);
     }
 
-    @Specialization(order = 100, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, int stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1));
     }
 
-    @Specialization(order = 103, guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     public RDoubleVector seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), RRuntime.int2double(lengthOut), ascending(start, to));
     }
 
-    @Specialization(order = 104, guards = {"startLengthOne", "toLengthOne", "lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "lengthZero"})
     public RIntVector seqLengthZero(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 110, guards = {"startLengthOne", "toLengthOne", "!zero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!zero"})
     public RDoubleSequence seq(RAbstractDoubleVector start, RAbstractDoubleVector to, double stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), stride, (int) (Math.abs((to.getDataAt(0) - start.getDataAt(0)) / stride) + 1));
     }
 
-    @Specialization(order = 113, guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "!lengthZero"})
     public RDoubleVector seq(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return getVectorWithComputedStride(start.getDataAt(0), to.getDataAt(0), lengthOut, ascending(start, to));
     }
 
-    @Specialization(order = 114, guards = {"startLengthOne", "toLengthOne", "lengthZero"})
+    @Specialization(guards = {"startLengthOne", "toLengthOne", "lengthZero"})
     public RIntVector seqLengthZero(RAbstractDoubleVector start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 120, guards = "!startEmpty")
+    @Specialization(guards = "!startEmpty")
     public RDoubleSequence seqFromOneArg(RAbstractDoubleVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         // GNU R really does that (take the length of start to create a sequence)
         return RDataFactory.createDoubleSequence(1, 1, start.getLength());
     }
 
-    @Specialization(order = 121, guards = "startEmpty")
+    @Specialization(guards = "startEmpty")
     public RIntVector seqFromOneArgEmpty(RAbstractDoubleVector start, RMissing to, RMissing stride, RMissing lengthOut, RMissing alongWith) {
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 150, guards = "lengthZero")
+    @Specialization(guards = "lengthZero")
     public RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 151, guards = "!lengthZero")
+    @Specialization(guards = "!lengthZero")
     public RIntSequence seq(RMissing start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, lengthOut);
     }
 
-    @Specialization(order = 155, guards = "lengthZero")
+    @Specialization(guards = "lengthZero")
     public RIntVector seqLengthZero(RMissing start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 156, guards = "!lengthZero")
+    @Specialization(guards = "!lengthZero")
     public RIntSequence seq(RMissing start, RMissing to, RMissing stride, double lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, (int) Math.ceil(lengthOut));
     }
 
-    @Specialization(order = 160, guards = "lengthZeroAlong")
+    @Specialization(guards = "lengthZeroAlong")
     public RIntVector LengthZero(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(order = 161, guards = "!lengthZeroAlong")
+    @Specialization(guards = "!lengthZeroAlong")
     public RIntSequence seq(RMissing start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, alongWith.getLength());
     }
 
-    @Specialization(order = 170, guards = {"startLengthOne", "lengthZero"})
+    @Specialization(guards = {"startLengthOne", "lengthZero"})
     public RDoubleVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyDoubleVector();
     }
 
-    @Specialization(order = 171, guards = {"startLengthOne", "lengthZeroAlong"})
+    @Specialization(guards = {"startLengthOne", "lengthZeroAlong"})
     public RDoubleVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
         controlVisibility();
         return RDataFactory.createEmptyDoubleVector();
     }
 
-    @Specialization(order = 180, guards = {"startLengthOne", "!lengthZero"})
+    @Specialization(guards = {"startLengthOne", "!lengthZero"})
     public RDoubleSequence seqLengthZero(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, lengthOut);
     }
 
-    @Specialization(order = 181, guards = {"startLengthOne", "!lengthZeroAlong"})
+    @Specialization(guards = {"startLengthOne", "!lengthZeroAlong"})
     public RDoubleSequence seqLengthZero(RAbstractDoubleVector start, RMissing to, RMissing stride, Object lengthOut, RAbstractVector alongWith) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(start.getDataAt(0), 1, alongWith.getLength());

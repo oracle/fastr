@@ -88,13 +88,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createIntVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public RIntVector doArrayNoDimNames(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayInt(frame, vec, dim);
     }
 
-    @Specialization(order = 11)
+    @Specialization
     public RIntVector doArray(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RIntVector ret = doArrayInt(frame, vec, dim);
@@ -112,13 +112,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createDoubleVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization(order = 20)
+    @Specialization
     public RDoubleVector doArrayNoDimNames(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayDouble(frame, vec, dim);
     }
 
-    @Specialization(order = 21)
+    @Specialization
     public RDoubleVector doArray(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RDoubleVector ret = doArrayDouble(frame, vec, dim);
@@ -136,13 +136,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createLogicalVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization(order = 30)
+    @Specialization
     public RLogicalVector doArrayNoDimNames(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayLogical(frame, vec, dim);
     }
 
-    @Specialization(order = 31)
+    @Specialization
     public RLogicalVector doArray(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RLogicalVector ret = doArrayLogical(frame, vec, dim);
@@ -160,13 +160,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createStringVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization(order = 40)
+    @Specialization
     public RStringVector doArrayNoDimNames(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayString(frame, vec, dim);
     }
 
-    @Specialization(order = 41)
+    @Specialization
     public RStringVector doArray(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RStringVector ret = doArrayString(frame, vec, dim);
@@ -187,13 +187,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createComplexVector(data, vec.isComplete(), dimData);
     }
 
-    @Specialization(order = 50)
+    @Specialization
     public RComplexVector doArrayNoDimNames(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayComplex(frame, vec, dim);
     }
 
-    @Specialization(order = 51)
+    @Specialization
     public RComplexVector doArray(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RComplexVector ret = doArrayComplex(frame, vec, dim);
@@ -211,13 +211,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createRawVector(data, dimData);
     }
 
-    @Specialization(order = 60)
+    @Specialization
     public RRawVector doArrayNoDimNames(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayRaw(frame, vec, dim);
     }
 
-    @Specialization(order = 61)
+    @Specialization
     public RRawVector doArray(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RRawVector ret = doArrayRaw(frame, vec, dim);
@@ -235,13 +235,13 @@ public abstract class Array extends RBuiltinNode {
         return RDataFactory.createList(data, dimData);
     }
 
-    @Specialization(order = 70)
+    @Specialization
     public RList doArrayNoDimeNames(VirtualFrame frame, RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayList(frame, vec, dim);
     }
 
-    @Specialization(order = 71)
+    @Specialization
     public RList doArray(VirtualFrame frame, RList vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RList ret = doArrayList(frame, vec, dim);

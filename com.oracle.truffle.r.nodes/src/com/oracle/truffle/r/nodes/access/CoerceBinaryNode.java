@@ -177,360 +177,360 @@ public abstract class CoerceBinaryNode extends RNode {
 
     // Left side is RNull
 
-    @Specialization(order = 0)
+    @Specialization
     public RNull access(VirtualFrame frame, RNull left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RLogicalVector access(VirtualFrame frame, RNull left, byte right) {
         return doLogical(frame, RDataFactory.createEmptyLogicalVector(), right);
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RNull left, int right) {
         return doInt(frame, RDataFactory.createEmptyIntVector(), right);
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RNull left, double right) {
         return doDouble(frame, RDataFactory.createEmptyDoubleVector(), right);
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RNull left, RComplex right) {
         return doComplex(frame, RDataFactory.createEmptyComplexVector(), right);
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RNull left, String right) {
         return doString(frame, RDataFactory.createEmptyStringVector(), right);
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public RLogicalVector access(VirtualFrame frame, RNull left, RLogicalVector right) {
         return doLogical(frame, RDataFactory.createEmptyLogicalVector(), right);
     }
 
-    @Specialization(order = 7)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RNull left, RIntVector right) {
         return doInt(frame, RDataFactory.createEmptyIntVector(), right);
     }
 
-    @Specialization(order = 8)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RNull left, RDoubleVector right) {
         return doDouble(frame, RDataFactory.createEmptyDoubleVector(), right);
     }
 
-    @Specialization(order = 9)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RNull left, RComplexVector right) {
         return doComplex(frame, RDataFactory.createEmptyComplexVector(), right);
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RNull left, RStringVector right) {
         return doString(frame, RDataFactory.createEmptyStringVector(), right);
     }
 
     // Left side is RLogicalVector
 
-    @Specialization(order = 100)
+    @Specialization
     public RLogicalVector access(VirtualFrame frame, RLogicalVector left, RNull right) {
         return doLogical(frame, left, RDataFactory.createEmptyLogicalVector());
     }
 
-    @Specialization(order = 101)
+    @Specialization
     public RLogicalVector access(VirtualFrame frame, RLogicalVector left, byte right) {
         return doLogical(frame, left, right);
     }
 
-    @Specialization(order = 102)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RLogicalVector left, int right) {
         leftNACheck.enable(left);
         return doInt(frame, RClosures.createLogicalToIntVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 103)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RLogicalVector left, double right) {
         leftNACheck.enable(left);
         return doDouble(frame, RClosures.createLogicalToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 104)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplex right) {
         leftNACheck.enable(left);
         return doComplex(frame, RClosures.createLogicalToComplexVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 105)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RLogicalVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
-    @Specialization(order = 106)
+    @Specialization
     public RLogicalVector access(VirtualFrame frame, RLogicalVector left, RLogicalVector right) {
         return doLogical(frame, left, right);
     }
 
-    @Specialization(order = 107)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RLogicalVector left, RIntVector right) {
         leftNACheck.enable(left);
         return doInt(frame, RClosures.createLogicalToIntVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 108)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RLogicalVector left, RDoubleVector right) {
         leftNACheck.enable(left);
         return doDouble(frame, RClosures.createLogicalToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 109)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplexVector right) {
         leftNACheck.enable(left);
         return doComplex(frame, RClosures.createLogicalToComplexVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 110)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RLogicalVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RIntVector
 
-    @Specialization(order = 200)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RIntVector left, RNull right) {
         return doInt(frame, left, RDataFactory.createEmptyIntVector());
     }
 
-    @Specialization(order = 201)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RIntVector left, byte right) {
         return doInt(frame, left, rightNACheck.convertLogicalToInt(right));
     }
 
-    @Specialization(order = 202)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RIntVector left, int right) {
         return doInt(frame, left, right);
     }
 
-    @Specialization(order = 203)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RIntVector left, double right) {
         return doDouble(frame, RClosures.createIntToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 204)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RIntVector left, RComplex right) {
         return doComplex(frame, RClosures.createIntToComplexVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 205)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RIntVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
-    @Specialization(order = 206)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RIntVector left, RLogicalVector right) {
         return doInt(frame, left, RClosures.createLogicalToIntVector(right, rightNACheck).materialize());
     }
 
-    @Specialization(order = 207)
+    @Specialization
     public RIntVector access(VirtualFrame frame, RIntVector left, RIntVector right) {
         return doInt(frame, left, right);
     }
 
-    @Specialization(order = 208)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RIntVector left, RDoubleVector right) {
         return doDouble(frame, RClosures.createIntToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 209)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RIntVector left, RComplexVector right) {
         return doComplex(frame, RClosures.createIntToComplexVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 210)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RIntVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RDoubleVector
 
-    @Specialization(order = 300)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RNull right) {
         return doDouble(frame, left, RDataFactory.createEmptyDoubleVector());
     }
 
-    @Specialization(order = 301)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, byte right) {
         return doDouble(frame, left, rightNACheck.convertLogicalToDouble(right));
     }
 
-    @Specialization(order = 302)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, int right) {
         return doDouble(frame, left, rightNACheck.convertIntToDouble(right));
     }
 
-    @Specialization(order = 303)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, double right) {
         return doDouble(frame, left, right);
     }
 
-    @Specialization(order = 304)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplex right) {
         return doComplex(frame, RClosures.createDoubleToComplexVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 305)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RDoubleVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
-    @Specialization(order = 306)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RLogicalVector right) {
         return doDouble(frame, left, RClosures.createLogicalToDoubleVector(right, rightNACheck).materialize());
     }
 
-    @Specialization(order = 307)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RIntVector right) {
         return doDouble(frame, left, RClosures.createIntToDoubleVector(right, rightNACheck).materialize());
     }
 
-    @Specialization(order = 308)
+    @Specialization
     public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RDoubleVector right) {
         return doDouble(frame, left, right);
     }
 
-    @Specialization(order = 309)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplexVector right) {
         return doComplex(frame, RClosures.createDoubleToComplexVector(left, leftNACheck).materialize(), right);
     }
 
-    @Specialization(order = 310)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RDoubleVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RComplexVector
 
-    @Specialization(order = 400)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, RNull right) {
         return doComplex(frame, left, RDataFactory.createEmptyComplexVector());
     }
 
-    @Specialization(order = 401)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, byte right) {
         return doComplex(frame, left, rightNACheck.convertLogicalToComplex(right));
     }
 
-    @Specialization(order = 402)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, int right) {
         return doComplex(frame, left, rightNACheck.convertIntToComplex(right));
     }
 
-    @Specialization(order = 403)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, double right) {
         return doComplex(frame, left, rightNACheck.convertDoubleToComplex(right));
     }
 
-    @Specialization(order = 404)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, RComplex right) {
         return doComplex(frame, left, right);
     }
 
-    @Specialization(order = 405)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RComplexVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
-    @Specialization(order = 406)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, RLogicalVector right) {
         return doComplex(frame, left, RClosures.createLogicalToComplexVector(right, rightNACheck).materialize());
     }
 
-    @Specialization(order = 407)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, RIntVector right) {
         return doComplex(frame, left, RClosures.createIntToComplexVector(right, rightNACheck).materialize());
     }
 
-    @Specialization(order = 408)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, RDoubleVector right) {
         return doComplex(frame, left, RClosures.createDoubleToComplexVector(right, rightNACheck).materialize());
     }
 
-    @Specialization(order = 409)
+    @Specialization
     public RComplexVector access(VirtualFrame frame, RComplexVector left, RComplexVector right) {
         return doComplex(frame, left, right);
     }
 
-    @Specialization(order = 410)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RComplexVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RStringVector
 
-    @Specialization(order = 500)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RNull right) {
         return doString(frame, left, RDataFactory.createEmptyStringVector());
     }
 
-    @Specialization(order = 501)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, byte right) {
         return doString(frame, left, rightNACheck.convertLogicalToString(right));
     }
 
-    @Specialization(order = 502)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, int right) {
         return doString(frame, left, rightNACheck.convertIntToString(right));
     }
 
-    @Specialization(order = 503)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, double right) {
         return doString(frame, left, rightNACheck.convertDoubleToString(right));
     }
 
-    @Specialization(order = 504)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RComplex right) {
         return doString(frame, left, rightNACheck.convertComplexToString(right));
     }
 
-    @Specialization(order = 505)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
-    @Specialization(order = 506)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RLogicalVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
-    @Specialization(order = 507)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RIntVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
-    @Specialization(order = 508)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RDoubleVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
-    @Specialization(order = 509)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RComplexVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
-    @Specialization(order = 510)
+    @Specialization
     public RStringVector access(VirtualFrame frame, RStringVector left, RStringVector right) {
         return doString(frame, left, right);
     }
 
     // left side is RList
 
-    @Specialization(order = 600)
+    @Specialization
     public RAbstractVector access(VirtualFrame frame, RList left, RAbstractVector right) {
         return doList(frame, left, right);
     }
 
-    @Specialization(order = 601)
+    @Specialization
     public RAbstractVector access(VirtualFrame frame, RList left, RNull right) {
         return doList(frame, left, right);
     }

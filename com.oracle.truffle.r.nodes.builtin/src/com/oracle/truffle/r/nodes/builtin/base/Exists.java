@@ -48,7 +48,7 @@ public abstract class Exists extends RBuiltinNode {
                         ConstantNode.create(RRuntime.TYPE_ANY), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
-    @Specialization(order = 10, guards = "noEnv")
+    @Specialization(guards = "noEnv")
     @SuppressWarnings("unused")
     public byte existsString(VirtualFrame frm, String name, int where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
@@ -64,7 +64,7 @@ public abstract class Exists extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization(order = 11)
+    @Specialization
     @SuppressWarnings("unused")
     public byte existsStringEnv(String name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
@@ -79,19 +79,19 @@ public abstract class Exists extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(order = 12)
+    @Specialization
     public byte existsStringEnv(RStringVector name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
     }
 
-    @Specialization(order = 13)
+    @Specialization
     public byte existsStringEnv(String name, @SuppressWarnings("unused") int where, REnvironment envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name, envir, RMissing.instance, frame, mode, inherits);
     }
 
-    @Specialization(order = 14)
+    @Specialization
     public byte existsStringEnv(RStringVector name, int where, REnvironment envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);

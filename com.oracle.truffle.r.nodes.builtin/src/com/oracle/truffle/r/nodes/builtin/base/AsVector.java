@@ -117,61 +117,61 @@ public abstract class AsVector extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.TYPE_ANY)};
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public Object asVector(RNull x, @SuppressWarnings("unused") RMissing mode) {
         controlVisibility();
         return x;
     }
 
-    @Specialization(order = 100, guards = "castToInt")
+    @Specialization(guards = "castToInt")
     public RAbstractVector asVectorInt(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castInteger(frame, x);
     }
 
-    @Specialization(order = 200, guards = "castToDouble")
+    @Specialization(guards = "castToDouble")
     public RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castDouble(frame, x);
     }
 
-    @Specialization(order = 300, guards = "castToComplex")
+    @Specialization(guards = "castToComplex")
     public RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castComplex(frame, x);
     }
 
-    @Specialization(order = 400, guards = "castToLogical")
+    @Specialization(guards = "castToLogical")
     public RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castLogical(frame, x);
     }
 
-    @Specialization(order = 500, guards = "castToString")
+    @Specialization(guards = "castToString")
     public RAbstractVector asVectorString(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castString(frame, x);
     }
 
-    @Specialization(order = 600, guards = "castToRaw")
+    @Specialization(guards = "castToRaw")
     public RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castRaw(frame, x);
     }
 
-    @Specialization(order = 700, guards = "castToList")
+    @Specialization(guards = "castToList")
     public RAbstractVector asVectorList(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castList(frame, x);
     }
 
-    @Specialization(order = 800, guards = "castToSymbol")
+    @Specialization(guards = "castToSymbol")
     public RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castSymbol(frame, x);
     }
 
-    @Specialization(order = 900, guards = "isSymbol")
+    @Specialization(guards = "isSymbol")
     public RSymbol asVectorSymbol(RSymbol x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return RDataFactory.createSymbol(x.getName());
@@ -181,7 +181,7 @@ public abstract class AsVector extends RBuiltinNode {
         return mode.equals("symbol");
     }
 
-    @Specialization(order = 1000)
+    @Specialization
     public RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         RList result = x.copyWithNewDimensions(null);
@@ -189,14 +189,14 @@ public abstract class AsVector extends RBuiltinNode {
         return result;
     }
 
-    @Specialization(order = 1001, guards = "modeIsAnyOrMatches")
+    @Specialization(guards = "modeIsAnyOrMatches")
     public RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return x.copyWithNewDimensions(null);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1002, guards = "invalidMode")
+    @Specialization(guards = "invalidMode")
     public RAbstractVector asVectorWrongMode(VirtualFrame frame, RAbstractVector x, String mode) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");

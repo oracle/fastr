@@ -42,7 +42,7 @@ public abstract class RowSums extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "!isNaRm", order = 0)
+    @Specialization(guards = "!isNaRm")
     public RDoubleVector rowSumsNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -68,7 +68,7 @@ public abstract class RowSums extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
-    @Specialization(guards = "isNaRm", order = 1)
+    @Specialization(guards = "isNaRm")
     public RDoubleVector rowSumsNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -86,7 +86,7 @@ public abstract class RowSums extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = "!isNaRm", order = 2)
+    @Specialization(guards = "!isNaRm")
     public RDoubleVector rowSumsNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -106,7 +106,7 @@ public abstract class RowSums extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm", order = 3)
+    @Specialization(guards = "isNaRm")
     public RDoubleVector rowSumsNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -124,7 +124,7 @@ public abstract class RowSums extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = "!isNaRm", order = 4)
+    @Specialization(guards = "!isNaRm")
     public RDoubleVector rowSumsNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -144,7 +144,7 @@ public abstract class RowSums extends RBuiltinNode {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "isNaRm", order = 5)
+    @Specialization(guards = "isNaRm")
     public RDoubleVector rowSumsNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
@@ -163,7 +163,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 6)
+    @Specialization
     public RDoubleVector rowSums(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);

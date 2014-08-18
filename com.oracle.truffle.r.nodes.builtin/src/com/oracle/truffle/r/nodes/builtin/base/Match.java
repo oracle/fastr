@@ -68,19 +68,19 @@ public abstract class Match extends RBuiltinNode {
 
     // FIXME deal incomparables parameter
 
-    @Specialization(order = 0)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
-    @Specialization(order = 1)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(x.getLength());
     }
 
-    @Specialization(order = 5)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -102,7 +102,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 6)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractDoubleVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -124,7 +124,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 10)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractDoubleVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -146,7 +146,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 11)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractDoubleVector x, RAbstractDoubleVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -168,7 +168,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 21)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -190,7 +190,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 15)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractLogicalVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -211,7 +211,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 22, guards = "!isStringVectorX")
+    @Specialization(guards = "!isStringVectorX")
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -233,7 +233,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 25)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RAbstractComplexVector x, RAbstractComplexVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -255,13 +255,13 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(order = 100)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, RFunction x, Object table, Object nomatchObj, Object incomparables) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
-    @Specialization(order = 101)
+    @Specialization
     @SuppressWarnings("unused")
     public RIntVector match(VirtualFrame frame, Object x, RFunction table, Object nomatchObj, Object incomparables) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);

@@ -39,7 +39,7 @@ public abstract class Switch extends RBuiltinNode {
         return this.isVisible;
     }
 
-    @Specialization(order = 0, guards = "isLengthOne")
+    @Specialization(guards = "isLengthOne")
     public Object doSwitch(VirtualFrame frame, RAbstractStringVector x, Object[] optionalArgs) {
         controlVisibility();
         Object currentDefaultValue = null;
@@ -67,12 +67,12 @@ public abstract class Switch extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public Object doSwitch(VirtualFrame frame, int x, Object[] optionalArgs) {
         return doSwitchInt(frame, x, optionalArgs);
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public Object doSwitch(VirtualFrame frame, Object x, Object[] optionalArgs) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -87,7 +87,7 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 3)
+    @Specialization
     public Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }

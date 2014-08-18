@@ -174,7 +174,7 @@ public class EnvFunctions {
             return new RNode[]{ConstantNode.create(RNull.instance)};
         }
 
-        @Specialization(order = 0)
+        @Specialization
         public Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
@@ -186,7 +186,7 @@ public class EnvFunctions {
          * cannot both have a specialization for {@link RFunction} and one for {@link Object}, but
          * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
          */
-        @Specialization(order = 1)
+        @Specialization
         public Object environment(Object funcArg) {
             controlVisibility();
             if (funcArg instanceof RFunction) {
@@ -217,7 +217,7 @@ public class EnvFunctions {
             return env.getName();
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public String environmentName(@SuppressWarnings("unused") Object env) {
             controlVisibility();
             // Not an error according to GnuR
@@ -273,7 +273,7 @@ public class EnvFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
 
-        @Specialization(order = 0)
+        @Specialization
         public Object lockEnvironment(REnvironment env, byte bindings) {
             controlVisibility();
             env.lock(bindings == RRuntime.LOGICAL_TRUE);
@@ -284,7 +284,7 @@ public class EnvFunctions {
 
     @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"})
     public abstract static class EnvironmentIsLocked extends RBuiltinNode {
-        @Specialization(order = 0)
+        @Specialization
         public Object lockEnvironment(REnvironment env) {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
@@ -294,7 +294,7 @@ public class EnvFunctions {
 
     @RBuiltin(name = "lockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class LockBinding extends RInvisibleBuiltinNode {
-        @Specialization(order = 0)
+        @Specialization
         public Object lockBinding(String sym, REnvironment env) {
             controlVisibility();
             env.lockBinding(sym);
@@ -305,7 +305,7 @@ public class EnvFunctions {
 
     @RBuiltin(name = "unlockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
-        @Specialization(order = 0)
+        @Specialization
         public Object unlockBinding(String sym, REnvironment env) {
             controlVisibility();
             env.unlockBinding(sym);
@@ -316,7 +316,7 @@ public class EnvFunctions {
 
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class BindingIsLocked extends RBuiltinNode {
-        @Specialization(order = 0)
+        @Specialization
         public Object bindingIsLocked(String sym, REnvironment env) {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym));
@@ -327,7 +327,7 @@ public class EnvFunctions {
     @RBuiltin(name = "makeActiveBinding", kind = INTERNAL, parameterNames = {"sym", "fun", "env"})
     public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
-        @Specialization(order = 0)
+        @Specialization
         public Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
@@ -338,7 +338,7 @@ public class EnvFunctions {
     @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class BindingIsActive extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
-        @Specialization(order = 0)
+        @Specialization
         public Object bindingIsActive(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();

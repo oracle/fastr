@@ -41,7 +41,7 @@ public abstract class AccessFieldNode extends RNode {
 
     private final BranchProfile inexactMatch = new BranchProfile();
 
-    @Specialization(order = 1, guards = "hasNames")
+    @Specialization(guards = "hasNames")
     public Object accessField(RList object) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
@@ -51,18 +51,18 @@ public abstract class AccessFieldNode extends RNode {
         return index == -1 ? RNull.instance : object.getDataAt(index);
     }
 
-    @Specialization(order = 2, guards = "!hasNames")
+    @Specialization(guards = "!hasNames")
     public Object accessFieldNoNames(@SuppressWarnings("unused") RList object) {
         return RNull.instance;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public Object accessField(REnvironment env) {
         Object obj = env.get(getField());
         return obj == null ? RNull.instance : obj;
     }
 
-    @Specialization(order = 1000)
+    @Specialization
     public Object accessField(VirtualFrame frame, @SuppressWarnings("unused") RAbstractVector object) {
         throw RError.error(frame, RError.Message.DOLLAR_ATOMIC_VECTORS);
     }

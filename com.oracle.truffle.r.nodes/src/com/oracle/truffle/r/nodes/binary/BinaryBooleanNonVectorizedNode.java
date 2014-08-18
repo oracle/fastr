@@ -70,162 +70,162 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
         return logic.requiresRightOperand(RTypesGen.RTYPES.asByte(leftValue));
     }
 
-    @Specialization(order = 1, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(byte left, boolean needsRightOperand, int right) {
         return logic.op(RRuntime.logical2int(left), right);
     }
 
-    @Specialization(order = 2, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, int right) {
         return left;
     }
 
-    @Specialization(order = 3, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(byte left, boolean needsRightOperand, double right) {
         return logic.op(RRuntime.logical2double(left), right);
     }
 
-    @Specialization(order = 4, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, double right) {
         return left;
     }
 
-    @Specialization(order = 5, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(byte left, boolean needsRightOperand, byte right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
-    @Specialization(order = 6, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, byte right) {
         return left;
     }
 
-    @Specialization(order = 7, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(byte left, boolean needsRightOperand, String right) {
         return logic.op(RRuntime.logical2int(left), right);
     }
 
-    @Specialization(order = 8, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, String right) {
         return left;
     }
 
-    @Specialization(order = 9, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(byte left, boolean needsRightOperand, RComplex right) {
         return logic.op(RRuntime.logical2complex(left), right);
     }
 
-    @Specialization(order = 10, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RComplex right) {
         return left;
     }
 
-    @Specialization(order = 11, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(Object left, boolean needsRightOperand, RRaw right) {
         return logic.op(left, right);
     }
 
-    @Specialization(order = 12, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RRaw right) {
         return left;
     }
 
-    @Specialization(order = 13, guards = "needsRightOperand")
+    @Specialization(guards = "needsRightOperand")
     public byte doLogical(Object left, boolean needsRightOperand, RNull right) {
         return logic.op(left, right);
     }
 
-    @Specialization(order = 14, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RNull right) {
         return left;
     }
 
-    @Specialization(order = 15, guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
     public byte doLogical(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return logic.op(RRuntime.logical2int(left), right.getDataAt(0));
     }
 
-    @Specialization(order = 16, guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.INT_NA);
     }
 
-    @Specialization(order = 17, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return left;
     }
 
-    @Specialization(order = 18, guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
     public byte doLogical(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return logic.op(RRuntime.logical2double(left), right.getDataAt(0));
     }
 
-    @Specialization(order = 19, guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return logic.op(RRuntime.logical2double(left), RRuntime.DOUBLE_NA);
     }
 
-    @Specialization(order = 20, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return left;
     }
 
-    @Specialization(order = 21, guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
     public byte doLogical(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right.getDataAt(0)));
     }
 
-    @Specialization(order = 22, guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.INT_NA);
     }
 
-    @Specialization(order = 23, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return left;
     }
 
-    @Specialization(order = 24, guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
     public byte doLogical(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return logic.op(RRuntime.logical2int(left), right.getDataAt(0));
     }
 
-    @Specialization(order = 25, guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.STRING_NA);
     }
 
-    @Specialization(order = 26, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return left;
     }
 
-    @Specialization(order = 27, guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
     public byte doLogical(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return logic.op(RRuntime.logical2complex(left), right.getDataAt(0));
     }
 
-    @Specialization(order = 28, guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return logic.op(RRuntime.logical2complex(left), RRuntime.createComplexNA());
     }
 
-    @Specialization(order = 29, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return left;
     }
 
-    @Specialization(order = 30, guards = {"needsRightOperand", "!isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
     public byte doLogical(Object left, boolean needsRightOperand, RAbstractRawVector right) {
         return logic.op(left, right.getDataAt(0));
     }
 
-    @Specialization(order = 31, guards = {"needsRightOperand", "isZeroLength"})
+    @Specialization(guards = {"needsRightOperand", "isZeroLength"})
     public byte doLogicalEmpty(VirtualFrame frame, Object left, boolean needsRightOperand, RAbstractRawVector right) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", logic.opName());
     }
 
-    @Specialization(order = 32, guards = "!needsRightOperand")
+    @Specialization(guards = "!needsRightOperand")
     public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractRawVector right) {
         return left;
     }

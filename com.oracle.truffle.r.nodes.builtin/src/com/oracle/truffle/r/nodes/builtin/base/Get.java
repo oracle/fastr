@@ -57,7 +57,7 @@ public abstract class Get extends RBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, String name, int pos, RMissing envir, String mode, byte inherits);
 
-    @Specialization(order = 0)
+    @Specialization
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
@@ -87,7 +87,7 @@ public abstract class Get extends RBuiltinNode {
         return lookup;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
@@ -109,7 +109,7 @@ public abstract class Get extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 2)
+    @Specialization
     @SuppressWarnings("unused")
     public Object get(VirtualFrame frame, RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
         return get(frame, x, envir, RMissing.instance, mode, inherits);

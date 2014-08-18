@@ -42,7 +42,7 @@ public abstract class VectorPositionCast extends RNode {
 
     private final NACheck positionNACheck;
 
-    @Specialization(order = 1)
+    @Specialization
     public int doDoublePosition(double operand) {
         positionNACheck.enable(operand);
         if (positionNACheck.check(operand)) {
@@ -51,13 +51,13 @@ public abstract class VectorPositionCast extends RNode {
         return (int) operand;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public int doInt(int operand) {
         positionNACheck.enable(operand);
         return operand;
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public byte doBoolean(byte operand) {
         positionNACheck.enable(operand);
         return operand;
@@ -87,27 +87,27 @@ public abstract class VectorPositionCast extends RNode {
         return operand.getStart() == 0 && operand.getStride() > 0;
     }
 
-    @Specialization(order = 5, guards = "greaterEqualOneSequence")
+    @Specialization(guards = "greaterEqualOneSequence")
     public RIntSequence doIntVectorPositiveSequence(RIntSequence operand) {
         return operand;
     }
 
-    @Specialization(order = 6, guards = "startingZeroSequence")
+    @Specialization(guards = "startingZeroSequence")
     public RIntSequence doIntVectorPositiveIncludingZeroSequence(RIntSequence operand) {
         return operand.removeFirst();
     }
 
-    @Specialization(order = 7, guards = {"!greaterEqualOneSequence", "!startingZeroSequence"})
+    @Specialization(guards = {"!greaterEqualOneSequence", "!startingZeroSequence"})
     public RIntVector doIntVector(RIntSequence operand) {
         return (RIntVector) operand.createVector();
     }
 
-    @Specialization(order = 8, guards = "canConvertIntSequence")
+    @Specialization(guards = "canConvertIntSequence")
     public RIntSequence doDoubleSequenceToIntConverstion(RDoubleSequence operand) {
         return RDataFactory.createIntSequence((int) operand.getStart(), (int) operand.getStride(), operand.getLength());
     }
 
-    @Specialization(order = 9, guards = "!canConvertIntSequence")
+    @Specialization(guards = "!canConvertIntSequence")
     public RIntVector doDoubleSequence(@SuppressWarnings("unused") RDoubleSequence operand) {
         throw Utils.nyi();
     }

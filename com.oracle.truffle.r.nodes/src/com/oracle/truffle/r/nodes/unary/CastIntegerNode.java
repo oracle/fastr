@@ -174,7 +174,7 @@ public abstract class CastIntegerNode extends CastNode {
         return idata;
     }
 
-    @Specialization(order = 101, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doComplexVectorDims(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
@@ -184,7 +184,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 102, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doComplexVectorNames(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
@@ -194,7 +194,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 103, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RIntVector doComplexVectorDimsNames(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
@@ -204,7 +204,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 104, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RIntVector doComplexVector(RComplexVector vector) {
         int[] result = dataFromComplex(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA());
@@ -214,7 +214,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 105, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doStringVectorDims(RStringVector vector) {
         int[] result = dataFromString(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
@@ -224,7 +224,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 106, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doStringVectorNames(RStringVector vector) {
         int[] result = dataFromString(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
@@ -234,7 +234,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 107, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RIntVector doStringVectorDimsNames(RStringVector vector) {
         int[] result = dataFromString(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
@@ -244,7 +244,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 108, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RIntVector doStringVector(RStringVector vector) {
         int[] result = dataFromString(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA());
@@ -254,7 +254,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 109, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doLogicalVectorDims(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
@@ -264,7 +264,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 110, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doLogicalVectorNames(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
@@ -274,7 +274,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 111, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RIntVector doLogicalVectorDimsNames(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
@@ -284,7 +284,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 112, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RIntVector doLogicalVector(RLogicalVector vector) {
         int[] result = dataFromLogical(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA());
@@ -294,7 +294,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 113, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doDoubleVectorDims(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
@@ -305,7 +305,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 114, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doDoubleVectorNames(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
@@ -316,7 +316,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 115, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RIntVector doDoubleVectorDimsNames(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
@@ -327,7 +327,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 116, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RIntVector doDoubleVector(RDoubleVector vector) {
         check.enable(vector);
         int[] result = check.convertDoubleVectorToIntData(vector);
@@ -338,7 +338,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 117, guards = {"!preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "preserveDimensions"})
     public RIntVector doRawVectorDims(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions());
@@ -348,7 +348,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 118, guards = {"preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "!preserveDimensions"})
     public RIntVector doRawVectorNames(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getNames());
@@ -358,7 +358,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 119, guards = {"preserveNames", "preserveDimensions"})
+    @Specialization(guards = {"preserveNames", "preserveDimensions"})
     public RIntVector doRawVectorDimsNames(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA(), vector.getDimensions(), vector.getNames());
@@ -368,7 +368,7 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    @Specialization(order = 120, guards = {"!preserveNames", "!preserveDimensions"})
+    @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
     public RIntVector doRawVector(RRawVector vector) {
         int[] result = dataFromRaw(vector);
         RIntVector ret = RDataFactory.createIntVector(result, check.neverSeenNA());

@@ -72,14 +72,14 @@ public abstract class Transpose extends RBuiltinNode {
         return value;
     }
 
-    @Specialization(order = 10, guards = "isEmpty2D")
+    @Specialization(guards = "isEmpty2D")
     public RAbstractVector transpose(RAbstractVector vector) {
         controlVisibility();
         int[] dim = vector.getDimensions();
         return vector.copyWithNewDimensions(new int[]{dim[1], dim[0]});
     }
 
-    @Specialization(order = 11, guards = "!isEmpty2D")
+    @Specialization(guards = "!isEmpty2D")
     public RIntVector transpose(RAbstractIntVector vector) {
         controlVisibility();
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
@@ -106,7 +106,7 @@ public abstract class Transpose extends RBuiltinNode {
         return r;
     }
 
-    @Specialization(order = 12, guards = "!isEmpty2D")
+    @Specialization(guards = "!isEmpty2D")
     public RDoubleVector transpose(RAbstractDoubleVector vector) {
         controlVisibility();
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
@@ -133,7 +133,7 @@ public abstract class Transpose extends RBuiltinNode {
         return r;
     }
 
-    @Specialization(order = 13, guards = "!isEmpty2D")
+    @Specialization(guards = "!isEmpty2D")
     public RStringVector transpose(RAbstractStringVector vector) {
         controlVisibility();
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});

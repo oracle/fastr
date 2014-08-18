@@ -62,7 +62,7 @@ public abstract class Matrix extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = "isByRow", order = 12)
+    @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -72,7 +72,7 @@ public abstract class Matrix extends RBuiltinNode {
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
     }
 
-    @Specialization(guards = "isByRow", order = 10)
+    @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -82,7 +82,7 @@ public abstract class Matrix extends RBuiltinNode {
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
     }
 
-    @Specialization(guards = "isByRow", order = 8)
+    @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -92,7 +92,7 @@ public abstract class Matrix extends RBuiltinNode {
         return transpose.execute(frame, vdata.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
     }
 
-    @Specialization(guards = "isByRow", order = 6)
+    @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
     public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -101,7 +101,7 @@ public abstract class Matrix extends RBuiltinNode {
         return transpose.execute(frame, data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(rowColByRow));
     }
 
-    @Specialization(guards = "!isByRow", order = 4)
+    @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -109,7 +109,7 @@ public abstract class Matrix extends RBuiltinNode {
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
-    @Specialization(guards = "!isByRow", order = 2)
+    @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -117,7 +117,7 @@ public abstract class Matrix extends RBuiltinNode {
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
-    @Specialization(guards = "!isByRow", order = 1)
+    @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -125,7 +125,7 @@ public abstract class Matrix extends RBuiltinNode {
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
     }
 
-    @Specialization(guards = "!isByRow", order = 0)
+    @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
     public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();

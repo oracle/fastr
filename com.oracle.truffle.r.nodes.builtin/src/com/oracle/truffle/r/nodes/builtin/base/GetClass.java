@@ -22,13 +22,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetClass extends RBuiltinNode {
 
-    @Specialization(guards = "isObject", order = 0)
+    @Specialization(guards = "isObject")
     public Object getClassForObject(RAbstractContainer arg) {
         controlVisibility();
         return arg.getClassHierarchy();
     }
 
-    @Specialization(guards = "!isObject", order = 1)
+    @Specialization(guards = "!isObject")
     public Object getClass(RAbstractContainer arg) {
         controlVisibility();
         final String klass = arg.getClassHierarchy().getDataAt(0);

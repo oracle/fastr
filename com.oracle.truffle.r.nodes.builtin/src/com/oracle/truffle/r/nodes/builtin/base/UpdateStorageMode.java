@@ -32,7 +32,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Child private CastTypeNode castTypeNode;
     @Child private IsFactorNode isFactor;
 
-    @Specialization(order = 0, guards = {"!isReal", "!isSingle"})
+    @Specialization(guards = {"!isReal", "!isSingle"})
     public Object update(VirtualFrame frame, final Object x, final String value) {
         controlVisibility();
         if (typeof == null) {
@@ -73,21 +73,21 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1, guards = "isReal")
+    @Specialization(guards = "isReal")
     public Object updateReal(VirtualFrame frame, final Object x, final String value) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.REAL, RRuntime.TYPE_DOUBLE);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2, guards = "isSingle")
+    @Specialization(guards = "isSingle")
     public Object updateSingle(VirtualFrame frame, final Object x, final String value) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.SINGLE, "mode<-");
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 3)
+    @Specialization
     public Object update(VirtualFrame frame, final Object x, final Object value) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);

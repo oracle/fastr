@@ -71,7 +71,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return list;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
         v.setDimNames(frame, null, getEncapsulatingSourceSection());
@@ -79,7 +79,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return v;
     }
 
-    @Specialization(order = 2, guards = "isZeroLength")
+    @Specialization(guards = "isZeroLength")
     public RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(frame, null, getEncapsulatingSourceSection());
@@ -87,7 +87,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return v;
     }
 
-    @Specialization(order = 3, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(frame, convertToListOfStrings(frame, list), getEncapsulatingSourceSection());

@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
-    @Specialization(order = 0)
+    @Specialization
     public Object parse(VirtualFrame frame, RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
@@ -57,7 +57,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1)
+    @Specialization
     public Object parse(VirtualFrame frame, RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
@@ -69,7 +69,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2, guards = "isText")
+    @Specialization(guards = "isText")
     public Object parse(VirtualFrame frame, RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {

@@ -41,23 +41,23 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(order = 0)
+    @Specialization
     public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
         REnvironment curEnv = curEnv(frame);
         return doDelayedAssign(frame, nameVec, value, curEnv, curEnv);
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
         return doDelayedAssign(frame, nameVec, value, curEnv(frame), assignEnv);
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
         return doDelayedAssign(frame, nameVec, value, evalEnv, curEnv(frame));
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, REnvironment assignEnv) {
         controlVisibility();
         String name = nameVec.getDataAt(0);

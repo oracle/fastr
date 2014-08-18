@@ -40,24 +40,24 @@ public abstract class CastToContainerNode extends CastNode {
         return isNonContainerPreserved();
     }
 
-    @Specialization(order = 1, guards = "preserveNonContainer")
+    @Specialization(guards = "preserveNonContainer")
     @SuppressWarnings("unused")
     public RNull castNull(RNull rnull) {
         return RNull.instance;
     }
 
-    @Specialization(order = 2, guards = "!preserveNonContainer")
+    @Specialization(guards = "!preserveNonContainer")
     @SuppressWarnings("unused")
     public RAbstractVector cast(RNull rnull) {
         return RDataFactory.createList();
     }
 
-    @Specialization(order = 3, guards = "preserveNonContainer")
+    @Specialization(guards = "preserveNonContainer")
     public RFunction castFunction(RFunction f) {
         return f;
     }
 
-    @Specialization(order = 4, guards = "!preserveNonContainer")
+    @Specialization(guards = "!preserveNonContainer")
     @SuppressWarnings("unused")
     public RAbstractVector cast(RFunction f) {
         return RDataFactory.createList();

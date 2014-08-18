@@ -45,7 +45,7 @@ public abstract class UpdateFieldNode extends RNode {
 
     @Child private CastListNode castList;
 
-    @Specialization(order = 1)
+    @Specialization
     public Object updateField(RList object, Object value) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
@@ -81,7 +81,7 @@ public abstract class UpdateFieldNode extends RNode {
         return result;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public Object updateField(VirtualFrame frame, REnvironment env, Object value) {
         // reference semantics for environments
         try {
@@ -92,7 +92,7 @@ public abstract class UpdateFieldNode extends RNode {
         return env;
     }
 
-    @Specialization(order = 1000)
+    @Specialization
     public Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

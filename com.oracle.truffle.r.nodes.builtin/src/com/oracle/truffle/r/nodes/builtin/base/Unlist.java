@@ -66,12 +66,12 @@ public abstract class Unlist extends RBuiltinNode {
             return 0;
         }
 
-        @Specialization(order = 10, guards = "!isVectorList")
+        @Specialization(guards = "!isVectorList")
         public int getLength(RAbstractVector vector) {
             return vector.getLength();
         }
 
-        @Specialization(order = 20, guards = "isVectorList")
+        @Specialization(guards = "isVectorList")
         public int getLengthList(VirtualFrame frame, RAbstractVector vector) {
             int totalSize = 0;
             for (int i = 0; i < vector.getLength(); ++i) {

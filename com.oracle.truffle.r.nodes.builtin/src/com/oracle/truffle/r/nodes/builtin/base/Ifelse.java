@@ -42,43 +42,43 @@ public abstract class Ifelse extends RBuiltinNode {
         return na.check(test);
     }
 
-    @Specialization(order = 0, guards = "isNA")
+    @Specialization(guards = "isNA")
     public byte ifelseNA(byte test, double yes, double no) {
         controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
-    @Specialization(order = 1, guards = "!isNA")
+    @Specialization(guards = "!isNA")
     public double ifelse(byte test, double yes, double no) {
         controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
-    @Specialization(order = 2, guards = "isNA")
+    @Specialization(guards = "isNA")
     public byte ifelseNA(byte test, int yes, int no) {
         controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
-    @Specialization(order = 3, guards = "!isNA")
+    @Specialization(guards = "!isNA")
     public int ifelse(byte test, int yes, int no) {
         controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
-    @Specialization(order = 4, guards = "isNA")
+    @Specialization(guards = "isNA")
     public byte ifelseNA(byte test, String yes, String no) {
         controlVisibility();
         return RRuntime.LOGICAL_NA;
     }
 
-    @Specialization(order = 5, guards = "!isNA")
+    @Specialization(guards = "!isNA")
     public String ifelse(byte test, String yes, String no) {
         controlVisibility();
         return test == RRuntime.LOGICAL_TRUE ? yes : no;
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public RDoubleVector ifelse(RLogicalVector lvec, RDoubleVector dvec, double no) {
         // just one special case for version.R
         assert lvec.getLength() == 1;

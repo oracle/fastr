@@ -120,7 +120,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 1)
+    @Specialization
     public String prettyPrintVector(byte operand, Object listElementName, byte quote) {
         return concat("[1] ", prettyPrint(operand));
     }
@@ -136,7 +136,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 10)
+    @Specialization
     public String prettyPrintVector(int operand, Object listElementName, byte quote) {
         return concat("[1] ", prettyPrint(operand));
     }
@@ -146,7 +146,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 20)
+    @Specialization
     public String prettyPrintVector(double operand, Object listElementName, byte quote) {
         return concat("[1] ", prettyPrint(operand));
     }
@@ -160,7 +160,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 30)
+    @Specialization
     public String prettyPrintVector(RComplex operand, Object listElementName, byte quote) {
         return concat("[1] ", prettyPrint(operand));
     }
@@ -172,7 +172,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 40)
+    @Specialization
     public String prettyPrintVector(String operand, Object listElementName, byte quote) {
         return concat("[1] ", prettyPrint(operand));
     }
@@ -182,7 +182,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 50)
+    @Specialization
     public String prettyPrintVector(RRaw operand, Object listElementName, byte quote) {
         return concat("[1] ", prettyPrint(operand));
     }
@@ -192,13 +192,13 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 60)
+    @Specialization
     public String prettyPrint(RFunction operand, Object listElementName, byte quote) {
         return ((RRootNode) operand.getTarget().getRootNode()).getSourceCode();
     }
 
     @SlowPath
-    @Specialization(order = 70)
+    @Specialization
     public String prettyPrint(REnvironment operand, Object listElementName, byte quote) {
         RAttributes attributes = operand.getAttributes();
         if (attributes == null) {
@@ -213,7 +213,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 80)
+    @Specialization
     public String prettyPrint(RExpression expr, Object listElementName, byte quote) {
         StringBuilder builder = new StringBuilder();
         builder.append("expression(");
@@ -229,13 +229,13 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 85)
+    @Specialization
     public String prettyPrintSymbol(RSymbol operand, Object listElementName, byte quote) {
         return operand.getName();
     }
 
     @SlowPath
-    @Specialization(order = 86)
+    @Specialization
     public String prettyPrintPromise(RPromise promise, Object listElementName, byte quote) {
         if (promise.isEvaluated()) {
             return prettyPrintRecursive(promise.getValue(), listElementName, quote);
@@ -245,7 +245,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 87)
+    @Specialization
     public String prettyPrintLanguage(RLanguage language, Object listElementName, byte quote) {
         return prettyPrintLanguageRep(language, listElementName);
     }
@@ -261,7 +261,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 88)
+    @Specialization
     public String prettyPrintPairList(RPairList pairList, Object listElementName, byte quote) {
         StringBuilder sb = new StringBuilder();
         RPairList pl = pairList;
@@ -284,13 +284,13 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 89)
+    @Specialization
     public String prettyPrintMissing(RMissing missing, Object listElementName, byte quote) {
         return "";
     }
 
     @SlowPath
-    @Specialization(order = 90)
+    @Specialization
     public String prettyPrintFormula(RFormula formula, Object listElementName, byte quote) {
         return formula.getSource().getCode();
     }
@@ -579,37 +579,37 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 100, guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore")
     public String prettyPrintM(RList operand, Object listElementName, byte quote) {
         return printVectorMultiDim(operand, true, false);
     }
 
     @SlowPath
-    @Specialization(order = 101, guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore")
     public String prettyPrintM(RAbstractStringVector operand, Object listElementName, byte quote) {
         return printVectorMultiDim(operand, true, false);
     }
 
     @SlowPath
-    @Specialization(order = 103, guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore")
     public String prettyPrintM(RAbstractComplexVector operand, Object listElementName, byte quote) {
         return printVectorMultiDim(operand, false, true);
     }
 
     @SlowPath
-    @Specialization(order = 104, guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore")
     public String prettyPrintM(RAbstractRawVector operand, Object listElementName, byte quote) {
         return printVectorMultiDim(operand, false, true);
     }
 
     @SlowPath
-    @Specialization(order = 105, guards = "twoDimsOrMore")
+    @Specialization(guards = "twoDimsOrMore")
     public String prettyPrintM(RAbstractVector operand, Object listElementName, byte quote) {
         return printVectorMultiDim(operand, false, false);
     }
 
     @SlowPath
-    @Specialization(order = 200, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RList operand, Object listElementName, byte quote) {
         return prettyPrintList0(operand, listElementName, quote);
     }
@@ -635,7 +635,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 300, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RAbstractDoubleVector operand, Object listElementName, byte quote) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -650,7 +650,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 400, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RAbstractIntVector operand, Object listElementName, byte quote) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -662,7 +662,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 500, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RAbstractStringVector operand, Object listElementName, byte quote) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -678,7 +678,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 600, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RAbstractLogicalVector operand, Object listElementName, byte quote) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -690,7 +690,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 700, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RAbstractRawVector operand, Object listElementName, byte quote) {
         int length = operand.getLength();
         String[] values = new String[length];
@@ -702,7 +702,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 800, guards = "!twoDimsOrMore")
+    @Specialization(guards = "!twoDimsOrMore")
     public String prettyPrint(RAbstractComplexVector operand, Object listElementName, byte quote) {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
@@ -735,7 +735,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @SlowPath
-    @Specialization(order = 1000)
+    @Specialization
     public String prettyPrint(RDataFrame operand, Object listElementName, byte quote) {
         if (operand.getVector().getLength() == 0) {
             return "data frame with 0 columns and 0 rows";
@@ -1075,19 +1075,19 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @SlowPath
-        @Specialization(order = 1)
+        @Specialization
         public String prettyPrintVectorElement(RList operand) {
             return prettyPrint(operand);
         }
 
         @SlowPath
-        @Specialization(order = 2, guards = {"!isLengthOne", "!isVectorList"})
+        @Specialization(guards = {"!isLengthOne", "!isVectorList"})
         public String prettyPrintVectorElement(RAbstractVector operand) {
             return prettyPrint(operand);
         }
 
         @SlowPath
-        @Specialization(order = 3, guards = {"isLengthOne", "!isVectorList"})
+        @Specialization(guards = {"isLengthOne", "!isVectorList"})
         public String prettyPrintVectorElementLengthOne(RAbstractVector operand) {
             return prettyPrintRecursive(operand.getDataAtAsObject(0));
         }
@@ -1226,7 +1226,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @SlowPath
-        @Specialization(order = 1, guards = "isEmpty")
+        @Specialization(guards = "isEmpty")
         public String printVector2DimEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1263,7 +1263,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @SlowPath
-        @Specialization(order = 10, guards = "!isEmpty")
+        @Specialization(guards = "!isEmpty")
         public String printVector2Dim(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1325,7 +1325,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @SlowPath
-        @Specialization(order = 20, guards = "!isEmpty")
+        @Specialization(guards = "!isEmpty")
         public String printVector2Dim(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
@@ -1380,7 +1380,7 @@ public abstract class PrettyPrinterNode extends RNode {
         }
 
         @SlowPath
-        @Specialization(order = 200, guards = {"!isEmpty", "notDoubleOrComplex"})
+        @Specialization(guards = {"!isEmpty", "notDoubleOrComplex"})
         public String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);

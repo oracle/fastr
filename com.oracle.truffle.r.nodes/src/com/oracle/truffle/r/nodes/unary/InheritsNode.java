@@ -28,19 +28,19 @@ public abstract class InheritsNode extends RBuiltinNode {
     public abstract byte execute(VirtualFrame frame, Object x, Object what);
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1)
+    @Specialization
     public Object doesInherit(RNull x, RAbstractStringVector what) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2)
+    @Specialization
     public Object doesInherit(REnvironment x, RAbstractStringVector what) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     // map operations lead to recursion resulting in compilation failure
-    @Specialization(order = 0)
+    @Specialization
     public Object doesInherit(RAbstractVector x, RAbstractStringVector what) {
         Map<String, Integer> classToPos = initClassToPos(x);
         for (int i = 0; i < what.getLength(); ++i) {

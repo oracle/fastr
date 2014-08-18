@@ -38,32 +38,32 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RComplex combine(RNull left, RComplex right) {
         return right;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public RComplex combine(RComplex left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RComplexVector combine(RComplexVector left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RComplexVector combine(RNull left, RComplexVector right) {
         return right;
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RComplexVector combine(RComplex left, RComplex right) {
         return RDataFactory.createComplexVector(new double[]{left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart()}, !left.isNA() && !right.isNA());
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public RComplexVector combine(RComplexVector left, RComplex right) {
         int dataLength = left.getLength();
         double[] result = new double[(dataLength + 1) << 1];
@@ -78,7 +78,7 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
         return RDataFactory.createComplexVector(result, left.isComplete() && !right.isNA(), combineNames(left, false));
     }
 
-    @Specialization(order = 7)
+    @Specialization
     public RComplexVector combine(RComplex left, RComplexVector right) {
         int dataLength = right.getLength();
         double[] result = new double[(1 + dataLength) << 1];
@@ -93,7 +93,7 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
         return RDataFactory.createComplexVector(result, (!left.isNA()) && right.isComplete(), combineNames(right, true));
     }
 
-    @Specialization(order = 8)
+    @Specialization
     public RComplexVector combine(RComplexVector left, RComplexVector right) {
         return (RComplexVector) genericCombine(left, right);
     }

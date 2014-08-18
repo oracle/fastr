@@ -86,7 +86,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return castList.executeList(frame, value);
     }
 
-    @Specialization(order = 0, guards = "nullValue")
+    @Specialization(guards = "nullValue")
     public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         RVector resultVector = container.materializeNonSharedVector();
@@ -117,7 +117,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         throw RError.error(frame, sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
     }
 
-    @Specialization(order = 1, guards = "!nullValue")
+    @Specialization(guards = "!nullValue")
     public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
         controlVisibility();
         RVector resultVector = container.materializeNonSharedVector();
@@ -143,7 +143,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
-    @Specialization(order = 2, guards = "!nullValue")
+    @Specialization(guards = "!nullValue")
     public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
         controlVisibility();
         return updateAttr(frame, vector, name.getDataAt(0), value);
@@ -155,14 +155,14 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return value == RNull.instance;
     }
 
-    @Specialization(order = 10, guards = "!nullValueforEnv")
+    @Specialization(guards = "!nullValueforEnv")
     public REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, Object value) {
         controlVisibility();
         env.setAttr(name, value);
         return env;
     }
 
-    @Specialization(order = 11, guards = "nullValueforEnv")
+    @Specialization(guards = "nullValueforEnv")
     public REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, RNull value) {
         controlVisibility();
         env.removeAttr(name);

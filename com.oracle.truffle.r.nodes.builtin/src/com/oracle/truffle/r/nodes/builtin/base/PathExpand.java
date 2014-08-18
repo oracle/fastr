@@ -45,7 +45,7 @@ public abstract class PathExpand extends RBuiltinNode {
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public Object doPathExpandGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");

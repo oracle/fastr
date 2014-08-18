@@ -44,7 +44,7 @@ public abstract class Identical extends RBuiltinNode {
                         ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Specialization(order = 0)
+    @Specialization
     public byte doInternalIdentical(byte x, byte y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
@@ -54,7 +54,7 @@ public abstract class Identical extends RBuiltinNode {
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public byte doInternalIdential(String x, String y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
@@ -64,7 +64,7 @@ public abstract class Identical extends RBuiltinNode {
         return x.equals(y) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public byte doInternalIdentical(double x, double y,
                     // @formatter:off
                     byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
@@ -75,7 +75,7 @@ public abstract class Identical extends RBuiltinNode {
         return truth ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public byte doInternalIdentical(REnvironment x, REnvironment y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
@@ -86,7 +86,7 @@ public abstract class Identical extends RBuiltinNode {
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(order = 10, guards = "!vectorsLists")
+    @Specialization(guards = "!vectorsLists")
     public byte doInternalIdentialGeneric(RAbstractVector x, RAbstractVector y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
@@ -104,7 +104,7 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public byte doInternalIdentialGeneric(@SuppressWarnings("unused") RList x, @SuppressWarnings("unused") RList y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
@@ -114,7 +114,7 @@ public abstract class Identical extends RBuiltinNode {
         throw RError.nyi(getEncapsulatingSourceSection(), "lists not supported in 'identical'");
     }
 
-    @Specialization(order = 101)
+    @Specialization
     public byte doInternalIdentialGeneric(@SuppressWarnings("unused") RDataFrame x, @SuppressWarnings("unused") RDataFrame y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,

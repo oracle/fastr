@@ -31,23 +31,23 @@ public abstract class CastListNode extends CastNode {
 
     public abstract RList executeList(VirtualFrame frame, Object o);
 
-    @Specialization(order = 0)
+    @Specialization
     @SuppressWarnings("unused")
     public RList doNull(RNull operand) {
         return RDataFactory.createList();
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RList doDouble(double operand) {
         return RDataFactory.createList(new Object[]{operand});
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public RList doInt(int operand) {
         return RDataFactory.createList(new Object[]{operand});
     }
 
-    @Specialization(order = 101)
+    @Specialization
     public RList doAbstractVector(RAbstractVector operand) {
         Object[] data = new Object[operand.getLength()];
         for (int i = 0; i < data.length; ++i) {

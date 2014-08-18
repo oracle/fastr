@@ -45,13 +45,13 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO revert to R implementation
 public abstract class Rhome extends RBuiltinNode {
 
-    @Specialization(order = 0)
+    @Specialization
     public Object doRhome(@SuppressWarnings("unused") RMissing component) {
         controlVisibility();
         return RDataFactory.createStringVector(REnvVars.rHome());
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public Object doRhome(String component) {
         controlVisibility();
         String rHome = REnvVars.rHome();

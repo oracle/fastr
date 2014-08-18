@@ -63,21 +63,21 @@ public abstract class All extends RBuiltinNode {
         return value;
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public byte all(int value) {
         controlVisibility();
         check.enable(value);
         return check.convertIntToLogical(value);
     }
 
-    @Specialization(order = 12)
+    @Specialization
     public byte all(double value) {
         controlVisibility();
         check.enable(value);
         return check.convertDoubleToLogical(value);
     }
 
-    @Specialization(order = 14)
+    @Specialization
     public byte all(RComplex value) {
         controlVisibility();
         check.enable(value);

@@ -35,7 +35,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
 
-    @Specialization(order = 0)
+    @Specialization
     public byte doLogical(byte operand) {
         na.enable(operand);
         if (na.check(operand)) {
@@ -44,7 +44,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         return not(operand);
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public byte doInt(int operand) {
         na.enable(operand);
         if (na.check(operand)) {
@@ -53,7 +53,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         return RRuntime.asLogical(operand == 0);
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public byte doDouble(double operand) {
         na.enable(operand);
         if (na.check(operand)) {
@@ -62,13 +62,13 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         return RRuntime.asLogical(operand == 0);
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RRaw doRaw(RRaw operand) {
         return RDataFactory.createRaw(performRaw(operand));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 10)
+    @Specialization
     public Object doNull(VirtualFrame frame, RNull operand) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
@@ -82,47 +82,47 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
-    @Specialization(order = 20, guards = "isZeroLength")
+    @Specialization(guards = "isZeroLength")
     public RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RAbstractVector vector) {
         return RDataFactory.createEmptyLogicalVector();
     }
 
-    @Specialization(order = 30)
+    @Specialization
     public RLogicalVector performLogicalVectorNot(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector vector) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
-    @Specialization(order = 40)
+    @Specialization
     public RLogicalVector performLogicalVectorNot(VirtualFrame frame, @SuppressWarnings("unused") RList list) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
-    @Specialization(order = 50, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RLogicalVector doLogicalVector(RLogicalVector vector) {
         return performLogicalVectorNot(vector);
     }
 
-    @Specialization(order = 51, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RLogicalVector doIntVector(RIntVector vector) {
         return performAbstractIntVectorNot(vector);
     }
 
-    @Specialization(order = 52, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RLogicalVector doDoubleVector(RDoubleVector vector) {
         return performAbstractDoubleVectorNot(vector);
     }
 
-    @Specialization(order = 53, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RLogicalVector doIntSequence(RIntSequence vector) {
         return performAbstractIntVectorNot(vector);
     }
 
-    @Specialization(order = 54, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RLogicalVector doDoubleSequence(RDoubleSequence vector) {
         return performAbstractDoubleVectorNot(vector);
     }
 
-    @Specialization(order = 55, guards = "!isZeroLength")
+    @Specialization(guards = "!isZeroLength")
     public RRawVector doRawVector(RRawVector vector) {
         return performRawVectorNot(vector);
     }

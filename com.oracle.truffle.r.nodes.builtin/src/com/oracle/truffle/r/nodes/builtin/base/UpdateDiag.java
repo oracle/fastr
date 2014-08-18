@@ -62,20 +62,20 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 0, guards = "!isMatrix")
+    @Specialization(guards = "!isMatrix")
     public RIntVector updateDiagNoMatrix(VirtualFrame frame, RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.ONLY_MATRIX_DIAGONALS);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1, guards = {"isMatrix", "!correctReplacementLength"})
+    @Specialization(guards = {"isMatrix", "!correctReplacementLength"})
     public RIntVector updateDiagReplacementDiagonalLength(VirtualFrame frame, RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_DIAGONAL_LENGTH);
     }
 
-    @Specialization(order = 11, guards = {"isMatrix", "correctReplacementLength"})
+    @Specialization(guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
         controlVisibility();
         RIntVector resultVector = vector;
@@ -94,7 +94,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(order = 12, guards = {"isMatrix", "correctReplacementLength"})
+    @Specialization(guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         RDoubleVector resultVector = vector;
@@ -113,7 +113,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(order = 13, guards = {"isMatrix", "correctReplacementLength"})
+    @Specialization(guards = {"isMatrix", "correctReplacementLength"})
     public RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         if (castDouble == null) {

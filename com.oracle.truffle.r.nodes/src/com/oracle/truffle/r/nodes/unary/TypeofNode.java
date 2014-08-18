@@ -136,12 +136,12 @@ public abstract class TypeofNode extends UnaryNode {
         return RRuntime.TYPE_PAIR_LIST;
     }
 
-    @Specialization(order = 100, guards = "isFunctionBuiltin")
+    @Specialization(guards = "isFunctionBuiltin")
     public String typeofBuiltin(RFunction obj) {
         return "builtin";
     }
 
-    @Specialization(order = 101, guards = "!isFunctionBuiltin")
+    @Specialization(guards = "!isFunctionBuiltin")
     public String typeofClosure(RFunction obj) {
         return "closure";
     }

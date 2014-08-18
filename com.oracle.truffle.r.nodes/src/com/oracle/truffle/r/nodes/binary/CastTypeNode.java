@@ -34,62 +34,62 @@ public abstract class CastTypeNode extends RInvisibleBuiltinNode {
     public abstract Object execute(VirtualFrame frame, final Object value, final String type);
 
     @SuppressWarnings("unused")
-    @Specialization(order = 0, guards = "isSameType")
+    @Specialization(guards = "isSameType")
     public RAbstractVector doCast(VirtualFrame frame, final RAbstractVector value, final String type) {
         return value;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1, guards = {"!isSameType", "isString"})
+    @Specialization(guards = {"!isSameType", "isString"})
     public Object doCastString(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastString();
         return castStringNode.executeString(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2, guards = {"!isSameType", "isComplex"})
+    @Specialization(guards = {"!isSameType", "isComplex"})
     public Object doCastComplex(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastComplex();
         return castComplexNode.executeComplex(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 4, guards = {"!isSameType", "isDouble"})
+    @Specialization(guards = {"!isSameType", "isDouble"})
     public Object doCastDouble(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastDouble();
         return castDoubleNode.executeDouble(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 6, guards = {"!isSameType", "isInteger"})
+    @Specialization(guards = {"!isSameType", "isInteger"})
     public Object doCastInteger(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastInteger();
         return castIntegerNode.executeInt(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 8, guards = {"!isSameType", "isLogical"})
+    @Specialization(guards = {"!isSameType", "isLogical"})
     public Object doCastLogical(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastLogical();
         return castLogicalNode.executeLogical(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 10, guards = {"!isSameType", "isRaw"})
+    @Specialization(guards = {"!isSameType", "isRaw"})
     public Object doCastRaw(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastRaw();
         return castRawNode.executeRaw(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 12, guards = {"!isSameType", "isList"})
+    @Specialization(guards = {"!isSameType", "isList"})
     public RList doCastList(VirtualFrame frame, final RAbstractVector value, final String type) {
         initCastList();
         return castListNode.executeList(frame, value);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 14)
+    @Specialization
     public Object doCastUnknown(VirtualFrame frame, final RAbstractVector value, final String type) {
         return null;
     }

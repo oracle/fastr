@@ -67,19 +67,19 @@ public abstract class Substr extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 1, guards = "emptyArg")
+    @Specialization(guards = "emptyArg")
     public RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2, guards = {"!emptyArg", "wrongParams"})
+    @Specialization(guards = {"!emptyArg", "wrongParams"})
     public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         assert false; // should never happen
         return RNull.instance; // dummy
     }
 
-    @Specialization(order = 3, guards = {"!emptyArg", "!wrongParams"})
+    @Specialization(guards = {"!emptyArg", "!wrongParams"})
     public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         String[] res = new String[arg.getLength()];
         for (int i = 0, j = 0, k = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength())) {

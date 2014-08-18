@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO revert to R
 public abstract class IsTRUE extends RBuiltinNode {
 
-    @Specialization(order = 0)
+    @Specialization
     public RLogicalVector isTRUE(byte x) {
         controlVisibility();
         byte xx = x;
@@ -47,13 +47,13 @@ public abstract class IsTRUE extends RBuiltinNode {
         return RDataFactory.createLogicalVectorFromScalar(xx);
     }
 
-    @Specialization(order = 1, guards = "exactlyTrue")
+    @Specialization(guards = "exactlyTrue")
     public RLogicalVector isTRUE(@SuppressWarnings("unused") RLogicalVector x) {
         controlVisibility();
         return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public RLogicalVector isTRUEGeneric(@SuppressWarnings("unused") Object x) {
         controlVisibility();
         return RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE);

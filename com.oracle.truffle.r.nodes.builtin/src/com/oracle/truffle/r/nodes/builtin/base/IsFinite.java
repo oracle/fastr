@@ -45,7 +45,7 @@ public abstract class IsFinite extends RBuiltinNode {
         return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(order = 100)
+    @Specialization
     public Object doIsFiniteGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();

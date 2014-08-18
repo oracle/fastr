@@ -34,27 +34,27 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /** Takes only RNull, double or RDoubleVector as arguments. Use CastDoubleNode to cast the operands. */
 public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
 
-    @Specialization(order = 0)
+    @Specialization
     public RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RAbstractDoubleVector combine(RNull left, RAbstractDoubleVector right) {
         return right;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public RAbstractDoubleVector combine(RAbstractDoubleVector left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RDoubleVector combine(double left, double right) {
         return RDataFactory.createDoubleVector(new double[]{left, right}, RRuntime.isComplete(left) && RRuntime.isComplete(right));
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RDoubleVector combine(RAbstractDoubleVector left, double right) {
         int dataLength = left.getLength();
         double[] result = new double[dataLength + 1];
@@ -65,7 +65,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         return RDataFactory.createDoubleVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false));
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RDoubleVector combine(double left, RAbstractDoubleVector right) {
         int dataLength = right.getLength();
         double[] result = new double[dataLength + 1];
@@ -76,7 +76,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         return RDataFactory.createDoubleVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true));
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public RDoubleVector combine(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();

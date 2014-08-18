@@ -394,14 +394,14 @@ public abstract class Combine extends RBuiltinNode {
         }
     }
 
-    @Specialization(order = 1, guards = "isNullPrecedence")
+    @Specialization(guards = "isNullPrecedence")
     @ExplodeLoop
     public RNull allNull(VirtualFrame frame, Object[] array) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(order = 2, guards = {"isLogicalPrecedence", "noArgNames"})
+    @Specialization(guards = {"isLogicalPrecedence", "noArgNames"})
     @ExplodeLoop
     public Object allLogical(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -413,7 +413,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 3, guards = {"isLogicalPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isLogicalPrecedence", "hasArgNames"})
     @ExplodeLoop
     public Object allLogicalArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -427,7 +427,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 4, guards = {"isIntegerPrecedence", "noArgNames"})
+    @Specialization(guards = {"isIntegerPrecedence", "noArgNames"})
     @ExplodeLoop
     public Object allInt(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -439,7 +439,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 5, guards = {"isIntegerPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isIntegerPrecedence", "hasArgNames"})
     @ExplodeLoop
     public Object allIntArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -453,7 +453,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 6, guards = {"isDoublePrecedence", "noArgNames"})
+    @Specialization(guards = {"isDoublePrecedence", "noArgNames"})
     @ExplodeLoop
     public Object allDouble(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -465,7 +465,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 7, guards = {"isDoublePrecedence", "hasArgNames"})
+    @Specialization(guards = {"isDoublePrecedence", "hasArgNames"})
     @ExplodeLoop
     public Object allDoubleArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -479,7 +479,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 8, guards = {"isComplexPrecedence", "noArgNames"})
+    @Specialization(guards = {"isComplexPrecedence", "noArgNames"})
     @ExplodeLoop
     public Object allComplex(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -491,7 +491,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 9, guards = {"isComplexPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isComplexPrecedence", "hasArgNames"})
     @ExplodeLoop
     public Object allComplexArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -505,7 +505,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 10, guards = {"isStringPrecedence", "noArgNames"})
+    @Specialization(guards = {"isStringPrecedence", "noArgNames"})
     @ExplodeLoop
     public Object allString(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -517,7 +517,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 11, guards = {"isStringPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isStringPrecedence", "hasArgNames"})
     @ExplodeLoop
     public Object allStringArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -531,7 +531,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 12, guards = {"isRawPrecedence", "noArgNames"})
+    @Specialization(guards = {"isRawPrecedence", "noArgNames"})
     @ExplodeLoop
     public Object allRaw(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -543,7 +543,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 13, guards = {"isRawPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isRawPrecedence", "hasArgNames"})
     @ExplodeLoop
     public Object allRawArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -557,7 +557,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 14, guards = {"isListPrecedence", "noArgNames"})
+    @Specialization(guards = {"isListPrecedence", "noArgNames"})
     @ExplodeLoop
     public Object list(VirtualFrame frame, Object[] array) {
         controlVisibility();
@@ -569,7 +569,7 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(order = 15, guards = {"isListPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isListPrecedence", "hasArgNames"})
     public Object listArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);

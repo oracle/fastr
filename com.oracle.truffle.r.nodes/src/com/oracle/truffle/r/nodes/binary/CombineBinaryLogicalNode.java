@@ -36,27 +36,27 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public byte combine(RNull left, byte right) {
         return right;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public byte combine(byte left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RLogicalVector combine(RLogicalVector left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RLogicalVector combine(RNull left, RLogicalVector right) {
         return right;
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RLogicalVector combine(byte left, byte right) {
         check.enable(true);
         check.check(left);
@@ -64,7 +64,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
         return RDataFactory.createLogicalVector(new byte[]{left, right}, check.neverSeenNA());
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public RLogicalVector combine(RLogicalVector left, byte right) {
         check.enable(left);
         check.enable(right);
@@ -80,7 +80,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
         return RDataFactory.createLogicalVector(result, check.neverSeenNA(), combineNames(left, false));
     }
 
-    @Specialization(order = 7)
+    @Specialization
     public RLogicalVector combine(byte left, RLogicalVector right) {
         check.enable(right);
         check.enable(left);
@@ -96,7 +96,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
         return RDataFactory.createLogicalVector(result, check.neverSeenNA(), combineNames(right, true));
     }
 
-    @Specialization(order = 8)
+    @Specialization
     public RLogicalVector combine(RLogicalVector left, RLogicalVector right) {
         return (RLogicalVector) genericCombine(left, right);
     }

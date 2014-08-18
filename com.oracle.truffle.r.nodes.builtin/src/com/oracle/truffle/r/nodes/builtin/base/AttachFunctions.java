@@ -49,7 +49,7 @@ public class AttachFunctions {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(2), null, ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
         }
 
-        @Specialization(order = 0)
+        @Specialization
         public REnvironment doAttach(@SuppressWarnings("unused") RNull what, int pos, String name) {
             controlVisibility();
             REnvironment env = new REnvironment.NewEnv(name);
@@ -57,24 +57,24 @@ public class AttachFunctions {
             return env;
         }
 
-        @Specialization(order = 1)
+        @Specialization
         public REnvironment doAttach(RNull what, double pos, RAbstractStringVector name) {
             return doAttach(what, (int) pos, name.getDataAt(0));
         }
 
-        @Specialization(order = 2)
+        @Specialization
         public REnvironment doAttach(REnvironment what, String name, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             return doAttachEnv(what, 2, name);
         }
 
-        @Specialization(order = 3)
+        @Specialization
         public REnvironment doAttach(REnvironment what, int pos, String name) {
             controlVisibility();
             return doAttachEnv(what, pos, name);
         }
 
-        @Specialization(order = 4)
+        @Specialization
         public REnvironment doAttach(REnvironment what, double pos, String name) {
             controlVisibility();
             return doAttachEnv(what, (int) pos, name);
@@ -94,19 +94,19 @@ public class AttachFunctions {
 
         }
 
-        @Specialization(order = 10)
+        @Specialization
         public REnvironment doAttach(RList what, String name, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             return doAttachList(what, 2, name);
         }
 
-        @Specialization(order = 11)
+        @Specialization
         public REnvironment doAttach(RList what, int pos, String name) {
             controlVisibility();
             return doAttachList(what, pos, name);
         }
 
-        @Specialization(order = 12)
+        @Specialization
         public REnvironment doAttach(RList what, double pos, String name) {
             controlVisibility();
             return doAttachList(what, (int) pos, name);

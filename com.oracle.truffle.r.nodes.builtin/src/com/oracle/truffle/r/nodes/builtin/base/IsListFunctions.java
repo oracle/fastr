@@ -76,25 +76,25 @@ public class IsListFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(order = 10, guards = "isList")
+        @Specialization(guards = "isList")
         public byte isTypeFrame(RDataFrame value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(order = 11, guards = "!isList")
+        @Specialization(guards = "!isList")
         public byte isType(RDataFrame value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(order = 12)
+        @Specialization
         public byte isType(REnvironment env) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(order = 13)
+        @Specialization
         public byte isType(RPairList pl) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;

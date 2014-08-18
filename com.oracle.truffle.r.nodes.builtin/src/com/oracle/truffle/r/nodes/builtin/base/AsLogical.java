@@ -64,19 +64,19 @@ public abstract class AsLogical extends RBuiltinNode {
         return value;
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public byte asLogical(VirtualFrame frame, int value) {
         controlVisibility();
         return castLogical(frame, value);
     }
 
-    @Specialization(order = 12)
+    @Specialization
     public byte asLogical(VirtualFrame frame, double value) {
         controlVisibility();
         return castLogical(frame, value);
     }
 
-    @Specialization(order = 14)
+    @Specialization
     public byte asLogical(VirtualFrame frame, RComplex value) {
         controlVisibility();
         return castLogical(frame, value);

@@ -44,7 +44,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         return arguments;
     }
 
-    @Specialization(order = 1, guards = "isLengthOne")
+    @Specialization(guards = "isLengthOne")
     public RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
@@ -58,7 +58,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2, guards = "!isLengthOne")
+    @Specialization(guards = "!isLengthOne")
     public RAbstractVector updateLengthError(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);

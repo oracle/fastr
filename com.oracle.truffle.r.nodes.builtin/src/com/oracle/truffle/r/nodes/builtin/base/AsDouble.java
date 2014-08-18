@@ -78,7 +78,7 @@ public abstract class AsDouble extends RBuiltinNode {
         return value;
     }
 
-    @Specialization(order = 10)
+    @Specialization
     public double asDoubleInt(VirtualFrame frame, int value) {
         controlVisibility();
         return castDouble(frame, value);

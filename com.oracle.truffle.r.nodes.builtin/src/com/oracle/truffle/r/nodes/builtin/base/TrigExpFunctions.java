@@ -361,36 +361,36 @@ public class TrigExpFunctions {
             return arguments;
         }
 
-        @Specialization(order = 10)
+        @Specialization
         public Object atan(VirtualFrame frame, @SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
         }
 
-        @Specialization(order = 11)
+        @Specialization
         public Object atan(VirtualFrame frame, @SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
         }
 
-        @Specialization(order = 0)
+        @Specialization
         public double atan2(double x, double y) {
             controlVisibility();
             return Math.atan2(x, y);
         }
 
-        @Specialization(order = 1)
+        @Specialization
         public RDoubleVector atan2(RDoubleVector x, RDoubleVector y) {
             controlVisibility();
             return doFun(x, y, (double d1, double d2) -> Math.atan2(d1, d2));
         }
 
-        @Specialization(order = 2)
+        @Specialization
         public RDoubleVector atan2(double x, RDoubleVector y) {
             controlVisibility();
             RDoubleVector xv = RDataFactory.createDoubleVectorFromScalar(x).copyResized(y.getLength(), false);
             return doFun(xv, y, (double d1, double d2) -> Math.atan2(d1, d2));
         }
 
-        @Specialization(order = 3)
+        @Specialization
         public RDoubleVector atan2(RDoubleVector x, double y) {
             controlVisibility();
             RDoubleVector yv = RDataFactory.createDoubleVectorFromScalar(y);

@@ -47,14 +47,14 @@ public abstract class Ls extends RBuiltinNode {
                         ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization(order = 0)
+    @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, RMissing pattern) {
         controlVisibility();
         return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), null);
     }
 
-    @Specialization(order = 1)
+    @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, RMissing pattern) {
         controlVisibility();
@@ -62,20 +62,20 @@ public abstract class Ls extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 2)
+    @Specialization
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, REnvironment envir, byte allNames, RMissing pattern) {
         controlVisibility();
         return envir.ls(RRuntime.fromLogical(allNames), null);
     }
 
-    @Specialization(order = 3)
+    @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, RMissing envir, byte allNames, String pattern) {
         controlVisibility();
         return REnvironment.createLsCurrent(frame.materialize()).ls(RRuntime.fromLogical(allNames), compile(pattern));
     }
 
-    @Specialization(order = 4)
+    @Specialization
     @SuppressWarnings("unused")
     public RStringVector ls(REnvironment name, Object pos, RMissing envir, byte allNames, String pattern) {
         controlVisibility();
@@ -83,14 +83,14 @@ public abstract class Ls extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 5)
+    @Specialization
     public RStringVector ls(VirtualFrame frame, RMissing name, int pos, REnvironment envir, byte allNames, String pattern) {
         controlVisibility();
         return envir.ls(RRuntime.fromLogical(allNames), compile(pattern));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(order = 6)
+    @Specialization
     public RStringVector ls(VirtualFrame frame, RAbstractIntVector name, int pos, RMissing envir, byte allNames, RMissing pattern) {
         controlVisibility();
         String[] searchPath = REnvironment.searchPath();

@@ -45,7 +45,7 @@ public class RNGFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 0)
+        @Specialization
         public RNull setSeed(VirtualFrame frame, double seed, RNull kind, RNull normKind) {
             controlVisibility();
             doSetSeed(frame, (int) seed, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
@@ -53,7 +53,7 @@ public class RNGFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 1)
+        @Specialization
         public RNull setSeed(VirtualFrame frame, double seed, RAbstractIntVector kind, RNull normKind) {
             controlVisibility();
             doSetSeed(frame, (int) seed, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
@@ -61,7 +61,7 @@ public class RNGFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 2)
+        @Specialization
         public RNull setSeed(VirtualFrame frame, RNull seed, RNull kind, RNull normKind) {
             controlVisibility();
             doSetSeed(frame, RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
@@ -69,7 +69,7 @@ public class RNGFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 10)
+        @Specialization
         public RNull setSeed(VirtualFrame frame, byte seed, RNull kind, RNull normKind) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
@@ -93,14 +93,14 @@ public class RNGFunctions {
     @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"})
     public abstract static class RNGkind extends RBuiltinNode {
 
-        @Specialization(order = 0)
+        @Specialization
         @SuppressWarnings("unused")
         public RIntVector doRNGkind(VirtualFrame frame, RNull x, RNull y) {
             controlVisibility();
             return getCurrent();
         }
 
-        @Specialization(order = 1)
+        @Specialization
         public RIntVector doRNGkind(VirtualFrame frame, RAbstractIntVector kind, @SuppressWarnings("unused") RNull normKind) {
             controlVisibility();
             RIntVector result = getCurrent();

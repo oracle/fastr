@@ -67,7 +67,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         }
     }
 
-    @Specialization(order = 1, guards = {"noEnv", "!doesInheritS"})
+    @Specialization(guards = {"noEnv", "!doesInheritS"})
     @SuppressWarnings("unused")
     public Object assignNoInherit(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
@@ -77,7 +77,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     }
 
     @ExplodeLoop
-    @Specialization(order = 2, guards = {"noEnv", "doesInheritS"})
+    @Specialization(guards = {"noEnv", "doesInheritS"})
     @SuppressWarnings("unused")
     public Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos, RMissing environment, byte inherits, byte immediate) {
         controlVisibility();
@@ -120,7 +120,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return frameSlot != null || REnvironment.isGlobalEnvFrame(materializedFrame);
     }
 
-    @Specialization(order = 10, guards = "!doesInherit")
+    @Specialization(guards = "!doesInherit")
     @SuppressWarnings("unused")
     public Object assignNoInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
@@ -135,13 +135,13 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return value;
     }
 
-    @Specialization(order = 11, guards = "!doesInheritX")
+    @Specialization(guards = "!doesInheritX")
     @SuppressWarnings("unused")
     public Object assignNoInherit(VirtualFrame frame, String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
         return assignNoInherit(frame, x, value, envir, RMissing.instance, inherits, immediate);
     }
 
-    @Specialization(order = 12, guards = "doesInherit")
+    @Specialization(guards = "doesInherit")
     @SuppressWarnings("unused")
     public Object assignInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
@@ -164,19 +164,19 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         return value;
     }
 
-    @Specialization(order = 20, guards = "!doesInherit")
+    @Specialization(guards = "!doesInherit")
     public Object assignNoInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         return assignNoInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
-    @Specialization(order = 21, guards = "doesInherit")
+    @Specialization(guards = "doesInherit")
     public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         return assignInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
-    @Specialization(order = 22, guards = "doesInheritX")
+    @Specialization(guards = "doesInheritX")
     public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
         controlVisibility();
         return assignInherit(frame, x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);

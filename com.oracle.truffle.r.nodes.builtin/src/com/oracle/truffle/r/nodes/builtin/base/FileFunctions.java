@@ -73,7 +73,7 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object doFileCreate(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -164,7 +164,7 @@ public class FileFunctions {
             return doFileLink(frame, vecFrom, vecTo, false);
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object doFileLink(VirtualFrame frame, @SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -179,7 +179,7 @@ public class FileFunctions {
             return doFileLink(frame, vecFrom, vecTo, true);
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object doFileSymLink(VirtualFrame frame, @SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -209,7 +209,7 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object doFileRemove(VirtualFrame frame, @SuppressWarnings("unused") Object x) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -244,7 +244,7 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object doFileRename(VirtualFrame frame, @SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -272,7 +272,7 @@ public class FileFunctions {
 
         }
 
-        @Specialization(order = 100)
+        @Specialization
         public Object doFileExists(VirtualFrame frame, @SuppressWarnings("unused") Object vec) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
@@ -342,17 +342,17 @@ public class FileFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(order = 0, guards = "lengthZero")
+        @Specialization(guards = "lengthZero")
         public RStringVector doFilePathZero(RAbstractStringVector vec, String fsep) {
             return RDataFactory.createEmptyStringVector();
         }
 
-        @Specialization(order = 1, guards = "!lengthZero")
+        @Specialization(guards = "!lengthZero")
         public RStringVector doFilePath(RAbstractStringVector vec, String fsep) {
             return doFilePath(new Object[]{vec}, fsep);
         }
 
-        @Specialization(order = 2, guards = "simpleArgs")
+        @Specialization(guards = "simpleArgs")
         public RStringVector doFilePath(Object[] args, String fsep) {
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < args.length; i++) {

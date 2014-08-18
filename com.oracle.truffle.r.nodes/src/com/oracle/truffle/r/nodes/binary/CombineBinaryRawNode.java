@@ -37,32 +37,32 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
         return RNull.instance;
     }
 
-    @Specialization(order = 1)
+    @Specialization
     public RRaw combine(RNull left, RRaw right) {
         return right;
     }
 
-    @Specialization(order = 2)
+    @Specialization
     public RRaw combine(RRaw left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 3)
+    @Specialization
     public RRawVector combine(RRawVector left, RNull right) {
         return left;
     }
 
-    @Specialization(order = 4)
+    @Specialization
     public RRawVector combine(RNull left, RRawVector right) {
         return right;
     }
 
-    @Specialization(order = 5)
+    @Specialization
     public RRawVector combine(RRaw left, RRaw right) {
         return RDataFactory.createRawVector(new byte[]{left.getValue(), right.getValue()});
     }
 
-    @Specialization(order = 6)
+    @Specialization
     public RRawVector combine(RRawVector left, RRaw right) {
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
@@ -73,7 +73,7 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
         return RDataFactory.createRawVector(result, combineNames(left, false));
     }
 
-    @Specialization(order = 7)
+    @Specialization
     public RRawVector combine(RRaw left, RRawVector right) {
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
@@ -84,7 +84,7 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
         return RDataFactory.createRawVector(result, combineNames(right, true));
     }
 
-    @Specialization(order = 8)
+    @Specialization
     public RRawVector combine(RRawVector left, RRawVector right) {
         return (RRawVector) genericCombine(left, right);
     }
