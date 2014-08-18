@@ -268,7 +268,8 @@ public class RRuntime {
     }
 
     public static String logicalToStringNoCheck(byte operand) {
-        return operand == LOGICAL_TRUE ? STRING_TRUE : operand == LOGICAL_FALSE ? STRING_FALSE : STRING_NA;
+        assert operand == LOGICAL_TRUE || operand == LOGICAL_FALSE;
+        return operand == LOGICAL_TRUE ? STRING_TRUE : STRING_FALSE;
     }
 
     public static String logicalToString(byte operand) {
