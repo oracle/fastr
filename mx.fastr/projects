@@ -163,7 +163,8 @@ project@com.oracle.truffle.r.runtime@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.runtime.ffi
 project@com.oracle.truffle.r.runtime.ffi@sourceDirs=src
-project@com.oracle.truffle.r.runtime.ffi@dependencies=com.oracle.truffle.r.runtime,com.oracle.nfi,ASM_ANALYSIS,JNR_POSIX,ASM_UTIL,JFFI,JNR_FFI,NETLIB,JNR_CONSTANTS,JFFI_NATIVE,JNR_INVOKE,JNR_UDIS86,ASM,ASM_TREE,ASM_COMMONS,JNR_X86ASM
+#project@com.oracle.truffle.r.runtime.ffi@dependencies=com.oracle.truffle.r.runtime,com.oracle.nfi,ASM_ANALYSIS,JNR_POSIX,ASM_UTIL,JFFI,JNR_FFI,NETLIB,JNR_CONSTANTS,JFFI_NATIVE,JNR_INVOKE,JNR_UDIS86,ASM,ASM_TREE,ASM_COMMONS,JNR_X86ASM
+project@com.oracle.truffle.r.runtime.ffi@dependencies=com.oracle.truffle.r.runtime,ASM_ANALYSIS,JNR_POSIX,ASM_UTIL,JFFI,JNR_FFI,NETLIB,JNR_CONSTANTS,JFFI_NATIVE,JNR_INVOKE,JNR_UDIS86,ASM,ASM_TREE,ASM_COMMONS,JNR_X86ASM
 project@com.oracle.truffle.r.runtime.ffi@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime.ffi@javaCompliance=1.8
 project@com.oracle.truffle.r.runtime.ffi@workingSets=Truffle,FastR
