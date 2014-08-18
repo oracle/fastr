@@ -625,6 +625,22 @@ public class ArgumentMatcher {
     private static RNode[] wrapInPromises(RFunction function, RNode[] arguments, FormalArguments formals, PromiseWrapper promiseWrapper) {
         RNode[] defaultArgs = formals.getDefaultArgs();
 
+        RNode[] resArgs = arguments;
+        int varArgIndex = formals.getVarArgIndex();
+        boolean hasVarArgs = varArgIndex != FormalArguments.NO_VARARG;
+
+        int varArgsLength = 0;
+        if (!hasVarArgs) {
+            for (int fi = 0; fi < arguments.length; fi++) {
+                RNode arg = arguments[fi];
+                if (arg instanceof VarArgsAsObjectArrayNode) {
+                    varArgsLength = ((VarArgsNode) arg).elementNodes.length - 1;
+                    break;
+                }
+            }
+            resArgs = new RNode[arguments.length + varArgsLength];
+        }
+
         // Check whether this is a builtin
         RootNode rootNode = function.getTarget().getRootNode();
         RBuiltinRootNode builtinRootNode = null;
@@ -641,22 +657,27 @@ public class ArgumentMatcher {
             // Has varargs? Unfold!
             if (arg instanceof VarArgsAsObjectArrayNode) {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
-                RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
-                for (int j = 0; j < varArgs.elementNodes.length; j++) {
-                    // Obviously single var args have no default values, so null
-                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
-                    logicalIndex++;
+                if (!hasVarArgs) {
+                    for (int j = 0; j < varArgs.elementNodes.length; j++) {
+                        resArgs[logicalIndex++] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
+                    }
+                } else {
+                    RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
+                    for (int j = 0; j < varArgs.elementNodes.length; j++) {
+                        // Obviously single var args have no default values, so null
+                        modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
+                        logicalIndex++;
+                    }
+                    resArgs[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes, varArgs.getNames());
                 }
-                arguments[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes);
-                continue;
+            } else {
+                // Normal argument: just wrap in promise
+                RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
+                resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
+                logicalIndex++;
             }
-
-            // Normal argument: just wrap in promise
-            RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-            arguments[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
-            logicalIndex++;
         }
-        return arguments;
+        return resArgs;
     }
 
     /**
@@ -813,19 +834,6 @@ public class ArgumentMatcher {
     }
 
     /**
-     * {@link VarArgsFactory} implementation that returns varargs as {@link RList}.
-     */
-    public static final class VarArgsAsListFactory implements VarArgsFactory<Object> {
-        public Object makeList(final Object[] elements, final String[] names) {
-            RList argList = RDataFactory.createList(elements);
-            if (names != null) {
-                argList.setNames(RDataFactory.createStringVector(names, true));
-            }
-            return argList;
-        }
-    }
-
-    /**
      * {@link VarArgsFactory} implementation that returns varargs as <code>Object[]</code>.
      */
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
@@ -836,21 +844,6 @@ public class ArgumentMatcher {
                 return elements[0];
             } else {
                 return RMissing.instance;
-            }
-        }
-    }
-
-    /**
-     * {@link VarArgsFactory} implementation that returns varargs as {@link VarArgsAsListNode}.
-     */
-    public static final class VarArgsAsListNodeFactory implements VarArgsFactory<RNode> {
-        public RNode makeList(final RNode[] elements, final String[] names) {
-            if (elements.length > 1 || elements.length == 0) {
-                return new VarArgsAsListNode(elements, names);
-            } else if (elements.length == 1) {
-                return elements[0];
-            } else {
-                return null;    // ConstantNode.create(RMissing.instance);
             }
         }
     }
@@ -871,38 +864,13 @@ public class ArgumentMatcher {
     }
 
     /**
-     * A {@link RNode} that encapsulates a list of varargs with names (as {@link RNode}).
-     */
-    public static final class VarArgsAsListNode extends VarArgsNode {
-        private final String[] names;
-
-        private VarArgsAsListNode(RNode[] elements, String[] names) {
-            super(elements);
-            this.names = names;
-        }
-
-        @Override
-        public RList execute(VirtualFrame frame) {
-            Object[] evaluatedElements = new Object[elementNodes.length];
-            if (elementNodes.length > 0) {
-                executeElementNodes(frame, elementNodes, evaluatedElements);
-            }
-            RList argList = RDataFactory.createList(evaluatedElements);
-            if (names != null) {
-                argList.setNames(RDataFactory.createStringVector(names, true));
-            }
-            return argList;
-        }
-    }
-
-    /**
      * {@link VarArgsFactory} implementation that returns varargs as
      * {@link VarArgsAsObjectArrayNode}.
      */
     public static final class VarArgsAsObjectArrayNodeFactory implements VarArgsFactory<RNode> {
         public RNode makeList(final RNode[] elements, final String[] names) {
             if (elements.length > 1) {
-                return new VarArgsAsObjectArrayNode(elements);
+                return new VarArgsAsObjectArrayNode(elements, names);
             } else if (elements.length == 1) {
                 return elements[0];
             } else {
@@ -916,8 +884,15 @@ public class ArgumentMatcher {
      * {@link VarArgsNode} that executes all its elements and returns the resulting value array.
      */
     public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
-        public VarArgsAsObjectArrayNode(RNode[] elements) {
+        private String[] names;
+
+        public VarArgsAsObjectArrayNode(RNode[] elements, String[] names) {
             super(elements);
+            this.names = names;
+        }
+
+        public String[] getNames() {
+            return names;
         }
 
         @Override

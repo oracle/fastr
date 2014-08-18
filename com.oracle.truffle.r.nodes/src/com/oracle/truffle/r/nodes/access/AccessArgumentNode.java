@@ -58,14 +58,16 @@ public class AccessArgumentNode extends RNode {
     public Object execute(VirtualFrame frame) {
         Object obj = RArguments.getArgument(frame, index);
         if (obj instanceof RPromise) {
-            obj = handlePromise(frame, obj);
-        } else if (obj instanceof Object[]) {
-            Object[] varArgs = (Object[]) obj;
+            return handlePromise(frame, obj);
+        } else if (obj instanceof VarArgsContainer) {
+            Object[] varArgs = ((VarArgsContainer) obj).getValues();
             for (int i = 0; i < varArgs.length; i++) {
                 varArgs[i] = handlePromise(frame, varArgs[i]);
             }
+            return varArgs;
+        } else {
+            return obj;
         }
-        return obj;
     }
 
     private Object handlePromise(VirtualFrame frame, Object promiseObj) {
