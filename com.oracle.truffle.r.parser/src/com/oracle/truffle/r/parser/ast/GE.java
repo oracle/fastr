@@ -16,13 +16,12 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.COMPARE_PRECEDENCE)
 public class GE extends BinaryOperation {
 
-    public GE(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public GE(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
     }
-
 }

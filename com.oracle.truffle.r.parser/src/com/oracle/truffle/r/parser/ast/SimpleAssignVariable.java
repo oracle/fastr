@@ -14,15 +14,14 @@ import com.oracle.truffle.api.source.*;
 
 public class SimpleAssignVariable extends AssignVariable {
 
-    Symbol variable;
+    private final Symbol variable;
 
-    public SimpleAssignVariable(SourceSection src, boolean isSuper, Symbol var, ASTNode rhs) {
-        super(isSuper, rhs);
-        source = src;
-        variable = var;
+    public SimpleAssignVariable(SourceSection source, boolean isSuper, Symbol variable, ASTNode rhs) {
+        super(source, isSuper, rhs);
+        this.variable = variable;
     }
 
-    public Symbol getSymbol() {
+    public Symbol getVariable() {
         return variable;
     }
 

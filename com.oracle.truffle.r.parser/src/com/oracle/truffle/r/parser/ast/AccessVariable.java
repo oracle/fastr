@@ -14,6 +14,10 @@ import com.oracle.truffle.api.source.*;
 
 public abstract class AccessVariable extends ASTNode {
 
+    protected AccessVariable(SourceSection source) {
+        super(source);
+    }
+
     public static ASTNode create(SourceSection src, String name, boolean shouldCopyValue) {
         return new SimpleAccessVariable(src, Symbol.getSymbol(name), shouldCopyValue);
     }

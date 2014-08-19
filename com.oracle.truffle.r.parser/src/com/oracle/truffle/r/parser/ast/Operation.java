@@ -12,6 +12,8 @@ package com.oracle.truffle.r.parser.ast;
 
 import java.util.*;
 
+import com.oracle.truffle.api.source.*;
+
 public abstract class Operation extends ASTNode {
 
     public static final int EQ_PRECEDENCE = 1;
@@ -35,10 +37,11 @@ public abstract class Operation extends ASTNode {
     public static final int SIGN_PRECEDENCE = COLON_PRECEDENCE + 1;
     public static final int POW_PRECEDENCE = SIGN_PRECEDENCE + 1;
 
-    final ASTNode lhs;
+    private final ASTNode lhs;
 
-    public Operation(ASTNode left) {
-        this.lhs = updateParent(left);
+    protected Operation(SourceSection source, ASTNode left) {
+        super(source);
+        this.lhs = left;
     }
 
     public ASTNode getLHS() {

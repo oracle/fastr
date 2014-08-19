@@ -151,7 +151,7 @@ public final class REngine implements RContext.Engine {
     public RExpression parse(String rscript) throws RContext.Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
-            ASTNode[] exprs = seq.getExprs();
+            ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
                 data[i] = RDataFactory.createLanguage(transform(exprs[i], REnvironment.emptyEnv()));

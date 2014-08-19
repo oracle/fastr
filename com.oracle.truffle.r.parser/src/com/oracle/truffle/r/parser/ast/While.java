@@ -16,24 +16,20 @@ import com.oracle.truffle.api.source.*;
 
 public class While extends Loop {
 
-    ASTNode cond;
+    private final ASTNode condition;
 
-    public While(SourceSection src, ASTNode cond, ASTNode expr) {
-        super(src, expr);
-        setCond(cond);
+    public While(SourceSection source, ASTNode condition, ASTNode expression) {
+        super(source, expression);
+        this.condition = condition;
     }
 
-    public ASTNode getCond() {
-        return cond;
-    }
-
-    public void setCond(ASTNode cond) {
-        this.cond = updateParent(cond);
+    public ASTNode getCondition() {
+        return condition;
     }
 
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getCond().accept(v), getBody().accept(v));
+        return Arrays.asList(getCondition().accept(v), getBody().accept(v));
     }
 
     @Override

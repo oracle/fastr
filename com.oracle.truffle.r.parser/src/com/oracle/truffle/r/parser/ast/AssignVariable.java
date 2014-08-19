@@ -20,9 +20,10 @@ public abstract class AssignVariable extends ASTNode {
     final boolean isSuper;
     ASTNode rhs;
 
-    AssignVariable(boolean isSuper, ASTNode expr) {
+    protected AssignVariable(SourceSection source, boolean isSuper, ASTNode expr) {
+        super(source);
         this.isSuper = isSuper;
-        rhs = updateParent(expr);
+        this.rhs = expr;
     }
 
     @Override
@@ -40,7 +41,7 @@ public abstract class AssignVariable extends ASTNode {
 
     public static ASTNode create(SourceSection src, boolean isSuper, ASTNode lhs, ASTNode rhs) {
         if (lhs instanceof SimpleAccessVariable) {
-            return writeVariable(src, isSuper, ((SimpleAccessVariable) lhs).symbol, rhs);
+            return writeVariable(src, isSuper, ((SimpleAccessVariable) lhs).getVariable(), rhs);
         } else if (lhs instanceof AccessVector) {
             return writeVector(src, isSuper, (AccessVector) lhs, rhs);
         } else if (lhs instanceof FieldAccess) {
@@ -70,27 +71,22 @@ public abstract class AssignVariable extends ASTNode {
             if (!isSuper) {
                 // ensure the vector is copied from an enclosing frame if it is not found in the
                 // current frame
-                SimpleAccessVariable newAccessVector = new SimpleAccessVariable(simpleAccessVariable.getSource(), simpleAccessVariable.getSymbol(), true);
-                newLhs = new AccessVector(lhs.getSource(), newAccessVector, lhs.getArgs(), lhs.isSubset());
-                newLhs.setParent(lhs.getParent());
+                SimpleAccessVariable newAccessVector = new SimpleAccessVariable(simpleAccessVariable.getSource(), simpleAccessVariable.getVariable(), true);
+                newLhs = new AccessVector(lhs.getSource(), newAccessVector, lhs.getArguments(), lhs.isSubset());
             }
             UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
-            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
+            lhs.getArguments().add(ArgNode.create(rhs.getSource(), "value", rhs));
             return update;
-        } else if (first instanceof AccessVector) {
+        } else if (first instanceof AccessVector || first instanceof FieldAccess) {
             UpdateVector update = new UpdateVector(isSuper, lhs, rhs);
-            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
-            return update;
-        } else if (first instanceof FieldAccess) {
-            UpdateVector update = new UpdateVector(isSuper, lhs, rhs);
-            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
+            lhs.getArguments().add(ArgNode.create(rhs.getSource(), "value", rhs));
             return update;
         } else if (first instanceof FunctionCall) {
             FunctionCall replacementFunc = (FunctionCall) first;
-            FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.getLhs(), replacementFunc.getArgs(), false);
-            AccessVector newLhs = new AccessVector(func.getSource(), func, lhs.getArgs(), lhs.isSubset());
+            FunctionCall func = new FunctionCall(replacementFunc.getSource(), replacementFunc.getLhs(), replacementFunc.getArguments(), false);
+            AccessVector newLhs = new AccessVector(func.getSource(), func, lhs.getArguments(), lhs.isSubset());
             UpdateVector update = new UpdateVector(isSuper, newLhs, rhs);
-            lhs.args.add(ArgNode.create(rhs.getSource(), "value", rhs));
+            lhs.getArguments().add(ArgNode.create(rhs.getSource(), "value", rhs));
             return writeFunction(lhs.getSource(), isSuper, replacementFunc, update);
         } else {
             Utils.nyi(); // TODO here we need to flatten complex assignments
@@ -112,13 +108,9 @@ public abstract class AssignVariable extends ASTNode {
         }
         lhs.setAssignment(true);
         lhs.setSuper(isSuper);
-        if (lhs.args.size() > 0) {
-            ASTNode first = lhs.args.get(0).getValue();
-            if (first instanceof SimpleAccessVariable) {
-                return new Replacement(src, isSuper, lhs, rhs);
-            } else if (first instanceof AccessVector) {
-                return new Replacement(src, isSuper, lhs, rhs);
-            } else if (first instanceof FieldAccess) {
+        if (lhs.getArguments().size() > 0) {
+            ASTNode first = lhs.getArguments().get(0).getValue();
+            if (first instanceof SimpleAccessVariable || first instanceof AccessVector || first instanceof FieldAccess) {
                 return new Replacement(src, isSuper, lhs, rhs);
             } else {
                 Utils.nyi(); // TODO here we need to flatten complex assignments

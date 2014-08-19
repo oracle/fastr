@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.COLON_PRECEDENCE)
 public class Colon extends BinaryOperation {
 
-    public Colon(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public Colon(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

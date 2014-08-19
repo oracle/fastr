@@ -18,23 +18,22 @@ public class FunctionCall extends Call {
 
     // LHS of a call does not need to be a symbol, it can be a lambda expression (FunctionCall)
     private Object lhs;
-    boolean isAssignment;
-    boolean isSuper;
-    boolean isReplacement;
+    private boolean isAssignment;
+    private boolean isSuper;
+    private boolean isReplacement;
 
-    public FunctionCall(SourceSection source, Object lhs, List<ArgNode> args, boolean isReplacement) {
-        super(args);
-        this.source = source;
+    public FunctionCall(SourceSection source, Object lhs, List<ArgNode> arguments, boolean isReplacement) {
+        super(source, arguments);
         this.lhs = lhs;
         this.isReplacement = isReplacement;
     }
 
-    public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> args) {
-        this(src, funName, args, false);
+    public FunctionCall(SourceSection src, Symbol funName, List<ArgNode> arguments) {
+        this(src, funName, arguments, false);
     }
 
-    public FunctionCall(SourceSection src, FunctionCall funCall, List<ArgNode> args) {
-        this(src, funCall, args, false);
+    public FunctionCall(SourceSection src, FunctionCall funCall, List<ArgNode> arguments) {
+        this(src, funCall, arguments, false);
     }
 
     public Object getLhs() {
@@ -50,17 +49,14 @@ public class FunctionCall extends Call {
     }
 
     public Symbol getName() {
-        assert lhs instanceof Symbol;
         return (Symbol) lhs;
     }
 
     public FunctionCall getFunctionCall() {
-        assert lhs instanceof FunctionCall;
         return (FunctionCall) lhs;
     }
 
     public ASTNode getLhsNode() {
-        assert lhs instanceof ASTNode;
         return (ASTNode) lhs;
     }
 
@@ -68,12 +64,12 @@ public class FunctionCall extends Call {
         return isSuper;
     }
 
-    public boolean isAssignment() {
-        return isAssignment;
-    }
-
     public void setSuper(boolean value) {
         this.isSuper = value;
+    }
+
+    public boolean isAssignment() {
+        return isAssignment;
     }
 
     public void setAssignment(boolean value) {
@@ -88,5 +84,4 @@ public class FunctionCall extends Call {
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
     }
-
 }

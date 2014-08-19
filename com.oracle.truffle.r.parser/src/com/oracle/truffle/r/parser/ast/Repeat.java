@@ -14,8 +14,8 @@ import com.oracle.truffle.api.source.*;
 
 public class Repeat extends Loop {
 
-    public Repeat(SourceSection src, ASTNode body) {
-        super(src, body);
+    public Repeat(SourceSection source, ASTNode body) {
+        super(source, body);
     }
 
     @Override

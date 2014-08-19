@@ -109,7 +109,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(Sequence n) {
-        ASTNode[] exprs = n.getExprs();
+        ASTNode[] exprs = n.getExpressions();
         switch (exprs.length) {
             case 0:
                 print("{}");
@@ -138,7 +138,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     @Override
     public Void visit(If n) {
         print("if(");
-        n.getCond().accept(this);
+        n.getCondition().accept(this);
         print(") ");
         n.getTrueCase().accept(this);
         ASTNode f = n.getFalseCase();
@@ -212,7 +212,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     @Override
     public Void visit(While n) {
         print("while(");
-        n.getCond().accept(this);
+        n.getCondition().accept(this);
         print(") ");
         n.getBody().accept(this);
         return null;
@@ -221,7 +221,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     @Override
     public Void visit(For n) {
         print("for(");
-        print(n.getCVar().pretty());
+        print(n.getVariable().pretty());
         print(" in ");
         n.getRange().accept(this);
         print(") ");
@@ -231,7 +231,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(SimpleAssignVariable n) {
-        print(n.getSymbol().pretty());
+        print(n.getVariable().pretty());
         print(" <- ");
         n.getExpr().accept(this);
         return null;
@@ -241,7 +241,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     public Void visit(AccessVector n) {
         print(n.getVector());
         print(n.isSubset() ? "[" : "[[");
-        print(n.getArgs(), true);
+        print(n.getArguments(), true);
         print(n.isSubset() ? "]" : "]]");
         return null;
     }
@@ -257,7 +257,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     @Override
     public Void visit(FunctionCall n) {
         print(n.getName().pretty() + "(");
-        print(n.getArgs(), true);
+        print(n.getArguments(), true);
         print(")");
         return null;
     }
@@ -273,7 +273,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     @Override
     public Void visit(SimpleAccessVariable n) {
-        print(n.getSymbol().pretty());
+        print(n.getVariable().pretty());
         return null;
     }
 

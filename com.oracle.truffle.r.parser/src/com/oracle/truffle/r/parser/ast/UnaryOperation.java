@@ -14,19 +14,18 @@ import com.oracle.truffle.api.source.*;
 
 public abstract class UnaryOperation extends Operation {
 
-    public UnaryOperation(SourceSection src, ASTNode op) {
-        super(op);
-        source = src;
+    public UnaryOperation(SourceSection source, ASTNode op) {
+        super(source, op);
     }
 
-    public static ASTNode create(SourceSection src, UnaryOperator op, ASTNode operand) {
+    public static ASTNode create(SourceSection source, UnaryOperator op, ASTNode operand) {
         switch (op) {
             case PLUS:
-                return new Not(src, operand);
+                return new Not(source, operand);
             case MINUS:
-                return new UnaryMinus(src, operand);
+                return new UnaryMinus(source, operand);
             case NOT:
-                return new Not(src, operand);
+                return new Not(source, operand);
         }
         throw new Error("No node implemented for: '" + op + "' (" + operand + ")");
     }

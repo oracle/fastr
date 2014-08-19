@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.EQ_PRECEDENCE)
 public class NE extends BinaryOperation {
 
-    public NE(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public NE(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

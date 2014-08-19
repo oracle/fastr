@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.SUB_PRECEDENCE)
 public class Sub extends BinaryOperation {
 
-    public Sub(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public Sub(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override
