@@ -1141,51 +1141,51 @@ public abstract class BinaryBooleanNode extends BinaryNode {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumericVector(RRaw left, RAbstractVector right) {
+    protected boolean convertRawToNumericVector(RRaw left, RAbstractVector right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumericVector(RAbstractVector left, RRaw right) {
+    protected boolean convertRawToNumericVector(RAbstractVector left, RRaw right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumericVector(RRawVector left, RAbstractVector right) {
+    protected boolean convertRawToNumericVector(RRawVector left, RAbstractVector right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumericVector(RAbstractVector left, RRawVector right) {
+    protected boolean convertRawToNumericVector(RAbstractVector left, RRawVector right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumeric(RRaw left, RRaw right) {
+    protected boolean convertRawToNumeric(RRaw left, RRaw right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumeric(RRawVector left, RRawVector right) {
+    protected boolean convertRawToNumeric(RRawVector left, RRawVector right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumeric(RRaw left, RRawVector right) {
+    protected boolean convertRawToNumeric(RRaw left, RRawVector right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean convertRawToNumeric(RRawVector left, RRaw right) {
+    protected boolean convertRawToNumeric(RRawVector left, RRaw right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean expectLogical(RRaw left, RRaw right) {
+    protected boolean expectLogical(RRaw left, RRaw right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean expectLogical(RRawVector left, RRawVector right) {
+    protected boolean expectLogical(RRawVector left, RRawVector right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean expectLogical(RRawVector left, RRaw right) {
+    protected boolean expectLogical(RRawVector left, RRaw right) {
         return isVectorizedLogicalOp();
     }
 
-    public boolean expectLogical(RRaw left, RRawVector right) {
+    protected boolean expectLogical(RRaw left, RRawVector right) {
         return isVectorizedLogicalOp();
     }
 

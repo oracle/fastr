@@ -1540,15 +1540,15 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(b);
         }
 
-        public boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             return vector.getLength() == 0;
         }
 
-        public boolean isEmpty(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected boolean isEmpty(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             return vector.getLength() == 0;
         }
 
-        public boolean isEmpty(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected boolean isEmpty(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             return vector.getLength() == 0;
         }
 

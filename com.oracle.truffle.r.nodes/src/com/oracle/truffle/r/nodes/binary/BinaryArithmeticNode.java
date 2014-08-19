@@ -157,7 +157,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         throw RError.error(frame, this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
-    public boolean supportsIntResult() {
+    protected boolean supportsIntResult() {
         return arithmetic.isSupportsIntResult();
     }
 

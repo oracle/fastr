@@ -582,11 +582,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    public boolean hasArgNames() {
+    protected boolean hasArgNames() {
         return getSuppliedArgsNames() != null;
     }
 
-    public boolean noArgNames() {
+    protected boolean noArgNames() {
         return !hasArgNames();
     }
 }

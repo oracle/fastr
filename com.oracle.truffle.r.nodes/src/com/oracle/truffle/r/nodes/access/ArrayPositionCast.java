@@ -169,7 +169,7 @@ public abstract class ArrayPositionCast extends RNode {
         return 0;
     }
 
-    public static boolean sizeOneOp(Object op, RAbstractContainer container, RAbstractIntVector operand) {
+    protected static boolean sizeOneOp(Object op, RAbstractContainer container, RAbstractIntVector operand) {
         return operand.getLength() == 1;
     }
 

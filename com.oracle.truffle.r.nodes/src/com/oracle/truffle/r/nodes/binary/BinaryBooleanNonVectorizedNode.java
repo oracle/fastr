@@ -66,7 +66,7 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
     }
 
     @ShortCircuit("arguments[1]")
-    public boolean needsRightOperand(Object leftValue) {
+    protected boolean needsRightOperand(Object leftValue) {
         return logic.requiresRightOperand(RTypesGen.RTYPES.asByte(leftValue));
     }
 
@@ -230,11 +230,11 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
         return left;
     }
 
-    boolean isZeroLength(byte left, boolean needsRightOperand, RAbstractVector operand) {
+    protected boolean isZeroLength(byte left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
-    boolean isZeroLength(Object left, boolean needsRightOperand, RAbstractVector operand) {
+    protected boolean isZeroLength(Object left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
@@ -320,15 +320,15 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
             return RRuntime.int2logical(operand.getDataAt(0));
         }
 
-        boolean isZeroLength(RAbstractVector operand) {
+        protected boolean isZeroLength(RAbstractVector operand) {
             return operand.getLength() == 0;
         }
 
-        boolean isStringVector(RAbstractVector vector) {
+        protected boolean isStringVector(RAbstractVector vector) {
             return vector.getElementClass() == RString.class;
         }
 
-        boolean isRawVector(RAbstractVector vector) {
+        protected boolean isRawVector(RAbstractVector vector) {
             return vector.getElementClass() == RRaw.class;
         }
     }

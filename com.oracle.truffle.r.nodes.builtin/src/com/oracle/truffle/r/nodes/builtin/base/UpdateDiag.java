@@ -43,21 +43,21 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     @Child protected CastDoubleNode castDouble;
 
-    public static boolean isMatrix(RAbstractVector vector) {
+    protected static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
 
     // FIXME The following two are workarounds for a Truffle-DSL bug.
 
-    public static boolean isMatrix(RAbstractIntVector vector) {
+    protected static boolean isMatrix(RAbstractIntVector vector) {
         return isMatrix((RAbstractVector) vector);
     }
 
-    public static boolean isMatrix(RAbstractDoubleVector vector) {
+    protected static boolean isMatrix(RAbstractDoubleVector vector) {
         return isMatrix((RAbstractVector) vector);
     }
 
-    public static boolean correctReplacementLength(RAbstractVector matrix, RAbstractVector replacement) {
+    protected static boolean correctReplacementLength(RAbstractVector matrix, RAbstractVector replacement) {
         return replacement.getLength() == 1 || Math.min(matrix.getDimensions()[0], matrix.getDimensions()[1]) == replacement.getLength();
     }
 

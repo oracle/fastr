@@ -79,11 +79,11 @@ public abstract class VectorPositionCast extends RNode {
         return ((int) stride == stride) && start >= 1.0;
     }
 
-    public static boolean greaterEqualOneSequence(RIntSequence operand) {
+    protected static boolean greaterEqualOneSequence(RIntSequence operand) {
         return operand.getStart() >= 1 && (operand.getStride() > 0 || operand.getEnd() > 0);
     }
 
-    public static boolean startingZeroSequence(RIntSequence operand) {
+    protected static boolean startingZeroSequence(RIntSequence operand) {
         return operand.getStart() == 0 && operand.getStride() > 0;
     }
 
