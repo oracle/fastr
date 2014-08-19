@@ -70,7 +70,7 @@ public abstract class RBuiltinPackage {
     }
 
     private static final Map<String, List<Component>> rSources = new HashMap<>();
-    private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
+    private static final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
     private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
