@@ -30,7 +30,7 @@ public final class RDouble extends RScalar {
 
     private final double value;
 
-    RDouble(double value) {
+    private RDouble(double value) {
         this.value = value;
     }
 

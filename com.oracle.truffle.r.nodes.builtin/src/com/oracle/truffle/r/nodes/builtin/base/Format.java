@@ -96,7 +96,7 @@ public abstract class Format extends RBuiltinNode {
     // types following suit at some point for compliance
 
     @SlowPath
-    RStringVector convertToString(RAbstractLogicalVector value) {
+    private static RStringVector convertToString(RAbstractLogicalVector value) {
         int width = formatLogical(value);
         String[] data = new String[value.getLength()];
         for (int i = 0; i < data.length; i++) {
@@ -117,7 +117,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    int formatLogical(RAbstractLogicalVector value) {
+    private static int formatLogical(RAbstractLogicalVector value) {
         int width = 1;
         for (int i = 0; i < value.getLength(); i++) {
             byte val = value.getDataAt(i);
@@ -144,7 +144,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SlowPath
-    RStringVector convertToString(RAbstractIntVector value) {
+    private static RStringVector convertToString(RAbstractIntVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
@@ -196,7 +196,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SlowPath
-    RStringVector convertToString(RAbstractDoubleVector value) {
+    private static RStringVector convertToString(RAbstractDoubleVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;

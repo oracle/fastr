@@ -19,9 +19,9 @@ public class PrettyPrinter extends BasicVisitor<Void> {
 
     public static final boolean PARENTHESIS = false;
 
-    int level = 0;
-    final PrintStream out;
-    StringBuilder buff = new StringBuilder();
+    private int level = 0;
+    private final PrintStream out;
+    private final StringBuilder buff = new StringBuilder();
     private static PrettyPrinter pp = getStringPrettyPrinter();
 
     public PrettyPrinter(PrintStream stream) {

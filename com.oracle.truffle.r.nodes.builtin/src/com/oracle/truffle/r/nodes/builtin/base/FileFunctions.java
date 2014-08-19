@@ -118,7 +118,7 @@ public class FileFunctions {
         }
     }
 
-    abstract static class FileLinkAdaptor extends RBuiltinNode {
+    public abstract static class FileLinkAdaptor extends RBuiltinNode {
         protected Object doFileLink(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo, boolean symbolic) {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
@@ -269,7 +269,6 @@ public class FileFunctions {
                 }
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
-
         }
 
         @Specialization
@@ -405,12 +404,11 @@ public class FileFunctions {
             }
             return true;
         }
-
     }
 
-    private abstract static class XyzNameAdapter extends RBuiltinNode {
-        abstract static class PathFunction {
-            abstract String invoke(FileSystem fileSystem, String name);
+    public abstract static class XyzNameAdapter extends RBuiltinNode {
+        public abstract static class PathFunction {
+            protected abstract String invoke(FileSystem fileSystem, String name);
         }
 
         protected RStringVector doXyzName(RAbstractStringVector vec, PathFunction fun) {
@@ -431,7 +429,6 @@ public class FileFunctions {
 
             }
             return RDataFactory.createStringVector(data, complete);
-
         }
     }
 
@@ -440,12 +437,11 @@ public class FileFunctions {
         private static class ParentPathFunction extends XyzNameAdapter.PathFunction {
 
             @Override
-            String invoke(FileSystem fileSystem, String name) {
+            protected String invoke(FileSystem fileSystem, String name) {
                 Path path = fileSystem.getPath(Utils.tildeExpand(name));
                 Path parent = path.getParent();
                 return parent != null ? parent.toString() : name;
             }
-
         }
 
         private static final ParentPathFunction parentPathFunction = new ParentPathFunction();
@@ -461,12 +457,11 @@ public class FileFunctions {
         private static class BasePathFunction extends XyzNameAdapter.PathFunction {
 
             @Override
-            String invoke(FileSystem fileSystem, String name) {
+            protected String invoke(FileSystem fileSystem, String name) {
                 Path path = fileSystem.getPath(name);
                 Path parent = path.getFileName();
                 return parent != null ? parent.toString() : name;
             }
-
         }
 
         private static final BasePathFunction basePathFunction = new BasePathFunction();

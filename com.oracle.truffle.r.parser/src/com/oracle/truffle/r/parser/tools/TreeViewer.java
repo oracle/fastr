@@ -42,7 +42,7 @@ public class TreeViewer extends JTree {
         }
     }
 
-    JFrame frame;
+    private JFrame frame;
 
     private static Field[] getFieldsFor(Class<?> clazz) {
         if (clazz.getName().startsWith("java.lang.") || Enum.class.isAssignableFrom(clazz)) {
@@ -71,7 +71,7 @@ public class TreeViewer extends JTree {
         return res;
     }
 
-    void updateRoots() {
+    private void updateRoots() {
         setModel(newModel());
         treeDidChange();
         frame.setVisible(true);

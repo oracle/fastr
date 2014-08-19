@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "fastr.compile", kind = PRIMITIVE, parameterNames = {"func"})
 public abstract class FastRCompileBuiltin extends RBuiltinNode {
 
-    static final class Compiler {
+    private static final class Compiler {
         private Class<?> optimizedCallTarget;
         private Method compileMethod;
 

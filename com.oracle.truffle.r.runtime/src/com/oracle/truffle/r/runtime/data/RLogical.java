@@ -30,7 +30,7 @@ public final class RLogical extends RScalar {
 
     private final byte value;
 
-    RLogical(byte value) {
+    private RLogical(byte value) {
         this.value = value;
     }
 

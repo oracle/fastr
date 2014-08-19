@@ -56,11 +56,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
     private final NACheck posNACheck = NACheck.create();
     private final NACheck namesNACheck = NACheck.create();
 
-    abstract RNode getVector();
+    protected abstract RNode getVector();
 
-    abstract RNode getNewValue();
+    protected abstract RNode getNewValue();
 
-    abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, Object vector);
+    protected abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, Object vector);
 
     @Child private UpdateArrayHelperNode updateRecursive;
     @Child private CastComplexNode castComplex;

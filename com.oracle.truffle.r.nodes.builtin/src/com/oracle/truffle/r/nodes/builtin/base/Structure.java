@@ -55,7 +55,7 @@ public abstract class Structure extends RBuiltinNode {
         return obj;
     }
 
-    Object fixupValue(Object value) {
+    private static Object fixupValue(Object value) {
         if (value instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) value);
         }

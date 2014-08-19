@@ -245,7 +245,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    interface HasMode {
+    private interface HasMode {
         String getMode();
     }
 

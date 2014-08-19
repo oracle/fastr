@@ -76,7 +76,7 @@ public class AnalyzeRBuiltin {
 
     }
 
-    enum Visibility {
+    private enum Visibility {
         ON("Force ON"),
         OFF("Force OFF"),
         ON_UPDATE("Force ON, implementation may UPDATE");
@@ -88,7 +88,7 @@ public class AnalyzeRBuiltin {
         }
     }
 
-    enum Kind {
+    private enum Kind {
         Primitive,
         Internal
     }

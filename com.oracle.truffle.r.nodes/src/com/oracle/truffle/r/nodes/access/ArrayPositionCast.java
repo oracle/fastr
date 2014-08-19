@@ -46,7 +46,7 @@ public abstract class ArrayPositionCast extends RNode {
 
     public abstract Object executeArg(VirtualFrame frame, Object op, Object vector, Object operand);
 
-    abstract RNode getVector();
+    protected abstract RNode getVector();
 
     private final int dimension;
 

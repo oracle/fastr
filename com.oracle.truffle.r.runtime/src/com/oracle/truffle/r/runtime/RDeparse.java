@@ -138,7 +138,7 @@ public class RDeparse {
 
     private static final PPInfo BUILTIN = new PPInfo(PP.FUNCALL, 0, false);
 
-    static PPInfo ppInfo(String op) {
+    private static PPInfo ppInfo(String op) {
         for (Func func : FUNCTAB) {
             if (func.op.equals(op)) {
                 return func.info;

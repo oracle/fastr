@@ -54,11 +54,11 @@ import com.oracle.truffle.r.runtime.*;
  */
 public abstract class RBuiltinPackage {
 
-    public static class Component {
-        final String libContents;
-        final String libName;
+    private static class Component {
+        public final String libContents;
+        public final String libName;
 
-        Component(String libName, String libContents) {
+        public Component(String libName, String libContents) {
             this.libContents = libContents;
             this.libName = libName;
         }

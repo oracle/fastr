@@ -29,7 +29,7 @@ public final class RString {
 
     private final String value;
 
-    RString(String value) {
+    private RString(String value) {
         this.value = value;
     }
 

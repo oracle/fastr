@@ -131,19 +131,19 @@ public class RCmdOptions {
         /**
          * The option name prefixed by {@code --} or {@code null} if no {@code --} form.
          */
-        final String name;
+        private final String name;
         /**
          * The short option name prefixed by {@code -} or {@code null} if no {@code -} form.
          */
-        final String shortName;
+        private final String shortName;
         /**
          * The '=' separated suffix, e.g. {@code --file=FILE}.
          */
-        String suffix;
+        private String suffix;
         /**
          * The space separated suffix, e.g. {@code -g TYPE}.
          */
-        String shortSuffix;
+        private String shortSuffix;
         /**
          * The help text.
          */

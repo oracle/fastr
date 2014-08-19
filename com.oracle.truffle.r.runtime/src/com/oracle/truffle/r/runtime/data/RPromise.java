@@ -134,7 +134,7 @@ public class RPromise {
      * @param env {@link #env}
      * @param expr {@link #exprRep}
      */
-    RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
+    private RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
         this.evalPolicy = evalPolicy;
         this.type = type;
         this.env = env;

@@ -39,7 +39,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         this.data = data;
     }
 
-    RRawVector(byte[] data, int[] dims) {
+    private RRawVector(byte[] data, int[] dims) {
         this(data, dims, null);
     }
 

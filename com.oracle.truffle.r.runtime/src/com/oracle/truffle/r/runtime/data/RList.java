@@ -44,7 +44,7 @@ public final class RList extends RVector implements RAbstractVector {
         this.data = data;
     }
 
-    RList(Object[] data, boolean isComplete, int[] dims) {
+    private RList(Object[] data, boolean isComplete, int[] dims) {
         this(data, isComplete, dims, null);
     }
 

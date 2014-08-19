@@ -17,8 +17,8 @@ import com.oracle.truffle.r.runtime.*;
 
 public abstract class AssignVariable extends ASTNode {
 
-    final boolean isSuper;
-    ASTNode rhs;
+    private final boolean isSuper;
+    private final ASTNode rhs;
 
     protected AssignVariable(SourceSection source, boolean isSuper, ASTNode expr) {
         super(source);

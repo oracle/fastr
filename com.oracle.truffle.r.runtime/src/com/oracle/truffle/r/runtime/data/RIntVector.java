@@ -46,7 +46,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         this.data = data;
     }
 
-    RIntVector(int[] data, boolean complete, int[] dims) {
+    private RIntVector(int[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
     }
 

@@ -273,7 +273,7 @@ public abstract class Sprintf extends RBuiltinNode {
     // format info parsing
     //
 
-    static class FormatInfo {
+    private static class FormatInfo {
         char conversion;
         int width;
         int precision;
