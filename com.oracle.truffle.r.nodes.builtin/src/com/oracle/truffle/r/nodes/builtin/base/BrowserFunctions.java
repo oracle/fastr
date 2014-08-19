@@ -115,7 +115,7 @@ public class BrowserFunctions {
                         }
 
                         default:
-                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true);
+                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true, false);
                             break;
                     }
                 }

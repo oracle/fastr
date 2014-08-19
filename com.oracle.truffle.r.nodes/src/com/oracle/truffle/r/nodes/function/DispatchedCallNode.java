@@ -119,7 +119,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
             return dcn.executeInternal(frame, type, args);
         }
     }
@@ -164,7 +164,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector aType, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
             if (isEqualType(this.type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }
@@ -193,7 +193,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
             return Utils.nyi();
         }
 

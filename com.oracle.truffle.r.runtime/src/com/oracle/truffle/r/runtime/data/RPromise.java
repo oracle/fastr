@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
  * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
  */
 @ValueType
-public class RPromise {
+public final class RPromise {
 
     /**
      * The policy used to evaluate a promise.
@@ -309,26 +309,6 @@ public class RPromise {
     }
 
     /**
-     * A {@link RPromise} implementation that already has its argument value evaluated.
-     *
-     * @see #RPromise(EvalPolicy, PromiseType, Object)
-     */
-    public static class RPromiseArgEvaluated extends RPromise {
-
-        /**
-         * @param evalPolicy {@link EvalPolicy}
-         * @param argumentValue The already evaluated value of the supplied argument.
-         *            <code>RMissing.instance</code> denotes 'argument not supplied', aka.
-         *            'missing'.
-         */
-        public RPromiseArgEvaluated(EvalPolicy evalPolicy, PromiseType type, Object argumentValue) {
-            super(evalPolicy, type, null, null);
-            this.value = argumentValue;
-            this.isEvaluated = true;
-        }
-    }
-
-    /**
      * A factory which produces instances of {@link RPromise}.
      *
      * @see RPromiseFactory#createPromise(REnvironment)
@@ -382,12 +362,16 @@ public class RPromise {
         }
 
         /**
-         * @param argumentValue The already evaluated argument value
+         * @param argumentValue The already evaluated value of the supplied argument.
+         *            <code>RMissing.instance</code> denotes 'argument not supplied', aka.
+         *            'missing'.
          * @return A {@link RPromise} whose supplied argument has already been evaluated
-         * @see RPromiseArgEvaluated
          */
         public RPromise createPromiseArgEvaluated(Object argumentValue) {
-            return new RPromiseArgEvaluated(evalPolicy, type, argumentValue);
+            RPromise result = new RPromise(evalPolicy, type, null, null);
+            result.value = argumentValue;
+            result.isEvaluated = true;
+            return result;
         }
 
         public Object getExpr() {

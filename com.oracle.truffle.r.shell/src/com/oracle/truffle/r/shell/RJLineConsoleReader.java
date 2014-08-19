@@ -34,6 +34,5 @@ public class RJLineConsoleReader extends ConsoleReader {
         super(in, out);
         setHandleUserInterrupt(true);
         setExpandEvents(false);
-        setPrompt("> ");
     }
 }
