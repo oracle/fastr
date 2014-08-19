@@ -54,23 +54,23 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization
-    public RNull doNull(@SuppressWarnings("unused") RNull operand) {
+    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
     }
 
     @Specialization
-    public double doInt(int operand) {
+    protected double doInt(int operand) {
         naCheck.enable(operand);
         return naCheck.convertIntToDouble(operand);
     }
 
     @Specialization
-    public double doDouble(double operand) {
+    protected double doDouble(double operand) {
         return operand;
     }
 
     @Specialization
-    public double doDouble(RComplex operand) {
+    protected double doDouble(RComplex operand) {
         naCheck.enable(operand);
         double result = naCheck.convertComplexToDouble(operand);
         if (operand.getImaginaryPart() != 0.0) {
@@ -80,7 +80,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization
-    public double doLogical(byte operand) {
+    protected double doLogical(byte operand) {
         naCheck.enable(operand);
         return naCheck.convertLogicalToDouble(operand);
     }
@@ -96,7 +96,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization
-    public double doRaw(RRaw operand) {
+    protected double doRaw(RRaw operand) {
         return RRuntime.raw2double(operand);
     }
 
@@ -154,17 +154,17 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization
-    public RDoubleVector doIntVector(RIntVector operand) {
+    protected RDoubleVector doIntVector(RIntVector operand) {
         return performAbstractIntVector(operand);
     }
 
     @Specialization
-    public RDoubleVector doIntVector(RIntSequence operand) {
+    protected RDoubleVector doIntVector(RIntSequence operand) {
         return performAbstractIntVector(operand);
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RDoubleVector doLogicalVectorDims(RLogicalVector operand) {
+    protected RDoubleVector doLogicalVectorDims(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
         if (isAttrPreservation()) {
@@ -174,7 +174,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RDoubleVector doLogicalVectorNames(RLogicalVector operand) {
+    protected RDoubleVector doLogicalVectorNames(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
         if (isAttrPreservation()) {
@@ -184,7 +184,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RDoubleVector doLogicalVectorDimsNames(RLogicalVector operand) {
+    protected RDoubleVector doLogicalVectorDimsNames(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -194,7 +194,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RDoubleVector doLogicalVector(RLogicalVector operand) {
+    protected RDoubleVector doLogicalVector(RLogicalVector operand) {
         double[] ddata = dataFromLogical(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         if (isAttrPreservation()) {
@@ -204,7 +204,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RDoubleVector doStringVectorDims(RStringVector operand) {
+    protected RDoubleVector doStringVectorDims(RStringVector operand) {
         double[] ddata = dataFromString(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
         if (isAttrPreservation()) {
@@ -214,7 +214,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RDoubleVector doStringVectorNames(RStringVector operand) {
+    protected RDoubleVector doStringVectorNames(RStringVector operand) {
         double[] ddata = dataFromString(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
         if (isAttrPreservation()) {
@@ -224,7 +224,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RDoubleVector doStringVectorDimsNames(RStringVector operand) {
+    protected RDoubleVector doStringVectorDimsNames(RStringVector operand) {
         double[] ddata = dataFromString(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -234,7 +234,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RDoubleVector doStringVector(RStringVector operand) {
+    protected RDoubleVector doStringVector(RStringVector operand) {
         double[] ddata = dataFromString(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         if (isAttrPreservation()) {
@@ -244,7 +244,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RDoubleVector doComplexVectorDims(RComplexVector operand) {
+    protected RDoubleVector doComplexVectorDims(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions());
         if (isAttrPreservation()) {
@@ -254,7 +254,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RDoubleVector doComplexVectorNames(RComplexVector operand) {
+    protected RDoubleVector doComplexVectorNames(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getNames());
         if (isAttrPreservation()) {
@@ -264,7 +264,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RDoubleVector doComplexVectorDimsNames(RComplexVector operand) {
+    protected RDoubleVector doComplexVectorDimsNames(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -274,7 +274,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RDoubleVector doComplexVector(RComplexVector operand) {
+    protected RDoubleVector doComplexVector(RComplexVector operand) {
         double[] ddata = dataFromComplex(operand);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         if (isAttrPreservation()) {
@@ -284,7 +284,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RDoubleVector doRawVectorDims(RRawVector vector) {
+    protected RDoubleVector doRawVectorDims(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getDimensions());
         if (isAttrPreservation()) {
@@ -294,7 +294,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RDoubleVector doRawVectorNames(RRawVector vector) {
+    protected RDoubleVector doRawVectorNames(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getNames());
         if (isAttrPreservation()) {
@@ -304,7 +304,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RDoubleVector doRawVectorDimsNames(RRawVector vector) {
+    protected RDoubleVector doRawVectorDimsNames(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA(), vector.getDimensions(), vector.getNames());
         if (isAttrPreservation()) {
@@ -314,7 +314,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RDoubleVector doRawVector(RRawVector vector) {
+    protected RDoubleVector doRawVector(RRawVector vector) {
         double[] ddata = dataFromRaw(vector);
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, naCheck.neverSeenNA());
         if (isAttrPreservation()) {
@@ -324,17 +324,17 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization
-    public RDoubleVector doDoubleVector(RDoubleVector operand) {
+    protected RDoubleVector doDoubleVector(RDoubleVector operand) {
         return operand;
     }
 
     @Specialization
-    public RDoubleSequence doDoubleSequence(RDoubleSequence operand) {
+    protected RDoubleSequence doDoubleSequence(RDoubleSequence operand) {
         return operand;
     }
 
     @Specialization
-    public RDoubleVector doList(VirtualFrame frame, RList list) {
+    protected RDoubleVector doList(VirtualFrame frame, RList list) {
         int length = list.getLength();
         double[] result = new double[length];
         for (int i = 0; i < length; i++) {

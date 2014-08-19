@@ -50,13 +50,13 @@ public abstract class IsNA extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object o);
 
     @Specialization
-    public byte isNA(int value) {
+    protected byte isNA(int value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RAbstractIntVector vector) {
+    protected RLogicalVector isNA(RAbstractIntVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -66,13 +66,13 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(double value) {
+    protected byte isNA(double value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RAbstractDoubleVector vector) {
+    protected RLogicalVector isNA(RAbstractDoubleVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -82,13 +82,13 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(String value) {
+    protected byte isNA(String value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RStringVector vector) {
+    protected RLogicalVector isNA(RStringVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -98,7 +98,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector isNA(VirtualFrame frame, RList list) {
+    protected RLogicalVector isNA(VirtualFrame frame, RList list) {
         controlVisibility();
         byte[] resultVector = new byte[list.getLength()];
         for (int i = 0; i < list.getLength(); i++) {
@@ -121,13 +121,13 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(byte value) {
+    protected byte isNA(byte value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RLogicalVector vector) {
+    protected RLogicalVector isNA(RLogicalVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -137,7 +137,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(RNull value) {
+    protected byte isNA(RNull value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }

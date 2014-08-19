@@ -42,44 +42,44 @@ public abstract class CastToContainerNode extends CastNode {
 
     @Specialization(guards = "preserveNonContainer")
     @SuppressWarnings("unused")
-    public RNull castNull(RNull rnull) {
+    protected RNull castNull(RNull rnull) {
         return RNull.instance;
     }
 
     @Specialization(guards = "!preserveNonContainer")
     @SuppressWarnings("unused")
-    public RAbstractVector cast(RNull rnull) {
+    protected RAbstractVector cast(RNull rnull) {
         return RDataFactory.createList();
     }
 
     @Specialization(guards = "preserveNonContainer")
-    public RFunction castFunction(RFunction f) {
+    protected RFunction castFunction(RFunction f) {
         return f;
     }
 
     @Specialization(guards = "!preserveNonContainer")
     @SuppressWarnings("unused")
-    public RAbstractVector cast(RFunction f) {
+    protected RAbstractVector cast(RFunction f) {
         return RDataFactory.createList();
     }
 
     @Specialization
-    public RAbstractVector cast(RAbstractVector vector) {
+    protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
     }
 
     @Specialization
-    public RDataFrame cast(RDataFrame dataFrame) {
+    protected RDataFrame cast(RDataFrame dataFrame) {
         return dataFrame;
     }
 
     @Specialization
-    public RExpression cast(RExpression expression) {
+    protected RExpression cast(RExpression expression) {
         return expression;
     }
 
     @Specialization
-    public RPairList cast(RPairList pairlist) {
+    protected RPairList cast(RPairList pairlist) {
         return pairlist;
     }
 

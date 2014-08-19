@@ -57,7 +57,7 @@ public abstract class Paste0 extends RBuiltinNode {
     }
 
     @Specialization
-    public Object paste0(VirtualFrame frame, RList values, Object collapse) {
+    protected Object paste0(VirtualFrame frame, RList values, Object collapse) {
         controlVisibility();
         return paste(frame, values, collapse);
     }

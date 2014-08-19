@@ -69,7 +69,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Specialization(guards = {"noEnv", "!doesInheritS"})
     @SuppressWarnings("unused")
-    public Object assignNoInherit(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignNoInherit(VirtualFrame frame, String x, Object value, Object pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         ensureWrite(x);
         writeVariableNode.execute(frame, value);
@@ -79,7 +79,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     @ExplodeLoop
     @Specialization(guards = {"noEnv", "doesInheritS"})
     @SuppressWarnings("unused")
-    public Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos, RMissing environment, byte inherits, byte immediate) {
+    protected Object assignInherit(VirtualFrame virtualFrame, String variableName, Object variableValue, Object pos, RMissing environment, byte inherits, byte immediate) {
         controlVisibility();
         MaterializedFrame materializedFrame = virtualFrame.materialize();
         FrameSlot slot = materializedFrame.getFrameDescriptor().findFrameSlot(variableName);
@@ -122,7 +122,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "!doesInherit")
     @SuppressWarnings("unused")
-    public Object assignNoInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignNoInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         if (pos == REnvironment.emptyEnv()) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
@@ -137,13 +137,13 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "!doesInheritX")
     @SuppressWarnings("unused")
-    public Object assignNoInherit(VirtualFrame frame, String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
+    protected Object assignNoInherit(VirtualFrame frame, String x, Object value, int pos, REnvironment envir, byte inherits, byte immediate) {
         return assignNoInherit(frame, x, value, envir, RMissing.instance, inherits, immediate);
     }
 
     @Specialization(guards = "doesInherit")
     @SuppressWarnings("unused")
-    public Object assignInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         REnvironment env = pos;
         while (env != null) {
@@ -165,19 +165,19 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!doesInherit")
-    public Object assignNoInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignNoInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         return assignNoInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(guards = "doesInherit")
-    public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignInherit(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         return assignInherit(frame, x.getDataAt(0), value, pos, envir, inherits, immediate);
     }
 
     @Specialization(guards = "doesInheritX")
-    public Object assignInherit(VirtualFrame frame, RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
+    protected Object assignInherit(VirtualFrame frame, RStringVector x, Object value, @SuppressWarnings("unused") int pos, REnvironment envir, byte inherits, byte immediate) {
         controlVisibility();
         return assignInherit(frame, x.getDataAt(0), value, envir, RMissing.instance, inherits, immediate);
     }

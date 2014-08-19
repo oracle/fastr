@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Internal extends RBuiltinNode {
 
     @Specialization
-    public Object doInternal(VirtualFrame frame, RPromise x) {
+    protected Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
         RNode call = (RNode) x.getRep();
         Symbol symbol = null;

@@ -23,19 +23,19 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class IsArray extends RBuiltinNode {
 
     @Specialization
-    public byte isType(RAbstractVector vector) {
+    protected byte isType(RAbstractVector vector) {
         controlVisibility();
         return RRuntime.asLogical(vector.isArray());
     }
 
     @Specialization
-    public byte isType(@SuppressWarnings("unused") RNull arg) {
+    protected byte isType(@SuppressWarnings("unused") RNull arg) {
         controlVisibility();
         return RRuntime.FALSE;
     }
 
     @Specialization
-    public byte isType(@SuppressWarnings("unused") RFunction arg) {
+    protected byte isType(@SuppressWarnings("unused") RFunction arg) {
         controlVisibility();
         return RRuntime.FALSE;
     }

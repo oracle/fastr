@@ -47,32 +47,32 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization
-    public RNull doNull(@SuppressWarnings("unused") RNull operand) {
+    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
     }
 
     @Specialization
-    public String doString(String value) {
+    protected String doString(String value) {
         return value;
     }
 
     @Specialization
-    public String doInteger(VirtualFrame frame, int value) {
+    protected String doInteger(VirtualFrame frame, int value) {
         return toString.executeString(frame, value);
     }
 
     @Specialization
-    public String doDouble(VirtualFrame frame, double value) {
+    protected String doDouble(VirtualFrame frame, double value) {
         return toString.executeString(frame, value);
     }
 
     @Specialization
-    public String doLogical(VirtualFrame frame, byte value) {
+    protected String doLogical(VirtualFrame frame, byte value) {
         return toString.executeString(frame, value);
     }
 
     @Specialization
-    public String doRaw(VirtualFrame frame, RRaw value) {
+    protected String doRaw(VirtualFrame frame, RRaw value) {
         return toString.executeString(frame, value);
     }
 
@@ -113,37 +113,37 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = "isZeroLength")
-    public Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
+    protected Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
         return isEmptyVectorConvertedToNull() ? RNull.instance : RDataFactory.createStringVector(0);
     }
 
     @Specialization(guards = "!isZeroLength")
-    public RStringVector doStringVector(RStringVector vector) {
+    protected RStringVector doStringVector(RStringVector vector) {
         return vector;
     }
 
     @Specialization(guards = "!isZeroLength")
-    public RStringVector doIntVector(VirtualFrame frame, RIntVector vector) {
+    protected RStringVector doIntVector(VirtualFrame frame, RIntVector vector) {
         return performAbstractIntVector(frame, vector);
     }
 
     @Specialization(guards = "!isZeroLength")
-    public RStringVector doDoubleVector(VirtualFrame frame, RDoubleVector vector) {
+    protected RStringVector doDoubleVector(VirtualFrame frame, RDoubleVector vector) {
         return performAbstractDoubleVector(frame, vector);
     }
 
     @Specialization(guards = "!isZeroLength")
-    public RStringVector doIntSequence(VirtualFrame frame, RIntSequence vector) {
+    protected RStringVector doIntSequence(VirtualFrame frame, RIntSequence vector) {
         return performAbstractIntVector(frame, vector);
     }
 
     @Specialization(guards = "!isZeroLength")
-    public RStringVector doDoubleSequence(VirtualFrame frame, RDoubleSequence vector) {
+    protected RStringVector doDoubleSequence(VirtualFrame frame, RDoubleSequence vector) {
         return performAbstractDoubleVector(frame, vector);
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    public RStringVector doLogicalVectorDims(VirtualFrame frame, RLogicalVector vector) {
+    protected RStringVector doLogicalVectorDims(VirtualFrame frame, RLogicalVector vector) {
         String[] result = dataFromLogical(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
         if (isAttrPreservation()) {
@@ -153,7 +153,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    public RStringVector doLogicalVectorNames(VirtualFrame frame, RLogicalVector vector) {
+    protected RStringVector doLogicalVectorNames(VirtualFrame frame, RLogicalVector vector) {
         String[] result = dataFromLogical(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
         if (isAttrPreservation()) {
@@ -163,7 +163,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    public RStringVector doLogicalVectorDimsNames(VirtualFrame frame, RLogicalVector vector) {
+    protected RStringVector doLogicalVectorDimsNames(VirtualFrame frame, RLogicalVector vector) {
         String[] result = dataFromLogical(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
         if (isAttrPreservation()) {
@@ -173,7 +173,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    public RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector vector) {
+    protected RStringVector doLogicalVector(VirtualFrame frame, RLogicalVector vector) {
         String[] result = dataFromLogical(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         if (isAttrPreservation()) {
@@ -183,7 +183,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    public RStringVector doComplexVectorDims(VirtualFrame frame, RComplexVector vector) {
+    protected RStringVector doComplexVectorDims(VirtualFrame frame, RComplexVector vector) {
         String[] result = dataFromComplex(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
         if (isAttrPreservation()) {
@@ -193,7 +193,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    public RStringVector doComplexVectorNames(VirtualFrame frame, RComplexVector vector) {
+    protected RStringVector doComplexVectorNames(VirtualFrame frame, RComplexVector vector) {
         String[] result = dataFromComplex(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
         if (isAttrPreservation()) {
@@ -203,7 +203,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    public RStringVector doComplexVectorDimsNames(VirtualFrame frame, RComplexVector vector) {
+    protected RStringVector doComplexVectorDimsNames(VirtualFrame frame, RComplexVector vector) {
         String[] result = dataFromComplex(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
         if (isAttrPreservation()) {
@@ -213,7 +213,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    public RStringVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
+    protected RStringVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
         String[] result = dataFromComplex(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         if (isAttrPreservation()) {
@@ -223,7 +223,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    public RStringVector doRawVectorDims(VirtualFrame frame, RRawVector vector) {
+    protected RStringVector doRawVectorDims(VirtualFrame frame, RRawVector vector) {
         String[] result = dataFromRaw(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions());
         if (isAttrPreservation()) {
@@ -233,7 +233,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    public RStringVector doRawVectorNames(VirtualFrame frame, RRawVector vector) {
+    protected RStringVector doRawVectorNames(VirtualFrame frame, RRawVector vector) {
         String[] result = dataFromRaw(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getNames());
         if (isAttrPreservation()) {
@@ -243,7 +243,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    public RStringVector doRawVectorDimsNames(VirtualFrame frame, RRawVector vector) {
+    protected RStringVector doRawVectorDimsNames(VirtualFrame frame, RRawVector vector) {
         String[] result = dataFromRaw(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames());
         if (isAttrPreservation()) {
@@ -253,7 +253,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    public RStringVector doRawVector(VirtualFrame frame, RRawVector vector) {
+    protected RStringVector doRawVector(VirtualFrame frame, RRawVector vector) {
         String[] result = dataFromRaw(frame, vector);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         if (isAttrPreservation()) {
@@ -263,7 +263,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "preserveDimensions"})
-    public RStringVector doListDims(VirtualFrame frame, RList list) {
+    protected RStringVector doListDims(VirtualFrame frame, RList list) {
         String[] result = dataFromList(frame, list);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getDimensions());
         if (isAttrPreservation()) {
@@ -273,7 +273,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "!preserveDimensions"})
-    public RStringVector doListNames(VirtualFrame frame, RList list) {
+    protected RStringVector doListNames(VirtualFrame frame, RList list) {
         String[] result = dataFromList(frame, list);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getNames());
         if (isAttrPreservation()) {
@@ -283,7 +283,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "preserveNames", "preserveDimensions"})
-    public RStringVector doListDimsNames(VirtualFrame frame, RList list) {
+    protected RStringVector doListDimsNames(VirtualFrame frame, RList list) {
         String[] result = dataFromList(frame, list);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR, list.getDimensions(), list.getNames());
         if (isAttrPreservation()) {
@@ -293,7 +293,7 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = {"!isZeroLength", "!preserveNames", "!preserveDimensions"})
-    public RStringVector doList(VirtualFrame frame, RList list) {
+    protected RStringVector doList(VirtualFrame frame, RList list) {
         String[] result = dataFromList(frame, list);
         RStringVector ret = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         if (isAttrPreservation()) {

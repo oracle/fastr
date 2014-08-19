@@ -35,25 +35,25 @@ public abstract class Log10 extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull log(VirtualFrame frame, RNull x) {
+    protected RNull log(VirtualFrame frame, RNull x) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization
-    public double log(int value) {
+    protected double log(int value) {
         controlVisibility();
         return Math.log10(value);
     }
 
     @Specialization
-    public double log(double value) {
+    protected double log(double value) {
         controlVisibility();
         return Math.log10(value);
     }
 
     @Specialization
-    public RDoubleVector log(RIntVector vector) {
+    protected RDoubleVector log(RIntVector vector) {
         controlVisibility();
         double[] resultVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -70,7 +70,7 @@ public abstract class Log10 extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector log(RDoubleVector vector) {
+    protected RDoubleVector log(RDoubleVector vector) {
         controlVisibility();
         double[] doubleVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {

@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization
-    public RStringVector doReadDCF(VirtualFrame frame, RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
+    protected RStringVector doReadDCF(VirtualFrame frame, RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
         try {
             DCF dcf = DCF.read(conn.readLines(0));
             if (dcf == null) {

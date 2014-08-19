@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class FastRSetField extends RInvisibleBuiltinNode {
 
     @Specialization
-    RNull setField(VirtualFrame frame, RAbstractStringVector vec, Object value) {
+    protected RNull setField(VirtualFrame frame, RAbstractStringVector vec, Object value) {
         controlVisibility();
         String qualFieldName = vec.getDataAt(0);
         int lx = qualFieldName.lastIndexOf('.');

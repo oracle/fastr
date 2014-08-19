@@ -46,13 +46,13 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Rhome extends RBuiltinNode {
 
     @Specialization
-    public Object doRhome(@SuppressWarnings("unused") RMissing component) {
+    protected Object doRhome(@SuppressWarnings("unused") RMissing component) {
         controlVisibility();
         return RDataFactory.createStringVector(REnvVars.rHome());
     }
 
     @Specialization
-    public Object doRhome(String component) {
+    protected Object doRhome(String component) {
         controlVisibility();
         String rHome = REnvVars.rHome();
         String result = component.equals("home") ? rHome : RRuntime.toString(FileSystems.getDefault().getPath(rHome, component).toAbsolutePath());

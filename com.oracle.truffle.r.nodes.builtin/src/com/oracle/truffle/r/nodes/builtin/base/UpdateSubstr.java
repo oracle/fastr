@@ -80,31 +80,31 @@ public abstract class UpdateSubstr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg")
-    public RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
+    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "wrongParams"})
-    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
+    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
         assert false; // should never happen
         return RNull.instance; // dummy
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "!wrongParams"})
-    public RStringVector substr(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
+    protected RStringVector substr(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "!wrongParams", "wrongValue"})
-    public RStringVector substr(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
+    protected RStringVector substr(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @Specialization(guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
-    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
+    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
         String[] res = new String[arg.getLength()];
         for (int i = 0, j = 0, k = 0, l = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength()), l = Utils.incMod(k, value.getLength())) {
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k), value.getDataAt(l));

@@ -61,7 +61,7 @@ public class HiddenInternalFunctions {
          * modified call in the {@code eenv} environment.
          */
         @Specialization
-        public RNull doMakeLazy(VirtualFrame frame, RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
+        protected RNull doMakeLazy(VirtualFrame frame, RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
             controlVisibility();
             initEval();
             for (int i = 0; i < names.getLength(); i++) {
@@ -92,7 +92,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"})
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Specialization
-        public RNull importIntoEnv(VirtualFrame frame, REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
+        protected RNull importIntoEnv(VirtualFrame frame, REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
             controlVisibility();
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
@@ -142,7 +142,7 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -187,7 +187,7 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
             initCast();
             return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
         }

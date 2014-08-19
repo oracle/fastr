@@ -43,7 +43,7 @@ public abstract class VectorPositionCast extends RNode {
     private final NACheck positionNACheck;
 
     @Specialization
-    public int doDoublePosition(double operand) {
+    protected int doDoublePosition(double operand) {
         positionNACheck.enable(operand);
         if (positionNACheck.check(operand)) {
             return RRuntime.INT_NA;
@@ -52,19 +52,19 @@ public abstract class VectorPositionCast extends RNode {
     }
 
     @Specialization
-    public int doInt(int operand) {
+    protected int doInt(int operand) {
         positionNACheck.enable(operand);
         return operand;
     }
 
     @Specialization
-    public byte doBoolean(byte operand) {
+    protected byte doBoolean(byte operand) {
         positionNACheck.enable(operand);
         return operand;
     }
 
     @Specialization
-    public String doString(String operand) {
+    protected String doString(String operand) {
         positionNACheck.enable(operand);
         return operand;
     }
@@ -88,50 +88,50 @@ public abstract class VectorPositionCast extends RNode {
     }
 
     @Specialization(guards = "greaterEqualOneSequence")
-    public RIntSequence doIntVectorPositiveSequence(RIntSequence operand) {
+    protected RIntSequence doIntVectorPositiveSequence(RIntSequence operand) {
         return operand;
     }
 
     @Specialization(guards = "startingZeroSequence")
-    public RIntSequence doIntVectorPositiveIncludingZeroSequence(RIntSequence operand) {
+    protected RIntSequence doIntVectorPositiveIncludingZeroSequence(RIntSequence operand) {
         return operand.removeFirst();
     }
 
     @Specialization(guards = {"!greaterEqualOneSequence", "!startingZeroSequence"})
-    public RIntVector doIntVector(RIntSequence operand) {
+    protected RIntVector doIntVector(RIntSequence operand) {
         return (RIntVector) operand.createVector();
     }
 
     @Specialization(guards = "canConvertIntSequence")
-    public RIntSequence doDoubleSequenceToIntConverstion(RDoubleSequence operand) {
+    protected RIntSequence doDoubleSequenceToIntConverstion(RDoubleSequence operand) {
         return RDataFactory.createIntSequence((int) operand.getStart(), (int) operand.getStride(), operand.getLength());
     }
 
     @Specialization(guards = "!canConvertIntSequence")
-    public RIntVector doDoubleSequence(@SuppressWarnings("unused") RDoubleSequence operand) {
+    protected RIntVector doDoubleSequence(@SuppressWarnings("unused") RDoubleSequence operand) {
         throw Utils.nyi();
     }
 
     @Specialization(guards = "sizeOneVector")
-    public int doIntVectorSizeOne(RIntVector operand) {
+    protected int doIntVectorSizeOne(RIntVector operand) {
         positionNACheck.enable(operand);
         return operand.getDataAt(0);
     }
 
     @Specialization(guards = "!sizeOneVector")
-    public RIntVector doIntVector(RIntVector operand) {
+    protected RIntVector doIntVector(RIntVector operand) {
         positionNACheck.enable(operand);
         return operand;
     }
 
     @Specialization
-    public RStringVector doIntVector(RStringVector operand) {
+    protected RStringVector doIntVector(RStringVector operand) {
         positionNACheck.enable(operand);
         return operand;
     }
 
     @Specialization
-    public RIntVector doDoubleVector(RDoubleVector operand) {
+    protected RIntVector doDoubleVector(RDoubleVector operand) {
         int dataLength = operand.getLength();
         positionNACheck.enable(operand);
         int[] intData = new int[dataLength];
@@ -142,17 +142,17 @@ public abstract class VectorPositionCast extends RNode {
     }
 
     @Specialization
-    public RLogicalVector doLogicalVector(RLogicalVector operand) {
+    protected RLogicalVector doLogicalVector(RLogicalVector operand) {
         return operand;
     }
 
     @Specialization
-    public RMissing doMissing(RMissing missing) {
+    protected RMissing doMissing(RMissing missing) {
         return missing;
     }
 
     @Specialization
-    public int doNull(@SuppressWarnings("unused") RNull nul) {
+    protected int doNull(@SuppressWarnings("unused") RNull nul) {
         return 0;
     }
 }

@@ -33,13 +33,13 @@ public abstract class IsNull extends IsTypeNode {
 
     @Specialization
     @Override
-    public byte isType(RNull value) {
+    protected byte isType(RNull value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isType(Object value) {
+    protected byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof RNull);
     }

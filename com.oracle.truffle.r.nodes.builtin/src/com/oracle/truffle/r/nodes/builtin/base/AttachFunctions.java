@@ -50,7 +50,7 @@ public class AttachFunctions {
         }
 
         @Specialization
-        public REnvironment doAttach(@SuppressWarnings("unused") RNull what, int pos, String name) {
+        protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, int pos, String name) {
             controlVisibility();
             REnvironment env = new REnvironment.NewEnv(name);
             doAttachEnv(pos, env);
@@ -58,24 +58,24 @@ public class AttachFunctions {
         }
 
         @Specialization
-        public REnvironment doAttach(RNull what, double pos, RAbstractStringVector name) {
+        protected REnvironment doAttach(RNull what, double pos, RAbstractStringVector name) {
             return doAttach(what, (int) pos, name.getDataAt(0));
         }
 
         @Specialization
-        public REnvironment doAttach(REnvironment what, String name, @SuppressWarnings("unused") String unused) {
+        protected REnvironment doAttach(REnvironment what, String name, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             return doAttachEnv(what, 2, name);
         }
 
         @Specialization
-        public REnvironment doAttach(REnvironment what, int pos, String name) {
+        protected REnvironment doAttach(REnvironment what, int pos, String name) {
             controlVisibility();
             return doAttachEnv(what, pos, name);
         }
 
         @Specialization
-        public REnvironment doAttach(REnvironment what, double pos, String name) {
+        protected REnvironment doAttach(REnvironment what, double pos, String name) {
             controlVisibility();
             return doAttachEnv(what, (int) pos, name);
         }
@@ -95,19 +95,19 @@ public class AttachFunctions {
         }
 
         @Specialization
-        public REnvironment doAttach(RList what, String name, @SuppressWarnings("unused") String unused) {
+        protected REnvironment doAttach(RList what, String name, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             return doAttachList(what, 2, name);
         }
 
         @Specialization
-        public REnvironment doAttach(RList what, int pos, String name) {
+        protected REnvironment doAttach(RList what, int pos, String name) {
             controlVisibility();
             return doAttachList(what, pos, name);
         }
 
         @Specialization
-        public REnvironment doAttach(RList what, double pos, String name) {
+        protected REnvironment doAttach(RList what, double pos, String name) {
             controlVisibility();
             return doAttachList(what, (int) pos, name);
         }
@@ -148,19 +148,19 @@ public class AttachFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object doDetach1(VirtualFrame frame, int name, int pos, byte unload, byte characterOnly, byte force) {
+        protected Object doDetach1(VirtualFrame frame, int name, int pos, byte unload, byte characterOnly, byte force) {
             controlVisibility();
             return doDetach3(frame, name, unload == RRuntime.LOGICAL_TRUE, force == RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization
-        public Object doDetach(VirtualFrame frame, double name, int pos, byte unload, byte characterOnly, byte force) {
+        protected Object doDetach(VirtualFrame frame, double name, int pos, byte unload, byte characterOnly, byte force) {
             return doDetach1(frame, (int) name, pos, unload, characterOnly, force);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object doDetach2(VirtualFrame frame, String name, int pos, byte unload, byte characterOnly, byte force) {
+        protected Object doDetach2(VirtualFrame frame, String name, int pos, byte unload, byte characterOnly, byte force) {
             controlVisibility();
             int ix = REnvironment.lookupIndexOnSearchPath(name);
             if (ix <= 0) {

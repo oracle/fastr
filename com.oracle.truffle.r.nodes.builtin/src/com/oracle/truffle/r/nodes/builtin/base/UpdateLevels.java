@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     @Specialization
-    public RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
+    protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
         controlVisibility();
         RVector v = vector.materialize();
         v.setLevels(null);
@@ -30,7 +30,7 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
+    protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
         controlVisibility();
         RVector v = vector.materialize();
         v.setLevels(levels);

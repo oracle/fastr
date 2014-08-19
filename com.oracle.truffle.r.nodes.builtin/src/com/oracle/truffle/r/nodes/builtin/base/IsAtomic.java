@@ -34,25 +34,25 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class IsAtomic extends RBuiltinNode {
 
     @Specialization
-    public byte isAtomic(@SuppressWarnings("unused") RNull arg) {
+    protected byte isAtomic(@SuppressWarnings("unused") RNull arg) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization(guards = "!isListVector")
-    public byte isAtomic(@SuppressWarnings("unused") RAbstractVector arg) {
+    protected byte isAtomic(@SuppressWarnings("unused") RAbstractVector arg) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isAtomic(@SuppressWarnings("unused") RFunction arg) {
+    protected byte isAtomic(@SuppressWarnings("unused") RFunction arg) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isAtomic(@SuppressWarnings("unused") RList arg) {
+    protected byte isAtomic(@SuppressWarnings("unused") RList arg) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }

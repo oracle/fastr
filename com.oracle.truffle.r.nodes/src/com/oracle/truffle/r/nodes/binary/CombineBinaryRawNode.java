@@ -33,37 +33,37 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class CombineBinaryRawNode extends CombineBinaryNode {
 
     @Specialization
-    public RNull combine(RNull left, RNull right) {
+    protected RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @Specialization
-    public RRaw combine(RNull left, RRaw right) {
+    protected RRaw combine(RNull left, RRaw right) {
         return right;
     }
 
     @Specialization
-    public RRaw combine(RRaw left, RNull right) {
+    protected RRaw combine(RRaw left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RRawVector combine(RRawVector left, RNull right) {
+    protected RRawVector combine(RRawVector left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RRawVector combine(RNull left, RRawVector right) {
+    protected RRawVector combine(RNull left, RRawVector right) {
         return right;
     }
 
     @Specialization
-    public RRawVector combine(RRaw left, RRaw right) {
+    protected RRawVector combine(RRaw left, RRaw right) {
         return RDataFactory.createRawVector(new byte[]{left.getValue(), right.getValue()});
     }
 
     @Specialization
-    public RRawVector combine(RRawVector left, RRaw right) {
+    protected RRawVector combine(RRawVector left, RRaw right) {
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -74,7 +74,7 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RRawVector combine(RRaw left, RRawVector right) {
+    protected RRawVector combine(RRaw left, RRawVector right) {
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -85,7 +85,7 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RRawVector combine(RRawVector left, RRawVector right) {
+    protected RRawVector combine(RRawVector left, RRawVector right) {
         return (RRawVector) genericCombine(left, right);
     }
 

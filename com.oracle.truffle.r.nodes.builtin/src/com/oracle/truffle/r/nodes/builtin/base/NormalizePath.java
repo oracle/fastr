@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class NormalizePath extends RBuiltinNode {
 
     @Specialization
-    public RStringVector doNormalizePath(VirtualFrame frame, RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
+    protected RStringVector doNormalizePath(VirtualFrame frame, RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
         controlVisibility();
         String[] results = new String[pathVec.getLength()];
         FileSystem fileSystem = FileSystems.getDefault();
@@ -78,7 +78,7 @@ public abstract class NormalizePath extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object doNormalizePath(VirtualFrame frame, Object path, Object winslash, Object mustWork) {
+    protected Object doNormalizePath(VirtualFrame frame, Object path, Object winslash, Object mustWork) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
     }

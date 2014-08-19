@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "drop", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
 public abstract class Drop extends RBuiltinNode {
     @Specialization
-    public RAbstractVector doDrop(RAbstractVector x) {
+    protected RAbstractVector doDrop(RAbstractVector x) {
         int[] dims = x.getDimensions();
         int[] newDims = new int[dims.length];
         int count = 0;

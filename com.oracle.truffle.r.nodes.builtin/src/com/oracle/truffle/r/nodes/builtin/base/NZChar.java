@@ -56,31 +56,31 @@ public abstract class NZChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RLogicalVector rev(VirtualFrame frame, RNull value) {
+    protected RLogicalVector rev(VirtualFrame frame, RNull value) {
         controlVisibility();
         return RDataFactory.createEmptyLogicalVector();
     }
 
     @Specialization
-    public byte rev(VirtualFrame frame, int value) {
+    protected byte rev(VirtualFrame frame, int value) {
         controlVisibility();
         return isNonZeroLength(coerceContent(frame, value));
     }
 
     @Specialization
-    public byte rev(VirtualFrame frame, double value) {
+    protected byte rev(VirtualFrame frame, double value) {
         controlVisibility();
         return isNonZeroLength(coerceContent(frame, value));
     }
 
     @Specialization
-    public byte rev(VirtualFrame frame, byte value) {
+    protected byte rev(VirtualFrame frame, byte value) {
         controlVisibility();
         return isNonZeroLength(coerceContent(frame, value));
     }
 
     @Specialization
-    public RLogicalVector rev(RStringVector vector) {
+    protected RLogicalVector rev(RStringVector vector) {
         controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];
@@ -91,7 +91,7 @@ public abstract class NZChar extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector rev(VirtualFrame frame, RAbstractVector vector) {
+    protected RLogicalVector rev(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];

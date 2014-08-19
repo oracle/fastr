@@ -129,12 +129,12 @@ public class EvalFunctions {
     public abstract static class Eval extends EvalAdapter {
 
         @Specialization
-        public Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
+        protected Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
             return doEvalBodyInCallerFrame(frame, expr);
         }
 
         @Specialization
-        public Object doEval(VirtualFrame frame, Object expr, REnvironment envir, RMissing enclos) {
+        protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, RMissing enclos) {
             controlVisibility();
             return doEvalBody(frame, expr, envir, enclos);
         }
@@ -145,12 +145,12 @@ public class EvalFunctions {
     public abstract static class EvalQuote extends EvalAdapter {
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
+        protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") RMissing enclos) {
             return doEvalBodyInCallerFrame(frame, RDataFactory.createLanguage(expr.getRep()));
         }
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
+        protected Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
             /*
              * evalq does not evaluate it's first argument
              */
@@ -175,12 +175,12 @@ public class EvalFunctions {
         }
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
+        protected Object doEval(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envir, RMissing enclos) {
             return doEval(frame, expr, new REnvironment.NewEnv(REnvironment.frameToEnvironment(frame.materialize()), 0), enclos);
         }
 
         @Specialization
-        public Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
+        protected Object doEval(VirtualFrame frame, RPromise expr, REnvironment envir, RMissing enclos) {
             /*
              * local does not evaluate it's first argument
              */

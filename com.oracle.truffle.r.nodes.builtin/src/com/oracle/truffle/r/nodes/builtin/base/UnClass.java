@@ -23,7 +23,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class UnClass extends RBuiltinNode {
 
     @Specialization
-    public Object unClass(RAbstractVector arg) {
+    protected Object unClass(RAbstractVector arg) {
         controlVisibility();
         if (arg.isObject()) {
             RVector resultVector = arg.materialize();
@@ -36,7 +36,7 @@ public abstract class UnClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object unClass(RDataFrame arg) {
+    protected Object unClass(RDataFrame arg) {
         controlVisibility();
         RDataFrame resultFrame = arg;
         if (resultFrame.isShared()) {

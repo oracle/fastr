@@ -87,7 +87,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "wrongArgsObject")
-    String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+    protected String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RLogicalVector sciVec) {
         return null;
     }
@@ -108,7 +108,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -164,7 +164,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -219,7 +219,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;

@@ -64,7 +64,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
-    public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
@@ -74,7 +74,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
-    public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
@@ -84,7 +84,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
-    public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         RVector vdata = data.materialize();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
@@ -94,7 +94,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "isByRow")
     @SuppressWarnings("unused")
-    public Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected Object matrixByRow(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         int[] rowColByRow = new int[]{nrowncol[1], nrowncol[0]};
@@ -103,7 +103,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
-    public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
@@ -111,7 +111,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
-    public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RAbstractVector ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
@@ -119,7 +119,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
-    public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RAbstractVector nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);
@@ -127,7 +127,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "!isByRow")
     @SuppressWarnings("unused")
-    public RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrix(VirtualFrame frame, RAbstractVector data, RMissing nrowp, RMissing ncolp, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] nrowncol = computeNrowNcol(frame, data, nrowp, ncolp);
         return data.copyResized(nrowncol[0] * nrowncol[1], false).copyWithNewDimensions(nrowncol);

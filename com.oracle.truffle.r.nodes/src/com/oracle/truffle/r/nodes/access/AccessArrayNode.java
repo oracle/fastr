@@ -1422,12 +1422,12 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
+        protected RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, RStringVector names) {
             return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, names);
         }
 
         @Specialization
-        RStringVector getNamesNull(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, @SuppressWarnings("unused") RNull names) {
+        protected RStringVector getNamesNull(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, byte allNull, @SuppressWarnings("unused") RNull names) {
             return getNamesInternal(frame, vector, positions, currentDimLevel, allNull, null);
         }
 
@@ -1494,7 +1494,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        Object getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
+        protected Object getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
             if (currentSrcDimLevel == 0) {
                 return null;
             }
@@ -1567,7 +1567,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RList getData(VirtualFrame frame, Object d, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        protected RList getData(VirtualFrame frame, Object d, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
             Object[] data = (Object[]) d;
             int[] srcDimensions = vector.getDimensions();
             RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -1596,7 +1596,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RAbstractIntVector getData(VirtualFrame frame, Object d, RAbstractIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+        protected RAbstractIntVector getData(VirtualFrame frame, Object d, RAbstractIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                         int accDstDimensions) {
             int[] data = (int[]) d;
             int[] srcDimensions = vector.getDimensions();
@@ -1627,7 +1627,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RAbstractDoubleVector getData(VirtualFrame frame, Object d, RAbstractDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+        protected RAbstractDoubleVector getData(VirtualFrame frame, Object d, RAbstractDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                         int accDstDimensions) {
             double[] data = (double[]) d;
             int[] srcDimensions = vector.getDimensions();
@@ -1658,7 +1658,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RAbstractLogicalVector getData(VirtualFrame frame, Object d, RAbstractLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+        protected RAbstractLogicalVector getData(VirtualFrame frame, Object d, RAbstractLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                         int accDstDimensions) {
             byte[] data = (byte[]) d;
             int[] srcDimensions = vector.getDimensions();
@@ -1689,7 +1689,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RAbstractStringVector getData(VirtualFrame frame, Object d, RAbstractStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+        protected RAbstractStringVector getData(VirtualFrame frame, Object d, RAbstractStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                         int accDstDimensions) {
             String[] data = (String[]) d;
             int[] srcDimensions = vector.getDimensions();
@@ -1720,7 +1720,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RAbstractComplexVector getData(VirtualFrame frame, Object d, RAbstractComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+        protected RAbstractComplexVector getData(VirtualFrame frame, Object d, RAbstractComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                         int accDstDimensions) {
             double[] data = (double[]) d;
             int[] srcDimensions = vector.getDimensions();
@@ -1753,7 +1753,7 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization
-        RAbstractRawVector getData(VirtualFrame frame, Object d, RAbstractRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+        protected RAbstractRawVector getData(VirtualFrame frame, Object d, RAbstractRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                         int accDstDimensions) {
             byte[] data = (byte[]) d;
             int[] srcDimensions = vector.getDimensions();
@@ -1828,12 +1828,12 @@ public abstract class AccessArrayNode extends RNode {
         }
 
         @Specialization(guards = {"!singleOpNegative", "!multiPos"})
-        public RAbstractIntVector doIntVector(@SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
+        protected RAbstractIntVector doIntVector(@SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
             return positions;
         }
 
         @Specialization(guards = {"!singleOpNegative", "multiPos"})
-        public RAbstractIntVector doIntVectorMultiPos(VirtualFrame frame, @SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
+        protected RAbstractIntVector doIntVectorMultiPos(VirtualFrame frame, @SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
             if (isSubset) {
                 return positions;
             } else {
@@ -1843,7 +1843,7 @@ public abstract class AccessArrayNode extends RNode {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"singleOpNA"})
-        public RAbstractIntVector doIntVectorNA(VirtualFrame frame, Object vector, RAbstractIntVector positions) {
+        protected RAbstractIntVector doIntVectorNA(VirtualFrame frame, Object vector, RAbstractIntVector positions) {
             if (isSubset) {
                 return positions;
             } else {

@@ -37,7 +37,7 @@ public class SerializeFunctions {
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
         @Specialization
-        public Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
             controlVisibility();
             try {
                 Object result = RSerialize.unserialize(conn);
@@ -49,7 +49,7 @@ public class SerializeFunctions {
         }
 
         @Specialization
-        public Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
+        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
             // TODO figure out what this really means?
             return doUnserializeFromConn(frame, conn, RNull.instance);
         }

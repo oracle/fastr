@@ -38,49 +38,49 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     }
 
     @Specialization(guards = "isSmaller")
-    public RIntSequence colonAscending(int left, int right) {
+    protected RIntSequence colonAscending(int left, int right) {
         controlVisibility();
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "!isSmaller")
-    public RIntSequence colonDescending(int left, int right) {
+    protected RIntSequence colonDescending(int left, int right) {
         controlVisibility();
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(guards = "isSmaller")
-    public RIntSequence colonAscending(int left, double right) {
+    protected RIntSequence colonAscending(int left, double right) {
         controlVisibility();
         return RDataFactory.createAscendingRange(left, (int) right);
     }
 
     @Specialization(guards = "!isSmaller")
-    public RIntSequence colonDescending(int left, double right) {
+    protected RIntSequence colonDescending(int left, double right) {
         controlVisibility();
         return RDataFactory.createDescendingRange(left, (int) right);
     }
 
     @Specialization(guards = "isSmaller")
-    public RDoubleSequence colonAscending(double left, int right) {
+    protected RDoubleSequence colonAscending(double left, int right) {
         controlVisibility();
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "!isSmaller")
-    public RDoubleSequence colonDescending(double left, int right) {
+    protected RDoubleSequence colonDescending(double left, int right) {
         controlVisibility();
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(guards = "isSmaller")
-    public RDoubleSequence colonAscending(double left, double right) {
+    protected RDoubleSequence colonAscending(double left, double right) {
         controlVisibility();
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "!isSmaller")
-    public RDoubleSequence colonDescending(double left, double right) {
+    protected RDoubleSequence colonDescending(double left, double right) {
         controlVisibility();
         return RDataFactory.createDescendingRange(left, right);
     }
@@ -115,44 +115,44 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     public abstract static class ColonCastNode extends RNode {
 
         @Specialization(guards = "isIntValue")
-        public int doDoubleToInt(double operand) {
+        protected int doDoubleToInt(double operand) {
             return (int) operand;
         }
 
         @Specialization(guards = "!isIntValue")
-        public double doDouble(double operand) {
+        protected double doDouble(double operand) {
             return operand;
         }
 
         @Specialization
-        public int doSequence(RIntSequence sequence) {
+        protected int doSequence(RIntSequence sequence) {
             // TODO: Produce warning
             return sequence.getStart();
         }
 
         @Specialization
-        public int doSequence(RIntVector vector) {
+        protected int doSequence(RIntVector vector) {
             // TODO: Produce warning
             return vector.getDataAt(0);
         }
 
         @Specialization(guards = "isFirstIntValue")
-        public int doDoubleVectorFirstIntValue(RDoubleVector vector) {
+        protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
             return (int) vector.getDataAt(0);
         }
 
         @Specialization(guards = "!isFirstIntValue")
-        public double doDoubleVector(RDoubleVector vector) {
+        protected double doDoubleVector(RDoubleVector vector) {
             return vector.getDataAt(0);
         }
 
         @Specialization
-        public int doInt(int operand) {
+        protected int doInt(int operand) {
             return operand;
         }
 
         @Specialization
-        public byte doBoolean(byte operand) {
+        protected byte doBoolean(byte operand) {
             return operand;
         }
 

@@ -41,7 +41,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public abstract byte executeByte(VirtualFrame frame, Object operandValue);
 
     @Specialization
-    public byte doLogical(VirtualFrame frame, byte value) {
+    protected byte doLogical(VirtualFrame frame, byte value) {
         check.enable(value);
         if (check.check(value)) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
@@ -50,7 +50,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doInt(VirtualFrame frame, int value) {
+    protected byte doInt(VirtualFrame frame, int value) {
         check.enable(value);
         if (check.check(value)) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
@@ -59,7 +59,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doDouble(VirtualFrame frame, double value) {
+    protected byte doDouble(VirtualFrame frame, double value) {
         check.enable(value);
         if (check.check(value)) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
@@ -68,7 +68,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doComplex(VirtualFrame frame, RComplex value) {
+    protected byte doComplex(VirtualFrame frame, RComplex value) {
         check.enable(value);
         if (check.check(value)) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
@@ -77,7 +77,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doString(VirtualFrame frame, String value) {
+    protected byte doString(VirtualFrame frame, String value) {
         check.enable(value);
         byte logicalValue = check.convertStringToLogical(value);
         check.enable(logicalValue);
@@ -88,12 +88,12 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doRaw(RRaw value) {
+    protected byte doRaw(RRaw value) {
         return RRuntime.asLogical(value.getValue() != 0);
     }
 
     @Specialization
-    public byte doIntSequence(RIntSequence value) {
+    protected byte doIntSequence(RIntSequence value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -102,7 +102,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doDoubleSequence(RDoubleSequence value) {
+    protected byte doDoubleSequence(RDoubleSequence value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -112,14 +112,14 @@ public abstract class ConvertBooleanNode extends UnaryNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty")
-    public byte doEmptyVector(VirtualFrame frame, RAbstractVector value) {
+    protected byte doEmptyVector(VirtualFrame frame, RAbstractVector value) {
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
     }
 
     private final BranchProfile moreThanOneElem = new BranchProfile();
 
     @Specialization(guards = "!isEmpty")
-    public byte doIntVector(VirtualFrame frame, RIntVector value) {
+    protected byte doIntVector(VirtualFrame frame, RIntVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -132,7 +132,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doDoubleVector(VirtualFrame frame, RDoubleVector value) {
+    protected byte doDoubleVector(VirtualFrame frame, RDoubleVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -145,7 +145,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doLogicalVector(VirtualFrame frame, RLogicalVector value) {
+    protected byte doLogicalVector(VirtualFrame frame, RLogicalVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -158,7 +158,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doComplexVector(VirtualFrame frame, RComplexVector value) {
+    protected byte doComplexVector(VirtualFrame frame, RComplexVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -171,7 +171,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doRawVector(RRawVector value) {
+    protected byte doRawVector(RRawVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -180,7 +180,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doStringVector(VirtualFrame frame, RStringVector value) {
+    protected byte doStringVector(VirtualFrame frame, RStringVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);

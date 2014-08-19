@@ -158,25 +158,25 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public abstract Mode getMode();
 
         @Specialization
-        public byte doLogical(VirtualFrame frame, byte value) {
+        protected byte doLogical(VirtualFrame frame, byte value) {
             resolveAndSet(frame, value, FrameSlotKind.Byte);
             return value;
         }
 
         @Specialization
-        public int doInteger(VirtualFrame frame, int value) {
+        protected int doInteger(VirtualFrame frame, int value) {
             resolveAndSet(frame, value, FrameSlotKind.Int);
             return value;
         }
 
         @Specialization
-        public double doDouble(VirtualFrame frame, double value) {
+        protected double doDouble(VirtualFrame frame, double value) {
             resolveAndSet(frame, value, FrameSlotKind.Double);
             return value;
         }
 
         @Specialization
-        public Object doObject(VirtualFrame frame, Object value) {
+        protected Object doObject(VirtualFrame frame, Object value) {
             resolveAndSet(frame, value, FrameSlotKind.Object);
             return value;
         }
@@ -198,28 +198,28 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         }
 
         @Specialization(guards = "isFrameBooleanKind")
-        public byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
+        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
             frame.setByte(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isFrameIntegerKind")
-        public int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
+        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
             frame.setInt(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isFrameDoubleKind")
-        public double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
+        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
             frame.setDouble(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isFrameObjectKind")
-        public Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
+        protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
             controlVisibility();
             super.writeObjectValue(frame, frame, frameSlot, value, getMode(), false);
             return value;
@@ -357,28 +357,28 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public abstract Mode getMode();
 
         @Specialization(guards = "isFrameBooleanKind")
-        public byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected byte doBoolean(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setByte(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isFrameIntegerKind")
-        public int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setInt(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isFrameDoubleKind")
-        public double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             enclosingFrame.setDouble(frameSlot, value);
             return value;
         }
 
         @Specialization(guards = "isFrameObjectKind")
-        public Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             super.writeObjectValue(frame, enclosingFrame, frameSlot, value, getMode(), true);
             return value;

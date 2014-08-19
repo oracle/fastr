@@ -41,21 +41,21 @@ public abstract class Cor extends Covcor {
     }
 
     @Specialization
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2, @SuppressWarnings("unused") String use, @SuppressWarnings("unused") RStringVector method) {
+    protected RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2, @SuppressWarnings("unused") String use, @SuppressWarnings("unused") RStringVector method) {
         controlVisibility();
         return corcov(vector1, vector2, false, true);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2, String use, RStringVector method) {
+    protected RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2, String use, RStringVector method) {
         controlVisibility();
         return corcov(vector1, null, false, true);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RNull vector2, String use, RStringVector method) {
+    protected RDoubleVector dimWithDimensions(RDoubleVector vector1, RNull vector2, String use, RStringVector method) {
         controlVisibility();
         return corcov(vector1, null, false, true);
     }

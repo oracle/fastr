@@ -60,19 +60,19 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object crossprod(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
+    protected Object crossprod(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
         controlVisibility();
         return matMult(frame, transpose(frame, a), b);
     }
 
     @Specialization(guards = "!matdouble")
-    public Object crossprod(VirtualFrame frame, RAbstractVector b, @SuppressWarnings("unused") RNull a) {
+    protected Object crossprod(VirtualFrame frame, RAbstractVector b, @SuppressWarnings("unused") RNull a) {
         controlVisibility();
         return matMult(frame, transpose(frame, b), b);
     }
 
     @Specialization(guards = "matdouble")
-    public Object crossprodDoubleMatrix(RAbstractDoubleVector a, @SuppressWarnings("unused") RNull b) {
+    protected Object crossprodDoubleMatrix(RAbstractDoubleVector a, @SuppressWarnings("unused") RNull b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = a.getDimensions()[0];

@@ -46,7 +46,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object parse(VirtualFrame frame, RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
+    protected Object parse(VirtualFrame frame, RConnection conn, RNull n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
             String[] lines = conn.readLines(0);
@@ -58,7 +58,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object parse(VirtualFrame frame, RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
+    protected Object parse(VirtualFrame frame, RConnection conn, double n, RNull text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
             String[] lines = conn.readLines((int) n);
@@ -70,7 +70,7 @@ public abstract class Parse extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isText")
-    public Object parse(VirtualFrame frame, RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
+    protected Object parse(VirtualFrame frame, RConnection conn, RNull n, String text, String prompt, RNull srcFile, String encoding) {
         controlVisibility();
         try {
             return doParse(text);

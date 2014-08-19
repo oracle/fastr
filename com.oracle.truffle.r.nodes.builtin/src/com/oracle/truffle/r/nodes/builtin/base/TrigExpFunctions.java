@@ -46,7 +46,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        public byte isType(VirtualFrame frame, @SuppressWarnings("unused") RMissing value) {
+        protected byte isType(VirtualFrame frame, @SuppressWarnings("unused") RMissing value) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
@@ -93,25 +93,25 @@ public class TrigExpFunctions {
     @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Exp extends AdapterCall1 {
         @Specialization
-        public double exp(int x) {
+        protected double exp(int x) {
             controlVisibility();
             return Math.exp(x);
         }
 
         @Specialization
-        public double exp(double x) {
+        protected double exp(double x) {
             controlVisibility();
             return Math.exp(x);
         }
 
         @Specialization
-        public RDoubleVector exp(RIntVector x) {
+        protected RDoubleVector exp(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.exp(d));
         }
 
         @Specialization
-        public RDoubleVector exp(RDoubleVector x) {
+        protected RDoubleVector exp(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.exp(d));
         }
@@ -121,25 +121,25 @@ public class TrigExpFunctions {
     @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class ExpM1 extends AdapterCall1 {
         @Specialization
-        public double expm1(int x) {
+        protected double expm1(int x) {
             controlVisibility();
             return Math.expm1(x);
         }
 
         @Specialization
-        public double expm1(double x) {
+        protected double expm1(double x) {
             controlVisibility();
             return Math.expm1(x);
         }
 
         @Specialization
-        public RDoubleVector expm1(RIntVector x) {
+        protected RDoubleVector expm1(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.expm1(d));
         }
 
         @Specialization
-        public RDoubleVector expm1(RDoubleVector x) {
+        protected RDoubleVector expm1(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.expm1(d));
         }
@@ -149,25 +149,25 @@ public class TrigExpFunctions {
     @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Sin extends AdapterCall1 {
         @Specialization
-        public double sin(int x) {
+        protected double sin(int x) {
             controlVisibility();
             return Math.sin(x);
         }
 
         @Specialization
-        public double sin(double x) {
+        protected double sin(double x) {
             controlVisibility();
             return Math.sin(x);
         }
 
         @Specialization
-        public RDoubleVector sin(RIntVector x) {
+        protected RDoubleVector sin(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.sin(d));
         }
 
         @Specialization
-        public RDoubleVector sin(RDoubleVector x) {
+        protected RDoubleVector sin(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.sin(d));
         }
@@ -177,25 +177,25 @@ public class TrigExpFunctions {
     public abstract static class Cos extends AdapterCall1 {
 
         @Specialization
-        public double cos(int x) {
+        protected double cos(int x) {
             controlVisibility();
             return Math.cos(x);
         }
 
         @Specialization
-        public double cos(double x) {
+        protected double cos(double x) {
             controlVisibility();
             return Math.cos(x);
         }
 
         @Specialization
-        public RDoubleVector cos(RIntVector x) {
+        protected RDoubleVector cos(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.cos(d));
         }
 
         @Specialization
-        public RDoubleVector cos(RDoubleVector x) {
+        protected RDoubleVector cos(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.cos(d));
         }
@@ -205,25 +205,25 @@ public class TrigExpFunctions {
     public abstract static class Tan extends AdapterCall1 {
 
         @Specialization
-        public double tan(int x) {
+        protected double tan(int x) {
             controlVisibility();
             return Math.tan(x);
         }
 
         @Specialization
-        public double tan(double x) {
+        protected double tan(double x) {
             controlVisibility();
             return Math.tan(x);
         }
 
         @Specialization
-        public RDoubleVector tan(RIntVector x) {
+        protected RDoubleVector tan(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.tan(d));
         }
 
         @Specialization
-        public RDoubleVector tan(RDoubleVector x) {
+        protected RDoubleVector tan(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.tan(d));
         }
@@ -232,25 +232,25 @@ public class TrigExpFunctions {
     @RBuiltin(name = "asin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Asin extends AdapterCall1 {
         @Specialization
-        public double asin(int x) {
+        protected double asin(int x) {
             controlVisibility();
             return Math.asin(x);
         }
 
         @Specialization
-        public double asin(double x) {
+        protected double asin(double x) {
             controlVisibility();
             return Math.asin(x);
         }
 
         @Specialization
-        public RDoubleVector asin(RIntVector x) {
+        protected RDoubleVector asin(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.asin(d));
         }
 
         @Specialization
-        public RDoubleVector asin(RDoubleVector x) {
+        protected RDoubleVector asin(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.asin(d));
         }
@@ -259,25 +259,25 @@ public class TrigExpFunctions {
     @RBuiltin(name = "acos", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Acos extends AdapterCall1 {
         @Specialization
-        public double acos(int x) {
+        protected double acos(int x) {
             controlVisibility();
             return Math.acos(x);
         }
 
         @Specialization
-        public double acos(double x) {
+        protected double acos(double x) {
             controlVisibility();
             return Math.acos(x);
         }
 
         @Specialization
-        public RDoubleVector acos(RIntVector x) {
+        protected RDoubleVector acos(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.acos(d));
         }
 
         @Specialization
-        public RDoubleVector acos(RDoubleVector x) {
+        protected RDoubleVector acos(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.acos(d));
         }
@@ -286,25 +286,25 @@ public class TrigExpFunctions {
     @RBuiltin(name = "atan", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class Atan extends AdapterCall1 {
         @Specialization
-        public double atan(int x) {
+        protected double atan(int x) {
             controlVisibility();
             return Math.atan(x);
         }
 
         @Specialization
-        public double atan(double x) {
+        protected double atan(double x) {
             controlVisibility();
             return Math.atan(x);
         }
 
         @Specialization
-        public RDoubleVector atan(RIntVector x) {
+        protected RDoubleVector atan(RIntVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.atan(d));
         }
 
         @Specialization
-        public RDoubleVector atan(RDoubleVector x) {
+        protected RDoubleVector atan(RDoubleVector x) {
             controlVisibility();
             return doFun(x, (double d) -> Math.atan(d));
         }
@@ -362,36 +362,36 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        public Object atan(VirtualFrame frame, @SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
+        protected Object atan(VirtualFrame frame, @SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
         }
 
         @Specialization
-        public Object atan(VirtualFrame frame, @SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
+        protected Object atan(VirtualFrame frame, @SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
         }
 
         @Specialization
-        public double atan2(double x, double y) {
+        protected double atan2(double x, double y) {
             controlVisibility();
             return Math.atan2(x, y);
         }
 
         @Specialization
-        public RDoubleVector atan2(RDoubleVector x, RDoubleVector y) {
+        protected RDoubleVector atan2(RDoubleVector x, RDoubleVector y) {
             controlVisibility();
             return doFun(x, y, (double d1, double d2) -> Math.atan2(d1, d2));
         }
 
         @Specialization
-        public RDoubleVector atan2(double x, RDoubleVector y) {
+        protected RDoubleVector atan2(double x, RDoubleVector y) {
             controlVisibility();
             RDoubleVector xv = RDataFactory.createDoubleVectorFromScalar(x).copyResized(y.getLength(), false);
             return doFun(xv, y, (double d1, double d2) -> Math.atan2(d1, d2));
         }
 
         @Specialization
-        public RDoubleVector atan2(RDoubleVector x, double y) {
+        protected RDoubleVector atan2(RDoubleVector x, double y) {
             controlVisibility();
             RDoubleVector yv = RDataFactory.createDoubleVectorFromScalar(y);
             return doFun(x, yv, (double d1, double d2) -> Math.atan2(d1, d2));

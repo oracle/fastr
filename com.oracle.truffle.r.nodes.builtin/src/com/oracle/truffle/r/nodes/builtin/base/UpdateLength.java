@@ -45,7 +45,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
-    public RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
+    protected RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
         RVector resultVector = vector.materialize();
@@ -59,14 +59,14 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isLengthOne")
-    public RAbstractVector updateLengthError(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector lengthVector) {
+    protected RAbstractVector updateLengthError(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object updateLengthError(VirtualFrame frame, Object vector, Object lengthVector) {
+    protected Object updateLengthError(VirtualFrame frame, Object vector, Object lengthVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }

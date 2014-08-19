@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 public abstract class Setwd extends RInvisibleBuiltinNode {
 
     @Specialization
-    public Object setwd(VirtualFrame frame, String dir) {
+    protected Object setwd(VirtualFrame frame, String dir) {
         controlVisibility();
         int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(dir);
         if (rc != 0) {

@@ -40,7 +40,7 @@ public abstract class Re extends RBuiltinNode {
     private NACheck check = NACheck.create();
 
     @Specialization
-    public RDoubleVector re(RAbstractComplexVector vector) {
+    protected RDoubleVector re(RAbstractComplexVector vector) {
         controlVisibility();
         double[] result = new double[vector.getLength()];
         check.enable(vector);
@@ -52,7 +52,7 @@ public abstract class Re extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector re(RAbstractDoubleVector vector) {
+    protected RDoubleVector re(RAbstractDoubleVector vector) {
         controlVisibility();
         return (RDoubleVector) vector.copy();
     }

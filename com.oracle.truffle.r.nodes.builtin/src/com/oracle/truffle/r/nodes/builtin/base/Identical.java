@@ -45,7 +45,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    public byte doInternalIdentical(byte x, byte y,
+    protected byte doInternalIdentical(byte x, byte y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -55,7 +55,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    public byte doInternalIdential(String x, String y,
+    protected byte doInternalIdential(String x, String y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -65,7 +65,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    public byte doInternalIdentical(double x, double y,
+    protected byte doInternalIdentical(double x, double y,
                     // @formatter:off
                     byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -76,7 +76,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    public byte doInternalIdentical(REnvironment x, REnvironment y,
+    protected byte doInternalIdentical(REnvironment x, REnvironment y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -87,7 +87,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization(guards = "!vectorsLists")
-    public byte doInternalIdentialGeneric(RAbstractVector x, RAbstractVector y,
+    protected byte doInternalIdentialGeneric(RAbstractVector x, RAbstractVector y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -105,7 +105,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    public byte doInternalIdentialGeneric(@SuppressWarnings("unused") RList x, @SuppressWarnings("unused") RList y,
+    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RList x, @SuppressWarnings("unused") RList y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -115,7 +115,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    public byte doInternalIdentialGeneric(@SuppressWarnings("unused") RDataFrame x, @SuppressWarnings("unused") RDataFrame y,
+    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RDataFrame x, @SuppressWarnings("unused") RDataFrame y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {

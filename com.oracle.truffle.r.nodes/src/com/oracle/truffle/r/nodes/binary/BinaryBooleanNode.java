@@ -61,79 +61,79 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     // empty raw vectors
 
     @Specialization(guards = {"isEmpty", "expectLogical"})
-    public RLogicalVector doEmptyLogical(RRawVector left, RRaw right) {
+    protected RLogicalVector doEmptyLogical(RRawVector left, RRaw right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization(guards = {"isEmpty", "expectLogical"})
-    public RLogicalVector doEmptyLogical(RRaw left, RRawVector right) {
+    protected RLogicalVector doEmptyLogical(RRaw left, RRawVector right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization(guards = {"isEmpty", "!expectLogical"})
-    public RRawVector doEmptyRaw(RRawVector left, RRaw right) {
+    protected RRawVector doEmptyRaw(RRawVector left, RRaw right) {
         return RDataFactory.createRawVector(0);
     }
 
     @Specialization(guards = {"isEmpty", "!expectLogical"})
-    public RRawVector doEmptyRaw(RRaw left, RRawVector right) {
+    protected RRawVector doEmptyRaw(RRaw left, RRawVector right) {
         return RDataFactory.createRawVector(0);
     }
 
     @Specialization(guards = {"isEmpty", "expectLogical"})
-    public RLogicalVector doEmptyLogical(RRawVector left, RRawVector right) {
+    protected RLogicalVector doEmptyLogical(RRawVector left, RRawVector right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization(guards = {"isEmpty", "!expectLogical"})
-    public RRawVector doEmptyRaw(RRawVector left, RRawVector right) {
+    protected RRawVector doEmptyRaw(RRawVector left, RRawVector right) {
         return RDataFactory.createRawVector(0);
     }
 
     // int
 
     @Specialization
-    public byte doInt(int left, int right) {
+    protected byte doInt(int left, int right) {
         return logic.op(left, right);
     }
 
     @Specialization
-    public byte doInt(int left, double right) {
+    protected byte doInt(int left, double right) {
         return logic.op(RRuntime.int2double(left), right);
     }
 
     @Specialization
-    public byte doInt(double left, int right) {
+    protected byte doInt(double left, int right) {
         return logic.op(left, RRuntime.int2double(right));
     }
 
     @Specialization
-    public byte doInt(int left, byte right) {
+    protected byte doInt(int left, byte right) {
         return logic.op(left, RRuntime.logical2int(right));
     }
 
     @Specialization
-    public byte doInt(byte left, int right) {
+    protected byte doInt(byte left, int right) {
         return logic.op(RRuntime.logical2int(left), right);
     }
 
     @Specialization
-    public byte doInt(int left, String right) {
+    protected byte doInt(int left, String right) {
         return logic.op(RRuntime.intToString(left, false), right);
     }
 
     @Specialization
-    public byte doInt(String left, int right) {
+    protected byte doInt(String left, int right) {
         return logic.op(left, RRuntime.intToString(right, false));
     }
 
     @Specialization
-    public byte doInt(int left, RComplex right) {
+    protected byte doInt(int left, RComplex right) {
         return logic.op(RRuntime.int2complex(left), right);
     }
 
     @Specialization
-    public byte doInt(RComplex left, int right) {
+    protected byte doInt(RComplex left, int right) {
         return logic.op(left, RRuntime.int2complex(right));
     }
 
@@ -145,546 +145,546 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     }
 
     @Specialization
-    public byte doDouble(double left, byte right) {
+    protected byte doDouble(double left, byte right) {
         return logic.op(left, RRuntime.logical2double(right));
     }
 
     @Specialization
-    public byte doDouble(byte left, double right) {
+    protected byte doDouble(byte left, double right) {
         return logic.op(RRuntime.logical2double(left), right);
     }
 
     @Specialization
-    public byte doDouble(double left, String right) {
+    protected byte doDouble(double left, String right) {
         return logic.op(RRuntime.doubleToString(left), right);
     }
 
     @Specialization
-    public byte doDouble(String left, double right) {
+    protected byte doDouble(String left, double right) {
         return logic.op(left, RRuntime.doubleToString(right));
     }
 
     @Specialization
-    public byte doDouble(double left, RComplex right) {
+    protected byte doDouble(double left, RComplex right) {
         return logic.op(RRuntime.double2complex(left), right);
     }
 
     @Specialization
-    public byte doDouble(RComplex left, double right) {
+    protected byte doDouble(RComplex left, double right) {
         return logic.op(left, RRuntime.double2complex(right));
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doDouble(double left, RRaw right) {
+    protected byte doDouble(double left, RRaw right) {
         return logic.op(left, RRuntime.raw2double(right));
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doDouble(RRaw left, double right) {
+    protected byte doDouble(RRaw left, double right) {
         return logic.op(RRuntime.raw2double(left), right);
     }
 
     // logical
 
     @Specialization
-    public byte doLogical(byte left, byte right) {
+    protected byte doLogical(byte left, byte right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
     @Specialization
-    public byte doBoolean(byte left, String right) {
+    protected byte doBoolean(byte left, String right) {
         return logic.op(RRuntime.logicalToString(left), right);
     }
 
     @Specialization
-    public byte doBoolean(String left, byte right) {
+    protected byte doBoolean(String left, byte right) {
         return logic.op(left, RRuntime.logicalToString(right));
     }
 
     @Specialization
-    public byte doLogical(byte left, RComplex right) {
+    protected byte doLogical(byte left, RComplex right) {
         return logic.op(RRuntime.logical2complex(left), right);
     }
 
     @Specialization
-    public byte doLogical(RComplex left, byte right) {
+    protected byte doLogical(RComplex left, byte right) {
         return logic.op(left, RRuntime.logical2complex(right));
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doLogical(byte left, RRaw right) {
+    protected byte doLogical(byte left, RRaw right) {
         return logic.op(left, RRuntime.raw2int(right));
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doLogical(RRaw left, byte right) {
+    protected byte doLogical(RRaw left, byte right) {
         return logic.op(RRuntime.raw2int(left), right);
     }
 
     // string
 
     @Specialization
-    public byte doString(String left, String right) {
+    protected byte doString(String left, String right) {
         return logic.op(left, right);
     }
 
     @Specialization
-    public byte doString(String left, RComplex right) {
+    protected byte doString(String left, RComplex right) {
         return logic.op(left, RRuntime.complexToString(right));
     }
 
     @Specialization
-    public byte doString(RComplex left, String right) {
+    protected byte doString(RComplex left, String right) {
         return logic.op(RRuntime.complexToString(left), right);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doString(String left, RRaw right) {
+    protected byte doString(String left, RRaw right) {
         return logic.op(left, RRuntime.rawToString(right));
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doString(RRaw left, String right) {
+    protected byte doString(RRaw left, String right) {
         return logic.op(RRuntime.rawToString(left), right);
     }
 
     // complex
 
     @Specialization
-    public byte doComplex(RComplex left, RComplex right) {
+    protected byte doComplex(RComplex left, RComplex right) {
         return logic.op(left, right);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doComplex(RComplex left, RRaw right) {
+    protected byte doComplex(RComplex left, RRaw right) {
         return logic.op(left, RRuntime.raw2complex(right));
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public byte doComplex(RRaw left, RComplex right) {
+    protected byte doComplex(RRaw left, RComplex right) {
         return logic.op(RRuntime.raw2complex(left), right);
     }
 
     // raw
 
     @Specialization(guards = "!convertRawToNumeric")
-    public RRaw doRawRaw(RRaw left, RRaw right) {
+    protected RRaw doRawRaw(RRaw left, RRaw right) {
         return logic.op(left, right);
     }
 
     @Specialization(guards = "convertRawToNumeric")
-    public byte doRawLogical(RRaw left, RRaw right) {
+    protected byte doRawLogical(RRaw left, RRaw right) {
         return logic.op(RRuntime.raw2int(left), RRuntime.raw2int(right));
     }
 
     // null
 
     @Specialization
-    public RLogicalVector doNull(RNull left, Object right) {
+    protected RLogicalVector doNull(RNull left, Object right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization
-    public RLogicalVector doNull(Object left, RNull right) {
+    protected RLogicalVector doNull(Object left, RNull right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     // empty vectors
 
     @Specialization(guards = "isEmpty")
-    public RLogicalVector doEmpty(RAbstractVector left, Object right) {
+    protected RLogicalVector doEmpty(RAbstractVector left, Object right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     @Specialization(guards = "isEmpty")
-    public RLogicalVector doEmpty(Object left, RAbstractVector right) {
+    protected RLogicalVector doEmpty(Object left, RAbstractVector right) {
         return RDataFactory.createLogicalVector(0);
     }
 
     // int vector and scalar
 
     @Specialization
-    public RLogicalVector doIntVectorOp(RAbstractIntVector left, int right) {
+    protected RLogicalVector doIntVectorOp(RAbstractIntVector left, int right) {
         return performIntVectorOp(left, RRuntime.int2double(right), false);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(int left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorOp(int left, RAbstractIntVector right) {
         return performIntVectorOp(right, RRuntime.int2double(left), true);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(RAbstractIntVector left, double right) {
+    protected RLogicalVector doIntVectorOp(RAbstractIntVector left, double right) {
         return performIntVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(double left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorOp(double left, RAbstractIntVector right) {
         return performIntVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(RAbstractIntVector left, byte right) {
+    protected RLogicalVector doIntVectorOp(RAbstractIntVector left, byte right) {
         return performIntVectorOp(left, RRuntime.logical2double(right), false);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(byte left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorOp(byte left, RAbstractIntVector right) {
         return performIntVectorOp(right, RRuntime.logical2double(left), true);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(RAbstractIntVector left, String right) {
+    protected RLogicalVector doIntVectorOp(RAbstractIntVector left, String right) {
         return performIntVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(String left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorOp(String left, RAbstractIntVector right) {
         return performIntVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(RAbstractIntVector left, RComplex right) {
+    protected RLogicalVector doIntVectorOp(RAbstractIntVector left, RComplex right) {
         return performIntVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doIntVectorOp(RComplex left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorOp(RComplex left, RAbstractIntVector right) {
         return performIntVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doIntVectorOp(RAbstractIntVector left, RRaw right) {
+    protected RLogicalVector doIntVectorOp(RAbstractIntVector left, RRaw right) {
         return performIntVectorOp(left, RRuntime.raw2double(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doIntVectorOp(RRaw left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorOp(RRaw left, RAbstractIntVector right) {
         return performIntVectorOp(right, RRuntime.raw2double(left), true);
     }
 
     // double vector and scalar
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, int right) {
+    protected RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, int right) {
         return performDoubleVectorOp(left, RRuntime.int2double(right), false);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(int left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorOp(int left, RAbstractDoubleVector right) {
         return performDoubleVectorOp(right, RRuntime.int2double(left), true);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, double right) {
+    protected RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, double right) {
         return performDoubleVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(double left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorOp(double left, RAbstractDoubleVector right) {
         return performDoubleVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, byte right) {
+    protected RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, byte right) {
         return performDoubleVectorOp(left, RRuntime.logical2double(right), false);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(byte left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorOp(byte left, RAbstractDoubleVector right) {
         return performDoubleVectorOp(right, RRuntime.logical2double(left), true);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, String right) {
+    protected RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, String right) {
         return performDoubleVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(String left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorOp(String left, RAbstractDoubleVector right) {
         return performDoubleVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, RComplex right) {
+    protected RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, RComplex right) {
         return performDoubleVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVectorOp(RComplex left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorOp(RComplex left, RAbstractDoubleVector right) {
         return performDoubleVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, RRaw right) {
+    protected RLogicalVector doDoubleVectorOp(RAbstractDoubleVector left, RRaw right) {
         return performDoubleVectorOp(left, RRuntime.raw2double(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doDoubleVectorOp(RRaw left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorOp(RRaw left, RAbstractDoubleVector right) {
         return performDoubleVectorOp(right, RRuntime.raw2double(left), true);
     }
 
     // logical vector and scalar
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(RLogicalVector left, int right) {
+    protected RLogicalVector doLogicalVectorOp(RLogicalVector left, int right) {
         return performLogicalVectorOp(left, RRuntime.int2double(right), false);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(int left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorOp(int left, RLogicalVector right) {
         return performLogicalVectorOp(right, RRuntime.int2double(left), true);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(RLogicalVector left, double right) {
+    protected RLogicalVector doLogicalVectorOp(RLogicalVector left, double right) {
         return performLogicalVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(double left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorOp(double left, RLogicalVector right) {
         return performLogicalVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(RLogicalVector left, byte right) {
+    protected RLogicalVector doLogicalVectorOp(RLogicalVector left, byte right) {
         return performLogicalVectorOp(left, RRuntime.logical2int(right), false);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(byte left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorOp(byte left, RLogicalVector right) {
         return performLogicalVectorOp(right, RRuntime.logical2double(left), true);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(RLogicalVector left, String right) {
+    protected RLogicalVector doLogicalVectorOp(RLogicalVector left, String right) {
         return performLogicalVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(String left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorOp(String left, RLogicalVector right) {
         return performLogicalVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(RLogicalVector left, RComplex right) {
+    protected RLogicalVector doLogicalVectorOp(RLogicalVector left, RComplex right) {
         return performLogicalVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doLogicalVectorOp(RComplex left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorOp(RComplex left, RLogicalVector right) {
         return performLogicalVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doLogicalVectorOp(RLogicalVector left, RRaw right) {
+    protected RLogicalVector doLogicalVectorOp(RLogicalVector left, RRaw right) {
         return performLogicalVectorOp(left, RRuntime.raw2double(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doLogicalVectorOp(RRaw left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorOp(RRaw left, RLogicalVector right) {
         return performLogicalVectorOp(right, RRuntime.raw2double(left), true);
     }
 
     // string vector and scalar
 
     @Specialization
-    public RLogicalVector doStringVectorOp(RStringVector left, int right) {
+    protected RLogicalVector doStringVectorOp(RStringVector left, int right) {
         return performStringVectorOp(left, RRuntime.intToString(right, false), false);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(int left, RStringVector right) {
+    protected RLogicalVector doStringVectorOp(int left, RStringVector right) {
         return performStringVectorOp(right, RRuntime.intToString(left, false), true);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(RStringVector left, double right) {
+    protected RLogicalVector doStringVectorOp(RStringVector left, double right) {
         return performStringVectorOp(left, RRuntime.doubleToString(right), false);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(double left, RStringVector right) {
+    protected RLogicalVector doStringVectorOp(double left, RStringVector right) {
         return performStringVectorOp(right, RRuntime.doubleToString(left), true);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(RStringVector left, byte right) {
+    protected RLogicalVector doStringVectorOp(RStringVector left, byte right) {
         return performStringVectorOp(left, RRuntime.logicalToString(right), false);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(byte left, RStringVector right) {
+    protected RLogicalVector doStringVectorOp(byte left, RStringVector right) {
         return performStringVectorOp(right, RRuntime.logicalToString(left), false);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(RStringVector left, String right) {
+    protected RLogicalVector doStringVectorOp(RStringVector left, String right) {
         return performStringVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(String left, RStringVector right) {
+    protected RLogicalVector doStringVectorOp(String left, RStringVector right) {
         return performStringVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(RStringVector left, RComplex right) {
+    protected RLogicalVector doStringVectorOp(RStringVector left, RComplex right) {
         return performStringVectorOp(left, RRuntime.complexToString(right), false);
     }
 
     @Specialization
-    public RLogicalVector doStringVectorOp(RComplex left, RStringVector right) {
+    protected RLogicalVector doStringVectorOp(RComplex left, RStringVector right) {
         return performStringVectorOp(right, RRuntime.complexToString(left), true);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doStringVectorOp(RStringVector left, RRaw right) {
+    protected RLogicalVector doStringVectorOp(RStringVector left, RRaw right) {
         return performStringVectorOp(left, RRuntime.rawToString(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doStringVectorOp(RRaw left, RStringVector right) {
+    protected RLogicalVector doStringVectorOp(RRaw left, RStringVector right) {
         return performStringVectorOp(right, RRuntime.rawToString(left), true);
     }
 
     // complex vector and scalar
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(RComplexVector left, int right) {
+    protected RLogicalVector doComplexVectorOp(RComplexVector left, int right) {
         return performComplexVectorOp(left, RRuntime.int2complex(right), false);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(int left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorOp(int left, RComplexVector right) {
         return performComplexVectorOp(right, RRuntime.int2complex(left), true);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(RComplexVector left, double right) {
+    protected RLogicalVector doComplexVectorOp(RComplexVector left, double right) {
         return performComplexVectorOp(left, RRuntime.double2complex(right), false);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(double left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorOp(double left, RComplexVector right) {
         return performComplexVectorOp(right, RRuntime.double2complex(left), true);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(RComplexVector left, byte right) {
+    protected RLogicalVector doComplexVectorOp(RComplexVector left, byte right) {
         return performComplexVectorOp(left, RRuntime.logical2complex(right), false);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(byte left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorOp(byte left, RComplexVector right) {
         return performComplexVectorOp(right, RRuntime.logical2complex(left), true);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(RComplexVector left, String right) {
+    protected RLogicalVector doComplexVectorOp(RComplexVector left, String right) {
         return performComplexVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(String left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorOp(String left, RComplexVector right) {
         return performComplexVectorOp(right, left, true);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(RComplexVector left, RComplex right) {
+    protected RLogicalVector doComplexVectorOp(RComplexVector left, RComplex right) {
         return performComplexVectorOp(left, right, false);
     }
 
     @Specialization
-    public RLogicalVector doComplexVectorOp(RComplex left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorOp(RComplex left, RComplexVector right) {
         return performComplexVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doComplexVectorOp(RComplexVector left, RRaw right) {
+    protected RLogicalVector doComplexVectorOp(RComplexVector left, RRaw right) {
         return performComplexVectorOp(left, RRuntime.raw2complex(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericVector")
-    public RLogicalVector doComplexVectorOp(RRaw left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorOp(RRaw left, RComplexVector right) {
         return performComplexVectorOp(right, RRuntime.raw2complex(left), true);
     }
 
     // raw vector and scalar
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(RRawVector left, int right) {
+    protected RLogicalVector doRawVectorOp(RRawVector left, int right) {
         return performRawVectorOp(left, RRuntime.int2double(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(int left, RRawVector right) {
+    protected RLogicalVector doRawVectorOp(int left, RRawVector right) {
         return performRawVectorOp(right, RRuntime.int2double(left), true);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(RRawVector left, double right) {
+    protected RLogicalVector doRawVectorOp(RRawVector left, double right) {
         return performRawVectorOp(left, right, false);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(double left, RRawVector right) {
+    protected RLogicalVector doRawVectorOp(double left, RRawVector right) {
         return performRawVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(RRawVector left, byte right) {
+    protected RLogicalVector doRawVectorOp(RRawVector left, byte right) {
         return performRawVectorOp(left, RRuntime.logical2int(right), false);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(byte left, RRawVector right) {
+    protected RLogicalVector doRawVectorOp(byte left, RRawVector right) {
         return performRawVectorOp(right, RRuntime.logical2int(left), true);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(RRawVector left, String right) {
+    protected RLogicalVector doRawVectorOp(RRawVector left, String right) {
         return performRawVectorOp(left, right, false);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(String left, RRawVector right) {
+    protected RLogicalVector doRawVectorOp(String left, RRawVector right) {
         return performRawVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(RRawVector left, RComplex right) {
+    protected RLogicalVector doRawVectorOp(RRawVector left, RComplex right) {
         return performRawVectorOp(left, right, false);
     }
 
     @Specialization(guards = "convertRawToNumericObject")
-    public RLogicalVector doRawVectorOp(RComplex left, RRawVector right) {
+    protected RLogicalVector doRawVectorOp(RComplex left, RRawVector right) {
         return performRawVectorOp(right, left, true);
     }
 
     @Specialization(guards = "convertRawToNumeric")
-    public RLogicalVector doRawVectorOpLogical(RRawVector left, RRaw right) {
+    protected RLogicalVector doRawVectorOpLogical(RRawVector left, RRaw right) {
         return performRawVectorOp(left, RRuntime.raw2int(right), false);
     }
 
     @Specialization(guards = "convertRawToNumeric")
-    public RLogicalVector doRawVectorOpLogical(RRaw left, RRawVector right) {
+    protected RLogicalVector doRawVectorOpLogical(RRaw left, RRawVector right) {
         return performRawVectorOp(right, RRuntime.raw2int(left), true);
     }
 
     @Specialization(guards = "!convertRawToNumeric")
-    public RRawVector doRawVectorOpRaw(RRawVector left, RRaw right) {
+    protected RRawVector doRawVectorOpRaw(RRawVector left, RRaw right) {
         return performRawVectorOp(left, right, false);
     }
 
     @Specialization(guards = "!convertRawToNumeric")
-    public RRawVector doRawVectorOpRaw(RRaw left, RRawVector right) {
+    protected RRawVector doRawVectorOpRaw(RRaw left, RRawVector right) {
         return performRawVectorOp(right, left, true);
     }
 
     @Specialization(guards = "differentDimensions")
-    public RLogicalVector doIntVectorDifferentLength(VirtualFrame frame, RAbstractVector left, RAbstractVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(VirtualFrame frame, RAbstractVector left, RAbstractVector right) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
@@ -709,382 +709,382 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     // int vector and vectors
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(left, right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(left, right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createIntToDoubleVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractDoubleVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorIntVectorSameLength(RAbstractDoubleVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorIntVectorSameLength(RAbstractDoubleVector left, RAbstractIntVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createIntToDoubleVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDifferentLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RAbstractLogicalVector right) {
         return performIntVectorOpSameLength(left, RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractLogicalVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RStringVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createIntToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RStringVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RStringVector right) {
         return performStringVectorOpSameLength(RClosures.createIntToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RStringVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RStringVector left, RAbstractIntVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createIntToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RStringVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorSameLength(RStringVector left, RAbstractIntVector right) {
         return performStringVectorOpSameLength(left, RClosures.createIntToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RComplexVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RComplexVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doIntVectorDifferentLength(RComplexVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RComplexVector left, RAbstractIntVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doIntVectorSameLength(RComplexVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorSameLength(RComplexVector left, RAbstractIntVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RRawVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractIntVector left, RRawVector right) {
         return performIntVectorOpDifferentLength(left, RClosures.createRawToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RRawVector right) {
+    protected RLogicalVector doIntVectorSameLength(RAbstractIntVector left, RRawVector right) {
         return performIntVectorOpSameLength(left, RClosures.createRawToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doIntVectorDifferentLength(RRawVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorDifferentLength(RRawVector left, RAbstractIntVector right) {
         return performIntVectorOpDifferentLength(RClosures.createRawToIntVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doIntVectorSameLength(RRawVector left, RAbstractIntVector right) {
+    protected RLogicalVector doIntVectorSameLength(RRawVector left, RAbstractIntVector right) {
         return performIntVectorOpSameLength(RClosures.createRawToIntVector(left, leftNACheck), right);
     }
 
     // double vector and vectors
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(left, right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(left, right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractLogicalVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createLogicalToDoubleVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RAbstractLogicalVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createLogicalToDoubleVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RStringVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createDoubleToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RStringVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RStringVector right) {
         return performStringVectorOpSameLength(RClosures.createDoubleToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RStringVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RStringVector left, RAbstractDoubleVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createDoubleToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RStringVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RStringVector left, RAbstractDoubleVector right) {
         return performStringVectorOpSameLength(left, RClosures.createDoubleToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RComplexVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RComplexVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doDoubleVectorDifferentLength(RComplexVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RComplexVector left, RAbstractDoubleVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doDoubleVectorSameLength(RComplexVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RComplexVector left, RAbstractDoubleVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RRawVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RRawVector right) {
         return performDoubleVectorOpDifferentLength(left, RClosures.createRawToDoubleVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RRawVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RAbstractDoubleVector left, RRawVector right) {
         return performDoubleVectorOpSameLength(left, RClosures.createRawToDoubleVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doDoubleVectorDifferentLength(RRawVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorDifferentLength(RRawVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpDifferentLength(RClosures.createRawToDoubleVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doDoubleVectorSameLength(RRawVector left, RAbstractDoubleVector right) {
+    protected RLogicalVector doDoubleVectorSameLength(RRawVector left, RAbstractDoubleVector right) {
         return performDoubleVectorOpSameLength(RClosures.createRawToDoubleVector(left, leftNACheck), right);
     }
 
     // logical vector and vectors
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doLogicalVectorDifferentLength(RLogicalVector left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RLogicalVector left, RLogicalVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doLogicalVectorSameLength(RLogicalVector left, RLogicalVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RLogicalVector left, RLogicalVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RStringVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createLogicalToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RStringVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RStringVector right) {
         return performStringVectorOpSameLength(RClosures.createLogicalToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doLogicalVectorDifferentLength(RStringVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RStringVector left, RAbstractLogicalVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createLogicalToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doLogicalVectorSameLength(RStringVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RStringVector left, RAbstractLogicalVector right) {
         return performStringVectorOpSameLength(left, RClosures.createLogicalToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RComplexVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RComplexVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doLogicalVectorDifferentLength(RComplexVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RComplexVector left, RAbstractLogicalVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doLogicalVectorSameLength(RComplexVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RComplexVector left, RAbstractLogicalVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RRawVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RRawVector right) {
         return performIntVectorOpDifferentLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createRawToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RRawVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RAbstractLogicalVector left, RRawVector right) {
         return performIntVectorOpSameLength(RClosures.createLogicalToIntVector(left, leftNACheck), RClosures.createRawToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doLogicalVectorDifferentLength(RRawVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doLogicalVectorDifferentLength(RRawVector left, RAbstractLogicalVector right) {
         return performIntVectorOpDifferentLength(RClosures.createRawToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doLogicalVectorSameLength(RRawVector left, RAbstractLogicalVector right) {
+    protected RLogicalVector doLogicalVectorSameLength(RRawVector left, RAbstractLogicalVector right) {
         return performIntVectorOpSameLength(RClosures.createRawToIntVector(left, leftNACheck), RClosures.createLogicalToIntVector(right, rightNACheck));
     }
 
     // string vector and vectors
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doStringVectorDifferentLength(RStringVector left, RStringVector right) {
+    protected RLogicalVector doStringVectorDifferentLength(RStringVector left, RStringVector right) {
         return performStringVectorOpDifferentLength(left, right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doStringVectorSameLength(RStringVector left, RStringVector right) {
+    protected RLogicalVector doStringVectorSameLength(RStringVector left, RStringVector right) {
         return performStringVectorOpSameLength(left, right);
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doStringVectorDifferentLength(RStringVector left, RAbstractComplexVector right) {
+    protected RLogicalVector doStringVectorDifferentLength(RStringVector left, RAbstractComplexVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createComplexToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doStringVectorSameLength(RStringVector left, RAbstractComplexVector right) {
+    protected RLogicalVector doStringVectorSameLength(RStringVector left, RAbstractComplexVector right) {
         return performStringVectorOpSameLength(left, RClosures.createComplexToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doStringVectorDifferentLength(RAbstractComplexVector left, RStringVector right) {
+    protected RLogicalVector doStringVectorDifferentLength(RAbstractComplexVector left, RStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createComplexToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doStringVectorSameLength(RAbstractComplexVector left, RStringVector right) {
+    protected RLogicalVector doStringVectorSameLength(RAbstractComplexVector left, RStringVector right) {
         return performStringVectorOpSameLength(RClosures.createComplexToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doStringVectorDifferentLength(RStringVector left, RRawVector right) {
+    protected RLogicalVector doStringVectorDifferentLength(RStringVector left, RRawVector right) {
         return performStringVectorOpDifferentLength(left, RClosures.createRawToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doStringVectorSameLength(RStringVector left, RRawVector right) {
+    protected RLogicalVector doStringVectorSameLength(RStringVector left, RRawVector right) {
         return performStringVectorOpSameLength(left, RClosures.createRawToStringVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doStringVectorDifferentLengthRRawVector(RRawVector left, RStringVector right) {
+    protected RLogicalVector doStringVectorDifferentLengthRRawVector(RRawVector left, RStringVector right) {
         return performStringVectorOpDifferentLength(RClosures.createRawToStringVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doStringVectorSameLengthRRawVector(RRawVector left, RStringVector right) {
+    protected RLogicalVector doStringVectorSameLengthRRawVector(RRawVector left, RStringVector right) {
         return performStringVectorOpSameLength(RClosures.createRawToStringVector(left, leftNACheck), right);
     }
 
     // complex vector and vectors
 
     @Specialization(guards = "!areSameLength")
-    public RLogicalVector doComplexVectorDifferentLength(RComplexVector left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorDifferentLength(RComplexVector left, RComplexVector right) {
         return performComplexVectorOpDifferentLength(left, right);
     }
 
     @Specialization(guards = "areSameLength")
-    public RLogicalVector doComplexVectorSameLength(RComplexVector left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorSameLength(RComplexVector left, RComplexVector right) {
         return performComplexVectorOpSameLength(left, right);
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doComplexVectorDifferentLength(RComplexVector left, RRawVector right) {
+    protected RLogicalVector doComplexVectorDifferentLength(RComplexVector left, RRawVector right) {
         return performComplexVectorOpDifferentLength(left, RClosures.createRawToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doComplexVectorSameLength(RComplexVector left, RRawVector right) {
+    protected RLogicalVector doComplexVectorSameLength(RComplexVector left, RRawVector right) {
         return performComplexVectorOpSameLength(left, RClosures.createRawToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doComplexVectorDifferentLength(RRawVector left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorDifferentLength(RRawVector left, RComplexVector right) {
         return performComplexVectorOpDifferentLength(RClosures.createRawToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumericVector"})
-    public RLogicalVector doComplexVectorSameLength(RRawVector left, RComplexVector right) {
+    protected RLogicalVector doComplexVectorSameLength(RRawVector left, RComplexVector right) {
         return performComplexVectorOpSameLength(RClosures.createRawToComplexVector(left, leftNACheck), right);
     }
 
     // raw vector and vectors
 
     @Specialization(guards = {"!areSameLength", "convertRawToNumeric"})
-    public RLogicalVector doRawVectorDifferentLengthLogical(RRawVector left, RRawVector right) {
+    protected RLogicalVector doRawVectorDifferentLengthLogical(RRawVector left, RRawVector right) {
         return performIntVectorOpDifferentLength(RClosures.createRawToIntVector(left, leftNACheck), RClosures.createRawToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"areSameLength", "convertRawToNumeric"})
-    public RLogicalVector doRawVectorSameLengthLogical(RRawVector left, RRawVector right) {
+    protected RLogicalVector doRawVectorSameLengthLogical(RRawVector left, RRawVector right) {
         return performIntVectorOpSameLength(RClosures.createRawToIntVector(left, leftNACheck), RClosures.createRawToIntVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "!convertRawToNumeric"})
-    public RRawVector doRawVectorDifferentLengthRaw(RRawVector left, RRawVector right) {
+    protected RRawVector doRawVectorDifferentLengthRaw(RRawVector left, RRawVector right) {
         return performRawVectorOpDifferentLength(left, right);
     }
 
     @Specialization(guards = {"areSameLength", "!convertRawToNumeric"})
-    public RRawVector doRawVectorSameLengthRaw(RRawVector left, RRawVector right) {
+    protected RRawVector doRawVectorSameLengthRaw(RRawVector left, RRawVector right) {
         return performRawVectorOpSameLength(left, right);
     }
 
@@ -1092,17 +1092,17 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     // convertRawToNumericVector
 
     @Specialization
-    public byte doRaw(RRaw left, Object right) {
+    protected byte doRaw(RRaw left, Object right) {
         return logic.op(left, right);
     }
 
     @Specialization
-    public byte doRaw(Object left, RRaw right) {
+    protected byte doRaw(Object left, RRaw right) {
         return logic.op(left, right);
     }
 
     @Specialization
-    public byte doRaw(RRawVector left, Object right) {
+    protected byte doRaw(RRawVector left, Object right) {
         // perhaps not the cleanest solution but others would be (unnecessarily) more verbose (e.g.
         // introduce another abstract method to BooleanOperation just to signal an error in one
         // case)
@@ -1111,7 +1111,7 @@ public abstract class BinaryBooleanNode extends BinaryNode {
     }
 
     @Specialization
-    public byte doRaw(Object left, RRawVector right) {
+    protected byte doRaw(Object left, RRawVector right) {
         // perhaps not the cleanest solution but others would be (unnecessarily) more verbose (e.g.
         // introduce another abstract method to BooleanOperation just to signal an error in one
         // case)

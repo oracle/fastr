@@ -48,7 +48,7 @@ public abstract class Apply extends RBuiltinNode {
 
     @Specialization(guards = "rowMargin")
     @SuppressWarnings("unused")
-    public Object applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
+    protected Object applyRows(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
         controlVisibility();
         int[] xdim = x.getDimensions();
         final int rows = xdim == null ? x.getLength() : xdim[0];
@@ -67,7 +67,7 @@ public abstract class Apply extends RBuiltinNode {
 
     @Specialization(guards = "colMargin")
     @SuppressWarnings("unused")
-    public Object applyCols(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
+    protected Object applyCols(VirtualFrame frame, RDoubleVector x, double margin, RFunction fun, Object args) {
         controlVisibility();
         int[] xdim = x.getDimensions();
         final int rows = xdim == null ? x.getLength() : xdim[0];
@@ -86,7 +86,7 @@ public abstract class Apply extends RBuiltinNode {
 
     @Specialization(guards = "rowMarginInt")
     @SuppressWarnings("unused")
-    public Object applyRows(VirtualFrame frame, RLogicalVector x, int margin, RFunction fun, Object args) {
+    protected Object applyRows(VirtualFrame frame, RLogicalVector x, int margin, RFunction fun, Object args) {
         controlVisibility();
         int[] xdim = x.getDimensions();
         final int rows = xdim == null ? x.getLength() : xdim[0];

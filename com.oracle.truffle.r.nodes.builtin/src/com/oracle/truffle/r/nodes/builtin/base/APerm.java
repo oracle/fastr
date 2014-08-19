@@ -40,7 +40,7 @@ public abstract class APerm extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector aPerm(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
+    protected RAbstractVector aPerm(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
         controlVisibility();
 
         if (!vector.isArray()) {

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class FastRTypeOfBuiltin extends RBuiltinNode {
 
     @Specialization
-    public String type(Object value) {
+    protected String type(Object value) {
         controlVisibility();
         return value.getClass().getSimpleName();
     }

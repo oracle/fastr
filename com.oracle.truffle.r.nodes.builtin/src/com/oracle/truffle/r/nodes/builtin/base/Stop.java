@@ -44,7 +44,7 @@ public abstract class Stop extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object stop(VirtualFrame frame, String msg, byte call, Object domain) {
+    protected Object stop(VirtualFrame frame, String msg, byte call, Object domain) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
@@ -64,7 +64,7 @@ public abstract class Stop extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object stop(VirtualFrame frame, RStringVector msg, byte call, Object domain) {
+    protected Object stop(VirtualFrame frame, RStringVector msg, byte call, Object domain) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, collapseStringVector(msg));
     }

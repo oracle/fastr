@@ -41,7 +41,7 @@ public abstract class Mod extends RBuiltinNode {
     @Child protected Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
 
     @Specialization
-    public RDoubleVector mod(RAbstractComplexVector vec) {
+    protected RDoubleVector mod(RAbstractComplexVector vec) {
         controlVisibility();
         double[] data = new double[vec.getLength()];
         for (int i = 0; i < vec.getLength(); i++) {

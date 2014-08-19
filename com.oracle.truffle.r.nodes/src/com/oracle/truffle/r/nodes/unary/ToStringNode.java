@@ -82,7 +82,7 @@ public abstract class ToStringNode extends UnaryNode {
     public abstract String executeString(VirtualFrame frame, Object o);
 
     @Specialization
-    public String toString(String value) {
+    protected String toString(String value) {
         if (RRuntime.isNA(value)) {
             return value;
         }
@@ -94,43 +94,43 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @Specialization
-    public String toString(@SuppressWarnings("unused") RNull vector) {
+    protected String toString(@SuppressWarnings("unused") RNull vector) {
         return "NULL";
     }
 
     @Specialization
-    public String toString(RFunction function) {
+    protected String toString(RFunction function) {
         return RRuntime.toString(function);
     }
 
     @Specialization
-    public String toString(RComplex complex) {
+    protected String toString(RComplex complex) {
         return complex.toString();
     }
 
     @Specialization
-    public String toString(RRaw raw) {
+    protected String toString(RRaw raw) {
         return raw.toString();
     }
 
     @Specialization
-    public String toString(int operand) {
+    protected String toString(int operand) {
         return RRuntime.intToString(operand, intL);
     }
 
     @Specialization
-    public String toString(double operand) {
+    protected String toString(double operand) {
         return RRuntime.doubleToString(operand);
     }
 
     @Specialization
-    public String toString(byte operand) {
+    protected String toString(byte operand) {
         return RRuntime.logicalToString(operand);
     }
 
     @SlowPath
     @Specialization
-    public String toString(RIntVector vector) {
+    protected String toString(RIntVector vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "integer(0)";
@@ -147,7 +147,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SlowPath
     @Specialization
-    public String toString(RDoubleVector vector) {
+    protected String toString(RDoubleVector vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "numeric(0)";
@@ -164,7 +164,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SlowPath
     @Specialization
-    public String toString(RStringVector vector) {
+    protected String toString(RStringVector vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "character(0)";
@@ -181,7 +181,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SlowPath
     @Specialization
-    public String toString(RLogicalVector vector) {
+    protected String toString(RLogicalVector vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "logical(0)";
@@ -198,7 +198,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SlowPath
     @Specialization
-    public String toString(RRawVector vector) {
+    protected String toString(RRawVector vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "raw(0)";
@@ -215,7 +215,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SlowPath
     @Specialization
-    public String toString(RComplexVector vector) {
+    protected String toString(RComplexVector vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "complex(0)";
@@ -232,7 +232,7 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SlowPath
     @Specialization
-    public String toString(VirtualFrame frame, RList vector) {
+    protected String toString(VirtualFrame frame, RList vector) {
         int length = vector.getLength();
         if (length == 0) {
             return "list()";
@@ -258,17 +258,17 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @Specialization
-    public String toString(VirtualFrame frame, RIntSequence vector) {
+    protected String toString(VirtualFrame frame, RIntSequence vector) {
         return toStringRecursive(frame, vector.createVector());
     }
 
     @Specialization
-    public String toString(VirtualFrame frame, RDoubleSequence vector) {
+    protected String toString(VirtualFrame frame, RDoubleSequence vector) {
         return toStringRecursive(frame, vector.createVector());
     }
 
     @Specialization
-    public String toString(REnvironment env) {
+    protected String toString(REnvironment env) {
         return env.toString();
     }
 

@@ -50,41 +50,41 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
-    public RNull doNull(@SuppressWarnings("unused") RNull operand) {
+    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
     }
 
     @Specialization
-    public byte doLogical(byte operand) {
+    protected byte doLogical(byte operand) {
         return operand;
     }
 
     @Specialization
-    public byte doDouble(double operand) {
+    protected byte doDouble(double operand) {
         naCheck.enable(operand);
         return naCheck.convertDoubleToLogical(operand);
     }
 
     @Specialization
-    public byte doInt(int operand) {
+    protected byte doInt(int operand) {
         naCheck.enable(operand);
         return naCheck.convertIntToLogical(operand);
     }
 
     @Specialization
-    public byte doComplex(RComplex operand) {
+    protected byte doComplex(RComplex operand) {
         naCheck.enable(operand);
         return naCheck.convertComplexToLogical(operand);
     }
 
     @Specialization
-    public byte doString(String operand) {
+    protected byte doString(String operand) {
         naCheck.enable(operand);
         return naCheck.convertStringToLogical(operand);
     }
 
     @Specialization
-    public byte doRaw(RRaw operand) {
+    protected byte doRaw(RRaw operand) {
         return RRuntime.raw2logical(operand);
     }
 
@@ -118,32 +118,32 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
-    public RLogicalVector doLogicalVector(RLogicalVector operand) {
+    protected RLogicalVector doLogicalVector(RLogicalVector operand) {
         return operand;
     }
 
     @Specialization
-    public RLogicalVector doIntVector(RIntVector operand) {
+    protected RLogicalVector doIntVector(RIntVector operand) {
         return performAbstractIntVector(operand);
     }
 
     @Specialization
-    public RLogicalVector doIntSequence(RIntSequence operand) {
+    protected RLogicalVector doIntSequence(RIntSequence operand) {
         return performAbstractIntVector(operand);
     }
 
     @Specialization
-    public RLogicalVector doDoubleVector(RDoubleVector operand) {
+    protected RLogicalVector doDoubleVector(RDoubleVector operand) {
         return performAbstractDoubleVector(operand);
     }
 
     @Specialization
-    public RLogicalVector doDoubleSequence(RDoubleSequence operand) {
+    protected RLogicalVector doDoubleSequence(RDoubleSequence operand) {
         return performAbstractDoubleVector(operand);
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RLogicalVector doStringVectorDims(RStringVector operand) {
+    protected RLogicalVector doStringVectorDims(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
         if (isAttrPreservation()) {
@@ -153,7 +153,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RLogicalVector doStringVectorNames(RStringVector operand) {
+    protected RLogicalVector doStringVectorNames(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
         if (isAttrPreservation()) {
@@ -163,7 +163,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RLogicalVector doStringVectorDimsNames(RStringVector operand) {
+    protected RLogicalVector doStringVectorDimsNames(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -173,7 +173,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RLogicalVector doStringVector(RStringVector operand) {
+    protected RLogicalVector doStringVector(RStringVector operand) {
         byte[] ldata = dataFromString(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
         if (isAttrPreservation()) {
@@ -183,7 +183,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RLogicalVector doComplexVectorDims(RComplexVector operand) {
+    protected RLogicalVector doComplexVectorDims(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions());
         if (isAttrPreservation()) {
@@ -193,7 +193,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RLogicalVector doComplexVectorNames(RComplexVector operand) {
+    protected RLogicalVector doComplexVectorNames(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getNames());
         if (isAttrPreservation()) {
@@ -203,7 +203,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RLogicalVector doComplexVectorDimsNames(RComplexVector operand) {
+    protected RLogicalVector doComplexVectorDimsNames(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA(), operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -213,7 +213,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RLogicalVector doComplexVector(RComplexVector operand) {
+    protected RLogicalVector doComplexVector(RComplexVector operand) {
         byte[] ldata = dataFromComplex(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, naCheck.neverSeenNA());
         if (isAttrPreservation()) {
@@ -223,7 +223,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RLogicalVector doRawVectorDims(RRawVector operand) {
+    protected RLogicalVector doRawVectorDims(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions());
         if (isAttrPreservation()) {
@@ -233,7 +233,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RLogicalVector doRawVectorNames(RRawVector operand) {
+    protected RLogicalVector doRawVectorNames(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getNames());
         if (isAttrPreservation()) {
@@ -243,7 +243,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RLogicalVector doRawVectorDimsNames(RRawVector operand) {
+    protected RLogicalVector doRawVectorDimsNames(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR, operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -253,7 +253,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RLogicalVector doRawVector(RRawVector operand) {
+    protected RLogicalVector doRawVector(RRawVector operand) {
         byte[] ldata = dataFromRaw(operand);
         RLogicalVector ret = RDataFactory.createLogicalVector(ldata, RDataFactory.COMPLETE_VECTOR);
         if (isAttrPreservation()) {
@@ -263,7 +263,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
-    public RLogicalVector doList(VirtualFrame frame, RList list) {
+    protected RLogicalVector doList(VirtualFrame frame, RList list) {
         int length = list.getLength();
         byte[] result = new byte[length];
         for (int i = 0; i < length; i++) {

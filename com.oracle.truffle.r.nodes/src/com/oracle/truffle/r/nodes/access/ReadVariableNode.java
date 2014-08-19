@@ -541,25 +541,25 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract Symbol getSymbol();
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return frame.getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return frame.getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return frame.getDouble(frameSlot);
         }
 
         @Specialization
-        public Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return frame.getObject(frameSlot);
@@ -580,25 +580,25 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract Symbol getSymbol();
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return enclosingFrame.getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return enclosingFrame.getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return enclosingFrame.getDouble(frameSlot);
         }
 
         @Specialization
-        public Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return enclosingFrame.getObject(frameSlot);
@@ -612,7 +612,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Override
         @Specialization
-        public Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 Object result = enclosingFrame.getObject(frameSlot);
@@ -636,7 +636,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract Symbol getSymbol();
 
         @Specialization
-        public Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
+        protected Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
             controlVisibility();
             return getFunction();
         }
@@ -652,7 +652,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract String getMode();
 
         @Specialization
-        public Object doObject(VirtualFrame frame) {
+        protected Object doObject(VirtualFrame frame) {
             controlVisibility();
             throw RError.error(frame, getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
         }

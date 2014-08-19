@@ -59,7 +59,7 @@ public abstract class Options extends RBuiltinNode {
     }
 
     @Specialization
-    public Object options(VirtualFrame frame, Object args) {
+    protected Object options(VirtualFrame frame, Object args) {
         controlVisibility();
         if (args instanceof RMissing) {
             return options((RMissing) args);

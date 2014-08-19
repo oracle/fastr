@@ -68,19 +68,19 @@ public abstract class Substr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg")
-    public RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "wrongParams"})
-    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         assert false; // should never happen
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg", "!wrongParams"})
-    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         String[] res = new String[arg.getLength()];
         for (int i = 0, j = 0, k = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength())) {
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));

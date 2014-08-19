@@ -54,7 +54,7 @@ public abstract class FastRDumpBuiltin extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object dump(RFunction function, byte igvDump, byte verbose) {
+    protected Object dump(RFunction function, byte igvDump, byte verbose) {
         controlVisibility();
 
         RootNode root = function.getTarget().getRootNode();

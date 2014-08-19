@@ -34,24 +34,24 @@ public abstract class RbindBinaryNode extends CombineBinaryNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull rbind(RNull left, RNull right) {
+    protected RNull rbind(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public RAbstractVector rbind(RAbstractVector left, RNull right) {
+    protected RAbstractVector rbind(RAbstractVector left, RNull right) {
         return left.copyWithNewDimensions(getDimensions(left));
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public RAbstractVector rbind(RNull left, RAbstractVector right) {
+    protected RAbstractVector rbind(RNull left, RAbstractVector right) {
         return right.copyWithNewDimensions(getDimensions(right));
     }
 
     @Specialization
-    public RAbstractVector rbind(RAbstractVector left, RAbstractVector right) {
+    protected RAbstractVector rbind(RAbstractVector left, RAbstractVector right) {
         return genericRbind(left.materialize(), right.materialize());
     }
 

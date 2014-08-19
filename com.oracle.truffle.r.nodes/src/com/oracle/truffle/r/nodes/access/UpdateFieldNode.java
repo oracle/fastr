@@ -46,7 +46,7 @@ public abstract class UpdateFieldNode extends RNode {
     @Child private CastListNode castList;
 
     @Specialization
-    public Object updateField(RList object, Object value) {
+    protected Object updateField(RList object, Object value) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
             inexactMatch.enter();
@@ -82,7 +82,7 @@ public abstract class UpdateFieldNode extends RNode {
     }
 
     @Specialization
-    public Object updateField(VirtualFrame frame, REnvironment env, Object value) {
+    protected Object updateField(VirtualFrame frame, REnvironment env, Object value) {
         // reference semantics for environments
         try {
             env.put(getField(), value);
@@ -93,7 +93,7 @@ public abstract class UpdateFieldNode extends RNode {
     }
 
     @Specialization
-    public Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
+    protected Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, true, false));

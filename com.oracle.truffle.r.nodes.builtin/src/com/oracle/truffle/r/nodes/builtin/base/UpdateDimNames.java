@@ -72,7 +72,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
+    protected RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
         v.setDimNames(frame, null, getEncapsulatingSourceSection());
         controlVisibility();
@@ -80,7 +80,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "isZeroLength")
-    public RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
+    protected RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(frame, null, getEncapsulatingSourceSection());
         controlVisibility();
@@ -88,7 +88,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!isZeroLength")
-    public RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
+    protected RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
         v.setDimNames(frame, convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
         controlVisibility();
@@ -96,13 +96,13 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!isVectorList")
-    public RAbstractVector updateDimnamesError(VirtualFrame frame, RAbstractVector vector, RAbstractVector v) {
+    protected RAbstractVector updateDimnamesError(VirtualFrame frame, RAbstractVector vector, RAbstractVector v) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
     @Specialization
-    public RAbstractVector updateDimnamesError(VirtualFrame frame, RAbstractVector vector, RFunction v) {
+    protected RAbstractVector updateDimnamesError(VirtualFrame frame, RAbstractVector vector, RFunction v) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }

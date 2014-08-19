@@ -70,19 +70,19 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(x.getLength());
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -104,7 +104,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractDoubleVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractDoubleVector x, RAbstractIntVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -126,7 +126,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractDoubleVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractDoubleVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -148,7 +148,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractDoubleVector x, RAbstractDoubleVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractDoubleVector x, RAbstractDoubleVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -170,7 +170,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -192,7 +192,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractLogicalVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractLogicalVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -213,7 +213,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization(guards = "!isStringVectorX")
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -235,7 +235,7 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RAbstractComplexVector x, RAbstractComplexVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractComplexVector x, RAbstractComplexVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
@@ -257,13 +257,13 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, RFunction x, Object table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RFunction x, Object table, Object nomatchObj, Object incomparables) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public RIntVector match(VirtualFrame frame, Object x, RFunction table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, Object x, RFunction table, Object nomatchObj, Object incomparables) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 

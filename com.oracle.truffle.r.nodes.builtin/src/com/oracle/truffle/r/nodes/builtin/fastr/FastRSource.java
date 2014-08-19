@@ -41,7 +41,7 @@ public abstract class FastRSource extends RBuiltinNode {
 
     @SlowPath
     @Specialization
-    public String debugSource(RFunction f) {
+    protected String debugSource(RFunction f) {
         controlVisibility();
         CallTarget ct = f.getTarget();
         if (!(ct instanceof DefaultCallTarget)) {

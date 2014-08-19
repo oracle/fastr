@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class License extends RInvisibleBuiltinNode {
 
     @Specialization
-    public Object license() {
+    protected Object license() {
         controlVisibility();
         RContext.getInstance().getConsoleHandler().println(RRuntime.LICENSE);
         return RNull.instance;

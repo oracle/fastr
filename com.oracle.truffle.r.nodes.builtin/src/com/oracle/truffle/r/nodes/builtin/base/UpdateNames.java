@@ -52,7 +52,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     public abstract Object executeStringVector(VirtualFrame frame, RAbstractVector vector, Object o);
 
     @Specialization
-    public RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
+    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
         controlVisibility();
         RVector v = vector.materialize();
         v.setNames(frame, null, getEncapsulatingSourceSection());
@@ -60,7 +60,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, RStringVector names) {
+    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, RStringVector names) {
         controlVisibility();
         RVector v = vector.materialize();
         RStringVector namesVector = names;
@@ -72,7 +72,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, String name) {
+    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, String name) {
         controlVisibility();
         RVector v = vector.materialize();
         String[] names = new String[v.getLength()];
@@ -84,7 +84,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object names) {
+    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object names) {
         controlVisibility();
         if (names instanceof RAbstractVector) {
             return updateNames(frame, vector, (RStringVector) castString(frame, names));
