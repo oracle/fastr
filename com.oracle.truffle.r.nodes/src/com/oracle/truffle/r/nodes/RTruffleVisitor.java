@@ -76,15 +76,15 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             case DOUBLE:
                 return ConstantNode.create(src, RRuntime.string2double(c.getValues()[0]));
             case BOOL:
-                String value = c.getValues()[0];
-                if (value.equals("NA")) {
-                    return ConstantNode.create(src, RRuntime.LOGICAL_NA);
-                } else if (value.equals("1")) {
-                    return ConstantNode.create(src, true);
-                } else if (value.equals("0")) {
-                    return ConstantNode.create(src, false);
-                } else {
-                    throw new AssertionError();
+                switch (c.getValues()[0]) {
+                    case "NA":
+                        return ConstantNode.create(src, RRuntime.LOGICAL_NA);
+                    case "1":
+                        return ConstantNode.create(src, true);
+                    case "0":
+                        return ConstantNode.create(src, false);
+                    default:
+                        throw new AssertionError();
                 }
             case STRING:
                 return ConstantNode.create(src, c.getValues()[0]);

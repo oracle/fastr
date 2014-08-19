@@ -348,20 +348,21 @@ public class RRuntime {
     }
 
     public static byte string2logicalNoCheck(String s) {
-        if (s.equals("TRUE") || s.equals("T")) {
-            return TRUE;
+        switch (s) {
+            case "TRUE":
+            case "T":
+            case "True":
+            case "true":
+                return TRUE;
+            case "FALSE":
+            case "F":
+            case "False":
+            case "false":
+                return FALSE;
+            default:
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+                return LOGICAL_NA;
         }
-        if (s.equals("FALSE") || s.equals("F")) {
-            return FALSE;
-        }
-        if (s.equals("True") || s.equals("true")) {
-            return TRUE;
-        }
-        if (s.equals("False") || s.equals("false")) {
-            return FALSE;
-        }
-        RContext.getInstance().getAssumptions().naIntroduced.invalidate();
-        return LOGICAL_NA;
     }
 
     public static byte string2logical(String s) {
