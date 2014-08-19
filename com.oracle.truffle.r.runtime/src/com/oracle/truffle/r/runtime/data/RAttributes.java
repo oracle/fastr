@@ -340,7 +340,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         private int maxSize;
 
         RAttributesStatsImpl() {
-            super();
             hist[0]++;
         }
 

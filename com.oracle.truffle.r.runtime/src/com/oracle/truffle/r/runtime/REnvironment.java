@@ -500,7 +500,7 @@ public abstract class REnvironment implements RAttributable {
      */
     private RStringVector getNamespaceSpec() {
         Object value = frameAccess.get(NAMESPACE_KEY);
-        if (value != null && value instanceof REnvironment) {
+        if (value instanceof REnvironment) {
             REnvironment info = (REnvironment) value;
             Object spec = info.frameAccess.get("spec");
             if ((spec != null) && spec instanceof RStringVector) {

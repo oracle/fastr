@@ -35,7 +35,6 @@ public abstract class UseMethod extends RBuiltinNode {
     @Child UseMethodNode useMethodNode;
 
     public UseMethod() {
-        super();
         this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
     }
 

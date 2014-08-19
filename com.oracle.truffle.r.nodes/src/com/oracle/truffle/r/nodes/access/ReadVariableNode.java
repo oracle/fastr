@@ -137,7 +137,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public abstract Symbol getSymbol();
 
     /**
-     * Checks every value read from a variable whether it is a {@link RPromise} or not. If yes, it
+     * Checks every value read from a variable whether it is an {@link RPromise} or not. If yes, it
      * replaces itself with a {@link ReadPromiseNode}, else with a standard {@link ReadVariableNode}
      */
     public static class ReadCheckPromiseNode extends ReadVariableNode {
@@ -147,7 +147,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final ReadVariableNode readNodeInitial;
 
         public ReadCheckPromiseNode(ReadVariableNode readNode) {
-            super();
             this.readNode = readNode;
             this.readNodeInitial = NodeUtil.cloneNode(readNode);
         }
@@ -171,7 +170,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private Object specializeAndExecute(VirtualFrame frame, Object value) {
             CompilerAsserts.neverPartOfCompilation();
 
-            if (value != null && value instanceof RPromise) {
+            if (value instanceof RPromise) {
                 // Force promise execution to get (back to) the future! ;)
                 RPromise promise = (RPromise) value;
                 Object promiseValue = promise.evaluate(frame);
@@ -207,7 +206,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Child private ReadVariableNode readNode;
 
         public ReadPromiseNode(Symbol symbol, RPromise promise, ReadVariableNode readNode) {
-            super();
             this.symbol = symbol;
             this.promise = promise;
             this.readNode = readNode;
