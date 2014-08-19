@@ -34,7 +34,7 @@ public abstract class EncodeString extends RBuiltinNode {
     }
 
     private final NACheck na = NACheck.create();
-    private BranchProfile everSeenNA = new BranchProfile();
+    private final BranchProfile everSeenNA = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {

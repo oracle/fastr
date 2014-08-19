@@ -43,8 +43,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
 public abstract class Repeat extends RBuiltinNode {
 
-    BranchProfile withNames = new BranchProfile();
-    BranchProfile noNames = new BranchProfile();
+    private final BranchProfile withNames = new BranchProfile();
+    private final BranchProfile noNames = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {

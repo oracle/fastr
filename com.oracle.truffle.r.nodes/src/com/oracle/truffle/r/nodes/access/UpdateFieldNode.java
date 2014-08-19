@@ -41,7 +41,7 @@ public abstract class UpdateFieldNode extends RNode {
 
     public abstract String getField();
 
-    BranchProfile inexactMatch = new BranchProfile();
+    private final BranchProfile inexactMatch = new BranchProfile();
 
     @Child private CastListNode castList;
 

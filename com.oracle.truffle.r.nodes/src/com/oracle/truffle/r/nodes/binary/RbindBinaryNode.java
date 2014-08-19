@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RbindBinaryNode extends CombineBinaryNode {
 
-    private BranchProfile everSeenNotEqualCols = new BranchProfile();
+    private final BranchProfile everSeenNotEqualCols = new BranchProfile();
 
     @SuppressWarnings("unused")
     @Specialization

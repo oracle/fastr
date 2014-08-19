@@ -30,9 +30,9 @@ import com.oracle.truffle.r.runtime.data.*;
 @NodeChild(value = "operand", type = RNode.class)
 public abstract class WrapArgumentNode extends RProxyNode {
 
-    private BranchProfile everSeenShared = new BranchProfile();
-    private BranchProfile everSeenTemporary = new BranchProfile();
-    private BranchProfile everSeenNonTemporary = new BranchProfile();
+    private final BranchProfile everSeenShared = new BranchProfile();
+    private final BranchProfile everSeenTemporary = new BranchProfile();
+    private final BranchProfile everSeenNonTemporary = new BranchProfile();
 
     private final boolean modeChange;
 

@@ -38,7 +38,7 @@ public abstract class Substr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
 
-    private BranchProfile everSeenIllegalRange = new BranchProfile();
+    private final BranchProfile everSeenIllegalRange = new BranchProfile();
 
     protected static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
