@@ -106,27 +106,27 @@ public abstract class TypeofNode extends UnaryNode {
         return "list";
     }
 
-    @Specialization()
+    @Specialization
     public String typeof(REnvironment env) {
         return RRuntime.TYPE_ENVIRONMENT;
     }
 
-    @Specialization()
+    @Specialization
     public String typeof(RSymbol symbol) {
         return "symbol";
     }
 
-    @Specialization()
+    @Specialization
     public String typeof(RLanguage language) {
         return "language";
     }
 
-    @Specialization()
+    @Specialization
     public String typeof(RPromise promise) {
         return "promise";
     }
 
-    @Specialization()
+    @Specialization
     public String typeof(RExpression symbol) {
         return "expression";
     }

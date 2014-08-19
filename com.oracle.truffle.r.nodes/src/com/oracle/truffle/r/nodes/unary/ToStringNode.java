@@ -113,7 +113,7 @@ public abstract class ToStringNode extends UnaryNode {
         return raw.toString();
     }
 
-    @Specialization()
+    @Specialization
     public String toString(int operand) {
         return RRuntime.intToString(operand, intL);
     }

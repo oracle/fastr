@@ -25,13 +25,14 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
  * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
  */
-@com.oracle.truffle.api.CompilerDirectives.ValueType
+@ValueType
 public class RPromise {
 
     /**

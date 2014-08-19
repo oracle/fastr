@@ -97,5 +97,4 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     public int getWidth() {
         return RContext.CONSOLE_WIDTH;
     }
-
 }

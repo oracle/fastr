@@ -91,9 +91,8 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
 
-    @Specialization()
+    @Specialization
     public RStringVector getClassHr(RAbstractContainer arg) {
         return arg.getClassHierarchy();
     }
-
 }

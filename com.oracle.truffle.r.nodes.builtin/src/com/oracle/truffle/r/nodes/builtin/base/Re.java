@@ -56,5 +56,4 @@ public abstract class Re extends RBuiltinNode {
         controlVisibility();
         return (RDoubleVector) vector.copy();
     }
-
 }

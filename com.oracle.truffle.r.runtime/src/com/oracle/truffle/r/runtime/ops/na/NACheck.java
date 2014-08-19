@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ops.na;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,9 +38,10 @@ public final class NACheck {
     private static final int CHECK_DEOPT = 1;
     private static final int CHECK = 2;
 
-    @CompilerDirectives.CompilationFinal int state;
-    private BranchProfile conversionOverflowReached = new BranchProfile();
-    @CompilerDirectives.CompilationFinal boolean seenNaN;
+    private final BranchProfile conversionOverflowReached = new BranchProfile();
+
+    @CompilationFinal int state;
+    @CompilationFinal boolean seenNaN;
 
     public static NACheck create() {
         return new NACheck();

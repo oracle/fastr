@@ -52,5 +52,4 @@ public abstract class RBounded {
             throw RError.error(frame, sourceSection, RError.Message.DIMS_DONT_MATCH_LENGTH, length, getLength());
         }
     }
-
 }

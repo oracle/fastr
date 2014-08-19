@@ -53,5 +53,4 @@ public class RFormula extends RScalar {
     public Object getModel() {
         return model;
     }
-
 }

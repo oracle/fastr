@@ -56,5 +56,4 @@ public abstract class Im extends RBuiltinNode {
         controlVisibility();
         return RDataFactory.createDoubleVector(vector.getLength());
     }
-
 }

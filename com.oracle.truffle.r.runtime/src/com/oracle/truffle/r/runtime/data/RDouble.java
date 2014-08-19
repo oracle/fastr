@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 
-@com.oracle.truffle.api.CompilerDirectives.ValueType
+@ValueType
 public final class RDouble extends RScalar {
 
     private final double value;

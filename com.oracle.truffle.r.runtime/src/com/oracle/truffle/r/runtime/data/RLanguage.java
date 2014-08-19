@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
+
 /**
  * Denotes an (unevaluated) element of, e.g. an {@link RExpression}.
  */
-@com.oracle.truffle.api.CompilerDirectives.ValueType
+@ValueType
 public class RLanguage extends RLanguageRep {
 
     public RLanguage(Object rep) {
         super(rep);
     }
-
 }

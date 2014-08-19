@@ -68,7 +68,7 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
     public abstract static class SysNFrame extends RBuiltinNode {
-        @Specialization()
+        @Specialization
         public int sysNFrame() {
             controlVisibility();
             return Utils.stackDepth();
@@ -83,7 +83,7 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(0)};
         }
 
-        @Specialization()
+        @Specialization
         public REnvironment sysFrame(VirtualFrame frame, int nd) {
             controlVisibility();
             int n = nd;
@@ -97,7 +97,7 @@ public class FrameFunctions {
             }
         }
 
-        @Specialization()
+        @Specialization
         public REnvironment sysFrame(VirtualFrame frame, double nd) {
             return sysFrame(frame, (int) nd);
         }
@@ -111,7 +111,7 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(1)};
         }
 
-        @Specialization()
+        @Specialization
         public int sysParent(int nd) {
             controlVisibility();
             int n = nd;
@@ -123,7 +123,7 @@ public class FrameFunctions {
             }
         }
 
-        @Specialization()
+        @Specialization
         public int sysParent(double nd) {
             return sysParent((int) nd);
         }
@@ -137,7 +137,7 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(0)};
         }
 
-        @Specialization()
+        @Specialization
         public Object sysFunction(VirtualFrame frame, int nd) {
             controlVisibility();
             int n = nd;
@@ -151,7 +151,7 @@ public class FrameFunctions {
             }
         }
 
-        @Specialization()
+        @Specialization
         public Object sysFunction(VirtualFrame frame, double nd) {
             return sysFunction(frame, (int) nd);
         }
@@ -159,7 +159,7 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {})
     public abstract static class SysParents extends FrameHelper {
-        @Specialization()
+        @Specialization
         public RIntVector sysParents() {
             controlVisibility();
             int d = Utils.stackDepth();
@@ -173,7 +173,7 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
     public abstract static class SysFrames extends FrameHelper {
-        @Specialization()
+        @Specialization
         public Object sysFrames() {
             throw RError.nyi(null, "sys.frames is not implemented");
         }
@@ -190,7 +190,7 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(1)};
         }
 
-        @Specialization()
+        @Specialization
         public REnvironment parentFrame(VirtualFrame frame, double nd) {
             controlVisibility();
             int n = (int) nd;

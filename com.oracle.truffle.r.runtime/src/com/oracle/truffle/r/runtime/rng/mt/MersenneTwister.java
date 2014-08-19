@@ -63,6 +63,7 @@
  */
 package com.oracle.truffle.r.runtime.rng.mt;
 
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.rng.*;
 
 public final class MersenneTwister extends RNGInitAdapter implements RRNG.GeneratorPrivate {
@@ -179,7 +180,7 @@ public final class MersenneTwister extends RNGInitAdapter implements RRNG.Genera
         return y;
     }
 
-    @com.oracle.truffle.api.CompilerDirectives.SlowPath
+    @SlowPath
     private void generateNewNumbers() {
         int y;
         int kk;

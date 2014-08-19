@@ -58,5 +58,4 @@ public abstract class ConvertInt extends UnaryNode {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());
     }
-
 }

@@ -39,7 +39,7 @@ public abstract class Rev extends RBuiltinNode {
         return value;
     }
 
-    @Specialization()
+    @Specialization
     public double rev(double value) {
         controlVisibility();
         return value;
