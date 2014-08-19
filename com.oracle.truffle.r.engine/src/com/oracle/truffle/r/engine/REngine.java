@@ -404,7 +404,8 @@ public final class REngine implements RContext.Engine {
         Object result = null;
         try {
             try {
-                result = callTarget.call(frame);
+                // FIXME: callTargets should only be called via Direct/IndirectCallNode
+                result = callTarget.call(frame.materialize());
             } catch (ControlFlowException cfe) {
                 throw RError.error(frame, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
