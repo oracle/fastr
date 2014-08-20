@@ -27,12 +27,34 @@
 # Use "make cleanlib; make force" to force a rebuild.
 #
 
-ifneq ($(shell uname), Darwin)
-OS_DIR=linux
-LIB_DERIVED=lib/$(OS_DIR)/libRDerived.so 
+OSNAME := $(shell uname)
+
+ifeq ($(OSNAME), Linux)
+  OS_DIR      := linux
+  CC          := gcc
+  FC          := gfortran
+  CFLAGS      := -fPIC -O2
+  LDFLAGS     := -fPIC -shared
+  SHARED_EXT  := so
+  LIBS        := -lgfortran
+else ifeq ($(OSNAME), SunOS)
+  OS_DIR      := sunos
+  CC          := cc
+  FC          := f90
+  CFLAGS      := -m64 -O -xcode=pic13
+  LDFLAGS     := -G -m64
+  SHARED_EXT  := so
+else ifeq ($(OSNAME), Darwin)
+  OS_DIR      := darwin
+  CC          := gcc
+  FC          := gfortran
+  CFLAGS      := -fPIC -O2
+  LDFLAGS     := -dynamiclib -undefined dynamic_lookup
+  SHARED_EXT  := dylib
 else
-OS_DIR=darwin
-LIB_DERIVED=lib/$(OS_DIR)/libRDerived.dylib
+all:
+	@echo "This Makefile does not know how to compile for $(OSNAME)"
+	@false
 endif
 
 .PHONY: all clean cleanlib cleanobj force
@@ -46,30 +68,36 @@ F_SOURCES := $(wildcard $(SRC)/*.f)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
 
+LIBDIR := ./lib/$(OS_DIR)
+LIB_DERIVED := lib/$(OS_DIR)/libRDerived.$(SHARED_EXT)
 
 all:
 	@echo $(LIB_DERIVED) is up to date
 
 force: $(LIB_DERIVED)
+	mkdir -p $(LIBDIR)
+# build+install blas and lapack too
+#	$(MAKE) -C src/blas
+#	cp src/blas/libRblas.$(SHARED_EXT) $(LIBDIR)
+#	$(MAKE) -C src/lapack
+#	cp src/lapack/libRlapack.$(SHARED_EXT) $(LIBDIR)
 
 $(LIB_DERIVED): $(C_OBJECTS) $(F_OBJECTS)
-ifneq ($(shell uname), Darwin)
-	gcc -fPIC -shared -o ./lib/linux/libRDerived.so $(C_OBJECTS) $(F_OBJECTS)
-else
-	gcc -dynamiclib -undefined dynamic_lookup -o ./lib/darwin/libRDerived.dylib $(C_OBJECTS) $(F_OBJECTS)
-endif
+	$(CC) $(LDFLAGS) -o $(LIBDIR)/libRDerived.$(SHARED_EXT) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
 
 $(OBJ)/%.o: $(SRC)/%.c
-	gcc -fPIC -O2 -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.f
-	gfortran -fPIC -O2 -c $< -o $@
+	$(FC) $(CFLAGS) -c $< -o $@
 
 
 cleanlib:
-	rm -f ./lib/$(OS_DIR)/libRDerived.*
+	rm -f $(LIBDIR)/libRDerived.* $(LIBDIR)/libRblas.$(SHARED_EXT) $(LIBDIR)/libRlapack.$(SHARED_EXT)
 
 clean: cleanobj
+#	$(MAKE) -C src/blas clean
+#	$(MAKE) -C src/lapack clean
 
 cleanobj:
-	rm -f ./lib/$(OS_DIR)/*.o
+	rm -f $(LIBDIR)/*.o
