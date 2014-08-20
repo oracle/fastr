@@ -23,10 +23,10 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"...", "na.rm"})
 public abstract class Prod extends RBuiltinNode {
 
-    private static final Object[] PARAMETER_NAMES = new Object[]{"..."};
+    private static final String[] PARAMETER_NAMES = new String[]{"..."};
 
     @Override
-    public Object[] getParameterNames() {
+    public String[] getParameterNames() {
         return PARAMETER_NAMES;
     }
 

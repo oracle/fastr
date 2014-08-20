@@ -47,7 +47,7 @@ public class ForeignFunctions {
         protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
 
         @Override
-        public Object[] getParameterNames() {
+        public String[] getParameterNames() {
             return PARAMETER_NAMES;
         }
 

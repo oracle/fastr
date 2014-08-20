@@ -150,10 +150,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
     public abstract void execute(VirtualFrame frame, Object value);
 
-    @NodeFields({@NodeField(name = "symbol", type = Object.class), @NodeField(name = "mode", type = Mode.class)})
+    @NodeFields({@NodeField(name = "name", type = String.class), @NodeField(name = "mode", type = Mode.class)})
     public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
 
-        public abstract Object getSymbol();
+        public abstract String getName();
 
         public abstract Mode getMode();
 
@@ -183,7 +183,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerAsserts.neverPartOfCompilation();
-            FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getSymbol(), initialKind);
+            FrameSlot frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(getName(), initialKind);
             replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), frameSlot, getMode())).execute(frame, value);
         }
     }

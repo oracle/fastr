@@ -58,7 +58,7 @@ public class EvalFunctions {
         @CompilationFinal private RFunction function;
 
         @Override
-        public Object[] getParameterNames() {
+        public String[] getParameterNames() {
             return PARAMETER_NAMES;
         }
 
@@ -165,7 +165,7 @@ public class EvalFunctions {
         @SuppressWarnings("hiding") protected static final String[] PARAMETER_NAMES = new String[]{"expr", "envir"};
 
         @Override
-        public Object[] getParameterNames() {
+        public String[] getParameterNames() {
             return PARAMETER_NAMES;
         }
 
