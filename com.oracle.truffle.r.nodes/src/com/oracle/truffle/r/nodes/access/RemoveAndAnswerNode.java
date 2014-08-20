@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.parser.ast.*;
@@ -33,40 +34,68 @@ import com.oracle.truffle.r.runtime.*;
  * perform checking; it is to be used for internal purposes. A sample use case is a
  * {@linkplain RTruffleVisitor#visit(Replacement) replacement}.
  */
-public final class RemoveAndAnswerNode extends RNode implements VisibilityController {
-
-    /**
-     * The name of the variable that is to be removed and whose value is to be returned.
-     */
-    private final String name;
-
-    private RemoveAndAnswerNode(String name) {
-        this.name = name;
-    }
+public abstract class RemoveAndAnswerNode extends RNode {
 
     public static RemoveAndAnswerNode create(String name) {
-        return new RemoveAndAnswerNode(name);
+        return new RemoveAndAnswerUninitializedNode(name);
     }
 
     public static RemoveAndAnswerNode create(Object name) {
-        return new RemoveAndAnswerNode(name.toString());
+        return new RemoveAndAnswerUninitializedNode(name.toString());
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        controlVisibility();
-        FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(name);
-        if (fs == null) {
-            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, name);
+    protected static final class RemoveAndAnswerUninitializedNode extends RemoveAndAnswerNode {
+
+        /**
+         * The name of the variable that is to be removed and whose value is to be returned.
+         */
+        protected final String name;
+
+        protected RemoveAndAnswerUninitializedNode(String name) {
+            this.name = name;
         }
-        Object result = frame.getValue(fs);
-        frame.setObject(fs, null); // use null (not an R value) to represent "undefined"
-        return result;
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            CompilerAsserts.neverPartOfCompilation();
+            return specialize(frame).execute(frame);
+        }
+
+        private RemoveAndAnswerNode specialize(VirtualFrame frame) {
+            FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(name);
+            if (fs == null) {
+                RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, name);
+            }
+            return replace(new RemoveAndAnswerResolvedNode(fs));
+        }
+
     }
 
-    @Override
-    public boolean getVisibility() {
-        return false;
+    protected static final class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode implements VisibilityController {
+
+        @Override
+        public boolean getVisibility() {
+            return false;
+        }
+
+        /**
+         * The frame slot representing the variable that is to be removed and whose value is to be
+         * returned.
+         */
+        private final FrameSlot slot;
+
+        protected RemoveAndAnswerResolvedNode(FrameSlot slot) {
+            this.slot = slot;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            Object result = frame.getValue(slot);
+            frame.setObject(slot, null); // use null (not an R value) to represent "undefined"
+            return result;
+        }
+
     }
 
 }
