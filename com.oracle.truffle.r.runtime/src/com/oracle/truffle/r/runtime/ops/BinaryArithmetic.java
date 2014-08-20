@@ -15,6 +15,7 @@ package com.oracle.truffle.r.runtime.ops;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -199,8 +200,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -248,8 +249,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -318,8 +319,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -451,8 +452,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -486,14 +487,14 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("unsupported complex operation");
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -529,8 +530,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -685,8 +686,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
 
@@ -946,8 +947,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
 
@@ -974,8 +975,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
 

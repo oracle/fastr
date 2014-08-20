@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -51,15 +51,18 @@ public abstract class ConvertIntExact extends UnaryNode {
         if (operand.getLength() == 1) {
             return operand.getDataAt(0);
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw new ConversionFailedException(operand.getClass().getName());
+            throw fail(operand.getClass().getName());
         }
     }
 
     @Fallback
     public int doOther(Object operand) {
-        CompilerDirectives.transferToInterpreter();
-        throw new ConversionFailedException(operand.getClass().getName());
+        throw fail(operand.getClass().getName());
+    }
+
+    @SlowPath
+    private static ConversionFailedException fail(String className) {
+        throw new ConversionFailedException(className);
     }
 
 }

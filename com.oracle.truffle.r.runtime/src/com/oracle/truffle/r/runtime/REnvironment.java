@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -394,12 +393,10 @@ public abstract class REnvironment implements RAttributable {
      */
     public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
         if (pos == searchPath.size()) {
-            CompilerDirectives.transferToInterpreter();
-            throw new DetachException(RError.Message.ENV_DETACH_BASE);
+            detachException(RError.Message.ENV_DETACH_BASE);
         }
         if (pos <= 0 || pos >= searchPath.size()) {
-            CompilerDirectives.transferToInterpreter();
-            throw new DetachException(RError.Message.ENV_SUBSCRIPT);
+            detachException(RError.Message.ENV_SUBSCRIPT);
         }
         assert pos != 1; // explicitly checked in caller
         // N.B. pos is 1-based
@@ -414,6 +411,11 @@ public abstract class REnvironment implements RAttributable {
             ((REnvMapFrameAccess) envToRemove.frameAccess).detach();
         }
         return envToRemove;
+    }
+
+    @SlowPath
+    private static void detachException(RError.Message message) throws DetachException {
+        throw new DetachException(message);
     }
 
     /**

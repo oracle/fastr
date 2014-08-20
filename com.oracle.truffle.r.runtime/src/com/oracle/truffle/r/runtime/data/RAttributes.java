@@ -24,8 +24,9 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -307,8 +308,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
                     return iter.next();
                 } else {
                     if (readSingleton) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw new NoSuchElementException();
+                        throw noSuchElement();
                     } else {
                         readSingleton = true;
                         return RAttributesImpl.this;
@@ -324,6 +324,11 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
 
         public Object getValue() {
             return value1;
+        }
+
+        @SlowPath
+        private static NoSuchElementException noSuchElement() {
+            throw new NoSuchElementException();
         }
     }
 

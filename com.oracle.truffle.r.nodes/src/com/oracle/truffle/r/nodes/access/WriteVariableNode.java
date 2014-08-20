@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -413,9 +414,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 
+    @SlowPath
     protected static boolean isObjectKind(FrameSlot frameSlot) {
         if (frameSlot.getKind() != FrameSlotKind.Object) {
-            CompilerDirectives.transferToInterpreter();
             frameSlot.setKind(FrameSlotKind.Object);
         }
         return true;
@@ -425,9 +426,9 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         return frameSlot.getKind() == kind || initialSetKind(frameSlot, kind);
     }
 
+    @SlowPath
     private static boolean initialSetKind(FrameSlot frameSlot, FrameSlotKind kind) {
         if (frameSlot.getKind() == FrameSlotKind.Illegal) {
-            CompilerDirectives.transferToInterpreter();
             frameSlot.setKind(kind);
             return true;
         }

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -112,12 +113,16 @@ public abstract class IsNA extends RBuiltinNode {
                 // and the single element of that vector is regarded as NA
                 isNAResult = (vector.getLength() == 1) ? vector.getDataAt(0) : RRuntime.LOGICAL_FALSE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw new UnsupportedOperationException("unhandled return type in isNA(list)");
+                throw fail("unhandled return type in isNA(list)");
             }
             resultVector[i] = isNAResult;
         }
         return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @SlowPath
+    private static UnsupportedOperationException fail(String message) {
+        throw new UnsupportedOperationException(message);
     }
 
     @Specialization

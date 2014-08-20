@@ -178,8 +178,8 @@ public final class RError extends RuntimeException {
      * A temporary error that indicates an unimplemented feature where terminating the VM using
      * {@link Utils#fatalError(String)} would be inappropriate.
      */
+    @SlowPath
     public static RError nyi(SourceSection src, String msg) {
-        CompilerDirectives.transferToInterpreter();
         return new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
     }
 
@@ -193,6 +193,7 @@ public final class RError extends RuntimeException {
         RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
     }
 
+    @SlowPath
     public static String formatMessage(Message msg, Object... args) {
         return msg.hasArgs ? String.format(msg.message, args) : msg.message;
     }

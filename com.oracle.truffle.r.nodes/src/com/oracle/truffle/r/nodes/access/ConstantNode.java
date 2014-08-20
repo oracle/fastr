@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -37,6 +37,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     }
 
     public static ConstantNode create(Object value) {
+        CompilerAsserts.neverPartOfCompilation();
         if (value instanceof Integer) {
             return new ConstantIntegerScalarNode((Integer) value);
         } else if (value instanceof Double) {
@@ -68,7 +69,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         } else if (value instanceof RFormula) {
             return new ConstantFormulaNode((RFormula) value);
         }
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException(value.getClass().getName());
     }
 

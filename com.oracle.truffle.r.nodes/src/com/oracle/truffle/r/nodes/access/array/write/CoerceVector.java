@@ -77,7 +77,7 @@ public abstract class CoerceVector extends RNode {
 
     private Object castList(VirtualFrame frame, Object vector) {
         if (castList == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, false, true));
         }
         return castList.executeCast(frame, vector);

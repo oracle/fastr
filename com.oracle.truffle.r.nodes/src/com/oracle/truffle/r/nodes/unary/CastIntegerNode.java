@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
@@ -416,8 +417,8 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Fallback
+    @SlowPath
     public int doOther(Object operand) {
-        CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());
     }
 

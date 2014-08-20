@@ -609,7 +609,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     private int getPositionInRecursion(VirtualFrame frame, RList vector, int position, int recLevel, boolean lastPos) {
         if (RRuntime.isNA(position)) {
-            CompilerDirectives.transferToInterpreter();
             if (lastPos && recLevel > 0) {
                 throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
             } else if (recLevel == 0) {
@@ -620,7 +619,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else if (!lastPos && position > vector.getLength()) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, recLevel + 1);
         } else if (position < 0) {
-            CompilerDirectives.transferToInterpreter();
             return AccessArrayNode.getPositionFromNegative(frame, vector, position, getEncapsulatingSourceSection());
         } else if (position == 0) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1075,7 +1073,6 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     return true;
                 }
             } else {
-                CompilerDirectives.transferToInterpreter();
                 if (!isSubset) {
                     if (isList) {
                         throw RError.error(frame, sourceSection, RError.Message.SUBSCRIPT_BOUNDS_SUB);

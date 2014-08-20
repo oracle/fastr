@@ -35,7 +35,6 @@ public abstract class FrameSlotNode extends Node {
     public abstract boolean hasValue(VirtualFrame virtualFrame, Frame frame);
 
     public FrameSlot executeFrameSlot(@SuppressWarnings("unused") VirtualFrame frame) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 

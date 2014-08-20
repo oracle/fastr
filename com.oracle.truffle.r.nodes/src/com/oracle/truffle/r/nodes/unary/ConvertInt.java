@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 
 //@PolymorphicLimit(1)
@@ -54,8 +54,8 @@ public abstract class ConvertInt extends UnaryNode {
     }
 
     @Fallback
+    @SlowPath
     public int doOther(Object operand) {
-        CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());
     }
 }

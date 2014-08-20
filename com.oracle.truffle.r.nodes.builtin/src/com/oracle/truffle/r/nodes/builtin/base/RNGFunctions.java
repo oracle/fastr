@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -72,7 +71,6 @@ public class RNGFunctions {
         @Specialization
         protected RNull setSeed(VirtualFrame frame, byte seed, RNull kind, RNull normKind) {
             controlVisibility();
-            CompilerDirectives.transferToInterpreter();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SEED_NOT_VALID_INT);
         }
 

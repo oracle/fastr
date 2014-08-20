@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -223,8 +222,7 @@ public abstract class Sprintf extends RBuiltinNode {
         } else if (o instanceof Integer) {
             return ((Integer) o).intValue();
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw new IllegalStateException("unexpected type");
+            throw fail("unexpected type");
         }
     }
 
@@ -354,8 +352,7 @@ public abstract class Sprintf extends RBuiltinNode {
                             widthAndPrecision(cs, j, fi);
                             j = fi.nextChar;
                         } else {
-                            CompilerDirectives.transferToInterpreter();
-                            throw new IllegalStateException("problem with format expression");
+                            throw fail("problem with format expression");
                         }
                 }
                 c = cs[j];
@@ -440,6 +437,11 @@ public abstract class Sprintf extends RBuiltinNode {
 
     protected boolean fmtLengthOne(RAbstractStringVector fmt) {
         return fmt.getLength() == 1;
+    }
+
+    @SlowPath
+    private static IllegalStateException fail(String message) {
+        throw new IllegalStateException(message);
     }
 
 }
