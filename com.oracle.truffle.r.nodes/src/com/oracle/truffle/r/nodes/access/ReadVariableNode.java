@@ -31,7 +31,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode.AbsentFrameSlotNode;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeFactory;
@@ -336,22 +335,14 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Child private ReadVariableNode readNode;
         @Child private UnresolvedReadVariableNode unresolvedNode;
-        @Children private final AbsentFrameSlotNode[] absentFrameSlotNodes;
+        private final Assumption[] absentFrameSlotAssumptions;
         private final Symbol symbol;
 
         ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, Symbol symbol) {
             this.readNode = readNode;
             this.unresolvedNode = unresolvedNode;
-            this.absentFrameSlotNodes = wrapAssumptions(assumptions);
+            this.absentFrameSlotAssumptions = assumptions.toArray(new Assumption[assumptions.size()]);
             this.symbol = symbol;
-        }
-
-        private AbsentFrameSlotNode[] wrapAssumptions(List<Assumption> assumptions) {
-            AbsentFrameSlotNode[] nodes = new AbsentFrameSlotNode[assumptions.size()];
-            for (int i = 0; i < assumptions.size(); i++) {
-                nodes[i] = new AbsentFrameSlotNode(assumptions.get(i), symbol);
-            }
-            return nodes;
         }
 
         @ExplodeLoop
@@ -359,8 +350,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             try {
-                for (int i = 0; i < absentFrameSlotNodes.length; i++) {
-                    absentFrameSlotNodes[i].getAssumption().check();
+                for (Assumption assumption : absentFrameSlotAssumptions) {
+                    assumption.check();
                 }
             } catch (InvalidAssumptionException e) {
                 return replace(unresolvedNode).execute(frame);
