@@ -14,6 +14,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -26,6 +27,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class CumMin extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
+
+    @Child private CastDoubleNode castDouble;
 
     @Specialization
     protected double cummin(double arg) {
@@ -50,13 +53,13 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected double cummax(String arg) {
+    protected double cummin(String arg) {
         controlVisibility();
-        return CastDoubleNodeFactory.create(null, false, false, false).doString(arg);
+        return na.convertStringToDouble(arg);
     }
 
     @Specialization
-    protected RIntVector cumMin(RIntSequence v) {
+    protected RIntVector cummin(RIntSequence v) {
         controlVisibility();
         int[] cminV = new int[v.getLength()];
 
@@ -145,7 +148,11 @@ public abstract class CumMin extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cummin(VirtualFrame frame, RStringVector v) {
         controlVisibility();
-        return cummin((RDoubleVector) CastDoubleNodeFactory.create(null, false, false, false).executeDouble(frame, v));
+        if (castDouble == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castDouble = insert(CastDoubleNodeFactory.create(null, false, false, false));
+        }
+        return cummin((RDoubleVector) castDouble.executeDouble(frame, v));
     }
 
     @Specialization
