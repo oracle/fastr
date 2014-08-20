@@ -39,10 +39,10 @@ import com.oracle.truffle.r.runtime.data.*;
 public class BrowserFunctions {
 
     private static final class HelperState {
-        String text;
-        Object condition;
+        private final String text;
+        private final Object condition;
 
-        HelperState(String text, Object condition) {
+        private HelperState(String text, Object condition) {
             this.text = text;
             this.condition = condition;
         }
