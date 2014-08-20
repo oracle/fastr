@@ -29,10 +29,10 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Precedence.MAX)
 public class SimpleAccessTempVariable extends AccessVariable {
 
-    Object tempSymbol;
+    private final Object tempSymbol;
 
     public SimpleAccessTempVariable(SourceSection source, Object tempSymbol) {
-        this.source = source;
+        super(source);
         this.tempSymbol = tempSymbol;
     }
 

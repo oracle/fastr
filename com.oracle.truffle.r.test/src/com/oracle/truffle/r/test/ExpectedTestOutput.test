@@ -7106,6 +7106,14 @@ NULL
 [1]  TRUE  TRUE FALSE FALSE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(NULL, "try-error") }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(new.env(), "try-error") }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{x <- 10; inherits(x, "a") ;}
 [1] FALSE
 

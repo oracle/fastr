@@ -51,7 +51,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization(guards = "tempDirL1")
-    public RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
+    protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         controlVisibility();
         return RDataFactory.createStringVector(createFile(pattern, tempDir.getDataAt(0), fileExt));
     }
@@ -62,7 +62,7 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector tempfileGeneric(VirtualFrame frame, Object pattern, Object tempDir, Object fileExt) throws RError {
+    protected RStringVector tempfileGeneric(VirtualFrame frame, Object pattern, Object tempDir, Object fileExt) throws RError {
         controlVisibility();
         RStringVector[] argVecs = new RStringVector[]{checkVector(frame, pattern, INVALID_PATTERN), checkVector(frame, tempDir, INVALID_TEMPDIR), checkVector(frame, fileExt, INVALID_FILEEXT)};
         // Now we have RStringVectors of at least length 1

@@ -55,7 +55,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
         removeFromCurrentFrame(frame, name);
         return RNull.instance;
@@ -63,7 +63,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
         for (Object o : names) {
             assert o instanceof String;
@@ -74,7 +74,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
             envir.rm(name);
@@ -86,7 +86,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
             for (Object o : names) {

@@ -59,7 +59,7 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
+    protected Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
         boolean doesInherit = inherits == RRuntime.LOGICAL_TRUE;
         ReadVariableNode lookup = null;
@@ -89,7 +89,7 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(VirtualFrame frame, RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+    protected Object get(VirtualFrame frame, RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
         String sx = x.getDataAt(0);
         REnvironment env = pos;
@@ -111,7 +111,7 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(VirtualFrame frame, RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
+    protected Object get(VirtualFrame frame, RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
         return get(frame, x, envir, RMissing.instance, mode, inherits);
     }
 

@@ -35,27 +35,27 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
 
     @Specialization
-    public RNull combine(RNull left, RNull right) {
+    protected RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @Specialization
-    public RAbstractDoubleVector combine(RNull left, RAbstractDoubleVector right) {
+    protected RAbstractDoubleVector combine(RNull left, RAbstractDoubleVector right) {
         return right;
     }
 
     @Specialization
-    public RAbstractDoubleVector combine(RAbstractDoubleVector left, RNull right) {
+    protected RAbstractDoubleVector combine(RAbstractDoubleVector left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RDoubleVector combine(double left, double right) {
+    protected RDoubleVector combine(double left, double right) {
         return RDataFactory.createDoubleVector(new double[]{left, right}, RRuntime.isComplete(left) && RRuntime.isComplete(right));
     }
 
     @Specialization
-    public RDoubleVector combine(RAbstractDoubleVector left, double right) {
+    protected RDoubleVector combine(RAbstractDoubleVector left, double right) {
         int dataLength = left.getLength();
         double[] result = new double[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -66,7 +66,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RDoubleVector combine(double left, RAbstractDoubleVector right) {
+    protected RDoubleVector combine(double left, RAbstractDoubleVector right) {
         int dataLength = right.getLength();
         double[] result = new double[dataLength + 1];
         result[0] = left;
@@ -77,7 +77,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RDoubleVector combine(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+    protected RDoubleVector combine(RAbstractDoubleVector left, RAbstractDoubleVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         double[] result = new double[leftLength + rightLength];

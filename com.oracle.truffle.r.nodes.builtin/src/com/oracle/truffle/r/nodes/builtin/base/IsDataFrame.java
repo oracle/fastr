@@ -36,17 +36,17 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class IsDataFrame extends RBuiltinNode {
 
     @Specialization
-    public byte isType(RDataFrame operand) {
+    protected byte isType(RDataFrame operand) {
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isTypeFrame(RAbstractVector operand) {
+    protected byte isTypeFrame(RAbstractVector operand) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RNull operand) {
+    protected byte isType(RNull operand) {
         return RRuntime.LOGICAL_FALSE;
     }
 }

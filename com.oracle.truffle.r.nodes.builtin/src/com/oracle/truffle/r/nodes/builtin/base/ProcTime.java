@@ -40,7 +40,7 @@ public abstract class ProcTime extends RBuiltinNode {
     private static RStringVector RNAMES;
 
     @Specialization
-    public RDoubleVector procTime() {
+    protected RDoubleVector procTime() {
         controlVisibility();
         double[] data = new double[5];
         long nowInNanos = RContext.getEngine().elapsedTimeInNanos();

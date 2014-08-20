@@ -33,7 +33,7 @@ public abstract class IsExpression extends IsTypeNode {
 
     @Override
     @Specialization
-    public byte isType(RExpression expr) {
+    protected byte isType(RExpression expr) {
         return RRuntime.LOGICAL_TRUE;
     }
 }

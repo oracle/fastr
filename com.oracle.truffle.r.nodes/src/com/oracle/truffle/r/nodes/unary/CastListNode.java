@@ -33,22 +33,22 @@ public abstract class CastListNode extends CastNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RList doNull(RNull operand) {
+    protected RList doNull(RNull operand) {
         return RDataFactory.createList();
     }
 
     @Specialization
-    public RList doDouble(double operand) {
+    protected RList doDouble(double operand) {
         return RDataFactory.createList(new Object[]{operand});
     }
 
     @Specialization
-    public RList doInt(int operand) {
+    protected RList doInt(int operand) {
         return RDataFactory.createList(new Object[]{operand});
     }
 
     @Specialization
-    public RList doAbstractVector(RAbstractVector operand) {
+    protected RList doAbstractVector(RAbstractVector operand) {
         Object[] data = new Object[operand.getLength()];
         for (int i = 0; i < data.length; ++i) {
             data[i] = operand.getDataAtAsObject(i);

@@ -86,7 +86,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrdc2")
-        public RList fortranDqrdc2(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrdc2(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
                 RDoubleVector xVec = (RDoubleVector) args[0];
@@ -127,7 +127,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrcf")
-        public RList fortranDqrcf(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrcf(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
                 RDoubleVector xVec = (RDoubleVector) args[0];
@@ -185,7 +185,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RList c(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList c(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
@@ -318,7 +318,7 @@ public class ForeignFunctions {
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
         @Specialization(guards = "fft")
-        public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
+        protected RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
             controlVisibility();
             RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
             double[] z = zVec.isTemporary() ? zVec.getDataWithoutCopying() : zVec.getDataCopy();
@@ -398,7 +398,7 @@ public class ForeignFunctions {
         // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
         @Specialization(guards = "methodsPackageMetaName")
-        public String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args) {
+        protected String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args) {
             controlVisibility();
             // TODO proper error checks
             String prefixString = (String) args[0];

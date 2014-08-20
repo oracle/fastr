@@ -39,17 +39,17 @@ public abstract class ConvertInt extends UnaryNode {
     public abstract int executeInteger(VirtualFrame frame, Object operand);
 
     @Specialization
-    public int doInt(int operand) {
+    protected int doInt(int operand) {
         return operand;
     }
 
     @Specialization
-    public int doDouble(double operand) {
+    protected int doDouble(double operand) {
         return (int) operand;
     }
 
     @Specialization
-    public int doLogical(byte operand) {
+    protected int doLogical(byte operand) {
         return RRuntime.logical2int(operand);
     }
 
@@ -58,5 +58,4 @@ public abstract class ConvertInt extends UnaryNode {
         CompilerDirectives.transferToInterpreter();
         throw new ConversionFailedException(operand.getClass().getName());
     }
-
 }

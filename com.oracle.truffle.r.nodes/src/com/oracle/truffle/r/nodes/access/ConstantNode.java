@@ -99,7 +99,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             controlVisibility();
             return doubleValue;
         }
-
     }
 
     private static final class ConstantLogicalScalarNode extends ConstantNode {
@@ -143,7 +142,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             controlVisibility();
             return doubleValue;
         }
-
     }
 
     private static final class ConstantIntegerScalarNode extends ConstantNode {
@@ -175,7 +173,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             controlVisibility();
             return doubleValue;
         }
-
     }
 
     private static final class ConstantStringScalarNode extends ConstantNode {
@@ -197,7 +194,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             controlVisibility();
             return objectValue;
         }
-
     }
 
     private static final class ConstantComplexNode extends ConstantNode {
@@ -219,7 +215,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             controlVisibility();
             return complexValue;
         }
-
     }
 
     private static final class ConstantNullNode extends ConstantNode {

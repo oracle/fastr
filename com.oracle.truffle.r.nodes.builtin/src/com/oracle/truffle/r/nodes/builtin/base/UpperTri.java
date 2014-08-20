@@ -42,7 +42,7 @@ public abstract class UpperTri extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector upperTri(RAbstractVector vector, byte diag) {
+    protected RLogicalVector upperTri(RAbstractVector vector, byte diag) {
         controlVisibility();
         int[] dim = preprocessDim(vector);
         int size = Math.min(dim[0], dim[1]);

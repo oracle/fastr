@@ -40,7 +40,7 @@ public abstract class Prod extends RBuiltinNode {
     @Child protected BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
 
     @Specialization
-    public double prod(RAbstractDoubleVector x) {
+    protected double prod(RAbstractDoubleVector x) {
         controlVisibility();
         double product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -50,7 +50,7 @@ public abstract class Prod extends RBuiltinNode {
     }
 
     @Specialization
-    public double prod(RAbstractIntVector x) {
+    protected double prod(RAbstractIntVector x) {
         controlVisibility();
         double product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -60,7 +60,7 @@ public abstract class Prod extends RBuiltinNode {
     }
 
     @Specialization
-    public double prod(RAbstractLogicalVector x) {
+    protected double prod(RAbstractLogicalVector x) {
         controlVisibility();
         double product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -70,7 +70,7 @@ public abstract class Prod extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplex prod(RAbstractComplexVector x) {
+    protected RComplex prod(RAbstractComplexVector x) {
         controlVisibility();
         RComplex product = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {

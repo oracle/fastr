@@ -43,7 +43,7 @@ public class SysFunctions {
     public abstract static class SysGetpid extends RBuiltinNode {
 
         @Specialization
-        public Object sysGetPid() {
+        protected Object sysGetPid() {
             controlVisibility();
             int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
             return RDataFactory.createIntVectorFromScalar(pid);
@@ -59,7 +59,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysGetEnv(RAbstractStringVector x, String unset) {
+        protected Object sysGetEnv(RAbstractStringVector x, String unset) {
             controlVisibility();
             Map<String, String> envMap = REnvVars.getMap();
             int len = x.getLength();
@@ -91,7 +91,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysGetEnvGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
+        protected Object sysGetEnvGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
         }
@@ -108,12 +108,12 @@ public class SysFunctions {
         }
 
         @Specialization
-        public RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector argVec) {
+        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector argVec) {
             return doSysSetEnv(frame, new Object[]{argVec.getDataAt(0)});
         }
 
         @Specialization
-        public RLogicalVector doSysSetEnv(VirtualFrame frame, Object[] args) {
+        protected RLogicalVector doSysSetEnv(VirtualFrame frame, Object[] args) {
             controlVisibility();
             String[] argNames = getSuppliedArgsNames();
             validateArgNames(frame, argNames);
@@ -144,7 +144,7 @@ public class SysFunctions {
     public abstract static class SysUnSetEnv extends RInvisibleBuiltinNode {
 
         @Specialization
-        public RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
+        protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
             byte[] data = new byte[argVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 data[i] = RRuntime.asLogical(REnvVars.unset(argVec.getDataAt(i)));
@@ -157,14 +157,14 @@ public class SysFunctions {
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
         @Specialization
-        public Object sysSleep(double seconds) {
+        protected Object sysSleep(double seconds) {
             controlVisibility();
             sleep(convertToMillis(seconds));
             return RNull.instance;
         }
 
         @Specialization
-        public Object sysSleep(VirtualFrame frame, String secondsString) {
+        protected Object sysSleep(VirtualFrame frame, String secondsString) {
             controlVisibility();
             long millis = convertToMillis(checkValidString(frame, secondsString));
             sleep(millis);
@@ -172,7 +172,7 @@ public class SysFunctions {
         }
 
         @Specialization(guards = "lengthOne")
-        public Object sysSleep(VirtualFrame frame, RStringVector secondsVector) {
+        protected Object sysSleep(VirtualFrame frame, RStringVector secondsVector) {
             controlVisibility();
             long millis = convertToMillis(checkValidString(frame, secondsVector.getDataAt(0)));
             sleep(millis);
@@ -184,7 +184,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysSleep(VirtualFrame frame, @SuppressWarnings("unused") Object arg) throws RError {
+        protected Object sysSleep(VirtualFrame frame, @SuppressWarnings("unused") Object arg) throws RError {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
         }
@@ -217,13 +217,13 @@ public class SysFunctions {
     public abstract static class SysReadlink extends RBuiltinNode {
 
         @Specialization
-        public Object sysReadLink(String path) {
+        protected Object sysReadLink(String path) {
             controlVisibility();
             return RDataFactory.createStringVector(doSysReadLink(path));
         }
 
         @Specialization
-        public Object sysReadlink(RStringVector vector) {
+        protected Object sysReadlink(RStringVector vector) {
             controlVisibility();
             String[] paths = new String[vector.getLength()];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
@@ -255,7 +255,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysReadlinkGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
+        protected Object sysReadlinkGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
         }

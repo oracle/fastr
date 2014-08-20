@@ -53,7 +53,7 @@ public abstract class Vector extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector vector(VirtualFrame frame, String mode, int length) {
+    protected RAbstractVector vector(VirtualFrame frame, String mode, int length) {
         controlVisibility();
         switch (mode) {
             case "character":

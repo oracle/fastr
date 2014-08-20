@@ -34,37 +34,37 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
 
     @Specialization
-    public RNull combine(RNull left, RNull right) {
+    protected RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @Specialization
-    public RComplex combine(RNull left, RComplex right) {
+    protected RComplex combine(RNull left, RComplex right) {
         return right;
     }
 
     @Specialization
-    public RComplex combine(RComplex left, RNull right) {
+    protected RComplex combine(RComplex left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RComplexVector combine(RComplexVector left, RNull right) {
+    protected RComplexVector combine(RComplexVector left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RComplexVector combine(RNull left, RComplexVector right) {
+    protected RComplexVector combine(RNull left, RComplexVector right) {
         return right;
     }
 
     @Specialization
-    public RComplexVector combine(RComplex left, RComplex right) {
+    protected RComplexVector combine(RComplex left, RComplex right) {
         return RDataFactory.createComplexVector(new double[]{left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart()}, !left.isNA() && !right.isNA());
     }
 
     @Specialization
-    public RComplexVector combine(RComplexVector left, RComplex right) {
+    protected RComplexVector combine(RComplexVector left, RComplex right) {
         int dataLength = left.getLength();
         double[] result = new double[(dataLength + 1) << 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -79,7 +79,7 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RComplexVector combine(RComplex left, RComplexVector right) {
+    protected RComplexVector combine(RComplex left, RComplexVector right) {
         int dataLength = right.getLength();
         double[] result = new double[(1 + dataLength) << 1];
         result[0] = left.getRealPart();
@@ -94,7 +94,7 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RComplexVector combine(RComplexVector left, RComplexVector right) {
+    protected RComplexVector combine(RComplexVector left, RComplexVector right) {
         return (RComplexVector) genericCombine(left, right);
     }
 }

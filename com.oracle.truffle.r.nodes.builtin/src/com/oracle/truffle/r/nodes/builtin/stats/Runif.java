@@ -45,7 +45,7 @@ public abstract class Runif extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector runif(int n) {
+    protected RDoubleVector runif(int n) {
         controlVisibility();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
@@ -55,7 +55,7 @@ public abstract class Runif extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector runif(double d) {
+    protected RDoubleVector runif(double d) {
         controlVisibility();
         return runif((int) d);
     }

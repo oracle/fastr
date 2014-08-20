@@ -610,7 +610,4 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         return zip().uncompress(dest, destlen, source, source.length);
     }
-
-
-
 }

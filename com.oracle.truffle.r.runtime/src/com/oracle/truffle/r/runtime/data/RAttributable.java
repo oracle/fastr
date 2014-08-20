@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 public interface RAttributable {
     /**
      * If the attribute set is not initialized, then initialize it.
-     * 
+     *
      * @return the pre-existing or new value
      */
     RAttributes initAttributes();
@@ -79,5 +79,4 @@ public interface RAttributable {
             attributes.remove(name);
         }
     }
-
 }

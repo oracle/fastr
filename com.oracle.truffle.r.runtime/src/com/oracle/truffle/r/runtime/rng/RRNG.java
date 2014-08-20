@@ -69,7 +69,7 @@ public class RRNG {
 
         static final Kind[] VALUES = values();
 
-        final boolean available;
+        private final boolean available;
         GeneratorPrivate generator;
 
         /**

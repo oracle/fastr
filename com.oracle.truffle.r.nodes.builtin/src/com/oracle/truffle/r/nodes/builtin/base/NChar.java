@@ -62,35 +62,35 @@ public abstract class NChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RIntVector rev(VirtualFrame frame, RNull value, String type, byte allowNA) {
+    protected RIntVector rev(VirtualFrame frame, RNull value, String type, byte allowNA) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public int rev(VirtualFrame frame, int value, String type, byte allowNA) {
+    protected int rev(VirtualFrame frame, int value, String type, byte allowNA) {
         controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public int rev(VirtualFrame frame, double value, String type, byte allowNA) {
+    protected int rev(VirtualFrame frame, double value, String type, byte allowNA) {
         controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public int rev(VirtualFrame frame, byte value, String type, byte allowNA) {
+    protected int rev(VirtualFrame frame, byte value, String type, byte allowNA) {
         controlVisibility();
         return coerceContent(frame, value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public RIntVector rev(RStringVector vector, String type, byte allowNA) {
+    protected RIntVector rev(RStringVector vector, String type, byte allowNA) {
         controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];
@@ -102,7 +102,7 @@ public abstract class NChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RIntVector rev(VirtualFrame frame, RAbstractVector vector, String type, byte allowNA) {
+    protected RIntVector rev(VirtualFrame frame, RAbstractVector vector, String type, byte allowNA) {
         controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];

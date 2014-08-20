@@ -42,23 +42,23 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
         REnvironment curEnv = curEnv(frame);
         return doDelayedAssign(frame, nameVec, value, curEnv, curEnv);
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
         return doDelayedAssign(frame, nameVec, value, curEnv(frame), assignEnv);
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
         return doDelayedAssign(frame, nameVec, value, evalEnv, curEnv(frame));
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, REnvironment assignEnv) {
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, REnvironment assignEnv) {
         controlVisibility();
         String name = nameVec.getDataAt(0);
         try {

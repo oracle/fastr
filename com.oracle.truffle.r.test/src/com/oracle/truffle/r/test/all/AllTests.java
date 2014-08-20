@@ -7924,6 +7924,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInherits_836249d31734a1237010e42b01dd40d1() {
+        assertEval("{ inherits(NULL, \"try-error\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_c3babb7ceea8dc93b0085895b3a09d12() {
+        assertEval("{ inherits(new.env(), \"try-error\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInheritsIgnore_d0dc6389c924878311546ba61d753a22() {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
     }

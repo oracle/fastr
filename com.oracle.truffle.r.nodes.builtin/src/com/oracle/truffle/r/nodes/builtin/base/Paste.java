@@ -70,12 +70,12 @@ public abstract class Paste extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector pasteList(VirtualFrame frame, RList values, String sep, RNull collapse) {
+    protected RStringVector pasteList(VirtualFrame frame, RList values, String sep, RNull collapse) {
         return pasteList(frame, values, sep, (Object) collapse);
     }
 
     @Specialization
-    public RStringVector pasteList(VirtualFrame frame, RList values, String sep, Object collapse) {
+    protected RStringVector pasteList(VirtualFrame frame, RList values, String sep, Object collapse) {
         controlVisibility();
         if (isEmptyOrNull(values)) {
             return RDataFactory.createEmptyStringVector();

@@ -49,7 +49,7 @@ public abstract class PMatch extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector doPMatch(RAbstractStringVector x, RAbstractStringVector table, int nomatch, byte duplicatesOk) {
+    protected RIntVector doPMatch(RAbstractStringVector x, RAbstractStringVector table, int nomatch, byte duplicatesOk) {
         int xl = x.getLength();
         int tl = table.getLength();
         boolean dupsOk = RRuntime.fromLogical(duplicatesOk);

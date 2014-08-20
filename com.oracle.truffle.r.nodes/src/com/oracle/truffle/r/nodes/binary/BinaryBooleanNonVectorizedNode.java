@@ -66,175 +66,175 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
     }
 
     @ShortCircuit("arguments[1]")
-    public boolean needsRightOperand(Object leftValue) {
+    protected boolean needsRightOperand(Object leftValue) {
         return logic.requiresRightOperand(RTypesGen.RTYPES.asByte(leftValue));
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(byte left, boolean needsRightOperand, int right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, int right) {
         return logic.op(RRuntime.logical2int(left), right);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, int right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, int right) {
         return left;
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(byte left, boolean needsRightOperand, double right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, double right) {
         return logic.op(RRuntime.logical2double(left), right);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, double right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, double right) {
         return left;
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(byte left, boolean needsRightOperand, byte right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, byte right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, byte right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, byte right) {
         return left;
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(byte left, boolean needsRightOperand, String right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, String right) {
         return logic.op(RRuntime.logical2int(left), right);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, String right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, String right) {
         return left;
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(byte left, boolean needsRightOperand, RComplex right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, RComplex right) {
         return logic.op(RRuntime.logical2complex(left), right);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RComplex right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RComplex right) {
         return left;
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(Object left, boolean needsRightOperand, RRaw right) {
+    protected byte doLogical(Object left, boolean needsRightOperand, RRaw right) {
         return logic.op(left, right);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RRaw right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RRaw right) {
         return left;
     }
 
     @Specialization(guards = "needsRightOperand")
-    public byte doLogical(Object left, boolean needsRightOperand, RNull right) {
+    protected byte doLogical(Object left, boolean needsRightOperand, RNull right) {
         return logic.op(left, right);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RNull right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RNull right) {
         return left;
     }
 
     @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
-    public byte doLogical(byte left, boolean needsRightOperand, RAbstractIntVector right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return logic.op(RRuntime.logical2int(left), right.getDataAt(0));
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractIntVector right) {
+    protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.INT_NA);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractIntVector right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractIntVector right) {
         return left;
     }
 
     @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
-    public byte doLogical(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return logic.op(RRuntime.logical2double(left), right.getDataAt(0));
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
+    protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return logic.op(RRuntime.logical2double(left), RRuntime.DOUBLE_NA);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractDoubleVector right) {
         return left;
     }
 
     @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
-    public byte doLogical(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.logical2int(right.getDataAt(0)));
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
+    protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.INT_NA);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractLogicalVector right) {
         return left;
     }
 
     @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
-    public byte doLogical(byte left, boolean needsRightOperand, RAbstractStringVector right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return logic.op(RRuntime.logical2int(left), right.getDataAt(0));
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractStringVector right) {
+    protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return logic.op(RRuntime.logical2int(left), RRuntime.STRING_NA);
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractStringVector right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractStringVector right) {
         return left;
     }
 
     @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
-    public byte doLogical(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
+    protected byte doLogical(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return logic.op(RRuntime.logical2complex(left), right.getDataAt(0));
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    public byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
+    protected byte doLogicalEmpty(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return logic.op(RRuntime.logical2complex(left), RRuntime.createComplexNA());
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractComplexVector right) {
         return left;
     }
 
     @Specialization(guards = {"needsRightOperand", "!isZeroLength"})
-    public byte doLogical(Object left, boolean needsRightOperand, RAbstractRawVector right) {
+    protected byte doLogical(Object left, boolean needsRightOperand, RAbstractRawVector right) {
         return logic.op(left, right.getDataAt(0));
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    public byte doLogicalEmpty(VirtualFrame frame, Object left, boolean needsRightOperand, RAbstractRawVector right) {
+    protected byte doLogicalEmpty(VirtualFrame frame, Object left, boolean needsRightOperand, RAbstractRawVector right) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", logic.opName());
     }
 
     @Specialization(guards = "!needsRightOperand")
-    public byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractRawVector right) {
+    protected byte doLogicalOnlyLeft(byte left, boolean needsRightOperand, RAbstractRawVector right) {
         return left;
     }
 
-    boolean isZeroLength(byte left, boolean needsRightOperand, RAbstractVector operand) {
+    protected boolean isZeroLength(byte left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
-    boolean isZeroLength(Object left, boolean needsRightOperand, RAbstractVector operand) {
+    protected boolean isZeroLength(Object left, boolean needsRightOperand, RAbstractVector operand) {
         return operand.getLength() == 0;
     }
 
@@ -251,84 +251,84 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
         public abstract String getOpName();
 
         @Specialization
-        public byte doLogical(int operand) {
+        protected byte doLogical(int operand) {
             return RRuntime.int2logical(operand);
         }
 
         @Specialization
-        public byte doLogical(double operand) {
+        protected byte doLogical(double operand) {
             return RRuntime.double2logical(operand);
         }
 
         @Specialization
-        public byte doLogical(RComplex operand) {
+        protected byte doLogical(RComplex operand) {
             return RRuntime.complex2logical(operand);
         }
 
         @Specialization
-        public byte doLogical(byte operand) {
+        protected byte doLogical(byte operand) {
             return operand;
         }
 
         @Specialization
-        public byte doLogical(VirtualFrame frame, String operand) {
+        protected byte doLogical(VirtualFrame frame, String operand) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
-        public byte doLogical(VirtualFrame frame, RRaw operand) {
+        protected byte doLogical(VirtualFrame frame, RRaw operand) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
-        public byte doLogical(VirtualFrame frame, RNull operand) {
+        protected byte doLogical(VirtualFrame frame, RNull operand) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization(guards = {"isZeroLength", "!isStringVector", "!isRawVector"})
-        public byte doLogical(RAbstractVector operand) {
+        protected byte doLogical(RAbstractVector operand) {
             return RRuntime.LOGICAL_NA;
         }
 
         @Specialization(guards = "!isZeroLength")
-        public byte doLogical(RAbstractDoubleVector operand) {
+        protected byte doLogical(RAbstractDoubleVector operand) {
             return RRuntime.double2logical(operand.getDataAt(0));
         }
 
         @Specialization(guards = "!isZeroLength")
-        public byte doLogical(RAbstractComplexVector operand) {
+        protected byte doLogical(RAbstractComplexVector operand) {
             return RRuntime.complex2logical(operand.getDataAt(0));
         }
 
         @Specialization(guards = "!isZeroLength")
-        public byte doLogical(RAbstractLogicalVector operand) {
+        protected byte doLogical(RAbstractLogicalVector operand) {
             return operand.getDataAt(0);
         }
 
         @Specialization
-        public byte doLogical(VirtualFrame frame, RAbstractStringVector operand) {
+        protected byte doLogical(VirtualFrame frame, RAbstractStringVector operand) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
-        public byte doLogical(VirtualFrame frame, RAbstractRawVector operand) {
+        protected byte doLogical(VirtualFrame frame, RAbstractRawVector operand) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization(guards = "!isZeroLength")
-        public byte doLogical(RAbstractIntVector operand) {
+        protected byte doLogical(RAbstractIntVector operand) {
             return RRuntime.int2logical(operand.getDataAt(0));
         }
 
-        boolean isZeroLength(RAbstractVector operand) {
+        protected boolean isZeroLength(RAbstractVector operand) {
             return operand.getLength() == 0;
         }
 
-        boolean isStringVector(RAbstractVector vector) {
+        protected boolean isStringVector(RAbstractVector vector) {
             return vector.getElementClass() == RString.class;
         }
 
-        boolean isRawVector(RAbstractVector vector) {
+        protected boolean isRawVector(RAbstractVector vector) {
             return vector.getElementClass() == RRaw.class;
         }
     }

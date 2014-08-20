@@ -16,16 +16,17 @@ import com.oracle.truffle.api.source.*;
 
 public abstract class Call extends ASTNode {
 
-    final List<ArgNode> args;
+    private final List<ArgNode> arguments;
 
-    public Call(List<ArgNode> alist) {
-        args = alist;
+    protected Call(SourceSection source, List<ArgNode> arguments) {
+        super(source);
+        this.arguments = arguments;
     }
 
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {
         List<R> list = new ArrayList<>();
-        for (ArgNode e : args) {
+        for (ArgNode e : arguments) {
             ASTNode n = e.getValue();
             if (n != null) {
                 list.add(n.accept(v));
@@ -34,23 +35,23 @@ public abstract class Call extends ASTNode {
         return list;
     }
 
-    public List<ArgNode> getArgs() {
-        return args;
+    public List<ArgNode> getArguments() {
+        return arguments;
     }
 
-    public static ASTNode create(SourceSection src, ASTNode call, List<ArgNode> args) {
+    public static ASTNode create(SourceSection source, ASTNode call, List<ArgNode> arguments) {
         if (call instanceof SimpleAccessVariable) {
             SimpleAccessVariable ccall = (SimpleAccessVariable) call;
-            return create(src, ccall.getSymbol(), args);
+            return create(source, ccall.getVariable(), arguments);
         } else if (call instanceof Constant) {
             Constant c = (Constant) call;
             assert c.getType() == Constant.ConstantType.STRING;
             assert c.getValues().length == 1;
-            return create(src, Symbol.getSymbol(c.getValues()[0]), args);
+            return create(source, Symbol.getSymbol(c.getValues()[0]), arguments);
         } else if (call instanceof FunctionCall) {
-            return new FunctionCall(src, (FunctionCall) call, args);
+            return new FunctionCall(source, (FunctionCall) call, arguments);
         } else {
-            return new FunctionCall(src, call, args, false);
+            return new FunctionCall(source, call, arguments, false);
         }
     }
 

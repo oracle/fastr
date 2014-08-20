@@ -42,7 +42,7 @@ public abstract class Quit extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object doQuit(final String saveArg, int status, byte runLast) {
+    protected Object doQuit(final String saveArg, int status, byte runLast) {
         controlVisibility();
         String save = saveArg;
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();

@@ -41,7 +41,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         this.data = data;
     }
 
-    RComplexVector(double[] data, boolean complete, int[] dims) {
+    private RComplexVector(double[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
     }
 

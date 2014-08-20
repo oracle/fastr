@@ -22,11 +22,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
-    protected Object[] args;
-    protected RNode[] argNodes;
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, String[] suppliedArgsNames) {
-        return new UninitializedDispatchedCallNode(genericName, dispatchType, suppliedArgsNames);
+        return new UninitializedDispatchedCallNode(genericName, dispatchType, null, suppliedArgsNames);
     }
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType, final Object[] args, String[] suppliedArgsNames) {
@@ -48,30 +46,28 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, RStringVector type);
 
-    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args);
+    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
 
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
         protected final int depth;
         protected final String genericName;
         protected final String dispatchType;
         protected final String[] suppliedArgsNames;
+        protected final Object[] args;
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, String[] suppliedArgsNames) {
-            this.genericName = genericName;
-            this.depth = 0;
-            this.dispatchType = dispatchType;
-            this.suppliedArgsNames = suppliedArgsNames;
-        }
-
-        private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
+        private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
             this.genericName = copy.genericName;
             this.dispatchType = copy.dispatchType;
             this.depth = depth;
             this.suppliedArgsNames = copy.suppliedArgsNames;
+            this.args = null;
         }
 
-        public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, final Object[] args, String[] suppliedArgsNames) {
-            this(genericName, dispatchType, suppliedArgsNames);
+        public UninitializedDispatchedCallNode(String genericName, String dispatchType, Object[] args, String[] suppliedArgsNames) {
+            this.depth = 0;
+            this.genericName = genericName;
+            this.dispatchType = dispatchType;
+            this.suppliedArgsNames = suppliedArgsNames;
             this.args = args;
         }
 
@@ -123,7 +119,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
             return dcn.executeInternal(frame, type, args);
         }
     }
@@ -168,7 +164,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector aType, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
             if (isEqualType(this.type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }
@@ -197,7 +193,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
             return Utils.nyi();
         }
 

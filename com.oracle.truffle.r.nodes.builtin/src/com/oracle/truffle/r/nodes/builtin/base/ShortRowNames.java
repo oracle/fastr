@@ -43,27 +43,27 @@ public abstract class ShortRowNames extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull getNames(RNull operand, RAbstractIntVector type) {
+    protected RNull getNames(RNull operand, RAbstractIntVector type) {
         controlVisibility();
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "invalidType")
-    public RNull getNamesInvalidType(VirtualFrame frame, RAbstractContainer operand, RAbstractIntVector type) {
+    protected RNull getNamesInvalidType(VirtualFrame frame, RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!invalidType", "!returnScalar"})
-    public Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
+    protected Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         return operand.getRowNames();
     }
 
     @Specialization(guards = {"!invalidType", "returnScalar"})
-    public int getNames(RAbstractContainer operand, RAbstractIntVector type) {
+    protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         int t = type.getDataAt(0);
         Object a = operand.getRowNames();

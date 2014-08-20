@@ -44,7 +44,7 @@ public class TryFunctions {
         }
 
         @Specialization
-        public Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
+        protected Object doTry(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") byte silent) {
             controlVisibility();
             return expr.evaluate(frame);
         }
@@ -60,13 +60,13 @@ public class TryFunctions {
         }
 
         @Specialization
-        public Object doTryCatch(VirtualFrame frame, RPromise expr, RPromise arg) {
+        protected Object doTryCatch(VirtualFrame frame, RPromise expr, RPromise arg) {
             return doTryCatch(frame, expr, new Object[]{arg});
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
+        protected Object doTryCatch(VirtualFrame frame, RPromise expr, Object[] args) {
             controlVisibility();
             return expr.evaluate(frame);
         }

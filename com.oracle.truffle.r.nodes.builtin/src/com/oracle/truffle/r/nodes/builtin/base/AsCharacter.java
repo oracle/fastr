@@ -74,61 +74,61 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization
-    public String doInt(VirtualFrame frame, int value) {
+    protected String doInt(VirtualFrame frame, int value) {
         controlVisibility();
         return castString(frame, value);
     }
 
     @Specialization
-    public String doDouble(VirtualFrame frame, double value) {
+    protected String doDouble(VirtualFrame frame, double value) {
         controlVisibility();
         return castString(frame, value);
     }
 
     @Specialization
-    public String doLogical(VirtualFrame frame, byte value) {
+    protected String doLogical(VirtualFrame frame, byte value) {
         controlVisibility();
         return castString(frame, value);
     }
 
     @Specialization
-    public String doString(VirtualFrame frame, String value) {
+    protected String doString(VirtualFrame frame, String value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public String doSymbol(VirtualFrame frame, RSymbol value) {
+    protected String doSymbol(VirtualFrame frame, RSymbol value) {
         controlVisibility();
         return value.getName();
     }
 
     @Specialization
-    public RStringVector doNull(RNull value) {
+    protected RStringVector doNull(RNull value) {
         controlVisibility();
         return RDataFactory.createStringVector(0);
     }
 
     @Specialization(guards = "!isObject")
-    public RStringVector doStringVector(VirtualFrame frame, RStringVector vector) {
+    protected RStringVector doStringVector(VirtualFrame frame, RStringVector vector) {
         controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
-    public RStringVector doList(VirtualFrame frame, RList list) {
+    protected RStringVector doList(VirtualFrame frame, RList list) {
         controlVisibility();
         throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
     }
 
     @Specialization(guards = "!isObject")
-    public RStringVector doVector(VirtualFrame frame, RAbstractVector vector) {
+    protected RStringVector doVector(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         return castStringVector(frame, vector);
     }
 
     @Specialization(guards = "isObject")
-    public Object doObject(VirtualFrame frame, RAbstractVector vector) {
+    protected Object doObject(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

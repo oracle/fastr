@@ -38,7 +38,7 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
+    protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
         controlVisibility();
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
@@ -55,13 +55,13 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RMissing args) {
+    protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, null, null, new Object[0]);
     }
 
     @Specialization
-    public Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RMissing args) {
+    protected Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, generic, obj, new Object[0]);
     }

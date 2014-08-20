@@ -43,40 +43,40 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     @Child protected CastDoubleNode castDouble;
 
-    public static boolean isMatrix(RAbstractVector vector) {
+    protected static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
 
     // FIXME The following two are workarounds for a Truffle-DSL bug.
 
-    public static boolean isMatrix(RAbstractIntVector vector) {
+    protected static boolean isMatrix(RAbstractIntVector vector) {
         return isMatrix((RAbstractVector) vector);
     }
 
-    public static boolean isMatrix(RAbstractDoubleVector vector) {
+    protected static boolean isMatrix(RAbstractDoubleVector vector) {
         return isMatrix((RAbstractVector) vector);
     }
 
-    public static boolean correctReplacementLength(RAbstractVector matrix, RAbstractVector replacement) {
+    protected static boolean correctReplacementLength(RAbstractVector matrix, RAbstractVector replacement) {
         return replacement.getLength() == 1 || Math.min(matrix.getDimensions()[0], matrix.getDimensions()[1]) == replacement.getLength();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isMatrix")
-    public RIntVector updateDiagNoMatrix(VirtualFrame frame, RAbstractVector vector, RAbstractVector valueVector) {
+    protected RIntVector updateDiagNoMatrix(VirtualFrame frame, RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.ONLY_MATRIX_DIAGONALS);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isMatrix", "!correctReplacementLength"})
-    public RIntVector updateDiagReplacementDiagonalLength(VirtualFrame frame, RAbstractVector vector, RAbstractVector valueVector) {
+    protected RIntVector updateDiagReplacementDiagonalLength(VirtualFrame frame, RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
         throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_DIAGONAL_LENGTH);
     }
 
     @Specialization(guards = {"isMatrix", "correctReplacementLength"})
-    public RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
+    protected RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
         controlVisibility();
         RIntVector resultVector = vector;
         if (vector.isShared()) {
@@ -95,7 +95,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix", "correctReplacementLength"})
-    public RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
+    protected RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         RDoubleVector resultVector = vector;
         if (vector.isShared()) {
@@ -114,7 +114,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix", "correctReplacementLength"})
-    public RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
+    protected RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

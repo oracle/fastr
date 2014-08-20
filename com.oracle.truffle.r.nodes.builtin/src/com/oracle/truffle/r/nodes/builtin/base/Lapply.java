@@ -35,20 +35,20 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     @Specialization
-    public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
+    protected Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
         Object[] combinedArgs = new Object[optionalArgs.length + 1];
         System.arraycopy(optionalArgs, 0, combinedArgs, 1, optionalArgs.length);
         return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
     @Specialization(guards = "!argMissing")
-    public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
+    protected Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
         Object[] combinedArgs = new Object[]{null, optionalArg};
         return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
     @Specialization
-    public Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, @SuppressWarnings("unused") RMissing optionalArg) {
+    protected Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, @SuppressWarnings("unused") RMissing optionalArg) {
         Object[] combinedArgs = new Object[]{null};
         return lapplyHelper(frame, x, fun, combinedArgs);
     }

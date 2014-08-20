@@ -89,13 +89,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector doArrayNoDimNames(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RIntVector doArrayNoDimNames(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayInt(frame, vec, dim);
     }
 
     @Specialization
-    public RIntVector doArray(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RIntVector doArray(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RIntVector ret = doArrayInt(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());
@@ -113,13 +113,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector doArrayNoDimNames(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RDoubleVector doArrayNoDimNames(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayDouble(frame, vec, dim);
     }
 
     @Specialization
-    public RDoubleVector doArray(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RDoubleVector doArray(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RDoubleVector ret = doArrayDouble(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());
@@ -137,13 +137,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector doArrayNoDimNames(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RLogicalVector doArrayNoDimNames(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayLogical(frame, vec, dim);
     }
 
     @Specialization
-    public RLogicalVector doArray(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RLogicalVector doArray(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RLogicalVector ret = doArrayLogical(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());
@@ -161,13 +161,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector doArrayNoDimNames(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RStringVector doArrayNoDimNames(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayString(frame, vec, dim);
     }
 
     @Specialization
-    public RStringVector doArray(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RStringVector doArray(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RStringVector ret = doArrayString(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());
@@ -188,13 +188,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector doArrayNoDimNames(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RComplexVector doArrayNoDimNames(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayComplex(frame, vec, dim);
     }
 
     @Specialization
-    public RComplexVector doArray(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RComplexVector doArray(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RComplexVector ret = doArrayComplex(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());
@@ -212,13 +212,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector doArrayNoDimNames(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RRawVector doArrayNoDimNames(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayRaw(frame, vec, dim);
     }
 
     @Specialization
-    public RRawVector doArray(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RRawVector doArray(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RRawVector ret = doArrayRaw(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());
@@ -236,13 +236,13 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    public RList doArrayNoDimeNames(VirtualFrame frame, RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
+    protected RList doArrayNoDimeNames(VirtualFrame frame, RList vec, RAbstractIntVector dim, @SuppressWarnings("unused") RNull dimnames) {
         controlVisibility();
         return doArrayList(frame, vec, dim);
     }
 
     @Specialization
-    public RList doArray(VirtualFrame frame, RList vec, RAbstractIntVector dim, RList dimnames) {
+    protected RList doArray(VirtualFrame frame, RList vec, RAbstractIntVector dim, RList dimnames) {
         controlVisibility();
         RList ret = doArrayList(frame, vec, dim);
         ret.setDimNames(frame, dimnames, getEncapsulatingSourceSection());

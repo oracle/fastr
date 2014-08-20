@@ -16,12 +16,11 @@ import com.oracle.truffle.api.source.*;
 
 public abstract class BinaryOperation extends Operation {
 
-    final ASTNode rhs;
+    private final ASTNode rhs;
 
-    public BinaryOperation(SourceSection src, ASTNode left, ASTNode right) {
-        super(left);
-        this.source = src;
-        this.rhs = updateParent(right);
+    protected BinaryOperation(SourceSection source, ASTNode left, ASTNode right) {
+        super(source, left);
+        this.rhs = right;
     }
 
     public ASTNode getRHS() {

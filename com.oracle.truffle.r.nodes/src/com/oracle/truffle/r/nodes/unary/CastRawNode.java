@@ -41,12 +41,12 @@ public abstract class CastRawNode extends CastNode {
     public abstract Object executeRaw(VirtualFrame frame, Object o);
 
     @Specialization
-    public RNull doNull(@SuppressWarnings("unused") RNull operand) {
+    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
     }
 
     @Specialization
-    public RRaw doInt(int operand) {
+    protected RRaw doInt(int operand) {
         int intResult = RRuntime.int2rawIntValue(operand);
         if (intResult != operand) {
             RError.warning(RError.Message.OUT_OF_RANGE);
@@ -55,7 +55,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization
-    public RRaw doDouble(double operand) {
+    protected RRaw doDouble(double operand) {
         int intResult = RRuntime.double2rawIntValue(operand);
         if (intResult != (int) operand) {
             RError.warning(RError.Message.OUT_OF_RANGE);
@@ -64,7 +64,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization
-    public RRaw doComplex(RComplex operand) {
+    protected RRaw doComplex(RComplex operand) {
         int intResult = RRuntime.complex2rawIntValue(operand);
         if (operand.getImaginaryPart() != 0) {
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
@@ -76,19 +76,19 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization
-    public RRaw doRaw(RRaw operand) {
+    protected RRaw doRaw(RRaw operand) {
         return operand;
     }
 
     @Specialization
-    public RRaw doLogical(byte operand) {
+    protected RRaw doLogical(byte operand) {
         // need to convert to int so that NA-related warning is caught
         int intVal = RRuntime.logical2int(operand);
         return doInt(intVal);
     }
 
     @Specialization
-    public RRaw doString(String operand) {
+    protected RRaw doString(String operand) {
         // need to cast to int to catch conversion warnings
         int intVal = RRuntime.string2int(operand);
         if (RRuntime.isNA(intVal)) {
@@ -163,17 +163,17 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization
-    public RRawVector doIntVector(RIntVector value) {
+    protected RRawVector doIntVector(RIntVector value) {
         return performAbstractIntVector(value);
     }
 
     @Specialization
-    public RRawVector doIntSequence(RIntSequence value) {
+    protected RRawVector doIntSequence(RIntSequence value) {
         return performAbstractIntVector(value);
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RRawVector doLogicalVectorDims(RLogicalVector operand) {
+    protected RRawVector doLogicalVectorDims(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
         if (isAttrPreservation()) {
@@ -183,7 +183,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RRawVector doLogicalVectorNames(RLogicalVector operand) {
+    protected RRawVector doLogicalVectorNames(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
         if (isAttrPreservation()) {
@@ -193,7 +193,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RRawVector doLogicalVectorDimsNames(RLogicalVector operand) {
+    protected RRawVector doLogicalVectorDimsNames(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -203,7 +203,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RRawVector doLogicalVector(RLogicalVector operand) {
+    protected RRawVector doLogicalVector(RLogicalVector operand) {
         byte[] bdata = dataFromLogical(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata);
         if (isAttrPreservation()) {
@@ -213,7 +213,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RRawVector doStringVectorDims(RStringVector operand) {
+    protected RRawVector doStringVectorDims(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
         if (isAttrPreservation()) {
@@ -223,7 +223,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RRawVector doStringVectorNames(RStringVector operand) {
+    protected RRawVector doStringVectorNames(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
         if (isAttrPreservation()) {
@@ -233,7 +233,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RRawVector doStringVectorDimsNames(RStringVector operand) {
+    protected RRawVector doStringVectorDimsNames(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -243,7 +243,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RRawVector doStringVector(RStringVector operand) {
+    protected RRawVector doStringVector(RStringVector operand) {
         byte[] bdata = dataFromString(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata);
         if (isAttrPreservation()) {
@@ -253,7 +253,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "preserveDimensions"})
-    public RRawVector doRawVectorDims(RComplexVector operand) {
+    protected RRawVector doRawVectorDims(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions());
         if (isAttrPreservation()) {
@@ -263,7 +263,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "!preserveDimensions"})
-    public RRawVector doComplexVectorNames(RComplexVector operand) {
+    protected RRawVector doComplexVectorNames(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getNames());
         if (isAttrPreservation()) {
@@ -273,7 +273,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"preserveNames", "preserveDimensions"})
-    public RRawVector doComplexVectorDimsNames(RComplexVector operand) {
+    protected RRawVector doComplexVectorDimsNames(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata, operand.getDimensions(), operand.getNames());
         if (isAttrPreservation()) {
@@ -283,7 +283,7 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization(guards = {"!preserveNames", "!preserveDimensions"})
-    public RRawVector doComplexVector(RComplexVector operand) {
+    protected RRawVector doComplexVector(RComplexVector operand) {
         byte[] bdata = dataFromComplex(operand);
         RRawVector ret = RDataFactory.createRawVector(bdata);
         if (isAttrPreservation()) {
@@ -293,17 +293,17 @@ public abstract class CastRawNode extends CastNode {
     }
 
     @Specialization
-    public RRawVector doDoubleVector(RDoubleVector value) {
+    protected RRawVector doDoubleVector(RDoubleVector value) {
         return performAbstractDoubleVector(value);
     }
 
     @Specialization
-    public RRawVector doDoubleSequence(RDoubleSequence value) {
+    protected RRawVector doDoubleSequence(RDoubleSequence value) {
         return performAbstractDoubleVector(value);
     }
 
     @Specialization
-    public RRawVector doRawVector(RRawVector operand) {
+    protected RRawVector doRawVector(RRawVector operand) {
         return operand;
     }
 

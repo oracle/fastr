@@ -28,19 +28,19 @@ public abstract class CumMin extends RBuiltinNode {
     private final NACheck na = NACheck.create();
 
     @Specialization
-    public double cummin(double arg) {
+    protected double cummin(double arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public int cummin(int arg) {
+    protected int cummin(int arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public int cummin(byte arg) {
+    protected int cummin(byte arg) {
         controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
@@ -50,13 +50,13 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    public double cummax(String arg) {
+    protected double cummax(String arg) {
         controlVisibility();
         return CastDoubleNodeFactory.create(null, false, false, false).doString(arg);
     }
 
     @Specialization
-    public RIntVector cumMin(RIntSequence v) {
+    protected RIntVector cumMin(RIntSequence v) {
         controlVisibility();
         int[] cminV = new int[v.getLength()];
 
@@ -74,7 +74,7 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cummin(RDoubleVector v) {
+    protected RDoubleVector cummin(RDoubleVector v) {
         controlVisibility();
         double[] cminV = new double[v.getLength()];
         double min = v.getDataAt(0);
@@ -97,7 +97,7 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cummin(RIntVector v) {
+    protected RIntVector cummin(RIntVector v) {
         controlVisibility();
         int[] cminV = new int[v.getLength()];
         int min = v.getDataAt(0);
@@ -120,7 +120,7 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cummin(RLogicalVector v) {
+    protected RIntVector cummin(RLogicalVector v) {
         controlVisibility();
         int[] cminV = new int[v.getLength()];
         int min = v.getDataAt(0);
@@ -143,13 +143,13 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cummin(VirtualFrame frame, RStringVector v) {
+    protected RDoubleVector cummin(VirtualFrame frame, RStringVector v) {
         controlVisibility();
         return cummin((RDoubleVector) CastDoubleNodeFactory.create(null, false, false, false).executeDouble(frame, v));
     }
 
     @Specialization
-    public RComplexVector cummin(VirtualFrame frame, @SuppressWarnings("unused") RComplexVector v) {
+    protected RComplexVector cummin(VirtualFrame frame, @SuppressWarnings("unused") RComplexVector v) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
     }

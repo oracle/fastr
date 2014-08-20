@@ -33,20 +33,20 @@ public abstract class IsCharacter extends IsTypeNode {
 
     @Specialization
     @Override
-    public byte isType(String value) {
+    protected byte isType(String value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
-    public byte isType(RStringVector value) {
+    protected byte isType(RStringVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isType(Object value) {
+    protected byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof String || value instanceof RStringVector);
     }

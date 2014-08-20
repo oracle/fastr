@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 
-@com.oracle.truffle.api.CompilerDirectives.ValueType
+@ValueType
 public final class RRaw extends RScalar {
 
     private final byte value;

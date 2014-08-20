@@ -43,7 +43,7 @@ public abstract class Return extends RBuiltinNode {
     }
 
     @Specialization
-    public Object returnFunction(Object value) {
+    protected Object returnFunction(Object value) {
         controlVisibility();
         throw new ReturnException(value);
     }

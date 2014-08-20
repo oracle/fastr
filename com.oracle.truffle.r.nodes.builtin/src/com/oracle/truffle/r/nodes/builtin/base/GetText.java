@@ -43,7 +43,7 @@ public abstract class GetText extends RBuiltinNode {
     }
 
     @Specialization
-    RAbstractVector getText(RAbstractVector vector, Object domain) {
+    protected RAbstractVector getText(RAbstractVector vector, Object domain) {
         // no translation done at this point
         return vector;
     }

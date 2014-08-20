@@ -16,13 +16,13 @@ import com.oracle.truffle.api.source.*;
 
 public class FieldAccess extends ASTNode {
 
-    final ASTNode lhs;
-    final Symbol name;
+    private final ASTNode lhs;
+    private final Symbol fieldName;
 
-    public FieldAccess(SourceSection src, ASTNode value, Symbol fieldName) {
-        this.source = src;
-        this.lhs = updateParent(value);
-        this.name = fieldName;
+    private FieldAccess(SourceSection source, ASTNode value, Symbol fieldName) {
+        super(source);
+        this.lhs = value;
+        this.fieldName = fieldName;
     }
 
     @Override
@@ -49,7 +49,6 @@ public class FieldAccess extends ASTNode {
     }
 
     public Symbol getFieldName() {
-        return name;
+        return fieldName;
     }
-
 }

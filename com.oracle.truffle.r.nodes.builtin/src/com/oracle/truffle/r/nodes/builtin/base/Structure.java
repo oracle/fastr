@@ -38,12 +38,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Structure extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
-    public Object structure(VirtualFrame frame, RMissing obj, RMissing args) {
+    protected Object structure(VirtualFrame frame, RMissing obj, RMissing args) {
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
     }
 
     @Specialization
-    public Object structure(VirtualFrame frame, RAbstractContainer obj, Object args) {
+    protected Object structure(VirtualFrame frame, RAbstractContainer obj, Object args) {
         if (!(args instanceof RMissing)) {
             Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
             String[] argNames = getSuppliedArgsNames();
@@ -55,7 +55,7 @@ public abstract class Structure extends RBuiltinNode {
         return obj;
     }
 
-    Object fixupValue(Object value) {
+    private static Object fixupValue(Object value) {
         if (value instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) value);
         }

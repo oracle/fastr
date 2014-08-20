@@ -46,7 +46,7 @@ public abstract class Crossprod extends RBuiltinNode {
     private Object matMult(VirtualFrame frame, Object op1, Object op2) {
         if (matMult == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matMult = insert(MatMultFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            matMult = insert(MatMultFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
         }
         return matMult.executeObject(frame, op1, op2);
     }
@@ -60,19 +60,19 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object crossprod(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
+    protected Object crossprod(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
         controlVisibility();
         return matMult(frame, transpose(frame, a), b);
     }
 
     @Specialization(guards = "!matdouble")
-    public Object crossprod(VirtualFrame frame, RAbstractVector b, @SuppressWarnings("unused") RNull a) {
+    protected Object crossprod(VirtualFrame frame, RAbstractVector b, @SuppressWarnings("unused") RNull a) {
         controlVisibility();
         return matMult(frame, transpose(frame, b), b);
     }
 
     @Specialization(guards = "matdouble")
-    public Object crossprodDoubleMatrix(RAbstractDoubleVector a, @SuppressWarnings("unused") RNull b) {
+    protected Object crossprodDoubleMatrix(RAbstractDoubleVector a, @SuppressWarnings("unused") RNull b) {
         controlVisibility();
         final int aCols = a.getDimensions()[1];
         final int bRows = a.getDimensions()[0];

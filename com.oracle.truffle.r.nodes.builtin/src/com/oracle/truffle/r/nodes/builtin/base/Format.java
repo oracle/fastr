@@ -87,7 +87,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "wrongArgsObject")
-    String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+    protected String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RLogicalVector sciVec) {
         return null;
     }
@@ -96,7 +96,7 @@ public abstract class Format extends RBuiltinNode {
     // types following suit at some point for compliance
 
     @SlowPath
-    RStringVector convertToString(RAbstractLogicalVector value) {
+    private static RStringVector convertToString(RAbstractLogicalVector value) {
         int width = formatLogical(value);
         String[] data = new String[value.getLength()];
         for (int i = 0; i < data.length; i++) {
@@ -108,7 +108,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -117,7 +117,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    int formatLogical(RAbstractLogicalVector value) {
+    private static int formatLogical(RAbstractLogicalVector value) {
         int width = 1;
         for (int i = 0; i < value.getLength(); i++) {
             byte val = value.getDataAt(i);
@@ -144,7 +144,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SlowPath
-    RStringVector convertToString(RAbstractIntVector value) {
+    private static RStringVector convertToString(RAbstractIntVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
@@ -164,7 +164,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -196,7 +196,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SlowPath
-    RStringVector convertToString(RAbstractDoubleVector value) {
+    private static RStringVector convertToString(RAbstractDoubleVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
@@ -219,7 +219,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;

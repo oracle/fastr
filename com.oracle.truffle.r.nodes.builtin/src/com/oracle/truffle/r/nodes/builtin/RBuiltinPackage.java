@@ -54,11 +54,11 @@ import com.oracle.truffle.r.runtime.*;
  */
 public abstract class RBuiltinPackage {
 
-    public static class Component {
-        final String libContents;
-        final String libName;
+    private static class Component {
+        public final String libContents;
+        public final String libName;
 
-        Component(String libName, String libContents) {
+        public Component(String libName, String libContents) {
             this.libContents = libContents;
             this.libName = libName;
         }
@@ -137,7 +137,7 @@ public abstract class RBuiltinPackage {
         ArrayList<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
-                RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false);
+                RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false, false);
             }
         }
     }

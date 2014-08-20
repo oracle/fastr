@@ -77,7 +77,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractVector abstractVector, RNull list) {
+    protected RAbstractVector updateAttributes(VirtualFrame frame, RAbstractVector abstractVector, RNull list) {
         controlVisibility();
         RVector resultVector = abstractVector.materialize();
         resultVector.resetAllAttributes(true);
@@ -85,7 +85,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector updateAttributes(VirtualFrame frame, RAbstractContainer container, RList list) {
+    protected RAbstractVector updateAttributes(VirtualFrame frame, RAbstractContainer container, RList list) {
         controlVisibility();
         Object listNamesObject = list.getNames();
         if (listNamesObject == null || listNamesObject == RNull.instance) {

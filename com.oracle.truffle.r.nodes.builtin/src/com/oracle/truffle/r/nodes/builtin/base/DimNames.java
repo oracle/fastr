@@ -34,19 +34,19 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class DimNames extends RBuiltinNode {
 
     @Specialization
-    public RNull getDimNames(RNull operand) {
+    protected RNull getDimNames(RNull operand) {
         controlVisibility();
         return operand;
     }
 
     @Specialization(guards = "!isNull")
-    public RList getDimNames(RAbstractVector vector) {
+    protected RList getDimNames(RAbstractVector vector) {
         controlVisibility();
         return vector.getDimNames();
     }
 
     @Specialization(guards = "isNull")
-    public RNull getDimNamesNull(@SuppressWarnings("unused") RAbstractVector vector) {
+    protected RNull getDimNamesNull(@SuppressWarnings("unused") RAbstractVector vector) {
         controlVisibility();
         return RNull.instance;
     }

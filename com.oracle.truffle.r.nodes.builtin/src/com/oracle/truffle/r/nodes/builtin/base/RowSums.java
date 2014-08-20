@@ -43,7 +43,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector rowSumsNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowSumsNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         boolean isComplete = true;
@@ -69,7 +69,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector rowSumsNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowSumsNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -87,7 +87,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector rowSumsNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowSumsNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -107,7 +107,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector rowSumsNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowSumsNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -125,7 +125,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector rowSumsNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowSumsNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -145,7 +145,7 @@ public abstract class RowSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector rowSumsNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowSumsNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -164,7 +164,7 @@ public abstract class RowSums extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RDoubleVector rowSums(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector rowSums(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }

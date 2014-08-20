@@ -35,61 +35,61 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Names extends RBuiltinNode {
 
     @Specialization
-    public RNull getNames(RNull vector) {
+    protected RNull getNames(RNull vector) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(byte operand) {
+    protected RNull getNames(byte operand) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(int operand) {
+    protected RNull getNames(int operand) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(double operand) {
+    protected RNull getNames(double operand) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(RComplex operand) {
+    protected RNull getNames(RComplex operand) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(String operand) {
+    protected RNull getNames(String operand) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(RRaw operand) {
+    protected RNull getNames(RRaw operand) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull getNames(RFunction function) {
+    protected RNull getNames(RFunction function) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "!hasNames")
-    public RNull getEmptyNames(RAbstractContainer container) {
+    protected RNull getEmptyNames(RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "hasNames")
-    public RStringVector getNames(RAbstractContainer container) {
+    protected RStringVector getNames(RAbstractContainer container) {
         controlVisibility();
         return (RStringVector) container.getNames();
     }

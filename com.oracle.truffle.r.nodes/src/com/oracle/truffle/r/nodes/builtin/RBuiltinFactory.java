@@ -82,5 +82,4 @@ public class RBuiltinFactory {
     public NodeFactory<RBuiltinNode> getFactory() {
         return factory;
     }
-
 }

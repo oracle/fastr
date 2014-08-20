@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * Run a FastR function, and dump its AST to IGV before and after running. If no function is passed,
  * this builtin does not do anything.
  */
-@RBuiltin(name = "fastr.rundump", parameterNames = {"function"}, kind = PRIMITIVE)
+@RBuiltin(name = "fastr.rundump", parameterNames = {"func"}, kind = PRIMITIVE)
 public abstract class FastRRunDump extends RInvisibleBuiltinNode {
 
     // TODO Make this more versatile by allowing actual function calls with arguments to be
@@ -56,12 +56,12 @@ public abstract class FastRRunDump extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object runDump(RNull function) {
+    protected Object runDump(RNull function) {
         return function;
     }
 
     @Specialization
-    public Object runDump(VirtualFrame frame, RFunction function) {
+    protected Object runDump(VirtualFrame frame, RFunction function) {
         controlVisibility();
         Object r = RNull.instance;
         graphPrinter.beginGroup(RRuntime.toString(function));

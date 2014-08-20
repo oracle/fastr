@@ -349,20 +349,21 @@ public class RRuntime {
     }
 
     public static byte string2logicalNoCheck(String s) {
-        if (s.equals("TRUE") || s.equals("T")) {
-            return TRUE;
+        switch (s) {
+            case "TRUE":
+            case "T":
+            case "True":
+            case "true":
+                return TRUE;
+            case "FALSE":
+            case "F":
+            case "False":
+            case "false":
+                return FALSE;
+            default:
+                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
+                return LOGICAL_NA;
         }
-        if (s.equals("FALSE") || s.equals("F")) {
-            return FALSE;
-        }
-        if (s.equals("True") || s.equals("true")) {
-            return TRUE;
-        }
-        if (s.equals("False") || s.equals("false")) {
-            return FALSE;
-        }
-        RContext.getInstance().getAssumptions().naIntroduced.invalidate();
-        return LOGICAL_NA;
     }
 
     public static byte string2logical(String s) {
@@ -634,41 +635,41 @@ public class RRuntime {
         return value == LOGICAL_NA;
     }
 
-    public static boolean isNA(int left) {
-        return left == INT_NA;
+    public static boolean isNA(int value) {
+        return value == INT_NA;
     }
 
-    public static boolean isNA(double left) {
-        return Double.doubleToRawLongBits(left) == NA_LONGBITS;
+    public static boolean isNA(double value) {
+        return Double.doubleToRawLongBits(value) == NA_LONGBITS;
     }
 
-    public static boolean isNA(RComplex left) {
-        return isNA(left.getRealPart());
+    public static boolean isNA(RComplex value) {
+        return isNA(value.getRealPart());
     }
 
-    public static boolean isComplete(String left) {
-        return !isNA(left);
+    public static boolean isComplete(String value) {
+        return !isNA(value);
     }
 
-    public static boolean isComplete(byte left) {
-        return !isNA(left);
+    public static boolean isComplete(byte value) {
+        return !isNA(value);
     }
 
-    public static boolean isComplete(int left) {
-        return !isNA(left);
+    public static boolean isComplete(int value) {
+        return !isNA(value);
     }
 
-    public static boolean isComplete(double left) {
-        return !isNA(left);
+    public static boolean isComplete(double value) {
+        return !isNA(value);
     }
 
-    public static boolean isComplete(RComplex left) {
-        return !isNA(left);
+    public static boolean isComplete(RComplex value) {
+        return !isNA(value);
     }
 
     @SlowPath
-    public static String quoteString(String data) {
-        return isNA(data) ? STRING_NA : "\"" + data + "\"";
+    public static String quoteString(String value) {
+        return isNA(value) ? STRING_NA : "\"" + value + "\"";
     }
 
     public static FrameSlotKind getSlotKind(Object value) {

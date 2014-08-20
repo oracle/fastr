@@ -500,7 +500,7 @@ public abstract class REnvironment implements RAttributable {
      */
     private RStringVector getNamespaceSpec() {
         Object value = frameAccess.get(NAMESPACE_KEY);
-        if (value != null && value instanceof REnvironment) {
+        if (value instanceof REnvironment) {
             REnvironment info = (REnvironment) value;
             Object spec = info.frameAccess.get("spec");
             if ((spec != null) && spec instanceof RStringVector) {
@@ -596,11 +596,15 @@ public abstract class REnvironment implements RAttributable {
              * namespaces are a special case; they have no name attribute, but they print with the
              * name which is buried.
              */
-            RStringVector spec = getNamespaceSpec();
-            if (spec != null) {
-                return "namespace:" + spec.getDataAt(0);
+            if (frameAccess == noFrameAccess) {
+                return "function def";
             } else {
-                return String.format("%#x", hashCode());
+                RStringVector spec = getNamespaceSpec();
+                if (spec != null) {
+                    return "namespace:" + spec.getDataAt(0);
+                } else {
+                    return String.format("%#x", hashCode());
+                }
             }
         } else {
             return attrName;

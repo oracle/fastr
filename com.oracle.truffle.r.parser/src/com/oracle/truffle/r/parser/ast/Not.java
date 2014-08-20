@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @PrettyName("!")
 public class Not extends UnaryOperation {
 
-    public Not(SourceSection src, ASTNode operand) {
-        super(src, operand);
+    public Not(SourceSection source, ASTNode operand) {
+        super(source, operand);
     }
 
     @Override

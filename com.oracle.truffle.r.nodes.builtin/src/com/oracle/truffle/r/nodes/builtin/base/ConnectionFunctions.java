@@ -71,7 +71,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdin extends RInvisibleBuiltinNode {
         @Specialization
-        public RConnection stdin() {
+        protected RConnection stdin() {
             controlVisibility();
             if (stdin == null) {
                 stdin = new StdinConnection();
@@ -132,7 +132,7 @@ public abstract class ConnectionFunctions {
     public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
-        public Object file(VirtualFrame frame, RAbstractStringVector description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
+        protected Object file(VirtualFrame frame, RAbstractStringVector description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!open.equals("r")) {
                 throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_OPEN_MODE, open);
@@ -149,7 +149,7 @@ public abstract class ConnectionFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object file(VirtualFrame frame, Object description, Object open, Object blocking, Object encoding, Object raw) {
+        protected Object file(VirtualFrame frame, Object description, Object open, Object blocking, Object encoding, Object raw) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
@@ -159,7 +159,7 @@ public abstract class ConnectionFunctions {
     public abstract static class GZFile extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
-        public Object gzFile(VirtualFrame frame, RAbstractStringVector description, String open, RAbstractStringVector encoding, double compression) {
+        protected Object gzFile(VirtualFrame frame, RAbstractStringVector description, String open, RAbstractStringVector encoding, double compression) {
             controlVisibility();
             String ePath = Utils.tildeExpand(description.getDataAt(0));
             try {
@@ -176,7 +176,7 @@ public abstract class ConnectionFunctions {
     // TODO Internal
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
-        public Object close(@SuppressWarnings("unused") Object con) {
+        protected Object close(@SuppressWarnings("unused") Object con) {
             controlVisibility();
             // TODO implement when on.exit doesn't evaluate it's argument
             return RNull.instance;
@@ -186,7 +186,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding"})
     public abstract static class ReadLines extends RBuiltinNode {
         @Specialization
-        public Object readLines(VirtualFrame frame, RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {
+        protected Object readLines(VirtualFrame frame, RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {
             controlVisibility();
             try {
                 String[] lines = con.readLines(n);
@@ -201,7 +201,7 @@ public abstract class ConnectionFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object readLines(VirtualFrame frame, Object con, Object n, Object ok, Object warn, Object encoding) {
+        protected Object readLines(VirtualFrame frame, Object con, Object n, Object ok, Object warn, Object encoding) {
             controlVisibility();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }

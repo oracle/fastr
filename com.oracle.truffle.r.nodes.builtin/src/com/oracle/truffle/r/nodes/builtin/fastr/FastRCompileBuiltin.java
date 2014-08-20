@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "fastr.compile", kind = PRIMITIVE, parameterNames = {"func"})
 public abstract class FastRCompileBuiltin extends RBuiltinNode {
 
-    static final class Compiler {
+    private static final class Compiler {
         private Class<?> optimizedCallTarget;
         private Method compileMethod;
 
@@ -71,7 +71,7 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
     private static final Compiler compiler = Compiler.getCompiler();
 
     @Specialization
-    public byte compileFunction(VirtualFrame frame, RFunction function) {
+    protected byte compileFunction(VirtualFrame frame, RFunction function) {
         controlVisibility();
         if (compiler != null) {
             try {
@@ -86,7 +86,7 @@ public abstract class FastRCompileBuiltin extends RBuiltinNode {
     }
 
     @Specialization
-    public byte compileFunction(VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
+    protected byte compileFunction(VirtualFrame frame, @SuppressWarnings("unused") Object arg) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "function");
     }

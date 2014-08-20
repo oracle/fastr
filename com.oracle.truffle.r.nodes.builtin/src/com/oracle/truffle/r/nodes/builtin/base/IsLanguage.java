@@ -30,19 +30,19 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class IsLanguage extends IsTypeNode {
     @Override
     @Specialization
-    public byte isType(RSymbol value) {
+    protected byte isType(RSymbol value) {
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Override
     @Specialization
-    public byte isType(RExpression value) {
+    protected byte isType(RExpression value) {
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Override
     @Specialization
-    public byte isType(RLanguage value) {
+    protected byte isType(RLanguage value) {
         return RRuntime.LOGICAL_TRUE;
     }
 

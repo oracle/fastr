@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class CommandArgs extends RBuiltinNode {
 
     @Specialization
-    public RStringVector commandArgs() {
+    protected RStringVector commandArgs() {
         controlVisibility();
         return getCommandArgs();
     }

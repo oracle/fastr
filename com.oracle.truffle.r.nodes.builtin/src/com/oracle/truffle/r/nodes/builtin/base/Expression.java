@@ -37,7 +37,7 @@ public abstract class Expression extends RBuiltinNode {
      */
 
     @Specialization
-    public Object doExpression(Object[] args) {
+    protected Object doExpression(Object[] args) {
         RLanguage[] data = new RLanguage[args.length];
         for (int i = 0; i < args.length; i++) {
             data[i] = convert((RPromise) args[i]);
@@ -47,7 +47,7 @@ public abstract class Expression extends RBuiltinNode {
     }
 
     @Specialization
-    public Object doExpression(RPromise language) {
+    protected Object doExpression(RPromise language) {
         RList list = RDataFactory.createList(new Object[]{convert(language)});
         return RDataFactory.createExpression(list);
     }

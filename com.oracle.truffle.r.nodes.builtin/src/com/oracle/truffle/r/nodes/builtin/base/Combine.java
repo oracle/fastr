@@ -87,19 +87,19 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RNull pass(RMissing vector) {
+    protected RNull pass(RMissing vector) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RNull pass(RNull vector) {
+    protected RNull pass(RNull vector) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RIntVector pass(RIntVector vector) {
+    protected RIntVector pass(RIntVector vector) {
         controlVisibility();
         RIntVector result = (RIntVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -107,7 +107,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector pass(RDoubleVector vector) {
+    protected RDoubleVector pass(RDoubleVector vector) {
         controlVisibility();
         RDoubleVector result = (RDoubleVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -115,7 +115,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector pass(RComplexVector vector) {
+    protected RComplexVector pass(RComplexVector vector) {
         controlVisibility();
         RComplexVector result = (RComplexVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -123,7 +123,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector pass(RStringVector vector) {
+    protected RStringVector pass(RStringVector vector) {
         controlVisibility();
         RStringVector result = (RStringVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -131,7 +131,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector pass(RRawVector vector) {
+    protected RRawVector pass(RRawVector vector) {
         controlVisibility();
         RRawVector result = (RRawVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -139,7 +139,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector pass(RLogicalVector vector) {
+    protected RLogicalVector pass(RLogicalVector vector) {
         controlVisibility();
         RLogicalVector result = (RLogicalVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -147,7 +147,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector pass(RIntSequence vector) {
+    protected RIntVector pass(RIntSequence vector) {
         controlVisibility();
         RIntVector result = (RIntVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -155,7 +155,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector pass(RDoubleSequence vector) {
+    protected RDoubleVector pass(RDoubleSequence vector) {
         controlVisibility();
         RDoubleVector result = (RDoubleVector) vector.copyDropAttributes();
         result.copyNamesFrom(vector);
@@ -163,7 +163,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization
-    public RList pass(RList list) {
+    protected RList pass(RList list) {
         controlVisibility();
         RList result = (RList) list.copyDropAttributes();
         result.copyNamesFrom(list);
@@ -171,73 +171,73 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization(guards = "noArgNames")
-    public int pass(int value) {
+    protected int pass(int value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "hasArgNames")
-    public RIntVector passArgs(int value) {
+    protected RIntVector passArgs(int value) {
         controlVisibility();
         return RDataFactory.createIntVector(new int[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
-    public double pass(double value) {
+    protected double pass(double value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "hasArgNames")
-    public RDoubleVector passArgs(double value) {
+    protected RDoubleVector passArgs(double value) {
         controlVisibility();
         return RDataFactory.createDoubleVector(new double[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
-    public byte pass(byte value) {
+    protected byte pass(byte value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "hasArgNames")
-    public RLogicalVector passArgs(byte value) {
+    protected RLogicalVector passArgs(byte value) {
         controlVisibility();
         return RDataFactory.createLogicalVector(new byte[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
-    public String pass(String value) {
+    protected String pass(String value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "hasArgNames")
-    public RStringVector passArgs(String value) {
+    protected RStringVector passArgs(String value) {
         controlVisibility();
         return RDataFactory.createStringVector(new String[]{value}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
-    public RRaw pass(RRaw value) {
+    protected RRaw pass(RRaw value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "hasArgNames")
-    public RRawVector passArgs(RRaw value) {
+    protected RRawVector passArgs(RRaw value) {
         controlVisibility();
         return RDataFactory.createRawVector(new byte[]{value.getValue()}, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
     @Specialization(guards = "noArgNames")
-    public RComplex pass(RComplex value) {
+    protected RComplex pass(RComplex value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "hasArgNames")
-    public RComplexVector passArgs(RComplex value) {
+    protected RComplexVector passArgs(RComplex value) {
         controlVisibility();
         return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
@@ -396,14 +396,14 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = "isNullPrecedence")
     @ExplodeLoop
-    public RNull allNull(VirtualFrame frame, Object[] array) {
+    protected RNull allNull(VirtualFrame frame, Object[] array) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = {"isLogicalPrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object allLogical(VirtualFrame frame, Object[] array) {
+    protected Object allLogical(VirtualFrame frame, Object[] array) {
         controlVisibility();
         Object current = castLogical(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
@@ -415,7 +415,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isLogicalPrecedence", "hasArgNames"})
     @ExplodeLoop
-    public Object allLogicalArgs(VirtualFrame frame, Object[] array) {
+    protected Object allLogicalArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castLogical(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -429,7 +429,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isIntegerPrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object allInt(VirtualFrame frame, Object[] array) {
+    protected Object allInt(VirtualFrame frame, Object[] array) {
         controlVisibility();
         Object current = castInteger(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
@@ -441,7 +441,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isIntegerPrecedence", "hasArgNames"})
     @ExplodeLoop
-    public Object allIntArgs(VirtualFrame frame, Object[] array) {
+    protected Object allIntArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castInteger(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -455,7 +455,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isDoublePrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object allDouble(VirtualFrame frame, Object[] array) {
+    protected Object allDouble(VirtualFrame frame, Object[] array) {
         controlVisibility();
         Object current = castDouble(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
@@ -467,7 +467,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isDoublePrecedence", "hasArgNames"})
     @ExplodeLoop
-    public Object allDoubleArgs(VirtualFrame frame, Object[] array) {
+    protected Object allDoubleArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castDouble(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -481,7 +481,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isComplexPrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object allComplex(VirtualFrame frame, Object[] array) {
+    protected Object allComplex(VirtualFrame frame, Object[] array) {
         controlVisibility();
         Object current = castComplex(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
@@ -493,7 +493,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isComplexPrecedence", "hasArgNames"})
     @ExplodeLoop
-    public Object allComplexArgs(VirtualFrame frame, Object[] array) {
+    protected Object allComplexArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castComplex(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -507,7 +507,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isStringPrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object allString(VirtualFrame frame, Object[] array) {
+    protected Object allString(VirtualFrame frame, Object[] array) {
         controlVisibility();
         Object current = castString(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
@@ -519,7 +519,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isStringPrecedence", "hasArgNames"})
     @ExplodeLoop
-    public Object allStringArgs(VirtualFrame frame, Object[] array) {
+    protected Object allStringArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castString(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -533,7 +533,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isRawPrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object allRaw(VirtualFrame frame, Object[] array) {
+    protected Object allRaw(VirtualFrame frame, Object[] array) {
         controlVisibility();
         Object current = castRaw(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
@@ -545,7 +545,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isRawPrecedence", "hasArgNames"})
     @ExplodeLoop
-    public Object allRawArgs(VirtualFrame frame, Object[] array) {
+    protected Object allRawArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castRaw(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -559,7 +559,7 @@ public abstract class Combine extends RBuiltinNode {
 
     @Specialization(guards = {"isListPrecedence", "noArgNames"})
     @ExplodeLoop
-    public Object list(VirtualFrame frame, Object[] array) {
+    protected Object list(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RList current = RDataFactory.createList();
         for (int i = 0; i < array.length; ++i) {
@@ -570,7 +570,7 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isListPrecedence", "hasArgNames"})
-    public Object listArgs(VirtualFrame frame, Object[] array) {
+    protected Object listArgs(VirtualFrame frame, Object[] array) {
         controlVisibility();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
@@ -582,11 +582,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    public boolean hasArgNames() {
+    protected boolean hasArgNames() {
         return getSuppliedArgsNames() != null;
     }
 
-    public boolean noArgNames() {
+    protected boolean noArgNames() {
         return !hasArgNames();
     }
 }

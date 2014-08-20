@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
 
-@com.oracle.truffle.api.CompilerDirectives.ValueType
+@ValueType
 public final class RLogical extends RScalar {
 
     private final byte value;
 
-    RLogical(byte value) {
+    private RLogical(byte value) {
         this.value = value;
     }
 

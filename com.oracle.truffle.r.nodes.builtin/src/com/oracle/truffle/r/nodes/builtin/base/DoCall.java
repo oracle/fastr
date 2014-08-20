@@ -40,7 +40,7 @@ public abstract class DoCall extends RBuiltinNode {
     @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
     @Specialization(guards = "lengthOne")
-    public Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
+    protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
         RFunction func = RContext.getEngine().lookupBuiltin(fname.getDataAt(0));
         if (func == null) {
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION, fname);

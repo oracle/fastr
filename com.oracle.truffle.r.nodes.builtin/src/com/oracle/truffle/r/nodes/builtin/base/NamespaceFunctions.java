@@ -35,7 +35,7 @@ public class NamespaceFunctions {
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"})
     public abstract static class GetRegisteredNamespace extends RBuiltinNode {
         @Specialization
-        public Object doGetRegisteredNamespace(String name) {
+        protected Object doGetRegisteredNamespace(String name) {
             controlVisibility();
             Object result = REnvironment.getRegisteredNamespace(name);
             if (result == null) {
@@ -46,7 +46,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        public Object doGetRegisteredNamespace(RSymbol name) {
+        protected Object doGetRegisteredNamespace(RSymbol name) {
             controlVisibility();
             return doGetRegisteredNamespace(name.getName());
         }
@@ -55,7 +55,7 @@ public class NamespaceFunctions {
     @RBuiltin(name = "isNamespaceEnv", kind = INTERNAL, parameterNames = {"env"})
     public abstract static class IsNamespaceEnv extends RBuiltinNode {
         @Specialization
-        public byte doIsNamespaceEnv(REnvironment env) {
+        protected byte doIsNamespaceEnv(REnvironment env) {
             controlVisibility();
             return RRuntime.asLogical(env.isNamespaceEnv());
         }
@@ -64,7 +64,7 @@ public class NamespaceFunctions {
     @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL, parameterNames = {})
     public abstract static class GetNamespaceRegistry extends RBuiltinNode {
         @Specialization
-        public REnvironment doGetNamespaceRegistry(@SuppressWarnings("unused") RMissing missing) {
+        protected REnvironment doGetNamespaceRegistry(@SuppressWarnings("unused") RMissing missing) {
             controlVisibility();
             return REnvironment.getNamespaceRegistry();
         }
@@ -73,7 +73,7 @@ public class NamespaceFunctions {
     @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"})
     public abstract static class RegisterNamespace extends RBuiltinNode {
         @Specialization
-        public RNull registerNamespace(String name, REnvironment env) {
+        protected RNull registerNamespace(String name, REnvironment env) {
             controlVisibility();
             REnvironment.registerNamespace(name, env);
             return RNull.instance;
@@ -83,14 +83,14 @@ public class NamespaceFunctions {
     @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"})
     public abstract static class UnregisterNamespace extends RBuiltinNode {
         @Specialization
-        public RNull unregisterNamespace(@SuppressWarnings("unused") RAbstractStringVector name) {
+        protected RNull unregisterNamespace(@SuppressWarnings("unused") RAbstractStringVector name) {
             controlVisibility();
             // TODO implement
             return RNull.instance;
         }
 
         @Specialization
-        public Object unregisterNamespace(@SuppressWarnings("unused") RSymbol name) {
+        protected Object unregisterNamespace(@SuppressWarnings("unused") RSymbol name) {
             controlVisibility();
             // TODO implement
             return RNull.instance;

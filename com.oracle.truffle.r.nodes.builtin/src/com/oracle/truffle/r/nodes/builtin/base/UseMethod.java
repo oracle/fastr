@@ -35,7 +35,6 @@ public abstract class UseMethod extends RBuiltinNode {
     @Child UseMethodNode useMethodNode;
 
     public UseMethod() {
-        super();
         this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());
     }
 
@@ -45,7 +44,7 @@ public abstract class UseMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object execute(VirtualFrame frame, String generic, Object arg) {
+    protected Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();
         throw new ReturnException(useMethodNode.execute(frame, generic, arg));
     }

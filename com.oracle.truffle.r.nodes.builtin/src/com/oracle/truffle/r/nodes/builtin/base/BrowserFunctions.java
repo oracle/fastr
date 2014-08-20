@@ -60,7 +60,7 @@ public class BrowserFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
+        protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
             controlVisibility();
             if (RRuntime.fromLogical(expr)) {
                 try {
@@ -115,7 +115,7 @@ public class BrowserFunctions {
                         }
 
                         default:
-                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true);
+                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true, false);
                             break;
                     }
                 }
@@ -160,13 +160,13 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
-        public String browserText(VirtualFrame frame, int n) {
+        protected String browserText(VirtualFrame frame, int n) {
             controlVisibility();
             return getHelperState(frame, n).text;
         }
 
         @Specialization
-        public String browserText(VirtualFrame frame, double n) {
+        protected String browserText(VirtualFrame frame, double n) {
             controlVisibility();
             return getHelperState(frame, (int) n).text;
         }
@@ -175,13 +175,13 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
-        public Object browserCondition(VirtualFrame frame, int n) {
+        protected Object browserCondition(VirtualFrame frame, int n) {
             controlVisibility();
             return getHelperState(frame, n).condition;
         }
 
         @Specialization
-        public Object browserCondition(VirtualFrame frame, double n) {
+        protected Object browserCondition(VirtualFrame frame, double n) {
             controlVisibility();
             return getHelperState(frame, (int) n).condition;
         }
@@ -190,7 +190,7 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
         @Specialization
-        public RNull browserSetDebug(@SuppressWarnings("unused") int n) {
+        protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
             controlVisibility();
             return RNull.instance;

@@ -42,32 +42,32 @@ public abstract class CharacterBuiltin extends RBuiltinNode {
     }
 
     @Specialization
-    public Object createCharacterVector(int length) {
+    protected Object createCharacterVector(int length) {
         controlVisibility();
         return RDataFactory.createStringVector(length);
     }
 
     @Specialization
-    public Object createCharacterVector(double length) {
+    protected Object createCharacterVector(double length) {
         controlVisibility();
         return RDataFactory.createStringVector((int) length);
     }
 
     @Specialization
-    public Object createCharacterVector(RAbstractIntVector length) {
+    protected Object createCharacterVector(RAbstractIntVector length) {
         controlVisibility();
         return createCharacterVector(length.getDataAt(0));
     }
 
     @Specialization
-    public Object createCharacterVector(RAbstractDoubleVector length) {
+    protected Object createCharacterVector(RAbstractDoubleVector length) {
         controlVisibility();
         return createCharacterVector(length.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object createCharacterVector(RMissing length) {
+    protected Object createCharacterVector(RMissing length) {
         controlVisibility();
         return RDataFactory.createStringVector(0);
     }

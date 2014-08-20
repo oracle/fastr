@@ -52,7 +52,7 @@ public abstract class Sd extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public double sd(VirtualFrame frame, RDoubleVector x, byte narm) {
+    protected double sd(VirtualFrame frame, RDoubleVector x, byte narm) {
         controlVisibility();
         double xmean = (double) mean.executeDouble(frame, x);
         double distSum = 0.0;

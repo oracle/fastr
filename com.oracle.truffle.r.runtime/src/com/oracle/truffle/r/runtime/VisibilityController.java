@@ -53,5 +53,4 @@ public interface VisibilityController {
             RContext.setVisible(getVisibility());
         }
     }
-
 }

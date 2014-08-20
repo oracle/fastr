@@ -47,29 +47,29 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization
-    public String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
+    protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return fmt;
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, RMissing x) {
+    protected String sprintf(RAbstractStringVector fmt, RMissing x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(String fmt, int x) {
+    protected String sprintf(String fmt, int x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, int x) {
+    protected String sprintf(RAbstractStringVector fmt, int x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public RStringVector sprintf(String fmt, RAbstractIntVector x) {
+    protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
@@ -79,12 +79,12 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(VirtualFrame frame, String fmt, double x) {
+    protected String sprintf(VirtualFrame frame, String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
         if (f == 'x' || f == 'd') {
@@ -97,12 +97,12 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(VirtualFrame frame, RAbstractStringVector fmt, double x) {
+    protected String sprintf(VirtualFrame frame, RAbstractStringVector fmt, double x) {
         return sprintf(frame, fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public RStringVector sprintf(VirtualFrame frame, String fmt, RAbstractDoubleVector x) {
+    protected RStringVector sprintf(VirtualFrame frame, String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
@@ -112,23 +112,23 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public RStringVector sprintf(VirtualFrame frame, RAbstractStringVector fmt, RAbstractDoubleVector x) {
+    protected RStringVector sprintf(VirtualFrame frame, RAbstractStringVector fmt, RAbstractDoubleVector x) {
         return sprintf(frame, fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(String fmt, String x) {
+    protected String sprintf(String fmt, String x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, String x) {
+    protected String sprintf(RAbstractStringVector fmt, String x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public RStringVector sprintf(String fmt, RAbstractStringVector x) {
+    protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
@@ -138,12 +138,12 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(String fmt, Object[] args) {
+    protected String sprintf(String fmt, Object[] args) {
         controlVisibility();
         return format(fmt, args);
     }
@@ -273,7 +273,7 @@ public abstract class Sprintf extends RBuiltinNode {
     // format info parsing
     //
 
-    static class FormatInfo {
+    private static class FormatInfo {
         char conversion;
         int width;
         int precision;

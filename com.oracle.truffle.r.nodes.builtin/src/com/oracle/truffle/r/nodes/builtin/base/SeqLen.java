@@ -40,7 +40,7 @@ public abstract class SeqLen extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntSequence seq(int length) {
+    protected RIntSequence seq(int length) {
         controlVisibility();
         return RDataFactory.createIntSequence(1, 1, length);
     }

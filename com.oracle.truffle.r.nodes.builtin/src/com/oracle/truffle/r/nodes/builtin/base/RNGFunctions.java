@@ -46,7 +46,7 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RNull setSeed(VirtualFrame frame, double seed, RNull kind, RNull normKind) {
+        protected RNull setSeed(VirtualFrame frame, double seed, RNull kind, RNull normKind) {
             controlVisibility();
             doSetSeed(frame, (int) seed, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
@@ -54,7 +54,7 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RNull setSeed(VirtualFrame frame, double seed, RAbstractIntVector kind, RNull normKind) {
+        protected RNull setSeed(VirtualFrame frame, double seed, RAbstractIntVector kind, RNull normKind) {
             controlVisibility();
             doSetSeed(frame, (int) seed, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             return RNull.instance;
@@ -62,7 +62,7 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RNull setSeed(VirtualFrame frame, RNull seed, RNull kind, RNull normKind) {
+        protected RNull setSeed(VirtualFrame frame, RNull seed, RNull kind, RNull normKind) {
             controlVisibility();
             doSetSeed(frame, RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
@@ -70,7 +70,7 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RNull setSeed(VirtualFrame frame, byte seed, RNull kind, RNull normKind) {
+        protected RNull setSeed(VirtualFrame frame, byte seed, RNull kind, RNull normKind) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
             throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SEED_NOT_VALID_INT);
@@ -95,13 +95,13 @@ public class RNGFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        public RIntVector doRNGkind(VirtualFrame frame, RNull x, RNull y) {
+        protected RIntVector doRNGkind(VirtualFrame frame, RNull x, RNull y) {
             controlVisibility();
             return getCurrent();
         }
 
         @Specialization
-        public RIntVector doRNGkind(VirtualFrame frame, RAbstractIntVector kind, @SuppressWarnings("unused") RNull normKind) {
+        protected RIntVector doRNGkind(VirtualFrame frame, RAbstractIntVector kind, @SuppressWarnings("unused") RNull normKind) {
             controlVisibility();
             RIntVector result = getCurrent();
             try {

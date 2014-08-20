@@ -45,19 +45,31 @@ public abstract class Inherits extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
+    @Specialization
+    protected Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object doesInherit(REnvironment x, RAbstractStringVector what, byte which) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
     public boolean whichFalse(RAbstractVector x, RAbstractStringVector what, byte which) {
         return which != RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization(guards = "whichFalse")
-    public byte doInherits(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+    protected byte doInherits(VirtualFrame frame, RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return initInheritsNode().execute(frame, x, what);
     }
 
     @SlowPath
     // map operations lead to recursion resulting in compilation failure
     @Specialization(guards = "!whichFalse")
-    public Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
+    protected Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         Map<String, Integer> classToPos = InheritsNode.initClassToPos(x);
         int[] result = new int[what.getLength()];
         for (int i = 0; i < what.getLength(); ++i) {

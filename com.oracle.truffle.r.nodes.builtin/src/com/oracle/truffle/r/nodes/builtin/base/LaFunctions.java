@@ -37,7 +37,7 @@ public class LaFunctions {
     public abstract static class Version extends RBuiltinNode {
         @Specialization
         @SlowPath
-        public String doVersion() {
+        protected String doVersion() {
             int[] version = new int[3];
             RFFIFactory.getRFFI().getLapackRFFI().ilaver(version);
             return version[0] + "." + version[1] + "." + version[2];
@@ -50,7 +50,7 @@ public class LaFunctions {
         private static final String[] NAMES = new String[]{"values", "vectors"};
 
         @Specialization
-        public Object doRg(VirtualFrame frame, RDoubleVector matrix, byte onlyValues) {
+        protected Object doRg(VirtualFrame frame, RDoubleVector matrix, byte onlyValues) {
             controlVisibility();
             if (!matrix.isMatrix()) {
                 RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
@@ -128,7 +128,7 @@ public class LaFunctions {
         private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
 
         @Specialization
-        public RList doQr(VirtualFrame frame, RAbstractVector aIn) {
+        protected RList doQr(VirtualFrame frame, RAbstractVector aIn) {
             // This implementation is sufficient for B25 matcal-5.
             if (!aIn.isMatrix()) {
                 RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
@@ -182,7 +182,7 @@ public class LaFunctions {
         }
 
         @Specialization
-        public RDoubleVector doQrCoefReal(VirtualFrame frame, RList qIn, RDoubleVector bIn) {
+        protected RDoubleVector doQrCoefReal(VirtualFrame frame, RList qIn, RDoubleVector bIn) {
             if (!bIn.isMatrix()) {
                 RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
             }
@@ -235,7 +235,7 @@ public class LaFunctions {
         private static final RStringVector DET_CLASS = RDataFactory.createStringVector(new String[]{"det"}, RDataFactory.COMPLETE_VECTOR);
 
         @Specialization
-        public RList doDetGeReal(VirtualFrame frame, RDoubleVector aIn, byte useLogIn) {
+        protected RList doDetGeReal(VirtualFrame frame, RDoubleVector aIn, byte useLogIn) {
             if (!aIn.isMatrix()) {
                 RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
             }
@@ -294,7 +294,7 @@ public class LaFunctions {
     @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"})
     public abstract static class LaChol extends RBuiltinNode {
         @Specialization
-        public RDoubleVector doDetGeReal(VirtualFrame frame, RDoubleVector aIn, byte pivot, double tol) {
+        protected RDoubleVector doDetGeReal(VirtualFrame frame, RDoubleVector aIn, byte pivot, double tol) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = aIn.getDimensions();
             int n = aDims[0];

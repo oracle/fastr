@@ -178,360 +178,360 @@ public abstract class CoerceBinaryNode extends RNode {
     // Left side is RNull
 
     @Specialization
-    public RNull access(VirtualFrame frame, RNull left, RNull right) {
+    protected RNull access(VirtualFrame frame, RNull left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RLogicalVector access(VirtualFrame frame, RNull left, byte right) {
+    protected RLogicalVector access(VirtualFrame frame, RNull left, byte right) {
         return doLogical(frame, RDataFactory.createEmptyLogicalVector(), right);
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RNull left, int right) {
+    protected RIntVector access(VirtualFrame frame, RNull left, int right) {
         return doInt(frame, RDataFactory.createEmptyIntVector(), right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RNull left, double right) {
+    protected RDoubleVector access(VirtualFrame frame, RNull left, double right) {
         return doDouble(frame, RDataFactory.createEmptyDoubleVector(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RNull left, RComplex right) {
+    protected RComplexVector access(VirtualFrame frame, RNull left, RComplex right) {
         return doComplex(frame, RDataFactory.createEmptyComplexVector(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RNull left, String right) {
+    protected RStringVector access(VirtualFrame frame, RNull left, String right) {
         return doString(frame, RDataFactory.createEmptyStringVector(), right);
     }
 
     @Specialization
-    public RLogicalVector access(VirtualFrame frame, RNull left, RLogicalVector right) {
+    protected RLogicalVector access(VirtualFrame frame, RNull left, RLogicalVector right) {
         return doLogical(frame, RDataFactory.createEmptyLogicalVector(), right);
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RNull left, RIntVector right) {
+    protected RIntVector access(VirtualFrame frame, RNull left, RIntVector right) {
         return doInt(frame, RDataFactory.createEmptyIntVector(), right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RNull left, RDoubleVector right) {
+    protected RDoubleVector access(VirtualFrame frame, RNull left, RDoubleVector right) {
         return doDouble(frame, RDataFactory.createEmptyDoubleVector(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RNull left, RComplexVector right) {
+    protected RComplexVector access(VirtualFrame frame, RNull left, RComplexVector right) {
         return doComplex(frame, RDataFactory.createEmptyComplexVector(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RNull left, RStringVector right) {
+    protected RStringVector access(VirtualFrame frame, RNull left, RStringVector right) {
         return doString(frame, RDataFactory.createEmptyStringVector(), right);
     }
 
     // Left side is RLogicalVector
 
     @Specialization
-    public RLogicalVector access(VirtualFrame frame, RLogicalVector left, RNull right) {
+    protected RLogicalVector access(VirtualFrame frame, RLogicalVector left, RNull right) {
         return doLogical(frame, left, RDataFactory.createEmptyLogicalVector());
     }
 
     @Specialization
-    public RLogicalVector access(VirtualFrame frame, RLogicalVector left, byte right) {
+    protected RLogicalVector access(VirtualFrame frame, RLogicalVector left, byte right) {
         return doLogical(frame, left, right);
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RLogicalVector left, int right) {
+    protected RIntVector access(VirtualFrame frame, RLogicalVector left, int right) {
         leftNACheck.enable(left);
         return doInt(frame, RClosures.createLogicalToIntVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RLogicalVector left, double right) {
+    protected RDoubleVector access(VirtualFrame frame, RLogicalVector left, double right) {
         leftNACheck.enable(left);
         return doDouble(frame, RClosures.createLogicalToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplex right) {
+    protected RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplex right) {
         leftNACheck.enable(left);
         return doComplex(frame, RClosures.createLogicalToComplexVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RLogicalVector left, String right) {
+    protected RStringVector access(VirtualFrame frame, RLogicalVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     @Specialization
-    public RLogicalVector access(VirtualFrame frame, RLogicalVector left, RLogicalVector right) {
+    protected RLogicalVector access(VirtualFrame frame, RLogicalVector left, RLogicalVector right) {
         return doLogical(frame, left, right);
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RLogicalVector left, RIntVector right) {
+    protected RIntVector access(VirtualFrame frame, RLogicalVector left, RIntVector right) {
         leftNACheck.enable(left);
         return doInt(frame, RClosures.createLogicalToIntVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RLogicalVector left, RDoubleVector right) {
+    protected RDoubleVector access(VirtualFrame frame, RLogicalVector left, RDoubleVector right) {
         leftNACheck.enable(left);
         return doDouble(frame, RClosures.createLogicalToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplexVector right) {
+    protected RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplexVector right) {
         leftNACheck.enable(left);
         return doComplex(frame, RClosures.createLogicalToComplexVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RLogicalVector left, RStringVector right) {
+    protected RStringVector access(VirtualFrame frame, RLogicalVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RIntVector
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RIntVector left, RNull right) {
+    protected RIntVector access(VirtualFrame frame, RIntVector left, RNull right) {
         return doInt(frame, left, RDataFactory.createEmptyIntVector());
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RIntVector left, byte right) {
+    protected RIntVector access(VirtualFrame frame, RIntVector left, byte right) {
         return doInt(frame, left, rightNACheck.convertLogicalToInt(right));
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RIntVector left, int right) {
+    protected RIntVector access(VirtualFrame frame, RIntVector left, int right) {
         return doInt(frame, left, right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RIntVector left, double right) {
+    protected RDoubleVector access(VirtualFrame frame, RIntVector left, double right) {
         return doDouble(frame, RClosures.createIntToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RIntVector left, RComplex right) {
+    protected RComplexVector access(VirtualFrame frame, RIntVector left, RComplex right) {
         return doComplex(frame, RClosures.createIntToComplexVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RIntVector left, String right) {
+    protected RStringVector access(VirtualFrame frame, RIntVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RIntVector left, RLogicalVector right) {
+    protected RIntVector access(VirtualFrame frame, RIntVector left, RLogicalVector right) {
         return doInt(frame, left, RClosures.createLogicalToIntVector(right, rightNACheck).materialize());
     }
 
     @Specialization
-    public RIntVector access(VirtualFrame frame, RIntVector left, RIntVector right) {
+    protected RIntVector access(VirtualFrame frame, RIntVector left, RIntVector right) {
         return doInt(frame, left, right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RIntVector left, RDoubleVector right) {
+    protected RDoubleVector access(VirtualFrame frame, RIntVector left, RDoubleVector right) {
         return doDouble(frame, RClosures.createIntToDoubleVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RIntVector left, RComplexVector right) {
+    protected RComplexVector access(VirtualFrame frame, RIntVector left, RComplexVector right) {
         return doComplex(frame, RClosures.createIntToComplexVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RIntVector left, RStringVector right) {
+    protected RStringVector access(VirtualFrame frame, RIntVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RDoubleVector
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RNull right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, RNull right) {
         return doDouble(frame, left, RDataFactory.createEmptyDoubleVector());
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, byte right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, byte right) {
         return doDouble(frame, left, rightNACheck.convertLogicalToDouble(right));
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, int right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, int right) {
         return doDouble(frame, left, rightNACheck.convertIntToDouble(right));
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, double right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, double right) {
         return doDouble(frame, left, right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplex right) {
+    protected RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplex right) {
         return doComplex(frame, RClosures.createDoubleToComplexVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RDoubleVector left, String right) {
+    protected RStringVector access(VirtualFrame frame, RDoubleVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RLogicalVector right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, RLogicalVector right) {
         return doDouble(frame, left, RClosures.createLogicalToDoubleVector(right, rightNACheck).materialize());
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RIntVector right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, RIntVector right) {
         return doDouble(frame, left, RClosures.createIntToDoubleVector(right, rightNACheck).materialize());
     }
 
     @Specialization
-    public RDoubleVector access(VirtualFrame frame, RDoubleVector left, RDoubleVector right) {
+    protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, RDoubleVector right) {
         return doDouble(frame, left, right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplexVector right) {
+    protected RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplexVector right) {
         return doComplex(frame, RClosures.createDoubleToComplexVector(left, leftNACheck).materialize(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RDoubleVector left, RStringVector right) {
+    protected RStringVector access(VirtualFrame frame, RDoubleVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RComplexVector
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, RNull right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, RNull right) {
         return doComplex(frame, left, RDataFactory.createEmptyComplexVector());
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, byte right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, byte right) {
         return doComplex(frame, left, rightNACheck.convertLogicalToComplex(right));
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, int right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, int right) {
         return doComplex(frame, left, rightNACheck.convertIntToComplex(right));
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, double right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, double right) {
         return doComplex(frame, left, rightNACheck.convertDoubleToComplex(right));
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, RComplex right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, RComplex right) {
         return doComplex(frame, left, right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RComplexVector left, String right) {
+    protected RStringVector access(VirtualFrame frame, RComplexVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, RLogicalVector right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, RLogicalVector right) {
         return doComplex(frame, left, RClosures.createLogicalToComplexVector(right, rightNACheck).materialize());
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, RIntVector right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, RIntVector right) {
         return doComplex(frame, left, RClosures.createIntToComplexVector(right, rightNACheck).materialize());
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, RDoubleVector right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, RDoubleVector right) {
         return doComplex(frame, left, RClosures.createDoubleToComplexVector(right, rightNACheck).materialize());
     }
 
     @Specialization
-    public RComplexVector access(VirtualFrame frame, RComplexVector left, RComplexVector right) {
+    protected RComplexVector access(VirtualFrame frame, RComplexVector left, RComplexVector right) {
         return doComplex(frame, left, right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RComplexVector left, RStringVector right) {
+    protected RStringVector access(VirtualFrame frame, RComplexVector left, RStringVector right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     // Left side is RStringVector
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RNull right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RNull right) {
         return doString(frame, left, RDataFactory.createEmptyStringVector());
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, byte right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, byte right) {
         return doString(frame, left, rightNACheck.convertLogicalToString(right));
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, int right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, int right) {
         return doString(frame, left, rightNACheck.convertIntToString(right));
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, double right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, double right) {
         return doString(frame, left, rightNACheck.convertDoubleToString(right));
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RComplex right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RComplex right) {
         return doString(frame, left, rightNACheck.convertComplexToString(right));
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, String right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, String right) {
         return doString(frame, left.toStringVector(), right);
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RLogicalVector right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RLogicalVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RIntVector right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RIntVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RDoubleVector right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RDoubleVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RComplexVector right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RComplexVector right) {
         return doString(frame, left, right.toStringVector());
     }
 
     @Specialization
-    public RStringVector access(VirtualFrame frame, RStringVector left, RStringVector right) {
+    protected RStringVector access(VirtualFrame frame, RStringVector left, RStringVector right) {
         return doString(frame, left, right);
     }
 
     // left side is RList
 
     @Specialization
-    public RAbstractVector access(VirtualFrame frame, RList left, RAbstractVector right) {
+    protected RAbstractVector access(VirtualFrame frame, RList left, RAbstractVector right) {
         return doList(frame, left, right);
     }
 
     @Specialization
-    public RAbstractVector access(VirtualFrame frame, RList left, RNull right) {
+    protected RAbstractVector access(VirtualFrame frame, RList left, RNull right) {
         return doList(frame, left, right);
     }
 
@@ -542,79 +542,79 @@ public abstract class CoerceBinaryNode extends RNode {
         protected abstract NACheck getNACheck();
 
         @Specialization
-        public int doInt(int operand) {
+        protected int doInt(int operand) {
             getNACheck().enable(RRuntime.isNA(operand));
             return operand;
         }
 
         @Specialization
-        public double doDouble(double operand) {
+        protected double doDouble(double operand) {
             getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
-        public RComplex doComplex(RComplex operand) {
+        protected RComplex doComplex(RComplex operand) {
             getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
-        public byte doBoolean(byte operand) {
+        protected byte doBoolean(byte operand) {
             getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
-        public String doString(String operand) {
+        protected String doString(String operand) {
             getNACheck().enable(operand);
             return operand;
         }
 
         @Specialization
-        public RIntVector doIntVector(RIntSequence operand) {
+        protected RIntVector doIntVector(RIntSequence operand) {
             // NACheck may keep disabled.
             return (RIntVector) operand.createVector();
         }
 
         @Specialization
-        public RIntVector doIntVector(RIntVector operand) {
+        protected RIntVector doIntVector(RIntVector operand) {
             getNACheck().enable(!operand.isComplete());
             return operand;
         }
 
         @Specialization
-        public RDoubleVector doDoubleVector(RDoubleVector operand) {
+        protected RDoubleVector doDoubleVector(RDoubleVector operand) {
             getNACheck().enable(!operand.isComplete());
             return operand;
         }
 
         @Specialization
-        public RComplexVector doComplexVector(RComplexVector operand) {
+        protected RComplexVector doComplexVector(RComplexVector operand) {
             getNACheck().enable(!operand.isComplete());
             return operand;
         }
 
         @Specialization
-        public RLogicalVector doLogicalVector(RLogicalVector operand) {
+        protected RLogicalVector doLogicalVector(RLogicalVector operand) {
             getNACheck().enable(!operand.isComplete());
             return operand;
         }
 
         @Specialization
-        public RStringVector doStringVector(RStringVector operand) {
+        protected RStringVector doStringVector(RStringVector operand) {
             getNACheck().enable(!operand.isComplete());
             return operand;
         }
 
         @Specialization
-        public RList doList(RList operand) {
+        protected RList doList(RList operand) {
             getNACheck().enable(!operand.isComplete());
             return operand;
         }
 
         @Specialization
-        public RNull doNull(RNull operand) {
+        protected RNull doNull(RNull operand) {
             return operand;
         }
     }
@@ -630,84 +630,84 @@ public abstract class CoerceBinaryNode extends RNode {
         BranchProfile seenShared = new BranchProfile();
 
         @Specialization
-        public RNull doNull(RNull operand) {
+        protected RNull doNull(RNull operand) {
             return operand;
         }
 
         @Specialization
-        public RIntVector doInt(int operand) {
+        protected RIntVector doInt(int operand) {
             getNACheck().enable(RRuntime.isNA(operand));
             return RDataFactory.createIntVectorFromScalar(operand);
         }
 
         @Specialization
-        public RDoubleVector doDouble(double operand) {
+        protected RDoubleVector doDouble(double operand) {
             getNACheck().enable(operand);
             return RDataFactory.createDoubleVectorFromScalar(operand);
         }
 
         @Specialization
-        public RComplexVector doComplex(RComplex operand) {
+        protected RComplexVector doComplex(RComplex operand) {
             getNACheck().enable(operand);
             return RDataFactory.createComplexVectorFromScalar(operand);
         }
 
         @Specialization
-        public RLogicalVector doBoolean(byte operand) {
+        protected RLogicalVector doBoolean(byte operand) {
             getNACheck().enable(operand);
             return RDataFactory.createLogicalVector(operand);
         }
 
         @Specialization
-        public RStringVector doString(String operand) {
+        protected RStringVector doString(String operand) {
             getNACheck().enable(operand);
             return RDataFactory.createStringVector(operand);
         }
 
         @Specialization
-        public RDoubleVector doDoubleVector(RDoubleSequence operand) {
+        protected RDoubleVector doDoubleVector(RDoubleSequence operand) {
             // NACheck may keep disabled.
             return (RDoubleVector) operand.createVector();
         }
 
         @Specialization
-        public RIntVector doIntVector(RIntSequence operand) {
+        protected RIntVector doIntVector(RIntSequence operand) {
             // NACheck may keep disabled.
             return (RIntVector) operand.createVector();
         }
 
         @Specialization
-        public RIntVector doIntVector(RIntVector operand) {
+        protected RIntVector doIntVector(RIntVector operand) {
             getNACheck().enable(!operand.isComplete());
             return doVector(operand);
         }
 
         @Specialization
-        public RDoubleVector doDoubleVector(RDoubleVector operand) {
+        protected RDoubleVector doDoubleVector(RDoubleVector operand) {
             getNACheck().enable(!operand.isComplete());
             return doVector(operand);
         }
 
         @Specialization
-        public RComplexVector doComplexVector(RComplexVector operand) {
+        protected RComplexVector doComplexVector(RComplexVector operand) {
             getNACheck().enable(!operand.isComplete());
             return doVector(operand);
         }
 
         @Specialization
-        public RLogicalVector doLogicalVector(RLogicalVector operand) {
+        protected RLogicalVector doLogicalVector(RLogicalVector operand) {
             getNACheck().enable(!operand.isComplete());
             return doVector(operand);
         }
 
         @Specialization
-        public RStringVector doStringVector(RStringVector operand) {
+        protected RStringVector doStringVector(RStringVector operand) {
             getNACheck().enable(!operand.isComplete());
             return doVector(operand);
         }
 
         @Specialization
-        public RList doList(RList operand) {
+        protected RList doList(RList operand) {
             getNACheck().enable(!operand.isComplete());
             return doVector(operand);
         }

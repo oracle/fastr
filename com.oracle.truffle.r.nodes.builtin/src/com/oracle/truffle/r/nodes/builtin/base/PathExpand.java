@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class PathExpand extends RBuiltinNode {
 
     @Specialization
-    public Object doPathExpand(RAbstractStringVector vec) {
+    protected Object doPathExpand(RAbstractStringVector vec) {
         controlVisibility();
         String[] results = new String[vec.getLength()];
         for (int i = 0; i < results.length; i++) {
@@ -46,7 +46,7 @@ public abstract class PathExpand extends RBuiltinNode {
     }
 
     @Specialization
-    public Object doPathExpandGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
+    protected Object doPathExpandGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
     }

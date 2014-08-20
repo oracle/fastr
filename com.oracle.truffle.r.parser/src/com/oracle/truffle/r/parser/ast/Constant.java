@@ -12,7 +12,6 @@ package com.oracle.truffle.r.parser.ast;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -29,13 +28,13 @@ public class Constant extends ASTNode {
         NULL
     }
 
-    final String[] values;
-    final ConstantType type;
+    private final String[] values;
+    private final ConstantType type;
 
-    public Constant(String[] values, ConstantType type, SourceSection source) {
+    private Constant(String[] values, ConstantType type, SourceSection source) {
+        super(source);
         this.values = values;
         this.type = type;
-        this.source = source;
     }
 
     public String[] getValues() {
@@ -76,7 +75,6 @@ public class Constant extends ASTNode {
         return new Constant(values, ConstantType.INT, src);
     }
 
-    @SlowPath
     public static Constant createBoolConstant(SourceSection src, int value) {
         String strValue;
         if (value == RRuntime.LOGICAL_NA) {
@@ -99,5 +97,4 @@ public class Constant extends ASTNode {
     public void addNegativeSign() {
         values[0] = "-" + values[0];
     }
-
 }

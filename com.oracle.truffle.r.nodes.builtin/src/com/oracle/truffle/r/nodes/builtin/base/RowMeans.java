@@ -43,7 +43,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector rowMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         boolean isComplete = true;
@@ -69,7 +69,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector rowMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         boolean isComplete = true;
@@ -95,7 +95,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector rowMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -115,7 +115,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector rowMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         boolean isComplete = true;
@@ -141,7 +141,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector rowMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         na.enable(x);
@@ -161,7 +161,7 @@ public abstract class RowMeans extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector rowMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector rowMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[rowNum];
         boolean isComplete = true;
@@ -188,7 +188,7 @@ public abstract class RowMeans extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RDoubleVector rowMeans(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector rowMeans(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }

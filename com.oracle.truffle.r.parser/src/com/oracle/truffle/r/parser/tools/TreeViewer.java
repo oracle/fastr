@@ -18,9 +18,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.parser.ast.*;
-
 public class TreeViewer extends JTree {
 
     private static final long serialVersionUID = 1L;
@@ -28,31 +25,44 @@ public class TreeViewer extends JTree {
     private static Map<Class<?>, Field[]> fieldsForClass = new LinkedHashMap<>();
 
     private static TreeViewer treeViewer;
+    private static final Object[] roots = new Object[100];
 
-    public static void showTree(ASTNode root) {
+    public static void showTree(Object root) {
+        System.arraycopy(roots, 0, roots, 1, roots.length - 1);
+        roots[0] = root;
         if (treeViewer == null) {
-            treeViewer = new TreeViewer("Basic Tree viewer (using reflection)", root);
+            try {
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+                e.printStackTrace();
+            }
+            treeViewer = new TreeViewer("Basic Tree viewer (using reflection)");
         } else {
-            treeViewer.setRoot(root);
+            treeViewer.updateRoots();
         }
     }
 
-    ASTNode root;
-    JFrame frame;
+    private JFrame frame;
 
     private static Field[] getFieldsFor(Class<?> clazz) {
+        if (clazz.getName().startsWith("java.lang.") || Enum.class.isAssignableFrom(clazz)) {
+            return new Field[0];
+        }
         if (fieldsForClass.containsKey(clazz)) {
             return fieldsForClass.get(clazz);
         }
         Class<?> current = clazz;
         ArrayList<Field> fields = new ArrayList<>();
-        while (current != ASTNode.class) {
-            Field[] f = current.getDeclaredFields();
-            for (int i = 0; i < f.length; i++) {
-                if (ASTNode.class.isAssignableFrom(f[i].getType())) {
-                    f[i].setAccessible(true);
-                    fields.add(f[i]);
+        while (current != Object.class) {
+            for (Field f : current.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers()) || Modifier.isSynchronized(f.getModifiers())) {
+                    continue;
                 }
+                if (f.getName().equals("parent") || f.getName().equals("source")) {
+                    continue;
+                }
+                f.setAccessible(true);
+                fields.add(f);
             }
             current = current.getSuperclass();
         }
@@ -61,16 +71,15 @@ public class TreeViewer extends JTree {
         return res;
     }
 
-    void setRoot(ASTNode newRoot) {
-        root = newRoot;
+    private void updateRoots() {
         setModel(newModel());
         treeDidChange();
         frame.setVisible(true);
     }
 
-    public TreeViewer(String title, ASTNode node) {
-        super();
-
+    public TreeViewer(String title) {
+        setRootVisible(false);
+        setShowsRootHandles(true);
         frame = new JFrame(title);
         JScrollPane scrollPane = new JScrollPane(this);
 
@@ -83,55 +92,56 @@ public class TreeViewer extends JTree {
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
-
-        setRoot(node);
+        frame.setSize(800, 400);
 
         frame.setVisible(true);
     }
 
-    @Override
-    @SlowPath
-    public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        StringBuffer res = new StringBuffer();
-        if (hasFocus) {
-            ASTNode parent = ((ASTNode) value).getParent();
-            if (parent != null) {
-                for (Field f : getFieldsFor(parent.getClass())) {
-                    try {
-                        if (f.get(parent) == value) {
-                            res.append('[');
-                            res.append(f.getName());
-                            res.append("] ");
-                            break;
-                        }
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        res.append(value.getClass().getSimpleName());
-        res.append(": ");
-        res.append(value.toString());
-        if (!hasFocus) {
-            res.append("                        ");
-        }
-        return res.toString();
+    private static final class Node {
+        public final String text;
+        public final Object value;
 
+        public Node(String text, Object value) {
+            if (value instanceof Object[]) {
+                this.text = text + " = " + value.getClass().getComponentType().getSimpleName() + "[" + ((Object[]) value).length + "]";
+            } else {
+                String valueString = String.valueOf(value);
+                if (valueString.length() > 80) {
+                    valueString = valueString.substring(0, 80) + "...";
+                }
+                this.text = text + " = " + (value == null ? "null" : ("\"" + valueString + "\" (" + value.getClass().getSimpleName() + ")"));
+            }
+            this.value = value;
+        }
     }
 
-    private TreeModel newModel() {
+    @Override
+    public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        if (value instanceof Node) {
+            return ((Node) value).text;
+        } else {
+            return String.valueOf(value);
+        }
+    }
+
+    private static TreeModel newModel() {
         return new TreeModel() {
 
             @Override
             public Object getRoot() {
-                return root;
+                return new Node("root", roots);
             }
 
             @Override
             public Object getChild(Object parent, int index) {
+                Object parentValue = ((Node) parent).value;
                 try {
-                    return getFieldsFor(parent.getClass())[index].get(parent);
+                    if (parentValue instanceof Object[]) {
+                        return new Node("[" + index + "]", ((Object[]) parentValue)[index]);
+                    } else {
+                        Field field = getFieldsFor(parentValue.getClass())[index];
+                        return new Node(field.getName(), field.get(parentValue));
+                    }
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -140,7 +150,14 @@ public class TreeViewer extends JTree {
 
             @Override
             public int getChildCount(Object parent) {
-                return getFieldsFor(parent.getClass()).length;
+                Object parentValue = ((Node) parent).value;
+                if (parentValue instanceof Object[]) {
+                    return ((Object[]) parentValue).length;
+                } else if (parentValue != null) {
+                    return getFieldsFor(parentValue.getClass()).length;
+                } else {
+                    return 0;
+                }
             }
 
             @Override
@@ -154,13 +171,28 @@ public class TreeViewer extends JTree {
 
             @Override
             public int getIndexOfChild(Object parent, Object child) {
-                int i = 0;
-                Field[] fields = getFieldsFor(parent.getClass());
-                for (Field field : fields) {
-                    if (field == child) {
-                        return i;
+                Object parentValue = ((Node) parent).value;
+                Object childValue = ((Node) child).value;
+                if (parentValue instanceof Object[]) {
+                    Object[] array = (Object[]) parentValue;
+                    for (int i = 0; i < array.length; i++) {
+                        if (array[i] == childValue) {
+                            return i;
+                        }
                     }
-                    i++;
+                } else {
+                    int i = 0;
+                    Field[] fields = getFieldsFor(parentValue.getClass());
+                    for (Field field : fields) {
+                        try {
+                            if (field.get(parentValue) == childValue) {
+                                return i;
+                            }
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            e.printStackTrace();
+                        }
+                        i++;
+                    }
                 }
                 return -1;
             }

@@ -37,17 +37,17 @@ public abstract class ConvertIntExact extends UnaryNode {
     public abstract int executeInteger(VirtualFrame frame, Object operand);
 
     @Specialization
-    public int doInt(int operand) {
+    protected int doInt(int operand) {
         return operand;
     }
 
     @Specialization
-    public int doLogical(byte operand) {
+    protected int doLogical(byte operand) {
         return RRuntime.logical2int(operand);
     }
 
     @Specialization
-    public double doInt(RIntVector operand) {
+    protected double doInt(RIntVector operand) {
         if (operand.getLength() == 1) {
             return operand.getDataAt(0);
         } else {

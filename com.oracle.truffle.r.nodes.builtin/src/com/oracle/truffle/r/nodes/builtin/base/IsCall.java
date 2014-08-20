@@ -21,7 +21,7 @@ public abstract class IsCall extends IsTypeNode {
 
     @Override
     @Specialization
-    public byte isType(RLanguage lang) {
+    protected byte isType(RLanguage lang) {
         return RRuntime.LOGICAL_TRUE;
     }
 }

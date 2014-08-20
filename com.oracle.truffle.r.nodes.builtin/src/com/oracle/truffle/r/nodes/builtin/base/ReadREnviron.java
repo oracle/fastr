@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector")
-    public Object doReadEnviron(VirtualFrame frame, RAbstractStringVector vec) {
+    protected Object doReadEnviron(VirtualFrame frame, RAbstractStringVector vec) {
         controlVisibility();
         String path = Utils.tildeExpand(vec.getDataAt(0));
         byte result = RRuntime.LOGICAL_TRUE;

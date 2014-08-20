@@ -35,7 +35,7 @@ public abstract class RepeatLength extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public RNull repLen(RNull value, int length) {
+    protected RNull repLen(RNull value, int length) {
         controlVisibility();
         return RNull.instance;
     }
@@ -44,7 +44,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     // Specialization for single values
     //
     @Specialization
-    public RRawVector repLen(RRaw value, int length) {
+    protected RRawVector repLen(RRaw value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
         Arrays.fill(array, value.getValue());
@@ -52,7 +52,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector repLen(int value, int length) {
+    protected RIntVector repLen(int value, int length) {
         controlVisibility();
         int[] array = new int[length];
         Arrays.fill(array, length);
@@ -60,7 +60,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector repLen(double value, int length) {
+    protected RDoubleVector repLen(double value, int length) {
         controlVisibility();
         double[] array = new double[length];
         Arrays.fill(array, value);
@@ -68,7 +68,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector repLen(String value, int length) {
+    protected RStringVector repLen(String value, int length) {
         controlVisibility();
         String[] array = new String[length];
         Arrays.fill(array, value);
@@ -76,7 +76,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector repLen(RComplex value, int length) {
+    protected RComplexVector repLen(RComplex value, int length) {
         controlVisibility();
         int complexLength = length * 2;
         double[] array = new double[complexLength];
@@ -88,7 +88,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector repLen(byte value, int length) {
+    protected RLogicalVector repLen(byte value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
         Arrays.fill(array, value);
@@ -99,7 +99,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     // Specialization for vector values
     //
     @Specialization
-    public RIntVector repLen(RAbstractIntVector value, int length) {
+    protected RIntVector repLen(RAbstractIntVector value, int length) {
         controlVisibility();
         int[] array = new int[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
@@ -109,7 +109,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector repLen(RDoubleVector value, int length) {
+    protected RDoubleVector repLen(RDoubleVector value, int length) {
         controlVisibility();
         double[] array = new double[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
@@ -119,7 +119,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector repLen(RStringVector vectorToRepeat, int length) {
+    protected RStringVector repLen(RStringVector vectorToRepeat, int length) {
         controlVisibility();
         String[] result = new String[length];
         int vectorToRepeatLength = vectorToRepeat.getLength();
@@ -130,7 +130,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector repLen(RRawVector value, int length) {
+    protected RRawVector repLen(RRawVector value, int length) {
         controlVisibility();
         byte[] array = new byte[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
@@ -140,7 +140,7 @@ public abstract class RepeatLength extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector repLen(RComplexVector value, int length) {
+    protected RComplexVector repLen(RComplexVector value, int length) {
         controlVisibility();
         final int resultLength = length * 2;
         double[] array = new double[resultLength];

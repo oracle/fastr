@@ -25,7 +25,7 @@ public abstract class IsFactorNode extends UnaryNode {
     public abstract byte execute(VirtualFrame frame, Object x);
 
     @Specialization
-    public byte isFactor(VirtualFrame frame, Object x) {
+    protected byte isFactor(VirtualFrame frame, Object x) {
         if (typeofNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             typeofNode = insert(TypeofNodeFactory.create(null));

@@ -54,7 +54,7 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     @Specialization
-    public Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
+    protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
         controlVisibility();
         // In the global environment, substitute behaves like quote
         REnvironment env = REnvironment.checkNonFunctionFrame(frame);
@@ -117,7 +117,7 @@ public abstract class Substitute extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public String doSubstitute(VirtualFrame frame, RPromise expr, REnvironment env) {
+    protected String doSubstitute(VirtualFrame frame, RPromise expr, REnvironment env) {
         controlVisibility();
         throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr, env)");
     }

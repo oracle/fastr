@@ -45,14 +45,14 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object onExit(@SuppressWarnings("unused") RPromise expr, @SuppressWarnings("unused") byte add) {
+    protected Object onExit(@SuppressWarnings("unused") RPromise expr, @SuppressWarnings("unused") byte add) {
         controlVisibility();
         RContext.getInstance().setEvalWarning("on.exit ignored");
         return RNull.instance;
     }
 
     @Specialization
-    public Object onExit(@SuppressWarnings("unused") RNull expr, @SuppressWarnings("unused") byte add) {
+    protected Object onExit(@SuppressWarnings("unused") RNull expr, @SuppressWarnings("unused") byte add) {
         controlVisibility();
         RContext.getInstance().setEvalWarning("on.exit ignored");
         return RNull.instance;

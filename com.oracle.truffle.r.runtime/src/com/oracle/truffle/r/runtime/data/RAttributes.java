@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -46,6 +46,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         Object getValue();
     }
 
+    @ValueType
     private static class AttrInstance implements RAttribute {
         private String name;
         private Object value;
@@ -69,7 +70,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         public String toString() {
             return name + "=" + value;
         }
-
     }
 
     public abstract void put(String name, Object value);
@@ -340,7 +340,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         private int maxSize;
 
         RAttributesStatsImpl() {
-            super();
             hist[0]++;
         }
 
@@ -397,5 +396,4 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
     }
-
 }
