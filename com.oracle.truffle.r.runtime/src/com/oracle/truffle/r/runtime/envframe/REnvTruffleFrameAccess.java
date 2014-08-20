@@ -38,13 +38,8 @@ import com.oracle.truffle.r.runtime.data.*;
 public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     private MaterializedFrame frame;
-    private Object id;
 
     public REnvTruffleFrameAccess(VirtualFrame frame) {
-        this.id = new Object();
-        FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot idSlot = fd.addFrameSlot(id);
-        frame.setObject(idSlot, id);
         this.frame = frame.materialize();
     }
 
@@ -130,11 +125,6 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     protected Set<String> getBindingsForLock() {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    public Object id() {
-        return id;
     }
 
     private static String[] getStringIdentifiers(FrameDescriptor fd) {

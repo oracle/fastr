@@ -193,7 +193,7 @@ public class EnvFunctions {
                 RFunction func = (RFunction) funcArg;
                 Frame enclosing = func.getEnclosingFrame();
                 REnvironment env = RArguments.getEnvironment(enclosing);
-                return env == null ? REnvironment.lexicalChain(enclosing.materialize()) : env;
+                return env == null ? REnvironment.createEnclosingEnvironments(enclosing.materialize()) : env;
             } else {
                 // Not an error according to GnuR
                 return RNull.instance;

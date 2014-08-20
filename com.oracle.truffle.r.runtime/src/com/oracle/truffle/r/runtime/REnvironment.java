@@ -73,6 +73,10 @@ import com.oracle.truffle.r.runtime.envframe.*;
  * "imports" environment. The parent of "package:base" is the empty environment, but the parent of
  * "namespace:base" is the global environment.
  *
+ * Whereas R types generally use value semantics environments do not; they have reference semantics.
+ * In particular in FastR, there is exactly one environment created for any package or function
+ * Truffle frame, allowing equality to be tested using {@code ==}.
+ *
  * TODO retire the {@code Package}, {@code Namespace} and {@code Imports} classes as they are only
  * used by the builtin packages, and will be completely redundant when they are loaded from
  * serialized package meta-data as will happen in due course.
@@ -145,19 +149,14 @@ public abstract class REnvironment implements RAttributable {
      * Returns {@code true} iff {@code frame} is that associated with {@code env}.
      */
     public static boolean isFrameForEnv(Frame frame, REnvironment env) {
-        Object id = env.frameAccess.id();
-        if (id == null) {
-            return false;
+        REnvironment frameEnv = RArguments.getEnvironment(frame);
+        if (frameEnv == env) {
+            return true;
         }
-        FrameSlot idSlot = frame.getFrameDescriptor().findFrameSlot(id);
-        if (idSlot == null) {
-            return false;
+        if (frameEnv == null) {
+            frameEnv = createEnclosingEnvironments(frame.materialize());
         }
-        try {
-            return frame.getObject(idSlot) == id;
-        } catch (FrameSlotTypeException fste) {
-            return false;
-        }
+        return frameEnv == env;
     }
 
     /**
@@ -183,7 +182,7 @@ public abstract class REnvironment implements RAttributable {
     /**
      * Check whether the given frame is indeed the frame stored in the global environment.
      */
-    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
+    public static boolean isGlobalEnvFrame(Frame frame) {
         return isFrameForEnv(frame, globalEnv);
     }
 
@@ -425,31 +424,14 @@ public abstract class REnvironment implements RAttributable {
     }
 
     /**
-     * Check if a frame corresponds to a function. If there is no function associated with the
-     * frame, then is it one of the package environments. Fortunately, we do not have to do a search
-     * as, in this case, the {@link REnvironment} value is also stored in the frame.
-     *
-     * @return ({code null) if this is a function frame, else the associated environment
-     */
-    public static REnvironment checkNonFunctionFrame(Frame frame) {
-        RFunction callerFunc = RArguments.getFunction(frame);
-        if (callerFunc == null) {
-            REnvironment env = RArguments.getEnvironment(frame);
-            assert env != null;
-            return env;
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * Converts a {@link Frame} to an {@link REnvironment}, which necessarily requires the frame to
      * be materialized.
      */
     public static REnvironment frameToEnvironment(MaterializedFrame frame) {
-        REnvironment env = checkNonFunctionFrame(frame);
+        REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
-            env = lexicalChain(frame);
+            assert RArguments.getFunction(frame) != null;
+            env = createEnclosingEnvironments(frame);
         }
         return env;
     }
@@ -464,11 +446,11 @@ public abstract class REnvironment implements RAttributable {
      * {@link MaterializedFrame}.
      */
     @SlowPath
-    public static REnvironment lexicalChain(MaterializedFrame frame) {
-        REnvironment env = checkNonFunctionFrame(frame);
+    public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
+        REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
             // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame);
+            env = REnvironment.Function.create(createEnclosingEnvironments(RArguments.getEnclosingFrame(frame)), frame);
         }
         return env;
     }
@@ -842,10 +824,15 @@ public abstract class REnvironment implements RAttributable {
         private Function(REnvironment parent, MaterializedFrame frame) {
             // function environments are not named
             super(parent, UNNAMED, frame);
+            // Associate frame with the environment
+            RArguments.setEnvironment(frame, this);
         }
 
         private static Function create(REnvironment parent, MaterializedFrame frame) {
-            Function result = new Function(parent, frame);
+            Function result = (Function) RArguments.getEnvironment(frame);
+            if (result == null) {
+                result = new Function(parent, frame);
+            }
             return result;
         }
 
