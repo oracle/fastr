@@ -28,7 +28,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 
 @TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends Node {
@@ -40,20 +39,20 @@ public abstract class FrameSlotNode extends Node {
         throw new UnsupportedOperationException();
     }
 
-    static FrameSlot findFrameSlot(Frame frame, Object symbol) {
-        return frame.getFrameDescriptor().findFrameSlot(RRuntime.toString(symbol));
+    static FrameSlot findFrameSlot(Frame frame, String name) {
+        return frame.getFrameDescriptor().findFrameSlot(name);
     }
 
-    static Assumption getAssumption(Frame frame, Object symbol) {
-        return frame.getFrameDescriptor().getNotInFrameAssumption(RRuntime.toString(symbol));
+    static Assumption getAssumption(Frame frame, String name) {
+        return frame.getFrameDescriptor().getNotInFrameAssumption(name);
     }
 
     public static final class UnresolvedFrameSlotNode extends FrameSlotNode {
 
-        private final Object symbol;
+        private final String name;
 
-        public UnresolvedFrameSlotNode(Object symbol) {
-            this.symbol = symbol;
+        public UnresolvedFrameSlotNode(String name) {
+            this.name = name;
         }
 
         @Override
@@ -64,11 +63,11 @@ public abstract class FrameSlotNode extends Node {
 
         private FrameSlotNode resolveFrameSlot(Frame frame) {
             final FrameSlotNode newNode;
-            final FrameSlot frameSlot = findFrameSlot(frame, symbol);
+            final FrameSlot frameSlot = findFrameSlot(frame, name);
             if (frameSlot != null) {
                 newNode = new PresentFrameSlotNode(frameSlot);
             } else {
-                newNode = new AbsentFrameSlotNode(getAssumption(frame, symbol), symbol);
+                newNode = new AbsentFrameSlotNode(getAssumption(frame, name), name);
             }
             return replace(newNode);
         }
@@ -77,11 +76,11 @@ public abstract class FrameSlotNode extends Node {
     public static final class AbsentFrameSlotNode extends FrameSlotNode {
 
         @CompilationFinal private Assumption assumption;
-        private final Object symbol;
+        private final String name;
 
-        public AbsentFrameSlotNode(Assumption assumption, Object symbol) {
+        public AbsentFrameSlotNode(Assumption assumption, String name) {
             this.assumption = assumption;
-            this.symbol = symbol;
+            this.name = name;
         }
 
         @Override
@@ -89,7 +88,7 @@ public abstract class FrameSlotNode extends Node {
             try {
                 assumption.check();
             } catch (InvalidAssumptionException e) {
-                final FrameSlot frameSlot = findFrameSlot(frame, symbol);
+                final FrameSlot frameSlot = findFrameSlot(frame, name);
                 if (frameSlot != null) {
                     return replace(new PresentFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
                 } else {

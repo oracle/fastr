@@ -272,8 +272,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (enclosingFrame != null) {
-                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol)
-                                : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol);
+                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol)
+                                : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol);
                 ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, mode, copyValue), mode);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
@@ -297,7 +297,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             ReadVariableNode readNode;
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
-                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol);
+                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol);
                 readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, mode, copyValue), mode);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
@@ -315,7 +315,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     assumptions = null;
                     break;
                 }
-                assumptions.add(FrameSlotNode.getAssumption(currentFrame, symbol));
+                assumptions.add(FrameSlotNode.getAssumption(currentFrame, symbol.getName()));
                 currentFrame = RArguments.getEnclosingFrame(currentFrame);
             } while (currentFrame != null);
             return assumptions;
@@ -425,7 +425,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             controlVisibility();
-            node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol));
+            node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol));
             if (node.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = node.execute(frame);
                 if (checkType(result, mode)) {
