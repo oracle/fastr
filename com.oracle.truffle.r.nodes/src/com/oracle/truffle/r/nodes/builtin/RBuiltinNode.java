@@ -71,7 +71,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
      *
      * TODO This should go away once all builtins are converted to annotation based specification.
      */
-    protected Object[] getParameterNames() {
+    protected String[] getParameterNames() {
         RBuiltin builtin = getRBuiltin();
         return builtin == null ? null : builtin.parameterNames();
     }

@@ -43,7 +43,7 @@ public class IsListFunctions {
         private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
         @Override
-        public Object[] getParameterNames() {
+        public String[] getParameterNames() {
             return PARAMETER_NAMES;
         }
 
