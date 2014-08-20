@@ -160,7 +160,7 @@ public class ArgumentMatcher {
             if (rvnArg instanceof ReadVariableNode) {
                 ReadVariableNode rvn = (ReadVariableNode) rvnArg;
                 Symbol symbol = rvn.getSymbol();
-                if (RMissingHelper.isMissingArgument(frame, symbol)) {
+                if (RMissingHelper.isMissingArgument(frame.materialize(), symbol)) {
                     suppliedEvaled[i] = null;
                     continue;
                 }
