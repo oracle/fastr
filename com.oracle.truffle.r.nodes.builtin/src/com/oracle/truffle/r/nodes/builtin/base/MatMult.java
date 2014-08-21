@@ -90,7 +90,8 @@ public abstract class MatMult extends RBuiltinNode {
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
         double[] result = new double[aRows * bCols];
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         for (int row = 0; row < aRows; ++row) {
             for (int col = 0; col < bCols; ++col) {
                 double x = 0.0;
@@ -111,7 +112,8 @@ public abstract class MatMult extends RBuiltinNode {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         double result = 0.0;
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         for (int k = 0; k < a.getLength(); ++k) {
             result = add.doDouble(result, mult.doDouble(a.getDataAt(k), b.getDataAt(k)));
             na.check(result);
@@ -127,7 +129,8 @@ public abstract class MatMult extends RBuiltinNode {
         if (aCols != 1 && aCols != b.getLength()) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         if (aCols != 1) {
             double[] result = new double[aRows];
             for (int row = 0; row < aRows; ++row) {
@@ -160,7 +163,8 @@ public abstract class MatMult extends RBuiltinNode {
         if (bRows != 1 && bRows != a.getLength()) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         if (bRows != 1) {
             double[] result = new double[bCols];
             for (int k = 0; k < bCols; ++k) {
@@ -198,7 +202,8 @@ public abstract class MatMult extends RBuiltinNode {
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
         double[] result = new double[(aRows * bCols) << 1];
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         for (int row = 0; row < aRows; ++row) {
             for (int col = 0; col < bCols; ++col) {
                 RComplex x = RDataFactory.createComplexZero();
@@ -221,7 +226,8 @@ public abstract class MatMult extends RBuiltinNode {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
         RComplex result = RDataFactory.createComplexZero();
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         for (int k = 0; k < a.getLength(); ++k) {
             result = add.doComplex(result, mult.doComplex(a.getDataAt(k), b.getDataAt(k)));
             na.check(result);
@@ -237,7 +243,8 @@ public abstract class MatMult extends RBuiltinNode {
         if (aCols != 1 && aCols != b.getLength()) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         if (aCols != 1) {
             double[] result = new double[aRows << 1];
             for (int row = 0; row < aRows; ++row) {
@@ -272,7 +279,8 @@ public abstract class MatMult extends RBuiltinNode {
         if (bRows != 1 && bRows != a.getLength()) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         if (bRows != 1) {
             double[] result = new double[bCols << 1];
             for (int k = 0; k < bCols; ++k) {
@@ -312,7 +320,8 @@ public abstract class MatMult extends RBuiltinNode {
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
         int[] result = new int[aRows * bCols];
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         for (int row = 0; row < aRows; ++row) {
             for (int col = 0; col < bCols; ++col) {
                 int x = 0;
@@ -349,7 +358,8 @@ public abstract class MatMult extends RBuiltinNode {
         if (aCols != 1 && aCols != b.getLength()) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         if (aCols != 1) {
             int[] result = new int[aRows];
             for (int row = 0; row < aRows; ++row) {
@@ -382,7 +392,8 @@ public abstract class MatMult extends RBuiltinNode {
         if (bRows != 1 && bRows != a.getLength()) {
             throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
         }
-        na.enable(true);
+        na.enable(a);
+        na.enable(b);
         if (bRows != 1) {
             int[] result = new int[bCols];
             for (int k = 0; k < bCols; ++k) {

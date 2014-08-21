@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
@@ -58,10 +59,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
 
     @Specialization
     protected RLogicalVector combine(byte left, byte right) {
-        check.enable(true);
-        check.check(left);
-        check.check(right);
-        return RDataFactory.createLogicalVector(new byte[]{left, right}, check.neverSeenNA());
+        return RDataFactory.createLogicalVector(new byte[]{left, right}, !RRuntime.isNA(left) && !RRuntime.isNA(right));
     }
 
     @Specialization

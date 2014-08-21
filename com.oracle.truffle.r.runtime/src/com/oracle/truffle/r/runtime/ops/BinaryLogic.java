@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.ops;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class BinaryLogic extends BooleanOperation {
 
@@ -45,8 +44,6 @@ public abstract class BinaryLogic extends BooleanOperation {
     @RBuiltin(name = "|", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class OrBuiltin {
     }
-
-    protected NACheck nan = NACheck.create();
 
     public static final BooleanOperationFactory NON_VECTOR_AND = new BooleanOperationFactory() {
 
@@ -102,15 +99,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left)) {
+            if (RRuntime.isNA(left)) {
                 if (right == 0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.check(right)) {
+            if (RRuntime.isNA(right)) {
                 if (left == 0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
@@ -122,15 +118,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left)) {
+            if (RRuntime.isNAorNaN(left)) {
                 if (right == 0.0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(right)) {
                 if (left == 0.0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
@@ -217,15 +212,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left)) {
-                if (right != 0 && !nan.check(right)) {
+            if (RRuntime.isNA(left)) {
+                if (right != 0 && !RRuntime.isNA(right)) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.check(right)) {
+            if (RRuntime.isNA(right)) {
                 if (left != 0) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
@@ -237,15 +231,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left)) {
-                if (right != 0.0 && !nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left)) {
+                if (right != 0.0 && !RRuntime.isNAorNaN(right)) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(right)) {
                 if (left != 0.0) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
@@ -323,15 +316,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left)) {
+            if (RRuntime.isNA(left)) {
                 if (right == 0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.check(right)) {
+            if (RRuntime.isNA(right)) {
                 if (left == 0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
@@ -343,15 +335,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left)) {
+            if (RRuntime.isNAorNaN(left)) {
                 if (right == 0.0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(right)) {
                 if (left == 0.0) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
@@ -434,15 +425,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left)) {
+            if (RRuntime.isNA(left)) {
                 if (right != 0) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.check(right)) {
+            if (RRuntime.isNA(right)) {
                 if (left != 0) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
@@ -454,15 +444,14 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left)) {
+            if (RRuntime.isNAorNaN(left)) {
                 if (right != 0.0) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {
                     return RRuntime.LOGICAL_NA;
                 }
             }
-            if (nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(right)) {
                 if (left != 0.0) {
                     return RRuntime.LOGICAL_TRUE;
                 } else {

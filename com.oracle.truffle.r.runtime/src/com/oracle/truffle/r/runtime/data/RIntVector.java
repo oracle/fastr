@@ -59,6 +59,19 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return new RIntVector(Arrays.copyOf(data, data.length), isComplete(), null);
     }
 
+    public RIntVector copyResetData(int[] newData) {
+        boolean isComplete = true;
+        for (int i = 0; i < newData.length; ++i) {
+            if (RRuntime.isNA(newData[i])) {
+                isComplete = false;
+                break;
+            }
+        }
+        RIntVector result = new RIntVector(newData, isComplete, null);
+        setAttributes(result);
+        return result;
+    }
+
     @Override
     protected int internalGetLength() {
         return data.length;
@@ -180,11 +193,6 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
-    }
-
-    public RIntVector resetData(int[] newData) {
-        this.data = newData;
-        return this;
     }
 
     @Override

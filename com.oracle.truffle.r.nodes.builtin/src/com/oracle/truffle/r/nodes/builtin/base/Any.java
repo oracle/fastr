@@ -167,7 +167,6 @@ public abstract class Any extends RBuiltinNode {
     protected byte any(VirtualFrame frame, Object[] args) {
         controlVisibility();
         boolean seenNA = false;
-        check.enable(true);
         for (int i = 0; i < args.length; i++) {
             byte result;
             if (args[i] instanceof RVector || args[i] instanceof RSequence) {
@@ -175,7 +174,7 @@ public abstract class Any extends RBuiltinNode {
             } else {
                 result = any(castLogical(frame, args[i]));
             }
-            if (check.check(result)) {
+            if (RRuntime.isNA(result)) {
                 seenNA = true;
             } else if (result == RRuntime.LOGICAL_TRUE) {
                 return RRuntime.LOGICAL_TRUE;

@@ -71,7 +71,7 @@ public class SortFunctions {
                 for (int i = 0; i < data.length; i++) {
                     rdata[i] = data[data.length - (i + 1)];
                 }
-                result.resetData(rdata);
+                result = RDataFactory.createIntVector(rdata, RDataFactory.COMPLETE_VECTOR);
             }
             return result;
         }
