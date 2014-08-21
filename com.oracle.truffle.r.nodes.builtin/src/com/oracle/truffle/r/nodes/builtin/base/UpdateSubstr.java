@@ -51,7 +51,6 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     }
 
     protected String substr0(String x, int start, int stop, String value) {
-        na.enable(true);
         if (na.check(x) || na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
         }
@@ -105,6 +104,9 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     @Specialization(guards = {"!emptyArg", "!wrongParams", "!wrongValue"})
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
         String[] res = new String[arg.getLength()];
+        na.enable(arg);
+        na.enable(start);
+        na.enable(stop);
         for (int i = 0, j = 0, k = 0, l = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength()), l = Utils.incMod(k, value.getLength())) {
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k), value.getDataAt(l));
         }

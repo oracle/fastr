@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.ops;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class BinaryCompare extends BooleanOperation {
 
@@ -52,8 +51,6 @@ public abstract class BinaryCompare extends BooleanOperation {
     @RBuiltin(name = "<", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
     public static class LessBuiltin {
     }
-
-    protected NACheck nan = NACheck.create();
 
     public static final BooleanOperationFactory NOT_EQUAL = new BooleanOperationFactory() {
 
@@ -116,8 +113,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left != right);
@@ -125,8 +121,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left != right);
@@ -134,8 +129,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(!left.equals(right));
@@ -143,8 +137,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(!left.equals(right));
@@ -164,8 +157,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left == right);
@@ -173,8 +165,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left == right);
@@ -182,8 +173,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left.equals(right));
@@ -191,8 +181,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(RComplex left, RComplex right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left.equals(right));
@@ -212,8 +201,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left >= right);
@@ -221,8 +209,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left >= right);
@@ -230,8 +217,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left.compareTo(right) >= 0);
@@ -256,8 +242,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left > right);
@@ -265,8 +250,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left > right);
@@ -274,8 +258,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left.compareTo(right) > 0);
@@ -300,8 +283,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left <= right);
@@ -309,8 +291,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left <= right);
@@ -318,8 +299,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left.compareTo(right) <= 0);
@@ -344,8 +324,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(int left, int right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left < right);
@@ -353,8 +332,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(double left, double right) {
-            nan.enable(true);
-            if (nan.checkNAorNaN(left) || nan.checkNAorNaN(right)) {
+            if (RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left < right);
@@ -362,8 +340,7 @@ public abstract class BinaryCompare extends BooleanOperation {
 
         @Override
         public byte op(String left, String right) {
-            nan.enable(true);
-            if (nan.check(left) || nan.check(right)) {
+            if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
                 return RRuntime.LOGICAL_NA;
             }
             return RRuntime.asLogical(left.compareTo(right) < 0);

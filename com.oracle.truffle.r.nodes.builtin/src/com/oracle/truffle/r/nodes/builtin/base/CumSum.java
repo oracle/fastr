@@ -69,7 +69,7 @@ public abstract class CumSum extends RBuiltinNode {
         int current = arg.getStart();
         int prev = 0;
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             prev = add.op(prev, current);
             if (na.check(prev)) {
@@ -81,7 +81,7 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(res, RDataFactory.COMPLETE_VECTOR, arg.getNames());
+        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames());
     }
 
     @Specialization
@@ -110,7 +110,7 @@ public abstract class CumSum extends RBuiltinNode {
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             if (na.check(arg.getDataAt(i))) {
                 break;
@@ -133,7 +133,7 @@ public abstract class CumSum extends RBuiltinNode {
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             prev = add.op(prev, arg.getDataAt(i));
             if (na.check(arg.getDataAt(i))) {
@@ -174,7 +174,7 @@ public abstract class CumSum extends RBuiltinNode {
         double[] res = new double[arg.getLength() * 2];
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             prev = add.op(prev.getRealPart(), prev.getImaginaryPart(), arg.getDataAt(i).getRealPart(), arg.getDataAt(i).getImaginaryPart());
             if (na.check(arg.getDataAt(i))) {
