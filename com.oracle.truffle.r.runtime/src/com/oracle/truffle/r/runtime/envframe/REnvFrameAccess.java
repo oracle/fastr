@@ -36,14 +36,6 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class REnvFrameAccess {
     /**
-     * Return the unique id that identifies the associated environment in the frame, or {@code null}
-     * if none.
-     */
-    public Object id() {
-        throw notImplemented("id");
-    }
-
-    /**
      * Return the value of object named {@code name} or {@code null} if not found.
      */
     public Object get(@SuppressWarnings("unused") String key) {
@@ -70,7 +62,7 @@ public class REnvFrameAccess {
 
     /**
      * Return the names in the environment that match {@code pattern}.
-     * 
+     *
      * @param allNames if {@code false} ignore names beginning with ".".
      * @param pattern if not {@code null} only include names matching {@code pattern}.
      */
