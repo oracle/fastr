@@ -61,6 +61,11 @@ def _set_libpath():
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
 
+def build(args):
+    '''FastR build'''
+    # Overridden in case we ever want to do anything non-standard
+    mx_graal.build(args) # this calls mx.build
+
 def findbugs(args):
     '''run FindBugs against non-test Java projects'''
     findBugsHome = mx.get_env('FINDBUGS_HOME', None)
@@ -347,6 +352,7 @@ def mx_init(suite):
         'rtestgen' : [testgen, ''],
         # core overrides
         'bench' : [bench, ''],
+        'build' : [build, ''],
         'gate' : [gate, ''],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
