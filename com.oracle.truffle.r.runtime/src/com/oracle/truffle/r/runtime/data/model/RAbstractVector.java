@@ -34,6 +34,12 @@ public interface RAbstractVector extends RAbstractContainer {
 
     int[] getDimensions();
 
+    /**
+     * Creates a copy of the vector. This copies all of the contained data as well. If the data in
+     * the vector is to be updated immediately after copying by means of one of the
+     * {@code resetData()} methods available in concrete vector classes, the corresponding
+     * {@code copyResetData()} method should be used instead.
+     */
     RAbstractVector copy();
 
     RAbstractVector copyResized(int size, boolean fillNA);

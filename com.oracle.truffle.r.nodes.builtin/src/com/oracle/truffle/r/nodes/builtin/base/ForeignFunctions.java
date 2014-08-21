@@ -247,18 +247,15 @@ public class ForeignFunctions {
                         results[i] = RDataFactory.createLogicalVector((byte[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
                         break;
                     case VECTOR_DOUBLE: {
-                        RVector dVec = (RVector) args[i];
-                        results[i] = ((RDoubleVector) dVec.copy()).resetData((double[]) nativeArgs[i]);
+                        results[i] = ((RDoubleVector) args[i]).copyResetData((double[]) nativeArgs[i]);
                         break;
                     }
                     case VECTOR_INT: {
-                        RVector iVec = (RVector) args[i];
-                        results[i] = ((RIntVector) iVec.copy()).resetData((int[]) nativeArgs[i]);
+                        results[i] = ((RIntVector) args[i]).copyResetData((int[]) nativeArgs[i]);
                         break;
                     }
                     case VECTOR_LOGICAL: {
-                        RVector iVec = (RVector) args[i];
-                        results[i] = ((RLogicalVector) iVec.copy()).resetData((byte[]) nativeArgs[i]);
+                        results[i] = ((RLogicalVector) args[i]).copyResetData((byte[]) nativeArgs[i]);
                         break;
                     }
 

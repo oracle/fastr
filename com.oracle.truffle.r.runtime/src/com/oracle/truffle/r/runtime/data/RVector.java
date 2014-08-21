@@ -412,7 +412,7 @@ public abstract class RVector extends RBounded implements RShareable, RAttributa
         return vector;
     }
 
-    private void setAttributes(RVector result) {
+    protected void setAttributes(RVector result) {
         result.names = this.names;
         result.dimNames = this.dimNames;
         result.dimensions = this.dimensions;

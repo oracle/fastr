@@ -49,6 +49,19 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete(), null);
     }
 
+    public RLogicalVector copyResetData(byte[] newData) {
+        boolean isComplete = true;
+        for (int i = 0; i < newData.length; ++i) {
+            if (RRuntime.isNA(newData[i])) {
+                isComplete = false;
+                break;
+            }
+        }
+        RLogicalVector result = new RLogicalVector(newData, isComplete, null);
+        setAttributes(result);
+        return result;
+    }
+
     @Override
     protected int internalGetLength() {
         return data.length;
