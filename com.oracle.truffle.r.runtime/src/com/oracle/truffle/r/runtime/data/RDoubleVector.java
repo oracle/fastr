@@ -207,11 +207,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return getDataAt(index);
     }
 
-    public RDoubleVector resetData(double[] newData) {
-        this.data = newData;
-        return this;
-    }
-
     @Override
     protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHr, implicitClassHrDyn);

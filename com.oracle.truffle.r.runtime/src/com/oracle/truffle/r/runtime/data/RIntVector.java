@@ -195,11 +195,6 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return getDataAt(index);
     }
 
-    public RIntVector resetData(int[] newData) {
-        this.data = newData;
-        return this;
-    }
-
     @Override
     protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHr, implicitClassHrDyn);

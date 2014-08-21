@@ -176,11 +176,6 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         return getDataAt(index);
     }
 
-    public RLogicalVector resetData(byte[] newData) {
-        data = newData;
-        return this;
-    }
-
     @Override
     protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(new String[]{RRuntime.TYPE_LOGICAL}, implicitClassHrDyn);
