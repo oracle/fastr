@@ -98,8 +98,8 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected REnvironment sysFrame(VirtualFrame frame, double nd) {
-            return sysFrame(frame, (int) nd);
+        protected REnvironment sysFrame(double nd) {
+            return sysFrame((int) nd);
         }
     }
 
@@ -152,8 +152,8 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected Object sysFunction(VirtualFrame frame, double nd) {
-            return sysFunction(frame, (int) nd);
+        protected Object sysFunction(double nd) {
+            return sysFunction((int) nd);
         }
     }
 
