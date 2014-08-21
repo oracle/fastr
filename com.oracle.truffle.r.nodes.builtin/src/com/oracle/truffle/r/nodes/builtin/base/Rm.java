@@ -74,26 +74,26 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
             envir.rm(name);
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return RNull.instance;
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
             for (Object o : names) {
                 envir.rm((String) (o));
             }
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return RNull.instance;
     }

@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -38,11 +37,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization
-    protected RStringVector doReadDCF(VirtualFrame frame, RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
+    protected RStringVector doReadDCF(RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
         try {
             DCF dcf = DCF.read(conn.readLines(0));
             if (dcf == null) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
             }
             String[] data = new String[fields.getLength()];
             String[] names = new String[data.length];
@@ -63,7 +62,7 @@ public abstract class ReadDCF extends RBuiltinNode {
             }
             return RDataFactory.createStringVector(data, complete, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } catch (IOException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION);
         }
 
     }

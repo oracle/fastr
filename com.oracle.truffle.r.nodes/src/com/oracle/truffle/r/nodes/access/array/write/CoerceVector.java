@@ -116,8 +116,8 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization
-    protected RIntVector coerce(VirtualFrame frame, RAbstractIntVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "integer", "raw");
+    protected RIntVector coerce(RAbstractIntVector value, RAbstractRawVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "integer", "raw");
     }
 
     @Specialization
@@ -153,8 +153,8 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization
-    protected RDoubleVector coerce(VirtualFrame frame, RAbstractDoubleVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "double", "raw");
+    protected RDoubleVector coerce(RAbstractDoubleVector value, RAbstractRawVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "double", "raw");
     }
 
     @Specialization
@@ -190,8 +190,8 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization
-    protected RLogicalVector coerce(VirtualFrame frame, RAbstractLogicalVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "logical", "raw");
+    protected RLogicalVector coerce(RAbstractLogicalVector value, RAbstractRawVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "logical", "raw");
     }
 
     @Specialization
@@ -227,8 +227,8 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization
-    protected RStringVector coerce(VirtualFrame frame, RAbstractStringVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "character", "raw");
+    protected RStringVector coerce(RAbstractStringVector value, RAbstractRawVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "character", "raw");
     }
 
     @Specialization
@@ -264,8 +264,8 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization
-    protected RComplexVector coerce(VirtualFrame frame, RAbstractComplexVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "complex", "raw");
+    protected RComplexVector coerce(RAbstractComplexVector value, RAbstractRawVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "complex", "raw");
     }
 
     @Specialization
@@ -281,8 +281,8 @@ public abstract class CoerceVector extends RNode {
     }
 
     @Specialization(guards = "!isVectorList")
-    protected RRawVector coerce(VirtualFrame frame, RAbstractRawVector value, RAbstractVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "raw", RRuntime.classToString(vector.getElementClass(), false));
+    protected RRawVector coerce(RAbstractRawVector value, RAbstractVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "raw", RRuntime.classToString(vector.getElementClass(), false));
     }
 
     @Specialization
@@ -312,8 +312,8 @@ public abstract class CoerceVector extends RNode {
     // function vector value
 
     @Specialization
-    protected RFunction coerce(VirtualFrame frame, RFunction value, RAbstractVector vector, Object operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "closure", RRuntime.classToString(vector.getElementClass(), false));
+    protected RFunction coerce(RFunction value, RAbstractVector vector, Object operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "closure", RRuntime.classToString(vector.getElementClass(), false));
     }
 
     // in all other cases, simply return the vector (no coercion)

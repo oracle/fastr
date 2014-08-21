@@ -221,8 +221,8 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
     }
 
     @Specialization(guards = {"needsRightOperand", "isZeroLength"})
-    protected byte doLogicalEmpty(VirtualFrame frame, Object left, boolean needsRightOperand, RAbstractRawVector right) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", logic.opName());
+    protected byte doLogicalEmpty(Object left, boolean needsRightOperand, RAbstractRawVector right) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "y", logic.opName());
     }
 
     @Specialization(guards = "!needsRightOperand")
@@ -271,18 +271,18 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
         }
 
         @Specialization
-        protected byte doLogical(VirtualFrame frame, String operand) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
+        protected byte doLogical(String operand) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
-        protected byte doLogical(VirtualFrame frame, RRaw operand) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
+        protected byte doLogical(RRaw operand) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
-        protected byte doLogical(VirtualFrame frame, RNull operand) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
+        protected byte doLogical(RNull operand) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization(guards = {"isZeroLength", "!isStringVector", "!isRawVector"})
@@ -306,13 +306,13 @@ public abstract class BinaryBooleanNonVectorizedNode extends BinaryNode {
         }
 
         @Specialization
-        protected byte doLogical(VirtualFrame frame, RAbstractStringVector operand) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
+        protected byte doLogical(RAbstractStringVector operand) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization
-        protected byte doLogical(VirtualFrame frame, RAbstractRawVector operand) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
+        protected byte doLogical(RAbstractRawVector operand) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, "x", getOpName());
         }
 
         @Specialization(guards = "!isZeroLength")

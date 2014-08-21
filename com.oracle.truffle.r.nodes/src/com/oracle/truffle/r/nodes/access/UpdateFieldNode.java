@@ -82,12 +82,12 @@ public abstract class UpdateFieldNode extends RNode {
     }
 
     @Specialization
-    protected Object updateField(VirtualFrame frame, REnvironment env, Object value) {
+    protected Object updateField(REnvironment env, Object value) {
         // reference semantics for environments
         try {
             env.put(getField(), value);
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return env;
     }

@@ -122,15 +122,15 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "!doesInherit")
     @SuppressWarnings("unused")
-    protected Object assignNoInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignNoInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         if (pos == REnvironment.emptyEnv()) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
         }
         try {
             pos.put(x, value);
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return value;
     }
@@ -143,7 +143,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "doesInherit")
     @SuppressWarnings("unused")
-    protected Object assignInherit(VirtualFrame frame, String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
+    protected Object assignInherit(String x, Object value, REnvironment pos, RMissing envir, byte inherits, byte immediate) {
         controlVisibility();
         REnvironment env = pos;
         while (env != null) {
@@ -159,7 +159,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 REnvironment.globalEnv().put(x, value);
             }
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return value;
     }

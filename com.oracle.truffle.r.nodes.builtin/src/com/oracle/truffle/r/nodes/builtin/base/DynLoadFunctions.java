@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -42,11 +41,11 @@ public class DynLoadFunctions {
     @RBuiltin(name = "dyn.load", kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"})
     public abstract static class DynLoad extends RInvisibleBuiltinNode {
         @Specialization
-        protected RList doDynLoad(VirtualFrame frame, RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
+        protected RList doDynLoad(RAbstractStringVector libVec, RAbstractLogicalVector localVec, byte now, @SuppressWarnings("unused") String unused) {
             controlVisibility();
             // Length checked by GnuR
             if (libVec.getLength() > 1) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHARACTER_EXPECTED);
             }
             String lib = libVec.getDataAt(0);
             // Length not checked by GnuR
@@ -56,7 +55,7 @@ public class DynLoadFunctions {
                 RList result = createDLLInfoList(info.toRValues());
                 return result;
             } catch (DLLException ex) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
         }
 
@@ -68,12 +67,12 @@ public class DynLoadFunctions {
     @RBuiltin(name = "dyn.unload", kind = INTERNAL, parameterNames = {"lib"})
     public abstract static class DynUnload extends RInvisibleBuiltinNode {
         @Specialization
-        protected RNull doDynunload(VirtualFrame frame, String lib) {
+        protected RNull doDynunload(String lib) {
             controlVisibility();
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+                throw RError.error(getEncapsulatingSourceSection(), ex);
             }
             return RNull.instance;
         }

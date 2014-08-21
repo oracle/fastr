@@ -72,17 +72,17 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RNull list) {
+    protected RAbstractVector updateDimnames(RAbstractVector vector, RNull list) {
         RVector v = vector.materialize();
-        v.setDimNames(frame, null, getEncapsulatingSourceSection());
+        v.setDimNames(null, getEncapsulatingSourceSection());
         controlVisibility();
         return v;
     }
 
     @Specialization(guards = "isZeroLength")
-    protected RAbstractVector updateDimnamesEmpty(VirtualFrame frame, RAbstractVector vector, RList list) {
+    protected RAbstractVector updateDimnamesEmpty(RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
-        v.setDimNames(frame, null, getEncapsulatingSourceSection());
+        v.setDimNames(null, getEncapsulatingSourceSection());
         controlVisibility();
         return v;
     }
@@ -90,21 +90,21 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Specialization(guards = "!isZeroLength")
     protected RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
         RVector v = vector.materialize();
-        v.setDimNames(frame, convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
+        v.setDimNames(convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
         controlVisibility();
         return v;
     }
 
     @Specialization(guards = "!isVectorList")
-    protected RAbstractVector updateDimnamesError(VirtualFrame frame, RAbstractVector vector, RAbstractVector v) {
+    protected RAbstractVector updateDimnamesError(RAbstractVector vector, RAbstractVector v) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
     @Specialization
-    protected RAbstractVector updateDimnamesError(VirtualFrame frame, RAbstractVector vector, RFunction v) {
+    protected RAbstractVector updateDimnamesError(RAbstractVector vector, RFunction v) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
     protected boolean isVectorList(RAbstractVector vector, RAbstractVector v) {

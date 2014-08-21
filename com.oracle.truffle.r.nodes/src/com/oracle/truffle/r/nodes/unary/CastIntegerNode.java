@@ -398,10 +398,10 @@ public abstract class CastIntegerNode extends CastNode {
                     } else if (intVector.getLength() == 0) {
                         result[i] = RRuntime.INT_NA;
                     } else {
-                        return cannotCoerceListError(frame);
+                        throw cannotCoerceListError();
                     }
                 } else {
-                    return cannotCoerceListError(frame);
+                    throw cannotCoerceListError();
                 }
             }
         }
@@ -412,8 +412,8 @@ public abstract class CastIntegerNode extends CastNode {
         return ret;
     }
 
-    private RIntVector cannotCoerceListError(VirtualFrame frame) {
-        throw RError.error(frame, this.getSourceSection(), RError.Message.LIST_COERCION, "integer");
+    private RError cannotCoerceListError() {
+        throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "integer");
     }
 
     @Fallback

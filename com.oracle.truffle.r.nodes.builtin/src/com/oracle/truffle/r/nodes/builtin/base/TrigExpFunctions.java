@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
@@ -46,9 +45,9 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected byte isType(VirtualFrame frame, @SuppressWarnings("unused") RMissing value) {
+        protected byte isType(@SuppressWarnings("unused") RMissing value) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
     }
@@ -362,13 +361,13 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected Object atan(VirtualFrame frame, @SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
+        protected Object atan(@SuppressWarnings("unused") RMissing x, @SuppressWarnings("unused") RMissing y) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
         }
 
         @Specialization
-        protected Object atan(VirtualFrame frame, @SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
+        protected Object atan(@SuppressWarnings("unused") RAbstractDoubleVector x, @SuppressWarnings("unused") RMissing y) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
         }
 
         @Specialization

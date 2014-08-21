@@ -57,19 +57,19 @@ public class ForeignFunctions {
                             ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
         }
 
-        protected int[] checkNAs(VirtualFrame frame, int argIndex, int[] data) throws RError {
+        protected int[] checkNAs(int argIndex, int[] data) throws RError {
             for (int i = 0; i < data.length; i++) {
                 if (RRuntime.isNA(data[i])) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
         }
 
-        protected double[] checkNAs(VirtualFrame frame, int argIndex, double[] data) throws RError {
+        protected double[] checkNAs(int argIndex, double[] data) throws RError {
             for (int i = 0; i < data.length; i++) {
                 if (!RRuntime.isFinite(data[i])) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
@@ -86,7 +86,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrdc2")
-        protected RList fortranDqrdc2(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrdc2(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
                 RDoubleVector xVec = (RDoubleVector) args[0];
@@ -115,7 +115,7 @@ public class ForeignFunctions {
                 // @formatter:on
                 return RDataFactory.createList(data, DQRDC2_NAMES);
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
             }
         }
 
@@ -127,7 +127,7 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrcf")
-        protected RList fortranDqrcf(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrcf(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             try {
                 RDoubleVector xVec = (RDoubleVector) args[0];
@@ -161,7 +161,7 @@ public class ForeignFunctions {
                 return RDataFactory.createList(data, DQRCF_NAMES);
 
             } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
             }
         }
 
@@ -185,11 +185,11 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RList c(VirtualFrame frame, String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList c(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
             }
             boolean dupArgs = RRuntime.fromLogical(dup);
             boolean checkNA = RRuntime.fromLogical(naok);
@@ -200,10 +200,10 @@ public class ForeignFunctions {
                 Object arg = args[i];
                 if (arg instanceof RDoubleVector) {
                     argTypes[i] = VECTOR_DOUBLE;
-                    nativeArgs[i] = checkNAs(frame, i + 1, ((RDoubleVector) arg).getDataCopy());
+                    nativeArgs[i] = checkNAs(i + 1, ((RDoubleVector) arg).getDataCopy());
                 } else if (arg instanceof RIntVector) {
                     argTypes[i] = VECTOR_INT;
-                    nativeArgs[i] = checkNAs(frame, i + 1, ((RIntVector) arg).getDataCopy());
+                    nativeArgs[i] = checkNAs(i + 1, ((RIntVector) arg).getDataCopy());
                 } else if (arg instanceof RLogicalVector) {
                     argTypes[i] = VECTOR_LOGICAL;
                     // passed as int[]
@@ -213,24 +213,24 @@ public class ForeignFunctions {
                         // An NA is an error but the error handling happens in checkNAs
                         dataAsInt[j] = RRuntime.isNA(data[j]) ? RRuntime.INT_NA : data[j];
                     }
-                    nativeArgs[i] = checkNAs(frame, i + 1, dataAsInt);
+                    nativeArgs[i] = checkNAs(i + 1, dataAsInt);
                 } else if (arg instanceof Double) {
                     argTypes[i] = SCALAR_DOUBLE;
-                    nativeArgs[i] = checkNAs(frame, i + 1, new double[]{(double) arg});
+                    nativeArgs[i] = checkNAs(i + 1, new double[]{(double) arg});
                 } else if (arg instanceof Integer) {
                     argTypes[i] = SCALAR_INT;
-                    nativeArgs[i] = checkNAs(frame, i + 1, new int[]{(int) arg});
+                    nativeArgs[i] = checkNAs(i + 1, new int[]{(int) arg});
                 } else if (arg instanceof Byte) {
                     argTypes[i] = SCALAR_LOGICAL;
-                    nativeArgs[i] = checkNAs(frame, i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
+                    nativeArgs[i] = checkNAs(i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
                 } else {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
             try {
                 RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
             } catch (Throwable t) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
             RStringVector listNames = validateArgNames(args.length, getSuppliedArgsNames());
@@ -332,7 +332,7 @@ public class ForeignFunctions {
                     int n = zVec.getLength();
                     RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
                     if (maxf[0] == 0) {
-                        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                     }
                     double[] work = new double[4 * maxf[0]];
                     int[] iwork = new int[maxp[0]];
@@ -347,7 +347,7 @@ public class ForeignFunctions {
                         if (d[i] > 1) {
                             RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(d[i], maxf, maxp);
                             if (maxf[0] == 0) {
-                                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                             }
                             if (maxf[0] > maxmaxf) {
                                 maxmaxf = maxf[0];

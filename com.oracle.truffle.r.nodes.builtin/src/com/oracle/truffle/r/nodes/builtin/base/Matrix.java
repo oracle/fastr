@@ -155,7 +155,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     private int getValue(VirtualFrame frame, RAbstractVector arg) {
         if (isNumeric.execute(frame, arg) == RRuntime.LOGICAL_FALSE) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATRIX_EXTENT);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATRIX_EXTENT);
         }
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -177,10 +177,10 @@ public abstract class Matrix extends RBuiltinNode {
     private int getNrow(VirtualFrame frame, RAbstractVector vecRow) {
         int nRow = getValue(frame, vecRow);
         if (nRow == RRuntime.INT_NA) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_NROW);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_NROW);
         }
         if (nRow < 0) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NROW);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NROW);
         }
         return nRow;
     }
@@ -188,10 +188,10 @@ public abstract class Matrix extends RBuiltinNode {
     private int getNcol(VirtualFrame frame, RAbstractVector vecCol) {
         int nCol = getValue(frame, vecCol);
         if (nCol == RRuntime.INT_NA) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_NCOL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_NCOL);
         }
         if (nCol < 0) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NCOL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_NCOL);
         }
         return nCol;
     }
@@ -203,7 +203,7 @@ public abstract class Matrix extends RBuiltinNode {
         int nCol = getNcol(frame, ncolp);
         if (nCol == 0) {
             if (xLen > 0) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
             } else {
                 nRow = 0;
             }
@@ -220,7 +220,7 @@ public abstract class Matrix extends RBuiltinNode {
         int nRow = getNrow(frame, nrowp);
         if (nRow == 0) {
             if (xLen > 0) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
             } else {
                 nCol = 0;
             }

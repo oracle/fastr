@@ -66,10 +66,10 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
     private Object doUnaryOp(VirtualFrame frame, Object operand) {
         if (unaryNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             if (unaryFactory == null) {
-                throw RError.error(frame, getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
+                throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
             } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 unaryNode = insert(UnaryArithmeticNodeFactory.create(unaryFactory, null));
             }
         }
@@ -136,25 +136,25 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization
-    protected Object doLeftString(VirtualFrame frame, RAbstractStringVector left, Object right) {
-        return doRightString(frame, right, left);
+    protected Object doLeftString(RAbstractStringVector left, Object right) {
+        return doRightString(right, left);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object doRightString(VirtualFrame frame, Object left, RAbstractStringVector right) {
-        throw RError.error(frame, this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+    protected Object doRightString(Object left, RAbstractStringVector right) {
+        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     @Specialization
-    protected Object doLeftRaw(VirtualFrame frame, RAbstractRawVector left, Object right) {
-        return doRightRaw(frame, right, left);
+    protected Object doLeftRaw(RAbstractRawVector left, Object right) {
+        return doRightRaw(right, left);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object doRightRaw(VirtualFrame frame, Object left, RAbstractRawVector right) {
-        throw RError.error(frame, this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
+    protected Object doRightRaw(Object left, RAbstractRawVector right) {
+        throw RError.error(this.getSourceSection(), RError.Message.NON_NUMERIC_BINARY);
     }
 
     protected boolean supportsIntResult() {
@@ -189,13 +189,13 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization
-    protected RComplex doInt(VirtualFrame frame, int left, RComplex right) {
-        return performArithmeticComplexEnableNACheck(frame, RRuntime.int2complex(left), right);
+    protected RComplex doInt(int left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(RRuntime.int2complex(left), right);
     }
 
     @Specialization
-    protected RComplex doInt(VirtualFrame frame, RComplex left, int right) {
-        return performArithmeticComplexEnableNACheck(frame, left, RRuntime.int2complex(right));
+    protected RComplex doInt(RComplex left, int right) {
+        return performArithmeticComplexEnableNACheck(left, RRuntime.int2complex(right));
     }
 
     @Specialization(guards = {"!supportsIntResult"})
@@ -231,13 +231,13 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization
-    protected RComplex doDouble(VirtualFrame frame, double left, RComplex right) {
-        return performArithmeticComplexEnableNACheck(frame, RRuntime.double2complex(left), right);
+    protected RComplex doDouble(double left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(RRuntime.double2complex(left), right);
     }
 
     @Specialization
-    protected RComplex doDouble(VirtualFrame frame, RComplex left, double right) {
-        return performArithmeticComplexEnableNACheck(frame, left, RRuntime.double2complex(right));
+    protected RComplex doDouble(RComplex left, double right) {
+        return performArithmeticComplexEnableNACheck(left, RRuntime.double2complex(right));
     }
 
     // logical
@@ -248,13 +248,13 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization
-    protected RComplex doLogical(VirtualFrame frame, byte left, RComplex right) {
-        return performArithmeticComplexEnableNACheck(frame, RRuntime.logical2complex(left), right);
+    protected RComplex doLogical(byte left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(RRuntime.logical2complex(left), right);
     }
 
     @Specialization
-    protected RComplex doLogical(VirtualFrame frame, RComplex left, byte right) {
-        return performArithmeticComplexEnableNACheck(frame, left, RRuntime.logical2complex(right));
+    protected RComplex doLogical(RComplex left, byte right) {
+        return performArithmeticComplexEnableNACheck(left, RRuntime.logical2complex(right));
     }
 
     @Specialization(guards = {"!supportsIntResult"})
@@ -265,8 +265,8 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     // complex
 
     @Specialization
-    public RComplex doComplex(VirtualFrame frame, RComplex left, RComplex right) {
-        return performArithmeticComplexEnableNACheck(frame, left, right);
+    public RComplex doComplex(RComplex left, RComplex right) {
+        return performArithmeticComplexEnableNACheck(left, right);
     }
 
     protected static boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
@@ -275,8 +275,8 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "differentDimensions")
-    protected RLogicalVector doIntVectorDifferentLength(VirtualFrame frame, RAbstractVector left, RAbstractVector right) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
+    protected RLogicalVector doIntVectorDifferentLength(RAbstractVector left, RAbstractVector right) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
     }
 
     // int vector and vectors
@@ -332,23 +332,23 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doIntVectorDifferentLength(VirtualFrame frame, RAbstractIntVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpDifferentLength(frame, RClosures.createIntToComplexVector(left, leftNACheck), right);
+    protected RComplexVector doIntVectorDifferentLength(RAbstractIntVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doIntVectorSameLength(VirtualFrame frame, RAbstractIntVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpSameLength(frame, RClosures.createIntToComplexVector(left, leftNACheck), right);
+    protected RComplexVector doIntVectorSameLength(RAbstractIntVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(RClosures.createIntToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doIntVectorDifferentLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractIntVector right) {
-        return performComplexVectorOpDifferentLength(frame, left, RClosures.createIntToComplexVector(right, rightNACheck));
+    protected RComplexVector doIntVectorDifferentLength(RAbstractComplexVector left, RAbstractIntVector right) {
+        return performComplexVectorOpDifferentLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doIntVectorSameLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractIntVector right) {
-        return performComplexVectorOpSameLength(frame, left, RClosures.createIntToComplexVector(right, rightNACheck));
+    protected RComplexVector doIntVectorSameLength(RAbstractComplexVector left, RAbstractIntVector right) {
+        return performComplexVectorOpSameLength(left, RClosures.createIntToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "!supportsIntResult"})
@@ -414,23 +414,23 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doDoubleVectorDifferentLength(VirtualFrame frame, RAbstractDoubleVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpDifferentLength(frame, RClosures.createDoubleToComplexVector(left, leftNACheck), right);
+    protected RComplexVector doDoubleVectorDifferentLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doDoubleVectorSameLength(VirtualFrame frame, RAbstractDoubleVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpSameLength(frame, RClosures.createDoubleToComplexVector(left, leftNACheck), right);
+    protected RComplexVector doDoubleVectorSameLength(RAbstractDoubleVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(RClosures.createDoubleToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doDoubleVectorDifferentLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractDoubleVector right) {
-        return performComplexVectorOpDifferentLength(frame, left, RClosures.createDoubleToComplexVector(right, rightNACheck));
+    protected RComplexVector doDoubleVectorDifferentLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
+        return performComplexVectorOpDifferentLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doDoubleVectorSameLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractDoubleVector right) {
-        return performComplexVectorOpSameLength(frame, left, RClosures.createDoubleToComplexVector(right, rightNACheck));
+    protected RComplexVector doDoubleVectorSameLength(RAbstractComplexVector left, RAbstractDoubleVector right) {
+        return performComplexVectorOpSameLength(left, RClosures.createDoubleToComplexVector(right, rightNACheck));
     }
 
     // logical vector and vectors
@@ -446,23 +446,23 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     }
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doLogicalVectorDifferentLength(VirtualFrame frame, RAbstractLogicalVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpDifferentLength(frame, RClosures.createLogicalToComplexVector(left, leftNACheck), right);
+    protected RComplexVector doLogicalVectorDifferentLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doLogicalVectorSameLength(VirtualFrame frame, RAbstractLogicalVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpSameLength(frame, RClosures.createLogicalToComplexVector(left, leftNACheck), right);
+    protected RComplexVector doLogicalVectorSameLength(RAbstractLogicalVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(RClosures.createLogicalToComplexVector(left, leftNACheck), right);
     }
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doLogicalVectorDifferentLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractLogicalVector right) {
-        return performComplexVectorOpDifferentLength(frame, left, RClosures.createLogicalToComplexVector(right, rightNACheck));
+    protected RComplexVector doLogicalVectorDifferentLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
+        return performComplexVectorOpDifferentLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doLogicalVectorSameLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractLogicalVector right) {
-        return performComplexVectorOpSameLength(frame, left, RClosures.createLogicalToComplexVector(right, rightNACheck));
+    protected RComplexVector doLogicalVectorSameLength(RAbstractComplexVector left, RAbstractLogicalVector right) {
+        return performComplexVectorOpSameLength(left, RClosures.createLogicalToComplexVector(right, rightNACheck));
     }
 
     @Specialization(guards = {"!areSameLength", "!supportsIntResult"})
@@ -478,13 +478,13 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
     // complex vector and vectors
 
     @Specialization(guards = "!areSameLength")
-    protected RComplexVector doComplexVectorDifferentLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpDifferentLength(frame, left, right);
+    protected RComplexVector doComplexVectorDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpDifferentLength(left, right);
     }
 
     @Specialization(guards = "areSameLength")
-    protected RComplexVector doComplexVectorSameLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractComplexVector right) {
-        return performComplexVectorOpSameLength(frame, left, right);
+    protected RComplexVector doComplexVectorSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
+        return performComplexVectorOpSameLength(left, right);
     }
 
     // implementation
@@ -507,7 +507,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         }
     }
 
-    private RComplexVector performComplexVectorOpDifferentLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractComplexVector right) {
+    private RComplexVector performComplexVectorOpDifferentLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         if (leftLength == 0 || rightLength == 0) {
@@ -524,7 +524,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(k);
             RComplex rightValue = right.getDataAt(j);
-            RComplex resultValue = performArithmeticComplex(frame, leftValue, rightValue);
+            RComplex resultValue = performArithmeticComplex(leftValue, rightValue);
             int index = i << 1;
             result[index] = resultValue.getRealPart();
             result[index + 1] = resultValue.getImaginaryPart();
@@ -630,7 +630,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         return ret;
     }
 
-    private RComplexVector performComplexVectorOpSameLength(VirtualFrame frame, RAbstractComplexVector left, RAbstractComplexVector right) {
+    private RComplexVector performComplexVectorOpSameLength(RAbstractComplexVector left, RAbstractComplexVector right) {
         assert areSameLength(left, right);
         int length = left.getLength();
         if (length == 0) {
@@ -644,7 +644,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         for (int i = 0; i < length; ++i) {
             RComplex leftValue = left.getDataAt(i);
             RComplex rightValue = right.getDataAt(i);
-            RComplex resultValue = performArithmeticComplex(frame, leftValue, rightValue);
+            RComplex resultValue = performArithmeticComplex(leftValue, rightValue);
             int index = i << 1;
             result[index] = resultValue.getRealPart();
             result[index + 1] = resultValue.getImaginaryPart();
@@ -748,20 +748,20 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
         return arithmetic.op(left, right);
     }
 
-    private RComplex performArithmeticComplexEnableNACheck(VirtualFrame frame, RComplex left, RComplex right) {
+    private RComplex performArithmeticComplexEnableNACheck(RComplex left, RComplex right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        return performArithmeticComplex(frame, left, right);
+        return performArithmeticComplex(left, right);
     }
 
-    private RComplex performArithmeticComplex(VirtualFrame frame, RComplex left, RComplex right) {
+    private RComplex performArithmeticComplex(RComplex left, RComplex right) {
         if (leftNACheck.check(left)) {
             if (this.arithmetic instanceof BinaryArithmetic.Pow && right.isZero()) {
                 // CORNER: (0i + NA)^0 == 1
                 return RDataFactory.createComplexRealOne();
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+                throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
@@ -771,7 +771,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+                throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }

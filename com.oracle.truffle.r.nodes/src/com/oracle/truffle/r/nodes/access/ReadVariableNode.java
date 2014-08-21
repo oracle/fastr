@@ -643,9 +643,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract String getMode();
 
         @Specialization
-        protected Object doObject(VirtualFrame frame) {
+        protected Object doObject() {
             controlVisibility();
-            throw RError.error(frame, getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
+            throw RError.error(getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
         }
     }
 }

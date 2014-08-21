@@ -45,9 +45,9 @@ public abstract class IsTypeNode extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isType(VirtualFrame frame, RMissing value) {
+    protected byte isType(RMissing value) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization

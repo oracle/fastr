@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -46,9 +45,9 @@ public abstract class PathExpand extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object doPathExpandGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
+    protected Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
     }
 
 }

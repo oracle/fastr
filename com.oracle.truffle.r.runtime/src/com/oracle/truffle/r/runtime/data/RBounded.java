@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -38,18 +37,18 @@ public abstract class RBounded {
 
     protected abstract int internalGetLength();
 
-    public final void verifyDimensions(VirtualFrame frame, int[] newDimensions, SourceSection sourceSection) {
+    public final void verifyDimensions(int[] newDimensions, SourceSection sourceSection) {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
             if (RRuntime.isNA(newDimensions[i])) {
-                throw RError.error(frame, sourceSection, RError.Message.DIMS_CONTAIN_NA);
+                throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NA);
             } else if (newDimensions[i] < 0) {
-                throw RError.error(frame, sourceSection, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+                throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
             }
             length *= newDimensions[i];
         }
         if (length != getLength()) {
-            throw RError.error(frame, sourceSection, RError.Message.DIMS_DONT_MATCH_LENGTH, length, getLength());
+            throw RError.error(sourceSection, RError.Message.DIMS_DONT_MATCH_LENGTH, length, getLength());
         }
     }
 }

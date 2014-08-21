@@ -81,13 +81,13 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             if (dimensions != null) {
                 dimLength = dimensions.length;
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
             if (resultVector.isArray()) {
                 return setClass(resultVector, RNull.instance);
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
         return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);

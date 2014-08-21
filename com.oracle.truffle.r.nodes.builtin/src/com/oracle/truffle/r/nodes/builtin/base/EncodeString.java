@@ -12,7 +12,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -291,32 +290,32 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isString")
-    protected RStringVector encodeStringInvalidFirstArgument(VirtualFrame frame, Object x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
+    protected RStringVector encodeStringInvalidFirstArgument(Object x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidWidth")
-    protected RStringVector encodeStringInvalidWidth(VirtualFrame frame, RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "width");
+    protected RStringVector encodeStringInvalidWidth(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "width");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidQuote")
-    protected RStringVector encodeStringInvalidQuote(VirtualFrame frame, RAbstractStringVector x, int width, Object quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "quote");
+    protected RStringVector encodeStringInvalidQuote(RAbstractStringVector x, int width, Object quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "quote");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidJustify")
-    protected RStringVector encodeStringInvalidJustify(VirtualFrame frame, RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "justify");
+    protected RStringVector encodeStringInvalidJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "justify");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidEncodeNA")
-    protected RStringVector encodeStringInvalidEncodeNA(VirtualFrame frame, RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "na.encode");
+    protected RStringVector encodeStringInvalidEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "na.encode");
     }
 
     @SuppressWarnings("unused")

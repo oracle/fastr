@@ -520,10 +520,10 @@ public abstract class Repeat extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RAbstractVector repeatTV(VirtualFrame frame, RAbstractVector value, RIntVector times, RMissing lengthOut, Object each) {
+    protected RAbstractVector repeatTV(RAbstractVector value, RIntVector times, RMissing lengthOut, Object each) {
         controlVisibility();
         if (value.getLength() != times.getLength()) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "times");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "times");
         }
         RVector valueMaterialized = value.materialize();
         RVector result = valueMaterialized.createEmptySameType(resultLength(times), valueMaterialized.isComplete());

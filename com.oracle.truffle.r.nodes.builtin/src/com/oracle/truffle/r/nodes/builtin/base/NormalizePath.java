@@ -29,7 +29,6 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -40,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class NormalizePath extends RBuiltinNode {
 
     @Specialization
-    protected RStringVector doNormalizePath(VirtualFrame frame, RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
+    protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
         controlVisibility();
         String[] results = new String[pathVec.getLength()];
         FileSystem fileSystem = FileSystems.getDefault();
@@ -64,7 +63,7 @@ public abstract class NormalizePath extends RBuiltinNode {
                         msg = Message.GENERIC;
                     }
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        throw RError.error(frame, getEncapsulatingSourceSection(), msg, errorArgs);
+                        throw RError.error(getEncapsulatingSourceSection(), msg, errorArgs);
                     } else {
                         // NA means warning
                         RContext.getInstance().setEvalWarning(RError.formatMessage(msg, errorArgs));
@@ -78,8 +77,8 @@ public abstract class NormalizePath extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object doNormalizePath(VirtualFrame frame, Object path, Object winslash, Object mustWork) {
+    protected Object doNormalizePath(Object path, Object winslash, Object mustWork) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
     }
 }

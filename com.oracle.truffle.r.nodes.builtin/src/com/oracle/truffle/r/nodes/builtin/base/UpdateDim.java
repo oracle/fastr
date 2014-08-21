@@ -60,10 +60,10 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     protected RAbstractVector updateDim(VirtualFrame frame, RAbstractVector vector, RAbstractVector dimensions) {
         controlVisibility();
         if (dimensions.getLength() == 0) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
         }
         int[] dimsData = castInteger(frame, dimensions).materialize().getDataCopy();
-        vector.verifyDimensions(frame, dimsData, getEncapsulatingSourceSection());
+        vector.verifyDimensions(dimsData, getEncapsulatingSourceSection());
         RVector result = vector.materialize();
         result.resetDimensions(dimsData);
         return result;

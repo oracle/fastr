@@ -78,21 +78,21 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAtAsObject(dstIndex % value.getLength()), null);
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, true, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
@@ -111,21 +111,21 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
@@ -144,21 +144,21 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
@@ -177,21 +177,21 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
@@ -210,21 +210,21 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
@@ -243,21 +243,21 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()), elementNACheck);
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
@@ -276,40 +276,40 @@ abstract class SetMultiDimDataNode extends RNode {
         if (currentDimLevel == 1) {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
-                int srcIndex = getSrcIndex(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int srcIndex = getSrcIndex(srcArrayBase, pos, newAccSrcDimensions);
                 vector.updateDataAt(srcIndex, value.getDataAt(dstIndex % value.getLength()));
             }
         } else {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
-                if (UpdateArrayHelperNode.seenNAMultiDim(frame, posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
+                if (UpdateArrayHelperNode.seenNAMultiDim(posNACheck.check(pos), value, false, isSubset, getEncapsulatingSourceSection())) {
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
-                int newSrcArrayBase = getNewArrayBase(frame, srcArrayBase, pos, newAccSrcDimensions);
+                int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
                 setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
-    private int getNewArrayBase(VirtualFrame frame, int srcArrayBase, int pos, int newAccSrcDimensions) {
+    private int getNewArrayBase(int srcArrayBase, int pos, int newAccSrcDimensions) {
         int newSrcArrayBase;
         if (posNACheck.check(pos)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
         } else {
             newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
         }
         return newSrcArrayBase;
     }
 
-    private int getSrcIndex(VirtualFrame frame, int srcArrayBase, int pos, int newAccSrcDimensions) {
+    private int getSrcIndex(int srcArrayBase, int pos, int newAccSrcDimensions) {
         if (posNACheck.check(pos)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
         } else {
             return srcArrayBase + newAccSrcDimensions * (pos - 1);
         }

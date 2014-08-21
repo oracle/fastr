@@ -31,7 +31,6 @@ import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -74,9 +73,9 @@ public class FileFunctions {
         }
 
         @Specialization
-        protected Object doFileCreate(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+        protected Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -119,11 +118,11 @@ public class FileFunctions {
     }
 
     public abstract static class FileLinkAdaptor extends RBuiltinNode {
-        protected Object doFileLink(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo, boolean symbolic) {
+        protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo, boolean symbolic) {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
             if (lenFrom < 1) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOTHING_TO_LINK);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOTHING_TO_LINK);
             }
             if (lenTo < 1) {
                 return RDataFactory.createLogicalVector(0);
@@ -159,30 +158,30 @@ public class FileFunctions {
     @RBuiltin(name = "file.link", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileLink extends FileLinkAdaptor {
         @Specialization
-        protected Object doFileLink(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+        protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
-            return doFileLink(frame, vecFrom, vecTo, false);
+            return doFileLink(vecFrom, vecTo, false);
         }
 
         @Specialization
-        protected Object doFileLink(VirtualFrame frame, @SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+        protected Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
     @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileSymLink extends FileLinkAdaptor {
         @Specialization
-        protected Object doFileSymLink(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+        protected Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
-            return doFileLink(frame, vecFrom, vecTo, true);
+            return doFileLink(vecFrom, vecTo, true);
         }
 
         @Specialization
-        protected Object doFileSymLink(VirtualFrame frame, @SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+        protected Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -210,20 +209,20 @@ public class FileFunctions {
         }
 
         @Specialization
-        protected Object doFileRemove(VirtualFrame frame, @SuppressWarnings("unused") Object x) {
+        protected Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
     @RBuiltin(name = "file.rename", kind = INTERNAL, parameterNames = {"from", "to"})
     public abstract static class FileRename extends RBuiltinNode {
         @Specialization
-        protected Object doFileRename(VirtualFrame frame, RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
+        protected Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.FROM_TO_DIFFERENT);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FROM_TO_DIFFERENT);
             }
             byte[] status = new byte[len];
             for (int i = 0; i < len; i++) {
@@ -245,9 +244,9 @@ public class FileFunctions {
         }
 
         @Specialization
-        protected Object doFileRename(VirtualFrame frame, @SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
+        protected Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -272,9 +271,9 @@ public class FileFunctions {
         }
 
         @Specialization
-        protected Object doFileExists(VirtualFrame frame, @SuppressWarnings("unused") Object vec) {
+        protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -290,7 +289,7 @@ public class FileFunctions {
         // @formatter:off
         @SuppressWarnings("unused")
         @Specialization
-        protected RStringVector doListFiles(VirtualFrame frame, RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive,
+        protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive,
                         byte ignoreCase, byte includeDirs, byte noDotDot) {
             // pattern in first element of vector, remaining elements are ignored (as per GnuR).
             String patternString = patternVec.getLength() == 0 ? "" : patternVec.getDataAt(0);
@@ -317,7 +316,7 @@ public class FileFunctions {
                         files.add(fullNames == RRuntime.LOGICAL_TRUE ? entry.toString() : entry.getFileName().toString());
                     }
                 } catch (IOException ex) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
                 }
             }
             if (files.size() == 0) {

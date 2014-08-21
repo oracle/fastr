@@ -50,8 +50,8 @@ public abstract class NGetText extends RBuiltinNode {
     }
 
     @Specialization(guards = "wrongNVector")
-    protected String getTextEmpty(VirtualFrame frame, RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "n");
+    protected String getTextEmpty(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "n");
     }
 
     @Specialization(guards = "!wrongNVector")
@@ -61,33 +61,33 @@ public abstract class NGetText extends RBuiltinNode {
     }
 
     @Specialization(guards = "!wrongNVector")
-    protected String getTextMsg1Null(VirtualFrame frame, RAbstractIntVector nVector, RNull msg1, RNull msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+    protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RNull msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = "!wrongNVector")
-    protected String getTextMsg1Null(VirtualFrame frame, RAbstractIntVector nVector, RNull msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+    protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RAbstractVector msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = {"!wrongNVector", "!msg1StringVectorOneElem"})
-    protected String getTextMsg1WrongMsg2Null(VirtualFrame frame, RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+    protected String getTextMsg1WrongMsg2Null(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = {"!wrongNVector", "!msg1StringVectorOneElem"})
-    protected String getTextMsg1Wrong(VirtualFrame frame, RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+    protected String getTextMsg1Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = {"!wrongNVector", "msg1StringVectorOneElem"})
-    protected String getTextMsg1(VirtualFrame frame, RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
+    protected String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
     }
 
     @Specialization(guards = {"!wrongNVector", "msg1StringVectorOneElem", "!msg2StringVectorOneElem"})
-    protected String getTextMsg2Wrong(VirtualFrame frame, RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
+    protected String getTextMsg2Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
     }
 
     @Specialization(guards = {"!wrongNVector", "msg1StringVectorOneElem", "msg2StringVectorOneElem"})

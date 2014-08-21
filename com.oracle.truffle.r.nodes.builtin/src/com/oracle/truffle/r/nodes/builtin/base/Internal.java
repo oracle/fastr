@@ -63,12 +63,12 @@ public abstract class Internal extends RBuiltinNode {
         }
 
         if (symbol == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
         }
         // TODO remove prefix for real use
         RFunction function = RContext.getEngine().lookupBuiltin(symbol.getName());
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
         }
 
         // .Internal function is validated

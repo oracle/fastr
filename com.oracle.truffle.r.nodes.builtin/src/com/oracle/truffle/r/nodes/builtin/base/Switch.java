@@ -40,7 +40,7 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
-    protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, Object[] optionalArgs) {
+    protected Object doSwitch(RAbstractStringVector x, Object[] optionalArgs) {
         controlVisibility();
         Object currentDefaultValue = null;
         final String xStr = x.getDataAt(0);
@@ -55,7 +55,7 @@ public abstract class Switch extends RBuiltinNode {
             }
             if (argName == null) {
                 if (currentDefaultValue != null) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, currentDefaultValue.toString(), value.toString());
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, currentDefaultValue.toString(), value.toString());
                 }
                 currentDefaultValue = value;
             }
@@ -68,8 +68,8 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object doSwitch(VirtualFrame frame, int x, Object[] optionalArgs) {
-        return doSwitchInt(frame, x, optionalArgs);
+    protected Object doSwitch(int x, Object[] optionalArgs) {
+        return doSwitchInt(x, optionalArgs);
     }
 
     @Specialization
@@ -83,22 +83,22 @@ public abstract class Switch extends RBuiltinNode {
             return returnNull();
         }
         int index = (Integer) objIndex;
-        return doSwitchInt(frame, index, optionalArgs);
+        return doSwitchInt(index, optionalArgs);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object doSwitch(VirtualFrame frame, RMissing x, RMissing optionalArgs) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
+    protected Object doSwitch(RMissing x, RMissing optionalArgs) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }
 
-    private Object doSwitchInt(VirtualFrame frame, int index, Object[] optionalArgs) {
+    private Object doSwitchInt(int index, Object[] optionalArgs) {
         if (index >= 1 && index <= optionalArgs.length) {
             Object value = optionalArgs[index - 1];
             if (value != null) {
                 return returnNonNull(value);
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ALTERNATIVE_IN_SWITCH);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ALTERNATIVE_IN_SWITCH);
         }
         return returnNull();
     }

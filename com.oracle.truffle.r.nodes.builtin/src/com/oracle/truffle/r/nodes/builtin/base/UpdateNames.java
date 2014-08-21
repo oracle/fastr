@@ -52,34 +52,34 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     public abstract Object executeStringVector(VirtualFrame frame, RAbstractVector vector, Object o);
 
     @Specialization
-    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
+    protected RAbstractVector updateNames(RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
         controlVisibility();
         RVector v = vector.materialize();
-        v.setNames(frame, null, getEncapsulatingSourceSection());
+        v.setNames(null, getEncapsulatingSourceSection());
         return v;
     }
 
     @Specialization
-    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, RStringVector names) {
+    protected RAbstractVector updateNames(RAbstractVector vector, RStringVector names) {
         controlVisibility();
         RVector v = vector.materialize();
         RStringVector namesVector = names;
         if (names.getLength() < v.getLength()) {
             namesVector = names.copyResized(v.getLength(), true);
         }
-        v.setNames(frame, namesVector, getEncapsulatingSourceSection());
+        v.setNames(namesVector, getEncapsulatingSourceSection());
         return v;
     }
 
     @Specialization
-    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, String name) {
+    protected RAbstractVector updateNames(RAbstractVector vector, String name) {
         controlVisibility();
         RVector v = vector.materialize();
         String[] names = new String[v.getLength()];
         Arrays.fill(names, RRuntime.STRING_NA);
         names[0] = name;
         RStringVector namesVector = RDataFactory.createStringVector(names, names.length > 1);
-        v.setNames(frame, namesVector, getEncapsulatingSourceSection());
+        v.setNames(namesVector, getEncapsulatingSourceSection());
         return v;
     }
 
@@ -87,9 +87,9 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object names) {
         controlVisibility();
         if (names instanceof RAbstractVector) {
-            return updateNames(frame, vector, (RStringVector) castString(frame, names));
+            return updateNames(vector, (RStringVector) castString(frame, names));
         } else {
-            return updateNames(frame, vector, (String) castString(frame, names));
+            return updateNames(vector, (String) castString(frame, names));
         }
     }
 }

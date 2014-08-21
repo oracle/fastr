@@ -42,8 +42,8 @@ public abstract class Quote extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, RPromise expr);
 
     @Specialization
-    protected RLanguage doQuote(VirtualFrame frame, @SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    protected RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization

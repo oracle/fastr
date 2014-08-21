@@ -45,7 +45,7 @@ public interface RAbstractVector extends RAbstractContainer {
     /**
      * May throw errors, so needs a {@link VirtualFrame}.
      */
-    void verifyDimensions(VirtualFrame frame, int[] newDimensions, SourceSection sourceSection);
+    void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();
 

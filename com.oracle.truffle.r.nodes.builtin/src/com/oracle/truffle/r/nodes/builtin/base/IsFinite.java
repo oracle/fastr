@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -45,8 +44,8 @@ public abstract class IsFinite extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object doIsFiniteGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x) {
+    protected Object doIsFiniteGeneric(@SuppressWarnings("unused") Object x) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARGUMENT_TYPE);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARGUMENT_TYPE);
     }
 }

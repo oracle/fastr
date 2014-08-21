@@ -282,10 +282,10 @@ public abstract class CastLogicalNode extends CastNode {
                     } else if (logicalVector.getLength() == 0) {
                         result[i] = RRuntime.LOGICAL_NA;
                     } else {
-                        return cannotCoerceListError(frame);
+                        throw cannotCoerceListError();
                     }
                 } else {
-                    return cannotCoerceListError(frame);
+                    throw cannotCoerceListError();
                 }
             }
         }
@@ -296,8 +296,8 @@ public abstract class CastLogicalNode extends CastNode {
         return ret;
     }
 
-    private RLogicalVector cannotCoerceListError(VirtualFrame frame) {
-        throw RError.error(frame, this.getSourceSection(), RError.Message.LIST_COERCION, "logical");
+    private RError cannotCoerceListError() {
+        throw RError.error(this.getSourceSection(), RError.Message.LIST_COERCION, "logical");
     }
 
     @Fallback

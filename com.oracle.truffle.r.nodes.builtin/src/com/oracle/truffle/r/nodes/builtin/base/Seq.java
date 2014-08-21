@@ -28,9 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.array.write.UpdateArrayHelperNode.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -356,30 +354,30 @@ public abstract class Seq extends RBuiltinNode {
         return start.getLength() == 0;
     }
 
-    protected boolean startLengthOne(VirtualFrame frame, RAbstractIntVector start) {
+    protected boolean startLengthOne(RAbstractIntVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean startLengthOne(VirtualFrame frame, RAbstractLogicalVector start) {
+    protected boolean startLengthOne(RAbstractLogicalVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean startLengthOne(VirtualFrame frame, RAbstractDoubleVector start) {
+    protected boolean startLengthOne(RAbstractDoubleVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
-    protected boolean toLengthOne(VirtualFrame frame, RAbstractVector start, RAbstractVector to) {
+    protected boolean toLengthOne(RAbstractVector start, RAbstractVector to) {
         if (to.getLength() != 1) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
         }
         return true;
     }

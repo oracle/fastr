@@ -156,9 +156,9 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector cummin(VirtualFrame frame, @SuppressWarnings("unused") RComplexVector v) {
+    protected RComplexVector cummin(@SuppressWarnings("unused") RComplexVector v) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
     }
 
 }

@@ -50,66 +50,66 @@ public abstract class MultiDimPosConverterNode extends RNode {
     }
 
     @Specialization(guards = {"!singleOpNegative", "multiPos"})
-    protected RAbstractIntVector doIntVectorMultiPos(VirtualFrame frame, @SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
+    protected RAbstractIntVector doIntVectorMultiPos(@SuppressWarnings("unused") Object vector, RAbstractIntVector positions) {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"singleOpNA"})
-    protected RAbstractIntVector doIntVectorNA(VirtualFrame frame, Object vector, RAbstractIntVector positions) {
+    protected RAbstractIntVector doIntVectorNA(Object vector, RAbstractIntVector positions) {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"singleOpNegative", "!singleOpNA"})
-    protected RAbstractIntVector doIntVectorNegative(VirtualFrame frame, Object vector, RAbstractIntVector positions) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+    protected RAbstractIntVector doIntVectorNegative(Object vector, RAbstractIntVector positions) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "noPosition")
-    protected Object accessListEmptyPos(VirtualFrame frame, RAbstractVector vector, RList positions) {
+    protected Object accessListEmptyPos(RAbstractVector vector, RList positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "onePosition")
-    protected Object accessListOnePos(VirtualFrame frame, RAbstractVector vector, RList positions) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+    protected Object accessListOnePos(RAbstractVector vector, RList positions) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "multiPos")
-    protected Object accessListMultiPos(VirtualFrame frame, RAbstractVector vector, RList positions) {
+    protected Object accessListMultiPos(RAbstractVector vector, RList positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object accessListOnePos(VirtualFrame frame, RAbstractVector vector, RComplex positions) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+    protected Object accessListOnePos(RAbstractVector vector, RComplex positions) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object accessListOnePos(VirtualFrame frame, RAbstractVector vector, RRaw positions) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+    protected Object accessListOnePos(RAbstractVector vector, RRaw positions) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @SuppressWarnings("unused")

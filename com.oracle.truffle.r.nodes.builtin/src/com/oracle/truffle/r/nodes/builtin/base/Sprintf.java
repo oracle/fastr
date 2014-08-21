@@ -28,7 +28,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -83,36 +82,36 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization
-    protected String sprintf(VirtualFrame frame, String fmt, double x) {
+    protected String sprintf(String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
         if (f == 'x' || f == 'd') {
             if (Math.floor(x) == x) {
                 return format(fmt, (long) x);
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
         }
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    protected String sprintf(VirtualFrame frame, RAbstractStringVector fmt, double x) {
-        return sprintf(frame, fmt.getDataAt(0), x);
+    protected String sprintf(RAbstractStringVector fmt, double x) {
+        return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    protected RStringVector sprintf(VirtualFrame frame, String fmt, RAbstractDoubleVector x) {
+    protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
-            r[k] = sprintf(frame, fmt, x.getDataAt(k));
+            r[k] = sprintf(fmt, x.getDataAt(k));
         }
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    protected RStringVector sprintf(VirtualFrame frame, RAbstractStringVector fmt, RAbstractDoubleVector x) {
-        return sprintf(frame, fmt.getDataAt(0), x);
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
+        return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization

@@ -48,7 +48,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             isFactor = insert(IsFactorNodeFactory.create(null));
         }
         if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -56,7 +56,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
         Object result = castTypeNode.execute(frame, x, value);
         if (result == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
         } else {
             if (x instanceof RAttributable && result instanceof RAttributable) {
                 RAttributable rx = (RAttributable) x;
@@ -74,23 +74,23 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isReal")
-    protected Object updateReal(VirtualFrame frame, final Object x, final String value) {
+    protected Object updateReal(final Object x, final String value) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.REAL, RRuntime.TYPE_DOUBLE);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.REAL, RRuntime.TYPE_DOUBLE);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isSingle")
-    protected Object updateSingle(VirtualFrame frame, final Object x, final String value) {
+    protected Object updateSingle(final Object x, final String value) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.SINGLE, "mode<-");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, RRuntime.SINGLE, "mode<-");
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object update(VirtualFrame frame, final Object x, final Object value) {
+    protected Object update(final Object x, final Object value) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
     }
 
     @SuppressWarnings("unused")

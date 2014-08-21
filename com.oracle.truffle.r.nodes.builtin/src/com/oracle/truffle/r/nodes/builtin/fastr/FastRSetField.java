@@ -25,10 +25,9 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import java.lang.reflect.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RError.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -36,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class FastRSetField extends RInvisibleBuiltinNode {
 
     @Specialization
-    protected RNull setField(VirtualFrame frame, RAbstractStringVector vec, Object value) {
+    protected RNull setField(RAbstractStringVector vec, Object value) {
         controlVisibility();
         String qualFieldName = vec.getDataAt(0);
         int lx = qualFieldName.lastIndexOf('.');
@@ -55,17 +54,17 @@ public abstract class FastRSetField extends RInvisibleBuiltinNode {
                     if (value instanceof Byte) {
                         field.setBoolean(null, RRuntime.fromLogical((byte) value));
                     } else {
-                        error(frame, qualFieldName);
+                        error(qualFieldName);
                     }
             }
         } catch (Exception ex) {
-            throw RError.error(frame, Message.GENERIC, ex.getMessage());
+            throw RError.error(Message.GENERIC, ex.getMessage());
         }
         return RNull.instance;
     }
 
-    private static void error(VirtualFrame frame, String fieldName) throws RError {
-        throw RError.error(frame, Message.GENERIC, "value is wrong type for %s", fieldName);
+    private static void error(String fieldName) throws RError {
+        throw RError.error(Message.GENERIC, "value is wrong type for %s", fieldName);
     }
 
 }

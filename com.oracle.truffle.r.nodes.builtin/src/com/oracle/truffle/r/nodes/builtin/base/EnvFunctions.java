@@ -49,18 +49,18 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected REnvironment asEnvironment(VirtualFrame frame, double dpos) {
+        protected REnvironment asEnvironment(double dpos) {
             controlVisibility();
-            return asEnvironmentInt(frame, (int) dpos);
+            return asEnvironmentInt((int) dpos);
         }
 
         @Specialization
-        protected REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
+        protected REnvironment asEnvironmentInt(int pos) {
             controlVisibility();
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
                     return REnvironment.frameToEnvironment(callerFrame.materialize());
                 }
@@ -72,14 +72,14 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
             }
         }
 
         @Specialization
-        protected REnvironment asEnvironment(VirtualFrame frame, RAbstractStringVector nameVec) {
+        protected REnvironment asEnvironment(RAbstractStringVector nameVec) {
             controlVisibility();
             String name = nameVec.getDataAt(0);
             String[] searchPath = REnvironment.searchPath();
@@ -88,7 +88,7 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
         }
 
     }
@@ -130,10 +130,10 @@ public class EnvFunctions {
     public abstract static class ParentEnv extends RBuiltinNode {
 
         @Specialization
-        protected REnvironment parentenv(VirtualFrame frame, REnvironment env) {
+        protected REnvironment parentenv(REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
         }
@@ -145,10 +145,10 @@ public class EnvFunctions {
     public abstract static class SetParentEnv extends RBuiltinNode {
 
         @Specialization
-        protected REnvironment setParentenv(VirtualFrame frame, REnvironment env, REnvironment parent) {
+        protected REnvironment setParentenv(REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
             return env;

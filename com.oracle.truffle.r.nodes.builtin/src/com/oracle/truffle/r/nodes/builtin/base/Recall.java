@@ -53,7 +53,7 @@ public class Recall extends RCustomBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             function = RArguments.getFunction(frame);
             if (function == null) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
             }
             callNode = insert(Truffle.getRuntime().createDirectCallNode(function.getTarget()));
         }

@@ -117,7 +117,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findFunction(this.genericName, frame);
             if (targetFunction == null || !targetFunction.isBuiltin()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_METHOD_FOUND);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_METHOD_FOUND);
             }
         }
         RStringVector classVec = null;

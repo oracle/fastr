@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -69,8 +68,8 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object doNull(VirtualFrame frame, RNull operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+    protected Object doNull(RNull operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
     private static byte performRaw(RRaw operand) {
@@ -78,8 +77,8 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector performLogicalVectorNot(VirtualFrame frame, @SuppressWarnings("unused") RFunction operand) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RFunction operand) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
     @Specialization(guards = "isZeroLength")
@@ -88,13 +87,13 @@ public abstract class UnaryNotNode extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector performLogicalVectorNot(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector vector) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RAbstractStringVector vector) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
     @Specialization
-    protected RLogicalVector performLogicalVectorNot(VirtualFrame frame, @SuppressWarnings("unused") RList list) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+    protected RLogicalVector performLogicalVectorNot(@SuppressWarnings("unused") RList list) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
     }
 
     @Specialization(guards = "!isZeroLength")

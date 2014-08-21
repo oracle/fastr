@@ -56,20 +56,20 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = {"!singlePosNegative", "multiPos"})
-    protected RAbstractIntVector doIntVectorMultiPos(VirtualFrame frame, RNull vector, RNull value, RAbstractIntVector positions) {
+    protected RAbstractIntVector doIntVectorMultiPos(RNull vector, RNull value, RAbstractIntVector positions) {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
     }
 
     @Specialization(guards = {"!isPosVectorInt", "multiPos"})
-    protected RAbstractVector doIntVectorMultiPos(VirtualFrame frame, RNull vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector doIntVectorMultiPos(RNull vector, RNull value, RAbstractVector positions) {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
     }
 
@@ -84,258 +84,258 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = {"!emptyValue", "!singlePosNegative", "multiPos"})
-    protected RAbstractIntVector doIntVectorMultiPos(VirtualFrame frame, RNull vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractIntVector doIntVectorMultiPos(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
     }
 
     @Specialization(guards = {"!emptyValue", "!isPosVectorInt", "multiPos"})
-    protected RAbstractVector doIntVectorMultiPos(VirtualFrame frame, RNull vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector doIntVectorMultiPos(RNull vector, RAbstractVector value, RAbstractVector positions) {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         }
     }
 
     @Specialization(guards = {"!emptyValue", "singlePosNegative"})
-    protected RAbstractIntVector doIntVectorNegative(VirtualFrame frame, RNull vector, RAbstractVector value, RAbstractIntVector positions) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+    protected RAbstractIntVector doIntVectorNegative(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(guards = "emptyValue")
-    protected RAbstractVector doIntVectorEmptyValue(VirtualFrame frame, RNull vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector doIntVectorEmptyValue(RNull vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"emptyValue", "!isVectorList"})
-    protected Object accessComplexEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RComplex position) {
+    protected Object accessComplexEmptyValue(RAbstractVector vector, RAbstractVector value, RComplex position) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
     @Specialization(guards = {"valueLongerThanOne", "!isVectorList"})
-    protected Object accessComplexValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RComplex position) {
+    protected Object accessComplexValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RComplex position) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
     @Specialization(guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
-    protected Object accessComplex(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RComplex position) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+    protected Object accessComplex(RAbstractVector vector, RAbstractVector value, RComplex position) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @Specialization
-    protected Object accessComplexList(VirtualFrame frame, RList vector, RAbstractVector value, RComplex position) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+    protected Object accessComplexList(RList vector, RAbstractVector value, RComplex position) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @Specialization
-    protected Object accessComplexList(VirtualFrame frame, RList vector, RNull value, RComplex position) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+    protected Object accessComplexList(RList vector, RNull value, RComplex position) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @Specialization(guards = "!isVectorList")
-    protected Object accessComplex(VirtualFrame frame, RAbstractVector vector, RNull value, RComplex position) {
+    protected Object accessComplex(RAbstractVector vector, RNull value, RComplex position) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
     @Specialization(guards = {"emptyValue", "!isVectorList"})
-    protected Object accessRawEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RRaw position) {
+    protected Object accessRawEmptyValue(RAbstractVector vector, RAbstractVector value, RRaw position) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
     @Specialization(guards = {"valueLongerThanOne", "!isVectorList"})
-    protected Object accessRawValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RRaw position) {
+    protected Object accessRawValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RRaw position) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
     @Specialization(guards = {"!valueLongerThanOne", "!emptyValue", "!isVectorList"})
-    protected Object accessRaw(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RRaw position) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+    protected Object accessRaw(RAbstractVector vector, RAbstractVector value, RRaw position) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @Specialization
-    protected Object accessRawList(VirtualFrame frame, RList vector, RAbstractVector value, RRaw position) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+    protected Object accessRawList(RList vector, RAbstractVector value, RRaw position) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @Specialization
-    protected Object accessRawList(VirtualFrame frame, RList vector, RNull value, RRaw position) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+    protected Object accessRawList(RList vector, RNull value, RRaw position) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @Specialization(guards = "!isVectorList")
-    protected Object accessRaw(VirtualFrame frame, RAbstractVector vector, RNull value, RRaw position) {
+    protected Object accessRaw(RAbstractVector vector, RNull value, RRaw position) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
     @Specialization(guards = {"noPosition", "emptyValue"})
-    protected RAbstractVector accessListEmptyPosEmptyValueList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"noPosition", "emptyValue", "!isVectorList"})
-    protected RAbstractVector accessListEmptyPosEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"noPosition", "valueLengthOne"})
-    protected RAbstractVector accessListEmptyPosValueLengthOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"noPosition", "valueLongerThanOne"})
-    protected RAbstractVector accessListEmptyPosValueLongerThanOneList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"noPosition", "valueLongerThanOne", "!isVectorList"})
-    protected RAbstractVector accessListEmptyPosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = "noPosition")
-    protected RAbstractVector accessListEmptyPosEmptyValueList(VirtualFrame frame, RList vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"noPosition", "!isVectorList"})
-    protected RAbstractVector accessListEmptyPosEmptyValue(VirtualFrame frame, RAbstractVector vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector accessListEmptyPosEmptyValue(RAbstractVector vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "emptyValue", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosEmptyValueList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "emptyValue", "!firstPosZero"})
-    protected RAbstractVector accessListOnePosEmptyValueList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "emptyValue", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroEmptyValueList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "emptyValue", "!isVectorList", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "emptyValue", "!isVectorList", "!firstPosZero"})
-    protected RAbstractVector accessListOnePosEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "emptyValue", "!isVectorList", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLengthOne", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosValueLengthOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -347,187 +347,187 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     }
 
     @Specialization(guards = {"onePosition", "valueLengthOne", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroValueLengthOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosValueLongerThanOneList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!firstPosZero"})
-    protected RAbstractVector accessListOnePosValueLongerThanOneList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroValueLongerThanOneList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "!firstPosZero"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "valueLongerThanOne", "!isVectorList", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosEmptyValueList(VirtualFrame frame, RList vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "!firstPosZero"})
-    protected RAbstractVector accessListOnePosEmptyValueList(VirtualFrame frame, RList vector, RNull value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
         if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroEmptyValueList(VirtualFrame frame, RList vector, RNull value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroEmptyValueList(RList vector, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "!isVectorList", "!isPosVectorInt"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "!isVectorList", "!firstPosZero"})
-    protected RAbstractVector accessListOnePosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RNull value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"onePosition", "!isVectorList", "firstPosZero"})
-    protected RAbstractVector accessListOnePosZeroValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RNull value, RAbstractIntVector positions) {
+    protected RAbstractVector accessListOnePosZeroValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = "multiPos")
-    protected RAbstractVector accessListTwoPosEmptyValueList(VirtualFrame frame, RList vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListTwoPosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"multiPos", "emptyValue", "!isVectorList"})
-    protected RAbstractVector accessListTwoPosEmptyValue(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListTwoPosEmptyValue(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"multiPos", "valueLengthOne", "!isVectorList"})
-    protected RAbstractVector accessListTwoPosValueLengthOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListTwoPosValueLengthOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"multiPos", "valueLongerThanOne", "!isVectorList"})
-    protected RAbstractVector accessListTwoPosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
+    protected RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = "multiPos")
-    protected RAbstractVector accessListTwoPosEmptyValueList(VirtualFrame frame, RList vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector accessListTwoPosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
     }
 
     @Specialization(guards = {"multiPos", "!isVectorList"})
-    protected RAbstractVector accessListTwoPosValueLongerThanOne(VirtualFrame frame, RAbstractVector vector, RNull value, RAbstractVector positions) {
+    protected RAbstractVector accessListTwoPosValueLongerThanOne(RAbstractVector vector, RNull value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions.getElementClass() == Object.class) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }

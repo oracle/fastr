@@ -71,7 +71,7 @@ public abstract class Get extends RBuiltinNode {
         try {
             return lookup.execute(frame);
         } catch (RError e) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
         }
     }
 
@@ -89,7 +89,7 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object get(VirtualFrame frame, RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+    protected Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
         String sx = x.getDataAt(0);
         REnvironment env = pos;
@@ -103,7 +103,7 @@ public abstract class Get extends RBuiltinNode {
             }
         }
         if (r == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, sx);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, sx);
         } else {
             return r;
         }
@@ -111,8 +111,8 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object get(VirtualFrame frame, RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
-        return get(frame, x, envir, RMissing.instance, mode, inherits);
+    protected Object get(RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
+        return get(x, envir, RMissing.instance, mode, inherits);
     }
 
 }

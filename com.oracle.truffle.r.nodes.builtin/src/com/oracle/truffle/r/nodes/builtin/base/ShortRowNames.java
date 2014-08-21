@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -50,9 +49,9 @@ public abstract class ShortRowNames extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "invalidType")
-    protected RNull getNamesInvalidType(VirtualFrame frame, RAbstractContainer operand, RAbstractIntVector type) {
+    protected RNull getNamesInvalidType(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
     }
 
     @SuppressWarnings("unused")

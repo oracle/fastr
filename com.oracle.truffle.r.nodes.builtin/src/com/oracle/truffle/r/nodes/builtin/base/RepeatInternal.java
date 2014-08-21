@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -106,12 +105,12 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector repInt(VirtualFrame frame, RStringVector value, RIntVector timesVec) {
+    protected RStringVector repInt(RStringVector value, RIntVector timesVec) {
         controlVisibility();
         int valueLength = value.getLength();
         int times = timesVec.getLength();
         if (!(times == 1 || times == valueLength)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
         }
         String[] array;
         if (times == 1) {

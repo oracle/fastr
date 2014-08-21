@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -37,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
     @Specialization(guards = "lengthOneCVector")
-    protected Object doReadEnviron(VirtualFrame frame, RAbstractStringVector vec) {
+    protected Object doReadEnviron(RAbstractStringVector vec) {
         controlVisibility();
         String path = Utils.tildeExpand(vec.getDataAt(0));
         byte result = RRuntime.LOGICAL_TRUE;
@@ -47,7 +46,7 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
             RContext.getInstance().setEvalWarning(ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }
         return result;
     }

@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -44,9 +43,9 @@ public abstract class Stop extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object stop(VirtualFrame frame, String msg, byte call, Object domain) {
+    protected Object stop(String msg, byte call, Object domain) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
     }
 
     @SlowPath
@@ -64,9 +63,9 @@ public abstract class Stop extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object stop(VirtualFrame frame, RStringVector msg, byte call, Object domain) {
+    protected Object stop(RStringVector msg, byte call, Object domain) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, collapseStringVector(msg));
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, collapseStringVector(msg));
     }
 
 }
