@@ -15,6 +15,7 @@ package com.oracle.truffle.r.runtime.ops;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
@@ -199,8 +200,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -248,8 +249,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -318,8 +319,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -407,7 +408,7 @@ public abstract class BinaryArithmetic extends Operation {
         // LICENSE: transcribed code from GCC, which is licensed under GPL
         // libgcc2
 
-        private BranchProfile everSeenNaN = new BranchProfile();
+        private final BranchProfile everSeenNaN = new BranchProfile();
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
@@ -451,8 +452,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -486,14 +487,14 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("unsupported complex operation");
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -529,8 +530,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
     }
@@ -685,8 +686,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public String op(String left, String right) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'String' of argument");
         }
 
@@ -696,7 +697,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CHypot extends Node {
 
-            private BranchProfile everSeenInfinite = new BranchProfile();
+            private final BranchProfile everSeenInfinite = new BranchProfile();
 
             public double chypot(double real, double imag) {
                 double res = Math.sqrt(real * real + imag * imag);
@@ -717,7 +718,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CPow2 extends Node {
 
-            private BranchProfile everSeenNaN = new BranchProfile();
+            private final BranchProfile everSeenNaN = new BranchProfile();
 
             public RComplex cpow2(double cre, double cim) {
                 double cre2 = cre * cre;
@@ -823,7 +824,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         private static class CReciprocal extends Node {
 
-            private BranchProfile everSeenNaN = new BranchProfile();
+            private final BranchProfile everSeenNaN = new BranchProfile();
 
             public RComplex creciprocal(RComplex c) {
                 double cre = c.getRealPart();
@@ -946,8 +947,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
 
@@ -974,8 +975,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException("illegal type 'complex' of argument");
         }
 

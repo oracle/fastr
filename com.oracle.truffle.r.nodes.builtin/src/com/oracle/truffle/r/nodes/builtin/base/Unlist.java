@@ -62,17 +62,17 @@ public abstract class Unlist extends RBuiltinNode {
 
         @Specialization
         @SuppressWarnings("unused")
-        public int getLength(RNull vector) {
+        protected int getLength(RNull vector) {
             return 0;
         }
 
         @Specialization(guards = "!isVectorList")
-        public int getLength(RAbstractVector vector) {
+        protected int getLength(RAbstractVector vector) {
             return vector.getLength();
         }
 
         @Specialization(guards = "isVectorList")
-        public int getLengthList(VirtualFrame frame, RAbstractVector vector) {
+        protected int getLengthList(VirtualFrame frame, RAbstractVector vector) {
             int totalSize = 0;
             for (int i = 0; i < vector.getLength(); ++i) {
                 Object data = vector.getDataAtAsObject(i);
@@ -104,21 +104,21 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull unlist(RNull vector, byte recursive, byte useNames) {
+    protected RNull unlist(RNull vector, byte recursive, byte useNames) {
         controlVisibility();
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isVectorList")
-    public RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
+    protected RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
         controlVisibility();
         return vector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty")
-    public RNull unlistEmptyList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+    protected RNull unlistEmptyList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
         controlVisibility();
         return RNull.instance;
     }
@@ -126,7 +126,7 @@ public abstract class Unlist extends RBuiltinNode {
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty")
-    public RAbstractVector unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+    protected RAbstractVector unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
         controlVisibility();
         boolean rec = recursive == RRuntime.LOGICAL_TRUE;
         boolean withNames = useNames == RRuntime.LOGICAL_TRUE;

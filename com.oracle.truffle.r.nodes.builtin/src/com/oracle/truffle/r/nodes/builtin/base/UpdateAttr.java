@@ -87,7 +87,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "nullValue")
-    public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
+    protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         RVector resultVector = container.materializeNonSharedVector();
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
@@ -107,24 +107,24 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return container.getElementClass() == RVector.class ? container : resultVector;
     }
 
-    public static RAbstractContainer setClassAttrFromObject(VirtualFrame frame, RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
+    public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
         if (value instanceof RStringVector) {
             return RVector.setClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RVector.class ? container : null);
         }
         if (value instanceof String) {
             return RVector.setClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RVector.class ? container : null);
         }
-        throw RError.error(frame, sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
+        throw RError.error(sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
     }
 
     @Specialization(guards = "!nullValue")
-    public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
+    protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
         controlVisibility();
         RVector resultVector = container.materializeNonSharedVector();
         if (name.equals(RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
             if (dimsVector.getLength() == 0) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
             resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
@@ -132,7 +132,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(frame, resultVector, value);
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-            return setClassAttrFromObject(frame, resultVector, container, value, getEncapsulatingSourceSection());
+            return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
         } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
             resultVector.setRowNames(castVector(frame, value));
         } else {
@@ -144,7 +144,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!nullValue")
-    public RAbstractContainer updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
+    protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
         controlVisibility();
         return updateAttr(frame, vector, name.getDataAt(0), value);
     }
@@ -156,14 +156,14 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!nullValueforEnv")
-    public REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, Object value) {
+    protected REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, Object value) {
         controlVisibility();
         env.setAttr(name, value);
         return env;
     }
 
     @Specialization(guards = "nullValueforEnv")
-    public REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, RNull value) {
+    protected REnvironment updateAttr(VirtualFrame frame, REnvironment env, String name, RNull value) {
         controlVisibility();
         env.removeAttr(name);
         return env;

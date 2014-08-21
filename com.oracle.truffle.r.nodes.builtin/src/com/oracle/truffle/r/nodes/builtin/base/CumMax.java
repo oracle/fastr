@@ -14,6 +14,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -27,26 +28,28 @@ public abstract class CumMax extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();
 
+    @Child private CastDoubleNode castDouble;
+
     @Specialization
-    public double cummax(double arg) {
+    protected double cummax(double arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public int cummax(int arg) {
+    protected int cummax(int arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public Object cummax(VirtualFrame frame, String arg) {
+    protected Object cummax(String arg) {
         controlVisibility();
-        return CastDoubleNodeFactory.create(null, false, false, false).executeDouble(frame, arg);
+        return na.convertStringToDouble(arg);
     }
 
     @Specialization
-    public int cummax(byte arg) {
+    protected int cummax(byte arg) {
         controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
@@ -56,7 +59,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cummax(RIntSequence v) {
+    protected RIntVector cummax(RIntSequence v) {
 
         controlVisibility();
         int[] cmaxV = new int[v.getLength()];
@@ -74,7 +77,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cummax(RDoubleVector v) {
+    protected RDoubleVector cummax(RDoubleVector v) {
         controlVisibility();
         double[] cmaxV = new double[v.getLength()];
         double max = v.getDataAt(0);
@@ -97,7 +100,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cummax(RIntVector v) {
+    protected RIntVector cummax(RIntVector v) {
         controlVisibility();
         int[] cmaxV = new int[v.getLength()];
         int max = v.getDataAt(0);
@@ -120,7 +123,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cummax(RLogicalVector v) {
+    protected RIntVector cummax(RLogicalVector v) {
         controlVisibility();
         int[] cmaxV = new int[v.getLength()];
         int max = v.getDataAt(0);
@@ -143,15 +146,19 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cummax(VirtualFrame frame, RStringVector v) {
+    protected RDoubleVector cummax(VirtualFrame frame, RStringVector v) {
         controlVisibility();
-        return cummax((RDoubleVector) CastDoubleNodeFactory.create(null, false, false, false).executeDouble(frame, v));
+        if (castDouble == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castDouble = insert(CastDoubleNodeFactory.create(null, false, false, false));
+        }
+        return cummax((RDoubleVector) castDouble.executeDouble(frame, v));
     }
 
     @Specialization
-    public RComplexVector cummax(VirtualFrame frame, @SuppressWarnings("unused") RComplexVector v) {
+    protected RComplexVector cummax(@SuppressWarnings("unused") RComplexVector v) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX);
     }
 
 }

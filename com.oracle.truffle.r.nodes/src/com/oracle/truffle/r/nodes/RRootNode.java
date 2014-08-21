@@ -75,5 +75,4 @@ public abstract class RRootNode extends RootNode {
     public boolean isSplittable() {
         return true;
     }
-
 }

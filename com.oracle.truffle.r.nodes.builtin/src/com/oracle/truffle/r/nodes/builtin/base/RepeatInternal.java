@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -46,7 +45,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector repInt(double value, int times) {
+    protected RDoubleVector repInt(double value, int times) {
         controlVisibility();
         double[] array = new double[times];
         Arrays.fill(array, value);
@@ -54,7 +53,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector repInt(RRaw value, int times) {
+    protected RRawVector repInt(RRaw value, int times) {
         controlVisibility();
         byte[] array = new byte[times];
         Arrays.fill(array, value.getValue());
@@ -62,7 +61,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector repInt(RIntSequence value, int times) {
+    protected RIntVector repInt(RIntSequence value, int times) {
         controlVisibility();
         int oldLength = value.getLength();
         int length = oldLength * times;
@@ -76,7 +75,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector repInt(RDoubleVector value, int times) {
+    protected RDoubleVector repInt(RDoubleVector value, int times) {
         controlVisibility();
         int oldLength = value.getLength();
         int length = value.getLength() * times;
@@ -90,7 +89,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector repInt(int value, int times) {
+    protected RIntVector repInt(int value, int times) {
         controlVisibility();
         int[] array = new int[times];
         Arrays.fill(array, value);
@@ -98,7 +97,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector repInt(String value, int times) {
+    protected RStringVector repInt(String value, int times) {
         controlVisibility();
         String[] array = new String[times];
         Arrays.fill(array, value);
@@ -106,12 +105,12 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector repInt(VirtualFrame frame, RStringVector value, RIntVector timesVec) {
+    protected RStringVector repInt(RStringVector value, RIntVector timesVec) {
         controlVisibility();
         int valueLength = value.getLength();
         int times = timesVec.getLength();
         if (!(times == 1 || times == valueLength)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TIMES_ARG);
         }
         String[] array;
         if (times == 1) {
@@ -141,7 +140,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
     }
 
     @Specialization
-    public RList repList(RList value, int times) {
+    protected RList repList(RList value, int times) {
         controlVisibility();
         int oldLength = value.getLength();
         int length = value.getLength() * times;

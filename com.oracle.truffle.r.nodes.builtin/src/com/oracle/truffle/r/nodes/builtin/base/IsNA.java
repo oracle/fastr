@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -50,13 +51,13 @@ public abstract class IsNA extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object o);
 
     @Specialization
-    public byte isNA(int value) {
+    protected byte isNA(int value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RAbstractIntVector vector) {
+    protected RLogicalVector isNA(RAbstractIntVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -66,13 +67,13 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(double value) {
+    protected byte isNA(double value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RAbstractDoubleVector vector) {
+    protected RLogicalVector isNA(RAbstractDoubleVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -82,13 +83,13 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(String value) {
+    protected byte isNA(String value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RStringVector vector) {
+    protected RLogicalVector isNA(RStringVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -98,7 +99,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector isNA(VirtualFrame frame, RList list) {
+    protected RLogicalVector isNA(VirtualFrame frame, RList list) {
         controlVisibility();
         byte[] resultVector = new byte[list.getLength()];
         for (int i = 0; i < list.getLength(); i++) {
@@ -112,22 +113,26 @@ public abstract class IsNA extends RBuiltinNode {
                 // and the single element of that vector is regarded as NA
                 isNAResult = (vector.getLength() == 1) ? vector.getDataAt(0) : RRuntime.LOGICAL_FALSE;
             } else {
-                CompilerDirectives.transferToInterpreter();
-                throw new UnsupportedOperationException("unhandled return type in isNA(list)");
+                throw fail("unhandled return type in isNA(list)");
             }
             resultVector[i] = isNAResult;
         }
         return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @SlowPath
+    private static UnsupportedOperationException fail(String message) {
+        throw new UnsupportedOperationException(message);
+    }
+
     @Specialization
-    public byte isNA(byte value) {
+    protected byte isNA(byte value) {
         controlVisibility();
         return RRuntime.asLogical(RRuntime.isNA(value));
     }
 
     @Specialization
-    public RLogicalVector isNA(RLogicalVector vector) {
+    protected RLogicalVector isNA(RLogicalVector vector) {
         controlVisibility();
         byte[] resultVector = new byte[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -137,7 +142,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isNA(RNull value) {
+    protected byte isNA(RNull value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }

@@ -30,19 +30,19 @@ public abstract class CumProd extends RBuiltinNode {
     @Child private BinaryArithmetic mul = BinaryArithmetic.MULTIPLY.create();
 
     @Specialization
-    public int cumprod(int arg) {
+    protected int cumprod(int arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public double cumrpod(double arg) {
+    protected double cumrpod(double arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public int cumprod(byte arg) {
+    protected int cumprod(byte arg) {
         controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
@@ -52,7 +52,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cumprod(RAbstractIntVector arg) {
+    protected RIntVector cumprod(RAbstractIntVector arg) {
         controlVisibility();
         int[] array = new int[arg.getLength()];
         na.enable(arg);
@@ -75,7 +75,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cumprod(RDoubleVector arg) {
+    protected RDoubleVector cumprod(RDoubleVector arg) {
         controlVisibility();
         double[] array = new double[arg.getLength()];
         na.enable(arg);
@@ -98,7 +98,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cumprod(RLogicalVector arg) {
+    protected RIntVector cumprod(RLogicalVector arg) {
         controlVisibility();
         int[] array = new int[arg.getLength()];
         na.enable(arg);
@@ -121,7 +121,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cumprod(RStringVector arg) {
+    protected RDoubleVector cumprod(RStringVector arg) {
         controlVisibility();
         double[] array = new double[arg.getLength()];
         na.enable(arg);
@@ -141,7 +141,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector cumprod(RComplexVector arg) {
+    protected RComplexVector cumprod(RComplexVector arg) {
         controlVisibility();
         double[] array = new double[arg.getLength() * 2];
         na.enable(arg);

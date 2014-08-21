@@ -38,12 +38,12 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
+    protected Object nextMethod(VirtualFrame frame, String genericMethod, @SuppressWarnings("unused") Object obj, Object[] args) {
         controlVisibility();
         final RStringVector type = readType(frame);
         final String genericName = readGenericName(frame, genericMethod);
         if (genericName == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
         }
         if (dispatchedCallNode == null || !lastGenericName.equals(genericName)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -55,24 +55,24 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     @Specialization
-    public Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RMissing args) {
+    protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, @SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, null, null, new Object[0]);
     }
 
     @Specialization
-    public Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RMissing args) {
+    protected Object nextMethod(VirtualFrame frame, String generic, Object obj, @SuppressWarnings("unused") RMissing args) {
         controlVisibility();
         return nextMethod(frame, generic, obj, new Object[0]);
     }
 
     private RStringVector getAlternateClassHr(VirtualFrame frame) {
         if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null || !(RArguments.getArgument(frame, 0) instanceof RAbstractVector)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         RAbstractVector enclosingArg = (RAbstractVector) RArguments.getArgument(frame, 0);
         if (!enclosingArg.isObject()) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
         }
         return enclosingArg.getClassHierarchy();
     }

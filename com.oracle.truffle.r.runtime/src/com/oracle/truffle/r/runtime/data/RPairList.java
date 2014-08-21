@@ -31,10 +31,11 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * Denotes the (rarely seen) {@code pairlist} type in R.
  */
 public class RPairList implements RAttributable, RAbstractContainer {
-    private Object car;
-    private Object cdr;
+    private final Object car;
+    private final Object cdr;
     private Object tag;
     private RAttributes attributes;
+
     /**
      * Denotes the (GnuR) typeof entity that the pairlist represents.
      */
@@ -182,5 +183,4 @@ public class RPairList implements RAttributable, RAbstractContainer {
     public boolean isObject() {
         return false;
     }
-
 }

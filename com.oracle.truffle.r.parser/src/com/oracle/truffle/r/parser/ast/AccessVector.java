@@ -16,12 +16,11 @@ import com.oracle.truffle.api.source.*;
 
 public class AccessVector extends Call {
 
-    final ASTNode vector;
-    final boolean subset;
+    private final ASTNode vector;
+    private final boolean subset;
 
-    public AccessVector(SourceSection src, ASTNode vector, List<ArgNode> args, boolean subset) {
-        super(args);
-        this.source = src;
+    public AccessVector(SourceSection source, ASTNode vector, List<ArgNode> arguments, boolean subset) {
+        super(source, arguments);
         this.vector = vector;
         this.subset = subset;
     }
@@ -43,5 +42,4 @@ public class AccessVector extends Call {
     public <R> List<R> visitAll(Visitor<R> v) {
         return Arrays.asList(vector.accept(v));
     }
-
 }

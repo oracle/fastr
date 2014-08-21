@@ -39,7 +39,7 @@ public abstract class FastRUsePromises extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object debugPromise(RFunction function) {
+    protected Object debugPromise(RFunction function) {
         controlVisibility();
         function.setUsePromises();
         return RNull.instance;

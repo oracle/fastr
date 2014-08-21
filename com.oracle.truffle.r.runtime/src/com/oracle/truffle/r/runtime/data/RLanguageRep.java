@@ -31,6 +31,7 @@ package com.oracle.truffle.r.runtime.data;
  * and {@link RPromise}.
  */
 public class RLanguageRep {
+
     private final Object rep;
 
     public RLanguageRep(Object rep) {
@@ -40,5 +41,4 @@ public class RLanguageRep {
     public Object getRep() {
         return rep;
     }
-
 }

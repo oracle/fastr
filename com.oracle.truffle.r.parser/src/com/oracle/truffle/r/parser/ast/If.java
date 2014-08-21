@@ -16,19 +16,19 @@ import com.oracle.truffle.api.source.*;
 
 public class If extends ASTNode {
 
-    final ASTNode cond;
-    final ASTNode trueCase;
-    final ASTNode falseCase;
+    private final ASTNode condition;
+    private final ASTNode trueCase;
+    private final ASTNode falseCase;
 
-    If(SourceSection src, ASTNode cond, ASTNode truecase, ASTNode falsecase) {
-        this.source = src;
-        this.cond = updateParent(cond);
-        this.trueCase = updateParent(truecase);
-        this.falseCase = updateParent(falsecase);
+    private If(SourceSection source, ASTNode condition, ASTNode trueCase, ASTNode falseCase) {
+        super(source);
+        this.condition = condition;
+        this.trueCase = trueCase;
+        this.falseCase = falseCase;
     }
 
-    public ASTNode getCond() {
-        return cond;
+    public ASTNode getCondition() {
+        return condition;
     }
 
     public ASTNode getTrueCase() {
@@ -47,7 +47,7 @@ public class If extends ASTNode {
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {
         List<R> nodes = new ArrayList<>();
-        nodes.add(getCond().accept(v));
+        nodes.add(getCondition().accept(v));
         nodes.add(getTrueCase().accept(v));
         if (getFalseCase() != null) {
             nodes.add(getFalseCase().accept(v));

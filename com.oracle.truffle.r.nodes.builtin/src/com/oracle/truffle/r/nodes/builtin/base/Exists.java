@@ -50,7 +50,7 @@ public abstract class Exists extends RBuiltinNode {
 
     @Specialization(guards = "noEnv")
     @SuppressWarnings("unused")
-    public byte existsString(VirtualFrame frm, String name, int where, RMissing envir, Object frame, String mode, byte inherits) {
+    protected byte existsString(VirtualFrame frm, String name, int where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -66,7 +66,7 @@ public abstract class Exists extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public byte existsStringEnv(String name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
+    protected byte existsStringEnv(String name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         if (inherits == RRuntime.LOGICAL_FALSE) {
             return RRuntime.asLogical(where.get(name) != null);
@@ -80,19 +80,19 @@ public abstract class Exists extends RBuiltinNode {
     }
 
     @Specialization
-    public byte existsStringEnv(RStringVector name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
+    protected byte existsStringEnv(RStringVector name, REnvironment where, RMissing envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
     }
 
     @Specialization
-    public byte existsStringEnv(String name, @SuppressWarnings("unused") int where, REnvironment envir, Object frame, String mode, byte inherits) {
+    protected byte existsStringEnv(String name, @SuppressWarnings("unused") int where, REnvironment envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name, envir, RMissing.instance, frame, mode, inherits);
     }
 
     @Specialization
-    public byte existsStringEnv(RStringVector name, int where, REnvironment envir, Object frame, String mode, byte inherits) {
+    protected byte existsStringEnv(RStringVector name, int where, REnvironment envir, Object frame, String mode, byte inherits) {
         controlVisibility();
         return existsStringEnv(name.getDataAt(0), where, envir, frame, mode, inherits);
     }

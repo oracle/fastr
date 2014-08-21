@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class GetOldClass extends RBuiltinNode {
 
     @Specialization
-    public Object getOldClass(RAbstractContainer arg) {
+    protected Object getOldClass(RAbstractContainer arg) {
         controlVisibility();
         if (arg.isObject()) {
             return arg.getClassHierarchy();
@@ -45,7 +45,7 @@ public abstract class GetOldClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object getOldClass(@SuppressWarnings("unused") RFunction arg) {
+    protected Object getOldClass(@SuppressWarnings("unused") RFunction arg) {
         controlVisibility();
         return RNull.instance;
     }

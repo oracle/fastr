@@ -34,20 +34,20 @@ public abstract class IsDouble extends IsTypeNode {
 
     @Specialization
     @Override
-    public byte isType(double value) {
+    protected byte isType(double value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
-    public byte isType(RDoubleVector value) {
+    protected byte isType(RDoubleVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isType(Object value) {
+    protected byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof Double || value instanceof RAbstractDoubleVector);
     }

@@ -35,7 +35,7 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
     @Specialization(guards = "!isStringVector")
-    public Object setClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
+    protected Object setClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
             return setClass(arg, RNull.instance);
@@ -49,14 +49,14 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);
     }
 
     @Specialization
-    public Object setClass(VirtualFrame frame, RAbstractContainer arg, String className) {
+    protected Object setClass(VirtualFrame frame, RAbstractContainer arg, String className) {
         controlVisibility();
         initTypeof();
         if (!arg.isObject()) {
@@ -81,20 +81,20 @@ public abstract class UpdateClass extends RInvisibleBuiltinNode {
             if (dimensions != null) {
                 dimLength = dimensions.length;
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
         }
         if (className.equals(RRuntime.TYPE_ARRAY)) {
             if (resultVector.isArray()) {
                 return setClass(resultVector, RNull.instance);
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
         return RVector.setClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RVector.class ? arg : null);
     }
 
     @Specialization
-    public Object setClass(RAbstractContainer arg, RStringVector className) {
+    protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);

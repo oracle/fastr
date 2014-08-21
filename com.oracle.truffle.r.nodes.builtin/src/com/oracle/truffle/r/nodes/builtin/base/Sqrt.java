@@ -46,7 +46,7 @@ public abstract class Sqrt extends RBuiltinNode {
     }
 
     @Specialization
-    public double sqrt(int x) {
+    protected double sqrt(int x) {
         controlVisibility();
         na.enable(x);
         if (na.check(x)) {
@@ -56,7 +56,7 @@ public abstract class Sqrt extends RBuiltinNode {
     }
 
     @Specialization
-    public double sqrt(byte x) {
+    protected double sqrt(byte x) {
         controlVisibility();
         // sqrt for logical values: TRUE -> 1, FALSE -> 0, NA -> NA
         na.enable(x);
@@ -67,7 +67,7 @@ public abstract class Sqrt extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector sqrt(RIntSequence xs) {
+    protected RDoubleVector sqrt(RIntSequence xs) {
         controlVisibility();
         double[] res = new double[xs.getLength()];
         int current = xs.getStart();
@@ -81,7 +81,7 @@ public abstract class Sqrt extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector sqrt(RDoubleVector xs) {
+    protected RDoubleVector sqrt(RDoubleVector xs) {
         controlVisibility();
         double[] res = new double[xs.getLength()];
         na.enable(xs);

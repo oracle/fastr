@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @PrettyName("-")
 public class UnaryMinus extends UnaryOperation {
 
-    public UnaryMinus(SourceSection src, ASTNode operand) {
-        super(src, operand);
+    public UnaryMinus(SourceSection source, ASTNode operand) {
+        super(source, operand);
     }
 
     @Override

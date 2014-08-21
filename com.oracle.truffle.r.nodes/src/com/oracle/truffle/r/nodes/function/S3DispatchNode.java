@@ -59,7 +59,7 @@ public abstract class S3DispatchNode extends DispatchNode {
         } finally {
             RError.ignoreError(prevIgnoreError);
         }
-        if (func != null && func instanceof RFunction) {
+        if (func instanceof RFunction) {
             targetFunctionName = functionName;
             targetFunction = (RFunction) func;
         }

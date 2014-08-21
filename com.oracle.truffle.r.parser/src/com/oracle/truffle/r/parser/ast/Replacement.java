@@ -26,15 +26,14 @@ import com.oracle.truffle.api.source.*;
 
 public class Replacement extends AssignVariable {
 
-    final FunctionCall replacementFunctionCall;
+    private final FunctionCall replacementFunctionCall;
 
-    public Replacement(SourceSection src, boolean isSuper, FunctionCall builtin, ASTNode rhs) {
-        super(isSuper, rhs);
-        this.replacementFunctionCall = builtin;
-        this.source = src;
+    public Replacement(SourceSection src, boolean isSuper, FunctionCall replacementFunctionCall, ASTNode rhs) {
+        super(src, isSuper, rhs);
+        this.replacementFunctionCall = replacementFunctionCall;
     }
 
-    public FunctionCall getBuiltin() {
+    public FunctionCall getReplacementFunctionCall() {
         return replacementFunctionCall;
     }
 
@@ -42,5 +41,4 @@ public class Replacement extends AssignVariable {
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
     }
-
 }

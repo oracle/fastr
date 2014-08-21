@@ -43,24 +43,24 @@ public class EnvFunctions {
     public abstract static class AsEnvironment extends RBuiltinNode {
 
         @Specialization
-        public REnvironment asEnvironment(REnvironment env) {
+        protected REnvironment asEnvironment(REnvironment env) {
             controlVisibility();
             return env;
         }
 
         @Specialization
-        public REnvironment asEnvironment(VirtualFrame frame, double dpos) {
+        protected REnvironment asEnvironment(double dpos) {
             controlVisibility();
-            return asEnvironmentInt(frame, (int) dpos);
+            return asEnvironmentInt((int) dpos);
         }
 
         @Specialization
-        public REnvironment asEnvironmentInt(VirtualFrame frame, int pos) {
+        protected REnvironment asEnvironmentInt(int pos) {
             controlVisibility();
             if (pos == -1) {
                 Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
                     return REnvironment.frameToEnvironment(callerFrame.materialize());
                 }
@@ -72,14 +72,14 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
             }
         }
 
         @Specialization
-        public REnvironment asEnvironment(VirtualFrame frame, RAbstractStringVector nameVec) {
+        protected REnvironment asEnvironment(RAbstractStringVector nameVec) {
             controlVisibility();
             String name = nameVec.getDataAt(0);
             String[] searchPath = REnvironment.searchPath();
@@ -88,7 +88,7 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
         }
 
     }
@@ -97,7 +97,7 @@ public class EnvFunctions {
     public abstract static class EmptyEnv extends RBuiltinNode {
 
         @Specialization
-        public REnvironment emptyenv() {
+        protected REnvironment emptyenv() {
             controlVisibility();
             return REnvironment.emptyEnv();
         }
@@ -107,7 +107,7 @@ public class EnvFunctions {
     public abstract static class GlobalEnv extends RBuiltinNode {
 
         @Specialization
-        public Object globalenv() {
+        protected Object globalenv() {
             controlVisibility();
             return REnvironment.globalEnv();
         }
@@ -120,7 +120,7 @@ public class EnvFunctions {
     public abstract static class BaseEnv extends RBuiltinNode {
 
         @Specialization
-        public Object baseenv() {
+        protected Object baseenv() {
             controlVisibility();
             return REnvironment.baseEnv();
         }
@@ -130,10 +130,10 @@ public class EnvFunctions {
     public abstract static class ParentEnv extends RBuiltinNode {
 
         @Specialization
-        public REnvironment parentenv(VirtualFrame frame, REnvironment env) {
+        protected REnvironment parentenv(REnvironment env) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
         }
@@ -145,10 +145,10 @@ public class EnvFunctions {
     public abstract static class SetParentEnv extends RBuiltinNode {
 
         @Specialization
-        public REnvironment setParentenv(VirtualFrame frame, REnvironment env, REnvironment parent) {
+        protected REnvironment setParentenv(REnvironment env, REnvironment parent) {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
             return env;
@@ -160,7 +160,7 @@ public class EnvFunctions {
     public abstract static class IsEnvironment extends RBuiltinNode {
 
         @Specialization
-        public byte isEnvironment(Object env) {
+        protected byte isEnvironment(Object env) {
             controlVisibility();
             return env instanceof REnvironment ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
@@ -175,7 +175,7 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public Object environment(@SuppressWarnings("unused") RNull x) {
+        protected Object environment(@SuppressWarnings("unused") RNull x) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
             return REnvironment.frameToEnvironment(callerFrame.materialize());
@@ -187,13 +187,13 @@ public class EnvFunctions {
          * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
          */
         @Specialization
-        public Object environment(Object funcArg) {
+        protected Object environment(Object funcArg) {
             controlVisibility();
             if (funcArg instanceof RFunction) {
                 RFunction func = (RFunction) funcArg;
                 Frame enclosing = func.getEnclosingFrame();
                 REnvironment env = RArguments.getEnvironment(enclosing);
-                return env == null ? REnvironment.lexicalChain(enclosing.materialize()) : env;
+                return env == null ? REnvironment.createEnclosingEnvironments(enclosing.materialize()) : env;
             } else {
                 // Not an error according to GnuR
                 return RNull.instance;
@@ -212,13 +212,13 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public String environmentName(REnvironment env) {
+        protected String environmentName(REnvironment env) {
             controlVisibility();
             return env.getName();
         }
 
         @Specialization
-        public String environmentName(@SuppressWarnings("unused") Object env) {
+        protected String environmentName(@SuppressWarnings("unused") Object env) {
             controlVisibility();
             // Not an error according to GnuR
             return "";
@@ -234,13 +234,13 @@ public class EnvFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        public REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
+        protected REnvironment newEnv(VirtualFrame frame, byte hash, RMissing parent, int size) {
             return newEnv(frame, hash, RNull.instance, size);
         }
 
         @Specialization
         @SuppressWarnings("unused")
-        public REnvironment newEnv(VirtualFrame frame, byte hash, RNull parent, int size) {
+        protected REnvironment newEnv(VirtualFrame frame, byte hash, RNull parent, int size) {
             // TODO this will eventually go away when R code fixed when promises available
             controlVisibility();
             // FIXME what if hash == FALSE?
@@ -248,7 +248,7 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+        protected REnvironment newEnv(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
             controlVisibility();
             // FIXME what if hash == FALSE?
             return new REnvironment.NewEnv(parent, size);
@@ -259,7 +259,7 @@ public class EnvFunctions {
     // TODO INTERNAL
     public abstract static class Search extends RBuiltinNode {
         @Specialization
-        public RStringVector search() {
+        protected RStringVector search() {
             return RDataFactory.createStringVector(REnvironment.searchPath(), RDataFactory.COMPLETE_VECTOR);
         }
     }
@@ -274,7 +274,7 @@ public class EnvFunctions {
         }
 
         @Specialization
-        public Object lockEnvironment(REnvironment env, byte bindings) {
+        protected Object lockEnvironment(REnvironment env, byte bindings) {
             controlVisibility();
             env.lock(bindings == RRuntime.LOGICAL_TRUE);
             return RNull.instance;
@@ -285,7 +285,7 @@ public class EnvFunctions {
     @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"})
     public abstract static class EnvironmentIsLocked extends RBuiltinNode {
         @Specialization
-        public Object lockEnvironment(REnvironment env) {
+        protected Object lockEnvironment(REnvironment env) {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.isLocked());
         }
@@ -295,7 +295,7 @@ public class EnvFunctions {
     @RBuiltin(name = "lockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class LockBinding extends RInvisibleBuiltinNode {
         @Specialization
-        public Object lockBinding(String sym, REnvironment env) {
+        protected Object lockBinding(String sym, REnvironment env) {
             controlVisibility();
             env.lockBinding(sym);
             return RNull.instance;
@@ -306,7 +306,7 @@ public class EnvFunctions {
     @RBuiltin(name = "unlockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
         @Specialization
-        public Object unlockBinding(String sym, REnvironment env) {
+        protected Object unlockBinding(String sym, REnvironment env) {
             controlVisibility();
             env.unlockBinding(sym);
             return RNull.instance;
@@ -317,7 +317,7 @@ public class EnvFunctions {
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"})
     public abstract static class BindingIsLocked extends RBuiltinNode {
         @Specialization
-        public Object bindingIsLocked(String sym, REnvironment env) {
+        protected Object bindingIsLocked(String sym, REnvironment env) {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym));
         }
@@ -328,7 +328,7 @@ public class EnvFunctions {
     public abstract static class MakeActiveBinding extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public Object makeActiveBinding(Object sym, Object fun, Object env) {
+        protected Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
             throw RError.nyi(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
@@ -339,7 +339,7 @@ public class EnvFunctions {
     public abstract static class BindingIsActive extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public Object bindingIsActive(Object sym, Object fun, Object env) {
+        protected Object bindingIsActive(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(false);

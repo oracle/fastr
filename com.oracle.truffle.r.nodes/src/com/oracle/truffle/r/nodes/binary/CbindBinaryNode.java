@@ -30,28 +30,28 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CbindBinaryNode extends CombineBinaryNode {
 
-    private BranchProfile everSeenNotEqualRows = new BranchProfile();
+    private final BranchProfile everSeenNotEqualRows = new BranchProfile();
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull cbind(RNull left, RNull right) {
+    protected RNull cbind(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public RAbstractVector cbind(RAbstractVector left, RNull right) {
+    protected RAbstractVector cbind(RAbstractVector left, RNull right) {
         return left.copyWithNewDimensions(getDimensions(left));
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public RAbstractVector cbind(RNull left, RAbstractVector right) {
+    protected RAbstractVector cbind(RNull left, RAbstractVector right) {
         return right.copyWithNewDimensions(getDimensions(right));
     }
 
     @Specialization
-    public RAbstractVector cbind(RAbstractVector left, RAbstractVector right) {
+    protected RAbstractVector cbind(RAbstractVector left, RAbstractVector right) {
         return genericCbind(left.materialize(), right.materialize());
     }
 

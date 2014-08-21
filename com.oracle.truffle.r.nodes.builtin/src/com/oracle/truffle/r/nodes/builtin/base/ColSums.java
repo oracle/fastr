@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -55,7 +54,7 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector colSumsNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector colSumsNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
         boolean isComplete = true;
@@ -81,7 +80,7 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector colSumsNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector colSumsNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
         na.enable(x);
@@ -99,7 +98,7 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector colSumsNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector colSumsNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
         na.enable(x);
@@ -119,7 +118,7 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector colSumsNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector colSumsNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
         na.enable(x);
@@ -137,7 +136,7 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isNaRm")
-    public RDoubleVector colSumsNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector colSumsNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
         na.enable(x);
@@ -157,7 +156,7 @@ public abstract class ColSums extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNaRm")
-    public RDoubleVector colSumsNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
+    protected RDoubleVector colSumsNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") byte naRm) {
         controlVisibility();
         double[] result = new double[colNum];
         na.enable(x);
@@ -176,9 +175,9 @@ public abstract class ColSums extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RDoubleVector colSums(VirtualFrame frame, RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
+    protected RDoubleVector colSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
     }
 
     @SuppressWarnings("unused")

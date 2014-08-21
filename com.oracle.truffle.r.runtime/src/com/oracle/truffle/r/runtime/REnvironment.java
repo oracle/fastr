@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -72,6 +71,10 @@ import com.oracle.truffle.r.runtime.envframe.*;
  * for package "xxx". The {@code base} package is a special case in that it does not have an
  * "imports" environment. The parent of "package:base" is the empty environment, but the parent of
  * "namespace:base" is the global environment.
+ *
+ * Whereas R types generally use value semantics environments do not; they have reference semantics.
+ * In particular in FastR, there is exactly one environment created for any package or function
+ * Truffle frame, allowing equality to be tested using {@code ==}.
  *
  * TODO retire the {@code Package}, {@code Namespace} and {@code Imports} classes as they are only
  * used by the builtin packages, and will be completely redundant when they are loaded from
@@ -145,19 +148,14 @@ public abstract class REnvironment implements RAttributable {
      * Returns {@code true} iff {@code frame} is that associated with {@code env}.
      */
     public static boolean isFrameForEnv(Frame frame, REnvironment env) {
-        Object id = env.frameAccess.id();
-        if (id == null) {
-            return false;
+        REnvironment frameEnv = RArguments.getEnvironment(frame);
+        if (frameEnv == env) {
+            return true;
         }
-        FrameSlot idSlot = frame.getFrameDescriptor().findFrameSlot(id);
-        if (idSlot == null) {
-            return false;
+        if (frameEnv == null) {
+            frameEnv = createEnclosingEnvironments(frame.materialize());
         }
-        try {
-            return frame.getObject(idSlot) == id;
-        } catch (FrameSlotTypeException fste) {
-            return false;
-        }
+        return frameEnv == env;
     }
 
     /**
@@ -183,7 +181,7 @@ public abstract class REnvironment implements RAttributable {
     /**
      * Check whether the given frame is indeed the frame stored in the global environment.
      */
-    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
+    public static boolean isGlobalEnvFrame(Frame frame) {
         return isFrameForEnv(frame, globalEnv);
     }
 
@@ -394,12 +392,10 @@ public abstract class REnvironment implements RAttributable {
      */
     public static REnvironment detach(int pos, boolean unload, boolean force) throws DetachException {
         if (pos == searchPath.size()) {
-            CompilerDirectives.transferToInterpreter();
-            throw new DetachException(RError.Message.ENV_DETACH_BASE);
+            detachException(RError.Message.ENV_DETACH_BASE);
         }
         if (pos <= 0 || pos >= searchPath.size()) {
-            CompilerDirectives.transferToInterpreter();
-            throw new DetachException(RError.Message.ENV_SUBSCRIPT);
+            detachException(RError.Message.ENV_SUBSCRIPT);
         }
         assert pos != 1; // explicitly checked in caller
         // N.B. pos is 1-based
@@ -416,6 +412,11 @@ public abstract class REnvironment implements RAttributable {
         return envToRemove;
     }
 
+    @SlowPath
+    private static void detachException(RError.Message message) throws DetachException {
+        throw new DetachException(message);
+    }
+
     /**
      * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
      */
@@ -425,31 +426,14 @@ public abstract class REnvironment implements RAttributable {
     }
 
     /**
-     * Check if a frame corresponds to a function. If there is no function associated with the
-     * frame, then is it one of the package environments. Fortunately, we do not have to do a search
-     * as, in this case, the {@link REnvironment} value is also stored in the frame.
-     *
-     * @return ({code null) if this is a function frame, else the associated environment
-     */
-    public static REnvironment checkNonFunctionFrame(Frame frame) {
-        RFunction callerFunc = RArguments.getFunction(frame);
-        if (callerFunc == null) {
-            REnvironment env = RArguments.getEnvironment(frame);
-            assert env != null;
-            return env;
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * Converts a {@link Frame} to an {@link REnvironment}, which necessarily requires the frame to
      * be materialized.
      */
     public static REnvironment frameToEnvironment(MaterializedFrame frame) {
-        REnvironment env = checkNonFunctionFrame(frame);
+        REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
-            env = lexicalChain(frame);
+            assert RArguments.getFunction(frame) != null;
+            env = createEnclosingEnvironments(frame);
         }
         return env;
     }
@@ -464,11 +448,11 @@ public abstract class REnvironment implements RAttributable {
      * {@link MaterializedFrame}.
      */
     @SlowPath
-    public static REnvironment lexicalChain(MaterializedFrame frame) {
-        REnvironment env = checkNonFunctionFrame(frame);
+    public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
+        REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
             // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(lexicalChain(RArguments.getEnclosingFrame(frame)), frame);
+            env = REnvironment.Function.create(createEnclosingEnvironments(RArguments.getEnclosingFrame(frame)), frame);
         }
         return env;
     }
@@ -500,7 +484,7 @@ public abstract class REnvironment implements RAttributable {
      */
     private RStringVector getNamespaceSpec() {
         Object value = frameAccess.get(NAMESPACE_KEY);
-        if (value != null && value instanceof REnvironment) {
+        if (value instanceof REnvironment) {
             REnvironment info = (REnvironment) value;
             Object spec = info.frameAccess.get("spec");
             if ((spec != null) && spec instanceof RStringVector) {
@@ -596,11 +580,15 @@ public abstract class REnvironment implements RAttributable {
              * namespaces are a special case; they have no name attribute, but they print with the
              * name which is buried.
              */
-            RStringVector spec = getNamespaceSpec();
-            if (spec != null) {
-                return "namespace:" + spec.getDataAt(0);
+            if (frameAccess == noFrameAccess) {
+                return "function def";
             } else {
-                return String.format("%#x", hashCode());
+                RStringVector spec = getNamespaceSpec();
+                if (spec != null) {
+                    return "namespace:" + spec.getDataAt(0);
+                } else {
+                    return String.format("%#x", hashCode());
+                }
             }
         } else {
             return attrName;
@@ -838,10 +826,15 @@ public abstract class REnvironment implements RAttributable {
         private Function(REnvironment parent, MaterializedFrame frame) {
             // function environments are not named
             super(parent, UNNAMED, frame);
+            // Associate frame with the environment
+            RArguments.setEnvironment(frame, this);
         }
 
         private static Function create(REnvironment parent, MaterializedFrame frame) {
-            Function result = new Function(parent, frame);
+            Function result = (Function) RArguments.getEnvironment(frame);
+            if (result == null) {
+                result = new Function(parent, frame);
+            }
             return result;
         }
 

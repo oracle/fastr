@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-@com.oracle.truffle.api.CompilerDirectives.ValueType
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
+
+@ValueType
 public class RScalar {
 }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO revert to INTERNAL when promises are lazy
 public abstract class Formals extends RBuiltinNode {
     @Specialization
-    public Object formals(Object funObj) {
+    protected Object formals(Object funObj) {
         controlVisibility();
         if (funObj instanceof RFunction) {
             RFunction fun = (RFunction) funObj;

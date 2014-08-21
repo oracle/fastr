@@ -24,7 +24,9 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -45,6 +47,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         Object getValue();
     }
 
+    @ValueType
     private static class AttrInstance implements RAttribute {
         private String name;
         private Object value;
@@ -68,7 +71,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         public String toString() {
             return name + "=" + value;
         }
-
     }
 
     public abstract void put(String name, Object value);
@@ -306,8 +308,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
                     return iter.next();
                 } else {
                     if (readSingleton) {
-                        CompilerDirectives.transferToInterpreter();
-                        throw new NoSuchElementException();
+                        throw noSuchElement();
                     } else {
                         readSingleton = true;
                         return RAttributesImpl.this;
@@ -324,6 +325,11 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         public Object getValue() {
             return value1;
         }
+
+        @SlowPath
+        private static NoSuchElementException noSuchElement() {
+            throw new NoSuchElementException();
+        }
     }
 
     // Performance analysis
@@ -339,7 +345,6 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         private int maxSize;
 
         RAttributesStatsImpl() {
-            super();
             hist[0]++;
         }
 
@@ -379,7 +384,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
     }
 
-    private static boolean stats;
+    @CompilationFinal private static boolean stats;
 
     public static class PerfHandler implements RPerfAnalysis.Handler {
         public void initialize() {
@@ -396,5 +401,4 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
     }
-
 }

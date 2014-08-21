@@ -87,7 +87,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "wrongArgsObject")
-    String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+    protected String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RLogicalVector sciVec) {
         return null;
     }
@@ -96,7 +96,7 @@ public abstract class Format extends RBuiltinNode {
     // types following suit at some point for compliance
 
     @SlowPath
-    RStringVector convertToString(RAbstractLogicalVector value) {
+    private static RStringVector convertToString(RAbstractLogicalVector value) {
         int width = formatLogical(value);
         String[] data = new String[value.getLength()];
         for (int i = 0; i < data.length; i++) {
@@ -108,7 +108,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -117,7 +117,7 @@ public abstract class Format extends RBuiltinNode {
         }
     }
 
-    int formatLogical(RAbstractLogicalVector value) {
+    private static int formatLogical(RAbstractLogicalVector value) {
         int width = 1;
         for (int i = 0; i < value.getLength(); i++) {
             byte val = value.getDataAt(i);
@@ -144,7 +144,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SlowPath
-    RStringVector convertToString(RAbstractIntVector value) {
+    private static RStringVector convertToString(RAbstractIntVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
@@ -164,7 +164,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
@@ -196,7 +196,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SlowPath
-    RStringVector convertToString(RAbstractDoubleVector value) {
+    private static RStringVector convertToString(RAbstractDoubleVector value) {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
@@ -219,7 +219,7 @@ public abstract class Format extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!wrongArgs")
-    RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
@@ -237,35 +237,35 @@ public abstract class Format extends RBuiltinNode {
     }
 
     // TruffleDSL bug - should not need multiple guards here
-    protected boolean wrongArgsObject(VirtualFrame frame, @SuppressWarnings("unused") Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec,
-                    RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+    protected boolean wrongArgsObject(@SuppressWarnings("unused") Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "trim");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "trim");
         }
         if (digitsVec.getLength() > 0 && (RRuntime.isNA(digitsVec.getDataAt(0)) || digitsVec.getDataAt(0) < R_MIN_DIGITS_OPT || digitsVec.getDataAt(0) > R_MAX_DIGITS_OPT)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "digits");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "digits");
         }
         if (nsmallVec.getLength() > 0 && (RRuntime.isNA(nsmallVec.getDataAt(0)) || nsmallVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 20)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "nsmall");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "nsmall");
         }
         if (widthVec.getLength() > 0 && RRuntime.isNA(widthVec.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "width");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "width");
         }
         if (justifyVec.getLength() > 0 && (RRuntime.isNA(justifyVec.getDataAt(0)) || justifyVec.getDataAt(0) < 0 || nsmallVec.getDataAt(0) > 3)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "justify");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "justify");
         }
         if (naEncodeVec.getLength() > 0 && RRuntime.isNA(naEncodeVec.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "na.encode");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "na.encode");
         }
         if (sciVec.getLength() != 1 || (sciVec.getElementClass() != RLogical.class && sciVec.getElementClass() != RInt.class && sciVec.getElementClass() != RDouble.class)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "scientific");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "scientific");
         }
         return false;
     }
 
-    protected boolean wrongArgs(VirtualFrame frame, RAbstractVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
-        return wrongArgsObject(frame, value, trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
+    protected boolean wrongArgs(RAbstractVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+                    RAbstractVector sciVec) {
+        return wrongArgsObject(value, trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
     }
 
     public static class Config {

@@ -35,7 +35,7 @@ public abstract class Contributors extends RInvisibleBuiltinNode {
     private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);
 
     @Specialization
-    public Object contributors() {
+    protected Object contributors() {
         controlVisibility();
         RContext.getInstance().getConsoleHandler().println(CONTRIBUTORS);
         return RNull.instance;

@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.EQ_PRECEDENCE)
 public class EQ extends BinaryOperation {
 
-    public EQ(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public EQ(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

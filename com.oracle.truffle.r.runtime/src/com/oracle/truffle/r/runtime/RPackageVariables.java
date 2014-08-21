@@ -27,7 +27,7 @@ import java.util.*;
 import com.oracle.truffle.r.runtime.REnvironment.PackageKind;
 
 /**
- * Support for (global) variables deined by packages (e.g. {@code base)}. Similar to
+ * Support for (global) variables defined by packages (e.g. {@code base)}. Similar to
  * {@link ROptions}, when a package is loaded, if it defines (global) variables, it must register
  * with this class. On startup, the {@code Handler} is called with the {@link REnvironment} instance
  * for the package, which can be used to define the variables.

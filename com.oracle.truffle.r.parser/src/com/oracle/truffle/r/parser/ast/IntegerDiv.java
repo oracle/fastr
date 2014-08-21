@@ -16,13 +16,12 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.INTEGER_DIV_PRECEDENCE)
 public class IntegerDiv extends BinaryOperation {
 
-    public IntegerDiv(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public IntegerDiv(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
     }
-
 }

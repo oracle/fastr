@@ -39,28 +39,26 @@ public class RMissingHelper {
      * has been provided once was a missing argument. (cp. R language definition and Internals 1.5.1
      * Missingness).
      *
-     * @param frame The frame in which to decide whether value is missing or not
      * @param value The value that should be examined
      * @return <code>true</code> iff this value is 'missing' in the definition of R
      */
-    public static boolean isMissing(VirtualFrame frame, Object value) {
+    public static boolean isMissing(Object value) {
         if (value == RMissing.instance) {
             return true;
         }
 
         // This might be a promise...
         if (value instanceof RPromise) {
-            return isMissing(frame, (RPromise) value);
+            return isMissing((RPromise) value);
         }
         return false;
     }
 
     /**
-     * @param frame The frame in which to decide whether value is missing or not
      * @param promise The {@link RPromise} that might evaluate to be 'missing'
-     * @return See {@link #isMissing(VirtualFrame, Object)}
+     * @return See {@link #isMissing(Object)}
      */
-    public static boolean isMissing(VirtualFrame frame, RPromise promise) {
+    public static boolean isMissing(RPromise promise) {
         // Represents a missing argument itself?
         if (promise.isDefaulted() || isMissingSymbol(promise)) {
             return true;
@@ -80,7 +78,7 @@ public class RMissingHelper {
      * @return See {@link #isMissingSymbol(RPromise)}
      */
     @SlowPath
-    public static boolean isMissingArgument(Frame frame, Symbol symbol) {
+    public static boolean isMissingArgument(MaterializedFrame frame, Symbol symbol) {
         // TODO IsDotDotSymbol: Anything special to do here?
 
         Object value = null;
@@ -112,7 +110,7 @@ public class RMissingHelper {
 
     /**
      * @param promise The {@link RPromise} which is checked whether it contains a
-     *            {@link #isMissingArgument(Frame, Symbol)}.
+     *            {@link #isMissingArgument(MaterializedFrame, Symbol)}.
      * @return Whether the given {@link RPromise} represents a symbol that is 'missing' in its frame
      */
     @SlowPath

@@ -63,7 +63,7 @@ public class Symbol {
      * @param name {@link #name}
      * @see Symbol
      */
-    Symbol(String name) {
+    private Symbol(String name) {
         this.name = name;
 
         this.isVarArg = name.equals("...");

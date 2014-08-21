@@ -117,5 +117,4 @@ public class RExpression implements RShareable, RAbstractContainer {
     public RShareable materializeToShareable() {
         return this;
     }
-
 }

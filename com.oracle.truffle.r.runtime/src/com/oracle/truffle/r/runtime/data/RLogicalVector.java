@@ -40,7 +40,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         this.data = data;
     }
 
-    RLogicalVector(byte[] data, boolean complete, int[] dims) {
+    private RLogicalVector(byte[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
     }
 

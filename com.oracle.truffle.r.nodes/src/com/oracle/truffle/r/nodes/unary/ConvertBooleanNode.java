@@ -41,59 +41,59 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public abstract byte executeByte(VirtualFrame frame, Object operandValue);
 
     @Specialization
-    public byte doLogical(VirtualFrame frame, byte value) {
+    protected byte doLogical(byte value) {
         check.enable(value);
         if (check.check(value)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
         }
         return value;
     }
 
     @Specialization
-    public byte doInt(VirtualFrame frame, int value) {
+    protected byte doInt(int value) {
         check.enable(value);
         if (check.check(value)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(value != 0);
     }
 
     @Specialization
-    public byte doDouble(VirtualFrame frame, double value) {
+    protected byte doDouble(double value) {
         check.enable(value);
         if (check.check(value)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(value != 0D);
     }
 
     @Specialization
-    public byte doComplex(VirtualFrame frame, RComplex value) {
+    protected byte doComplex(RComplex value) {
         check.enable(value);
         if (check.check(value)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(!value.isZero());
     }
 
     @Specialization
-    public byte doString(VirtualFrame frame, String value) {
+    protected byte doString(String value) {
         check.enable(value);
         byte logicalValue = check.convertStringToLogical(value);
         check.enable(logicalValue);
         if (check.check(logicalValue)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return logicalValue;
     }
 
     @Specialization
-    public byte doRaw(RRaw value) {
+    protected byte doRaw(RRaw value) {
         return RRuntime.asLogical(value.getValue() != 0);
     }
 
     @Specialization
-    public byte doIntSequence(RIntSequence value) {
+    protected byte doIntSequence(RIntSequence value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -102,7 +102,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization
-    public byte doDoubleSequence(RDoubleSequence value) {
+    protected byte doDoubleSequence(RDoubleSequence value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -112,66 +112,66 @@ public abstract class ConvertBooleanNode extends UnaryNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isEmpty")
-    public byte doEmptyVector(VirtualFrame frame, RAbstractVector value) {
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
+    protected byte doEmptyVector(RAbstractVector value) {
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO);
     }
 
-    private BranchProfile moreThanOneElem = new BranchProfile();
+    private final BranchProfile moreThanOneElem = new BranchProfile();
 
     @Specialization(guards = "!isEmpty")
-    public byte doIntVector(VirtualFrame frame, RIntVector value) {
+    protected byte doIntVector(RIntVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
         check.enable(value);
         if (check.check(value.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(value.getDataAt(0) != 0);
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doDoubleVector(VirtualFrame frame, RDoubleVector value) {
+    protected byte doDoubleVector(RDoubleVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
         check.enable(value);
         if (check.check(value.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(value.getDataAt(0) != 0D);
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doLogicalVector(VirtualFrame frame, RLogicalVector value) {
+    protected byte doLogicalVector(RLogicalVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
         check.enable(value);
         if (check.check(value.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_UNEXP);
         }
         return RRuntime.asLogical(value.getDataAt(0) != RRuntime.LOGICAL_FALSE);
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doComplexVector(VirtualFrame frame, RComplexVector value) {
+    protected byte doComplexVector(RComplexVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
         }
         check.enable(value);
         if (check.check(value.getDataAt(0))) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.asLogical(!value.getDataAt(0).isZero());
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doRawVector(RRawVector value) {
+    protected byte doRawVector(RRawVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -180,7 +180,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isEmpty")
-    public byte doStringVector(VirtualFrame frame, RStringVector value) {
+    protected byte doStringVector(RStringVector value) {
         if (value.getLength() > 1) {
             moreThanOneElem.enter();
             RError.warning(this.getEncapsulatingSourceSection(), RError.Message.LENGTH_GT_1);
@@ -189,7 +189,7 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         byte logicalValue = check.convertStringToLogical(value.getDataAt(0));
         check.enable(logicalValue);
         if (check.check(logicalValue)) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return logicalValue;
     }

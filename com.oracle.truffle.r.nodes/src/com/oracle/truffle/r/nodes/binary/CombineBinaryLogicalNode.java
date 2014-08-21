@@ -32,32 +32,32 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     private final NACheck check = NACheck.create();
 
     @Specialization
-    public RNull combine(RNull left, RNull right) {
+    protected RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @Specialization
-    public byte combine(RNull left, byte right) {
+    protected byte combine(RNull left, byte right) {
         return right;
     }
 
     @Specialization
-    public byte combine(byte left, RNull right) {
+    protected byte combine(byte left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RLogicalVector combine(RLogicalVector left, RNull right) {
+    protected RLogicalVector combine(RLogicalVector left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RLogicalVector combine(RNull left, RLogicalVector right) {
+    protected RLogicalVector combine(RNull left, RLogicalVector right) {
         return right;
     }
 
     @Specialization
-    public RLogicalVector combine(byte left, byte right) {
+    protected RLogicalVector combine(byte left, byte right) {
         check.enable(true);
         check.check(left);
         check.check(right);
@@ -65,7 +65,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RLogicalVector combine(RLogicalVector left, byte right) {
+    protected RLogicalVector combine(RLogicalVector left, byte right) {
         check.enable(left);
         check.enable(right);
         int dataLength = left.getLength();
@@ -81,7 +81,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RLogicalVector combine(byte left, RLogicalVector right) {
+    protected RLogicalVector combine(byte left, RLogicalVector right) {
         check.enable(right);
         check.enable(left);
         int dataLength = right.getLength();
@@ -97,7 +97,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RLogicalVector combine(RLogicalVector left, RLogicalVector right) {
+    protected RLogicalVector combine(RLogicalVector left, RLogicalVector right) {
         return (RLogicalVector) genericCombine(left, right);
     }
 }

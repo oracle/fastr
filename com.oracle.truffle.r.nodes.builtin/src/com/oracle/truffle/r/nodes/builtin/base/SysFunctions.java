@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -43,7 +42,7 @@ public class SysFunctions {
     public abstract static class SysGetpid extends RBuiltinNode {
 
         @Specialization
-        public Object sysGetPid() {
+        protected Object sysGetPid() {
             controlVisibility();
             int pid = RFFIFactory.getRFFI().getBaseRFFI().getpid();
             return RDataFactory.createIntVectorFromScalar(pid);
@@ -59,7 +58,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysGetEnv(RAbstractStringVector x, String unset) {
+        protected Object sysGetEnv(RAbstractStringVector x, String unset) {
             controlVisibility();
             Map<String, String> envMap = REnvVars.getMap();
             int len = x.getLength();
@@ -91,9 +90,9 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysGetEnvGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
+        protected Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
         }
 
     }
@@ -108,15 +107,15 @@ public class SysFunctions {
         }
 
         @Specialization
-        public RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector argVec) {
-            return doSysSetEnv(frame, new Object[]{argVec.getDataAt(0)});
+        protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
+            return doSysSetEnv(new Object[]{argVec.getDataAt(0)});
         }
 
         @Specialization
-        public RLogicalVector doSysSetEnv(VirtualFrame frame, Object[] args) {
+        protected RLogicalVector doSysSetEnv(Object[] args) {
             controlVisibility();
             String[] argNames = getSuppliedArgsNames();
-            validateArgNames(frame, argNames);
+            validateArgNames(argNames);
             byte[] data = new byte[args.length];
             for (int i = 0; i < args.length; i++) {
                 REnvVars.put(argNames[i], (String) args[i]);
@@ -125,7 +124,7 @@ public class SysFunctions {
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private void validateArgNames(VirtualFrame frame, String[] argNames) throws RError {
+        private void validateArgNames(String[] argNames) throws RError {
             boolean ok = argNames != null;
             if (argNames != null) {
                 for (int i = 0; i < argNames.length; i++) {
@@ -135,7 +134,7 @@ public class SysFunctions {
                 }
             }
             if (!ok) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
             }
         }
     }
@@ -144,7 +143,7 @@ public class SysFunctions {
     public abstract static class SysUnSetEnv extends RInvisibleBuiltinNode {
 
         @Specialization
-        public RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
+        protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
             byte[] data = new byte[argVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 data[i] = RRuntime.asLogical(REnvVars.unset(argVec.getDataAt(i)));
@@ -157,24 +156,24 @@ public class SysFunctions {
     public abstract static class SysSleep extends RInvisibleBuiltinNode {
 
         @Specialization
-        public Object sysSleep(double seconds) {
+        protected Object sysSleep(double seconds) {
             controlVisibility();
             sleep(convertToMillis(seconds));
             return RNull.instance;
         }
 
         @Specialization
-        public Object sysSleep(VirtualFrame frame, String secondsString) {
+        protected Object sysSleep(String secondsString) {
             controlVisibility();
-            long millis = convertToMillis(checkValidString(frame, secondsString));
+            long millis = convertToMillis(checkValidString(secondsString));
             sleep(millis);
             return RNull.instance;
         }
 
         @Specialization(guards = "lengthOne")
-        public Object sysSleep(VirtualFrame frame, RStringVector secondsVector) {
+        protected Object sysSleep(RStringVector secondsVector) {
             controlVisibility();
-            long millis = convertToMillis(checkValidString(frame, secondsVector.getDataAt(0)));
+            long millis = convertToMillis(checkValidString(secondsVector.getDataAt(0)));
             sleep(millis);
             return RNull.instance;
         }
@@ -184,20 +183,20 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysSleep(VirtualFrame frame, @SuppressWarnings("unused") Object arg) throws RError {
+        protected Object sysSleep(@SuppressWarnings("unused") Object arg) throws RError {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
         }
 
         private static long convertToMillis(double d) {
             return (long) (d * 1000);
         }
 
-        private double checkValidString(VirtualFrame frame, String s) {
+        private double checkValidString(String s) {
             try {
                 return Double.parseDouble(s);
             } catch (NumberFormatException ex) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
             }
         }
 
@@ -217,13 +216,13 @@ public class SysFunctions {
     public abstract static class SysReadlink extends RBuiltinNode {
 
         @Specialization
-        public Object sysReadLink(String path) {
+        protected Object sysReadLink(String path) {
             controlVisibility();
             return RDataFactory.createStringVector(doSysReadLink(path));
         }
 
         @Specialization
-        public Object sysReadlink(RStringVector vector) {
+        protected Object sysReadlink(RStringVector vector) {
             controlVisibility();
             String[] paths = new String[vector.getLength()];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
@@ -255,9 +254,9 @@ public class SysFunctions {
         }
 
         @Specialization
-        public Object sysReadlinkGeneric(VirtualFrame frame, @SuppressWarnings("unused") Object path) {
+        protected Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
         }
     }
 

@@ -19,7 +19,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -61,7 +60,7 @@ public class HiddenInternalFunctions {
          * modified call in the {@code eenv} environment.
          */
         @Specialization
-        public RNull doMakeLazy(VirtualFrame frame, RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
+        protected RNull doMakeLazy(RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
             controlVisibility();
             initEval();
             for (int i = 0; i < names.getLength(); i++) {
@@ -76,7 +75,7 @@ public class HiddenInternalFunctions {
                 try {
                     aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+                    throw RError.error(getEncapsulatingSourceSection(), ex);
                 }
             }
             return RNull.instance;
@@ -92,11 +91,11 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impEnv", "impNames", "expEnv", "expNames"})
     public abstract static class ImportIntoEnv extends RBuiltinNode {
         @Specialization
-        public RNull importIntoEnv(VirtualFrame frame, REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
+        protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
             controlVisibility();
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), Message.IMP_EXP_NAMES_MATCH);
+                throw RError.error(getEncapsulatingSourceSection(), Message.IMP_EXP_NAMES_MATCH);
             }
             for (int i = 0; i < length; i++) {
                 String impsym = impNames.getDataAt(i);
@@ -113,7 +112,7 @@ public class HiddenInternalFunctions {
                 try {
                     impEnv.put(impsym, binding);
                 } catch (PutException ex) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+                    throw RError.error(getEncapsulatingSourceSection(), ex);
                 }
 
             }
@@ -142,7 +141,7 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(RIntVector key, RStringVector datafile, RIntVector compressed, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
@@ -153,7 +152,7 @@ public class HiddenInternalFunctions {
                     bs.read(dbData);
                 } catch (IOException ex) {
                     // unexpected
-                    throw RError.error(frame, Message.GENERIC, ex.getMessage());
+                    throw RError.error(Message.GENERIC, ex.getMessage());
                 }
                 dbCache.put(dbPath, dbData);
             }
@@ -172,24 +171,24 @@ public class HiddenInternalFunctions {
                 destlen[0] = udata.length;
                 int rc = RFFIFactory.getRFFI().getBaseRFFI().uncompress(udata, destlen, data);
                 if (rc != 0) {
-                    throw RError.error(frame, Message.GENERIC, "zlib uncompress error");
+                    throw RError.error(Message.GENERIC, "zlib uncompress error");
                 }
                 try {
                     Object result = RSerialize.unserialize(udata, envhook);
                     return result;
                 } catch (IOException ex) {
                     // unexpected
-                    throw RError.error(frame, Message.GENERIC, ex.getMessage());
+                    throw RError.error(Message.GENERIC, ex.getMessage());
                 }
             } else {
-                throw RError.error(frame, Message.GENERIC, "unsupported compression");
+                throw RError.error(Message.GENERIC, "unsupported compression");
             }
         }
 
         @Specialization
-        public Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
+        protected Object lazyLoadDBFetch(RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
             initCast();
-            return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
+            return lazyLoadDBFetch(key, datafile, castIntNode.doLogicalVector(compressed), envhook);
         }
     }
 

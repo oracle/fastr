@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Force extends RBuiltinNode {
 
     @Specialization
-    Object force(@SuppressWarnings("unused") VirtualFrame frame, Object arg) {
+    protected Object force(@SuppressWarnings("unused") VirtualFrame frame, Object arg) {
         if (arg instanceof RPromise) {
             RPromise promise = (RPromise) arg;
             if (promise.isEvaluated()) {

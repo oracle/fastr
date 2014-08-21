@@ -35,13 +35,13 @@ public abstract class ToLower extends RBuiltinNode {
 
     @Specialization
     @SlowPath
-    public String toLower(String value) {
+    protected String toLower(String value) {
         controlVisibility();
         return value.toLowerCase();
     }
 
     @Specialization
-    public RStringVector toLower(RStringVector vector) {
+    protected RStringVector toLower(RStringVector vector) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -52,7 +52,7 @@ public abstract class ToLower extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RStringVector tolower(RNull empty) {
+    protected RStringVector tolower(RNull empty) {
         controlVisibility();
         return RDataFactory.createStringVector(0);
     }

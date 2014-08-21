@@ -108,5 +108,4 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         RDoubleVector.resizeData(data, data, getLength(), fillNA);
         return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()));
     }
-
 }

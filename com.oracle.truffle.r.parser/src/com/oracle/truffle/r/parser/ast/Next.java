@@ -14,12 +14,12 @@ import com.oracle.truffle.api.source.*;
 
 public class Next extends ControlStatement {
 
-    public static Next create(SourceSection src) {
-        return new Next(src);
+    public static Next create(SourceSection source) {
+        return new Next(source);
     }
 
-    public Next(SourceSection src) {
-        source = src;
+    private Next(SourceSection src) {
+        super(src);
     }
 
     @Override

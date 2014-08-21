@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.rng.user;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -56,8 +55,7 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
         userRngRFFI.setLibrary(libInfo.path);
         userRngRFFI.init(seed);
         if (userUnifSeedloc != 0 && userUnifNSeed == 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw new RNGException(RError.Message.RNG_READ_SEEDS, false);
+            throw RNGException.raise(RError.Message.RNG_READ_SEEDS, false);
         }
         nSeeds = userRngRFFI.nSeed();
     }
@@ -66,8 +64,7 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
         DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(symbol, null);
         if (symbolInfo == null) {
             if (!optional) {
-                CompilerDirectives.transferToInterpreter();
-                throw new RNGException(RError.Message.RNG_SYMBOL, true, symbol);
+                throw RNGException.raise(RError.Message.RNG_SYMBOL, true, symbol);
             } else {
                 return 0;
             }

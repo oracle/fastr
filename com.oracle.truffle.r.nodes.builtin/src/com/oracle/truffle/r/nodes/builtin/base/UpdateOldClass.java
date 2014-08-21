@@ -47,7 +47,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
     @Specialization(guards = "!isStringVector")
-    public Object setOldClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
+    protected Object setOldClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
@@ -61,19 +61,19 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object setOldClass(RAbstractContainer arg, String className) {
+    protected Object setOldClass(RAbstractContainer arg, String className) {
         return setOldClass(arg, RDataFactory.createStringVector(className));
     }
 
     @Specialization
-    public Object setOldClass(RAbstractContainer arg, RStringVector className) {
+    protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, className, arg.getElementClass() == RVector.class ? arg : null);
     }
 
     @Specialization
-    public Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
+    protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
         RVector resultVector = arg.materializeNonSharedVector();
         return RVector.setClassAttr(resultVector, null, arg.getElementClass() == RVector.class ? arg : null);

@@ -31,37 +31,37 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class CombineBinaryStringNode extends CombineBinaryNode {
 
     @Specialization
-    public RNull combine(RNull left, RNull right) {
+    protected RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @Specialization
-    public String combine(RNull left, String right) {
+    protected String combine(RNull left, String right) {
         return right;
     }
 
     @Specialization
-    public String combine(String left, RNull right) {
+    protected String combine(String left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RStringVector combine(RStringVector left, RNull right) {
+    protected RStringVector combine(RStringVector left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RStringVector combine(RNull left, RStringVector right) {
+    protected RStringVector combine(RNull left, RStringVector right) {
         return right;
     }
 
     @Specialization
-    public RStringVector combine(String left, String right) {
+    protected RStringVector combine(String left, String right) {
         return RDataFactory.createStringVector(new String[]{left, right}, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @Specialization
-    public RStringVector combine(RStringVector left, String right) {
+    protected RStringVector combine(RStringVector left, String right) {
         int dataLength = left.getLength();
         String[] result = new String[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -72,7 +72,7 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RStringVector combine(String left, RStringVector right) {
+    protected RStringVector combine(String left, RStringVector right) {
         int dataLength = right.getLength();
         String[] result = new String[dataLength + 1];
         for (int i = 0; i < dataLength; ++i) {
@@ -83,7 +83,7 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
     }
 
     @Specialization
-    public RStringVector combine(RStringVector left, RStringVector right) {
+    protected RStringVector combine(RStringVector left, RStringVector right) {
         return (RStringVector) genericCombine(left, right);
     }
 

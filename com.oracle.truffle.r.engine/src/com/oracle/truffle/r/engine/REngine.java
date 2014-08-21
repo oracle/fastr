@@ -71,7 +71,7 @@ public final class REngine implements RContext.Engine {
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
      * @return a {@link VirtualFrame} that can be passed to
-     *         {@link #parseAndEval(String, VirtualFrame, REnvironment, boolean)}
+     *         {@link #parseAndEval(String, VirtualFrame, REnvironment, boolean, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         startTime = System.nanoTime();
@@ -96,16 +96,16 @@ public final class REngine implements RContext.Engine {
         ROptions.initialize();
         RProfile.initialize();
         // eval the system profile
-        singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false);
+        singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
         REnvironment.packagesInitialize(RPackages.initialize());
         RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {
-            singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false);
+            singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
         }
         String userProfile = RProfile.userProfile();
         if (userProfile != null) {
-            singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false);
+            singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
         }
         return globalFrame;
     }
@@ -130,14 +130,14 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
-    public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult);
+    public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult, allowIncompleteSource);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult, false);
     }
 
     public class ParseException extends Exception {
@@ -151,7 +151,7 @@ public final class REngine implements RContext.Engine {
     public RExpression parse(String rscript) throws RContext.Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
-            ASTNode[] exprs = seq.getExprs();
+            ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
                 data[i] = RDataFactory.createLanguage(transform(exprs[i], REnvironment.emptyEnv()));
@@ -302,9 +302,20 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult) {
+    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
-            return runCall(makeCallTarget(parseToRNode(stream, source)), frame, printResult, true);
+            RootCallTarget callTarget = makeCallTarget(parseToRNode(stream, source));
+            Object result = runCall(callTarget, frame, printResult, true);
+            return result;
+        } catch (NoViableAltException | MismatchedTokenException e) {
+            if (e.token.getType() == Token.EOF && allowIncompleteSource) {
+                // the parser got stuck at the eof, request another line
+                return INCOMPLETE_SOURCE;
+            }
+            String line = source.getCode(e.line);
+            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, e.charPositionInLine + 1) + "\"";
+            context.getConsoleHandler().println(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"));
+            return null;
         } catch (RecognitionException | RuntimeException e) {
             context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -393,9 +404,10 @@ public final class REngine implements RContext.Engine {
         Object result = null;
         try {
             try {
-                result = callTarget.call(frame);
+                // FIXME: callTargets should only be called via Direct/IndirectCallNode
+                result = callTarget.call(frame.materialize());
             } catch (ControlFlowException cfe) {
-                throw RError.error(frame, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
             if (printResult) {
                 printResult(result);

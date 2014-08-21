@@ -50,7 +50,6 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     private final int nameCount;
 
     protected ArgumentsNode(RNode[] arguments, String[] names) {
-        super();
         this.arguments = arguments;
         this.names = names;
         this.nameCount = ArgumentsTrait.countNonNull(names);

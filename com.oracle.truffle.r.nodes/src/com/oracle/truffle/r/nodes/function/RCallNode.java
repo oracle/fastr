@@ -276,7 +276,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, debugSrc);
                     // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
                 }
@@ -378,8 +378,7 @@ public abstract class RCallNode extends RNode {
 
         /**
          * Stores the function and arguments used for the last call and checks whether
-         * {@link ArgumentMatcher#argsNeedRematch(VirtualFrame, RFunction, CallArgumentsNode, RNode)}
-         * .
+         * {@link ArgumentMatcher#argsNeedRematch(RFunction, CallArgumentsNode, RNode)} .
          */
         private final ArgumentMatcher matcher;
 
@@ -398,7 +397,7 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction function) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            if (matchedArgs == null || matcher.argsNeedRematch(frame, function, suppliedArgs, this)) {
+            if (matchedArgs == null || matcher.argsNeedRematch(function, suppliedArgs, this)) {
                 argsOrFunctionChangedProfile.enter();
 
                 // Create new MatchedArgumentsNode

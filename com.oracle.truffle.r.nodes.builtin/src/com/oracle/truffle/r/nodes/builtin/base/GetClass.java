@@ -23,13 +23,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class GetClass extends RBuiltinNode {
 
     @Specialization(guards = "isObject")
-    public Object getClassForObject(RAbstractContainer arg) {
+    protected Object getClassForObject(RAbstractContainer arg) {
         controlVisibility();
         return arg.getClassHierarchy();
     }
 
     @Specialization(guards = "!isObject")
-    public Object getClass(RAbstractContainer arg) {
+    protected Object getClass(RAbstractContainer arg) {
         controlVisibility();
         final String klass = arg.getClassHierarchy().getDataAt(0);
         if (klass.equals(RRuntime.TYPE_DOUBLE)) {
@@ -39,43 +39,43 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") RFunction arg) {
+    protected Object getClass(@SuppressWarnings("unused") RFunction arg) {
         controlVisibility();
         return RRuntime.TYPE_FUNCTION;
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") RFormula arg) {
+    protected Object getClass(@SuppressWarnings("unused") RFormula arg) {
         controlVisibility();
         return RRuntime.TYPE_FORMULA;
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") RNull arg) {
+    protected Object getClass(@SuppressWarnings("unused") RNull arg) {
         controlVisibility();
         return RRuntime.NULL;
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") RSymbol arg) {
+    protected Object getClass(@SuppressWarnings("unused") RSymbol arg) {
         controlVisibility();
         return RRuntime.CLASS_SYMBOL;
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") REnvironment arg) {
+    protected Object getClass(@SuppressWarnings("unused") REnvironment arg) {
         controlVisibility();
         return RRuntime.TYPE_ENVIRONMENT;
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") RPairList arg) {
+    protected Object getClass(@SuppressWarnings("unused") RPairList arg) {
         controlVisibility();
         return RRuntime.TYPE_PAIR_LIST;
     }
 
     @Specialization
-    public Object getClass(@SuppressWarnings("unused") RLanguage arg) {
+    protected Object getClass(@SuppressWarnings("unused") RLanguage arg) {
         controlVisibility();
         return RRuntime.CLASS_LANGUAGE;
     }

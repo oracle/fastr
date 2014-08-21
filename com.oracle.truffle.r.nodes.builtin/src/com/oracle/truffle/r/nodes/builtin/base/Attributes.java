@@ -35,13 +35,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Attributes extends RBuiltinNode {
 
     @Specialization(guards = "!hasAttributes")
-    public RNull attributesNull(@SuppressWarnings("unused") RAbstractVector vector) {
+    protected RNull attributesNull(@SuppressWarnings("unused") RAbstractVector vector) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization(guards = "hasAttributes")
-    public RList attributes(RAbstractContainer container) {
+    protected RList attributes(RAbstractContainer container) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
         int size = attributes.size();

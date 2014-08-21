@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {})
 public abstract class NArgs extends RBuiltinNode {
     @Specialization
-    public int doNArgs(VirtualFrame frame) {
+    protected int doNArgs(VirtualFrame frame) {
         int result = 0;
         if (RArguments.getFunction(frame) == null) {
             return RRuntime.INT_NA;

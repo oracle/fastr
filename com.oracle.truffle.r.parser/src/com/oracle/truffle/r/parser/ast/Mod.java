@@ -16,13 +16,12 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.MOD_PRECEDENCE)
 public class Mod extends BinaryOperation {
 
-    public Mod(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public Mod(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override
     public <R> R accept(Visitor<R> v) {
         return v.visit(this);
     }
-
 }

@@ -23,7 +23,7 @@ public abstract class Date extends RBuiltinNode {
 
     @Specialization
     @SlowPath
-    public String date() {
+    protected String date() {
         return RRuntime.toString(new SimpleDateFormat(RRuntime.SYSTEM_DATE_FORMAT).format(Calendar.getInstance().getTime()));
     }
 }

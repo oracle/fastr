@@ -12,7 +12,13 @@ package com.oracle.truffle.r.parser.ast;
 
 import java.util.*;
 
+import com.oracle.truffle.api.source.*;
+
 public abstract class ControlStatement extends ASTNode {
+
+    protected ControlStatement(SourceSection source) {
+        super(source);
+    }
 
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {

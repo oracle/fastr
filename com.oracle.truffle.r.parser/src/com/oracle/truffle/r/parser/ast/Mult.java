@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.MULT_PRECEDENCE)
 public class Mult extends BinaryOperation {
 
-    public Mult(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public Mult(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

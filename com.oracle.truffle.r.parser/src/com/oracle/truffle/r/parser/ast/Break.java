@@ -14,12 +14,12 @@ import com.oracle.truffle.api.source.*;
 
 public class Break extends ControlStatement {
 
-    public static Break create(SourceSection src) {
-        return new Break(src);
+    public static Break create(SourceSection source) {
+        return new Break(source);
     }
 
-    public Break(SourceSection src) {
-        source = src;
+    private Break(SourceSection src) {
+        super(src);
     }
 
     @Override

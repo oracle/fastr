@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,20 +39,20 @@ public abstract class Abs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull abs(VirtualFrame frame, RNull x) {
+    protected RNull abs(RNull x) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization
-    public int abs(int value) {
+    protected int abs(int value) {
         controlVisibility();
         check.enable(value);
         return performInt(value);
     }
 
     @Specialization
-    public int abs(byte value) {
+    protected int abs(byte value) {
         controlVisibility();
         check.enable(value);
         if (check.check(value)) {
@@ -63,14 +62,14 @@ public abstract class Abs extends RBuiltinNode {
     }
 
     @Specialization
-    public double abs(double value) {
+    protected double abs(double value) {
         controlVisibility();
         check.enable(value);
         return performDouble(value);
     }
 
     @Specialization
-    public double abs(RComplex value) {
+    protected double abs(RComplex value) {
         controlVisibility();
         check.enable(value);
         return performComplex(value);
@@ -78,27 +77,27 @@ public abstract class Abs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(VirtualFrame frame, RRaw vector) {
+    protected Object abs(RRaw vector) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(VirtualFrame frame, String vector) {
+    protected Object abs(String vector) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @Specialization
-    public RIntVector abs(RLogicalVector value) {
+    protected RIntVector abs(RLogicalVector value) {
         controlVisibility();
         check.enable(value);
         return doAbs(RClosures.createLogicalToIntVector(value, check));
     }
 
     @Specialization
-    public RIntVector abs(RIntVector vector) {
+    protected RIntVector abs(RIntVector vector) {
         controlVisibility();
         return doAbs(vector);
     }
@@ -115,7 +114,7 @@ public abstract class Abs extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector abs(RDoubleVector vector) {
+    protected RDoubleVector abs(RDoubleVector vector) {
         controlVisibility();
         check.enable(vector);
         double[] doubleVector = new double[vector.getLength()];
@@ -128,7 +127,7 @@ public abstract class Abs extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector abs(RComplexVector vector) {
+    protected RDoubleVector abs(RComplexVector vector) {
         controlVisibility();
         check.enable(vector);
         double[] doubleVector = new double[vector.getLength()];
@@ -142,16 +141,16 @@ public abstract class Abs extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(VirtualFrame frame, RStringVector vector) {
+    protected Object abs(RStringVector vector) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object abs(VirtualFrame frame, RRawVector vector) {
+    protected Object abs(RRawVector vector) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     private int performInt(int value) {

@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Internal extends RBuiltinNode {
 
     @Specialization
-    public Object doInternal(VirtualFrame frame, RPromise x) {
+    protected Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
         RNode call = (RNode) x.getRep();
         Symbol symbol = null;
@@ -63,20 +63,17 @@ public abstract class Internal extends RBuiltinNode {
         }
 
         if (symbol == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
         }
         // TODO remove prefix for real use
         RFunction function = RContext.getEngine().lookupBuiltin(symbol.getName());
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, symbol);
         }
 
         // .Internal function is validated
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // Replace the original call; we can't just use callNode as that will cause recursion!
-        if (symbol.getName().equals("paste")) {
-            System.console();
-        }
         RCallNode internalCallNode = RCallNode.createInternalCall(frame, this.getParent().getSourceSection(), callNode, function, symbol);
         this.getParent().replace(internalCallNode);
         // evaluate the actual builtin this time, next time we won't get here!

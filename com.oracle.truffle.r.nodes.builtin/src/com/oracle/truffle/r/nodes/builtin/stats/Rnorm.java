@@ -13,7 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.stats;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -35,7 +35,7 @@ public abstract class Rnorm extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector rnorm(int n, double mean, double standardd) {
+    protected RDoubleVector rnorm(int n, double mean, double standardd) {
         controlVisibility();
         double[] result = new double[n];
         for (int i = 0; i < n; i++) {
@@ -45,13 +45,13 @@ public abstract class Rnorm extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector rnorm(int n, int mean, int standardd) {
+    protected RDoubleVector rnorm(int n, int mean, int standardd) {
         controlVisibility();
         return rnorm(n, (double) mean, (double) standardd);
     }
 
     @Specialization
-    public RDoubleVector rnorm(double n, double mean, double standardd) {
+    protected RDoubleVector rnorm(double n, double mean, double standardd) {
         controlVisibility();
         return rnorm((int) n, mean, standardd);
     }
@@ -232,10 +232,14 @@ public abstract class Rnorm extends RBuiltinNode {
         /* else */
         if (x < xmin) {
             /* answer less than half precision because x too near -1 */
-            CompilerDirectives.transferToInterpreter();
-            throw new RuntimeException("ERROR: ML_ERROR(ME_PRECISION, \"log1p\")");
+            fail("ERROR: ML_ERROR(ME_PRECISION, \"log1p\")");
         }
         return Math.log(1 + x);
+    }
+
+    @SlowPath
+    private static void fail(String message) {
+        throw new RuntimeException(message);
     }
 
     private static double chebyshevEval(double x, double[] a, final int n) {

@@ -17,17 +17,17 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Precedence.MAX)
 public class SimpleAccessVariable extends AccessVariable {
 
-    Symbol symbol;
-    boolean shouldCopyValue;
+    private final Symbol variable;
+    private final boolean shouldCopyValue;
 
-    public SimpleAccessVariable(SourceSection src, Symbol sym, boolean copy) {
-        source = src;
-        symbol = sym;
-        shouldCopyValue = copy;
+    public SimpleAccessVariable(SourceSection source, Symbol variable, boolean shouldCopyValue) {
+        super(source);
+        this.variable = variable;
+        this.shouldCopyValue = shouldCopyValue;
     }
 
-    public Symbol getSymbol() {
-        return symbol;
+    public Symbol getVariable() {
+        return variable;
     }
 
     public boolean shouldCopyValue() {

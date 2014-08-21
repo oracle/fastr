@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 public abstract class Getwd extends RBuiltinNode {
 
     @Specialization
-    public Object getwd() {
+    protected Object getwd() {
         controlVisibility();
         String result = RFFIFactory.getRFFI().getBaseRFFI().getwd();
         return RDataFactory.createStringVector(result);

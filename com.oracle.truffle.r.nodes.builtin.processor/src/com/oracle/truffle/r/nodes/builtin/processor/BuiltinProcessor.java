@@ -51,7 +51,7 @@ public class BuiltinProcessor extends AbstractProcessor {
     /**
      * Set true to trace processor.
      */
-    private static boolean trace = true;
+    private static boolean trace = false;
 
     private Map<PackageElement, PackageBuiltins> map;
     private boolean writtenBuiltinsFile;

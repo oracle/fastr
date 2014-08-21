@@ -35,7 +35,7 @@ public abstract class IsTypeNode extends RBuiltinNode {
     private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
     @Override
-    public Object[] getParameterNames() {
+    public String[] getParameterNames() {
         return PARAMETER_NAMES;
     }
 
@@ -45,131 +45,131 @@ public abstract class IsTypeNode extends RBuiltinNode {
     }
 
     @Specialization
-    public byte isType(VirtualFrame frame, RMissing value) {
+    protected byte isType(RMissing value) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization
-    public byte isType(int value) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
-    public byte isType(RIntVector value) {
+    protected byte isType(int value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(double value) {
+    protected byte isType(RIntVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RDoubleVector value) {
+    protected byte isType(double value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(String value) {
+    protected byte isType(RDoubleVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RStringVector value) {
+    protected byte isType(String value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(byte value) {
+    protected byte isType(RStringVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RLogicalVector value) {
+    protected byte isType(byte value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RNull value) {
+    protected byte isType(RLogicalVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RComplex value) {
+    protected byte isType(RNull value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RComplexVector value) {
+    protected byte isType(RComplex value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RRaw value) {
+    protected byte isType(RComplexVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RRawVector value) {
+    protected byte isType(RRaw value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RList value) {
+    protected byte isType(RRawVector value) {
+        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RIntSequence value) {
+    protected byte isType(RList value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RDoubleSequence value) {
+    protected byte isType(RIntSequence value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RFunction value) {
+    protected byte isType(RDoubleSequence value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RSymbol value) {
+    protected byte isType(RFunction value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RLanguage value) {
+    protected byte isType(RSymbol value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RPromise value) {
+    protected byte isType(RLanguage value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RExpression value) {
+    protected byte isType(RPromise value) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte isType(RPairList value) {
+    protected byte isType(RExpression value) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isType(RPairList value) {
         return RRuntime.LOGICAL_FALSE;
     }
 }

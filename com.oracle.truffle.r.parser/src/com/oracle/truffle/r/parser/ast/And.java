@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.AND_PRECEDENCE)
 public class And extends BinaryOperation {
 
-    public And(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public And(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

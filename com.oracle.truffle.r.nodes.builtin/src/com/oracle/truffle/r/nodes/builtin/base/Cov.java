@@ -42,14 +42,14 @@ public abstract class Cov extends Covcor {
     }
 
     @Specialization
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2) {
+    protected RDoubleVector dimWithDimensions(RDoubleVector vector1, RDoubleVector vector2) {
         controlVisibility();
         return corcov(vector1, vector2, false, false);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2) {
+    protected RDoubleVector dimWithDimensions(RDoubleVector vector1, RMissing vector2) {
         controlVisibility();
         return corcov(vector1, null, false, false);
     }

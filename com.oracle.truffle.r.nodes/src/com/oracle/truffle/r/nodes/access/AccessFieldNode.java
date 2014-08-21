@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,7 +41,7 @@ public abstract class AccessFieldNode extends RNode {
     private final BranchProfile inexactMatch = new BranchProfile();
 
     @Specialization(guards = "hasNames")
-    public Object accessField(RList object) {
+    protected Object accessField(RList object) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
             inexactMatch.enter();
@@ -52,19 +51,19 @@ public abstract class AccessFieldNode extends RNode {
     }
 
     @Specialization(guards = "!hasNames")
-    public Object accessFieldNoNames(@SuppressWarnings("unused") RList object) {
+    protected Object accessFieldNoNames(@SuppressWarnings("unused") RList object) {
         return RNull.instance;
     }
 
     @Specialization
-    public Object accessField(REnvironment env) {
+    protected Object accessField(REnvironment env) {
         Object obj = env.get(getField());
         return obj == null ? RNull.instance : obj;
     }
 
     @Specialization
-    public Object accessField(VirtualFrame frame, @SuppressWarnings("unused") RAbstractVector object) {
-        throw RError.error(frame, RError.Message.DOLLAR_ATOMIC_VECTORS);
+    protected Object accessField(@SuppressWarnings("unused") RAbstractVector object) {
+        throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
     protected static boolean hasNames(RList object) {

@@ -46,7 +46,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RNull wrap(RNull x) {
+    protected RNull wrap(RNull x) {
         return proxy(x);
     }
 
@@ -55,7 +55,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public byte wrap(byte x) {
+    protected byte wrap(byte x) {
         return proxy(x);
     }
 
@@ -64,7 +64,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public int wrap(int x) {
+    protected int wrap(int x) {
         return proxy(x);
     }
 
@@ -73,7 +73,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public double wrap(double x) {
+    protected double wrap(double x) {
         return proxy(x);
     }
 
@@ -82,7 +82,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RRaw wrap(RRaw x) {
+    protected RRaw wrap(RRaw x) {
         return proxy(x);
     }
 
@@ -91,7 +91,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RComplex wrap(RComplex x) {
+    protected RComplex wrap(RComplex x) {
         return proxy(x);
     }
 
@@ -100,7 +100,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public String wrap(String x) {
+    protected String wrap(String x) {
         return proxy(x);
     }
 
@@ -109,7 +109,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RFunction wrap(RFunction x) {
+    protected RFunction wrap(RFunction x) {
         return proxy(x);
     }
 
@@ -118,7 +118,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RIntSequence wrap(RIntSequence x) {
+    protected RIntSequence wrap(RIntSequence x) {
         return proxy(x);
     }
 
@@ -127,7 +127,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RDoubleSequence wrap(RDoubleSequence x) {
+    protected RDoubleSequence wrap(RDoubleSequence x) {
         return x;
     }
 
@@ -136,7 +136,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RLogicalVector wrap(RLogicalVector x) {
+    protected RLogicalVector wrap(RLogicalVector x) {
         return proxy(x);
     }
 
@@ -145,7 +145,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RIntVector wrap(RIntVector x) {
+    protected RIntVector wrap(RIntVector x) {
         return proxy(x);
     }
 
@@ -154,7 +154,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RDoubleVector wrap(RDoubleVector x) {
+    protected RDoubleVector wrap(RDoubleVector x) {
         return proxy(x);
     }
 
@@ -163,7 +163,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RRawVector wrap(RRawVector x) {
+    protected RRawVector wrap(RRawVector x) {
         return proxy(x);
     }
 
@@ -172,7 +172,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RComplexVector wrap(RComplexVector x) {
+    protected RComplexVector wrap(RComplexVector x) {
         return proxy(x);
     }
 
@@ -181,7 +181,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RStringVector wrap(RStringVector x) {
+    protected RStringVector wrap(RStringVector x) {
         return proxy(x);
     }
 
@@ -190,7 +190,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RList wrap(RList x) {
+    protected RList wrap(RList x) {
         return proxy(x);
     }
 
@@ -199,7 +199,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RDataFrame wrap(RDataFrame x) {
+    protected RDataFrame wrap(RDataFrame x) {
         return proxy(x);
     }
 
@@ -208,7 +208,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RMissing wrap(RMissing x) {
+    protected RMissing wrap(RMissing x) {
         return proxy(x);
     }
 
@@ -217,7 +217,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public REnvironment wrap(REnvironment x) {
+    protected REnvironment wrap(REnvironment x) {
         return proxy(x);
     }
 
@@ -226,7 +226,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RConnection wrap(RConnection x) {
+    protected RConnection wrap(RConnection x) {
         return proxy(x);
     }
 
@@ -235,7 +235,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RExpression wrap(RExpression x) {
+    protected RExpression wrap(RExpression x) {
         return proxy(x);
     }
 
@@ -244,7 +244,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RSymbol wrap(RSymbol x) {
+    protected RSymbol wrap(RSymbol x) {
         return proxy(x);
     }
 
@@ -253,7 +253,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RLanguage wrap(RLanguage x) {
+    protected RLanguage wrap(RLanguage x) {
         return proxy(x);
     }
 
@@ -262,7 +262,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RPromise wrap(RPromise x) {
+    protected RPromise wrap(RPromise x) {
         return proxy(x);
     }
 
@@ -271,7 +271,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RPairList wrap(RPairList x) {
+    protected RPairList wrap(RPairList x) {
         return proxy(x);
     }
 
@@ -280,7 +280,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public Object[] wrap(Object[] x) {
+    protected Object[] wrap(Object[] x) {
         return proxy(x);
     }
 
@@ -289,7 +289,7 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
-    public RFormula wrap(RFormula x) {
+    protected RFormula wrap(RFormula x) {
         return proxy(x);
     }
 

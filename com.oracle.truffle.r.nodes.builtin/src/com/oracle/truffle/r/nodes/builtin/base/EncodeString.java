@@ -12,7 +12,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -34,7 +33,7 @@ public abstract class EncodeString extends RBuiltinNode {
     }
 
     private final NACheck na = NACheck.create();
-    private BranchProfile everSeenNA = new BranchProfile();
+    private final BranchProfile everSeenNA = new BranchProfile();
 
     @Override
     public RNode[] getParameterValues() {
@@ -87,7 +86,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "leftJustify", "isEncodeNA"})
-    public RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
@@ -108,7 +107,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "leftJustify", "!isEncodeNA"})
-    public RStringVector encodeStringLeftJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringLeftJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
@@ -126,7 +125,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "rightJustify", "isEncodeNA"})
-    public RStringVector encodeStringRightJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringRightJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
@@ -147,7 +146,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "rightJustify", "!isEncodeNA"})
-    public RStringVector encodeStringRightJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringRightJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
@@ -165,7 +164,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "centerJustify", "isEncodeNA"})
-    public RStringVector encodeStringCenterJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringCenterJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
@@ -193,7 +192,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "centerJustify", "!isEncodeNA"})
-    public RStringVector encodeStringCenterJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringCenterJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
@@ -257,7 +256,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "noJustify", "isEncodeNA"})
-    public RStringVector encodeStringNoJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringNoJustifyEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final String[] result = new String[x.getLength()];
         for (int i = 0; i < x.getLength(); ++i) {
@@ -274,7 +273,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"isValidWidth", "noJustify", "!isEncodeNA"})
-    public RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+    protected RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
         final String quoteEl = quote.getDataAt(0);
         final String[] result = new String[x.getLength()];
         for (int i = 0; i < x.getLength(); ++i) {
@@ -291,32 +290,32 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isString")
-    public RStringVector encodeStringInvalidFirstArgument(VirtualFrame frame, Object x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
+    protected RStringVector encodeStringInvalidFirstArgument(Object x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidWidth")
-    public RStringVector encodeStringInvalidWidth(VirtualFrame frame, RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "width");
+    protected RStringVector encodeStringInvalidWidth(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "width");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidQuote")
-    public RStringVector encodeStringInvalidQuote(VirtualFrame frame, RAbstractStringVector x, int width, Object quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "quote");
+    protected RStringVector encodeStringInvalidQuote(RAbstractStringVector x, int width, Object quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "quote");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidJustify")
-    public RStringVector encodeStringInvalidJustify(VirtualFrame frame, RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "justify");
+    protected RStringVector encodeStringInvalidJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "justify");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidEncodeNA")
-    public RStringVector encodeStringInvalidEncodeNA(VirtualFrame frame, RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "na.encode");
+    protected RStringVector encodeStringInvalidEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "na.encode");
     }
 
     @SuppressWarnings("unused")

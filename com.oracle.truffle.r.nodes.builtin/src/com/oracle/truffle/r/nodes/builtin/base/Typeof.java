@@ -40,7 +40,7 @@ public abstract class Typeof extends RBuiltinNode {
     public abstract String execute(VirtualFrame frame, Object x);
 
     @Specialization
-    public String typeof(VirtualFrame frame, Object obj) {
+    protected String typeof(VirtualFrame frame, Object obj) {
         if (typeofNode == null) {
             typeofNode = insert(TypeofNodeFactory.create(null));
         }

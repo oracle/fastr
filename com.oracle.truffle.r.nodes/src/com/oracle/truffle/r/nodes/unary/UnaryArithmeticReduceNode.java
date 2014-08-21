@@ -55,7 +55,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization(guards = "isNullInt")
-    public int doInt(@SuppressWarnings("unused") RNull operand) {
+    protected int doInt(@SuppressWarnings("unused") RNull operand) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
@@ -63,7 +63,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isNullInt")
-    public double doDouble(@SuppressWarnings("unused") RNull operand) {
+    protected double doDouble(@SuppressWarnings("unused") RNull operand) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
@@ -71,19 +71,19 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    public int doInt(int operand) {
+    protected int doInt(int operand) {
         na.enable(operand);
         return na.check(operand) ? RRuntime.INT_NA : arithmetic.op(semantics.getIntStart(), operand);
     }
 
     @Specialization
-    public double doDouble(double operand) {
+    protected double doDouble(double operand) {
         na.enable(operand);
         return na.check(operand) ? RRuntime.DOUBLE_NA : arithmetic.op(semantics.getDoubleStart(), operand);
     }
 
     @Specialization
-    public int doIntVector(RIntVector operand) {
+    protected int doIntVector(RIntVector operand) {
         int result = semantics.getIntStart();
         na.enable(operand);
         int i = 0;
@@ -103,7 +103,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    public double doDoubleVector(RDoubleVector operand) {
+    protected double doDoubleVector(RDoubleVector operand) {
         double result = semantics.getDoubleStart();
         na.enable(operand);
         int i = 0;
@@ -123,7 +123,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    public int doLogicalVector(RLogicalVector operand) {
+    protected int doLogicalVector(RLogicalVector operand) {
         int result = semantics.getIntStart();
         na.enable(operand);
         int i = 0;
@@ -143,7 +143,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    public int doIntSequence(RIntSequence operand) {
+    protected int doIntSequence(RIntSequence operand) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
         int i = 0;
@@ -162,7 +162,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    public double doDoubleSequence(RDoubleSequence operand) {
+    protected double doDoubleSequence(RDoubleSequence operand) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
         int i = 0;
@@ -181,7 +181,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization
-    public RComplex doComplexVector(RComplexVector operand) {
+    protected RComplex doComplexVector(RComplexVector operand) {
         RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
         int i = 0;
         for (; i < operand.getLength(); ++i) {
@@ -204,7 +204,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     // "largest" String for the implementation of max function
 
     @Specialization(guards = "empty")
-    public String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand) {
+    protected String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand) {
         if (semantics.getEmptyWarning() != null) {
             RError.warning(semantics.emptyWarning);
         }
@@ -212,12 +212,12 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization(guards = "lengthOne")
-    public String doStringVectorOneElem(RStringVector operand) {
+    protected String doStringVectorOneElem(RStringVector operand) {
         return operand.getDataAt(0);
     }
 
     @Specialization(guards = "longerThanOne")
-    public String doStringVector(RStringVector operand) {
+    protected String doStringVector(RStringVector operand) {
         String result = operand.getDataAt(0);
         na.enable(result);
         if (na.check(result)) {

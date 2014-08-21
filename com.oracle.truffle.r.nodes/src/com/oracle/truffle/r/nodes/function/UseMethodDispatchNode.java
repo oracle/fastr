@@ -34,35 +34,35 @@ public class UseMethodDispatchNode extends S3DispatchNode {
     public Object execute(VirtualFrame frame) {
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         if (targetFunction == null) {
-            findTargetFunction(frame, callerFrame);
+            findTargetFunction(callerFrame);
         }
-        return executeHelper(frame, callerFrame, extractArgs(frame));
+        return executeHelper(callerFrame, extractArgs(frame));
     }
 
     @Override
     public Object execute(VirtualFrame frame, RStringVector aType) {
         this.type = aType;
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
-        findTargetFunction(frame, callerFrame);
-        return executeHelper(frame, callerFrame, extractArgs(frame));
+        findTargetFunction(callerFrame);
+        return executeHelper(callerFrame, extractArgs(frame));
     }
 
     @Override
     public Object executeInternal(VirtualFrame frame, Object[] args) {
         if (targetFunction == null) {
-            findTargetFunction(frame, frame);
+            findTargetFunction(frame);
         }
-        return executeHelper(frame, frame, args);
+        return executeHelper(frame, args);
     }
 
     @Override
     public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
         this.type = aType;
-        findTargetFunction(frame, frame);
-        return executeHelper(frame, frame, args);
+        findTargetFunction(frame);
+        return executeHelper(frame, args);
     }
 
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args) {
+    private Object executeHelper(Frame callerFrame, Object[] args) {
         // Extract arguments from current frame...
         int argCount = args.length;
         int argListSize = argCount;
@@ -76,10 +76,10 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 argList.ensureCapacity(argListSize);
 
                 for (Object varArg : varArgs) {
-                    addArg(frame, argList, varArg);
+                    addArg(argList, varArg);
                 }
             } else {
-                addArg(frame, argList, arg);
+                addArg(argList, arg);
             }
         }
 
@@ -88,7 +88,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs());
     }
 
@@ -100,8 +100,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return args;
     }
 
-    private static void addArg(VirtualFrame frame, List<Object> values, Object value) {
-        if (RMissingHelper.isMissing(frame, value)) {
+    private static void addArg(List<Object> values, Object value) {
+        if (RMissingHelper.isMissing(value)) {
             values.add(null);
         } else {
             values.add(value);
@@ -118,10 +118,10 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return funCallNode.call(newFrame, targetFunction.getTarget(), argObject);
     }
 
-    private void findTargetFunction(VirtualFrame frame, Frame callerFrame) {
+    private void findTargetFunction(Frame callerFrame) {
         findTargetFunctionLookup(callerFrame);
         if (targetFunction == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, this.genericName, RRuntime.toString(this.type));
         }
     }
 

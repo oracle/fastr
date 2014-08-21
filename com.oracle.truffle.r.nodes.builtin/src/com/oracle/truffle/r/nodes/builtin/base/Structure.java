@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -38,16 +37,16 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Structure extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
-    public Object structure(VirtualFrame frame, RMissing obj, RMissing args) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
+    protected Object structure(RMissing obj, RMissing args) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
     }
 
     @Specialization
-    public Object structure(VirtualFrame frame, RAbstractContainer obj, Object args) {
+    protected Object structure(RAbstractContainer obj, Object args) {
         if (!(args instanceof RMissing)) {
             Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
             String[] argNames = getSuppliedArgsNames();
-            validateArgNames(frame, argNames);
+            validateArgNames(argNames);
             for (int i = 0; i < values.length; i++) {
                 obj.setAttr(argNames[i + 1], fixupValue(values[i]));
             }
@@ -55,14 +54,14 @@ public abstract class Structure extends RBuiltinNode {
         return obj;
     }
 
-    Object fixupValue(Object value) {
+    private static Object fixupValue(Object value) {
         if (value instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) value);
         }
         return value;
     }
 
-    private void validateArgNames(VirtualFrame frame, String[] argNames) throws RError {
+    private void validateArgNames(String[] argNames) throws RError {
         // first "name" is the container
         boolean ok = argNames != null;
         if (argNames != null) {
@@ -73,7 +72,7 @@ public abstract class Structure extends RBuiltinNode {
             }
         }
         if (!ok) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
         }
     }
 }

@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.MULT_PRECEDENCE)
 public class Div extends BinaryOperation {
 
-    public Div(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public Div(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

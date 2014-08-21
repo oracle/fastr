@@ -49,14 +49,14 @@ public abstract class MatchFun extends RBuiltinNode {
     // FIXME implement actual semantics (lookup in caller environment)
 
     @Specialization
-    public RFunction matchFun(RFunction fun, @SuppressWarnings("unused") byte descend) {
+    protected RFunction matchFun(RFunction fun, @SuppressWarnings("unused") byte descend) {
         return fun;
     }
 
     @Child protected ReadVariableNode lookup;
 
     @Specialization
-    public Object matchFun(VirtualFrame frame, String fun, @SuppressWarnings("unused") byte descend) {
+    protected Object matchFun(VirtualFrame frame, String fun, @SuppressWarnings("unused") byte descend) {
         controlVisibility();
         if (lookup == null || !fun.equals(lastFun)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -66,7 +66,7 @@ public abstract class MatchFun extends RBuiltinNode {
         }
         Object r = lookup.execute(frame);
         if (r == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION, fun);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION, fun);
         } else {
             return r;
         }

@@ -28,7 +28,6 @@ import java.io.*;
 
 import com.oracle.nfi.*;
 import com.oracle.nfi.api.*;
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
@@ -140,8 +139,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
                     return null;
                 } else {
                     // some other error
-                    CompilerDirectives.transferToInterpreter();
-                    throw new IOException();
+                    throw ioex();
                 }
             } else {
                 return CString.create(resultBuf.address, length, false);

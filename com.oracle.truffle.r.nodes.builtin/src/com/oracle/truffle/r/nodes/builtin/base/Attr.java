@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -51,7 +50,7 @@ public abstract class Attr extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isRowNamesAttr")
-    public Object attr(RAbstractContainer container, String name) {
+    protected Object attr(RAbstractContainer container, String name) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
         if (attributes == null) {
@@ -76,7 +75,7 @@ public abstract class Attr extends RBuiltinNode {
     }
 
     @Specialization(guards = "isRowNamesAttr")
-    public Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
+    protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
         if (attributes == null) {
@@ -87,20 +86,20 @@ public abstract class Attr extends RBuiltinNode {
     }
 
     @Specialization(guards = {"!emptyName", "isRowNamesAttr"})
-    public Object attrRowNames(RAbstractContainer container, RStringVector name) {
+    protected Object attrRowNames(RAbstractContainer container, RStringVector name) {
         return attrRowNames(container, name.getDataAt(0));
     }
 
     @Specialization(guards = {"!emptyName", "!isRowNamesAttr"})
-    public Object attr(RAbstractContainer container, RStringVector name) {
+    protected Object attr(RAbstractContainer container, RStringVector name) {
         return attr(container, name.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyName")
-    public Object attrEmtpyName(VirtualFrame frame, RAbstractContainer container, RStringVector name) {
+    protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
     }
 
     protected boolean isRowNamesAttr(@SuppressWarnings("unused") RAbstractContainer container, String name) {
