@@ -21,36 +21,33 @@
 # questions.
 #
 
-.PHONY: all clean
+OSNAME := $(shell uname)
 
-BIN = ../bin
-SRC = $(CURDIR)
-C_SOURCES := $(wildcard *.c)
-C_LIBNAME := lib$(C_SOURCES:.c=.so)
-C_OBJECTS := $(BIN)/$(C_SOURCES:.c=.o)
-C_LIB := $(BIN)/$(C_LIBNAME)
-
-
-ifeq ($(TOPDIR),)
-    TOPDIR = $(abspath ../..)
-endif
-
-INCLUDE_DIR := $(subst test.native,native,$(TOPDIR))/include
-
-all: $(C_LIB)
-
-$(C_LIB): $(BIN) $(C_OBJECTS)
-ifneq ($(shell uname), Darwin)
-	gcc -fPIC -shared -o $(C_LIB) $(C_OBJECTS)
+ifeq ($(OSNAME), Linux)
+  OS_DIR      := linux
+  CC          := gcc
+  FC          := gfortran
+  CFLAGS      := -fPIC -O2
+  LDFLAGS     := -fPIC -shared
+  SHARED_EXT  := so
+  LIBS        := -lgfortran
+else ifeq ($(OSNAME), SunOS)
+  OS_DIR      := sunos
+  CC          := cc
+  FC          := f90
+  CFLAGS      := -m64 -O -xcode=pic13
+  LDFLAGS     := -G -m64
+  SHARED_EXT  := so
+else ifeq ($(OSNAME), Darwin)
+  OS_DIR      := darwin
+  CC          := gcc
+  FC          := gfortran
+  CFLAGS      := -fPIC -O2
+  LDFLAGS     := -dynamiclib -undefined dynamic_lookup
+  SHARED_EXT  := dylib
 else
-	gcc -dynamiclib -undefined dynamic_lookup -o $(C_LIB) $(C_OBJECTS)
+all:
+	@echo "This Makefile does not know how to compile for $(OSNAME)"
+	@false
 endif
 
-$(BIN):
-	mkdir -p $(BIN)
-
-$(BIN)/%.o: %.c
-	gcc -I$(INCLUDE_DIR) -fPIC -O2 -c $< -o $@
-
-clean:
-	rm -rf $(BIN)

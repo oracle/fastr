@@ -21,50 +21,38 @@
 # questions.
 #
 
+ifeq ($(TOPDIR),)
+    TOPDIR = $(abspath ..)
+endif
+$(warning  $(TOPDIR))
+
+NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
+$(warning $(NATIVE_PROJECT))
+
+include $(NATIVE_PROJECT)/platform.mk
+
 .PHONY: all clean
 
-HOSTOS = $(shell uname)
-ifeq ($(HOSTOS),Darwin)
-   HOSTOS_LC = darwin
-endif
-ifeq ($(HOSTOS),Linux)
-   HOSTOS_LC = linux
-endif
+OBJ = lib
+SRC = src
+C_SOURCES := $(wildcard $(SRC)/*.c)
+C_LIBNAME := lib$(subst $(SRC)/,,$(C_SOURCES:.c=.$(SHARED_EXT)))
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+C_LIB := $(OBJ)/$(C_LIBNAME)
 
-ifeq ($(TOPDIR),)
-    TOPDIR = $(abspath ../../..)
-endif
 
-BIN = ../bin/$(HOSTOS_LC)
-SRC = $(CURDIR)
-C_SOURCES := $(wildcard *.c)
-ifneq ($(HOSTOS), Darwin)
-    C_LIBNAME := lib$(C_SOURCES:.c=.so)
-else
-    C_LIBNAME := lib$(C_SOURCES:.c=.dylib)
-endif
-C_OBJECTS := $(BIN)/$(C_SOURCES:.c=.o)
-C_LIB := $(BIN)/$(C_LIBNAME)
-
-JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(HOSTOS_LC)
-FFI_INCLUDES = -I$(TOPDIR)/jni/include
-
-INCLUDE_DIR := $(JNI_INCLUDES) $(FFI_INCLUDES)
+INCLUDE_DIR := $(NATIVE_PROJECT)/include/jni
 
 all: $(C_LIB)
 
-$(C_LIB): $(BIN) $(C_OBJECTS)
-ifneq ($HOSTOS, Darwin)
-	gcc -fPIC -shared -o $(C_LIB) $(C_OBJECTS)
-else
-	gcc -dynamiclib -undefined dynamic_lookup -o $(C_LIB) $(C_OBJECTS)
-endif
+$(C_LIB): $(OBJ) $(C_OBJECTS)
+	$(CC) $(LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)
 
-$(BIN):
-	mkdir -p $(BIN)
+$(OBJ):
+	mkdir -p $(OBJ)
 
-$(BIN)/%.o: %.c
-	gcc $(INCLUDE_DIR) -fPIC -O2 -c $< -o $@
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 clean:
-	rm -rf $(BIN)
+	rm -rf $(OBJ)

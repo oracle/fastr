@@ -26,6 +26,7 @@ import java.nio.file.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
@@ -44,26 +45,10 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     @SlowPath
     private static void loadLibrary() {
-// System.loadLibrary("call");
         String rHome = REnvVars.rHome();
-        String packageName = "com.oracle.truffle.r.runtime.ffi.native";
-        String osName = System.getProperty("os.name");
-        String libExt = "so";
-        String subDir = null;
-        switch (osName) {
-            case "Mac OS X":
-                subDir = "darwin";
-                libExt = "dylib";
-                break;
-
-            case "Linux":
-                subDir = "linux";
-                break;
-
-            default:
-                Utils.fail("CallRFFI: unsupported OS: " + osName);
-        }
-        Path path = FileSystems.getDefault().getPath(rHome, packageName, "jni", "call", "bin", subDir, "libCall." + libExt);
+        String packageName = "com.oracle.truffle.r.native";
+        OSInfo osInfo = RPlatform.getOSInfo();
+        Path path = FileSystems.getDefault().getPath(rHome, packageName, "fficall", "jni", "lib", "libcall." + osInfo.libExt);
         System.load(path.toString());
     }
 

@@ -1,6 +1,10 @@
-com.oracle.truffle.r.native/include/R_ext/Boolean.h,no.copyright
-com.oracle.truffle.r.native/include/R_ext/Random.h,no.copyright
-com.oracle.truffle.r.native/src/fft.c,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.native/builtinlibs/src/fft.c,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.native/fficall/jni/src/call.c,gnu_r.copyright
+com.oracle.truffle.r.native/include/jni/R_ext/Boolean.h,no.copyright
+com.oracle.truffle.r.native/include/jni/R_ext/Random.h,no.copyright
+com.oracle.truffle.r.native/include/jni/R.h,gnu_r.copyright
+com.oracle.truffle.r.native/include/jni/Rdefines.h,gnu_r.copyright
+com.oracle.truffle.r.native/include/jni/Rinternals.h,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchedCallNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchNode.java,purdue.copyright
@@ -120,10 +124,6 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RGroupGenerics.jav
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ops/BinaryArithmetic.java,gnu_r_purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ops/UnaryArithmetic.java,gnu_r_unary.copyright
-com.oracle.truffle.r.runtime.ffi.native/jni/call/src/call.c,gnu_r.copyright
-com.oracle.truffle.r.runtime.ffi.native/jni/include/R.h,gnu_r.copyright
-com.oracle.truffle.r.runtime.ffi.native/jni/include/Rdefines.h,gnu_r.copyright
-com.oracle.truffle.r.runtime.ffi.native/jni/include/Rinternals.h,gnu_r.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/TestBase.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/all/AllTests.java,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/failing/FailingTests.java,no.copyright

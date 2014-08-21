@@ -52,7 +52,7 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
 
 def _set_libpath():
     osname = platform.system()
-    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'lib', osname.lower())
+    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib', osname.lower())
     lib_value = lib_base
     if osname == 'Darwin':
         lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'

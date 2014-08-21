@@ -21,12 +21,37 @@
 # questions.
 #
 
-.PHONY: urand clean
+ifeq ($(TOPDIR),)
+    TOPDIR = $(abspath ../..)
+endif
 
-export TOPDIR = $(CURDIR)
+$(warning $(TOPDIR))
+include $(TOPDIR)/platform.mk
 
-jnicall:
-	$(MAKE) -C jni/call/src
+.PHONY: all clean
+
+OBJ = lib
+SRC = src
+C_SOURCES := $(wildcard $(SRC)/*.c)
+C_LIBNAME := libcall.$(SHARED_EXT)
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+C_LIB := $(OBJ)/$(C_LIBNAME)
+
+JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_DIR)
+FFI_INCLUDES = -I$(TOPDIR)/include/jni
+
+INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
+
+all: $(C_LIB)
+
+$(C_LIB): $(OBJ) $(C_OBJECTS)
+	$(CC) $(LDFLAGS) -o $(C_LIB) $(C_OBJECTS)
+
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	$(MAKE) -C jni/call/src clean
+	rm -rf $(OBJ)

@@ -23,10 +23,8 @@
 
 .PHONY: all clean
 
-export TOPDIR = $(CURDIR)
-
 all:
-	$(MAKE) -C urand
+	$(MAKE) -C jni
 
 clean:
-	$(MAKE) -C urand clean
+	$(MAKE) -C jni clean
