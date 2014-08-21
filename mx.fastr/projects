@@ -168,6 +168,11 @@ project@com.oracle.truffle.r.runtime.ffi@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime.ffi@javaCompliance=1.8
 project@com.oracle.truffle.r.runtime.ffi@workingSets=Truffle,FastR
 
+# com.oracle.truffle.r.runtime.ffi.native
+project@com.oracle.truffle.r.runtime.ffi.native@sourceDirs=
+project@com.oracle.truffle.r.runtime.ffi.native@native=true
+project@com.oracle.truffle.r.runtime.ffi.native@workingSets=FastR
+
 # com.oracle.truffle.r.native
 project@com.oracle.truffle.r.native@sourceDirs=
 project@com.oracle.truffle.r.native@native=true

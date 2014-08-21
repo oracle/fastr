@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -43,14 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
  * href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Foreign.html">here</a>.
  */
 public class ForeignFunctions {
-    public abstract static class Adapter extends RBuiltinNode {
-        protected static final String[] PARAMETER_NAMES = new String[]{".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"};
-
-        @Override
-        public Object[] getParameterNames() {
-            return PARAMETER_NAMES;
-        }
-
+    public abstract static class FortranCAdapter extends RBuiltinNode {
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(EMPTY_OBJECT_ARRAY), ConstantNode.create(RRuntime.LOGICAL_FALSE),
@@ -80,7 +74,7 @@ public class ForeignFunctions {
      * For now, just some special case functions that are built in to the implementation.
      */
     @RBuiltin(name = ".Fortran", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"})
-    public abstract static class Fortran extends Adapter {
+    public abstract static class Fortran extends FortranCAdapter {
         private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
         private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);
 
@@ -172,7 +166,7 @@ public class ForeignFunctions {
     }
 
     @RBuiltin(name = ".C", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"})
-    public abstract static class C extends Adapter {
+    public abstract static class C extends FortranCAdapter {
 
         private static final int SCALAR_DOUBLE = 0;
         private static final int SCALAR_INT = 1;
@@ -285,11 +279,16 @@ public class ForeignFunctions {
      * For now, just some special case functions that are built in to the implementation.
      */
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
-    public abstract static class Call extends Adapter {
+    public abstract static class Call extends RBuiltinNode {
 
         @Child private CastComplexNode castComplex;
         @Child private CastLogicalNode castLogical;
         @Child private CastToVectorNode castVector;
+
+        @Override
+        public RNode[] getParameterValues() {
+            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(EMPTY_OBJECT_ARRAY), ConstantNode.create(RMissing.instance)};
+        }
 
         private Object castComplex(VirtualFrame frame, Object operand) {
             if (castComplex == null) {
@@ -318,7 +317,7 @@ public class ForeignFunctions {
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
         @Specialization(guards = "fft")
-        public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args) {
+        public RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args, RMissing packageName) {
             controlVisibility();
             RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
             double[] z = zVec.isTemporary() ? zVec.getDataWithoutCopying() : zVec.getDataCopy();
@@ -398,7 +397,7 @@ public class ForeignFunctions {
         // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
         @Specialization(guards = "methodsPackageMetaName")
-        public String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args) {
+        public String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args, RMissing packageName) {
             controlVisibility();
             // TODO proper error checks
             String prefixString = (String) args[0];
@@ -413,6 +412,24 @@ public class ForeignFunctions {
 
         public boolean methodsPackageMetaName(RList f) {
             return matchName(f, "R_methodsPackageMetaName");
+        }
+
+        @Specialization
+        public Object callNamedFunction(VirtualFrame frame, String name, Object[] args, @SuppressWarnings("unused") RMissing packageName) {
+            return callNamedFunctionWithPackage(frame, name, args, null);
+        }
+
+        @Specialization
+        public Object callNamedFunctionWithPackage(VirtualFrame frame, String name, Object[] args, String packageName) {
+            SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
+            if (symbolInfo == null) {
+                throw RError.error(frame, getEncapsulatingSourceSection(), Message.GENERIC, ".Call %s not found", name);
+            }
+            try {
+                return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args);
+            } catch (Throwable t) {
+                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
+            }
         }
 
     }

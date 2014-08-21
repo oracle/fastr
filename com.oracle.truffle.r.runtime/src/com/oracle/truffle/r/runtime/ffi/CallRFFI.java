@@ -23,34 +23,28 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * FastR foreign function interface. There are separate interfaces for the various kinds of foreign
- * functions that are possible in R:
- * <ul>
- * <li>{@link BaseRFFI}: the specific, typed, foreign functions required the built-in {@code base}
- * package.</li>
- * <li>{@link LapackRFFI}: the specific, typed, foreign functions required by the built-in
- * {@code Lapack} functions.</li>
- * <li>{@link RDerivedRFFI}: the specific, typed, foreign functions required by the built-in
- * {@code Linpack} functions.</li>
- * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.
- * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.
- * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.
- * </ul>
- *
- * These interfaces may be implemented by one or more providers, specified either when the FastR
- * system is built or run.
+ * Support for the {.Call} and {.External} calls.
  */
-public interface RFFI {
-    BaseRFFI getBaseRFFI();
+public interface CallRFFI {
+    /**
+     * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
+     * {@code args}. The values in {@code args} can be any of the types used to represent {@code R}
+     * values in the implementation.
+     *
+     * @param symbolInfo identifies the symbol and the defining library
+     * @param args arguments
+     * @throws Throwable on any error during the call
+     */
+    Object invokeCall(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
 
-    LapackRFFI getLapackRFFI();
-
-    RDerivedRFFI getRDerivedRFFI();
-
-    CRFFI getCRFFI();
-
-    CallRFFI getCallRFFI();
-
-    UserRngRFFI getUserRngRFFI();
+    /**
+     * Variant of {@link #invokeCall} for {@code .External}, where args are wrapped up as a single
+     * argument to the native call.
+     *
+     * @param symbolInfo
+     * @param args
+     * @throws Throwable
+     */
+    Object invokeExternal(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
 
 }

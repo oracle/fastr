@@ -56,7 +56,12 @@ public abstract class RFFIFactory {
     }
 
     public CRFFI getCRFFI() {
-        Utils.fail("getCCallRFFI not implemented");
+        Utils.fail("getCRFFI not implemented");
+        return null;
+    }
+
+    public CallRFFI getCallRFFI() {
+        Utils.fail("getCallRFFI not implemented");
         return null;
     }
 

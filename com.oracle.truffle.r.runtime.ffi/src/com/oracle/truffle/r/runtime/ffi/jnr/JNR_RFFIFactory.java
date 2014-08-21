@@ -39,6 +39,11 @@ import com.oracle.truffle.r.runtime.ffi.*;
  */
 public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDerivedRFFI, LapackRFFI, UserRngRFFI {
 
+    public JNR_RFFIFactory() {
+        // This must load early as package libraries reference symbols in it.
+        getCallRFFI();
+    }
+
     // Base
 
     @Override
@@ -568,7 +573,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     }
 
     /*
-     * CCall methods
+     * .C methods
      */
 
     private static CRFFI cRFFI;
@@ -579,6 +584,20 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
            cRFFI =  new CRFFI_JNR_Invoke();
         }
         return cRFFI;
+    }
+
+    /*
+     * .C methods
+     */
+
+    private static CallRFFI callRFFI;
+
+    @Override
+    public CallRFFI getCallRFFI() {
+        if (callRFFI == null) {
+            callRFFI =  new CallRFFIWithJNI();
+        }
+        return callRFFI;
     }
 
     // zip
