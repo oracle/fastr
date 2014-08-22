@@ -54,7 +54,7 @@ public class TestRPackages extends TestBase {
         Path rpackagesDists = rpackages.resolve("distributions");
         Path vanilla = rpackagesDists.resolve("vanilla_1.0.tar.gz");
         // install the package (using GnuR for now)
-        ProcessBuilder pb = new ProcessBuilder("R", "CMD", "install", vanilla.toString());
+        ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", vanilla.toString());
         Map<String, String> env = pb.environment();
         env.put("R_LIBS_USER", rpackagesLibs.toString());
         try {
