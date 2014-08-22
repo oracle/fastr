@@ -189,7 +189,7 @@ public final class Utils {
     }
 
     public static String tildeExpand(String path) {
-        if (path.charAt(0) == '~') {
+        if (path.length() > 0 && path.charAt(0) == '~') {
             return userHome() + path.substring(1);
         } else {
             return path;

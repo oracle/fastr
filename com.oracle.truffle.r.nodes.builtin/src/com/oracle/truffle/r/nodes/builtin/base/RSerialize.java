@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
 
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -414,7 +415,7 @@ public class RSerialize {
         try {
             return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv());
         } catch (PutException ex) {
-            throw RError.uncatchableError(null, ex);
+            throw RError.error((SourceSection) null, ex);
         }
     }
 
