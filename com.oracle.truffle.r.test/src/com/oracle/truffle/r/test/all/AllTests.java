@@ -15289,18 +15289,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleErrorHandling_testError_348915a6c26600afd6b32577391ac2a5() {
-        assertEval("{ nonExistentVariable1 }");
-    }
-
-    @Test
-    public void TestSimpleErrorHandling_testErrorIgnore_7a495cffee7687695179e2ea1b236f89() {
+    public void TestSimpleErrorHandling_testError_7a495cffee7687695179e2ea1b236f89() {
         assertEval("{ x <- 2 ; options(error=quote(cat(x,'\n'))) ; v }");
     }
 
     @Test
-    public void TestSimpleErrorHandling_testErrorIgnore_44248be5db1cc48d0aa8de3c32e1dbf3() {
-        assertEval("{ nonExistentVariable2 }");
+    public void TestSimpleErrorHandling_testError_53dc91b25224feb844f5c6f33bf16d2e() {
+        assertEval("{ nonExistentVariable }");
     }
 
     @Test

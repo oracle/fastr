@@ -2019,16 +2019,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleErrorHandling_testErrorIgnore_7a495cffee7687695179e2ea1b236f89() {
-        assertEval("{ x <- 2 ; options(error=quote(cat(x,'\n'))) ; v }");
-    }
-
-    @Ignore
-    public void TestSimpleErrorHandling_testErrorIgnore_44248be5db1cc48d0aa8de3c32e1dbf3() {
-        assertEval("{ nonExistentVariable2 }");
-    }
-
-    @Ignore
     public void TestSimpleFunctions_testArgs_88c2c495f154230921998b06b16d441c() {
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm=\"x\") }");
     }

@@ -13389,13 +13389,18 @@ $row.names
 
 
 ##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
-#{ nonExistentVariable1 }
-Error: object 'nonExistentVariable1' not found
+#{ nonExistentVariable }
+Error: object 'nonExistentVariable' not found
 
 ##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
 #{ options(error=quote(cat(23,'\n'))) ; v }
 Error: object 'v' not found
 23
+
+##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
+#{ x <- 2 ; options(error=quote(cat(x,'\n'))) ; v }
+Error: object 'v' not found
+2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFormulae.testCreation
 #{ class(a~b) }

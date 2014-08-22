@@ -35,21 +35,21 @@ import com.oracle.truffle.r.test.*;
  */
 public class TestSimpleErrorHandling extends TestBase {
 
-    @Test
-    public void testError() {
-        assertEval("{ options(error=quote(cat(23,'\\n'))) ; v }");
+    /**
+     * This special version of {@code assertEval()} overrides {@link TestBase#assertEval(String)}
+     * and ensures the {@code error} handler option is reset after executing a test.
+     */
+    protected static void assertEval(String input) {
+        TestBase.assertEval(input);
         ROptions.addOption("error", RNull.instance);
-        // make sure the error handler has been reset
-        assertEval("{ nonExistentVariable1 }");
     }
 
     @Test
-    @Ignore
-    public void testErrorIgnore() {
+    public void testError() {
+        assertEval("{ options(error=quote(cat(23,'\\n'))) ; v }");
         assertEval("{ x <- 2 ; options(error=quote(cat(x,'\\n'))) ; v }");
-        ROptions.addOption("error", RNull.instance);
         // make sure the error handler has been reset
-        assertEval("{ nonExistentVariable2 }");
+        assertEval("{ nonExistentVariable }");
     }
 
 }
