@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -101,7 +102,6 @@ public abstract class REnvironment implements RAttributable {
         public PutException(RError.Message msg, Object... args) {
             super(msg, args);
         }
-
     }
 
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
@@ -148,14 +148,7 @@ public abstract class REnvironment implements RAttributable {
      * Returns {@code true} iff {@code frame} is that associated with {@code env}.
      */
     public static boolean isFrameForEnv(Frame frame, REnvironment env) {
-        REnvironment frameEnv = RArguments.getEnvironment(frame);
-        if (frameEnv == env) {
-            return true;
-        }
-        if (frameEnv == null) {
-            frameEnv = createEnclosingEnvironments(frame.materialize());
-        }
-        return frameEnv == env;
+        return RArguments.getEnvironment(frame) == env;
     }
 
     /**
@@ -440,12 +433,11 @@ public abstract class REnvironment implements RAttributable {
 
     /**
      * When functions are defined, the associated {@code FunctionDefinitionNode} contains an
-     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment instance
-     * whose parent is the lexically enclosing environment. This chain can be followed back to
-     * whichever "base" (i.e. non-function) environment the outermost function was defined in, e.g.
-     * "global" or "base". The purpose of this method is to create an analogous lexical parent chain
-     * of {@link com.oracle.truffle.r.runtime.REnvironment.Function} instances with the correct
-     * {@link MaterializedFrame}.
+     * {@link FunctionDefinition} environment instance whose parent is the lexically enclosing
+     * environment. This chain can be followed back to whichever "base" (i.e. non-function)
+     * environment the outermost function was defined in, e.g. "global" or "base". The purpose of
+     * this method is to create an analogous lexical parent chain of {@link Function} instances with
+     * the correct {@link MaterializedFrame}.
      */
     @SlowPath
     public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
@@ -700,8 +692,8 @@ public abstract class REnvironment implements RAttributable {
     }
 
     @Override
-    @SlowPath
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return getPrintName();
     }
 
@@ -710,7 +702,7 @@ public abstract class REnvironment implements RAttributable {
      * "imports" environment, except for "base" where it is globalEnv
      */
     private static class Namespace extends REnvironment {
-        Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
+        private Namespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
             namespaceRegistry.safePut(name, this);
         }
@@ -725,11 +717,11 @@ public abstract class REnvironment implements RAttributable {
      * Denotes the "imports:xxx" environment of an R package.
      */
     private static class Imports extends REnvironment {
-        Imports(String name, REnvFrameAccess frameAccess) {
+
+        private Imports(String name, REnvFrameAccess frameAccess) {
             super(baseEnv.getNamespace(), UNNAMED, frameAccess);
             setAttr(NAME_ATTR_KEY, "imports:" + name);
         }
-
     }
 
     /**
@@ -740,7 +732,7 @@ public abstract class REnvironment implements RAttributable {
         private final Imports importsEnv;
         private final Namespace namespaceEnv;
 
-        Package(REnvironment parent, String name, VirtualFrame frame, String path) {
+        private Package(REnvironment parent, String name, VirtualFrame frame, String path) {
             // This sets up the EnvFrameAccess instance, which is shared by the
             // Namespace (and Imports?) environments.
             super(parent, name, frame);
@@ -750,17 +742,17 @@ public abstract class REnvironment implements RAttributable {
             setPath(path);
         }
 
-        protected void setName(String name) {
+        private void setName(String name) {
             setAttr(NAME_ATTR_KEY, "package:" + name);
         }
 
-        protected void setPath(String path) {
+        private void setPath(String path) {
             setAttr(PATH_ATTR_KEY, path);
         }
 
         /**
          * Constructor for {@link Base}. During initialization the parent is emptyEnv. Ultimately it
-         * will be set to globalEnv..
+         * will be set to globalEnv.
          */
         protected Package(VirtualFrame frame) {
             super(emptyEnv, "base", frame);
@@ -775,23 +767,13 @@ public abstract class REnvironment implements RAttributable {
     }
 
     private static class Base extends Package {
-        Base(VirtualFrame frame) {
+        private Base(VirtualFrame frame) {
             super(frame);
         }
 
         @Override
         public void rm(String key) throws PutException {
             throw new PutException(RError.Message.ENV_REMOVE_VARIABLES, getPrintNameHelper());
-        }
-
-        @Override
-        protected void setName(String name) {
-            // base not attributed
-        }
-
-        @Override
-        protected void setPath(String path) {
-            // base not attributed
         }
 
         @Override
@@ -814,7 +796,6 @@ public abstract class REnvironment implements RAttributable {
         protected String getSearchName() {
             return ".GlobalEnv";
         }
-
     }
 
     /**
@@ -837,7 +818,6 @@ public abstract class REnvironment implements RAttributable {
             }
             return result;
         }
-
     }
 
     /**
@@ -849,7 +829,7 @@ public abstract class REnvironment implements RAttributable {
      */
 
     public static final class FunctionDefinition extends REnvironment {
-        private FrameDescriptor descriptor;
+        private final FrameDescriptor descriptor;
 
         public FunctionDefinition(REnvironment parent) {
             // function environments are not named
@@ -860,7 +840,6 @@ public abstract class REnvironment implements RAttributable {
         public FrameDescriptor getDescriptor() {
             return descriptor;
         }
-
     }
 
     public interface UsesREnvMap {
@@ -891,7 +870,6 @@ public abstract class REnvironment implements RAttributable {
         public REnvMapFrameAccess getFrameAccess() {
             return (REnvMapFrameAccess) frameAccess;
         }
-
     }
 
     /**
@@ -916,7 +894,6 @@ public abstract class REnvironment implements RAttributable {
             super(baseEnv(), UNNAMED, baseEnv().getFrame());
             setAttr(NAME_ATTR_KEY, "Autoloads");
         }
-
     }
 
     /**
@@ -933,7 +910,5 @@ public abstract class REnvironment implements RAttributable {
         public void put(String key, Object value) throws PutException {
             throw new PutException(RError.Message.ENV_ASSIGN_EMPTY);
         }
-
     }
-
 }
