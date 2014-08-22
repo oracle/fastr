@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWrit
 import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeField(name = "argWrite", type = boolean.class)

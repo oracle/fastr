@@ -25,6 +25,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"})
 // TODO inherits is applicable to every type of object, if only because of "try-error".

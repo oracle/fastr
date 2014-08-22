@@ -29,6 +29,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public final class FunctionDefinitionNode extends RRootNode {
 

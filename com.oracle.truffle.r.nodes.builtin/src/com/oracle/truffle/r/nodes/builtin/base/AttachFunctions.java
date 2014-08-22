@@ -29,9 +29,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.DetachException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * TODO The specialization signatures are weird owing to issues with named parameter handling.

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.runtime.env;
 
 import java.util.*;
 import java.util.regex.*;
@@ -28,7 +28,8 @@ import java.util.regex.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.RError.RErrorException;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RError.*;
 import com.oracle.truffle.r.runtime.RPackages.RPackage;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.envframe.*;

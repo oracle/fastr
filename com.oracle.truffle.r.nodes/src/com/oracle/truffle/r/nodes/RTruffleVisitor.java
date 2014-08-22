@@ -44,6 +44,7 @@ import com.oracle.truffle.r.parser.ast.Symbol;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public final class RTruffleVisitor extends BasicVisitor<RNode> {
 

@@ -28,8 +28,9 @@ import java.util.regex.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * Variant of {@link REnvFrameAccess} environments where the "frame" is a {@link LinkedHashMap},

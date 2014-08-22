@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public final class RDataFactory {
 

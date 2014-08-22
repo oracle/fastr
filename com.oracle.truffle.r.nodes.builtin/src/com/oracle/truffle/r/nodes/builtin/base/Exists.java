@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "exists", kind = SUBSTITUTE, parameterNames = {"x", "where", "envir", "frame", "mode", "inherits"})
 // TODO INTERNAL, interpret mode parameter

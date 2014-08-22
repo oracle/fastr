@@ -21,8 +21,8 @@
  * questions.
  */
 /**
- * This package contains all the code related to the "frame" access aspect of an {@link com.oracle.truffle.r.runtime.REnvironment}.
- * The basic interface assumed by {@link com.oracle.truffle.r.runtime.REnvironment} is defined in
+ * This package contains all the code related to the "frame" access aspect of an {@link com.oracle.truffle.r.runtime.env.REnvironment}.
+ * The basic interface assumed by {@link com.oracle.truffle.r.runtime.env.REnvironment} is defined in
  * {@link com.oracle.truffle.r.runtime.envframe.REnvFrameAccess}, which provides default implementations, most of which fail.
  * The subclass {@link com.oracle.truffle.r.runtime.envframe.REnvFrameAccessBindingsAdapter} handles the common code
  * for locking/unlocking bindings. The leaf classes {@link com.oracle.truffle.r.runtime.envframe.REnvTruffleFrameAccess}

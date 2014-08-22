@@ -42,8 +42,9 @@ import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 
@@ -356,7 +357,7 @@ public final class REngine implements RContext.Engine {
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
      * {@link RootCallTarget} for it. We define the
-     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment to have the
+     * {@link com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition} environment to have the
      * {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
      * environments, i.e. is truly anonymous.
      *

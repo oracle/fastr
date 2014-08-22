@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."})
 // TODO Is it really worth having all the individual specializations given that we have to have one

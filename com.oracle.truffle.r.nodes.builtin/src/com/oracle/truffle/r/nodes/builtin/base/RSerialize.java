@@ -17,8 +17,9 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 // Code loosely transcribed from GnuR serialize.c.

@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * The error messages have been copied from GNU R.
@@ -27,7 +28,7 @@ public final class RError extends RuntimeException {
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
      * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
-     * object and any arguments. E.g. see {@link REnvironment.PutException}.
+     * object and any arguments. E.g. see {@link PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
