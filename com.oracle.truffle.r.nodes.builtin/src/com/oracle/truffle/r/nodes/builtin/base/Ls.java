@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "ls", aliases = {"objects"}, kind = SUBSTITUTE, parameterNames = {"name", "pos", "envir", "all.names", "pattern"})
 // TODO INTERNAL, which would sanitize the way the environment is passed to a single REnvironment

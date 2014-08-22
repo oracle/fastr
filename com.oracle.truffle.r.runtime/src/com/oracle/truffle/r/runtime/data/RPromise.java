@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.

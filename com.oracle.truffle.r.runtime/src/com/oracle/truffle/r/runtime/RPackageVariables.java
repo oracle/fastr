@@ -24,7 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
-import com.oracle.truffle.r.runtime.REnvironment.PackageKind;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * Support for (global) variables defined by packages (e.g. {@code base)}. Similar to
