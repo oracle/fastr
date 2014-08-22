@@ -438,7 +438,10 @@ public final class REngine implements RContext.Engine {
 
     @SlowPath
     public void printRError(RError e) {
-        context.getConsoleHandler().printErrorln(e.toString());
+        String es = e.toString();
+        if (!es.isEmpty()) {
+            context.getConsoleHandler().printErrorln(e.toString());
+        }
         reportWarnings(true);
     }
 
