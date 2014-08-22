@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Refactored out of {@link UseMethod} to avoid Eclipse annotation processor circularity.
@@ -89,6 +90,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RLanguage arg) {
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RFormula arg) {
+        return RDataFactory.createStringVector(RRuntime.TYPE_FORMULA);
     }
 
     @Specialization

@@ -34,14 +34,15 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
 @SuppressWarnings("unused")
 public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
-    @Child UpdateNames updateNames;
-    @Child UpdateDimNames updateDimNames;
+    @Child private UpdateNames updateNames;
+    @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;

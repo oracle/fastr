@@ -20,14 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.envframe;
+package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.regex.*;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Access to the frame component, handled by delegation in {@link REnvironment}. The default

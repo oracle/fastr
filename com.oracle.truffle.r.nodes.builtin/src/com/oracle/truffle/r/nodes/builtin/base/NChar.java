@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "nchar", kind = INTERNAL, parameterNames = {"x", "type", "allowNA"})
 public abstract class NChar extends RBuiltinNode {
 
-    @Child CastStringNode convertString;
+    @Child private CastStringNode convertString;
 
     @Override
     public RNode[] getParameterValues() {

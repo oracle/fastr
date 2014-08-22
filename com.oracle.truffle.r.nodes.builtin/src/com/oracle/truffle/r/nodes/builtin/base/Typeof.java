@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
-    @Child TypeofNode typeofNode;
+    @Child private TypeofNode typeofNode;
 
     public abstract String execute(VirtualFrame frame, Object x);
 

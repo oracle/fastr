@@ -37,7 +37,7 @@ public abstract class EncodeString extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(""), ConstantNode.create("left"), ConstantNode.create(RRuntime.TRUE)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(0), ConstantNode.create(""), ConstantNode.create("left"), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
     @CreateCast("arguments")

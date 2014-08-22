@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 import jline.console.*;

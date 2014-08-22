@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class), @NodeChild(value = "quote", type = RNode.class)})
@@ -57,15 +58,15 @@ public abstract class PrettyPrinterNode extends RNode {
 
     public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName, byte quote);
 
-    @Child PrettyPrinterNode attributePrettyPrinter;
-    @Child PrettyPrinterNode recursivePrettyPrinter;
-    @Child PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
-    @Child PrintVectorMultiDimNode multiDimPrinter;
+    @Child private PrettyPrinterNode attributePrettyPrinter;
+    @Child private PrettyPrinterNode recursivePrettyPrinter;
+    @Child private PrettyPrinterSingleListElementNode singleListElementPrettyPrinter;
+    @Child private PrintVectorMultiDimNode multiDimPrinter;
 
-    @Child Re re;
-    @Child Im im;
+    @Child private Re re;
+    @Child private Im im;
 
-    @Child IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
     protected abstract boolean isPrintingAttributes();
 
@@ -906,7 +907,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class), @NodeChild(value = "quote", type = RNode.class)})
     abstract static class PrettyPrinterSingleListElementNode extends RNode {
 
-        @Child PrettyPrinterNode prettyPrinter;
+        @Child private PrettyPrinterNode prettyPrinter;
 
         private void initCast(Object listElementName) {
             if (prettyPrinter == null) {
@@ -1020,7 +1021,7 @@ public abstract class PrettyPrinterNode extends RNode {
     @NodeChild(value = "operand", type = RNode.class)
     abstract static class PrettyPrinterSingleVectorElementNode extends RNode {
 
-        @Child PrettyPrinterSingleVectorElementNode recursivePrettyPrinter;
+        @Child private PrettyPrinterSingleVectorElementNode recursivePrettyPrinter;
 
         private String prettyPrintRecursive(Object o) {
             if (recursivePrettyPrinter == null) {
@@ -1109,8 +1110,8 @@ public abstract class PrettyPrinterNode extends RNode {
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class)})
     abstract static class PrintVectorMultiDimNode extends RNode {
 
-        @Child PrintVector2DimNode vector2DimPrinter;
-        @Child PrintDimNode dimPrinter;
+        @Child private PrintVector2DimNode vector2DimPrinter;
+        @Child private PrintDimNode dimPrinter;
 
         private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             if (vector2DimPrinter == null) {
@@ -1187,7 +1188,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class)})
     abstract static class PrintVector2DimNode extends RNode {
 
-        @Child PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
+        @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
 
         private String prettyPrintSingleVectorElement(Object o) {
             if (singleVectorElementPrettyPrinter == null) {
@@ -1562,8 +1563,8 @@ public abstract class PrettyPrinterNode extends RNode {
         public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions,
                         String header);
 
-        @Child PrintVector2DimNode vector2DimPrinter;
-        @Child PrintDimNode dimPrinter;
+        @Child private PrintVector2DimNode vector2DimPrinter;
+        @Child private PrintDimNode dimPrinter;
 
         private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
             if (vector2DimPrinter == null) {

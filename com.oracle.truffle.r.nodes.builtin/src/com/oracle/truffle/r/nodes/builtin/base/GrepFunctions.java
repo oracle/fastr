@@ -137,18 +137,20 @@ public class GrepFunctions {
         }
     }
 
-    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "fixed", "useBytes"})
+    @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"})
     public abstract static class GrepL extends ExtraArgsChecker {
 
         @Override
         public RNode[] getParameterValues() {
             // pattern, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE
             return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),
+                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RRuntime.LOGICAL_FALSE),};
         }
 
         @Specialization
-        protected Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        @SuppressWarnings("unused")
+        protected Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);

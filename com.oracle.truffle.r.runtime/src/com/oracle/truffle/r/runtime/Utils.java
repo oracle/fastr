@@ -252,6 +252,23 @@ public final class Utils {
     }
 
     /**
+     * Retrieve the actual current frame. This may be different from the frame returned by
+     * {@link TruffleRuntime#getCurrentFrame()} due to operations applied in
+     * {@code FunctionDefinitionNode.execute(VirtualFrame)}. Also see
+     * {@code FunctionDefinitionNode.substituteFrame}.
+     */
+    @SlowPath
+    public static VirtualFrame getActualCurrentFrame() {
+        FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
+        VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
+        if (frame.getArguments().length == 1) {
+            // an arguments array length of 1 is indicative of a substituted frame
+            frame = (VirtualFrame) frame.getArguments()[0];
+        }
+        return frame;
+    }
+
+    /**
      * Generate a stack trace as a string.
      */
     @SlowPath

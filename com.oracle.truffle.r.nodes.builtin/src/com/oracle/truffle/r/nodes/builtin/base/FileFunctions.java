@@ -117,7 +117,7 @@ public class FileFunctions {
         }
     }
 
-    public abstract static class FileLinkAdaptor extends RBuiltinNode {
+    abstract static class FileLinkAdaptor extends RBuiltinNode {
         protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo, boolean symbolic) {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
@@ -405,7 +405,7 @@ public class FileFunctions {
         }
     }
 
-    public abstract static class XyzNameAdapter extends RBuiltinNode {
+    abstract static class XyzNameAdapter extends RBuiltinNode {
         public abstract static class PathFunction {
             protected abstract String invoke(FileSystem fileSystem, String name);
         }

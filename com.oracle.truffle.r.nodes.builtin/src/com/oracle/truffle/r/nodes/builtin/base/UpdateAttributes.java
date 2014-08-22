@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
 
-    @Child UpdateNames updateNames;
+    @Child private UpdateNames updateNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;

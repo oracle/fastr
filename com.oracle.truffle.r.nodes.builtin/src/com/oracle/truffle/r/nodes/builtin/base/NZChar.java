@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class NZChar extends RBuiltinNode {
-    @Child CastStringNode convertString;
+    @Child private CastStringNode convertString;
 
     private String coerceContent(VirtualFrame frame, Object content) {
         if (convertString == null) {

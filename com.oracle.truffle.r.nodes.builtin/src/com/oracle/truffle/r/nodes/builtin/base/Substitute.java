@@ -34,12 +34,13 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 // TODO Implement completely
 @RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = {0})
 public abstract class Substitute extends RBuiltinNode {
 
-    @Child Quote quote;
+    @Child private Quote quote;
 
     @Override
     public RNode[] getParameterValues() {

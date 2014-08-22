@@ -28,9 +28,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 @RBuiltin(name = "delayedAssign", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"x", "value", "eval.env", "assign.env"}, nonEvalArgs = {1})
 // TODO kind==INTERNAL when promises generally available

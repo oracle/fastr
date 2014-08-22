@@ -11,12 +11,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * The error messages have been copied from GNU R.
@@ -29,7 +28,7 @@ public final class RError extends RuntimeException {
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
      * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
-     * object and any arguments. E.g. see {@link REnvironment.PutException}.
+     * object and any arguments. E.g. see {@link PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -154,12 +153,7 @@ public final class RError extends RuntimeException {
                 RContext.getEngine().printRError(rError);
                 // errorExpr can be anything, but not everything makes sense
                 if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                    FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
-                    VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.NONE, true);
-                    if (frame == null) {
-                        RContext.getInstance().getConsoleHandler().print("Sorry, options(error=expr) is currently not implemented");
-                        throw new RError(null, "");
-                    }
+                    VirtualFrame frame = Utils.getActualCurrentFrame();
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, frame);
                     } else if (errorExpr instanceof RExpression) {

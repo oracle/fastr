@@ -28,7 +28,8 @@ import java.util.*;
  * Support for recording the set of default R packages.
  */
 public class RPackages {
-    static class RPackage {
+    // TODO: this should actually be private
+    public static class RPackage {
         public final String name;
         public final String path;
 

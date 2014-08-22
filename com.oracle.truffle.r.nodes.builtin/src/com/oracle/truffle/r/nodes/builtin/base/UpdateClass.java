@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
-public abstract class UpdateClass extends RInvisibleBuiltinNode {
+public abstract class UpdateClass extends RBuiltinNode {
 
     @Child private CastTypeNode castTypeNode;
     @Child private CastStringNode castStringNode;
