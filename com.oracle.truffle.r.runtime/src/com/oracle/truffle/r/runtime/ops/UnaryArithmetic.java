@@ -14,6 +14,7 @@
 package com.oracle.truffle.r.runtime.ops;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -90,14 +91,14 @@ public abstract class UnaryArithmetic extends Operation {
         }
 
         @Override
+        @SlowPath
         public double opd(double op, int digits) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException();
         }
 
         @Override
+        @SlowPath
         public RComplex opd(double re, double im, int digits) {
-            CompilerDirectives.transferToInterpreter();
             throw new UnsupportedOperationException();
         }
 

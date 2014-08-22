@@ -20,6 +20,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
@@ -29,19 +30,19 @@ public abstract class InheritsNode extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object doesInherit(RNull x, RAbstractStringVector what) {
+    protected Object doesInherit(RNull x, RAbstractStringVector what) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object doesInherit(REnvironment x, RAbstractStringVector what) {
+    protected Object doesInherit(REnvironment x, RAbstractStringVector what) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     // map operations lead to recursion resulting in compilation failure
     @Specialization
-    public Object doesInherit(RAbstractVector x, RAbstractStringVector what) {
+    protected Object doesInherit(RAbstractVector x, RAbstractStringVector what) {
         Map<String, Integer> classToPos = initClassToPos(x);
         for (int i = 0; i < what.getLength(); ++i) {
             if (classToPos.get(what.getDataAt(i)) != null) {

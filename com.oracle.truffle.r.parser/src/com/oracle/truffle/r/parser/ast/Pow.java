@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.POW_PRECEDENCE)
 public class Pow extends BinaryOperation {
 
-    public Pow(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public Pow(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

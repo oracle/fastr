@@ -61,82 +61,82 @@ public abstract class PrecedenceNode extends UnaryNode {
     }
 
     @Specialization
-    public int doNull(RNull val, byte recursive) {
+    protected int doNull(RNull val, byte recursive) {
         return NO_PRECEDENCE;
     }
 
     @Specialization
-    public int doRaw(RRaw val, byte recursive) {
+    protected int doRaw(RRaw val, byte recursive) {
         return RAW_PRECEDENCE;
     }
 
     @Specialization
-    public int doRawVector(RRawVector val, byte recursive) {
+    protected int doRawVector(RRawVector val, byte recursive) {
         return RAW_PRECEDENCE;
     }
 
     @Specialization
-    public int doLogical(byte val, byte recursive) {
+    protected int doLogical(byte val, byte recursive) {
         return LOGICAL_PRECEDENCE;
     }
 
     @Specialization
-    public int doLogical(RLogicalVector val, byte recursive) {
+    protected int doLogical(RLogicalVector val, byte recursive) {
         return LOGICAL_PRECEDENCE;
     }
 
     @Specialization
-    public int doInt(int val, byte recursive) {
+    protected int doInt(int val, byte recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    public int doComplex(RComplex val, byte recursive) {
+    protected int doComplex(RComplex val, byte recursive) {
         return COMPLEX_PRECEDENCE;
     }
 
     @Specialization
-    public int doInt(RIntVector val, byte recursive) {
+    protected int doInt(RIntVector val, byte recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    public int doInt(RIntSequence val, byte recursive) {
+    protected int doInt(RIntSequence val, byte recursive) {
         return INT_PRECEDENCE;
     }
 
     @Specialization
-    public int doDouble(double val, byte recursive) {
+    protected int doDouble(double val, byte recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    public int doDouble(RDoubleVector val, byte recursive) {
+    protected int doDouble(RDoubleVector val, byte recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    public int doDouble(RDoubleSequence val, byte recursive) {
+    protected int doDouble(RDoubleSequence val, byte recursive) {
         return DOUBLE_PRECEDENCE;
     }
 
     @Specialization
-    public int doComplex(RComplexVector val, byte recursive) {
+    protected int doComplex(RComplexVector val, byte recursive) {
         return COMPLEX_PRECEDENCE;
     }
 
     @Specialization
-    public int doString(String val, byte recursive) {
+    protected int doString(String val, byte recursive) {
         return STRING_PRECEDENCE;
     }
 
     @Specialization
-    public int doString(RStringVector val, byte recursive) {
+    protected int doString(RStringVector val, byte recursive) {
         return STRING_PRECEDENCE;
     }
 
     @Specialization(guards = "isRecursive")
-    public int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
+    protected int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); ++i) {
             Object data = val.getDataAt(i);
@@ -146,12 +146,12 @@ public abstract class PrecedenceNode extends UnaryNode {
     }
 
     @Specialization(guards = "!isRecursive")
-    public int doList(RList val, byte recursive) {
+    protected int doList(RList val, byte recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
-    public int doDataFrame(VirtualFrame frame, RDataFrame val, byte recursive) {
+    protected int doDataFrame(VirtualFrame frame, RDataFrame val, byte recursive) {
         return precedenceRecursive(frame, val.getVector(), recursive);
     }
 

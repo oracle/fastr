@@ -31,9 +31,10 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 @NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})
 @NodeField(name = "field", type = String.class)
@@ -41,12 +42,12 @@ public abstract class UpdateFieldNode extends RNode {
 
     public abstract String getField();
 
-    BranchProfile inexactMatch = new BranchProfile();
+    private final BranchProfile inexactMatch = new BranchProfile();
 
     @Child private CastListNode castList;
 
     @Specialization
-    public Object updateField(RList object, Object value) {
+    protected Object updateField(RList object, Object value) {
         int index = object.getElementIndexByName(getField());
         if (index == -1) {
             inexactMatch.enter();
@@ -82,18 +83,18 @@ public abstract class UpdateFieldNode extends RNode {
     }
 
     @Specialization
-    public Object updateField(VirtualFrame frame, REnvironment env, Object value) {
+    protected Object updateField(REnvironment env, Object value) {
         // reference semantics for environments
         try {
             env.put(getField(), value);
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return env;
     }
 
     @Specialization
-    public Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
+    protected Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeFactory.create(null, true, true, false));

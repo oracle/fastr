@@ -43,7 +43,7 @@ public final class Symbol {
 
         // TODO A less stupid implementation for symbol table
         // i.e., close to a set implementation with linear probing
-        final Map<String, Symbol> table = new HashMap<>();
+        private final Map<String, Symbol> table = new HashMap<>();
 
         private Symbol get(String name) {
             Symbol sym = table.get(name);

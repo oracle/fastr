@@ -28,9 +28,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 @RBuiltin(name = "delayedAssign", kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"x", "value", "eval.env", "assign.env"}, nonEvalArgs = {1})
 // TODO kind==INTERNAL when promises generally available
@@ -42,30 +43,30 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
         REnvironment curEnv = curEnv(frame);
-        return doDelayedAssign(frame, nameVec, value, curEnv, curEnv);
+        return doDelayedAssign(nameVec, value, curEnv, curEnv);
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
-        return doDelayedAssign(frame, nameVec, value, curEnv(frame), assignEnv);
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, @SuppressWarnings("unused") RMissing evalEnv, REnvironment assignEnv) {
+        return doDelayedAssign(nameVec, value, curEnv(frame), assignEnv);
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
-        return doDelayedAssign(frame, nameVec, value, evalEnv, curEnv(frame));
+    protected Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, @SuppressWarnings("unused") RMissing assignEnv) {
+        return doDelayedAssign(nameVec, value, evalEnv, curEnv(frame));
     }
 
     @Specialization
-    public Object doDelayedAssign(VirtualFrame frame, RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, REnvironment assignEnv) {
+    protected Object doDelayedAssign(RAbstractStringVector nameVec, RPromise value, REnvironment evalEnv, REnvironment assignEnv) {
         controlVisibility();
         String name = nameVec.getDataAt(0);
         try {
             assignEnv.put(name, RDataFactory.createPromise(value.getRep(), evalEnv));
             return RNull.instance;
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
     }
 

@@ -16,11 +16,11 @@ import com.oracle.truffle.api.source.*;
 
 public abstract class Loop extends ASTNode {
 
-    final ASTNode body;
+    private final ASTNode body;
 
-    public Loop(SourceSection src, ASTNode body) {
-        this.source = src;
-        this.body = updateParent(body);
+    protected Loop(SourceSection source, ASTNode body) {
+        super(source);
+        this.body = body;
     }
 
     public ASTNode getBody() {

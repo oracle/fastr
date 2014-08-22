@@ -11,12 +11,12 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.mm.*;
 import com.oracle.truffle.r.runtime.rng.mt.*;
@@ -69,7 +69,7 @@ public class RRNG {
 
         static final Kind[] VALUES = values();
 
-        final boolean available;
+        private final boolean available;
         GeneratorPrivate generator;
 
         /**
@@ -136,6 +136,11 @@ public class RRNG {
 
         public boolean isError() {
             return isError;
+        }
+
+        @SlowPath
+        public static RNGException raise(RError.Message message, boolean isError, Object... args) throws RNGException {
+            throw new RNGException(message, isError, args);
         }
     }
 
@@ -210,8 +215,7 @@ public class RRNG {
             } else {
                 kind = setKind(kindAsInt);
                 if (!kind.available) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw new RNGException(RError.Message.RNG_BAD_KIND, true, kind);
+                    throw RNGException.raise(RError.Message.RNG_BAD_KIND, true, kind);
                 }
             }
         } else {
@@ -237,8 +241,7 @@ public class RRNG {
 
     private static Kind setKind(int kindAsInt) throws RNGException {
         if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length) {
-            CompilerDirectives.transferToInterpreter();
-            throw new RNGException(RError.Message.RNG_NOT_IMPL_KIND, true, kindAsInt);
+            throw RNGException.raise(RError.Message.RNG_NOT_IMPL_KIND, true, kindAsInt);
         }
         return Kind.VALUES[kindAsInt];
 
@@ -292,4 +295,5 @@ public class RRNG {
         int millis = (int) (System.currentTimeMillis() & 0xFFFFFFFFL);
         return (millis << 16) ^ pid;
     }
+
 }

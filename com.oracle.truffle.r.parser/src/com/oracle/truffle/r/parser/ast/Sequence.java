@@ -16,11 +16,11 @@ import com.oracle.truffle.api.source.*;
 
 public class Sequence extends ASTNode {
 
-    ASTNode[] exprs;
+    private final ASTNode[] expressions;
 
-    Sequence(SourceSection src, ASTNode[] e) {
-        exprs = updateParent(e); // FIXME or not ... do we need to duplicate this array
-        source = src;
+    private Sequence(SourceSection source, ASTNode[] expressions) {
+        super(source);
+        this.expressions = expressions; // FIXME or not ... do we need to duplicate this array
     }
 
     @Override
@@ -28,14 +28,14 @@ public class Sequence extends ASTNode {
         return v.visit(this);
     }
 
-    public ASTNode[] getExprs() {
-        return exprs;
+    public ASTNode[] getExpressions() {
+        return expressions;
     }
 
     @Override
     public <R> List<R> visitAll(Visitor<R> v) {
         List<R> list = new ArrayList<>();
-        for (ASTNode e : exprs) {
+        for (ASTNode e : expressions) {
             list.add(e.accept(v));
         }
         return list;

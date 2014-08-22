@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Denotes an R type that can have associated attributes, e.g. {@link RVector}, {@link REnvironment}
@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 public interface RAttributable {
     /**
      * If the attribute set is not initialized, then initialize it.
-     * 
+     *
      * @return the pre-existing or new value
      */
     RAttributes initAttributes();
@@ -57,19 +57,6 @@ public interface RAttributable {
     }
 
     /**
-     * Return the attribute {@code name} or {@code null} if not found. This is generic; a class may
-     * need to override this to handle certain attributes specially,
-     */
-    default Object getAttr(String name) {
-        RAttributes attributes = getAttributes();
-        if (attributes == null) {
-            return null;
-        } else {
-            return attributes.get(name);
-        }
-    }
-
-    /**
      * Remove the attribute {@code name}. No error if {@code name} is not an attribute. This is
      * generic; a class may need to override this to handle certain attributes specially,
      */
@@ -79,5 +66,4 @@ public interface RAttributable {
             attributes.remove(name);
         }
     }
-
 }

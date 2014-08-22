@@ -39,7 +39,7 @@ public class TestUserRNG extends TestBase {
     @Test
     public void testUserRNG() {
         Path cwd = Paths.get(System.getProperty("user.dir"));
-        Path libPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native/urand/bin/liburand.so");
+        Path libPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native/urand/lib/liburand." + RPlatform.getOSInfo().libExt);
         Path relLibPath = cwd.relativize(libPath);
         assertTemplateEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{relLibPath.toString()}));
     }

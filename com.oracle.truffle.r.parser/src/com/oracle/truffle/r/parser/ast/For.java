@@ -16,12 +16,12 @@ import com.oracle.truffle.api.source.*;
 
 public class For extends Loop {
 
-    final Symbol cvar;
-    final ASTNode range;
+    private final Symbol variable;
+    private final ASTNode range;
 
-    public For(SourceSection src, Symbol cvar, ASTNode range, ASTNode body) {
-        super(src, body);
-        this.cvar = cvar;
+    public For(SourceSection source, Symbol variable, ASTNode range, ASTNode body) {
+        super(source, body);
+        this.variable = variable;
         this.range = range;
     }
 
@@ -29,8 +29,8 @@ public class For extends Loop {
         return range;
     }
 
-    public Symbol getCVar() {
-        return cvar;
+    public Symbol getVariable() {
+        return variable;
     }
 
     @Override

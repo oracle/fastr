@@ -40,8 +40,8 @@ public abstract class Mod extends RBuiltinNode {
     @Child protected BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
     @Child protected Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
 
-    @Specialization()
-    public RDoubleVector mod(RAbstractComplexVector vec) {
+    @Specialization
+    protected RDoubleVector mod(RAbstractComplexVector vec) {
         controlVisibility();
         double[] data = new double[vec.getLength()];
         for (int i = 0; i < vec.getLength(); i++) {
@@ -50,5 +50,4 @@ public abstract class Mod extends RBuiltinNode {
         }
         return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

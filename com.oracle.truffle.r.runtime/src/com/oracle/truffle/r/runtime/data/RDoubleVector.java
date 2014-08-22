@@ -46,13 +46,26 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         this.data = data;
     }
 
-    RDoubleVector(double[] data, boolean complete, int[] dims) {
+    private RDoubleVector(double[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
     }
 
     @Override
     protected RDoubleVector internalCopy() {
         return new RDoubleVector(Arrays.copyOf(data, data.length), this.isComplete(), null);
+    }
+
+    public RDoubleVector copyResetData(double[] newData) {
+        boolean isComplete = true;
+        for (int i = 0; i < newData.length; ++i) {
+            if (RRuntime.isNA(newData[i])) {
+                isComplete = false;
+                break;
+            }
+        }
+        RDoubleVector result = new RDoubleVector(newData, isComplete, null);
+        setAttributes(result);
+        return result;
     }
 
     @Override
@@ -192,11 +205,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
-    }
-
-    public RDoubleVector resetData(double[] newData) {
-        this.data = newData;
-        return this;
     }
 
     @Override

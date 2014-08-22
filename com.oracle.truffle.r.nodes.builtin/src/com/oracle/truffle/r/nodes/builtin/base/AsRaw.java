@@ -76,61 +76,61 @@ public abstract class AsRaw extends RBuiltinNode {
     public abstract RRaw executeRaw(VirtualFrame frame, Object o);
 
     @Specialization
-    public RRawVector asRaw(RNull vector) {
+    protected RRawVector asRaw(RNull vector) {
         controlVisibility();
         return RDataFactory.createRawVector(0);
     }
 
     @Specialization
-    public RRaw asRaw(VirtualFrame frame, byte logical) {
+    protected RRaw asRaw(VirtualFrame frame, byte logical) {
         controlVisibility();
         return castRaw(frame, logical);
     }
 
     @Specialization
-    public RRaw asRaw(VirtualFrame frame, int value) {
+    protected RRaw asRaw(VirtualFrame frame, int value) {
         controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
-    public RRaw asRaw(VirtualFrame frame, double value) {
+    protected RRaw asRaw(VirtualFrame frame, double value) {
         controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
-    public RRaw asRaw(VirtualFrame frame, RComplex value) {
+    protected RRaw asRaw(VirtualFrame frame, RComplex value) {
         controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
-    public RRaw asRaw(VirtualFrame frame, String value) {
+    protected RRaw asRaw(VirtualFrame frame, String value) {
         controlVisibility();
         return castRaw(frame, value);
     }
 
     @Specialization
-    public RRaw asRaw(RRaw value) {
+    protected RRaw asRaw(RRaw value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = {"!isListVector", "!isRawVector"})
-    public RRawVector asRaw(VirtualFrame frame, RAbstractVector vector) {
+    protected RRawVector asRaw(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         return castRawVector(frame, vector);
     }
 
     @Specialization
-    public RRawVector asRaw(RRawVector value) {
+    protected RRawVector asRaw(RRawVector value) {
         controlVisibility();
         return RDataFactory.createRawVector(value.getDataCopy());
     }
 
     @Specialization
-    public RRawVector asRaw(VirtualFrame frame, RList value) {
+    protected RRawVector asRaw(VirtualFrame frame, RList value) {
         controlVisibility();
         int length = value.getLength();
         RRawVector result = RDataFactory.createRawVector(length);

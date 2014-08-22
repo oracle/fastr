@@ -34,20 +34,20 @@ public abstract class IsInteger extends IsTypeNode {
 
     @Specialization
     @Override
-    public byte isType(int value) {
+    protected byte isType(int value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
     @Override
-    public byte isType(RIntVector value) {
+    protected byte isType(RIntVector value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isType(Object value) {
+    protected byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof Integer || value instanceof RAbstractIntVector);
     }

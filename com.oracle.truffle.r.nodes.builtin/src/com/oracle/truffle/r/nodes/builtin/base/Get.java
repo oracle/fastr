@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "get", kind = SUBSTITUTE, parameterNames = {"x", "pos", "envir", "mode", "inherits"})
 // TODO INTERNAL
@@ -59,7 +60,7 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
+    protected Object get(VirtualFrame frame, String x, int pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
         boolean doesInherit = inherits == RRuntime.LOGICAL_TRUE;
         ReadVariableNode lookup = null;
@@ -71,7 +72,7 @@ public abstract class Get extends RBuiltinNode {
         try {
             return lookup.execute(frame);
         } catch (RError e) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
         }
     }
 
@@ -89,7 +90,7 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(VirtualFrame frame, RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
+    protected Object get(RAbstractStringVector x, REnvironment pos, RMissing envir, String mode, byte inherits) {
         controlVisibility();
         String sx = x.getDataAt(0);
         REnvironment env = pos;
@@ -103,7 +104,7 @@ public abstract class Get extends RBuiltinNode {
             }
         }
         if (r == null) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, sx);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, sx);
         } else {
             return r;
         }
@@ -111,8 +112,8 @@ public abstract class Get extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object get(VirtualFrame frame, RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
-        return get(frame, x, envir, RMissing.instance, mode, inherits);
+    protected Object get(RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
+        return get(x, envir, RMissing.instance, mode, inherits);
     }
 
 }

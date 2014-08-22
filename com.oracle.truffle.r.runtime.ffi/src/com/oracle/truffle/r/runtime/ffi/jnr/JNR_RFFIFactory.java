@@ -25,12 +25,11 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 import java.io.*;
 import java.nio.*;
 
+import jnr.constants.platform.*;
 import jnr.ffi.*;
 import jnr.ffi.annotations.*;
 import jnr.posix.*;
-import jnr.constants.platform.Errno;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.ffi.*;
 
@@ -38,6 +37,11 @@ import com.oracle.truffle.r.runtime.ffi.*;
  * JNR-based factory.
  */
 public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDerivedRFFI, LapackRFFI, UserRngRFFI {
+
+    public JNR_RFFIFactory() {
+        // This must load early as package libraries reference symbols in it.
+        getCallRFFI();
+    }
 
     // Base
 
@@ -119,8 +123,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
                 // not a link
             } else {
                 // some other error
-                CompilerDirectives.transferToInterpreter();
-                throw new IOException();
+                throw ioex();
             }
         }
         return s;
@@ -568,7 +571,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     }
 
     /*
-     * CCall methods
+     * .C methods
      */
 
     private static CRFFI cRFFI;
@@ -579,6 +582,20 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
            cRFFI =  new CRFFI_JNR_Invoke();
         }
         return cRFFI;
+    }
+
+    /*
+     * .C methods
+     */
+
+    private static CallRFFI callRFFI;
+
+    @Override
+    public CallRFFI getCallRFFI() {
+        if (callRFFI == null) {
+            callRFFI =  new CallRFFIWithJNI();
+        }
+        return callRFFI;
     }
 
     // zip
@@ -610,7 +627,4 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         return zip().uncompress(dest, destlen, source, source.length);
     }
-
-
-
 }

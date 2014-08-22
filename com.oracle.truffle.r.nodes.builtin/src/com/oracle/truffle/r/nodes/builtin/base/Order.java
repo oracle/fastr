@@ -54,7 +54,7 @@ public abstract class Order extends RBuiltinNode {
     // specialisations for one parameter
 
     @Specialization
-    public RIntVector order(RStringVector x, @SuppressWarnings("unused") RMissing tie) {
+    protected RIntVector order(RStringVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         String[] xs = x.getDataCopy();
         int[] ord = ordArray(xs.length);
@@ -63,7 +63,7 @@ public abstract class Order extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector order(RDoubleVector x, @SuppressWarnings("unused") RMissing tie) {
+    protected RIntVector order(RDoubleVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         double[] xs = x.getDataCopy();
         int[] ord = ordArray(xs.length);
@@ -72,7 +72,7 @@ public abstract class Order extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector order(RIntVector x, @SuppressWarnings("unused") RMissing tie) {
+    protected RIntVector order(RIntVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         int[] xs = x.getDataCopy();
         int[] ord = ordArray(xs.length);
@@ -81,13 +81,13 @@ public abstract class Order extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector order(RIntVector x, @SuppressWarnings("unused") RNull nul) {
+    protected RIntVector order(RIntVector x, @SuppressWarnings("unused") RNull nul) {
         controlVisibility();
         return order(x, RMissing.instance);
     }
 
     @Specialization
-    public RIntVector order(RComplexVector x, @SuppressWarnings("unused") RMissing tie) {
+    protected RIntVector order(RComplexVector x, @SuppressWarnings("unused") RMissing tie) {
         controlVisibility();
         double[] xs = x.getDataCopy();
         int[] ord = ordArray(x.getLength());
@@ -98,7 +98,7 @@ public abstract class Order extends RBuiltinNode {
     // specialisations for vector and tie parameters
 
     @Specialization
-    public RIntVector order(RIntVector x, RStringVector tie) {
+    protected RIntVector order(RIntVector x, RStringVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         int[] xs = x.getDataCopy();
@@ -109,7 +109,7 @@ public abstract class Order extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector order(RDoubleVector x, RStringVector tie) {
+    protected RIntVector order(RDoubleVector x, RStringVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         double[] xs = x.getDataCopy();
@@ -120,7 +120,7 @@ public abstract class Order extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector order(RDoubleVector x, RDoubleVector tie) {
+    protected RIntVector order(RDoubleVector x, RDoubleVector tie) {
         controlVisibility();
         int[] t = order(tie, RMissing.instance).getDataWithoutCopying();
         double[] xs = x.getDataCopy();

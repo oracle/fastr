@@ -33,13 +33,13 @@ public abstract class IsName extends IsTypeNode {
 
     @Specialization
     @Override
-    public byte isType(RSymbol value) {
+    protected byte isType(RSymbol value) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }
 
     @Specialization
-    public byte isType(Object value) {
+    protected byte isType(Object value) {
         controlVisibility();
         return RRuntime.asLogical(value instanceof RSymbol);
     }

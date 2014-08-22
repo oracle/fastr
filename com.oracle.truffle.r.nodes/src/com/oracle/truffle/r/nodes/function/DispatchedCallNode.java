@@ -22,8 +22,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public abstract class DispatchedCallNode extends RNode {
 
     private static final int INLINE_CACHE_SIZE = 4;
-    protected Object[] args;
-    protected RNode[] argNodes;
 
     public static DispatchedCallNode create(final String genericName, final String dispatchType) {
         return new UninitializedDispatchedCallNode(genericName, dispatchType);
@@ -48,12 +46,13 @@ public abstract class DispatchedCallNode extends RNode {
 
     public abstract Object execute(VirtualFrame frame, RStringVector type);
 
-    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args);
+    public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
 
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
         protected final int depth;
         protected final String genericName;
         protected final String dispatchType;
+        protected final Object[] args;
 
         public UninitializedDispatchedCallNode(final String genericName, final String dispatchType, Object[] args) {
             this.genericName = genericName;
@@ -67,9 +66,10 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         private UninitializedDispatchedCallNode(final UninitializedDispatchedCallNode copy, final int depth) {
+            this.depth = depth;
             this.genericName = copy.genericName;
             this.dispatchType = copy.dispatchType;
-            this.depth = depth;
+            this.args = null;
         }
 
         @Override
@@ -120,7 +120,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
             return dcn.executeInternal(frame, type, args);
         }
     }
@@ -165,7 +165,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector aType, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector aType, Object[] args) {
             if (isEqualType(this.type, aType)) {
                 return currentNode.executeInternal(frame, args);
             }
@@ -194,7 +194,7 @@ public abstract class DispatchedCallNode extends RNode {
         }
 
         @Override
-        public Object executeInternal(VirtualFrame frame, RStringVector type, @SuppressWarnings("hiding") Object[] args) {
+        public Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args) {
             return Utils.nyi();
         }
 

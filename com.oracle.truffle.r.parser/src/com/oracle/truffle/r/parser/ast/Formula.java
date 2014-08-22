@@ -31,10 +31,10 @@ public class Formula extends ASTNode {
     private final ASTNode response;
     private final ASTNode model;
 
-    public Formula(SourceSection source, ASTNode response, ASTNode model) {
+    private Formula(SourceSection source, ASTNode response, ASTNode model) {
+        super(source);
         this.response = response;
         this.model = model;
-        setSource(source);
     }
 
     public static Formula create(SourceSection source, ASTNode response, ASTNode model) {
@@ -58,5 +58,4 @@ public class Formula extends ASTNode {
     public <R> List<R> visitAll(Visitor<R> v) {
         throw new IllegalStateException("should not reach here");
     }
-
 }

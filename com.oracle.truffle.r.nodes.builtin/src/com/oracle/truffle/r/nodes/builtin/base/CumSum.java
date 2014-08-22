@@ -41,19 +41,19 @@ public abstract class CumSum extends RBuiltinNode {
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
 
     @Specialization
-    public double cumsum(double arg) {
+    protected double cumsum(double arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public int cumsum(int arg) {
+    protected int cumsum(int arg) {
         controlVisibility();
         return arg;
     }
 
     @Specialization
-    public int cumsum(byte arg) {
+    protected int cumsum(byte arg) {
         controlVisibility();
         na.enable(arg);
         if (na.check(arg)) {
@@ -63,13 +63,13 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cumsum(RIntSequence arg) {
+    protected RIntVector cumsum(RIntSequence arg) {
         controlVisibility();
         int[] res = new int[arg.getLength()];
         int current = arg.getStart();
         int prev = 0;
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             prev = add.op(prev, current);
             if (na.check(prev)) {
@@ -81,11 +81,11 @@ public abstract class CumSum extends RBuiltinNode {
         if (!na.neverSeenNA()) {
             Arrays.fill(res, i, res.length, RRuntime.INT_NA);
         }
-        return RDataFactory.createIntVector(res, RDataFactory.COMPLETE_VECTOR, arg.getNames());
+        return RDataFactory.createIntVector(res, na.neverSeenNA(), arg.getNames());
     }
 
     @Specialization
-    public RDoubleVector cumsum(RDoubleVector arg) {
+    protected RDoubleVector cumsum(RDoubleVector arg) {
         controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
@@ -105,12 +105,12 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cumsum(RIntVector arg) {
+    protected RIntVector cumsum(RIntVector arg) {
         controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             if (na.check(arg.getDataAt(i))) {
                 break;
@@ -128,12 +128,12 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector cumsum(RLogicalVector arg) {
+    protected RIntVector cumsum(RLogicalVector arg) {
         controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             prev = add.op(prev, arg.getDataAt(i));
             if (na.check(arg.getDataAt(i))) {
@@ -148,7 +148,7 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector cumsum(RStringVector arg) {
+    protected RDoubleVector cumsum(RStringVector arg) {
         controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
@@ -169,12 +169,12 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector cumsum(RComplexVector arg) {
+    protected RComplexVector cumsum(RComplexVector arg) {
         controlVisibility();
         double[] res = new double[arg.getLength() * 2];
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
         int i;
-        na.enable(true);
+        na.enable(arg);
         for (i = 0; i < arg.getLength(); ++i) {
             prev = add.op(prev.getRealPart(), prev.getImaginaryPart(), arg.getDataAt(i).getRealPart(), arg.getDataAt(i).getImaginaryPart());
             if (na.check(arg.getDataAt(i))) {

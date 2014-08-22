@@ -29,12 +29,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class CombineBinaryListNode extends CombineBinaryNode {
 
     @Specialization
-    public RList combine(RList left, double right) {
+    protected RList combine(RList left, double right) {
         return extend(left, right);
     }
 
     @Specialization
-    public RList combine(RList left, RAbstractVector right) {
+    protected RList combine(RList left, RAbstractVector right) {
         Object[] data = left.getDataWithoutCopying();
         Object[] result = new Object[data.length + right.getLength()];
         System.arraycopy(data, 0, result, 0, data.length);

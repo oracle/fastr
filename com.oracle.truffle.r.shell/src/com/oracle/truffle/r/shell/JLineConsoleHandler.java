@@ -30,11 +30,11 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 
 public class JLineConsoleHandler implements RContext.ConsoleHandler {
-    final ConsoleReader console;
-    final boolean isInteractive;
-    final PrintWriter printWriter;
+    private final ConsoleReader console;
+    private final boolean isInteractive;
+    private final PrintWriter printWriter;
 
-    JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
+    public JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
         this.console = console;
         printWriter = new PrintWriter(console.getOutput());
         this.isInteractive = isInteractive;
@@ -97,5 +97,4 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     public int getWidth() {
         return RContext.CONSOLE_WIDTH;
     }
-
 }

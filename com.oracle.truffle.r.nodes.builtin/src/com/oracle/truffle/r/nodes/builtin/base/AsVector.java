@@ -118,61 +118,61 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization
-    public Object asVector(RNull x, @SuppressWarnings("unused") RMissing mode) {
+    protected Object asVector(RNull x, @SuppressWarnings("unused") RMissing mode) {
         controlVisibility();
         return x;
     }
 
     @Specialization(guards = "castToInt")
-    public RAbstractVector asVectorInt(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorInt(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castInteger(frame, x);
     }
 
     @Specialization(guards = "castToDouble")
-    public RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castDouble(frame, x);
     }
 
     @Specialization(guards = "castToComplex")
-    public RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castComplex(frame, x);
     }
 
     @Specialization(guards = "castToLogical")
-    public RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castLogical(frame, x);
     }
 
     @Specialization(guards = "castToString")
-    public RAbstractVector asVectorString(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorString(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castString(frame, x);
     }
 
     @Specialization(guards = "castToRaw")
-    public RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castRaw(frame, x);
     }
 
     @Specialization(guards = "castToList")
-    public RAbstractVector asVectorList(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorList(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castList(frame, x);
     }
 
     @Specialization(guards = "castToSymbol")
-    public RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castSymbol(frame, x);
     }
 
     @Specialization(guards = "isSymbol")
-    public RSymbol asVectorSymbol(RSymbol x, @SuppressWarnings("unused") String mode) {
+    protected RSymbol asVectorSymbol(RSymbol x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return RDataFactory.createSymbol(x.getName());
     }
@@ -182,7 +182,7 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         RList result = x.copyWithNewDimensions(null);
         result.copyNamesFrom(x);
@@ -190,16 +190,16 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "modeIsAnyOrMatches")
-    public RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return x.copyWithNewDimensions(null);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "invalidMode")
-    public RAbstractVector asVectorWrongMode(VirtualFrame frame, RAbstractVector x, String mode) {
+    protected RAbstractVector asVectorWrongMode(RAbstractVector x, String mode) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
     }
 
     protected boolean castToInt(RAbstractVector x, String mode) {

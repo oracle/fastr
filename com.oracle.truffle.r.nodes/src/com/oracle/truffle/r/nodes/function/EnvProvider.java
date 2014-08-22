@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This class should prevent the unnecessary creation of a new {@link REnvironment} for different

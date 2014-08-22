@@ -20,26 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
-
-import java.io.*;
+package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Abstracts the mechanism for accessing resources in the sense of
- * {@link java.lang.Class#getResource(String)}, for environments that might not support that
- * functionality.
+ * Support for the {.Call} and {.External} calls.
  */
-public interface ResourceHandler {
+public interface CallRFFI {
     /**
-     * See {@link java.lang.Class#getResource(String)}.
-     * 
-     * @return The path component of the {@link java.net URL} returned by
-     *         {@link java.lang.Class#getResource(String)}
+     * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
+     * {@code args}. The values in {@code args} can be any of the types used to represent {@code R}
+     * values in the implementation.
+     *
+     * @param symbolInfo identifies the symbol and the defining library
+     * @param args arguments
+     * @throws Throwable on any error during the call
      */
-    String getResourcePath(Class<?> accessor, String name);
+    Object invokeCall(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
 
     /**
-     * See {@link java.lang.Class#getResourceAsStream(String)}.
+     * Variant of {@link #invokeCall} for {@code .External}, where args are wrapped up as a single
+     * argument to the native call.
+     *
+     * @param symbolInfo
+     * @param args
+     * @throws Throwable
      */
-    InputStream getResourceAsStream(Class<?> accessor, String name);
+    Object invokeExternal(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
+
 }

@@ -58,7 +58,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RIntVector sortList(VirtualFrame frame, RAbstractVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
+        protected RIntVector sortList(VirtualFrame frame, RAbstractVector vec, RNull partial, byte naLast, byte decreasing, RMissing method) {
             controlVisibility();
             if (order == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -71,7 +71,7 @@ public class SortFunctions {
                 for (int i = 0; i < data.length; i++) {
                     rdata[i] = data[data.length - (i + 1)];
                 }
-                result.resetData(rdata);
+                result = RDataFactory.createIntVector(rdata, RDataFactory.COMPLETE_VECTOR);
             }
             return result;
         }
@@ -92,14 +92,14 @@ public class SortFunctions {
         }
 
         @Specialization
-        public RDoubleVector qsort(RAbstractDoubleVector vec, @SuppressWarnings("unused") Object indexReturn) {
+        protected RDoubleVector qsort(RAbstractDoubleVector vec, @SuppressWarnings("unused") Object indexReturn) {
             double[] data = vec.materialize().getDataCopy();
             sort(data);
             return RDataFactory.createDoubleVector(data, vec.isComplete());
         }
 
         @Specialization
-        public RIntVector qsort(RAbstractIntVector vec, @SuppressWarnings("unused") Object indexReturn) {
+        protected RIntVector qsort(RAbstractIntVector vec, @SuppressWarnings("unused") Object indexReturn) {
             int[] data = vec.materialize().getDataCopy();
             sort(data);
             return RDataFactory.createIntVector(data, vec.isComplete());

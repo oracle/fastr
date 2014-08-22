@@ -36,48 +36,48 @@ public abstract class CastSymbolNode extends CastNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RSymbol doNull(VirtualFrame frame, RNull value) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
+    protected RSymbol doNull(RNull value) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
     }
 
     @Specialization
-    public RSymbol doInteger(VirtualFrame frame, int value) {
+    protected RSymbol doInteger(VirtualFrame frame, int value) {
         return backQuote(toString.executeString(frame, value));
     }
 
     @Specialization
-    public RSymbol doDouble(VirtualFrame frame, double value) {
+    protected RSymbol doDouble(VirtualFrame frame, double value) {
         return backQuote(toString.executeString(frame, value));
     }
 
     @Specialization
-    public RSymbol doLogical(VirtualFrame frame, byte value) {
+    protected RSymbol doLogical(VirtualFrame frame, byte value) {
         return backQuote(toString.executeString(frame, value));
     }
 
     @Specialization
-    public RSymbol doString(String value) {
+    protected RSymbol doString(String value) {
         return RDataFactory.createSymbol(value);
     }
 
     @Specialization
-    public RSymbol doStringVector(@SuppressWarnings("unused") VirtualFrame frame, RStringVector value) {
+    protected RSymbol doStringVector(@SuppressWarnings("unused") VirtualFrame frame, RStringVector value) {
         // Only element 0 interpreted
         return doString(value.getDataAt(0));
     }
 
     @Specialization
-    public RSymbol doIntegerVector(VirtualFrame frame, RIntVector value) {
+    protected RSymbol doIntegerVector(VirtualFrame frame, RIntVector value) {
         return doInteger(frame, value.getDataAt(0));
     }
 
     @Specialization
-    public RSymbol doDoubleVector(VirtualFrame frame, RDoubleVector value) {
+    protected RSymbol doDoubleVector(VirtualFrame frame, RDoubleVector value) {
         return doDouble(frame, value.getDataAt(0));
     }
 
     @Specialization
-    public RSymbol doLogicalVector(VirtualFrame frame, RLogicalVector value) {
+    protected RSymbol doLogicalVector(VirtualFrame frame, RLogicalVector value) {
         return doLogical(frame, value.getDataAt(0));
     }
 

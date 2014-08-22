@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class BooleanOperation extends Operation {
@@ -52,48 +52,48 @@ public abstract class BooleanOperation extends Operation {
         return true;
     }
 
+    @SlowPath
     public RRaw op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") RRaw right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") int left, @SuppressWarnings("unused") String right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") String left, @SuppressWarnings("unused") int right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") double left, @SuppressWarnings("unused") String right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") String left, @SuppressWarnings("unused") double right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") Object right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RNull right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 
+    @SlowPath
     public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
-        CompilerDirectives.transferToInterpreter();
         throw new UnsupportedOperationException();
     }
 

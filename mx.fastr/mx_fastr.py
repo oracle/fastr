@@ -52,7 +52,7 @@ def runRscriptCommand(args, nonZeroIsFatal=True):
 
 def _set_libpath():
     osname = platform.system()
-    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'lib', osname.lower())
+    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib', osname.lower())
     lib_value = lib_base
     if osname == 'Darwin':
         lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'
@@ -60,6 +60,17 @@ def _set_libpath():
     else:
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
+
+def build(args):
+    '''FastR build'''
+    # Overridden in case we ever want to do anything non-standard
+    # workaround for Hotspot Mac OS X build problem
+    osname = platform.system()
+    if osname == 'Darwin':
+        os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
+        os.environ['USE_CLANG'] = 'true'
+        os.environ['LFLAGS'] = '-Xlinker -lstdc++'
+    mx_graal.build(args, vm='server') # this calls mx.build
 
 def findbugs(args):
     '''run FindBugs against non-test Java projects'''
@@ -97,24 +108,15 @@ def findbugs(args):
 def _fastr_gate_body(args, tasks):
     _check_autogen_tests(False)
 
-    # workaround for Hotspot Mac OS X build problem
-    osname = platform.system()
-    if osname == 'Darwin':
-        os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
-        os.environ['USE_CLANG'] = 'true'
-        os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-
-    t = mx_graal.Task('BuildHotSpotGraalServer: product')
-    mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
-    tasks.append(t.stop())
-
     # check that the expected test output file is up to date
     t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
-    junit(['--tests', _simple_unit_tests(), '--check-expected-output'])
+    rc1 = junit(['--tests', _all_unit_tests(), '--check-expected-output'])
+    if rc1 != 0:
+        mx.abort('unit tests expected output check failed')
     tasks.append(t.stop())
     t = mx.GateTask('UnitTests: simple')
-    rc = junit(['--tests', _simple_unit_tests()])
-    if rc != 0:
+    rc2 = junit(['--tests', _simple_unit_tests()])
+    if rc2 != 0:
         mx.abort('unit tests failed')
     tasks.append(t.stop())
 
@@ -347,6 +349,7 @@ def mx_init(suite):
         'rtestgen' : [testgen, ''],
         # core overrides
         'bench' : [bench, ''],
+        'build' : [build, ''],
         'gate' : [gate, ''],
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],

@@ -26,128 +26,129 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @SuppressWarnings("unused")
 public abstract class TypeofNode extends UnaryNode {
     public abstract String execute(VirtualFrame frame, Object x);
 
     @Specialization
-    public String typeof(RNull vector) {
+    protected String typeof(RNull vector) {
         return "NULL";
     }
 
     @Specialization
-    public String typeof(byte x) {
+    protected String typeof(byte x) {
         return "logical";
     }
 
     @Specialization
-    public String typeof(int s) {
+    protected String typeof(int s) {
         return "integer";
     }
 
     @Specialization
-    public String typeof(double x) {
+    protected String typeof(double x) {
         return "double";
     }
 
     @Specialization
-    public String typeof(RComplex x) {
+    protected String typeof(RComplex x) {
         return "complex";
     }
 
     @Specialization
-    public String typeof(RRaw x) {
+    protected String typeof(RRaw x) {
         return "raw";
     }
 
     @Specialization
-    public String typeof(String x) {
+    protected String typeof(String x) {
         return "character";
     }
 
     @Specialization
-    public String typeof(RIntSequence vector) {
+    protected String typeof(RIntSequence vector) {
         return "integer";
     }
 
     @Specialization
-    public String typeof(RLogicalVector vector) {
+    protected String typeof(RLogicalVector vector) {
         return "logical";
     }
 
     @Specialization
-    public String typeof(RIntVector vector) {
+    protected String typeof(RIntVector vector) {
         return "integer";
     }
 
     @Specialization
-    public String typeof(RDoubleVector vector) {
+    protected String typeof(RDoubleVector vector) {
         return "double";
     }
 
     @Specialization
-    public String typeof(RStringVector vector) {
+    protected String typeof(RStringVector vector) {
         return "character";
     }
 
     @Specialization
-    public String typeof(RComplexVector vector) {
+    protected String typeof(RComplexVector vector) {
         return "complex";
     }
 
     @Specialization
-    public String typeof(RRawVector vector) {
+    protected String typeof(RRawVector vector) {
         return "raw";
     }
 
     @Specialization
-    public String typeof(RList list) {
+    protected String typeof(RList list) {
         return "list";
     }
 
-    @Specialization()
-    public String typeof(REnvironment env) {
+    @Specialization
+    protected String typeof(REnvironment env) {
         return RRuntime.TYPE_ENVIRONMENT;
     }
 
-    @Specialization()
-    public String typeof(RSymbol symbol) {
+    @Specialization
+    protected String typeof(RSymbol symbol) {
         return "symbol";
     }
 
-    @Specialization()
-    public String typeof(RLanguage language) {
+    @Specialization
+    protected String typeof(RLanguage language) {
         return "language";
     }
 
-    @Specialization()
-    public String typeof(RPromise promise) {
+    @Specialization
+    protected String typeof(RPromise promise) {
         return "promise";
     }
 
-    @Specialization()
-    public String typeof(RExpression symbol) {
+    @Specialization
+    protected String typeof(RExpression symbol) {
         return "expression";
     }
 
     @Specialization
-    public String typeof(RPairList pairlist) {
+    protected String typeof(RPairList pairlist) {
         return RRuntime.TYPE_PAIR_LIST;
     }
 
     @Specialization(guards = "isFunctionBuiltin")
-    public String typeofBuiltin(RFunction obj) {
+    protected String typeofBuiltin(RFunction obj) {
         return "builtin";
     }
 
     @Specialization(guards = "!isFunctionBuiltin")
-    public String typeofClosure(RFunction obj) {
+    protected String typeofClosure(RFunction obj) {
         return "closure";
     }
 
     @Specialization
-    public String typeofFormula(RFormula f) {
+    protected String typeofFormula(RFormula f) {
         return "language";
     }
 

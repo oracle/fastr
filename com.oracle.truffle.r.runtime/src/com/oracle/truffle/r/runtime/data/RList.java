@@ -44,7 +44,7 @@ public final class RList extends RVector implements RAbstractVector {
         this.data = data;
     }
 
-    RList(Object[] data, boolean isComplete, int[] dims) {
+    private RList(Object[] data, boolean isComplete, int[] dims) {
         this(data, isComplete, dims, null);
     }
 
@@ -142,7 +142,7 @@ public final class RList extends RVector implements RAbstractVector {
                 return "$" + RRuntime.NA_HEADER;
             } else if (name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
                 return "[[" + Integer.toString(index + 1) + "]]";
-            } else if (name.matches("^[a-zA-Z.]+[a-zA-Z0-9_.]*$")) {
+            } else if (name.matches("^[a-zA-Z.][a-zA-Z0-9_.]*$")) {
                 return "$" + name;
             } else {
                 return "$`" + name + "`";

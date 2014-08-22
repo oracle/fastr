@@ -293,7 +293,7 @@ function returns [ASTNode v]
     }
     @after {
         SourceSection srcs = sourceSection("function", $start, $stop);
-        vv = Function.create(l, $body.v, srcs);
+        vv = Function.create(srcs, l, $body.v);
         $v = vv;
     }
     : FUNCTION n_ LPAR  n_ (par_decl[l] (n_ COMMA n_ par_decl[l])* n_)? RPAR n_ body=expr_or_assign

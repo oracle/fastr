@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Refactored out of {@link UseMethod} to avoid Eclipse annotation processor circularity.
@@ -37,63 +38,62 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     public abstract RStringVector execute(VirtualFrame frame, Object arg);
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_LOGICAL);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_CHARACTER);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_INTEGER);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
         return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_COMPLEX);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") RFunction arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RFunction arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_FUNCTION);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
         return RDataFactory.createStringVector(RRuntime.NULL);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") RSymbol arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RSymbol arg) {
         return RDataFactory.createStringVector(RRuntime.CLASS_SYMBOL);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") REnvironment arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") REnvironment arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_ENVIRONMENT);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") RPairList arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RPairList arg) {
         return RDataFactory.createStringVector(RRuntime.TYPE_PAIR_LIST);
     }
 
     @Specialization
-    public RStringVector getClassHr(@SuppressWarnings("unused") RLanguage arg) {
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RLanguage arg) {
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
 
-    @Specialization()
-    public RStringVector getClassHr(RAbstractContainer arg) {
+    @Specialization
+    protected RStringVector getClassHr(RAbstractContainer arg) {
         return arg.getClassHierarchy();
     }
-
 }

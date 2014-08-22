@@ -27,31 +27,31 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public class SerializeFunctions {
 
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class UnserializeFromConn extends RInvisibleBuiltinNode {
         @Specialization
-        public Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
             controlVisibility();
             try {
                 Object result = RSerialize.unserialize(conn);
                 return result;
             } catch (IOException ex) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
 
         }
 
         @Specialization
-        public Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
+        protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
             // TODO figure out what this really means?
-            return doUnserializeFromConn(frame, conn, RNull.instance);
+            return doUnserializeFromConn(conn, RNull.instance);
         }
     }
 }

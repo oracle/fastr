@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -40,15 +39,15 @@ public abstract class APerm extends RBuiltinNode {
     }
 
     @Specialization
-    public RAbstractVector aPerm(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
+    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize) {
         controlVisibility();
 
         if (!vector.isArray()) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
 
         int[] dim = getDimensions(vector);
-        int[] perm = getPermute(frame, dim, permVector);
+        int[] perm = getPermute(dim, permVector);
 
         int[] posV = new int[dim.length];
         int[] pDim = applyPermute(dim, perm, false);
@@ -57,7 +56,7 @@ public abstract class APerm extends RBuiltinNode {
         RVector result = realVector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         if (resize == RRuntime.LOGICAL_NA) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
         } else if (resize == RRuntime.LOGICAL_TRUE) {
             result.setDimensions(pDim);
         } else {
@@ -74,7 +73,7 @@ public abstract class APerm extends RBuiltinNode {
         return result;
     }
 
-    private int[] getPermute(VirtualFrame frame, int[] dim, RAbstractIntVector perm) {
+    private int[] getPermute(int[] dim, RAbstractIntVector perm) {
         int[] arrayPerm = new int[dim.length];
         if (perm.getLength() == 0) {
             // If perm missing, the default is a reverse of the dim.
@@ -84,7 +83,7 @@ public abstract class APerm extends RBuiltinNode {
         } else if (perm.getLength() == dim.length) {
             for (int i = 0; i < perm.getLength(); i++) {
                 if (perm.getDataAt(i) > perm.getLength() || perm.getDataAt(i) < 1) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.VALUE_OUT_OF_RANGE, "perm");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.VALUE_OUT_OF_RANGE, "perm");
                 }
                 arrayPerm[i] = perm.getDataAt(i) - 1; // Adjust to zero based permute.
             }
@@ -96,12 +95,12 @@ public abstract class APerm extends RBuiltinNode {
                     visited[arrayPerm[i]] = true;
                 } else {
                     // Duplicate dimension mapping in permute
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "perm");
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "perm");
                 }
             }
         } else {
             // perm size error
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
 
         return arrayPerm;

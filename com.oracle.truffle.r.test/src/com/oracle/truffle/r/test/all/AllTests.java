@@ -7924,6 +7924,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInherits_836249d31734a1237010e42b01dd40d1() {
+        assertEval("{ inherits(NULL, \"try-error\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testInherits_c3babb7ceea8dc93b0085895b3a09d12() {
+        assertEval("{ inherits(new.env(), \"try-error\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInheritsIgnore_d0dc6389c924878311546ba61d753a22() {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
     }
@@ -15271,6 +15281,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleDataFrames_testRowNames_617a4bc79c4c6a2d2d1bfc03b84edde6() {
         assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
+    }
+
+    @Test
+    public void TestSimpleErrorHandling_testError_6ba10a2b4fe6fccb944e927a3dfecda8() {
+        assertEval("{ options(error=quote(cat(23,'\n'))) ; v }");
+    }
+
+    @Test
+    public void TestSimpleErrorHandling_testError_7a495cffee7687695179e2ea1b236f89() {
+        assertEval("{ x <- 2 ; options(error=quote(cat(x,'\n'))) ; v }");
+    }
+
+    @Test
+    public void TestSimpleErrorHandling_testError_53dc91b25224feb844f5c6f33bf16d2e() {
+        assertEval("{ nonExistentVariable }");
     }
 
     @Test
@@ -23456,21 +23481,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testSuperUpdate_10ce79326af7e07dc8525793ffb4c8bc() {
         assertEval("{ x <- 1:3 ; f <- function() { x[2] <- 10 ; x[2] <<- 100 ; x[2] <- 1000 } ; f() ; x }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testTmpUpdate_f6ccb4168af3fd4313e35696afc3f2f5() {
-        assertEval("{ x<-c(1,2); x[1]<-42; `*tmp*`[1]<-7; x }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testUpdateOther_eea525ae4479446e708a52622475cd5b() {
-        assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testUpdateOther_7994f543433d0239668974a5699941da() {
-        assertEval("{ f<-function() { print(`*tmp*`[2]); `*tmp*`[2]<<-7; 1 } ; x<-c(1,2); x[f()]<-42; x }");
     }
 
     @Test

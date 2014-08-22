@@ -48,7 +48,7 @@ public abstract class Mean extends RBuiltinNode {
     @Child protected BinaryArithmetic div = BinaryArithmetic.DIV.create();
 
     @Specialization
-    public double mean(RAbstractDoubleVector x) {
+    protected double mean(RAbstractDoubleVector x) {
         controlVisibility();
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -58,7 +58,7 @@ public abstract class Mean extends RBuiltinNode {
     }
 
     @Specialization
-    public double mean(RAbstractIntVector x) {
+    protected double mean(RAbstractIntVector x) {
         controlVisibility();
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -68,7 +68,7 @@ public abstract class Mean extends RBuiltinNode {
     }
 
     @Specialization
-    public double mean(RAbstractLogicalVector x) {
+    protected double mean(RAbstractLogicalVector x) {
         controlVisibility();
         double sum = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); ++k) {
@@ -78,7 +78,7 @@ public abstract class Mean extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplex mean(RAbstractComplexVector x) {
+    protected RComplex mean(RAbstractComplexVector x) {
         controlVisibility();
         RComplex sum = x.getDataAt(0);
         RComplex comp;

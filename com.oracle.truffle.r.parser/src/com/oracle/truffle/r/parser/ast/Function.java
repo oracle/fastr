@@ -16,13 +16,13 @@ import com.oracle.truffle.api.source.*;
 
 public class Function extends ASTNode {
 
-    final List<ArgNode> signature;
-    final ASTNode body;
+    private final List<ArgNode> signature;
+    private final ASTNode body;
 
-    Function(List<ArgNode> alist, ASTNode body, SourceSection src) {
-        this.signature = alist;
-        this.body = updateParent(body);
-        this.source = src;
+    private Function(SourceSection source, List<ArgNode> signature, ASTNode body) {
+        super(source);
+        this.signature = signature;
+        this.body = body;
     }
 
     public List<ArgNode> getSignature() {
@@ -43,8 +43,7 @@ public class Function extends ASTNode {
         return Arrays.asList(body.accept(v));
     }
 
-    public static ASTNode create(List<ArgNode> alist, ASTNode body, SourceSection src) {
-        return new Function(alist, body, src);
+    public static ASTNode create(SourceSection source, List<ArgNode> signature, ASTNode body) {
+        return new Function(source, signature, body);
     }
-
 }

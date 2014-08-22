@@ -57,7 +57,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, int x) {
+    protected Object doSequence(VirtualFrame frame, int x) {
         int count = 0;
         try {
             cvar.execute(frame, x);
@@ -78,7 +78,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, double x) {
+    protected Object doSequence(VirtualFrame frame, double x) {
         int count = 0;
         try {
             cvar.execute(frame, x);
@@ -99,7 +99,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, String x) {
+    protected Object doSequence(VirtualFrame frame, String x) {
         int count = 0;
         try {
             cvar.execute(frame, x);
@@ -120,7 +120,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, RIntSequence range) {
+    protected Object doSequence(VirtualFrame frame, RIntSequence range) {
         int count = 0;
         try {
             for (int i = 0, pos = range.getStart(); i < range.getLength(); i++, pos += range.getStride()) {
@@ -143,7 +143,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, RAbstractVector vector) {
+    protected Object doSequence(VirtualFrame frame, RAbstractVector vector) {
         int count = 0;
         try {
             for (int i = 0; i < vector.getLength(); ++i) {
@@ -166,7 +166,7 @@ public abstract class ForNode extends LoopNode {
     }
 
     @Specialization
-    public Object doSequence(VirtualFrame frame, RExpression expr) {
+    protected Object doSequence(VirtualFrame frame, RExpression expr) {
         return doSequence(frame, expr.getList());
     }
 

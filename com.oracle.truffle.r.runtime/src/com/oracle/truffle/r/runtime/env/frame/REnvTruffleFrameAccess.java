@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.envframe;
+package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.*;
 import java.util.regex.*;
@@ -29,8 +29,9 @@ import java.util.stream.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame.
@@ -38,13 +39,8 @@ import com.oracle.truffle.r.runtime.data.*;
 public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     private MaterializedFrame frame;
-    private Object id;
 
     public REnvTruffleFrameAccess(VirtualFrame frame) {
-        this.id = new Object();
-        FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot idSlot = fd.addFrameSlot(id);
-        frame.setObject(idSlot, id);
         this.frame = frame.materialize();
     }
 
@@ -130,11 +126,6 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     protected Set<String> getBindingsForLock() {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    public Object id() {
-        return id;
     }
 
     private static String[] getStringIdentifiers(FrameDescriptor fd) {

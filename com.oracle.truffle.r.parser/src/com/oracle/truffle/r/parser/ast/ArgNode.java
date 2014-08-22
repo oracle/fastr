@@ -28,22 +28,21 @@ import com.oracle.truffle.api.source.*;
 
 public class ArgNode extends ASTNode {
 
-    private Symbol name;
+    private final Symbol name;
+    private final ASTNode value;
 
-    private ASTNode value;
-
-    public ArgNode(SourceSection src, Symbol name, ASTNode value) {
-        this.source = src;
+    private ArgNode(SourceSection source, Symbol name, ASTNode value) {
+        super(source);
         this.name = name;
         this.value = value;
     }
 
-    public static ArgNode create(SourceSection src, String name, ASTNode value) {
-        return new ArgNode(src, Symbol.getSymbol(name), value);
+    public static ArgNode create(SourceSection source, String name, ASTNode value) {
+        return new ArgNode(source, Symbol.getSymbol(name), value);
     }
 
-    public static ArgNode create(SourceSection src, Symbol name, ASTNode value) {
-        return new ArgNode(src, name, value);
+    public static ArgNode create(SourceSection source, Symbol name, ASTNode value) {
+        return new ArgNode(source, name, value);
     }
 
     public Symbol getName() {
@@ -63,5 +62,4 @@ public class ArgNode extends ASTNode {
     public <R> List<R> visitAll(Visitor<R> v) {
         return Arrays.asList(getValue().accept(v));
     }
-
 }

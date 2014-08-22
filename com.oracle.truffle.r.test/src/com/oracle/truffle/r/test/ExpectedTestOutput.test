@@ -7106,6 +7106,14 @@ NULL
 [1]  TRUE  TRUE FALSE FALSE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(NULL, "try-error") }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
+#{ inherits(new.env(), "try-error") }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testInherits
 #{x <- 10; inherits(x, "a") ;}
 [1] FALSE
 
@@ -13379,6 +13387,20 @@ $class
 $row.names
 [1] 1 2 3
 
+
+##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
+#{ nonExistentVariable }
+Error: object 'nonExistentVariable' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
+#{ options(error=quote(cat(23,'\n'))) ; v }
+Error: object 'v' not found
+23
+
+##com.oracle.truffle.r.test.simple.TestSimpleErrorHandling.testError
+#{ x <- 2 ; options(error=quote(cat(x,'\n'))) ; v }
+Error: object 'v' not found
+2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFormulae.testCreation
 #{ class(a~b) }
@@ -55040,6 +55062,16 @@ $X
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testSuperUpdate
 #{ x <- 1:3 ; f <- function() { x[2] <<- 100 } ; f() ; x }
 [1]   1 100   3
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testUpdateOther
+#{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }
+[1]   4 200
+[1] 1 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleVectors.testUpdateOther
+#{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }
+[1] 100 200
+[1] 4 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleVectors.testVectorIndex
 # { f <- function(b,i) { b[i] } ; f(c(a=1,b=2,c=3), c(TRUE,NA)) }

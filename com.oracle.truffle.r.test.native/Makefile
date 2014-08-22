@@ -21,12 +21,12 @@
 # questions.
 #
 
-.PHONY: urand clean
+.PHONY: all clean
 
 export TOPDIR = $(CURDIR)
 
-urand:
-	$(MAKE) -C urand/src
+all:
+	$(MAKE) -C urand
 
 clean:
-	$(MAKE) -C urand/src clean
+	$(MAKE) -C urand clean

@@ -75,49 +75,49 @@ public abstract class AsComplex extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplex doComplex(RComplex value) {
+    protected RComplex doComplex(RComplex value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public RComplex doInt(VirtualFrame frame, int value) {
+    protected RComplex doInt(VirtualFrame frame, int value) {
         controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
-    public RComplex doDouble(VirtualFrame frame, double value) {
+    protected RComplex doDouble(VirtualFrame frame, double value) {
         controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
-    public RComplex doLogical(VirtualFrame frame, byte value) {
+    protected RComplex doLogical(VirtualFrame frame, byte value) {
         controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
-    public RComplex doString(VirtualFrame frame, String value) {
+    protected RComplex doString(VirtualFrame frame, String value) {
         controlVisibility();
         return castComplex(frame, value);
     }
 
     @Specialization
-    public RComplexVector doNull(RNull value) {
+    protected RComplexVector doNull(RNull value) {
         controlVisibility();
         return RDataFactory.createComplexVector(0);
     }
 
     @Specialization
-    public RComplexVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
+    protected RComplexVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
         controlVisibility();
         return RDataFactory.createComplexVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
-    public RComplexVector doIntVector(VirtualFrame frame, RAbstractVector vector) {
+    protected RComplexVector doIntVector(VirtualFrame frame, RAbstractVector vector) {
         controlVisibility();
         return castComplexVector(frame, vector);
     }

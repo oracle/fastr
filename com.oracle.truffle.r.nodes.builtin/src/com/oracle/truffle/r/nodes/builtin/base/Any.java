@@ -60,53 +60,53 @@ public abstract class Any extends RBuiltinNode {
     }
 
     @Specialization
-    public byte any(byte value) {
+    protected byte any(byte value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public byte any(int value) {
+    protected byte any(int value) {
         controlVisibility();
         check.enable(value);
         return check.convertIntToLogical(value);
     }
 
     @Specialization
-    public byte any(double value) {
+    protected byte any(double value) {
         controlVisibility();
         check.enable(value);
         return check.convertDoubleToLogical(value);
     }
 
     @Specialization
-    public byte any(RComplex value) {
+    protected byte any(RComplex value) {
         controlVisibility();
         check.enable(value);
         return check.convertComplexToLogical(value);
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, String value) {
+    protected byte any(VirtualFrame frame, String value) {
         controlVisibility();
         check.enable(value);
         return check.convertStringToLogical(value);
     }
 
     @Specialization
-    public byte any(RNull vector) {
+    protected byte any(RNull vector) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte any(RMissing vector) {
+    protected byte any(RMissing vector) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    public byte any(RLogicalVector vector) {
+    protected byte any(RLogicalVector vector) {
         controlVisibility();
         check.enable(vector);
         boolean seenNA = false;
@@ -122,52 +122,51 @@ public abstract class Any extends RBuiltinNode {
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RIntVector vector) {
+    protected byte any(VirtualFrame frame, RIntVector vector) {
         controlVisibility();
         return any(castLogicalVector(frame, vector));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RStringVector vector) {
+    protected byte any(VirtualFrame frame, RStringVector vector) {
         controlVisibility();
         return any(castLogicalVector(frame, vector));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RDoubleVector vector) {
+    protected byte any(VirtualFrame frame, RDoubleVector vector) {
         controlVisibility();
         return any(castLogicalVector(frame, vector));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RComplexVector vector) {
+    protected byte any(VirtualFrame frame, RComplexVector vector) {
         controlVisibility();
         return any(castLogicalVector(frame, vector));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RDoubleSequence sequence) {
+    protected byte any(VirtualFrame frame, RDoubleSequence sequence) {
         controlVisibility();
         return any(castLogicalVector(frame, sequence));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RIntSequence sequence) {
+    protected byte any(VirtualFrame frame, RIntSequence sequence) {
         controlVisibility();
         return any(castLogicalVector(frame, sequence));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, RRawVector vector) {
+    protected byte any(VirtualFrame frame, RRawVector vector) {
         controlVisibility();
         return any(castLogicalVector(frame, vector));
     }
 
     @Specialization
-    public byte any(VirtualFrame frame, Object[] args) {
+    protected byte any(VirtualFrame frame, Object[] args) {
         controlVisibility();
         boolean seenNA = false;
-        check.enable(true);
         for (int i = 0; i < args.length; i++) {
             byte result;
             if (args[i] instanceof RVector || args[i] instanceof RSequence) {
@@ -175,7 +174,7 @@ public abstract class Any extends RBuiltinNode {
             } else {
                 result = any(castLogical(frame, args[i]));
             }
-            if (check.check(result)) {
+            if (RRuntime.isNA(result)) {
                 seenNA = true;
             } else if (result == RRuntime.LOGICAL_TRUE) {
                 return RRuntime.LOGICAL_TRUE;

@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.OUTER_MULT_PRECEDENCE)
 public class OuterMult extends BinaryOperation {
 
-    public OuterMult(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public OuterMult(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

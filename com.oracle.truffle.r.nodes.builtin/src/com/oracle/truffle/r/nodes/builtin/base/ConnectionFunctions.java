@@ -30,7 +30,6 @@ import java.util.zip.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
@@ -71,7 +70,7 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {})
     public abstract static class Stdin extends RInvisibleBuiltinNode {
         @Specialization
-        public RConnection stdin() {
+        protected RConnection stdin() {
             controlVisibility();
             if (stdin == null) {
                 stdin = new StdinConnection();
@@ -132,10 +131,10 @@ public abstract class ConnectionFunctions {
     public abstract static class File extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
-        public Object file(VirtualFrame frame, RAbstractStringVector description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
+        protected Object file(RAbstractStringVector description, String open, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!open.equals("r")) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_OPEN_MODE, open);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_OPEN_MODE, open);
             }
             String ePath = Utils.tildeExpand(description.getDataAt(0));
             try {
@@ -143,15 +142,15 @@ public abstract class ConnectionFunctions {
                 return new FileReadRConnection(ePath);
             } catch (IOException ex) {
                 RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object file(VirtualFrame frame, Object description, Object open, Object blocking, Object encoding, Object raw) {
+        protected Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
@@ -159,7 +158,7 @@ public abstract class ConnectionFunctions {
     public abstract static class GZFile extends RInvisibleBuiltinNode {
         @Specialization
         @SuppressWarnings("unused")
-        public Object gzFile(VirtualFrame frame, RAbstractStringVector description, String open, RAbstractStringVector encoding, double compression) {
+        protected Object gzFile(RAbstractStringVector description, String open, RAbstractStringVector encoding, double compression) {
             controlVisibility();
             String ePath = Utils.tildeExpand(description.getDataAt(0));
             try {
@@ -167,7 +166,7 @@ public abstract class ConnectionFunctions {
                 return new GZIPInputRConnection(ePath);
             } catch (IOException ex) {
                 RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -176,7 +175,7 @@ public abstract class ConnectionFunctions {
     // TODO Internal
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
-        public Object close(@SuppressWarnings("unused") Object con) {
+        protected Object close(@SuppressWarnings("unused") Object con) {
             controlVisibility();
             // TODO implement when on.exit doesn't evaluate it's argument
             return RNull.instance;
@@ -186,24 +185,24 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding"})
     public abstract static class ReadLines extends RBuiltinNode {
         @Specialization
-        public Object readLines(VirtualFrame frame, RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {
+        protected Object readLines(RConnection con, int n, byte ok, @SuppressWarnings("unused") byte warn, @SuppressWarnings("unused") String encoding) {
             controlVisibility();
             try {
                 String[] lines = con.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
-                    throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
                 }
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object readLines(VirtualFrame frame, Object con, Object n, Object ok, Object warn, Object encoding) {
+        protected Object readLines(Object con, Object n, Object ok, Object warn, Object encoding) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 

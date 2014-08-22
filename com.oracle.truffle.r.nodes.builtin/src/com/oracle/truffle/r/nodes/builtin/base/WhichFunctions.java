@@ -49,7 +49,7 @@ public class WhichFunctions {
         }
 
         @Specialization
-        public RIntVector which(RAbstractLogicalVector x) {
+        protected RIntVector which(RAbstractLogicalVector x) {
             controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
             for (int i = 0; i < x.getLength(); ++i) {
@@ -75,7 +75,7 @@ public class WhichFunctions {
         }
 
         @Specialization
-        public int which(RAbstractDoubleVector x) {
+        protected int which(RAbstractDoubleVector x) {
             controlVisibility();
             double max = x.getDataAt(0);
             int maxIndex = 0;
@@ -100,7 +100,7 @@ public class WhichFunctions {
         }
 
         @Specialization
-        public int which(RAbstractDoubleVector x) {
+        protected int which(RAbstractDoubleVector x) {
             controlVisibility();
             double minimum = x.getDataAt(0);
             int minIndex = 0;

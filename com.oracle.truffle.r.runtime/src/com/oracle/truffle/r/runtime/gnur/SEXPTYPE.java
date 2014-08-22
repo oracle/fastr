@@ -13,8 +13,8 @@ package com.oracle.truffle.r.runtime.gnur;
 
 import java.util.*;
 
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 // Transcribed from GnuR src/include/Rinternals.h and src/main/serialize.c
 

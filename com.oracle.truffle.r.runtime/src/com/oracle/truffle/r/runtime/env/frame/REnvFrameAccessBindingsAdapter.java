@@ -20,17 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.envframe;
+package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.*;
 import java.util.regex.*;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * This adapter class handles the locking of bindings, but has null implementations of the basic
@@ -50,9 +49,8 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     }
 
     @Override
-    public void put(String key, Object value) throws REnvironment.PutException {
+    public void put(String key, Object value) throws PutException {
         if (lockedBindings != null && lockedBindings.contains(key)) {
-            CompilerDirectives.transferToInterpreter();
             throw createPutException(key);
         }
     }
@@ -94,8 +92,8 @@ public class REnvFrameAccessBindingsAdapter extends REnvFrameAccess {
     }
 
     @SlowPath
-    public PutException createPutException(String key) {
-        return new PutException(RError.Message.ENV_CHANGE_BINDING, key);
+    public PutException createPutException(String key) throws PutException {
+        throw new PutException(RError.Message.ENV_CHANGE_BINDING, key);
     }
 
     @Override

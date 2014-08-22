@@ -32,6 +32,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Denotes an R package that is built-in to the implementation. It consists of two parts:
@@ -54,11 +55,11 @@ import com.oracle.truffle.r.runtime.*;
  */
 public abstract class RBuiltinPackage {
 
-    public static class Component {
-        final String libContents;
-        final String libName;
+    private static class Component {
+        public final String libContents;
+        public final String libName;
 
-        Component(String libName, String libContents) {
+        public Component(String libName, String libContents) {
             this.libContents = libContents;
             this.libName = libName;
         }
@@ -69,8 +70,8 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    private static final Map<String, List<Component>> rSources = new HashMap<>();
-    private static TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
+    private static final HashMap<String, ArrayList<Component>> rSources = new HashMap<>();
+    private static final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
     private static synchronized void putBuiltin(String name, RBuiltinFactory factory) {
         builtins.put(name, factory);
@@ -84,7 +85,7 @@ public abstract class RBuiltinPackage {
             if (is == null) {
                 return;
             }
-            List<Component> componentList = new ArrayList<>();
+            ArrayList<Component> componentList = new ArrayList<>();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = r.readLine()) != null) {
@@ -134,10 +135,10 @@ public abstract class RBuiltinPackage {
                 factory.setEnv(env);
             }
         }
-        List<Component> sources = rSources.get(getName());
+        ArrayList<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
-                RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false);
+                RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false, false);
             }
         }
     }

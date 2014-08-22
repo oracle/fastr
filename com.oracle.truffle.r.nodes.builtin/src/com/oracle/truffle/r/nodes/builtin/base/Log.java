@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -50,25 +49,25 @@ public abstract class Log extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull log(VirtualFrame frame, RNull x, RNull base) {
+    protected RNull log(RNull x, RNull base) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
     }
 
     @Specialization
-    public double log(int x, double base) {
-        controlVisibility();
-        return logb(x, base);
-    }
-
-    @Specialization
-    public double log(double x, double base) {
+    protected double log(int x, double base) {
         controlVisibility();
         return logb(x, base);
     }
 
     @Specialization
-    public RDoubleVector log(RIntVector vector, double base) {
+    protected double log(double x, double base) {
+        controlVisibility();
+        return logb(x, base);
+    }
+
+    @Specialization
+    protected RDoubleVector log(RIntVector vector, double base) {
         controlVisibility();
         double[] resultVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -83,7 +82,7 @@ public abstract class Log extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector log(RDoubleVector vector, double base) {
+    protected RDoubleVector log(RDoubleVector vector, double base) {
         controlVisibility();
         double[] doubleVector = new double[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {

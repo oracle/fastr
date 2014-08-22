@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."})
 // TODO Is it really worth having all the individual specializations given that we have to have one
@@ -37,74 +38,74 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ListBuiltin extends RBuiltinNode {
 
     @Specialization
-    public RList list(@SuppressWarnings("unused") RMissing missing) {
+    protected RList list(@SuppressWarnings("unused") RMissing missing) {
         controlVisibility();
         return list(new Object[0]);
     }
 
     @Specialization
-    public RList list(byte value) {
+    protected RList list(byte value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(int value) {
+    protected RList list(int value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(double value) {
+    protected RList list(double value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(RRaw value) {
+    protected RList list(RRaw value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(RComplex value) {
+    protected RList list(RComplex value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(String value) {
+    protected RList list(String value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(RAbstractVector value) {
+    protected RList list(RAbstractVector value) {
         controlVisibility();
         return list(new Object[]{value});
     }
 
     @Specialization
-    public RList list(Object[] args) {
+    protected RList list(Object[] args) {
         controlVisibility();
         // TODO: should we duplicate all specializations for no-args and args case?
         return RDataFactory.createList(args, argNameVector());
     }
 
     @Specialization
-    public RList list(RNull value) {
+    protected RList list(RNull value) {
         controlVisibility();
         return RDataFactory.createList(new Object[]{value}, argNameVector());
     }
 
     @Specialization
-    public RList list(REnvironment value) {
+    protected RList list(REnvironment value) {
         controlVisibility();
         return RDataFactory.createList(new Object[]{value}, argNameVector());
     }
 
     @Specialization
-    public RList list(RFunction value) {
+    protected RList list(RFunction value) {
         controlVisibility();
         return RDataFactory.createList(new Object[]{value}, argNameVector());
     }

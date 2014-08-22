@@ -42,12 +42,12 @@ public abstract class Quote extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, RPromise expr);
 
     @Specialization
-    public RLanguage doQuote(VirtualFrame frame, @SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+    protected RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization
-    public Object doQuote(RPromise expr) {
+    protected Object doQuote(RPromise expr) {
         controlVisibility();
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();

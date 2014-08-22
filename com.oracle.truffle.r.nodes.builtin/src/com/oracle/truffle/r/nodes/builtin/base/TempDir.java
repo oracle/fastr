@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class TempDir extends RBuiltinNode {
 
     @Specialization
-    public Object tempdir() {
+    protected Object tempdir() {
         controlVisibility();
         return TempDirPath.tempDirPath();
     }

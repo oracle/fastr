@@ -33,6 +33,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link RDerivedRFFI}: the specific, typed, foreign functions required by the built-in
  * {@code Linpack} functions.</li>
  * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.
+ * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.
  * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.
  * </ul>
  *
@@ -47,6 +48,8 @@ public interface RFFI {
     RDerivedRFFI getRDerivedRFFI();
 
     CRFFI getCRFFI();
+
+    CallRFFI getCallRFFI();
 
     UserRngRFFI getUserRngRFFI();
 

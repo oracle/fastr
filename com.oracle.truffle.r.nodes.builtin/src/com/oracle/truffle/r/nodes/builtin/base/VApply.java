@@ -40,7 +40,7 @@ public abstract class VApply extends RBuiltinNode {
 
     // TODO complete the implementation so that it works for all types of x and fun
     @Specialization
-    public Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
         controlVisibility();
         // The first element of optionalArgs is FUN_VALUE
         Object funValue = optionalArgs[0];
@@ -71,7 +71,7 @@ public abstract class VApply extends RBuiltinNode {
     }
 
     @Specialization
-    public Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
         Object[] optionalArgs = new Object[]{optionalArg};
         return vapply(frame, x, fun, optionalArgs);
     }

@@ -35,14 +35,15 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public class BrowserFunctions {
 
     private static final class HelperState {
-        String text;
-        Object condition;
+        private final String text;
+        private final Object condition;
 
-        HelperState(String text, Object condition) {
+        private HelperState(String text, Object condition) {
             this.text = text;
             this.condition = condition;
         }
@@ -60,7 +61,7 @@ public class BrowserFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
+        protected RNull browser(VirtualFrame frame, String text, RNull condition, byte expr, int skipCalls) {
             controlVisibility();
             if (RRuntime.fromLogical(expr)) {
                 try {
@@ -115,7 +116,7 @@ public class BrowserFunctions {
                         }
 
                         default:
-                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true);
+                            RContext.getEngine().parseAndEval(input, frame, callerEnv, true, false);
                             break;
                     }
                 }
@@ -144,9 +145,9 @@ public class BrowserFunctions {
         /**
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */
-        protected HelperState getHelperState(VirtualFrame frame, int n) {
+        protected HelperState getHelperState(int n) {
             if (n <= 0) {
-                throw RError.error(frame, getEncapsulatingSourceSection(), Message.POSITIVE_CONTEXTS);
+                throw RError.error(getEncapsulatingSourceSection(), Message.POSITIVE_CONTEXTS);
             }
             int nn = n;
             if (nn > helperState.size()) {
@@ -160,37 +161,37 @@ public class BrowserFunctions {
     @RBuiltin(name = "browserText", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserText extends RetrieveAdapter {
         @Specialization
-        public String browserText(VirtualFrame frame, int n) {
+        protected String browserText(int n) {
             controlVisibility();
-            return getHelperState(frame, n).text;
+            return getHelperState(n).text;
         }
 
         @Specialization
-        public String browserText(VirtualFrame frame, double n) {
+        protected String browserText(double n) {
             controlVisibility();
-            return getHelperState(frame, (int) n).text;
+            return getHelperState((int) n).text;
         }
     }
 
     @RBuiltin(name = "browserCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserCondition extends RetrieveAdapter {
         @Specialization
-        public Object browserCondition(VirtualFrame frame, int n) {
+        protected Object browserCondition(int n) {
             controlVisibility();
-            return getHelperState(frame, n).condition;
+            return getHelperState(n).condition;
         }
 
         @Specialization
-        public Object browserCondition(VirtualFrame frame, double n) {
+        protected Object browserCondition(double n) {
             controlVisibility();
-            return getHelperState(frame, (int) n).condition;
+            return getHelperState((int) n).condition;
         }
     }
 
     @RBuiltin(name = "browserSetDebug", kind = RBuiltinKind.INTERNAL, parameterNames = {"n"})
     public abstract static class BrowserSetDebug extends RetrieveAdapter {
         @Specialization
-        public RNull browserSetDebug(@SuppressWarnings("unused") int n) {
+        protected RNull browserSetDebug(@SuppressWarnings("unused") int n) {
             // TODO implement
             controlVisibility();
             return RNull.instance;

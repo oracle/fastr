@@ -43,7 +43,7 @@ public abstract class AnyNA extends RBuiltinNode {
 
     @Specialization
     // TODO recursive == TRUE
-    public Object anyNA(VirtualFrame frame, Object x, byte recursive) {
+    protected Object anyNA(VirtualFrame frame, Object x, byte recursive) {
         if (RRuntime.fromLogical(recursive)) {
             throw RError.nyi(getEncapsulatingSourceSection(), "recursive = TRUE not implemented");
         }

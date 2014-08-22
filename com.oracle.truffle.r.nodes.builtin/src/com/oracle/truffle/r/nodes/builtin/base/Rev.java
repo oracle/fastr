@@ -34,43 +34,43 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Rev extends RBuiltinNode {
 
     @Specialization
-    public int rev(int value) {
-        controlVisibility();
-        return value;
-    }
-
-    @Specialization()
-    public double rev(double value) {
+    protected int rev(int value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public byte rev(byte value) {
+    protected double rev(double value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public String rev(String value) {
+    protected byte rev(byte value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public RComplex asInteger(RComplex value) {
+    protected String rev(String value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public RRaw asInteger(RRaw value) {
+    protected RComplex asInteger(RComplex value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public RNull asInteger(RNull value) {
+    protected RRaw asInteger(RRaw value) {
+        controlVisibility();
+        return value;
+    }
+
+    @Specialization
+    protected RNull asInteger(RNull value) {
         controlVisibility();
         return value;
     }
@@ -90,7 +90,7 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector rev(RIntVector vector) {
+    protected RIntVector rev(RIntVector vector) {
         controlVisibility();
         int len = vector.getLength();
         int[] result = new int[len];
@@ -101,7 +101,7 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector rev(RDoubleVector vector) {
+    protected RDoubleVector rev(RDoubleVector vector) {
         controlVisibility();
         int len = vector.getLength();
         double[] result = new double[len];
@@ -112,7 +112,7 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RStringVector rev(RStringVector vector) {
+    protected RStringVector rev(RStringVector vector) {
         controlVisibility();
         int len = vector.getLength();
         String[] result = new String[len];
@@ -123,7 +123,7 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector rev(RLogicalVector vector) {
+    protected RLogicalVector rev(RLogicalVector vector) {
         controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];
@@ -134,7 +134,7 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RComplexVector rev(RComplexVector vector) {
+    protected RComplexVector rev(RComplexVector vector) {
         controlVisibility();
         int len = vector.getLength();
         double[] result = new double[len * 2];
@@ -148,7 +148,7 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RRawVector rev(RRawVector vector) {
+    protected RRawVector rev(RRawVector vector) {
         controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];
@@ -159,14 +159,14 @@ public abstract class Rev extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntSequence rev(RIntSequence sequence) {
+    protected RIntSequence rev(RIntSequence sequence) {
         controlVisibility();
         int start = sequence.getStart() + (sequence.getLength() - 1) * sequence.getStride();
         return RDataFactory.createIntSequence(start, -sequence.getStride(), sequence.getLength());
     }
 
     @Specialization
-    public RDoubleSequence rev(RDoubleSequence sequence) {
+    protected RDoubleSequence rev(RDoubleSequence sequence) {
         controlVisibility();
         double start = sequence.getStart() + (sequence.getLength() - 1) * sequence.getStride();
         return RDataFactory.createDoubleSequence(start, -sequence.getStride(), sequence.getLength());

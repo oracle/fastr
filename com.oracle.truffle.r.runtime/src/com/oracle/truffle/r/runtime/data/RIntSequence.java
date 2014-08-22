@@ -33,7 +33,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
 
     RIntSequence(int start, int stride, int length) {
         super(length);
-// assert length > 0;
+        // assert length > 0;
         this.start = start;
         this.stride = stride;
     }

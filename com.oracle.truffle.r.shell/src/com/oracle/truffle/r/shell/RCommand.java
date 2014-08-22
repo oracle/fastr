@@ -30,6 +30,8 @@ import java.util.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.Engine;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 import jline.console.*;
@@ -121,9 +123,6 @@ public class RCommand {
             ConsoleReader console = null;
             try {
                 console = new RJLineConsoleReader(consoleInput, consoleOutput);
-                if (SLAVE.getValue()) {
-                    console.setPrompt("");
-                }
             } catch (IOException ex) {
                 Utils.fail("unexpected error opening console reader");
             }
@@ -156,11 +155,10 @@ public class RCommand {
             String content = new String(bytes);
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(content, frame, REnvironment.globalEnv(), false);
+            REngine.getInstance().parseAndEval(content, frame, REnvironment.globalEnv(), false, false);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
         }
-
     }
 
     private static void readEvalPrint(boolean isInteractive, ConsoleReader console, String[] commandArgs) {
@@ -172,23 +170,30 @@ public class RCommand {
             VirtualFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
-                String line = console.readLine();
-                if (line == null) {
-                    break;
+                console.setPrompt(SLAVE.getValue() ? "" : "> ");
+                String input = console.readLine();
+                if (input == null) {
+                    return;
                 }
-                line = line.trim();
-                if (line.equals("") || line.charAt(0) == '#') {
+                input = input.trim();
+                if (input.equals("") || input.charAt(0) == '#') {
                     continue;
                 }
 
-                REngine.getInstance().parseAndEval(line, globalFrame, REnvironment.globalEnv(), true);
+                while (REngine.getInstance().parseAndEval(input, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                    console.setPrompt(SLAVE.getValue() ? "" : "+ ");
+                    String additionalInput = console.readLine();
+                    if (additionalInput == null) {
+                        return;
+                    }
+                    input = input + "\n" + additionalInput;
+                }
             }
         } catch (UserInterruptException e) {
             // interrupted
         } catch (IOException ex) {
             Utils.fail("unexpected error reading console input");
         }
-
     }
 
 }

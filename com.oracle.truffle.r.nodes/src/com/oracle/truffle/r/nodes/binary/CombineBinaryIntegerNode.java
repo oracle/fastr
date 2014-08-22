@@ -32,27 +32,27 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
 
     @Specialization
-    public RNull combine(RNull left, RNull right) {
+    protected RNull combine(RNull left, RNull right) {
         return RNull.instance;
     }
 
     @Specialization
-    public RAbstractIntVector combine(RNull left, RAbstractIntVector right) {
+    protected RAbstractIntVector combine(RNull left, RAbstractIntVector right) {
         return right;
     }
 
     @Specialization
-    public RAbstractIntVector combine(RAbstractIntVector left, RNull right) {
+    protected RAbstractIntVector combine(RAbstractIntVector left, RNull right) {
         return left;
     }
 
     @Specialization
-    public RIntVector combine(int left, int right) {
+    protected RIntVector combine(int left, int right) {
         return RDataFactory.createIntVector(new int[]{left, right}, RRuntime.isComplete(left) && RRuntime.isComplete(right));
     }
 
     @Specialization
-    public RIntVector combine(RAbstractIntVector left, RAbstractIntVector right) {
+    protected RIntVector combine(RAbstractIntVector left, RAbstractIntVector right) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         int[] result = new int[leftLength + rightLength];

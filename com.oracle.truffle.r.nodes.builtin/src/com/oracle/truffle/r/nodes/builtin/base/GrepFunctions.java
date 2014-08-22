@@ -100,7 +100,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public RIntVector grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
+        protected RIntVector grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, byte perl, byte fixed, byte useBytes, byte invert) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, invert);
             valueCheck(value);
@@ -148,7 +148,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected Object grep(String patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);
@@ -172,7 +172,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);
@@ -180,7 +180,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected RStringVector sub(String patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);
@@ -188,7 +188,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public RStringVector sub(RStringVector patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected RStringVector sub(RStringVector patternArg, String replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             // FIXME print a warning that only pattern[1] is used
@@ -197,7 +197,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public RStringVector sub(String patternArg, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected RStringVector sub(String patternArg, RStringVector replacement, RStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             // FIXME print a warning that only replacement[1] is used
@@ -233,7 +233,7 @@ public class GrepFunctions {
 
         @Specialization
         @Override
-        public String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected String sub(String patternArg, String replacement, String x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg);
@@ -241,7 +241,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected String sub(RAbstractStringVector patternArg, RAbstractStringVector replacement, RAbstractStringVector x, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
@@ -267,7 +267,7 @@ public class GrepFunctions {
         }
 
         @Specialization
-        public Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
@@ -310,7 +310,7 @@ public class GrepFunctions {
 
         @Specialization
         @Override
-        public Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
             controlVisibility();
             checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
@@ -345,7 +345,7 @@ public class GrepFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
             controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
@@ -384,7 +384,7 @@ public class GrepFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        public Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
+        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, RIntVector costs, RDoubleVector bounds, byte useBytes, byte fixed) {
             // TODO implement properly, this only supports strict equality!
             controlVisibility();
             checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);

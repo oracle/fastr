@@ -27,6 +27,7 @@ import java.util.*;
 
 import org.antlr.runtime.*;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
@@ -41,8 +42,9 @@ import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 
@@ -52,13 +54,14 @@ import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
  */
 public final class REngine implements RContext.Engine {
 
-    private static REngine singleton = new REngine();
-    private static boolean crashOnFatalError;
-    private static long startTime;
-    private static long[] childTimes;
-    private static RContext context;
-    private static RBuiltinLookup builtinLookup;
-    private static RFunction evalFunction;
+    private static final REngine singleton = new REngine();
+
+    @CompilationFinal private boolean crashOnFatalError;
+    @CompilationFinal private long startTime;
+    @CompilationFinal private long[] childTimes;
+    @CompilationFinal private RContext context;
+    @CompilationFinal private RBuiltinLookup builtinLookup;
+    @CompilationFinal private RFunction evalFunction;
 
     private REngine() {
     }
@@ -71,22 +74,22 @@ public final class REngine implements RContext.Engine {
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
      * @return a {@link VirtualFrame} that can be passed to
-     *         {@link #parseAndEval(String, VirtualFrame, REnvironment, boolean)}
+     *         {@link #parseAndEval(String, VirtualFrame, REnvironment, boolean, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
-        startTime = System.nanoTime();
-        childTimes = new long[]{0, 0};
+        singleton.startTime = System.nanoTime();
+        singleton.childTimes = new long[]{0, 0};
         Locale.setDefault(Locale.ROOT);
         FastROptions.initialize();
         Load_RFFIFactory.initialize();
         RPerfAnalysis.initialize();
-        crashOnFatalError = crashOnFatalErrorArg;
-        builtinLookup = RBuiltinPackages.getInstance();
-        context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, headless);
+        singleton.crashOnFatalError = crashOnFatalErrorArg;
+        singleton.builtinLookup = RBuiltinPackages.getInstance();
+        singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, headless);
         VirtualFrame globalFrame = RRuntime.createNonFunctionFrame();
         VirtualFrame baseFrame = RRuntime.createNonFunctionFrame();
         REnvironment.baseInitialize(globalFrame, baseFrame);
-        evalFunction = singleton.lookupBuiltin("eval");
+        singleton.evalFunction = singleton.lookupBuiltin("eval");
         RPackageVariables.initializeBase();
         RVersionInfo.initialize();
         RAccuracyInfo.initialize();
@@ -96,16 +99,16 @@ public final class REngine implements RContext.Engine {
         ROptions.initialize();
         RProfile.initialize();
         // eval the system profile
-        singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false);
+        singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
         REnvironment.packagesInitialize(RPackages.initialize());
         RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {
-            singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false);
+            singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
         }
         String userProfile = RProfile.userProfile();
         if (userProfile != null) {
-            singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false);
+            singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
         }
         return globalFrame;
     }
@@ -130,14 +133,14 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
-    public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult);
+    public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult, allowIncompleteSource);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         VirtualFrame frame = RRuntime.createNonFunctionFrame();
         REnvironment.resetForTest(frame);
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult);
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<test_input>"), frame, printResult, false);
     }
 
     public class ParseException extends Exception {
@@ -151,7 +154,7 @@ public final class REngine implements RContext.Engine {
     public RExpression parse(String rscript) throws RContext.Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
-            ASTNode[] exprs = seq.getExprs();
+            ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
                 data[i] = RDataFactory.createLanguage(transform(exprs[i], REnvironment.emptyEnv()));
@@ -302,11 +305,22 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult) {
+    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, VirtualFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
-            return runCall(makeCallTarget(parseToRNode(stream, source)), frame, printResult, true);
+            RootCallTarget callTarget = makeCallTarget(parseToRNode(stream, source));
+            Object result = runCall(callTarget, frame, printResult, true);
+            return result;
+        } catch (NoViableAltException | MismatchedTokenException e) {
+            if (e.token.getType() == Token.EOF && allowIncompleteSource) {
+                // the parser got stuck at the eof, request another line
+                return INCOMPLETE_SOURCE;
+            }
+            String line = source.getCode(e.line);
+            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, e.charPositionInLine + 1) + "\"";
+            singleton.context.getConsoleHandler().println(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"));
+            return null;
         } catch (RecognitionException | RuntimeException e) {
-            context.getConsoleHandler().println("Exception while parsing: " + e);
+            singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
             return null;
         }
@@ -343,7 +357,7 @@ public final class REngine implements RContext.Engine {
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
      * {@link RootCallTarget} for it. We define the
-     * {@link com.oracle.truffle.r.runtime.REnvironment.FunctionDefinition} environment to have the
+     * {@link com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition} environment to have the
      * {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
      * environments, i.e. is truly anonymous.
      *
@@ -393,9 +407,10 @@ public final class REngine implements RContext.Engine {
         Object result = null;
         try {
             try {
-                result = callTarget.call(frame);
+                // FIXME: callTargets should only be called via Direct/IndirectCallNode
+                result = callTarget.call(frame.materialize());
             } catch (ControlFlowException cfe) {
-                throw RError.error(frame, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
             if (printResult) {
                 printResult(result);
@@ -424,7 +439,10 @@ public final class REngine implements RContext.Engine {
 
     @SlowPath
     public void printRError(RError e) {
-        context.getConsoleHandler().printErrorln(e.toString());
+        String es = e.toString();
+        if (!es.isEmpty()) {
+            context.getConsoleHandler().printErrorln(e.toString());
+        }
         reportWarnings(true);
     }
 
@@ -432,18 +450,18 @@ public final class REngine implements RContext.Engine {
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
-        context.getConsoleHandler().printErrorln(RRuntime.toString(out));
+        singleton.context.getConsoleHandler().printErrorln(RRuntime.toString(out));
         // R suicide, unless, e.g., we are running units tests.
         // We don't call quit as the system is broken.
-        if (crashOnFatalError) {
+        if (singleton.crashOnFatalError) {
             Utils.exit(2);
         }
     }
 
     @SlowPath
     private static void reportWarnings(boolean inAddition) {
-        List<String> evalWarnings = context.extractEvalWarnings();
-        ConsoleHandler consoleHandler = context.getConsoleHandler();
+        List<String> evalWarnings = singleton.context.extractEvalWarnings();
+        ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
         // GnuR outputs warnings to the stderr, so we do too
         if (evalWarnings != null && evalWarnings.size() > 0) {
             if (inAddition) {

@@ -24,9 +24,10 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.util.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -122,7 +123,6 @@ public class REnvVars {
                 // name=value
                 int ix = line.indexOf('=');
                 if (ix < 0) {
-                    CompilerDirectives.transferToInterpreter();
                     throw invalid(path, line);
                 }
                 String var = line.substring(0, ix);
@@ -161,8 +161,9 @@ public class REnvVars {
         return result.toString();
     }
 
-    private static IOException invalid(String path, String line) {
-        return new IOException("   File " + path + " contains invalid line(s)\n      " + line + "\n   They were ignored\n");
+    @SlowPath
+    private static IOException invalid(String path, String line) throws IOException {
+        throw new IOException("   File " + path + " contains invalid line(s)\n      " + line + "\n   They were ignored\n");
     }
 
     public static void safeReadEnvironFile(String path) {

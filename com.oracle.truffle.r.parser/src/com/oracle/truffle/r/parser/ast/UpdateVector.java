@@ -14,13 +14,14 @@ import java.util.*;
 
 public class UpdateVector extends ASTNode {
 
-    final AccessVector vector;
-    final ASTNode rhs;
-    final boolean isSuper;
+    private final AccessVector vector;
+    private final ASTNode rhs;
+    private final boolean isSuper;
 
     public UpdateVector(boolean isSuper, AccessVector vector, ASTNode rhs) {
-        this.vector = updateParent(vector);
-        this.rhs = updateParent(rhs);
+        super(null);
+        this.vector = vector;
+        this.rhs = rhs;
         this.isSuper = isSuper;
     }
 

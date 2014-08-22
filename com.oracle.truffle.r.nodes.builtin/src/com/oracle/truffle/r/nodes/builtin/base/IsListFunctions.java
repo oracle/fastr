@@ -25,13 +25,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public class IsListFunctions {
     @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"})
@@ -43,7 +43,7 @@ public class IsListFunctions {
         private static final String[] PARAMETER_NAMES = new String[]{"x"};
 
         @Override
-        public Object[] getParameterNames() {
+        public String[] getParameterNames() {
             return PARAMETER_NAMES;
         }
 
@@ -53,49 +53,49 @@ public class IsListFunctions {
         }
 
         @Specialization
-        public byte isType(VirtualFrame frame, RMissing value) {
+        protected byte isType(RMissing value) {
             controlVisibility();
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
         @Specialization
-        public byte isType(RList value) {
+        protected byte isType(RList value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = "!isList")
-        public byte isType(RAbstractVector value) {
+        protected byte isType(RAbstractVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        public byte isType(RNull value) {
+        protected byte isType(RNull value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization(guards = "isList")
-        public byte isTypeFrame(RDataFrame value) {
+        protected byte isTypeFrame(RDataFrame value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization(guards = "!isList")
-        public byte isType(RDataFrame value) {
+        protected byte isType(RDataFrame value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        public byte isType(REnvironment env) {
+        protected byte isType(REnvironment env) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
         }
 
         @Specialization
-        public byte isType(RPairList pl) {
+        protected byte isType(RPairList pl) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
@@ -114,7 +114,7 @@ public class IsListFunctions {
     public abstract static class IsPairList extends IsTypeNode {
         @Specialization
         @Override
-        public byte isType(RPairList value) {
+        protected byte isType(RPairList value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }

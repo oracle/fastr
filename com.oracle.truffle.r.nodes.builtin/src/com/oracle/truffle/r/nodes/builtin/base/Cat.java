@@ -62,19 +62,19 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object cat(RNull arg, String file, String sep, byte fill, Object labels, byte append) {
+    protected Object cat(RNull arg, String file, String sep, byte fill, Object labels, byte append) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public Object cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
+    protected Object cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public Object cat(VirtualFrame frame, RAbstractVector arg, String file, String sep, byte fill, Object labels, byte append) {
+    protected Object cat(VirtualFrame frame, RAbstractVector arg, String file, String sep, byte fill, Object labels, byte append) {
         ensureToString(sep);
         catIntl(toString.executeString(frame, arg));
         controlVisibility();
@@ -82,7 +82,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object cat(VirtualFrame frame, Object[] args, String file, String sep, byte fill, Object labels, byte append) {
+    protected Object cat(VirtualFrame frame, Object[] args, String file, String sep, byte fill, Object labels, byte append) {
         ensureToString(sep);
         for (int i = 0; i < args.length; ++i) {
             if (args[i] instanceof Object[]) {

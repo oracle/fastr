@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -43,27 +42,27 @@ public abstract class ShortRowNames extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public RNull getNames(RNull operand, RAbstractIntVector type) {
+    protected RNull getNames(RNull operand, RAbstractIntVector type) {
         controlVisibility();
         return RNull.instance;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "invalidType")
-    public RNull getNamesInvalidType(VirtualFrame frame, RAbstractContainer operand, RAbstractIntVector type) {
+    protected RNull getNamesInvalidType(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
-        throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!invalidType", "!returnScalar"})
-    public Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
+    protected Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         return operand.getRowNames();
     }
 
     @Specialization(guards = {"!invalidType", "returnScalar"})
-    public int getNames(RAbstractContainer operand, RAbstractIntVector type) {
+    protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         int t = type.getDataAt(0);
         Object a = operand.getRowNames();

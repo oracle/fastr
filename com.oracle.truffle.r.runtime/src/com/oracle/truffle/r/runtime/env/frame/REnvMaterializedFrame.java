@@ -20,14 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.envframe;
+package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.UsesREnvMap;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
  * Allows an {@link REnvironment} without a Truffle {@link Frame}, e.g. one created by
@@ -176,7 +177,6 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     public Object getValue(FrameSlot slot) {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
-            CompilerDirectives.transferToInterpreter();
             resize();
         }
         return map.get(slot.getIdentifier());
@@ -203,7 +203,6 @@ public class REnvMaterializedFrame implements MaterializedFrame {
     private byte getTag(FrameSlot slot) {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
-            CompilerDirectives.transferToInterpreter();
             resize();
         }
         return getTags()[slotIndex];
@@ -248,8 +247,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
             if (!resize()) {
-                CompilerDirectives.transferToInterpreter();
-                throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
+                illegal("The frame slot '%s' is not known by the frame descriptor.", slot);
             }
         }
         getTags()[slotIndex] = (byte) accessKind.ordinal();
@@ -259,8 +257,7 @@ public class REnvMaterializedFrame implements MaterializedFrame {
         int slotIndex = slot.getIndex();
         if (slotIndex >= getTags().length) {
             if (!resize()) {
-                CompilerDirectives.transferToInterpreter();
-                throw new IllegalArgumentException(String.format("The frame slot '%s' is not known by the frame descriptor.", slot));
+                illegal("The frame slot '%s' is not known by the frame descriptor.", slot);
             }
         }
         byte tag = this.getTags()[slotIndex];
@@ -271,9 +268,18 @@ public class REnvMaterializedFrame implements MaterializedFrame {
                     return;
                 }
             }
-            CompilerDirectives.transferToInterpreter();
-            throw new FrameSlotTypeException();
+            throw frameSlotTypeException();
         }
+    }
+
+    @SlowPath
+    private static void illegal(String message, FrameSlot slot) {
+        throw new IllegalArgumentException(String.format(message, slot));
+    }
+
+    @SlowPath
+    private static FrameSlotTypeException frameSlotTypeException() throws FrameSlotTypeException {
+        throw new FrameSlotTypeException();
     }
 
 }

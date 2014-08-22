@@ -40,7 +40,7 @@ public abstract class Im extends RBuiltinNode {
     private NACheck check = NACheck.create();
 
     @Specialization
-    public RDoubleVector im(RAbstractComplexVector vector) {
+    protected RDoubleVector im(RAbstractComplexVector vector) {
         controlVisibility();
         double[] result = new double[vector.getLength()];
         check.enable(vector);
@@ -52,9 +52,8 @@ public abstract class Im extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector im(RAbstractDoubleVector vector) {
+    protected RDoubleVector im(RAbstractDoubleVector vector) {
         controlVisibility();
         return RDataFactory.createDoubleVector(vector.getLength());
     }
-
 }

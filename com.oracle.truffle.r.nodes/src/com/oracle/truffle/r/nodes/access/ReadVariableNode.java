@@ -31,7 +31,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode.AbsentFrameSlotNode;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariableNodeFactory;
@@ -137,7 +136,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public abstract Symbol getSymbol();
 
     /**
-     * Checks every value read from a variable whether it is a {@link RPromise} or not. If yes, it
+     * Checks every value read from a variable whether it is an {@link RPromise} or not. If yes, it
      * replaces itself with a {@link ReadPromiseNode}, else with a standard {@link ReadVariableNode}
      */
     public static class ReadCheckPromiseNode extends ReadVariableNode {
@@ -147,7 +146,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private final ReadVariableNode readNodeInitial;
 
         public ReadCheckPromiseNode(ReadVariableNode readNode) {
-            super();
             this.readNode = readNode;
             this.readNodeInitial = NodeUtil.cloneNode(readNode);
         }
@@ -171,7 +169,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         private Object specializeAndExecute(VirtualFrame frame, Object value) {
             CompilerAsserts.neverPartOfCompilation();
 
-            if (value != null && value instanceof RPromise) {
+            if (value instanceof RPromise) {
                 // Force promise execution to get (back to) the future! ;)
                 RPromise promise = (RPromise) value;
                 Object promiseValue = promise.evaluate(frame);
@@ -207,7 +205,6 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         @Child private ReadVariableNode readNode;
 
         public ReadPromiseNode(Symbol symbol, RPromise promise, ReadVariableNode readNode) {
-            super();
             this.symbol = symbol;
             this.promise = promise;
             this.readNode = readNode;
@@ -245,7 +242,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         }
     }
 
-    interface HasMode {
+    private interface HasMode {
         String getMode();
     }
 
@@ -275,8 +272,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (enclosingFrame != null) {
-                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol)
-                                : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol);
+                ReadSuperVariableNode readSuper = copyValue ? ReadAndCopySuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol)
+                                : ReadSuperVariableNodeFactory.create(null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol);
                 ReadVariableMaterializedNode readNode = new ReadVariableMaterializedNode(readSuper, new UnresolvedReadVariableNode(symbol, mode, copyValue), mode);
                 return replace(readNode).execute(frame, enclosingFrame);
             } else {
@@ -300,7 +297,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             ReadVariableNode readNode;
             if (assumptions == null) {
                 // Found variable in one of the frames; build inline cache.
-                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol);
+                ReadLocalVariableNode actualReadNode = ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol);
                 readNode = new ReadVariableVirtualNode(actualReadNode, new UnresolvedReadVariableNode(symbol, mode, copyValue), mode);
             } else {
                 // Symbol is missing in all frames; bundle assumption checks and access builtin.
@@ -318,7 +315,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
                     assumptions = null;
                     break;
                 }
-                assumptions.add(FrameSlotNode.getAssumption(currentFrame, symbol));
+                assumptions.add(FrameSlotNode.getAssumption(currentFrame, symbol.getName()));
                 currentFrame = RArguments.getEnclosingFrame(currentFrame);
             } while (currentFrame != null);
             return assumptions;
@@ -338,22 +335,14 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Child private ReadVariableNode readNode;
         @Child private UnresolvedReadVariableNode unresolvedNode;
-        @Children private final AbsentFrameSlotNode[] absentFrameSlotNodes;
+        private final Assumption[] absentFrameSlotAssumptions;
         private final Symbol symbol;
 
         ReadVariableNonFrameNode(List<Assumption> assumptions, ReadVariableNode readNode, UnresolvedReadVariableNode unresolvedNode, Symbol symbol) {
             this.readNode = readNode;
             this.unresolvedNode = unresolvedNode;
-            this.absentFrameSlotNodes = wrapAssumptions(assumptions);
+            this.absentFrameSlotAssumptions = assumptions.toArray(new Assumption[assumptions.size()]);
             this.symbol = symbol;
-        }
-
-        private AbsentFrameSlotNode[] wrapAssumptions(List<Assumption> assumptions) {
-            AbsentFrameSlotNode[] nodes = new AbsentFrameSlotNode[assumptions.size()];
-            for (int i = 0; i < assumptions.size(); i++) {
-                nodes[i] = new AbsentFrameSlotNode(assumptions.get(i), symbol);
-            }
-            return nodes;
         }
 
         @ExplodeLoop
@@ -361,8 +350,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             controlVisibility();
             try {
-                for (int i = 0; i < absentFrameSlotNodes.length; i++) {
-                    absentFrameSlotNodes[i].getAssumption().check();
+                for (Assumption assumption : absentFrameSlotAssumptions) {
+                    assumption.check();
                 }
             } catch (InvalidAssumptionException e) {
                 return replace(unresolvedNode).execute(frame);
@@ -436,7 +425,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             controlVisibility();
-            node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol));
+            node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol.getName()), symbol));
             if (node.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = node.execute(frame);
                 if (checkType(result, mode)) {
@@ -543,25 +532,25 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract Symbol getSymbol();
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return frame.getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return frame.getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return frame.getDouble(frameSlot);
         }
 
         @Specialization
-        public Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return frame.getObject(frameSlot);
@@ -582,25 +571,25 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract Symbol getSymbol();
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected byte doLogical(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return enclosingFrame.getByte(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected int doInteger(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return enclosingFrame.getInt(frameSlot);
         }
 
         @Specialization(rewriteOn = FrameSlotTypeException.class)
-        public double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
+        protected double doDouble(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
             controlVisibility();
             return enclosingFrame.getDouble(frameSlot);
         }
 
         @Specialization
-        public Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 return enclosingFrame.getObject(frameSlot);
@@ -614,7 +603,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         @Override
         @Specialization
-        public Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected Object doObject(VirtualFrame frame, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             try {
                 Object result = enclosingFrame.getObject(frameSlot);
@@ -638,7 +627,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract Symbol getSymbol();
 
         @Specialization
-        public Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
+        protected Object doObject(@SuppressWarnings("unused") VirtualFrame frame) {
             controlVisibility();
             return getFunction();
         }
@@ -654,9 +643,9 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         public abstract String getMode();
 
         @Specialization
-        public Object doObject(VirtualFrame frame) {
+        protected Object doObject() {
             controlVisibility();
-            throw RError.error(frame, getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
+            throw RError.error(getMode() == RRuntime.TYPE_FUNCTION ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, getSymbol());
         }
     }
 }

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 // TODO Implement completely
 @RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = {0})
@@ -54,11 +55,10 @@ public abstract class Substitute extends RBuiltinNode {
     }
 
     @Specialization
-    public Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
+    protected Object doSubstitute(VirtualFrame frame, RPromise expr, @SuppressWarnings("unused") RMissing envMissing) {
         controlVisibility();
         // In the global environment, substitute behaves like quote
-        REnvironment env = REnvironment.checkNonFunctionFrame(frame);
-        if (env == REnvironment.globalEnv()) {
+        if (REnvironment.isGlobalEnvFrame(frame)) {
             return checkQuote().execute(frame, expr);
         }
         // We have to examine all the names in the expression:
@@ -80,9 +80,7 @@ public abstract class Substitute extends RBuiltinNode {
                 // N.B. In many cases it is ok to just return the value, which is what we do to
                 // allow progress on package loading
             }
-            if (env == null) {
-                env = REnvironment.frameToEnvironment(frame.materialize());
-            }
+            REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
             Object val = env.get(name);
             if (val == null) {
                 // not bound in env
@@ -117,7 +115,7 @@ public abstract class Substitute extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    public String doSubstitute(VirtualFrame frame, RPromise expr, REnvironment env) {
+    protected String doSubstitute(VirtualFrame frame, RPromise expr, REnvironment env) {
         controlVisibility();
         throw RError.nyi(getEncapsulatingSourceSection(), "substitute(expr, env)");
     }

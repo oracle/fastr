@@ -37,7 +37,7 @@ public abstract class FastRInfoBuiltin extends RBuiltinNode {
 
     @SlowPath
     @Specialization
-    public Object printTree() {
+    protected Object printTree() {
         controlVisibility();
         RContext.getInstance();
         StringBuilder b = new StringBuilder();

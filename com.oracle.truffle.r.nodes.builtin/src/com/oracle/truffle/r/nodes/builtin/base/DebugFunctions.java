@@ -36,7 +36,7 @@ public class DebugFunctions {
     public abstract static class Debug extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public RNull debug(RFunction fun, RAbstractStringVector text, RNull condition) {
+        protected RNull debug(RFunction fun, RAbstractStringVector text, RNull condition) {
             // TODO implement
             controlVisibility();
             return RNull.instance;
@@ -47,7 +47,7 @@ public class DebugFunctions {
     public abstract static class DebugOnce extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public RNull debugonce(RFunction fun, RAbstractStringVector text, RNull condition) {
+        protected RNull debugonce(RFunction fun, RAbstractStringVector text, RNull condition) {
             // TODO implement
             controlVisibility();
             return RNull.instance;
@@ -58,7 +58,7 @@ public class DebugFunctions {
     public abstract static class UnDebug extends RInvisibleBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public RNull undebug(RFunction fun) {
+        protected RNull undebug(RFunction fun) {
             // TODO implement
             controlVisibility();
             return RNull.instance;
@@ -69,7 +69,7 @@ public class DebugFunctions {
     public abstract static class IsDebugged extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization
-        public byte isDebugged(RFunction fun) {
+        protected byte isDebugged(RFunction fun) {
             // TODO implement
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;

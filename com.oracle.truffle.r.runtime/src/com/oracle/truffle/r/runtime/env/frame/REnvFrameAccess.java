@@ -20,14 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.envframe;
+package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.regex.*;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * Access to the frame component, handled by delegation in {@link REnvironment}. The default
@@ -35,14 +36,6 @@ import com.oracle.truffle.r.runtime.data.*;
  * environment which never has an associated frame.
  */
 public class REnvFrameAccess {
-    /**
-     * Return the unique id that identifies the associated environment in the frame, or {@code null}
-     * if none.
-     */
-    public Object id() {
-        throw notImplemented("id");
-    }
-
     /**
      * Return the value of object named {@code name} or {@code null} if not found.
      */
@@ -70,7 +63,7 @@ public class REnvFrameAccess {
 
     /**
      * Return the names in the environment that match {@code pattern}.
-     * 
+     *
      * @param allNames if {@code false} ignore names beginning with ".".
      * @param pattern if not {@code null} only include names matching {@code pattern}.
      */

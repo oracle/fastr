@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.io.*;
+
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -56,13 +59,23 @@ public abstract class RFFIFactory {
     }
 
     public CRFFI getCRFFI() {
-        Utils.fail("getCCallRFFI not implemented");
+        Utils.fail("getCRFFI not implemented");
+        return null;
+    }
+
+    public CallRFFI getCallRFFI() {
+        Utils.fail("getCallRFFI not implemented");
         return null;
     }
 
     public UserRngRFFI getUserRngRFFI() {
         Utils.fail("getUserRngRFFI not implemented");
         return null;
+    }
+
+    @SlowPath
+    protected static IOException ioex() throws IOException {
+        throw new IOException();
     }
 
 }

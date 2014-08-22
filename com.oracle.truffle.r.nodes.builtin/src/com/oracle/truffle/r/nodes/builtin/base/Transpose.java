@@ -49,38 +49,38 @@ public abstract class Transpose extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, Object o);
 
     @Specialization
-    public RNull transpose(RNull value) {
+    protected RNull transpose(RNull value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public int transpose(int value) {
+    protected int transpose(int value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public double transpose(double value) {
+    protected double transpose(double value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    public byte transpose(byte value) {
+    protected byte transpose(byte value) {
         controlVisibility();
         return value;
     }
 
     @Specialization(guards = "isEmpty2D")
-    public RAbstractVector transpose(RAbstractVector vector) {
+    protected RAbstractVector transpose(RAbstractVector vector) {
         controlVisibility();
         int[] dim = vector.getDimensions();
         return vector.copyWithNewDimensions(new int[]{dim[1], dim[0]});
     }
 
     @Specialization(guards = "!isEmpty2D")
-    public RIntVector transpose(RAbstractIntVector vector) {
+    protected RIntVector transpose(RAbstractIntVector vector) {
         controlVisibility();
         return performAbstractIntVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
@@ -107,7 +107,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
-    public RDoubleVector transpose(RAbstractDoubleVector vector) {
+    protected RDoubleVector transpose(RAbstractDoubleVector vector) {
         controlVisibility();
         return performAbstractDoubleVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }
@@ -134,7 +134,7 @@ public abstract class Transpose extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isEmpty2D")
-    public RStringVector transpose(RAbstractStringVector vector) {
+    protected RStringVector transpose(RAbstractStringVector vector) {
         controlVisibility();
         return performAbstractStringVector(vector, vector.isMatrix() ? vector.getDimensions() : new int[]{vector.getLength(), 1});
     }

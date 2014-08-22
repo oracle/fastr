@@ -51,13 +51,13 @@ public abstract class Diag extends RBuiltinNode {
     }
 
     @Specialization
-    public RNull dim(RNull vector, int rows, int cols) {
+    protected RNull dim(RNull vector, int rows, int cols) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    public RIntVector dim(int val, int rows, int cols) {
+    protected RIntVector dim(int val, int rows, int cols) {
         controlVisibility();
         int[] data = new int[rows * cols];
         for (int i = 0; i < Math.min(cols, rows); i++) {
@@ -67,12 +67,12 @@ public abstract class Diag extends RBuiltinNode {
     }
 
     @Specialization
-    public RIntVector dim(int val, int rows, RMissing cols) {
+    protected RIntVector dim(int val, int rows, RMissing cols) {
         return dim(val, rows, rows);
     }
 
     @Specialization
-    public RDoubleVector dim(double val, int rows, int cols) {
+    protected RDoubleVector dim(double val, int rows, int cols) {
         controlVisibility();
         double[] data = new double[rows * cols];
         for (int i = 0; i < Math.min(cols, rows); i++) {
@@ -82,12 +82,12 @@ public abstract class Diag extends RBuiltinNode {
     }
 
     @Specialization
-    public RDoubleVector dim(double val, int rows, RMissing cols) {
+    protected RDoubleVector dim(double val, int rows, RMissing cols) {
         return dim(val, rows, rows);
     }
 
     @Specialization
-    public RLogicalVector dim(byte val, int rows, int cols) {
+    protected RLogicalVector dim(byte val, int rows, int cols) {
         controlVisibility();
         byte[] data = new byte[rows * cols];
         for (int i = 0; i < Math.min(cols, rows); i++) {
@@ -97,12 +97,12 @@ public abstract class Diag extends RBuiltinNode {
     }
 
     @Specialization
-    public RLogicalVector dim(byte val, int rows, RMissing cols) {
+    protected RLogicalVector dim(byte val, int rows, RMissing cols) {
         return dim(val, rows, rows);
     }
 
     @Specialization(guards = "isMatrix")
-    public RIntVector dimWithDimensions(RIntVector vector, Object rows, Object cols) {
+    protected RIntVector dimWithDimensions(RIntVector vector, Object rows, Object cols) {
         controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
         int[] result = new int[size];
@@ -119,7 +119,7 @@ public abstract class Diag extends RBuiltinNode {
     }
 
     @Specialization(guards = "isMatrix")
-    public RDoubleVector dimWithDimensions(RDoubleVector vector, Object rows, Object cols) {
+    protected RDoubleVector dimWithDimensions(RDoubleVector vector, Object rows, Object cols) {
         controlVisibility();
         int size = Math.min(vector.getDimensions()[0], vector.getDimensions()[1]);
         double[] result = new double[size];

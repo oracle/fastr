@@ -54,6 +54,7 @@ public class BuiltinProcessor extends AbstractProcessor {
     private static boolean trace = false;
 
     private Map<PackageElement, PackageBuiltins> map;
+    private boolean writtenBuiltinsFile;
 
     private static class PackageBuiltins {
         PackageElement packageElement;
@@ -68,6 +69,7 @@ public class BuiltinProcessor extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment pe) {
         super.init(pe);
         map = new HashMap<>();
+        writtenBuiltinsFile = false;
         note("BuiltinProcessor.init");
     }
 
@@ -75,15 +77,16 @@ public class BuiltinProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         try {
             note("BuiltinProcessor.process");
-            if (roundEnv.processingOver()) {
+            if (roundEnv.processingOver() && !writtenBuiltinsFile) {
                 checkRBuiltin();
-                note("writing RBUILTINS");
+                note("writing RBuiltinClasses");
                 writeBuiltinsFiles();
+                writtenBuiltinsFile = true;
                 return true;
             }
-            boolean added = false;
             note("BuiltinProcessor: analyzing RBuiltins");
             TypeElement rBuiltinType = processingEnv.getElementUtils().getTypeElement("com.oracle.truffle.r.runtime.RBuiltin");
+            int addCount = 0;
             for (Element element : roundEnv.getElementsAnnotatedWith(rBuiltinType)) {
                 TypeElement classElement = (TypeElement) element;
                 PackageElement packageElement = getPackage(classElement);
@@ -93,11 +96,11 @@ public class BuiltinProcessor extends AbstractProcessor {
                     map.put(packageElement, packageBuiltins);
                 }
                 packageBuiltins.builtinClassElements.add(classElement);
-                added = true;
+                addCount++;
             }
-            note("BuiltinProcessor.process added=" + added);
+            note("BuiltinProcessor.process added=" + addCount);
         } catch (Exception ex) {
-            error("error generating RBUILTINS: " + ex);
+            error("error generating RBuiltinClasses: " + ex);
             StackTraceElement[] elements = ex.getStackTrace();
             for (StackTraceElement element : elements) {
                 error(element.toString());
@@ -111,6 +114,7 @@ public class BuiltinProcessor extends AbstractProcessor {
             String packageName = packageBuiltins.packageElement.getQualifiedName().toString();
             // Read the previous file content if any
             SortedSet<String> classNames = readBuiltinsClass(packageName);
+            note("read " + classNames.size() + " from existing in " + packageName);
             // add in the classes from this step
             for (TypeElement builtinClassElement : packageBuiltins.builtinClassElements) {
                 String qualName = builtinClassElement.getQualifiedName().toString();

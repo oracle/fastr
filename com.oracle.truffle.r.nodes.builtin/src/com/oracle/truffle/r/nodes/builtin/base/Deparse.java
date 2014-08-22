@@ -43,7 +43,7 @@ public abstract class Deparse extends RBuiltinNode {
 
     @SlowPath
     @Specialization
-    public RStringVector deparse(Object expr, int widthCutoffArg, RLogicalVector backtick, int nlines) {
+    protected RStringVector deparse(Object expr, int widthCutoffArg, RLogicalVector backtick, int nlines) {
         controlVisibility();
         int widthCutoff = widthCutoffArg;
         if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {

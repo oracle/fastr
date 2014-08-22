@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -45,7 +44,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
-    public RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
+    protected RAbstractVector updateLength(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
         RVector resultVector = vector.materialize();
@@ -59,16 +58,16 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isLengthOne")
-    public RAbstractVector updateLengthError(VirtualFrame frame, RAbstractVector vector, RAbstractIntVector lengthVector) {
+    protected RAbstractVector updateLengthError(RAbstractVector vector, RAbstractIntVector lengthVector) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public Object updateLengthError(VirtualFrame frame, Object vector, Object lengthVector) {
+    protected Object updateLengthError(Object vector, Object lengthVector) {
         controlVisibility();
-        throw RError.error(frame, this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     protected static boolean isLengthOne(@SuppressWarnings("unused") RAbstractVector vector, RAbstractIntVector length) {

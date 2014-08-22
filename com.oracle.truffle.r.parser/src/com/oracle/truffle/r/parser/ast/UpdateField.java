@@ -19,14 +19,14 @@ import com.oracle.truffle.api.source.*;
  */
 public class UpdateField extends ASTNode {
 
-    FieldAccess vector;
-    ASTNode rhs;
-    final boolean isSuper;
+    private final FieldAccess vector;
+    private final ASTNode rhs;
+    private final boolean isSuper;
 
     public UpdateField(SourceSection src, boolean isSuper, FieldAccess vector, ASTNode rhs) {
-        this.source = src;
-        this.vector = updateParent(vector);
-        this.rhs = updateParent(rhs);
+        super(src);
+        this.vector = vector;
+        this.rhs = rhs;
         this.isSuper = isSuper;
     }
 

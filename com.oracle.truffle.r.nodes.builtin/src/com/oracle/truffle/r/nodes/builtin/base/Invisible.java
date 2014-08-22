@@ -44,7 +44,7 @@ public abstract class Invisible extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object doInvisible(Object o) {
+    protected Object doInvisible(Object o) {
         controlVisibility();
         return o;
     }

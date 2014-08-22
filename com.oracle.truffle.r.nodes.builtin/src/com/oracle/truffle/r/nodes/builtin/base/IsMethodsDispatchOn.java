@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class IsMethodsDispatchOn extends RBuiltinNode {
 
     @Specialization
-    public byte doIsMethodsDispatchOn(@SuppressWarnings("unused") RMissing x) {
+    protected byte doIsMethodsDispatchOn(@SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return RRuntime.LOGICAL_TRUE;
     }

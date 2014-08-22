@@ -38,14 +38,13 @@ public abstract class Substr extends RBuiltinNode {
 
     protected final NACheck na = NACheck.create();
 
-    private BranchProfile everSeenIllegalRange = new BranchProfile();
+    private final BranchProfile everSeenIllegalRange = new BranchProfile();
 
     protected static boolean rangeOk(String x, int start, int stop) {
         return start <= stop && start > 0 && stop > 0 && start <= x.length() && stop <= x.length();
     }
 
     protected String substr0(String x, int start, int stop) {
-        na.enable(true);
         if (na.check(x) || na.check(start) || na.check(stop)) {
             return RRuntime.STRING_NA;
         }
@@ -68,20 +67,23 @@ public abstract class Substr extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg")
-    public RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg", "wrongParams"})
-    public RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         assert false; // should never happen
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg", "!wrongParams"})
-    public RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         String[] res = new String[arg.getLength()];
+        na.enable(arg);
+        na.enable(start);
+        na.enable(stop);
         for (int i = 0, j = 0, k = 0; i < arg.getLength(); ++i, j = Utils.incMod(j, start.getLength()), k = Utils.incMod(k, stop.getLength())) {
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));
         }
@@ -94,9 +96,9 @@ public abstract class Substr extends RBuiltinNode {
         return arg.getLength() == 0;
     }
 
-    protected boolean wrongParams(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean wrongParams(@SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }
         return false;
     }

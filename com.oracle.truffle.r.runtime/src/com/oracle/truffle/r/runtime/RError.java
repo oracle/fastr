@@ -11,11 +11,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
  * The error messages have been copied from GNU R.
@@ -27,8 +27,8 @@ public final class RError extends RuntimeException {
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
-     * {@link RError#error(VirtualFrame, SourceSection, RErrorException)}, which access the stored
-     * {@link Message} object and any arguments. E.g. see {@link REnvironment.PutException}.
+     * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
+     * object and any arguments. E.g. see {@link PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -94,12 +94,14 @@ public final class RError extends RuntimeException {
      * An error that cannot be caught by {@code options(error = expr)} as there is no
      * {@link VirtualFrame} available. Ideally this should not be necessary.
      */
+    @SlowPath
     public static RError uncatchableError(SourceSection src, Message msg, Object... args) {
-        return error(null, src, msg, args);
+        throw error0(true, src, msg, args);
     }
 
+    @SlowPath
     public static RError uncatchableError(SourceSection src, RErrorException ex) {
-        return error(null, src, ex.msg, ex.args);
+        throw error0(true, src, ex.msg, ex.args);
     }
 
     /**
@@ -114,13 +116,21 @@ public final class RError extends RuntimeException {
      * has a return type of {@link RError} to allow callers to use the idiom
      * {@code throw error(...)} to indicate the control transfer.
      *
-     * @param frame the frame where the error occurred. Currently may be {@code null} for un
      * @param src source of the code throwing the error, or {@code null} if not available
      * @param msg a {@link Message} instance specifying the error
      * @param args arguments for format specifiers in the message string
      */
-    public static RError error(VirtualFrame frame, SourceSection src, Message msg, Object... args) {
-        CompilerDirectives.transferToInterpreter();
+    @SlowPath
+    public static RError error(SourceSection src, Message msg, Object... args) {
+        throw error0(false, src, msg, args);
+    }
+
+    @SlowPath
+    public static RError error(SourceSection src, Message msg) {
+        throw error(src, msg, (Object[]) null);
+    }
+
+    private static RError error0(boolean uncatchable, SourceSection src, Message msg, Object... args) {
         RError rError;
         if (src != null) {
             rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
@@ -134,7 +144,7 @@ public final class RError extends RuntimeException {
 
         Object errorExpr = ROptions.getValue("error");
         if (errorExpr != RNull.instance) {
-            if (frame == null) {
+            if (uncatchable) {
                 // uncatchable
                 RContext.getInstance().getConsoleHandler().println("error in uncatchable");
                 throw rError;
@@ -142,10 +152,13 @@ public final class RError extends RuntimeException {
                 // Errors and warnings are output before the expression is evaluated
                 RContext.getEngine().printRError(rError);
                 // errorExpr can be anything, but not everything makes sense
-                if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
-                } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
+                    VirtualFrame frame = Utils.getActualCurrentFrame();
+                    if (errorExpr instanceof RLanguage) {
+                        RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                    } else if (errorExpr instanceof RExpression) {
+                        RContext.getEngine().eval((RExpression) errorExpr, frame);
+                    }
                 } else {
                     // GnuR checks this earlier when the option is set
                     throw new RError(null, Message.INVALID_ERROR.message);
@@ -159,28 +172,54 @@ public final class RError extends RuntimeException {
     }
 
     /**
-     * Convenience variant of {@link #error(VirtualFrame, SourceSection, Message, Object...)} where
-     * no source section can be provide. Ideally, this would never happen.
+     * Convenience variant of {@link #error(SourceSection, Message, Object...)} where no source
+     * section can be provide. Ideally, this would never happen.
      */
-    public static RError error(VirtualFrame frame, Message msg, Object... args) {
-        return error(frame, null, msg, args);
+    @SlowPath
+    public static RError error(Message msg, Object... args) {
+        throw error(null, msg, args);
+    }
+
+    @SlowPath
+    public static RError error(Message msg) {
+        throw error(null, msg, (Object[]) null);
+    }
+
+    /**
+     * Convenience variant of {@link #error(SourceSection, Message, Object...)} where only one
+     * argument to the message is given. This avoids object array creation in the (probably
+     * fast-path) caller.
+     */
+    @SlowPath
+    public static RError error(SourceSection src, Message msg, Object arg) {
+        throw error(src, msg, new Object[]{arg});
+    }
+
+    /**
+     * Convenience variant of {@link #error(Message, Object...)} where only one argument to the
+     * message is given. This avoids object array creation in the (probably fast-path) caller.
+     */
+    @SlowPath
+    public static RError error(Message msg, Object arg) {
+        throw error(msg, new Object[]{arg});
     }
 
     /**
      * Variant for the case where the original error occurs in code where it is not appropriate to
      * report the error. The error information is propagated using the {@link RErrorException}.
      */
-    public static RError error(VirtualFrame frame, SourceSection src, RErrorException ex) {
-        return error(frame, src, ex.msg, ex.args);
+    @SlowPath
+    public static RError error(SourceSection src, RErrorException ex) {
+        throw error(src, ex.msg, ex.args);
     }
 
     /**
      * A temporary error that indicates an unimplemented feature where terminating the VM using
      * {@link Utils#fatalError(String)} would be inappropriate.
      */
+    @SlowPath
     public static RError nyi(SourceSection src, String msg) {
-        CompilerDirectives.transferToInterpreter();
-        return new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
+        throw new RError(src, "NYI: " + (src != null ? src.getCode() : "") + msg);
     }
 
     @SlowPath
@@ -193,6 +232,7 @@ public final class RError extends RuntimeException {
         RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
     }
 
+    @SlowPath
     public static String formatMessage(Message msg, Object... args) {
         return msg.hasArgs ? String.format(msg.message, args) : msg.message;
     }

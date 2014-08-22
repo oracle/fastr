@@ -56,12 +56,12 @@ public abstract class FastRRunDump extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    public Object runDump(RNull function) {
+    protected Object runDump(RNull function) {
         return function;
     }
 
     @Specialization
-    public Object runDump(VirtualFrame frame, RFunction function) {
+    protected Object runDump(VirtualFrame frame, RFunction function) {
         controlVisibility();
         Object r = RNull.instance;
         graphPrinter.beginGroup(RRuntime.toString(function));

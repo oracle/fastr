@@ -16,8 +16,8 @@ import com.oracle.truffle.api.source.*;
 @Precedence(Operation.OR_PRECEDENCE)
 public class ElementwiseOr extends BinaryOperation {
 
-    public ElementwiseOr(SourceSection src, ASTNode l, ASTNode r) {
-        super(src, l, r);
+    public ElementwiseOr(SourceSection source, ASTNode l, ASTNode r) {
+        super(source, l, r);
     }
 
     @Override

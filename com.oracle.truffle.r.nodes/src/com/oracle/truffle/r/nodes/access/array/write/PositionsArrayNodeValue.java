@@ -20,14 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.access;
+package com.oracle.truffle.r.nodes.access.array.write;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ArrayPositionCast.OperatorConverterNode;
-import com.oracle.truffle.r.nodes.access.UpdateArrayHelperNode.MultiDimPosConverterValueNode;
+import com.oracle.truffle.r.nodes.access.array.*;
+import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.runtime.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class)})

@@ -26,10 +26,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -47,29 +45,29 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization
-    public String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
+    protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return fmt;
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, RMissing x) {
+    protected String sprintf(RAbstractStringVector fmt, RMissing x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(String fmt, int x) {
+    protected String sprintf(String fmt, int x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, int x) {
+    protected String sprintf(RAbstractStringVector fmt, int x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public RStringVector sprintf(String fmt, RAbstractIntVector x) {
+    protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
@@ -79,56 +77,56 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractIntVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(VirtualFrame frame, String fmt, double x) {
+    protected String sprintf(String fmt, double x) {
         controlVisibility();
         char f = Character.toLowerCase(firstFormatChar(fmt));
         if (f == 'x' || f == 'd') {
             if (Math.floor(x) == x) {
                 return format(fmt, (long) x);
             }
-            throw RError.error(frame, getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FORMAT_DOUBLE, fmt);
         }
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(VirtualFrame frame, RAbstractStringVector fmt, double x) {
-        return sprintf(frame, fmt.getDataAt(0), x);
+    protected String sprintf(RAbstractStringVector fmt, double x) {
+        return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public RStringVector sprintf(VirtualFrame frame, String fmt, RAbstractDoubleVector x) {
+    protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
-            r[k] = sprintf(frame, fmt, x.getDataAt(k));
+            r[k] = sprintf(fmt, x.getDataAt(k));
         }
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public RStringVector sprintf(VirtualFrame frame, RAbstractStringVector fmt, RAbstractDoubleVector x) {
-        return sprintf(frame, fmt.getDataAt(0), x);
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
+        return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(String fmt, String x) {
+    protected String sprintf(String fmt, String x) {
         controlVisibility();
         return format(fmt, x);
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public String sprintf(RAbstractStringVector fmt, String x) {
+    protected String sprintf(RAbstractStringVector fmt, String x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public RStringVector sprintf(String fmt, RAbstractStringVector x) {
+    protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; ++k) {
@@ -138,12 +136,12 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     @Specialization(guards = "fmtLengthOne")
-    public RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
-    public String sprintf(String fmt, Object[] args) {
+    protected String sprintf(String fmt, Object[] args) {
         controlVisibility();
         return format(fmt, args);
     }
@@ -223,8 +221,7 @@ public abstract class Sprintf extends RBuiltinNode {
         } else if (o instanceof Integer) {
             return ((Integer) o).intValue();
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw new IllegalStateException("unexpected type");
+            throw fail("unexpected type");
         }
     }
 
@@ -273,7 +270,7 @@ public abstract class Sprintf extends RBuiltinNode {
     // format info parsing
     //
 
-    static class FormatInfo {
+    private static class FormatInfo {
         char conversion;
         int width;
         int precision;
@@ -354,8 +351,7 @@ public abstract class Sprintf extends RBuiltinNode {
                             widthAndPrecision(cs, j, fi);
                             j = fi.nextChar;
                         } else {
-                            CompilerDirectives.transferToInterpreter();
-                            throw new IllegalStateException("problem with format expression");
+                            throw fail("problem with format expression");
                         }
                 }
                 c = cs[j];
@@ -440,6 +436,11 @@ public abstract class Sprintf extends RBuiltinNode {
 
     protected boolean fmtLengthOne(RAbstractStringVector fmt) {
         return fmt.getLength() == 1;
+    }
+
+    @SlowPath
+    private static IllegalStateException fail(String message) {
+        throw new IllegalStateException(message);
     }
 
 }

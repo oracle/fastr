@@ -34,6 +34,11 @@ public interface RAbstractVector extends RAbstractContainer {
 
     int[] getDimensions();
 
+    /**
+     * Creates a copy of the vector. This copies all of the contained data as well. If the data in
+     * the vector is to be updated upon copying, the corresponding {@code copyResetData()} method
+     * should be used.
+     */
     RAbstractVector copy();
 
     RAbstractVector copyResized(int size, boolean fillNA);
@@ -45,7 +50,7 @@ public interface RAbstractVector extends RAbstractContainer {
     /**
      * May throw errors, so needs a {@link VirtualFrame}.
      */
-    void verifyDimensions(VirtualFrame frame, int[] newDimensions, SourceSection sourceSection);
+    void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();
 

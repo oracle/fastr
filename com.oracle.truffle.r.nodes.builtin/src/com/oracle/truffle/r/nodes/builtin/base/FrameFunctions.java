@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * sys.R. See <a
@@ -47,12 +48,12 @@ public class FrameFunctions {
         /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
-        protected Frame getFrame(VirtualFrame frame, int nn) {
+        protected Frame getFrame(int nn) {
             int n = nn;
             if (n > 0) {
                 int d = Utils.stackDepth();
                 if (n > d) {
-                    RError.error(frame, RError.Message.NOT_THAT_MANY_FRAMES);
+                    RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 n = d - n;
             } else {
@@ -60,7 +61,7 @@ public class FrameFunctions {
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n);
             if (callerFrame == null) {
-                RError.error(frame, RError.Message.NOT_THAT_MANY_FRAMES);
+                RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
             }
             return callerFrame;
         }
@@ -68,8 +69,8 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {})
     public abstract static class SysNFrame extends RBuiltinNode {
-        @Specialization()
-        public int sysNFrame() {
+        @Specialization
+        protected int sysNFrame() {
             controlVisibility();
             return Utils.stackDepth();
         }
@@ -83,8 +84,8 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(0)};
         }
 
-        @Specialization()
-        public REnvironment sysFrame(VirtualFrame frame, int nd) {
+        @Specialization
+        protected REnvironment sysFrame(int nd) {
             controlVisibility();
             int n = nd;
             if (n == 0) {
@@ -92,14 +93,14 @@ public class FrameFunctions {
                 // (which may differ from globalenv() during startup)
                 return REnvironment.globalEnv();
             } else {
-                Frame callerFrame = getFrame(frame, n);
+                Frame callerFrame = getFrame(n);
                 return REnvironment.frameToEnvironment(callerFrame.materialize());
             }
         }
 
-        @Specialization()
-        public REnvironment sysFrame(VirtualFrame frame, double nd) {
-            return sysFrame(frame, (int) nd);
+        @Specialization
+        protected REnvironment sysFrame(double nd) {
+            return sysFrame((int) nd);
         }
     }
 
@@ -111,8 +112,8 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(1)};
         }
 
-        @Specialization()
-        public int sysParent(int nd) {
+        @Specialization
+        protected int sysParent(int nd) {
             controlVisibility();
             int n = nd;
             int d = Utils.stackDepth();
@@ -123,8 +124,8 @@ public class FrameFunctions {
             }
         }
 
-        @Specialization()
-        public int sysParent(double nd) {
+        @Specialization
+        protected int sysParent(double nd) {
             return sysParent((int) nd);
         }
     }
@@ -137,12 +138,12 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(0)};
         }
 
-        @Specialization()
-        public Object sysFunction(VirtualFrame frame, int nd) {
+        @Specialization
+        protected Object sysFunction(int nd) {
             controlVisibility();
             int n = nd;
             // N.B. Despite the spec, n==0 is treated as the current function
-            Frame callerFrame = getFrame(frame, n);
+            Frame callerFrame = getFrame(n);
             RFunction func = RArguments.getFunction(callerFrame);
             if (func == null) {
                 return RNull.instance;
@@ -151,16 +152,16 @@ public class FrameFunctions {
             }
         }
 
-        @Specialization()
-        public Object sysFunction(VirtualFrame frame, double nd) {
-            return sysFunction(frame, (int) nd);
+        @Specialization
+        protected Object sysFunction(double nd) {
+            return sysFunction((int) nd);
         }
     }
 
     @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {})
     public abstract static class SysParents extends FrameHelper {
-        @Specialization()
-        public RIntVector sysParents() {
+        @Specialization
+        protected RIntVector sysParents() {
             controlVisibility();
             int d = Utils.stackDepth();
             int[] data = new int[d];
@@ -173,8 +174,8 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {})
     public abstract static class SysFrames extends FrameHelper {
-        @Specialization()
-        public Object sysFrames() {
+        @Specialization
+        protected Object sysFrames() {
             throw RError.nyi(null, "sys.frames is not implemented");
         }
     }
@@ -190,12 +191,12 @@ public class FrameFunctions {
             return new RNode[]{ConstantNode.create(1)};
         }
 
-        @Specialization()
-        public REnvironment parentFrame(VirtualFrame frame, double nd) {
+        @Specialization
+        protected REnvironment parentFrame(double nd) {
             controlVisibility();
             int n = (int) nd;
             if (n == 0) {
-                RError.error(frame, RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
+                RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.toString(n));
             }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, n + 1);
             if (callerFrame == null) {

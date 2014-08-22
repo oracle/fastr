@@ -30,8 +30,9 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 @RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"...", "list", "pos", "envir", "inherits"})
 // TODO remove should be INTERNAL and rm is in R
@@ -55,7 +56,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
         removeFromCurrentFrame(frame, name);
         return RNull.instance;
@@ -63,7 +64,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
+    protected Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, RMissing envir, byte inherits) {
         controlVisibility();
         for (Object o : names) {
             assert o instanceof String;
@@ -74,26 +75,26 @@ public abstract class Rm extends RInvisibleBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(String name, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
             envir.rm(name);
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return RNull.instance;
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object rm(VirtualFrame frame, Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
+    protected Object rm(Object[] names, RStringVector list, Object pos, REnvironment envir, byte inherits) {
         controlVisibility();
         try {
             for (Object o : names) {
                 envir.rm((String) (o));
             }
         } catch (PutException ex) {
-            throw RError.error(frame, getEncapsulatingSourceSection(), ex);
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
         return RNull.instance;
     }

@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.unary.ConvertNode.*;
+import com.oracle.truffle.r.nodes.unary.ConvertNode.ConversionFailedException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -37,29 +37,32 @@ public abstract class ConvertIntExact extends UnaryNode {
     public abstract int executeInteger(VirtualFrame frame, Object operand);
 
     @Specialization
-    public int doInt(int operand) {
+    protected int doInt(int operand) {
         return operand;
     }
 
     @Specialization
-    public int doLogical(byte operand) {
+    protected int doLogical(byte operand) {
         return RRuntime.logical2int(operand);
     }
 
     @Specialization
-    public double doInt(RIntVector operand) {
+    protected double doInt(RIntVector operand) {
         if (operand.getLength() == 1) {
             return operand.getDataAt(0);
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw new ConversionFailedException(operand.getClass().getName());
+            throw fail(operand.getClass().getName());
         }
     }
 
     @Fallback
     public int doOther(Object operand) {
-        CompilerDirectives.transferToInterpreter();
-        throw new ConversionFailedException(operand.getClass().getName());
+        throw fail(operand.getClass().getName());
+    }
+
+    @SlowPath
+    private static ConversionFailedException fail(String className) {
+        throw new ConversionFailedException(className);
     }
 
 }
