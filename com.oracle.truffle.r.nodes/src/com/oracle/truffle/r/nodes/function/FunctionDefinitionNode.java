@@ -46,7 +46,8 @@ public final class FunctionDefinitionNode extends RRootNode {
      * the shell, or R's {@code eval} and its friends. In that case, {@code substituteFrame} is
      * {@code true}, and the {@link #execute(VirtualFrame)} method must be invoked with one
      * argument, namely the {@link VirtualFrame} to be side-effected. Execution will then proceed in
-     * the context of that frame.
+     * the context of that frame. Note that passing only this one frame argument, strictly spoken,
+     * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
      */
     private final boolean substituteFrame;
 
@@ -68,6 +69,9 @@ public final class FunctionDefinitionNode extends RRootNode {
         return funcEnv;
     }
 
+    /**
+     * @see #substituteFrame
+     */
     @Override
     public Object execute(VirtualFrame frame) {
         try {
