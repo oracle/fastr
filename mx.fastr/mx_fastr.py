@@ -64,7 +64,13 @@ def _set_libpath():
 def build(args):
     '''FastR build'''
     # Overridden in case we ever want to do anything non-standard
-    mx_graal.build(args) # this calls mx.build
+    # workaround for Hotspot Mac OS X build problem
+    osname = platform.system()
+    if osname == 'Darwin':
+        os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
+        os.environ['USE_CLANG'] = 'true'
+        os.environ['LFLAGS'] = '-Xlinker -lstdc++'
+    mx_graal.build(args, vm='server') # this calls mx.build
 
 def findbugs(args):
     '''run FindBugs against non-test Java projects'''
@@ -102,12 +108,6 @@ def findbugs(args):
 def _fastr_gate_body(args, tasks):
     _check_autogen_tests(False)
 
-    # workaround for Hotspot Mac OS X build problem
-    osname = platform.system()
-    if osname == 'Darwin':
-        os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
-        os.environ['USE_CLANG'] = 'true'
-        os.environ['LFLAGS'] = '-Xlinker -lstdc++'
 
     t = mx_graal.Task('BuildHotSpotGraalServer: product')
     mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])

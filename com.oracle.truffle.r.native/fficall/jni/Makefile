@@ -25,7 +25,6 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ../..)
 endif
 
-$(warning $(TOPDIR))
 include $(TOPDIR)/platform.mk
 
 .PHONY: all clean

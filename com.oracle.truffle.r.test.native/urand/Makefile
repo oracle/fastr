@@ -24,10 +24,8 @@
 ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ..)
 endif
-$(warning  $(TOPDIR))
 
 NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
-$(warning $(NATIVE_PROJECT))
 
 include $(NATIVE_PROJECT)/platform.mk
 
