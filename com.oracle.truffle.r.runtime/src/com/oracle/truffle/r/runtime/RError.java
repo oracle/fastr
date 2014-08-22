@@ -155,11 +155,7 @@ public final class RError extends RuntimeException {
                 // errorExpr can be anything, but not everything makes sense
                 if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
-                    VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.NONE, true);
-                    if (frame == null) {
-                        RContext.getInstance().getConsoleHandler().print("Sorry, options(error=expr) is currently not implemented");
-                        throw new RError(null, "");
-                    }
+                    VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, frame);
                     } else if (errorExpr instanceof RExpression) {
