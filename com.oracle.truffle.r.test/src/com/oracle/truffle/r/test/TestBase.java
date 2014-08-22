@@ -468,7 +468,7 @@ public class TestBase {
     /**
      * The method to call when a micro-test fails.
      */
-    private static boolean assertTrue(boolean truth) {
+    protected static boolean assertTrue(boolean truth) {
         if (!truth) {
             microTestFailed();
         }
@@ -501,7 +501,7 @@ public class TestBase {
         }
     }
 
-    private static boolean assertFalse() {
+    protected static boolean assertFalse() {
         assertTrue(false);
         return false;
     }
