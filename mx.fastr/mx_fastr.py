@@ -108,11 +108,6 @@ def findbugs(args):
 def _fastr_gate_body(args, tasks):
     _check_autogen_tests(False)
 
-
-    t = mx_graal.Task('BuildHotSpotGraalServer: product')
-    mx_graal.buildvms(['--vms', 'server', '--builds', 'product'])
-    tasks.append(t.stop())
-
     # check that the expected test output file is up to date
     t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
     rc1 = junit(['--tests', _all_unit_tests(), '--check-expected-output'])
