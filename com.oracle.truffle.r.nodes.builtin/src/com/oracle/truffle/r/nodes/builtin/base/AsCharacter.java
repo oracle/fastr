@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class AsCharacter extends RBuiltinNode {
 
-    @Child CastStringNode castStringNode;
-    @Child DispatchedCallNode dcn;
+    @Child private CastStringNode castStringNode;
+    @Child private DispatchedCallNode dcn;
 
     private void initCast() {
         if (castStringNode == null) {

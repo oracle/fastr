@@ -54,7 +54,7 @@ public class SortFunctions {
                             ConstantNode.create(RMissing.instance)};
         }
 
-        @Child Order order;
+        @Child private Order order;
 
         @SuppressWarnings("unused")
         @Specialization

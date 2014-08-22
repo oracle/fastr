@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class AsLogical extends RBuiltinNode {
 
-    @Child CastLogicalNode castLogicalNode;
+    @Child private CastLogicalNode castLogicalNode;
 
     public abstract RLogicalVector executeRLogicalVector(VirtualFrame frame, Object o) throws UnexpectedResultException;
 

@@ -43,7 +43,7 @@ public abstract class CastIntegerNode extends CastNode {
 
     public abstract Object executeInt(VirtualFrame frame, Object o);
 
-    @Child CastIntegerNode recursiveCastInteger;
+    @Child private CastIntegerNode recursiveCastInteger;
 
     private Object castIntegerRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastInteger == null) {

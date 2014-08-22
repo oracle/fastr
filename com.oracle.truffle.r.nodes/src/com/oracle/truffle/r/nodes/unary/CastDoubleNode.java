@@ -44,7 +44,7 @@ public abstract class CastDoubleNode extends CastNode {
 
     public abstract Object executeDouble(VirtualFrame frame, Object o);
 
-    @Child CastDoubleNode recursiveCastDouble;
+    @Child private CastDoubleNode recursiveCastDouble;
 
     private Object castDoubleRecursive(VirtualFrame frame, Object o) {
         if (recursiveCastDouble == null) {

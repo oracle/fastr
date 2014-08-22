@@ -50,7 +50,7 @@ public abstract class PrecedenceNode extends UnaryNode {
 
     public abstract int executeInteger(VirtualFrame frame, Object object, byte recursive);
 
-    @Child PrecedenceNode precedenceNode;
+    @Child private PrecedenceNode precedenceNode;
 
     private int precedenceRecursive(VirtualFrame frame, Object o, byte recursive) {
         if (precedenceNode == null) {

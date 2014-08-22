@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsNA extends RBuiltinNode {
 
-    @Child IsNA recursiveIsNA;
+    @Child private IsNA recursiveIsNA;
 
     private Object isNARecursive(VirtualFrame frame, Object o) {
         if (recursiveIsNA == null) {

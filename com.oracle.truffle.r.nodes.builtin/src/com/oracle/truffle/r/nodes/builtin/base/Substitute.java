@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.env.*;
 @RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = {0})
 public abstract class Substitute extends RBuiltinNode {
 
-    @Child Quote quote;
+    @Child private Quote quote;
 
     @Override
     public RNode[] getParameterValues() {
