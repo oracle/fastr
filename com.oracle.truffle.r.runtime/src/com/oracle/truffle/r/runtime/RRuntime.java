@@ -52,8 +52,6 @@ public class RRuntime {
         "'Share and Enjoy.'";
     //@formatter:on
 
-    public static final int TRUE = 1;
-    public static final int FALSE = 0;
     public static final String STRING_NA = new String("NA");
     public static final String STRING_NaN = new String("NaN");
     public static final String STRING_TRUE = new String("TRUE");
@@ -349,16 +347,16 @@ public class RRuntime {
 
     public static byte string2logicalNoCheck(String s) {
         if (s.equals("TRUE") || s.equals("T")) {
-            return TRUE;
+            return LOGICAL_TRUE;
         }
         if (s.equals("FALSE") || s.equals("F")) {
-            return FALSE;
+            return LOGICAL_FALSE;
         }
         if (s.equals("True") || s.equals("true")) {
-            return TRUE;
+            return LOGICAL_TRUE;
         }
         if (s.equals("False") || s.equals("false")) {
-            return FALSE;
+            return LOGICAL_FALSE;
         }
         RContext.getInstance().getAssumptions().naIntroduced.invalidate();
         return LOGICAL_NA;

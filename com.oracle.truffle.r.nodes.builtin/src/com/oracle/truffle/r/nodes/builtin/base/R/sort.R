@@ -43,6 +43,7 @@ sort.int <-
     function(x, method = c("shell", "quick"), partial = NULL, na.last = NA, decreasing = FALSE,
              index.return = FALSE)
 {
+	match.arg(method, c("shell", "quick"))
     if(isfact <- is.factor(x)) {
         # TODO: implement factor
         stop("factors not yet supported")

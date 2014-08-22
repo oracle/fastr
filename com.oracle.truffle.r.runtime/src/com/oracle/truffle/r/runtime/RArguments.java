@@ -156,8 +156,8 @@ public final class RArguments {
         return create(functionObj, functionObj.getEnclosingFrame(), evaluatedArgs);
     }
 
-    public static Object[] createS3Args(RFunction functionObj, Object[] evaluatedArgs) {
-        return createS3Args(null, functionObj, functionObj.getEnclosingFrame(), evaluatedArgs, EMPTY_STRING_ARRAY);
+    public static Object[] createS3Args(RFunction functionObj, Object[] evaluatedArgs, String[] names) {
+        return createS3Args(null, functionObj, functionObj.getEnclosingFrame(), evaluatedArgs, names);
     }
 
     public static Object[] create(RFunction functionObj, Object[] evaluatedArgs, String[] names) {
@@ -289,8 +289,8 @@ public final class RArguments {
         return (MaterializedFrame) getArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
     }
 
-    public static Object getName(Frame frame, int nameIndex) {
-        return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + getNArgs(frame) + nameIndex];
+    public static String getName(Frame frame, int nameIndex) {
+        return (String) getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + getNArgs(frame) + nameIndex];
     }
 
     public static int getNamesLength(Frame frame) {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -39,10 +40,11 @@ public final class CallArgumentsNode extends ArgumentsNode {
     private static final String[] NO_NAMES = new String[0];
 
     /**
-     * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this flag
-     * is set to {@code true}.
+     * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
+     * field is set to the index of the symbol. Otherwise it is {@link #NO_VARARG} (
+     * {@value #NO_VARARG}).
      */
-    private final boolean containsVarArgsSymbol;
+    private final int varArgsSymbolIndex;
 
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
@@ -61,9 +63,9 @@ public final class CallArgumentsNode extends ArgumentsNode {
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, String[] names, boolean containsVarArgsSymbol, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, String[] names, int varArgsSymbolIndex, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, names);
-        this.containsVarArgsSymbol = containsVarArgsSymbol;
+        this.varArgsSymbolIndex = varArgsSymbolIndex;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
     }
@@ -87,16 +89,18 @@ public final class CallArgumentsNode extends ArgumentsNode {
     public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
-        boolean containsVarArgsSymbol = false;
+        int varArgsSymbolIndex = NO_VARARG;
         for (int i = 0; i < wrappedArgs.length; ++i) {
             RNode arg = args[i];
             if (arg == null) {
                 wrappedArgs[i] = null;
             } else {
-                if (!containsVarArgsSymbol && arg instanceof ReadVariableNode) {
+                if (varArgsSymbolIndex == NO_VARARG && arg instanceof ReadVariableNode) {
                     // Check for presence of "..." in the arguments
                     ReadVariableNode rvn = (ReadVariableNode) arg;
-                    containsVarArgsSymbol = rvn.getSymbol().isVarArg();
+                    if (rvn.getSymbol().isVarArg()) {
+                        varArgsSymbolIndex = i;
+                    }
                 }
                 wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true);
             }
@@ -110,7 +114,7 @@ public final class CallArgumentsNode extends ArgumentsNode {
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, containsVarArgsSymbol, modeChange, modeChangeForAll);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndex, modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -129,11 +133,44 @@ public final class CallArgumentsNode extends ArgumentsNode {
         throw new AssertionError();
     }
 
+    public ArgsValuesAndNames executeFlatten(VirtualFrame frame) {
+        if (!containsVarArgsSymbol()) {
+            Object[] values = new Object[arguments.length];
+            for (int i = 0; i < values.length; i++) {
+                values[i] = arguments[i] == null ? null : arguments[i].execute(frame);
+            }
+            return new ArgsValuesAndNames(values, this.getNames());
+        } else {
+            ArrayList<Object> values = new ArrayList<>(arguments.length);
+            ArrayList<String> newNames = new ArrayList<>(arguments.length);
+
+            for (int i = 0; i < arguments.length; i++) {
+                Object argEvaluated = arguments[i].execute(frame);
+                if (varArgsSymbolIndex == i) {
+
+                }
+                if (argEvaluated instanceof ArgsValuesAndNames) {
+                    // variadic argument
+                    ArgsValuesAndNames varArgInfo = (ArgsValuesAndNames) argEvaluated;
+                    for (int j = 0; j < varArgInfo.length(); j++) {
+                        values.add(varArgInfo.getValues()[j]);
+                        newNames.add(varArgInfo.getNames()[j]);
+                    }
+                } else {
+                    values.add(argEvaluated);
+                    newNames.add(this.getNames()[i]);
+                }
+            }
+
+            return new ArgsValuesAndNames(values.toArray(), newNames.toArray(new String[newNames.size()]));
+        }
+    }
+
     /**
      * @return {@link #containsVarArgsSymbol}
      */
     public boolean containsVarArgsSymbol() {
-        return containsVarArgsSymbol;
+        return varArgsSymbolIndex != NO_VARARG;
     }
 
     /**

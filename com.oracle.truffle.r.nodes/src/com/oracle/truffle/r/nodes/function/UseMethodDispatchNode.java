@@ -22,12 +22,9 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class UseMethodDispatchNode extends S3DispatchNode {
 
-    private final String[] suppliedArgsNames;
-
-    UseMethodDispatchNode(final String generic, final RStringVector type, String[] suppliedArgsNames) {
+    UseMethodDispatchNode(final String generic, final RStringVector type) {
         this.genericName = generic;
         this.type = type;
-        this.suppliedArgsNames = suppliedArgsNames;
     }
 
     @Override
@@ -36,7 +33,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         if (targetFunction == null) {
             findTargetFunction(frame, callerFrame);
         }
-        return executeHelper(frame, callerFrame, extractArgs(frame));
+        return executeHelper(frame, callerFrame);
     }
 
     @Override
@@ -44,7 +41,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         this.type = aType;
         Frame callerFrame = Utils.getCallerFrame(FrameAccess.MATERIALIZE);
         findTargetFunction(frame, callerFrame);
-        return executeHelper(frame, callerFrame, extractArgs(frame));
+        return executeHelper(frame, callerFrame);
     }
 
     @Override
@@ -62,55 +59,115 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return executeHelper(frame, frame, args);
     }
 
-    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args) {
-        // Extract arguments from current frame...
-        int argCount = args.length;
-        int argListSize = argCount;
-        ArrayList<Object> argList = new ArrayList<>(argListSize);
-        int fi = 0;
-        for (; fi < argCount; ++fi) {
-            Object arg = args[fi];
-            if (arg instanceof Object[]) {
-                Object[] varArgs = (Object[]) arg;
-                argListSize += varArgs.length;
-                argList.ensureCapacity(argListSize);
+    private static String[] resizeNamesArray(String[] oldNames, int newSize) {
+        String[] newNames = new String[newSize];
+        if (oldNames != null) {
+            for (int i = 0; i < newSize; i++) {
+                newNames[i] = oldNames[i];
+            }
+        }
+        return newNames;
+    }
 
-                for (Object varArg : varArgs) {
-                    addArg(frame, argList, varArg);
+    private static Object[] resizeValuesArray(Object[] oldValues, int newSize) {
+        Object[] newValues = new Object[newSize];
+        if (oldValues != null) {
+            for (int i = 0; i < newSize; i++) {
+                newValues[i] = oldValues[i];
+            }
+        }
+        return newValues;
+    }
+
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
+        // Extract arguments from current frame...
+        int argCount = RArguments.getArgumentsLength(frame);
+        assert RArguments.getNamesLength(frame) == 0 || RArguments.getNamesLength(frame) == argCount;
+        boolean hasNames = RArguments.getNamesLength(frame) > 0;
+        int argListSize = argCount;
+        Object[] argValues = new Object[argListSize];
+        String[] argNames = hasNames ? new String[argListSize] : null;
+        int fi = 0;
+        int index = 0;
+        for (; fi < argCount; ++fi) {
+            // conditional vs. allocation in extractArgs() - is it worth it?
+            Object arg = RArguments.getArgument(frame, fi);
+            if (arg instanceof ArgsValuesAndNames) {
+                argValues = resizeValuesArray(argValues, argListSize);
+                argNames = resizeNamesArray(argNames, argListSize);
+                ArgsValuesAndNames varArgsContainer = (ArgsValuesAndNames) arg;
+                Object[] varArgsValues = varArgsContainer.getValues();
+                String[] varArgsNames = varArgsContainer.getNames();
+                boolean allNamesNull = true;
+                for (int i = 0; i < varArgsContainer.length(); i++) {
+                    addArg(frame, argValues, varArgsValues[i], index);
+                    String name = varArgsNames[i];
+                    allNamesNull |= name != null;
+                    argNames[index] = name;
+                    index++;
+                }
+                if (allNamesNull && !hasNames) {
+                    argNames = null;
                 }
             } else {
-                addArg(frame, argList, arg);
+                addArg(frame, argValues, arg, index);
+                if (hasNames) {
+                    argNames[index] = RArguments.getName(frame, fi);
+                }
+                index++;
             }
         }
 
         // ...and use them as 'supplied' arguments...
-        String[] calledSuppliedNames = suppliedArgsNames;
         // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
-        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argList.toArray(), calledSuppliedNames);
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
-        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs());
+        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
-    private static Object[] extractArgs(VirtualFrame frame) {
-        Object[] args = new Object[RArguments.getArgumentsLength(frame)];
-        for (int i = 0; i < args.length; ++i) {
-            args[i] = RArguments.getArgument(frame, i);
+    private Object executeHelper(VirtualFrame frame, Frame callerFrame, Object[] args) {
+        // Extract arguments from current frame...
+        int argCount = args.length;
+        int argListSize = argCount;
+        Object[] argValues = new Object[argListSize];
+        int fi = 0;
+        int index = 0;
+        for (; fi < argCount; ++fi) {
+            // conditional vs. allocation in extractArgs() - is it worth it?
+            Object arg = args[fi];
+            if (arg instanceof Object[]) {
+                Object[] varArgs = (Object[]) arg;
+                argListSize += varArgs.length;
+                argValues = resizeValuesArray(argValues, argListSize);
+
+                for (Object varArg : varArgs) {
+                    addArg(frame, argValues, varArg, index++);
+                }
+            } else {
+                addArg(frame, argValues, arg, index++);
+            }
         }
-        return args;
+
+        // ...and use them as 'supplied' arguments...
+        // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
+        EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
+        // ...to match them against the chosen function's formal arguments
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
-    private static void addArg(VirtualFrame frame, List<Object> values, Object value) {
+    private static void addArg(VirtualFrame frame, Object[] values, Object value, int index) {
         if (RMissingHelper.isMissing(frame, value)) {
-            values.add(null);
+            values[index] = null;
         } else {
-            values.add(value);
+            values[index] = value;
         }
     }
 
     @SlowPath
-    private Object executeHelper2(Frame callerFrame, Object[] arguments) {
-        Object[] argObject = RArguments.createS3Args(targetFunction, arguments);
+    private Object executeHelper2(Frame callerFrame, Object[] arguments, String[] argNames) {
+        Object[] argObject = RArguments.createS3Args(targetFunction, arguments, argNames);
         VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         genCallEnv = callerFrame;
         defineVarsNew(newFrame);

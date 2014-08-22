@@ -26,7 +26,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.function.ArgumentMatcher.VarArgsAsObjectArrayNode;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -114,18 +113,6 @@ public final class MatchedArgumentsNode extends ArgumentsNode {
         Object[] result = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             RNode arg = arguments[i];
-            if (arg instanceof VarArgsAsObjectArrayNode) {
-                // Unfold varargs into an Object[]
-                VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
-                Object[] newVarArgs = new Object[varArgs.elementNodes.length];
-                for (int vi = 0; vi < newVarArgs.length; vi++) {
-                    RNode varArg = varArgs.elementNodes[vi];
-                    newVarArgs[vi] = varArg.execute(frame);
-                }
-                result[i] = new VarArgsContainer(newVarArgs, varArgs.getNames());
-                continue;
-            }
-
             result[i] = arg.execute(frame);
         }
         return result;

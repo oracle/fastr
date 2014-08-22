@@ -42,6 +42,6 @@ public abstract class IsMatrix extends RBuiltinNode {
     @Specialization
     public byte isType(@SuppressWarnings("unused") RNull arg) {
         controlVisibility();
-        return RRuntime.FALSE;
+        return RRuntime.LOGICAL_FALSE;
     }
 }

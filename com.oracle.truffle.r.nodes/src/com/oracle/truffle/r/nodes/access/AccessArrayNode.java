@@ -281,7 +281,7 @@ public abstract class AccessArrayNode extends RNode {
             RIntVector p = (RIntVector) positions[i];
             int pLength = p.getLength();
             if (pLength == 1 && p.getDataAt(0) != 0) {
-                if (!isSubset || dropDim == RRuntime.TRUE) {
+                if (!isSubset || dropDim == RRuntime.LOGICAL_TRUE) {
                     // always drop dimensions with subscript
                     continue;
                 } else {
@@ -306,7 +306,7 @@ public abstract class AccessArrayNode extends RNode {
                 RIntVector p = (RIntVector) positions[i];
                 int pLength = p.getLength();
                 if (pLength == 1 && p.getDataAt(0) != 0) {
-                    if (!isSubset || dropDim == RRuntime.TRUE) {
+                    if (!isSubset || dropDim == RRuntime.LOGICAL_TRUE) {
                         // always drop dimensions with subscript
                         continue;
                     } else {
@@ -334,7 +334,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RList access(VirtualFrame frame, RList vector, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
@@ -590,7 +590,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RIntVector access(VirtualFrame frame, RAbstractIntVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
@@ -694,7 +694,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RDoubleVector access(VirtualFrame frame, RAbstractDoubleVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
@@ -798,7 +798,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RLogicalVector access(VirtualFrame frame, RLogicalVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
@@ -902,7 +902,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RStringVector access(VirtualFrame frame, RStringVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
@@ -1006,7 +1006,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RComplexVector access(VirtualFrame frame, RComplexVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
@@ -1114,7 +1114,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization
     RRawVector access(VirtualFrame frame, RRawVector vector, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         // compute length of dimensions array and of the resulting vector
-        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.TRUE : dropDim.getDataAt(0));
+        DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
         int[] dimensions = res.dimensions;
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();

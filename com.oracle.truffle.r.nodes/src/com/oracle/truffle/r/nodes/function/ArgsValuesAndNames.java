@@ -25,11 +25,11 @@ package com.oracle.truffle.r.nodes.function;
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
-public class VarArgsContainer {
+public class ArgsValuesAndNames {
     private Object[] values;
     private String[] names;
 
-    public VarArgsContainer(Object[] values, String[] names) {
+    public ArgsValuesAndNames(Object[] values, String[] names) {
         this.values = values;
         this.names = names;
     }
@@ -40,6 +40,11 @@ public class VarArgsContainer {
 
     public String[] getNames() {
         return names;
+    }
+
+    public int length() {
+        assert values.length == names.length;
+        return values.length;
     }
 
 }

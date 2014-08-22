@@ -183,7 +183,7 @@ public abstract class REnvironment implements RAttributable {
     /**
      * Check whether the given frame is indeed the frame stored in the global environment.
      */
-    public static boolean isGlobalEnvFrame(MaterializedFrame frame) {
+    public static boolean isGlobalEnvFrame(Frame frame) {
         return isFrameForEnv(frame, globalEnv);
     }
 

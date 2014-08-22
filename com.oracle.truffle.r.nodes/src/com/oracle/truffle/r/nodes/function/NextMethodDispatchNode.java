@@ -65,7 +65,8 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         final Object[] mergedArgs = new Object[RArguments.getArgumentsLength(frame) + args.length];
         RArguments.copyArgumentsInto(frame, mergedArgs);
         System.arraycopy(args, 0, mergedArgs, RArguments.getArgumentsLength(frame), args.length);
-        Object[] argObject = RArguments.createS3Args(targetFunction, mergedArgs);
+        // TODO: implement names passing
+        Object[] argObject = RArguments.createS3Args(targetFunction, mergedArgs, RArguments.EMPTY_STRING_ARRAY);
         final VirtualFrame newFrame = Truffle.getRuntime().createVirtualFrame(argObject, new FrameDescriptor());
         defineVarsNew(newFrame);
         if (storedFunctionName != null) {

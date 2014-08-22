@@ -59,12 +59,17 @@ public class AccessArgumentNode extends RNode {
         Object obj = RArguments.getArgument(frame, index);
         if (obj instanceof RPromise) {
             return handlePromise(frame, obj);
-        } else if (obj instanceof VarArgsContainer) {
-            Object[] varArgs = ((VarArgsContainer) obj).getValues();
-            for (int i = 0; i < varArgs.length; i++) {
-                varArgs[i] = handlePromise(frame, varArgs[i]);
+        } else if (obj instanceof ArgsValuesAndNames) {
+            ArgsValuesAndNames varArgsContainer = (ArgsValuesAndNames) obj;
+            Object[] varArgs = varArgsContainer.getValues();
+            if (varArgs.length == 1) {
+                return varArgs[0] instanceof RPromise ? handlePromise(frame, varArgs[0]) : varArgs[0];
+            } else {
+                for (int i = 0; i < varArgsContainer.length(); i++) {
+                    varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, varArgs[i]) : varArgs[i];
+                }
+                return varArgs;
             }
-            return varArgs;
         } else {
             return obj;
         }

@@ -184,6 +184,8 @@ public class TestSimpleFunctions extends TestBase {
 
         assertEval("{ f <- function(...) cat(..., \"\\n\") ; f(\"Hello\", \"world\") }");
         assertEval("{ f <- function(a=1,...) a ; f() }");
+
+        assertEval("{ f<-function(x, y) { print(missing(y)); } ; f(42) }");
     }
 
     @Test
