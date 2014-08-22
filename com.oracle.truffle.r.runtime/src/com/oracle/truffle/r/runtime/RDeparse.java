@@ -282,7 +282,9 @@ public class RDeparse {
             case CLOSXP: {
                 RPairList f = (RPairList) obj;
                 state.append("function (");
-                args2buff(state, (RPairList) f.car(), false, true);
+                if (f.car() instanceof RPairList) {
+                    args2buff(state, (RPairList) f.car(), false, true);
+                }
                 state.append(") ");
                 state.writeline();
                 deparse2buff(state, f.cdr());
