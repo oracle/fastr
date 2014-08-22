@@ -52,8 +52,6 @@ public class RRuntime {
         "'Share and Enjoy.'";
     //@formatter:on
 
-    public static final int TRUE = 1;
-    public static final int FALSE = 0;
     public static final String STRING_NA = new String("NA");
     public static final String STRING_NaN = new String("NaN");
     public static final String STRING_TRUE = new String("TRUE");
@@ -354,12 +352,12 @@ public class RRuntime {
             case "T":
             case "True":
             case "true":
-                return TRUE;
+                return LOGICAL_TRUE;
             case "FALSE":
             case "F":
             case "False":
             case "false":
-                return FALSE;
+                return LOGICAL_FALSE;
             default:
                 RContext.getInstance().getAssumptions().naIntroduced.invalidate();
                 return LOGICAL_NA;

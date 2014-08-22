@@ -40,7 +40,7 @@ public abstract class ColSums extends RBuiltinNode {
     @Override
     public RNode[] getParameterValues() {
         // X, m, n, na.rm = FALSE
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.FALSE)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
     @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
