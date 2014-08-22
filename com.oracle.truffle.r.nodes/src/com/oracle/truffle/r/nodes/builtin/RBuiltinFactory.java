@@ -32,7 +32,7 @@ public class RBuiltinFactory {
     private String[] builtinNames;
     private RBuiltin builtin;
     private Object[] constantArguments;
-    private Object pkg;
+    private final Object pkg;
     private REnvironment env;
 
     public RBuiltinFactory(String[] names, RBuiltin builtin, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, Object pkg) {

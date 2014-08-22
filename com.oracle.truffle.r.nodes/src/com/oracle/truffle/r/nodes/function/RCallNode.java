@@ -132,7 +132,7 @@ public abstract class RCallNode extends RNode {
 
     public abstract static class RootCallNode extends RCallNode {
 
-        @Child private RNode functionNode;
+        @Child RNode functionNode;
 
         public RootCallNode(RNode function) {
             this.functionNode = function;

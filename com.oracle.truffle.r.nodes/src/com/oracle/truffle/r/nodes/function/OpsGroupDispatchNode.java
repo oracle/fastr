@@ -23,7 +23,7 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
     private RStringVector typeR;
     private boolean writeGroupR;
 
-    public OpsGroupDispatchNode(final String genericName, final String grpName, CallArgumentsNode callArgNode) {
+    public OpsGroupDispatchNode(String genericName, String grpName, CallArgumentsNode callArgNode) {
         super(genericName, grpName, callArgNode);
     }
 

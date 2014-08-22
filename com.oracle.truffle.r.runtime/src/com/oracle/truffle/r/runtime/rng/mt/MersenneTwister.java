@@ -86,7 +86,7 @@ public final class MersenneTwister extends RNGInitAdapter implements RRNG.Genera
      * pointer arithmetic to set {@code mt} to {@code dummy + 1}. We can't play pointer arithmetic
      * games, do we use a variable {@code dummy0} instead.
      */
-    private int[] mt = new int[N];
+    private final int[] mt = new int[N];
 
     private int dummy0;
 

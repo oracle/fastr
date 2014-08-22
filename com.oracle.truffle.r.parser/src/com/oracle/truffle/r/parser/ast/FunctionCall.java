@@ -20,7 +20,7 @@ public class FunctionCall extends Call {
     private Object lhs;
     private boolean isAssignment;
     private boolean isSuper;
-    private boolean isReplacement;
+    private final boolean isReplacement;
 
     public FunctionCall(SourceSection source, Object lhs, List<ArgNode> arguments, boolean isReplacement) {
         super(source, arguments);

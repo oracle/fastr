@@ -39,7 +39,7 @@ public abstract class BinaryArithmeticNode extends BinaryNode {
 
     @Child private BinaryArithmetic arithmetic;
     @Child private UnaryArithmeticNode unaryNode;
-    private UnaryArithmeticFactory unaryFactory;
+    private final UnaryArithmeticFactory unaryFactory;
 
     private final NACheck leftNACheck;
     private final NACheck rightNACheck;

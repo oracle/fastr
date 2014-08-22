@@ -47,8 +47,8 @@ public abstract class WhiteList {
         }
     }
 
-    private Map<String, Results> map = new HashMap<>();
-    private String whiteListResource;
+    private final Map<String, Results> map = new HashMap<>();
+    private final String whiteListResource;
 
     protected WhiteList(String whiteListResource) {
         this.whiteListResource = whiteListResource;

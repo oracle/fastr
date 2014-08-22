@@ -33,8 +33,8 @@ public final class RError extends RuntimeException {
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
 
-        private RError.Message msg;
-        private Object[] args;
+        private final RError.Message msg;
+        private final Object[] args;
 
         protected RErrorException(RError.Message msg, Object[] args) {
             super(RError.formatMessage(msg, args));
@@ -43,7 +43,7 @@ public final class RError extends RuntimeException {
         }
     }
 
-    private SourceSection source;
+    private final SourceSection source;
 
     private RError(SourceSection src, String msg) {
         super(msg);
