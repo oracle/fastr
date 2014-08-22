@@ -1,5 +1,5 @@
 ##com.oracle.truffle.r.test.rffi.TestUserRNG.testUserRNG
-#{ dyn.load("com.oracle.truffle.r.test.native/urand/lib/liburand.dylib"); RNGkind("user"); print(RNGkind()); set.seed(4567); runif(10) }
+#{ dyn.load("com.oracle.truffle.r.test.native/urand/lib/liburand.so"); RNGkind("user"); print(RNGkind()); set.seed(4567); runif(10) }
 [1] "user-supplied" "Inversion"
  [1] 0.45336386 0.38848030 0.94576608 0.11726267 0.21542351 0.08672997
  [7] 0.35201276 0.16919220 0.93579263 0.26084486
