@@ -71,6 +71,9 @@ public abstract class WhiteList {
                         if (line.startsWith("#") || line.length() == 0) { // ignore line, comment
                             continue;
                         }
+                        if (line.contains("\\n")) {
+                            line = line.replace("\\n", "\n");
+                        }
                         String[] s = line.split("\\" + SPLIT_CHAR);
                         assert s.length == 3;
                         map.put(s[0], new Results(expandVar(s[1], vars), expandVar(s[2], vars)));
@@ -103,8 +106,8 @@ public abstract class WhiteList {
     public void report() {
         int unusedCount = map.size();
         for (Map.Entry<String, Results> entry : map.entrySet()) {
-            if (!entry.getValue().used) {
-                unusedCount++;
+            if (entry.getValue().used) {
+                unusedCount--;
             }
         }
         if (unusedCount == 0) {
