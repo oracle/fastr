@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.*;
 // the environment doesn't matter, and named argument matching isn't required
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"name", "args", "env"})
 public abstract class DoCall extends RBuiltinNode {
-    @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
     @Specialization(guards = "lengthOne")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {

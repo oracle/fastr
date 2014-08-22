@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN", "..."})
 public abstract class Lapply extends RBuiltinNode {
 
-    @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
     @Override
     public RNode[] getParameterValues() {

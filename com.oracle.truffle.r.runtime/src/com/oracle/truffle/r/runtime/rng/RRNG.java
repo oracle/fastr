@@ -127,7 +127,8 @@ public class RRNG {
      */
     public static class RNGException extends RErrorException {
         private static final long serialVersionUID = 1L;
-        private boolean isError;
+
+        private final boolean isError;
 
         public RNGException(RError.Message msg, boolean isError, Object... args) {
             super(msg, args);

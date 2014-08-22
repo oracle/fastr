@@ -39,9 +39,9 @@ import com.oracle.truffle.r.runtime.env.*;
 // TODO INTERNAL, interpret mode parameter
 public abstract class Exists extends RBuiltinNode {
 
-    @Child protected Get getNode;
-    @CompilationFinal protected String lastName;
-    @CompilationFinal protected boolean lastLookup;
+    @Child private Get getNode;
+    @CompilationFinal private String lastName;
+    @CompilationFinal private boolean lastLookup;
 
     @Override
     public RNode[] getParameterValues() {

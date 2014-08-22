@@ -49,11 +49,11 @@ public abstract class DispatchedCallNode extends RNode {
     public abstract Object executeInternal(VirtualFrame frame, RStringVector type, Object[] args);
 
     private static final class UninitializedDispatchedCallNode extends DispatchedCallNode {
-        protected final int depth;
-        protected final String genericName;
-        protected final String dispatchType;
-        protected final String[] suppliedArgsNames;
-        protected final Object[] args;
+        private final int depth;
+        private final String genericName;
+        private final String dispatchType;
+        private final String[] suppliedArgsNames;
+        private final Object[] args;
 
         private UninitializedDispatchedCallNode(UninitializedDispatchedCallNode copy, int depth) {
             this.genericName = copy.genericName;
@@ -126,8 +126,8 @@ public abstract class DispatchedCallNode extends RNode {
 
     private static final class CachedNode extends DispatchedCallNode {
 
-        @Child protected DispatchedCallNode nextNode;
-        @Child protected DispatchNode currentNode;
+        @Child private DispatchedCallNode nextNode;
+        @Child private DispatchNode currentNode;
         private final RStringVector type;
 
         CachedNode(final DispatchNode currentNode, final DispatchedCallNode nextNode, final RStringVector type) {
@@ -173,8 +173,8 @@ public abstract class DispatchedCallNode extends RNode {
     }
 
     private static final class ResolvedDispatchedCallNode extends DispatchedCallNode {
-        @Child protected RCallNode aCallNode;
-        @Child protected GroupDispatchNode aDispatchNode;
+        @Child private RCallNode aCallNode;
+        @Child private GroupDispatchNode aDispatchNode;
 
         public ResolvedDispatchedCallNode(GroupDispatchNode dNode) {
             this.aDispatchNode = dNode;

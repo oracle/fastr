@@ -49,7 +49,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     @ValueType
     private static class AttrInstance implements RAttribute {
-        private String name;
+        private final String name;
         private Object value;
 
         AttrInstance(String name, Object value) {
@@ -339,7 +339,7 @@ public abstract class RAttributes implements Iterable<RAttributes.RAttribute> {
      */
     private static class RAttributesStatsImpl extends RAttributesImpl {
         private static final int OVERFLOW = 5;
-        private static int[] hist = new int[OVERFLOW + 1];
+        private static final int[] hist = new int[OVERFLOW + 1];
         private static int globalMaxSize;
 
         private int maxSize;

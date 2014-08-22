@@ -632,7 +632,7 @@ public class RSerialize {
             }
         }
 
-        private Xdr xdr;
+        private final Xdr xdr;
 
         XdrFormat(InputStream is) throws IOException {
             super(is);

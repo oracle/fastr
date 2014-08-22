@@ -37,7 +37,7 @@ public abstract class Prod extends RBuiltinNode {
 
     public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
 
-    @Child protected BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
+    @Child private BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
 
     @Specialization
     protected double prod(RAbstractDoubleVector x) {

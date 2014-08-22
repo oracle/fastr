@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // TODO Rewrite to accept any vector type but ideally not by simply repeating the code
 public abstract class Apply extends RBuiltinNode {
 
-    @Child protected IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
+    @Child private IndirectCallNode funCall = Truffle.getRuntime().createIndirectCallNode();
 
     @Override
     public RNode[] getParameterValues() {
@@ -122,5 +122,4 @@ public abstract class Apply extends RBuiltinNode {
         Object[] args = RArguments.create(fun, new Object[]{input});
         return funCall.call(frame, fun.getTarget(), args);
     }
-
 }

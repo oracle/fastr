@@ -22,13 +22,13 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class S3DispatchNode extends DispatchNode {
 
-    @Child protected ReadVariableNode lookup;
-    @CompilationFinal protected String lastFun;
-    @Child protected WriteVariableNode wvnCallEnv;
-    @Child protected WriteVariableNode wvnGeneric;
-    @Child protected WriteVariableNode wvnClass;
+    @Child private ReadVariableNode lookup;
+    @CompilationFinal private String lastFun;
+    @Child private WriteVariableNode wvnCallEnv;
+    @Child private WriteVariableNode wvnGeneric;
+    @Child private WriteVariableNode wvnClass;
     @Child protected WriteVariableNode wvnMethod;
-    @Child protected WriteVariableNode wvnDefEnv;
+    @Child private WriteVariableNode wvnDefEnv;
     @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;

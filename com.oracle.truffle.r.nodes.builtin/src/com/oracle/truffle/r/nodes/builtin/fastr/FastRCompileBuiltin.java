@@ -36,16 +36,20 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class FastRCompileBuiltin extends RBuiltinNode {
 
     private static final class Compiler {
-        private Class<?> optimizedCallTarget;
-        private Method compileMethod;
+        private final Class<?> optimizedCallTarget;
+        private final Method compileMethod;
 
         private Compiler() {
+            Class<?> clazz = null;
+            Method method = null;
             try {
-                optimizedCallTarget = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
-                compileMethod = optimizedCallTarget.getDeclaredMethod("compile");
+                clazz = Class.forName("com.oracle.graal.truffle.OptimizedCallTarget", false, Truffle.getRuntime().getClass().getClassLoader());
+                method = clazz.getDeclaredMethod("compile");
             } catch (ClassNotFoundException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
                 Utils.fail("DebugCompileBuiltin failed to find compile method");
             }
+            optimizedCallTarget = clazz;
+            compileMethod = method;
         }
 
         static Compiler getCompiler() {

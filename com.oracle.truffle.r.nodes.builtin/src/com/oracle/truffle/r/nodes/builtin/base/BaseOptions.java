@@ -77,12 +77,11 @@ public class BaseOptions implements ROptions.Handler {
         Nwarnings("nwarnings"),
         Width("width");
 
-        private String rName;
+        private final String rName;
 
         private Name(String name) {
             this.rName = name;
         }
-
     }
 
     public BaseOptions() {

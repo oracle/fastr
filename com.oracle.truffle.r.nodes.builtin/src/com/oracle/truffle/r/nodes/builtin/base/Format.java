@@ -289,5 +289,4 @@ public abstract class Format extends RBuiltinNode {
         CENTRE,
         NONE;
     }
-
 }

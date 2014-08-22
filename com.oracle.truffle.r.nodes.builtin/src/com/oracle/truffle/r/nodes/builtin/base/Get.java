@@ -44,11 +44,11 @@ public abstract class Get extends RBuiltinNode {
     // 1. handle mode parameter (we should perhaps guard against mode being set in call right now)
     // 2. revert to .Internal using get.R
 
-    @Child protected ReadVariableNode lookUpInherit;
-    @Child protected ReadVariableNode lookUpNoInherit;
+    @Child private ReadVariableNode lookUpInherit;
+    @Child private ReadVariableNode lookUpNoInherit;
 
-    @CompilationFinal protected String lastX;
-    @CompilationFinal protected String lastMode;
+    @CompilationFinal private String lastX;
+    @CompilationFinal private String lastMode;
 
     @Override
     public RNode[] getParameterValues() {
@@ -70,6 +70,7 @@ public abstract class Get extends RBuiltinNode {
             lookup = lookUpNoInherit = setLookUp(lookUpNoInherit, x, mode, doesInherit);
         }
         try {
+            // FIXME: this will not compile, since lookup is not compilation final
             return lookup.execute(frame);
         } catch (RError e) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
@@ -115,5 +116,4 @@ public abstract class Get extends RBuiltinNode {
     protected Object get(RAbstractStringVector x, int pos, REnvironment envir, String mode, byte inherits) {
         return get(x, envir, RMissing.instance, mode, inherits);
     }
-
 }

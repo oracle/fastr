@@ -114,7 +114,7 @@ public class DLL {
     public static class SymbolInfo {
         private final DLLInfo libInfo;
         private final String symbol;
-        private long address;
+        private final long address;
 
         SymbolInfo(DLLInfo libInfo, String symbol, long address) {
             this.libInfo = libInfo;
@@ -133,7 +133,6 @@ public class DLL {
         public String getSymbol() {
             return symbol;
         }
-
     }
 
     /**
