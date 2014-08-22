@@ -21,11 +21,11 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class NextMethodDispatchNode extends S3DispatchNode {
 
-    @Child protected ReadVariableNode rvnDefEnv;
-    @Child protected ReadVariableNode rvnCallEnv;
-    @Child protected ReadVariableNode rvnGroup;
-    @Child protected ReadVariableNode rvnMethod;
-    @Child protected WriteVariableNode wvnGroup;
+    @Child private ReadVariableNode rvnDefEnv;
+    @Child private ReadVariableNode rvnCallEnv;
+    @Child private ReadVariableNode rvnGroup;
+    @Child private ReadVariableNode rvnMethod;
+    @Child private WriteVariableNode wvnGroup;
     private String group;
     private String lastGroup;
     private String storedFunctionName;

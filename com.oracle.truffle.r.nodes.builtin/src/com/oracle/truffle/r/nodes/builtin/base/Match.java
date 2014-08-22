@@ -64,7 +64,7 @@ public abstract class Match extends RBuiltinNode {
         return (int) castInt.executeCast(frame, operand);
     }
 
-    @Child protected BooleanOperation eq = BinaryCompare.EQUAL.create();
+    @Child private BooleanOperation eq = BinaryCompare.EQUAL.create();
 
     // FIXME deal incomparables parameter
 

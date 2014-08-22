@@ -97,7 +97,7 @@ public abstract class UseMethod extends RBuiltinNode {
 
     private abstract static class UseMethodCachedNode extends UseMethodNode {
 
-        @Child protected UseMethodNode nextNode;
+        @Child private UseMethodNode nextNode;
         @Child protected DispatchedCallNode currentNode;
 
         private final String generic;

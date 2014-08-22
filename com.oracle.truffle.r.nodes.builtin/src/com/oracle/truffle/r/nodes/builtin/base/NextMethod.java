@@ -27,10 +27,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // TODO INTERNAL
 public abstract class NextMethod extends RBuiltinNode {
 
-    @Child protected DispatchedCallNode dispatchedCallNode;
-    @Child protected ReadVariableNode rvnClass;
-    @Child protected ReadVariableNode rvnGeneric;
-    protected String lastGenericName;
+    @Child private DispatchedCallNode dispatchedCallNode;
+    @Child private ReadVariableNode rvnClass;
+    @Child private ReadVariableNode rvnGeneric;
+    private String lastGenericName;
 
     @Override
     public RNode[] getParameterValues() {

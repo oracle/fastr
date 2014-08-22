@@ -38,14 +38,14 @@ import com.oracle.truffle.r.runtime.data.*;
 // TODO revert to R
 public abstract class MatchFun extends RBuiltinNode {
 
-    @CompilationFinal protected String lastFun;
+    @CompilationFinal private String lastFun;
 
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
     }
 
-    // FIXME honour the descend parameter
+    // FIXME honor the descend parameter
     // FIXME implement actual semantics (lookup in caller environment)
 
     @Specialization
@@ -53,7 +53,7 @@ public abstract class MatchFun extends RBuiltinNode {
         return fun;
     }
 
-    @Child protected ReadVariableNode lookup;
+    @Child private ReadVariableNode lookup;
 
     @Specialization
     protected Object matchFun(VirtualFrame frame, String fun, @SuppressWarnings("unused") byte descend) {
@@ -71,5 +71,4 @@ public abstract class MatchFun extends RBuiltinNode {
             return r;
         }
     }
-
 }

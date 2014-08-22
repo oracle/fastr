@@ -132,7 +132,7 @@ public abstract class RCallNode extends RNode {
 
     public abstract static class RootCallNode extends RCallNode {
 
-        @Child protected RNode functionNode;
+        @Child private RNode functionNode;
 
         public RootCallNode(RNode function) {
             this.functionNode = function;
@@ -170,8 +170,8 @@ public abstract class RCallNode extends RNode {
 
     public static final class CachedCallNode extends RootCallNode {
 
-        @Child protected RootCallNode nextNode;
-        @Child protected RCallNode currentNode;
+        @Child private RootCallNode nextNode;
+        @Child private RCallNode currentNode;
         private final RFunction function;
         private final CallTarget target;
 
@@ -214,8 +214,8 @@ public abstract class RCallNode extends RNode {
 
     private static final class UninitializedCallNode extends RootCallNode {
 
-        @Child protected CallArgumentsNode args;
-        protected final int depth;
+        @Child private CallArgumentsNode args;
+        private final int depth;
 
         protected UninitializedCallNode(RNode function, CallArgumentsNode args) {
             this(function, args, 0);
@@ -300,10 +300,10 @@ public abstract class RCallNode extends RNode {
      */
     private static class DispatchedCallNode extends RCallNode {
 
-        @Child protected MatchedArgumentsNode matchedArgs;
-        @Child protected DirectCallNode call;
+        @Child private MatchedArgumentsNode matchedArgs;
+        @Child private DirectCallNode call;
 
-        protected final RFunction function;
+        private final RFunction function;
 
         DispatchedCallNode(RFunction function, MatchedArgumentsNode matchedArgs) {
             this.matchedArgs = matchedArgs;
@@ -324,11 +324,11 @@ public abstract class RCallNode extends RNode {
      */
     private static class DispatchedVarArgsCallNode extends RCallNode {
 
-        @Child protected CallArgumentsNode suppliedArgs;    // Is not executed!
-        @Child protected DirectCallNode call;
-        @Child protected MatchedArgumentsNode matchedArgs;
+        @Child private CallArgumentsNode suppliedArgs;    // Is not executed!
+        @Child private DirectCallNode call;
+        @Child private MatchedArgumentsNode matchedArgs;
 
-        protected final RFunction function;
+        private final RFunction function;
 
         // TODO VARARGS! Enable on proper implementation
 // /**
@@ -372,9 +372,9 @@ public abstract class RCallNode extends RNode {
      */
     private static final class GenericCallNode extends RootCallNode {
 
-        @Child protected CallArgumentsNode suppliedArgs;
-        @Child protected IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-        @Child protected MatchedArgumentsNode matchedArgs;
+        @Child private CallArgumentsNode suppliedArgs;
+        @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
+        @Child private MatchedArgumentsNode matchedArgs;
 
         /**
          * Stores the function and arguments used for the last call and checks whether

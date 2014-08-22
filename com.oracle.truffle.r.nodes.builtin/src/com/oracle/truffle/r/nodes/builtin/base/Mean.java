@@ -44,8 +44,8 @@ public abstract class Mean extends RBuiltinNode {
 
     public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
 
-    @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
-    @Child protected BinaryArithmetic div = BinaryArithmetic.DIV.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child private BinaryArithmetic div = BinaryArithmetic.DIV.create();
 
     @Specialization
     protected double mean(RAbstractDoubleVector x) {
@@ -88,5 +88,4 @@ public abstract class Mean extends RBuiltinNode {
         }
         return div.op(sum.getRealPart(), sum.getImaginaryPart(), x.getLength(), 0);
     }
-
 }
