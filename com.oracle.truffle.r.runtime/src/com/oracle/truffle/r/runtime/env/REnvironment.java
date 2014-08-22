@@ -29,10 +29,10 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RError.*;
+import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RPackages.RPackage;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.envframe.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * Denotes an R {@code environment}.
