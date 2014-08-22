@@ -32,7 +32,7 @@ public abstract class UseMethod extends RBuiltinNode {
      * TODO: If more than two parameters are passed to UseMethod the extra parameters are ignored
      * and a warning is generated.
      */
-    @Child UseMethodNode useMethodNode;
+    @Child private UseMethodNode useMethodNode;
 
     public UseMethod() {
         this.useMethodNode = new UninitializedUseMethodNode(0, getSuppliedArgsNames());

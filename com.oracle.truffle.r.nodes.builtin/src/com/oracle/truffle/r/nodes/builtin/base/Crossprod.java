@@ -39,8 +39,8 @@ public abstract class Crossprod extends RBuiltinNode {
 
     // TODO: this is supposed to be slightly faster than t(x) %*% y but for now it should suffice
 
-    @Child MatMult matMult;
-    @Child Transpose transpose;
+    @Child private MatMult matMult;
+    @Child private Transpose transpose;
     protected final NACheck na = NACheck.create();
 
     private Object matMult(VirtualFrame frame, Object op1, Object op2) {

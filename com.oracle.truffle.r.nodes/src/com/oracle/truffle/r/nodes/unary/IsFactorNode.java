@@ -19,8 +19,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class IsFactorNode extends UnaryNode {
-    @Child TypeofNode typeofNode;
-    @Child InheritsNode inheritsNode;
+    @Child private TypeofNode typeofNode;
+    @Child private InheritsNode inheritsNode;
 
     public abstract byte execute(VirtualFrame frame, Object x);
 

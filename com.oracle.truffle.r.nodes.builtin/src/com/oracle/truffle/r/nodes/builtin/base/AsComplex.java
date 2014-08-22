@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class AsComplex extends RBuiltinNode {
 
-    @Child CastComplexNode castComplexNode;
+    @Child private CastComplexNode castComplexNode;
 
     public abstract RComplexVector executeRComplexVector(VirtualFrame frame, Object o) throws UnexpectedResultException;
 

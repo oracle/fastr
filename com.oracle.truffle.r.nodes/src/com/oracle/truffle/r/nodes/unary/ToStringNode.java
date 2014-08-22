@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ToStringNode extends UnaryNode {
 
-    @Child ToStringNode recursiveToString;
+    @Child private ToStringNode recursiveToString;
 
     @CompilationFinal private boolean quotes = true;
 

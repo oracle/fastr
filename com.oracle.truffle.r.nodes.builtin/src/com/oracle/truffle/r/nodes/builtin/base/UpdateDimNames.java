@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
-    @Child CastStringNode castStringNode;
-    @Child CastToVectorNode castVectorNode;
+    @Child private CastStringNode castStringNode;
+    @Child private CastToVectorNode castVectorNode;
 
     private Object castString(VirtualFrame frame, Object o) {
         if (castStringNode == null) {

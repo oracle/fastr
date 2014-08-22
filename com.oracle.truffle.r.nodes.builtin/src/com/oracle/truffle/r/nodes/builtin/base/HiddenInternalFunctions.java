@@ -43,7 +43,7 @@ public class HiddenInternalFunctions {
      */
     @RBuiltin(name = "makeLazy", kind = RBuiltinKind.INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"})
     public abstract static class MakeLazy extends RBuiltinNode {
-        @Child Eval eval;
+        @Child private Eval eval;
 
         private void initEval() {
             if (eval == null) {
@@ -127,7 +127,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "dtafile", "compressed", "envhook"})
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
-        @Child CastIntegerNode castIntNode;
+        @Child private CastIntegerNode castIntNode;
 
         private void initCast() {
             if (castIntNode == null) {
