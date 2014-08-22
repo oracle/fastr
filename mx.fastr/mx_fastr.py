@@ -243,6 +243,9 @@ def junit_simple(args):
 def junit_default(args):
     return junit(['--tests', _all_unit_tests()] + args)
 
+def junit_gate(args):
+    return junit(['--tests', _gate_unit_tests()] + args)
+
 def _simple_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
@@ -363,6 +366,7 @@ def mx_init(suite):
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
         'junitdefault' : [junit_default, ['options']],
+        'junitgate' : [junit_gate, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],
