@@ -68,9 +68,8 @@ public abstract class Format extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
-        // TODO figure out to get a frame for the error
-        if (children.length != getBuiltin().getRBuiltin().parameterNames().length) {
-            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(format)", getBuiltin().getRBuiltin().parameterNames().length);
+        if (children.length != getParameterNames().length) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(format)", getParameterNames().length);
         }
         RNode[] newChildren = new RNode[children.length];
         // cast to vector as appropriate to eliminate NULL values
