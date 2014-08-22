@@ -41,8 +41,8 @@ import com.oracle.truffle.r.runtime.env.*;
 @SuppressWarnings("unused")
 public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
-    @Child UpdateNames updateNames;
-    @Child UpdateDimNames updateDimNames;
+    @Child private UpdateNames updateNames;
+    @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;

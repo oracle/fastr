@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"...", "collapse"})
 public abstract class Paste0 extends RBuiltinNode {
 
-    @Child Paste pasteNode;
+    @Child private Paste pasteNode;
 
     @Override
     public RNode[] getParameterValues() {

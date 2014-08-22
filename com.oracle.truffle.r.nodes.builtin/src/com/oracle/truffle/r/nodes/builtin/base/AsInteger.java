@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 public abstract class AsInteger extends RBuiltinNode {
 
-    @Child CastIntegerNode castIntNode;
+    @Child private CastIntegerNode castIntNode;
 
     private void initCast() {
         if (castIntNode == null) {

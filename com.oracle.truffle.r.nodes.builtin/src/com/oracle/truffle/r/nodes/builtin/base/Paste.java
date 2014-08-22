@@ -40,7 +40,7 @@ public abstract class Paste extends RBuiltinNode {
 
     public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
 
-    @Child CastStringNode castCharacterNode;
+    @Child private CastStringNode castCharacterNode;
 
     @Override
     public RNode[] getParameterValues() {

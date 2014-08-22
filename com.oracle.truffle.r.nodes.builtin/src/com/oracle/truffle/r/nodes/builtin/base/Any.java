@@ -39,7 +39,7 @@ public abstract class Any extends RBuiltinNode {
 
     private final NACheck check = NACheck.create();
 
-    @Child CastLogicalNode castLogicalNode;
+    @Child private CastLogicalNode castLogicalNode;
 
     public abstract Object execute(VirtualFrame frame, Object o);
 

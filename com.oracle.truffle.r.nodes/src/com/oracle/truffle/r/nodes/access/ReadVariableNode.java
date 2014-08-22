@@ -414,7 +414,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
     public static final class UnResolvedReadLocalVariableNode extends ReadVariableNode implements HasMode {
         private final Symbol symbol;
         private final String mode;
-        @Child ReadLocalVariableNode node;
+        @Child private ReadLocalVariableNode node;
 
         UnResolvedReadLocalVariableNode(final Symbol symbol, final String mode) {
             this.symbol = symbol;
