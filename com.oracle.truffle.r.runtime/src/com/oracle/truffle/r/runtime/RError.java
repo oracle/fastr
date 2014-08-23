@@ -152,6 +152,10 @@ public final class RError extends RuntimeException {
                 // Errors and warnings are output before the expression is evaluated
                 RContext.getEngine().printRError(rError);
                 // errorExpr can be anything, but not everything makes sense
+                if (errorExpr instanceof RArgsValuesAndNames) {
+                    // TODO: worry about other potential ... values?
+                    errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
+                }
                 if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     VirtualFrame frame = Utils.getActualCurrentFrame();
                     if (errorExpr instanceof RLanguage) {

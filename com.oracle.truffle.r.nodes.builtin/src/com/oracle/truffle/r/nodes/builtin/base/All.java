@@ -158,14 +158,15 @@ public abstract class All extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte all(VirtualFrame frame, Object[] args) {
+    protected byte all(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
-        for (int i = 0; i < args.length; i++) {
+        Object[] argValues = args.getValues();
+        for (int i = 0; i < argValues.length; i++) {
             byte result;
-            if (args[i] instanceof RVector || args[i] instanceof RSequence) {
-                result = all(castLogicalVector(frame, args[i]));
+            if (argValues[i] instanceof RVector || argValues[i] instanceof RSequence) {
+                result = all(castLogicalVector(frame, argValues[i]));
             } else {
-                result = all(castLogical(frame, args[i]));
+                result = all(castLogical(frame, argValues[i]));
             }
             if (result != RRuntime.LOGICAL_TRUE) {
                 return result;

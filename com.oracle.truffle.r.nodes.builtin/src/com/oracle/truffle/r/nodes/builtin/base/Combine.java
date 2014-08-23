@@ -28,8 +28,10 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -51,6 +53,8 @@ public abstract class Combine extends RBuiltinNode {
     @Child private FoldOperationNode foldOperation;
 
     @Child private PrecedenceNode precedenceNode;
+
+    @Child private Combine combineRecursive;
 
     public abstract Object executeCombine(VirtualFrame frame, Object value);
 
@@ -242,40 +246,41 @@ public abstract class Combine extends RBuiltinNode {
         return RDataFactory.createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, true, RDataFactory.createStringVector(getSuppliedArgsNames(), true));
     }
 
-    protected boolean isIntegerPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.INT_PRECEDENCE;
+    protected boolean isIntegerPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.INT_PRECEDENCE;
     }
 
-    protected boolean isLogicalPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.LOGICAL_PRECEDENCE;
+    protected boolean isLogicalPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.LOGICAL_PRECEDENCE;
     }
 
-    protected boolean isDoublePrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.DOUBLE_PRECEDENCE;
+    protected boolean isDoublePrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.DOUBLE_PRECEDENCE;
     }
 
-    protected boolean isComplexPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.COMPLEX_PRECEDENCE;
+    protected boolean isComplexPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.COMPLEX_PRECEDENCE;
     }
 
-    protected boolean isStringPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.STRING_PRECEDENCE;
+    protected boolean isStringPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.STRING_PRECEDENCE;
     }
 
-    protected boolean isRawPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.RAW_PRECEDENCE;
+    protected boolean isRawPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
-    protected boolean isNullPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.NO_PRECEDENCE;
+    protected boolean isNullPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.NO_PRECEDENCE;
     }
 
-    protected boolean isListPrecedence(VirtualFrame frame, Object[] array) {
-        return precedence(frame, array) == PrecedenceNode.LIST_PRECEDENCE;
+    protected boolean isListPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
+        return precedence(frame, args) == PrecedenceNode.LIST_PRECEDENCE;
     }
 
-    private int precedence(VirtualFrame frame, Object[] array) {
+    private int precedence(VirtualFrame frame, RArgsValuesAndNames args) {
         int precedence = -1;
+        Object[] array = args.getValues();
         for (int i = 0; i < array.length; i++) {
             precedence = Math.max(precedence, precedenceNode.executeInteger(frame, array[i], RRuntime.LOGICAL_FALSE));
         }
@@ -395,16 +400,26 @@ public abstract class Combine extends RBuiltinNode {
     }
 
     @Specialization(guards = "isNullPrecedence")
-    @ExplodeLoop
-    protected RNull allNull(VirtualFrame frame, Object[] array) {
+    protected RNull allNull(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = {"isLogicalPrecedence", "noArgNames"})
-    @ExplodeLoop
-    protected Object allLogical(VirtualFrame frame, Object[] array) {
+    @Specialization(guards = {"!isNullPrecedence", "oneElement"})
+    protected Object allOneElem(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        if (combineRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            combineRecursive = insert(CombineFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return combineRecursive.executeCombine(frame, args.getValues()[0]);
+    }
+
+    @Specialization(guards = {"isLogicalPrecedence", "noArgNames", "!oneElement"})
+    @ExplodeLoop
+    protected Object allLogical(VirtualFrame frame, RArgsValuesAndNames args) {
+        controlVisibility();
+        Object[] array = args.getValues();
         Object current = castLogical(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
             Object other = castLogical(frame, array[i]);
@@ -413,10 +428,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isLogicalPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isLogicalPrecedence", "hasArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allLogicalArgs(VirtualFrame frame, Object[] array) {
+    protected Object allLogicalArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castLogical(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -427,10 +443,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "noArgNames"})
+    @Specialization(guards = {"isIntegerPrecedence", "noArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allInt(VirtualFrame frame, Object[] array) {
+    protected Object allInt(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         Object current = castInteger(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
             Object other = castInteger(frame, array[i]);
@@ -439,10 +456,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isIntegerPrecedence", "hasArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allIntArgs(VirtualFrame frame, Object[] array) {
+    protected Object allIntArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castInteger(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -453,10 +471,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "noArgNames"})
+    @Specialization(guards = {"isDoublePrecedence", "noArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allDouble(VirtualFrame frame, Object[] array) {
+    protected Object allDouble(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         Object current = castDouble(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
             Object other = castDouble(frame, array[i]);
@@ -465,10 +484,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "hasArgNames"})
+    @Specialization(guards = {"isDoublePrecedence", "hasArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allDoubleArgs(VirtualFrame frame, Object[] array) {
+    protected Object allDoubleArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castDouble(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -479,10 +499,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isComplexPrecedence", "noArgNames"})
+    @Specialization(guards = {"isComplexPrecedence", "noArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allComplex(VirtualFrame frame, Object[] array) {
+    protected Object allComplex(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         Object current = castComplex(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
             Object other = castComplex(frame, array[i]);
@@ -491,10 +512,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isComplexPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isComplexPrecedence", "hasArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allComplexArgs(VirtualFrame frame, Object[] array) {
+    protected Object allComplexArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castComplex(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -505,10 +527,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isStringPrecedence", "noArgNames"})
+    @Specialization(guards = {"isStringPrecedence", "noArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allString(VirtualFrame frame, Object[] array) {
+    protected Object allString(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         Object current = castString(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
             Object other = castString(frame, array[i]);
@@ -517,10 +540,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isStringPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isStringPrecedence", "hasArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allStringArgs(VirtualFrame frame, Object[] array) {
+    protected Object allStringArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castString(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -531,10 +555,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isRawPrecedence", "noArgNames"})
+    @Specialization(guards = {"isRawPrecedence", "noArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allRaw(VirtualFrame frame, Object[] array) {
+    protected Object allRaw(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         Object current = castRaw(frame, array[0]);
         for (int i = 1; i < array.length; i++) {
             Object other = castRaw(frame, array[i]);
@@ -543,10 +568,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isRawPrecedence", "hasArgNames"})
+    @Specialization(guards = {"isRawPrecedence", "hasArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object allRawArgs(VirtualFrame frame, Object[] array) {
+    protected Object allRawArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castRaw(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -557,10 +583,11 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isListPrecedence", "noArgNames"})
+    @Specialization(guards = {"isListPrecedence", "noArgNames", "!oneElement"})
     @ExplodeLoop
-    protected Object list(VirtualFrame frame, Object[] array) {
+    protected Object list(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RList current = RDataFactory.createList();
         for (int i = 0; i < array.length; ++i) {
             Object other = castList(frame, array[i]);
@@ -569,9 +596,10 @@ public abstract class Combine extends RBuiltinNode {
         return current;
     }
 
-    @Specialization(guards = {"isListPrecedence", "hasArgNames"})
-    protected Object listArgs(VirtualFrame frame, Object[] array) {
+    @Specialization(guards = {"isListPrecedence", "hasArgNames", "!oneElement"})
+    protected Object listArgs(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
+        Object[] array = args.getValues();
         RAbstractVector currentVector = castVector(frame, array[0]);
         Object current = castList(frame, namesMerge(currentVector, getSuppliedArgsNames()[0]));
         for (int i = 1; i < array.length; i++) {
@@ -580,6 +608,10 @@ public abstract class Combine extends RBuiltinNode {
             current = foldOperation.executeList(frame, current, other);
         }
         return current;
+    }
+
+    protected boolean oneElement(RArgsValuesAndNames args) {
+        return args.length() == 1;
     }
 
     protected boolean hasArgNames() {

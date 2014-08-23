@@ -34,16 +34,17 @@ public abstract class Lapply extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
-    @Specialization
-    protected Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
-        Object[] combinedArgs = new Object[optionalArgs.length + 1];
-        System.arraycopy(optionalArgs, 0, combinedArgs, 1, optionalArgs.length);
+    @Specialization(guards = "!argMissing")
+    protected Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, RArgsValuesAndNames optionalArgs) {
+        Object[] optionalArgValues = optionalArgs.getValues();
+        Object[] combinedArgs = new Object[optionalArgValues.length + 1];
+        System.arraycopy(optionalArgValues, 0, combinedArgs, 1, optionalArgValues.length);
         return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
-    @Specialization(guards = "!argMissing")
-    protected Object lapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object optionalArg) {
-        Object[] combinedArgs = new Object[]{null, optionalArg};
+    @Specialization(guards = "argMissing")
+    protected Object lapplyMissing(VirtualFrame frame, RAbstractVector x, RFunction fun, @SuppressWarnings("unused") RArgsValuesAndNames optionalArgs) {
+        Object[] combinedArgs = new Object[]{null};
         return lapplyHelper(frame, x, fun, combinedArgs);
     }
 
@@ -74,7 +75,7 @@ public abstract class Lapply extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    protected boolean argMissing(RAbstractVector x, RFunction fun, Object optionalArg) {
-        return optionalArg == RMissing.instance;
+    protected boolean argMissing(RAbstractVector x, RFunction fun, RArgsValuesAndNames optionalArg) {
+        return optionalArg.length() == 1 && optionalArg.getValues()[0] == RMissing.instance;
     }
 }

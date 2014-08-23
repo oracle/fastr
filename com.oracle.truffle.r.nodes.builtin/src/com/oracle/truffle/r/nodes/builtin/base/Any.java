@@ -164,15 +164,16 @@ public abstract class Any extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte any(VirtualFrame frame, Object[] args) {
+    protected byte any(VirtualFrame frame, RArgsValuesAndNames args) {
         controlVisibility();
         boolean seenNA = false;
-        for (int i = 0; i < args.length; i++) {
+        Object[] argValues = args.getValues();
+        for (int i = 0; i < argValues.length; i++) {
             byte result;
-            if (args[i] instanceof RVector || args[i] instanceof RSequence) {
-                result = any(castLogicalVector(frame, args[i]));
+            if (argValues[i] instanceof RVector || argValues[i] instanceof RSequence) {
+                result = any(castLogicalVector(frame, argValues[i]));
             } else {
-                result = any(castLogical(frame, args[i]));
+                result = any(castLogical(frame, argValues[i]));
             }
             if (RRuntime.isNA(result)) {
                 seenNA = true;

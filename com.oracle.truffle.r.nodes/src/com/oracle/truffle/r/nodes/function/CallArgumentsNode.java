@@ -29,6 +29,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their {@link #getNames()}
@@ -133,25 +134,22 @@ public final class CallArgumentsNode extends ArgumentsNode {
         throw new AssertionError();
     }
 
-    public ArgsValuesAndNames executeFlatten(VirtualFrame frame) {
+    public RArgsValuesAndNames executeFlatten(VirtualFrame frame) {
         if (!containsVarArgsSymbol()) {
             Object[] values = new Object[arguments.length];
             for (int i = 0; i < values.length; i++) {
                 values[i] = arguments[i] == null ? null : arguments[i].execute(frame);
             }
-            return new ArgsValuesAndNames(values, this.getNames());
+            return new RArgsValuesAndNames(values, this.getNames());
         } else {
             ArrayList<Object> values = new ArrayList<>(arguments.length);
             ArrayList<String> newNames = new ArrayList<>(arguments.length);
 
             for (int i = 0; i < arguments.length; i++) {
                 Object argEvaluated = arguments[i].execute(frame);
-                if (varArgsSymbolIndex == i) {
-
-                }
-                if (argEvaluated instanceof ArgsValuesAndNames) {
+                if (argEvaluated instanceof RArgsValuesAndNames) {
                     // variadic argument
-                    ArgsValuesAndNames varArgInfo = (ArgsValuesAndNames) argEvaluated;
+                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) argEvaluated;
                     for (int j = 0; j < varArgInfo.length(); j++) {
                         values.add(varArgInfo.getValues()[j]);
                         newNames.add(varArgInfo.getNames()[j]);
@@ -162,7 +160,7 @@ public final class CallArgumentsNode extends ArgumentsNode {
                 }
             }
 
-            return new ArgsValuesAndNames(values.toArray(), newNames.toArray(new String[newNames.size()]));
+            return new RArgsValuesAndNames(values.toArray(), newNames.toArray(new String[newNames.size()]));
         }
     }
 

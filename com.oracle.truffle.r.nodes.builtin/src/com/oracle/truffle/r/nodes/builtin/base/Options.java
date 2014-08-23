@@ -42,8 +42,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public abstract class Options extends RBuiltinNode {
 
-    // @Specialization
-    private RList options(@SuppressWarnings("unused") RMissing x) {
+    @Specialization
+    protected RList options(@SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         Set<Map.Entry<String, Object>> optionSettings = ROptions.getValues();
         Object[] data = new Object[optionSettings.size()];
@@ -57,45 +57,45 @@ public abstract class Options extends RBuiltinNode {
         return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
     }
 
-    @Specialization
-    protected Object options(Object args) {
-        controlVisibility();
-        if (args instanceof RMissing) {
-            return options((RMissing) args);
-        } else {
-            Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
-            String[] argNames = getSuppliedArgsNames();
-            Object[] data = new Object[values.length];
-            String[] names = new String[values.length];
-            // getting
-            for (int i = 0; i < values.length; i++) {
-                String argName = namedArgument(argNames, i);
-                Object value = values[i];
-                if (argName == null) {
-                    // getting
-                    String optionName = null;
-                    if (value instanceof RStringVector) {
-                        optionName = ((RStringVector) value).getDataAt(0); // ignore rest (cf GnuR)
-                    } else if (value instanceof String) {
-                        optionName = (String) value;
-                    } else {
-                        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
-                    }
-                    Object optionVal = ROptions.getValue(optionName);
-                    data[i] = optionVal == null ? RNull.instance : optionVal;
-                    names[i] = optionName;
+    @Specialization(guards = "isMissing")
+    protected Object optionsMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        return options(RMissing.instance);
+    }
+
+    @Specialization(guards = "!isMissing")
+    protected Object options(RArgsValuesAndNames args) {
+        Object[] values = args.getValues();
+        String[] argNames = getSuppliedArgsNames();
+        Object[] data = new Object[values.length];
+        String[] names = new String[values.length];
+        // getting
+        for (int i = 0; i < values.length; i++) {
+            String argName = namedArgument(argNames, i);
+            Object value = values[i];
+            if (argName == null) {
+                // getting
+                String optionName = null;
+                if (value instanceof RStringVector) {
+                    optionName = ((RStringVector) value).getDataAt(0); // ignore rest (cf GnuR)
+                } else if (value instanceof String) {
+                    optionName = (String) value;
                 } else {
-                    // setting
-                    Object previousVal = ROptions.getValue(argName);
-                    data[i] = previousVal == null ? RNull.instance : previousVal;
-                    names[i] = argName;
-                    ROptions.setValue(argName, value);
-                    // any settings means result is invisible
-                    RContext.setVisible(false);
+                    throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
                 }
+                Object optionVal = ROptions.getValue(optionName);
+                data[i] = optionVal == null ? RNull.instance : optionVal;
+                names[i] = optionName;
+            } else {
+                // setting
+                Object previousVal = ROptions.getValue(argName);
+                data[i] = previousVal == null ? RNull.instance : previousVal;
+                names[i] = argName;
+                ROptions.setValue(argName, value);
+                // any settings means result is invisible
+                RContext.setVisible(false);
             }
-            return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         }
+        return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
     }
 
     private static String namedArgument(String[] argNames, int i) {
@@ -106,7 +106,7 @@ public abstract class Options extends RBuiltinNode {
         }
     }
 
-// @Specialization
+    @Specialization
     public RList options(RAbstractStringVector vec) {
         String key = vec.getDataAt(0);
         Object value = ROptions.getValue(key);
@@ -114,7 +114,7 @@ public abstract class Options extends RBuiltinNode {
         return RDataFactory.createList(new Object[]{rObject}, RDataFactory.createStringVectorFromScalar(key));
     }
 
-// @Specialization
+    @Specialization
     public Object options(@SuppressWarnings("unused") double d) {
         // HACK ALERT - just to allow b25 test, it doesn't do anything,
         // as that would require the option name
@@ -122,12 +122,16 @@ public abstract class Options extends RBuiltinNode {
         return RNull.instance;
     }
 
-// @Specialization
+    @Specialization
     public Object options(@SuppressWarnings("unused") RFunction f) {
         // HACK ALERT - just to allow b25 test, it doesn't do anything,
         // as that would require the option name
         controlVisibility();
         return RNull.instance;
+    }
+
+    protected boolean isMissing(RArgsValuesAndNames args) {
+        return args.length() == 1 && args.getValues()[0] == RMissing.instance;
     }
 
 }

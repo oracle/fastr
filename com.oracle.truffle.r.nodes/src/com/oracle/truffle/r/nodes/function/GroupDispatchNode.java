@@ -171,15 +171,38 @@ public class GroupDispatchNode extends S3DispatchNode {
         return null;
     }
 
+    public static RNode[] resizeNodesArray(RNode[] oldNodes, int newSize) {
+        RNode[] newNodes = new RNode[newSize];
+        if (oldNodes != null) {
+            for (int i = 0; i < oldNodes.length; i++) {
+                newNodes[i] = oldNodes[i];
+            }
+        }
+        return newNodes;
+    }
+
     @SlowPath
     private void initFunCall(RFunction func) {
         // avoid re-evaluating arguments.
         if (evaluatedArgs != null) {
             RNode[] argArray = new RNode[callArgsNode.getArguments().length];
             System.arraycopy(callArgsNode.getArguments(), evaluatedArgs.length, argArray, evaluatedArgs.length, argArray.length - evaluatedArgs.length);
+            int index = 0;
             for (int i = 0; i < evaluatedArgs.length; ++i) {
                 if (evaluatedArgs[i] != null) {
-                    argArray[i] = ConstantNode.create(evaluatedArgs[i]);
+                    if (evaluatedArgs[i] instanceof RArgsValuesAndNames) {
+                        RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) evaluatedArgs[i];
+                        if (argsValuesAndNames.length() == 1) {
+                            argArray[index++] = ConstantNode.create(argsValuesAndNames.getValues()[0]);
+                        } else {
+                            argArray = resizeNodesArray(argArray, argArray.length + argsValuesAndNames.length() - 1);
+                            for (int j = 0; j < argsValuesAndNames.length(); j++) {
+                                argArray[index++] = ConstantNode.create(argsValuesAndNames.getValues()[j]);
+                            }
+                        }
+                    } else {
+                        argArray[index++] = ConstantNode.create(evaluatedArgs[i]);
+                    }
                 }
             }
             this.funCall = new DispatchNode.FunctionCall(func, CallArgumentsNode.create(callArgsNode.modeChange(), callArgsNode.modeChangeForAll(), argArray, callArgsNode.getNames()));

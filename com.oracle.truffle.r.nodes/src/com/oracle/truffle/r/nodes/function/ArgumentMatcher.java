@@ -642,7 +642,7 @@ public class ArgumentMatcher {
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
         public Object makeList(final Object[] elements, final String[] names) {
             if (elements.length > 0) {
-                return new ArgsValuesAndNames(elements, names == null ? new String[elements.length] : names);
+                return new RArgsValuesAndNames(elements, names == null ? new String[elements.length] : names);
             } else {
                 return RMissing.instance;
             }
@@ -696,22 +696,30 @@ public class ArgumentMatcher {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            Object[] evaluatedElements = new Object[elementNodes.length];
-            if (elementNodes.length > 0) {
-                executeElementNodes(frame, elementNodes, evaluatedElements);
-            }
-            if (evaluatedElements.length == 1) {
-                return evaluatedElements[0];
-            } else {
-                return evaluatedElements;
-            }
+            Object[] evaluatedArgs = executeArguments(frame, elementNodes);
+            return new RArgsValuesAndNames(evaluatedArgs, names);
         }
     }
 
     @ExplodeLoop
-    protected static void executeElementNodes(VirtualFrame frame, RNode[] elementNodes, Object[] evaluatedElements) {
+    private static Object[] executeArguments(VirtualFrame frame, RNode[] elementNodes) {
+        Object[] evaluatedArgs = new Object[elementNodes.length];
+        int index = 0;
         for (int i = 0; i < elementNodes.length; i++) {
-            evaluatedElements[i] = elementNodes[i].execute(frame);
+            Object argValue = elementNodes[i].execute(frame);
+            if (argValue instanceof RArgsValuesAndNames) {
+                // this can happen if ... is simply passed around (in particular when the call chain
+                // contains two functions with just the ... argument)
+                RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
+                evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, evaluatedArgs.length + argsValuesAndNames.length() - 1);
+                Object[] varargValues = argsValuesAndNames.getValues();
+                for (int j = 0; j < argsValuesAndNames.length(); j++) {
+                    evaluatedArgs[index++] = varargValues[j];
+                }
+            } else {
+                evaluatedArgs[index++] = argValue;
+            }
         }
+        return evaluatedArgs;
     }
 }

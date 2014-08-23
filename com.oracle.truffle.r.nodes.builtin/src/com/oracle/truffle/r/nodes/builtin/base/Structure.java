@@ -42,14 +42,17 @@ public abstract class Structure extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object structure(RAbstractContainer obj, Object args) {
-        if (!(args instanceof RMissing)) {
-            Object[] values = args instanceof Object[] ? (Object[]) args : new Object[]{args};
-            String[] argNames = getSuppliedArgsNames();
-            validateArgNames(argNames);
-            for (int i = 0; i < values.length; i++) {
-                obj.setAttr(argNames[i + 1], fixupValue(values[i]));
-            }
+    protected Object structure(RAbstractContainer obj, @SuppressWarnings("unused") RMissing args) {
+        return obj;
+    }
+
+    @Specialization
+    protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
+        Object[] values = args.getValues();
+        String[] argNames = getSuppliedArgsNames();
+        validateArgNames(argNames);
+        for (int i = 0; i < values.length; i++) {
+            obj.setAttr(argNames[i + 1], fixupValue(values[i]));
         }
         return obj;
     }

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
-@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"...", "list", "pos", "envir", "inherits"})
+@RBuiltin(name = "rm", aliases = {"remove"}, kind = SUBSTITUTE, parameterNames = {"name", "list", "pos", "envir", "inherits"})
 // TODO remove should be INTERNAL and rm is in R
 public abstract class Rm extends RInvisibleBuiltinNode {
 

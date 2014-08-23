@@ -32,6 +32,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -68,38 +69,39 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected Object cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
+    protected RNull cat(RMissing arg, String file, String sep, byte fill, Object labels, byte append) {
         controlVisibility();
         return RNull.instance;
     }
 
     @Specialization
-    protected Object cat(VirtualFrame frame, RAbstractVector arg, String file, String sep, byte fill, Object labels, byte append) {
+    protected RNull cat(VirtualFrame frame, RAbstractVector arg, String file, String sep, byte fill, Object labels, byte append) {
         ensureToString(sep);
         catIntl(toString.executeString(frame, arg));
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization
-    protected Object cat(VirtualFrame frame, Object[] args, String file, String sep, byte fill, Object labels, byte append) {
+    @Specialization(guards = "!isNull")
+    protected RNull cat(VirtualFrame frame, RArgsValuesAndNames args, String file, String sep, byte fill, Object labels, byte append) {
         ensureToString(sep);
-        for (int i = 0; i < args.length; ++i) {
-            if (args[i] instanceof Object[]) {
-                // in case cat is called with a ... parameter, it is passed as an array within the
-                // args array
-                Object[] wrappedArgs = (Object[]) args[i];
-                for (int j = 0; j < wrappedArgs.length; ++j) {
-                    catIntl(toString.executeString(frame, wrappedArgs[j]));
-                    catSep(sep, wrappedArgs, j);
-                }
-            } else {
-                catIntl(toString.executeString(frame, args[i]));
-            }
-            catSep(sep, args, i);
+        Object[] argValues = args.getValues();
+        for (int i = 0; i < argValues.length; ++i) {
+            catIntl(toString.executeString(frame, argValues[i]));
+            catSep(sep, argValues, i);
         }
         controlVisibility();
         return RNull.instance;
+    }
+
+    @Specialization(guards = "isNull")
+    protected RNull catNull(VirtualFrame frame, RArgsValuesAndNames args, String file, String sep, byte fill, Object labels, byte append) {
+        controlVisibility();
+        return RNull.instance;
+    }
+
+    protected boolean isNull(RArgsValuesAndNames args) {
+        return args.length() == 1 && args.getValues()[0] == RNull.instance;
     }
 
     private static void catSep(String sep, Object[] os, int j) {

@@ -30,13 +30,16 @@ import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.nodes.builtin.base.FileFunctionsFactory.FileExistsFactory;
 
 public class FileFunctions {
 
@@ -253,6 +256,27 @@ public class FileFunctions {
     @RBuiltin(name = "file.exists", kind = INTERNAL, parameterNames = {"..."})
     public abstract static class FileExists extends RBuiltinNode {
 
+        public abstract Object executeObject(VirtualFrame frame, Object args);
+
+        @Child private FileExists fileExistsRecursive;
+
+        @Specialization(guards = "oneArg")
+        protected Object doFileExistsOneArg(VirtualFrame frame, RArgsValuesAndNames args) {
+            controlVisibility();
+            if (fileExistsRecursive == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                fileExistsRecursive = insert(FileExistsFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            }
+            return executeObject(frame, args.getValues()[0]);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!oneArg")
+        protected Object doFileExists(VirtualFrame frame, RArgsValuesAndNames args) {
+            controlVisibility();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+        }
+
         @Specialization
         protected Object doFileExists(RAbstractStringVector vec) {
             controlVisibility();
@@ -274,6 +298,10 @@ public class FileFunctions {
         protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+        }
+
+        protected boolean oneArg(RArgsValuesAndNames args) {
+            return args.length() == 1;
         }
     }
 
@@ -347,14 +375,15 @@ public class FileFunctions {
 
         @Specialization(guards = "!lengthZero")
         protected RStringVector doFilePath(RAbstractStringVector vec, String fsep) {
-            return doFilePath(new Object[]{vec}, fsep);
+            return doFilePath(new RArgsValuesAndNames(new Object[]{vec}, null), fsep);
         }
 
         @Specialization(guards = "simpleArgs")
-        protected RStringVector doFilePath(Object[] args, String fsep) {
+        protected RStringVector doFilePath(RArgsValuesAndNames args, String fsep) {
+            Object[] argValues = args.getValues();
             StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < args.length; i++) {
-                Object elem = args[i];
+            for (int i = 0; i < argValues.length; i++) {
+                Object elem = argValues[i];
                 String elemAsString;
                 if (elem instanceof RStringVector) {
                     RStringVector svec = (RStringVector) elem;
@@ -383,8 +412,8 @@ public class FileFunctions {
             return vec.getLength() == 0;
         }
 
-        public static boolean simpleArgs(Object[] args, String fsep) {
-            for (Object arg : args) {
+        public static boolean simpleArgs(RArgsValuesAndNames args) {
+            for (Object arg : args.getValues()) {
                 if (arg instanceof RStringVector) {
                     if (((RStringVector) arg).getLength() > 1) {
                         return false;
@@ -392,10 +421,6 @@ public class FileFunctions {
                 } else {
                     if (arg instanceof String) {
                         continue;
-                    } else if (arg instanceof Object[]) {
-                        if (!simpleArgs((Object[]) arg, fsep)) {
-                            return false;
-                        }
                     } else {
                         return false;
                     }

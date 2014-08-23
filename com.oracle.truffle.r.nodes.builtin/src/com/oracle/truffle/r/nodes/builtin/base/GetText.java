@@ -24,17 +24,42 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
 @RBuiltin(name = "gettext", kind = INTERNAL, parameterNames = {"...", "domain"})
 public abstract class GetText extends RBuiltinNode {
+
+    @Child private CastToVectorNode castVector;
+    @Child private CastStringNode castString;
+
+    private final NACheck elementNACheck = NACheck.create();
+
+    private Object castString(VirtualFrame frame, Object operand) {
+        if (castString == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castString = insert(CastStringNodeFactory.create(null, false, true, false, false));
+        }
+        return castString.executeCast(frame, operand);
+    }
+
+    private Object castVector(VirtualFrame frame, Object value) {
+        if (castVector == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castVector = insert(CastToVectorNodeFactory.create(null, false, false, false, false));
+        }
+        return castVector.executeObject(frame, value);
+    }
 
     @Override
     public RNode[] getParameterValues() {
@@ -43,8 +68,27 @@ public abstract class GetText extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractVector getText(RAbstractVector vector, Object domain) {
+    protected RStringVector getText(VirtualFrame frame, Object args, Object domain) {
         // no translation done at this point
-        return vector;
+        // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
+        Object[] argValues = ((RArgsValuesAndNames) args).getValues();
+        String[] a = null;
+        int aLength = 0;
+        int index = 0;
+        for (int i = 0; i < argValues.length; i++) {
+            Object v = castVector(frame, argValues[i]);
+            if (v != RNull.instance) {
+                RStringVector vector = (RStringVector) castString(frame, v);
+                elementNACheck.enable(vector);
+                aLength += vector.getLength();
+                a = Utils.resizeStringsArray(a, aLength);
+                for (int j = 0; j < vector.getLength(); j++) {
+                    a[index] = vector.getDataAt(j);
+                    elementNACheck.check(a[index]);
+                    index++;
+                }
+            }
+        }
+        return RDataFactory.createStringVector(a, elementNACheck.neverSeenNA());
     }
 }

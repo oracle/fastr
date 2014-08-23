@@ -339,7 +339,7 @@ public abstract class RCallNode extends RNode {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
 
-            ArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
+            RArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             EvaluatedArguments evaledArgs = EvaluatedArguments.create(argsValuesAndNames.getValues(), argsValuesAndNames.getNames());
             // ...to match them against the chosen function's formal arguments
             EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(evaluatedFunction, evaledArgs, getEncapsulatingSourceSection());
@@ -367,7 +367,7 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction function) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            ArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
+            RArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             EvaluatedArguments evaledArgs = EvaluatedArguments.create(argsValuesAndNames.getValues(), argsValuesAndNames.getNames());
             // ...to match them against the chosen function's formal arguments
             EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, getEncapsulatingSourceSection());

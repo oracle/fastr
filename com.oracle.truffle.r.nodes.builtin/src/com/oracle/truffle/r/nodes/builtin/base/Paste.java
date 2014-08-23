@@ -35,7 +35,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"...", "sep", "collapse"})
+@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"})
 public abstract class Paste extends RBuiltinNode {
 
     public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
@@ -44,8 +44,7 @@ public abstract class Paste extends RBuiltinNode {
 
     @Override
     public RNode[] getParameterValues() {
-        // ..., sep = " ", collapse = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(" "), ConstantNode.create(RNull.instance)};
+        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
 
     private String castCharacter(VirtualFrame frame, Object o) {

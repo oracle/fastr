@@ -297,4 +297,24 @@ public final class Utils {
         }
     }
 
+    public static String[] resizeStringsArray(String[] oldNames, int newSize) {
+        String[] newNames = new String[newSize];
+        if (oldNames != null) {
+            for (int i = 0; i < oldNames.length; i++) {
+                newNames[i] = oldNames[i];
+            }
+        }
+        return newNames;
+    }
+
+    public static Object[] resizeObjectsArray(Object[] oldValues, int newSize) {
+        Object[] newValues = new Object[newSize];
+        if (oldValues != null) {
+            for (int i = 0; i < oldValues.length; i++) {
+                newValues[i] = oldValues[i];
+            }
+        }
+        return newValues;
+    }
+
 }

@@ -59,26 +59,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return executeHelper(frame, args);
     }
 
-    private static String[] resizeNamesArray(String[] oldNames, int newSize) {
-        String[] newNames = new String[newSize];
-        if (oldNames != null) {
-            for (int i = 0; i < newSize; i++) {
-                newNames[i] = oldNames[i];
-            }
-        }
-        return newNames;
-    }
-
-    private static Object[] resizeValuesArray(Object[] oldValues, int newSize) {
-        Object[] newValues = new Object[newSize];
-        if (oldValues != null) {
-            for (int i = 0; i < newSize; i++) {
-                newValues[i] = oldValues[i];
-            }
-        }
-        return newValues;
-    }
-
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
         // Extract arguments from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
@@ -92,10 +72,11 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         for (; fi < argCount; ++fi) {
             // conditional vs. allocation in extractArgs() - is it worth it?
             Object arg = RArguments.getArgument(frame, fi);
-            if (arg instanceof ArgsValuesAndNames) {
-                argValues = resizeValuesArray(argValues, argListSize);
-                argNames = resizeNamesArray(argNames, argListSize);
-                ArgsValuesAndNames varArgsContainer = (ArgsValuesAndNames) arg;
+            if (arg instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) arg;
+                argListSize += varArgsContainer.length() - 1;
+                argValues = Utils.resizeObjectsArray(argValues, argListSize);
+                argNames = Utils.resizeStringsArray(argNames, argListSize);
                 Object[] varArgsValues = varArgsContainer.getValues();
                 String[] varArgsNames = varArgsContainer.getNames();
                 boolean allNamesNull = true;
@@ -138,8 +119,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             Object arg = args[fi];
             if (arg instanceof Object[]) {
                 Object[] varArgs = (Object[]) arg;
-                argListSize += varArgs.length;
-                argValues = resizeValuesArray(argValues, argListSize);
+                argListSize += varArgs.length - 1;
+                argValues = Utils.resizeObjectsArray(argValues, argListSize);
 
                 for (Object varArg : varArgs) {
                     addArg(argValues, varArg, index++);

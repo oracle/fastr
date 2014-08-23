@@ -24,7 +24,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,6 +39,14 @@ import com.oracle.truffle.r.runtime.env.*;
 // for *every* type
 // and the code is essentially equivalent for each one?
 public abstract class ListBuiltin extends RBuiltinNode {
+
+    protected abstract Object executeObject(VirtualFrame frame, Object arg);
+
+    @Child private ListBuiltin listRecursive;
+
+    private RList list(Object[] args) {
+        return RDataFactory.createList(args, argNameVector());
+    }
 
     @Specialization
     protected RList list(@SuppressWarnings("unused") RMissing missing) {
@@ -85,11 +96,26 @@ public abstract class ListBuiltin extends RBuiltinNode {
         return list(new Object[]{value});
     }
 
-    @Specialization
-    protected RList list(Object[] args) {
+    @Specialization(guards = {"!missing", "!oneElement"})
+    protected RList list(RArgsValuesAndNames args) {
         controlVisibility();
-        // TODO: should we duplicate all specializations for no-args and args case?
-        return RDataFactory.createList(args, argNameVector());
+        return RDataFactory.createList(args.getValues(), argNameVector());
+    }
+
+    @Specialization(guards = {"!missing", "oneElement"})
+    protected Object listOneElement(VirtualFrame frame, RArgsValuesAndNames args) {
+        controlVisibility();
+        if (listRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            listRecursive = insert(ListBuiltinFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return listRecursive.executeObject(frame, args.getValues()[0]);
+    }
+
+    @Specialization(guards = "missing")
+    protected RList listMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        controlVisibility();
+        return list(new Object[0]);
     }
 
     @Specialization
@@ -121,6 +147,14 @@ public abstract class ListBuiltin extends RBuiltinNode {
             names[i] = (orgName == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : orgName);
         }
         return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    protected boolean missing(RArgsValuesAndNames args) {
+        return args.length() == 1 && args.getValues()[0] == RMissing.instance;
+    }
+
+    protected boolean oneElement(RArgsValuesAndNames args) {
+        return args.length() == 1;
     }
 
 }

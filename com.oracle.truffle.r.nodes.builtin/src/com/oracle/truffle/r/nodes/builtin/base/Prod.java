@@ -10,6 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -35,9 +36,21 @@ public abstract class Prod extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
+    @Child private Prod prodRecursive;
+
+    public abstract Object executeObject(VirtualFrame frame, Object x);
 
     @Child protected BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
+
+    @Specialization
+    protected Object prod(VirtualFrame frame, RArgsValuesAndNames args) {
+        if (prodRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            prodRecursive = insert(ProdFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+        }
+        // TODO: evantually handle multiple vectors properly
+        return executeObject(frame, args.getValues()[0]);
+    }
 
     @Specialization
     protected double prod(RAbstractDoubleVector x) {

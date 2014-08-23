@@ -297,4 +297,14 @@ public abstract class RProxyNode extends RNode {
     protected RFormula proxy(RFormula x) {
         return (RFormula) proxyScalar(x);
     }
+
+    @Specialization
+    protected RArgsValuesAndNames wrap(RArgsValuesAndNames x) {
+        return proxy(x);
+    }
+
+    protected RArgsValuesAndNames proxy(RArgsValuesAndNames x) {
+        return (RArgsValuesAndNames) proxyScalar(x);
+    }
+
 }

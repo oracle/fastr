@@ -87,18 +87,19 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrdc2")
-        protected RList fortranDqrdc2(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrdc2(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
+            Object[] argValues = args.getValues();
             try {
-                RDoubleVector xVec = (RDoubleVector) args[0];
-                int ldx = (int) args[1];
-                int n = (int) args[2];
-                int p = (int) args[3];
-                double tol = (double) args[4];
-                RIntVector rankVec = (RIntVector) args[5];
-                RDoubleVector qrauxVec = (RDoubleVector) args[6];
-                RIntVector pivotVec = (RIntVector) args[7];
-                RDoubleVector workVec = (RDoubleVector) args[8];
+                RDoubleVector xVec = (RDoubleVector) argValues[0];
+                int ldx = (int) argValues[1];
+                int n = (int) argValues[2];
+                int p = (int) argValues[3];
+                double tol = (double) argValues[4];
+                RIntVector rankVec = (RIntVector) argValues[5];
+                RDoubleVector qrauxVec = (RDoubleVector) argValues[6];
+                RIntVector pivotVec = (RIntVector) argValues[7];
+                RDoubleVector workVec = (RDoubleVector) argValues[8];
                 double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
                 int[] rank = rankVec.isTemporary() ? rankVec.getDataWithoutCopying() : rankVec.getDataCopy();
                 double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
@@ -107,11 +108,11 @@ public class ForeignFunctions {
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, xVec.getDimensions()),
-                            args[1], args[2], args[3], args[4],
+                            argValues[1], argValues[2], argValues[3], argValues[4],
                             RDataFactory.createIntVector(rank, RDataFactory.COMPLETE_VECTOR),
                             RDataFactory.createDoubleVector(qraux, RDataFactory.COMPLETE_VECTOR),
                             RDataFactory.createIntVector(pivot, RDataFactory.COMPLETE_VECTOR),
-                            args[8]
+                            argValues[8]
                 };
                 // @formatter:on
                 return RDataFactory.createList(data, DQRDC2_NAMES);
@@ -186,8 +187,10 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RList c(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList c(String f, Object args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
+            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
+            Object[] argValues = ((RArgsValuesAndNames) args).getValues();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
@@ -195,10 +198,10 @@ public class ForeignFunctions {
             boolean dupArgs = RRuntime.fromLogical(dup);
             boolean checkNA = RRuntime.fromLogical(naok);
             // Analyze the args, making copies (ignoring dup for now)
-            int[] argTypes = new int[args.length];
-            Object[] nativeArgs = new Object[args.length];
-            for (int i = 0; i < args.length; i++) {
-                Object arg = args[i];
+            int[] argTypes = new int[argValues.length];
+            Object[] nativeArgs = new Object[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
+                Object arg = argValues[i];
                 if (arg instanceof RDoubleVector) {
                     argTypes[i] = VECTOR_DOUBLE;
                     nativeArgs[i] = checkNAs(i + 1, ((RDoubleVector) arg).getDataCopy());
@@ -234,9 +237,9 @@ public class ForeignFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }
             // we have to assume that the native method updated everything
-            RStringVector listNames = validateArgNames(args.length, getSuppliedArgsNames());
-            Object[] results = new Object[args.length];
-            for (int i = 0; i < args.length; i++) {
+            RStringVector listNames = validateArgNames(argValues.length, getSuppliedArgsNames());
+            Object[] results = new Object[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
                 switch (argTypes[i]) {
                     case SCALAR_DOUBLE:
                         results[i] = RDataFactory.createDoubleVector((double[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
@@ -248,15 +251,15 @@ public class ForeignFunctions {
                         results[i] = RDataFactory.createLogicalVector((byte[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
                         break;
                     case VECTOR_DOUBLE: {
-                        results[i] = ((RDoubleVector) args[i]).copyResetData((double[]) nativeArgs[i]);
+                        results[i] = ((RDoubleVector) argValues[i]).copyResetData((double[]) nativeArgs[i]);
                         break;
                     }
                     case VECTOR_INT: {
-                        results[i] = ((RIntVector) args[i]).copyResetData((int[]) nativeArgs[i]);
+                        results[i] = ((RIntVector) argValues[i]).copyResetData((int[]) nativeArgs[i]);
                         break;
                     }
                     case VECTOR_LOGICAL: {
-                        results[i] = ((RLogicalVector) args[i]).copyResetData((byte[]) nativeArgs[i]);
+                        results[i] = ((RLogicalVector) argValues[i]).copyResetData((byte[]) nativeArgs[i]);
                         break;
                     }
 
@@ -321,11 +324,13 @@ public class ForeignFunctions {
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
         @Specialization(guards = "fft")
-        protected RComplexVector callFFT(VirtualFrame frame, RList f, Object[] args, RMissing packageName) {
+        protected RComplexVector callFFT(VirtualFrame frame, RList f, Object args, RMissing packageName) {
             controlVisibility();
-            RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, args[0]));
+            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
+            Object[] argValues = ((RArgsValuesAndNames) args).getValues();
+            RComplexVector zVec = (RComplexVector) castComplex(frame, castVector(frame, argValues[0]));
             double[] z = zVec.isTemporary() ? zVec.getDataWithoutCopying() : zVec.getDataCopy();
-            RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, args[1]));
+            RLogicalVector inverse = (RLogicalVector) castLogical(frame, castVector(frame, argValues[1]));
             int inv = RRuntime.isNA(inverse.getDataAt(0)) || inverse.getDataAt(0) == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;
             if (zVec.getLength() > 1) {
@@ -401,12 +406,14 @@ public class ForeignFunctions {
         // Translated from GnuR: library/methods/src/methods_list_dispatch.c
         @SuppressWarnings("unused")
         @Specialization(guards = "methodsPackageMetaName")
-        protected String callMethodsPackageMetaName(VirtualFrame frame, RList f, Object[] args, RMissing packageName) {
+        protected String callMethodsPackageMetaName(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
+            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
+            Object[] argValues = args.getValues();
             // TODO proper error checks
-            String prefixString = (String) args[0];
-            String nameString = (String) args[1];
-            String pkgString = (String) args[2];
+            String prefixString = (String) argValues[0];
+            String nameString = (String) argValues[1];
+            String pkgString = (String) argValues[2];
             if (pkgString.length() == 0) {
                 return String.format(".__%s__%s", prefixString, nameString);
             } else {
@@ -419,18 +426,18 @@ public class ForeignFunctions {
         }
 
         @Specialization
-        public Object callNamedFunction(String name, Object[] args, @SuppressWarnings("unused") RMissing packageName) {
+        public Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             return callNamedFunctionWithPackage(name, args, null);
         }
 
         @Specialization
-        public Object callNamedFunctionWithPackage(String name, Object[] args, String packageName) {
+        public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
                 throw RError.error(getEncapsulatingSourceSection(), Message.GENERIC, ".Call %s not found", name);
             }
             try {
-                return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args);
+                return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getValues());
             } catch (Throwable t) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
             }

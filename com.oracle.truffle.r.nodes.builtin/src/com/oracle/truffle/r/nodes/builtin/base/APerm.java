@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 //TODO: Implement permuting with DimNames
-@RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "..."})
+@RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"})
 public abstract class APerm extends RBuiltinNode {
 
     @Override

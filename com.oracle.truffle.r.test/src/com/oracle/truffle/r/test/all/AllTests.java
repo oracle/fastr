@@ -15649,6 +15649,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_a1cb3470922356d8b17b303e086fe3c2() {
+        assertEval("{ f<-function(x, y) { print(missing(y)); } ; f(42) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_cfc74f82dbc53749f5879ea6ea52e317() {
+        assertEval("{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDotsIgnore_e620898284cbe5e1d40bfe326c77804e() {
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
     }

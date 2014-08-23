@@ -26,8 +26,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -43,6 +45,10 @@ public abstract class Sprintf extends RBuiltinNode {
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
     }
+
+    public abstract Object executeObject(VirtualFrame frame, String fmt, Object args);
+
+    @Child Sprintf sprintfRecursive;
 
     @Specialization
     protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
@@ -140,10 +146,30 @@ public abstract class Sprintf extends RBuiltinNode {
         return sprintf(fmt.getDataAt(0), x);
     }
 
-    @Specialization
-    protected String sprintf(String fmt, Object[] args) {
+    @Specialization(guards = "!oneElement")
+    protected String sprintf(String fmt, RArgsValuesAndNames args) {
         controlVisibility();
-        return format(fmt, args);
+        return format(fmt, args.getValues());
+    }
+
+    @Specialization(guards = "oneElement")
+    protected Object sprintfOneElement(VirtualFrame frame, String fmt, RArgsValuesAndNames args) {
+        controlVisibility();
+        if (sprintfRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            sprintfRecursive = insert(SprintfFactory.create(new RNode[2], getBuiltin(), getSuppliedArgsNames()));
+        }
+        return sprintfRecursive.executeObject(frame, fmt, args.getValues()[0]);
+    }
+
+    @Specialization(guards = {"!oneElement", "fmtLengthOne"})
+    protected String sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+        return sprintf(fmt.getDataAt(0), args);
+    }
+
+    @Specialization(guards = {"oneElement", "fmtLengthOne"})
+    protected Object RAbstractStringVector(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
+        return sprintfOneElement(frame, fmt.getDataAt(0), args);
     }
 
     private static String format(String fmt, Object... args) {
@@ -436,6 +462,10 @@ public abstract class Sprintf extends RBuiltinNode {
 
     protected boolean fmtLengthOne(RAbstractStringVector fmt) {
         return fmt.getLength() == 1;
+    }
+
+    protected boolean oneElement(@SuppressWarnings("unused") Object fmt, RArgsValuesAndNames args) {
+        return args.length() == 1;
     }
 
     @SlowPath

@@ -40,14 +40,15 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @Specialization(guards = "isLengthOne")
-    protected Object doSwitch(RAbstractStringVector x, Object[] optionalArgs) {
+    protected Object doSwitch(RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
+        Object[] optionalArgValues = optionalArgs.getValues();
         Object currentDefaultValue = null;
         final String xStr = x.getDataAt(0);
         final String[] argNames = this.getSuppliedArgsNames();
         for (int i = 1; i < argNames.length; ++i) {
             final String argName = argNames[i];
-            final Object value = optionalArgs[i - 1];
+            final Object value = optionalArgValues[i - 1];
             if (xStr.equals(argName)) {
                 if (value != null) {
                     return returnNonNull(value);
@@ -68,12 +69,12 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object doSwitch(int x, Object[] optionalArgs) {
+    protected Object doSwitch(int x, RArgsValuesAndNames optionalArgs) {
         return doSwitchInt(x, optionalArgs);
     }
 
     @Specialization
-    protected Object doSwitch(VirtualFrame frame, Object x, Object[] optionalArgs) {
+    protected Object doSwitch(VirtualFrame frame, Object x, RArgsValuesAndNames optionalArgs) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntNode = insert(CastIntegerNodeFactory.create(null, false, false, false));
@@ -92,9 +93,10 @@ public abstract class Switch extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
     }
 
-    private Object doSwitchInt(int index, Object[] optionalArgs) {
-        if (index >= 1 && index <= optionalArgs.length) {
-            Object value = optionalArgs[index - 1];
+    private Object doSwitchInt(int index, RArgsValuesAndNames optionalArgs) {
+        Object[] optionalArgValues = optionalArgs.getValues();
+        if (index >= 1 && index <= optionalArgValues.length) {
+            Object value = optionalArgValues[index - 1];
             if (value != null) {
                 return returnNonNull(value);
             }
@@ -103,8 +105,7 @@ public abstract class Switch extends RBuiltinNode {
         return returnNull();
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isLengthOne(RAbstractStringVector x, Object[] optionalArgs) {
+    protected boolean isLengthOne(RAbstractStringVector x) {
         return x.getLength() == 1;
     }
 
