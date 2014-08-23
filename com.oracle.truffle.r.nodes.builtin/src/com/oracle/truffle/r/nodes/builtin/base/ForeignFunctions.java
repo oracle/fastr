@@ -129,17 +129,19 @@ public class ForeignFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "dqrcf")
-        protected RList fortranDqrcf(String f, Object[] args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        protected RList fortranDqrcf(String f, Object args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
+            // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
+            Object[] argValues = ((RArgsValuesAndNames) args).getValues();
             try {
-                RDoubleVector xVec = (RDoubleVector) args[0];
-                int n = (int) args[1];
-                RIntVector k = (RIntVector) args[2];
-                RDoubleVector qrauxVec = (RDoubleVector) args[3];
-                RDoubleVector yVec = (RDoubleVector) args[4];
-                int ny = (int) args[5];
-                RDoubleVector bVec = (RDoubleVector) args[6];
-                RIntVector infoVec = (RIntVector) args[7];
+                RDoubleVector xVec = (RDoubleVector) argValues[0];
+                int n = (int) argValues[1];
+                RIntVector k = (RIntVector) argValues[2];
+                RDoubleVector qrauxVec = (RDoubleVector) argValues[3];
+                RDoubleVector yVec = (RDoubleVector) argValues[4];
+                int ny = (int) argValues[5];
+                RDoubleVector bVec = (RDoubleVector) argValues[6];
+                RIntVector infoVec = (RIntVector) argValues[7];
                 double[] x = xVec.isTemporary() ? xVec.getDataWithoutCopying() : xVec.getDataCopy();
                 double[] qraux = qrauxVec.isTemporary() ? qrauxVec.getDataWithoutCopying() : qrauxVec.getDataCopy();
                 double[] y = yVec.isTemporary() ? yVec.getDataWithoutCopying() : yVec.getDataCopy();
@@ -151,11 +153,11 @@ public class ForeignFunctions {
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR),
-                            args[1],
+                            argValues[1],
                             k.copy(),
                             RDataFactory.createDoubleVector(qraux, RDataFactory.COMPLETE_VECTOR),
                             RDataFactory.createDoubleVector(y, RDataFactory.COMPLETE_VECTOR),
-                            args[5],
+                            argValues[5],
                             coef,
                             RDataFactory.createIntVector(info, RDataFactory.COMPLETE_VECTOR),
                 };
