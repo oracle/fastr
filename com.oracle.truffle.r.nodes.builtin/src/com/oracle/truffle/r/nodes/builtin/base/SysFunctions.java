@@ -112,13 +112,18 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysSetEnv(Object[] args) {
+        protected RLogicalVector doSysSetEnv(RArgsValuesAndNames args) {
             controlVisibility();
+            Object[] argValues = args.getValues();
+            return doSysSetEnv(argValues);
+        }
+
+        private RLogicalVector doSysSetEnv(Object[] argValues) {
             String[] argNames = getSuppliedArgsNames();
             validateArgNames(argNames);
-            byte[] data = new byte[args.length];
-            for (int i = 0; i < args.length; i++) {
-                REnvVars.put(argNames[i], (String) args[i]);
+            byte[] data = new byte[argValues.length];
+            for (int i = 0; i < argValues.length; i++) {
+                REnvVars.put(argNames[i], (String) argValues[i]);
                 data[i] = RRuntime.LOGICAL_TRUE;
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
