@@ -40,13 +40,14 @@ public abstract class VApply extends RBuiltinNode {
 
     // TODO complete the implementation so that it works for all types of x and fun
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, Object[] optionalArgs) {
+    protected Object vapply(VirtualFrame frame, RAbstractVector x, RFunction fun, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
+        Object[] optionalArgValues = optionalArgs.getValues();
         // The first element of optionalArgs is FUN_VALUE
-        Object funValue = optionalArgs[0];
-        int optionalArgsLength = optionalArgs.length - 1;
+        Object funValue = optionalArgValues[0];
+        int optionalArgsLength = optionalArgValues.length - 1;
         Object[] combinedArgs = new Object[optionalArgsLength + 1];
-        System.arraycopy(optionalArgs, 0, combinedArgs, 1, optionalArgsLength);
+        System.arraycopy(optionalArgValues, 0, combinedArgs, 1, optionalArgsLength);
         RVector xMat = x.materialize();
         Object[] applyResult;
         if (x.getLength() > 0) {
