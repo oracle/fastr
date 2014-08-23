@@ -27,7 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -35,6 +37,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.nodes.builtin.base.SysFunctionsFactory.SysSetEnvFactory;
 
 public class SysFunctions {
 
@@ -101,6 +104,10 @@ public class SysFunctions {
     // TODO INTERNAL when argument names available in list(...)
     public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
 
+        protected abstract Object executeObject(VirtualFrame frame, Object args);
+
+        @Child private SysSetEnv sysSetEnvRecursive;
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RMissing.instance)};
@@ -111,14 +118,25 @@ public class SysFunctions {
             return doSysSetEnv(new Object[]{argVec.getDataAt(0)});
         }
 
-        @Specialization
-        protected RLogicalVector doSysSetEnv(RArgsValuesAndNames args) {
+        @Specialization(guards = "oneElement")
+        protected Object doSysSetEnvOneElement(VirtualFrame frame, RArgsValuesAndNames args) {
             controlVisibility();
+            if (sysSetEnvRecursive == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sysSetEnvRecursive = insert(SysSetEnvFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            }
+            return sysSetEnvRecursive.executeObject(frame, args.getValues()[0]);
+
+        }
+
+        @Specialization(guards = "!oneElement")
+        protected RLogicalVector doSysSetEnv(RArgsValuesAndNames args) {
             Object[] argValues = args.getValues();
             return doSysSetEnv(argValues);
         }
 
         private RLogicalVector doSysSetEnv(Object[] argValues) {
+            controlVisibility();
             String[] argNames = getSuppliedArgsNames();
             validateArgNames(argNames);
             byte[] data = new byte[argValues.length];
@@ -141,6 +159,10 @@ public class SysFunctions {
             if (!ok) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGS_MUST_BE_NAMED);
             }
+        }
+
+        protected boolean oneElement(RArgsValuesAndNames args) {
+            return args.length() == 1;
         }
     }
 
