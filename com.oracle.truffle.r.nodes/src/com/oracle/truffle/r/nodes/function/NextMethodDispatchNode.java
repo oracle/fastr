@@ -21,11 +21,11 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public class NextMethodDispatchNode extends S3DispatchNode {
 
-    @Child protected ReadVariableNode rvnDefEnv;
-    @Child protected ReadVariableNode rvnCallEnv;
-    @Child protected ReadVariableNode rvnGroup;
-    @Child protected ReadVariableNode rvnMethod;
-    @Child protected WriteVariableNode wvnGroup;
+    @Child private ReadVariableNode rvnDefEnv;
+    @Child private ReadVariableNode rvnCallEnv;
+    @Child private ReadVariableNode rvnGroup;
+    @Child private ReadVariableNode rvnMethod;
+    @Child private WriteVariableNode wvnGroup;
     private String group;
     private String lastGroup;
     private String storedFunctionName;
@@ -36,7 +36,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
     private boolean lastHasGroup;
     private final Object[] args;
 
-    NextMethodDispatchNode(final String genericName, final RStringVector type, final Object[] args) {
+    NextMethodDispatchNode(String genericName, RStringVector type, Object[] args) {
         this.genericName = genericName;
         this.type = type;
         this.args = args;
@@ -84,7 +84,7 @@ public class NextMethodDispatchNode extends S3DispatchNode {
         return lastHasGroup == hasGroup && isEqual(lastGroup, group) && isEqual(lastStoredFunctionName, storedFunctionName);
     }
 
-    private static boolean isEqual(final String a, final String b) {
+    private static boolean isEqual(String a, String b) {
         if (a == null || b == null) {
             return a == null && b == null;
         }

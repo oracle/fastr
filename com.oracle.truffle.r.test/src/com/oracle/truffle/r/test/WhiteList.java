@@ -47,8 +47,8 @@ public abstract class WhiteList {
         }
     }
 
-    private Map<String, Results> map = new HashMap<>();
-    private String whiteListResource;
+    private final Map<String, Results> map = new HashMap<>();
+    private final String whiteListResource;
 
     protected WhiteList(String whiteListResource) {
         this.whiteListResource = whiteListResource;
@@ -70,6 +70,9 @@ public abstract class WhiteList {
                         }
                         if (line.startsWith("#") || line.length() == 0) { // ignore line, comment
                             continue;
+                        }
+                        if (line.contains("\\n")) {
+                            line = line.replace("\\n", "\n");
                         }
                         String[] s = line.split("\\" + SPLIT_CHAR);
                         assert s.length == 3;
@@ -103,8 +106,8 @@ public abstract class WhiteList {
     public void report() {
         int unusedCount = map.size();
         for (Map.Entry<String, Results> entry : map.entrySet()) {
-            if (!entry.getValue().used) {
-                unusedCount++;
+            if (entry.getValue().used) {
+                unusedCount--;
             }
         }
         if (unusedCount == 0) {

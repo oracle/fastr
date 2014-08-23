@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -27,10 +28,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // TODO INTERNAL
 public abstract class NextMethod extends RBuiltinNode {
 
-    @Child protected DispatchedCallNode dispatchedCallNode;
-    @Child protected ReadVariableNode rvnClass;
-    @Child protected ReadVariableNode rvnGeneric;
-    protected String lastGenericName;
+    @Child private DispatchedCallNode dispatchedCallNode;
+    @Child private ReadVariableNode rvnClass;
+    @Child private ReadVariableNode rvnGeneric;
+    @CompilationFinal private String lastGenericName;
 
     @Override
     public RNode[] getParameterValues() {

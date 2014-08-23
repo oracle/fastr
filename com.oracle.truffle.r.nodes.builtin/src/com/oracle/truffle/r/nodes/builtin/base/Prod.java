@@ -40,7 +40,7 @@ public abstract class Prod extends RBuiltinNode {
 
     public abstract Object executeObject(VirtualFrame frame, Object x);
 
-    @Child protected BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
+    @Child private BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.create();
 
     @Specialization
     protected Object prod(VirtualFrame frame, RArgsValuesAndNames args) {

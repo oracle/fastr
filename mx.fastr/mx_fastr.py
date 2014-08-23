@@ -114,8 +114,8 @@ def _fastr_gate_body(args, tasks):
     if rc1 != 0:
         mx.abort('unit tests expected output check failed')
     tasks.append(t.stop())
-    t = mx.GateTask('UnitTests: simple')
-    rc2 = junit(['--tests', _simple_unit_tests()])
+    t = mx.GateTask('UnitTests: gate')
+    rc2 = junit(['--tests', _gate_unit_tests()])
     if rc2 != 0:
         mx.abort('unit tests failed')
     tasks.append(t.stop())
@@ -243,14 +243,26 @@ def junit_simple(args):
 def junit_default(args):
     return junit(['--tests', _all_unit_tests()] + args)
 
+def junit_gate(args):
+    return junit(['--tests', _gate_unit_tests()] + args)
+
 def _simple_unit_tests():
     return 'com.oracle.truffle.r.test.simple'
 
-def _testgen_unit_tests():
+def _testrgen_unit_tests():
     return 'com.oracle.truffle.r.test.testrgen'
 
+def _rffi_unit_tests():
+    return 'com.oracle.truffle.r.test.rffi'
+
+def _rpackages_unit_tests():
+    return 'com.oracle.truffle.r.test.rpackages'
+
+def _gate_unit_tests():
+    return _simple_unit_tests() + ',' + _rffi_unit_tests() + ',' + _rpackages_unit_tests()
+
 def _all_unit_tests():
-    return _simple_unit_tests() + ',' + _testgen_unit_tests()
+    return _gate_unit_tests() + ',' + _testrgen_unit_tests()
 
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
@@ -354,6 +366,7 @@ def mx_init(suite):
         'junit' : [junit, ['options']],
         'junitsimple' : [junit_simple, ['options']],
         'junitdefault' : [junit_default, ['options']],
+        'junitgate' : [junit_gate, ['options']],
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],

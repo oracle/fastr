@@ -80,6 +80,7 @@ public final class RFunction extends RScalar {
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
     }
+
     public void setUsePromises() {
         usePromises = true;
     }
@@ -87,5 +88,4 @@ public final class RFunction extends RScalar {
     public boolean getUsePromises() {
         return usePromises;
     }
-
 }

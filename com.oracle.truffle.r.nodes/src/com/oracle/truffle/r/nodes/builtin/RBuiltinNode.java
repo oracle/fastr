@@ -207,7 +207,7 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
     // or in case of var args exactly one.
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
-        @Child protected RNode delegate;
+        @Child private RNode delegate;
 
         public RWrapperBuiltinNode(RBuiltinNode prev) {
             super(prev);
@@ -264,7 +264,6 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
         public RIntVector executeRIntVector(VirtualFrame frame) throws UnexpectedResultException {
             return delegate.executeRIntVector(frame);
         }
-
     }
 
     public static class RCustomBuiltinNode extends RBuiltinNode {
@@ -304,5 +303,4 @@ public abstract class RBuiltinNode extends RCallNode implements VisibilityContro
             return "<custom builtin>";
         }
     }
-
 }

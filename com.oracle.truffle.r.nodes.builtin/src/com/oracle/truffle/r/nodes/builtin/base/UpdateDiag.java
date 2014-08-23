@@ -41,7 +41,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
 
-    @Child protected CastDoubleNode castDouble;
+    @Child private CastDoubleNode castDouble;
 
     protected static boolean isMatrix(RAbstractVector vector) {
         return vector.hasDimensions() && vector.getDimensions().length == 2;

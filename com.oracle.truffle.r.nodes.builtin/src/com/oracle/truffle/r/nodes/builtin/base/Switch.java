@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."})
 public abstract class Switch extends RBuiltinNode {
-    @Child protected CastIntegerNode castIntNode;
+    @Child private CastIntegerNode castIntNode;
 
     private boolean isVisible = true;
 

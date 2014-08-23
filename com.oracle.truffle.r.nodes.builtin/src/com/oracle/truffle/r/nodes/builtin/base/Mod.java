@@ -36,9 +36,9 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Mod extends RBuiltinNode {
 
-    @Child protected BinaryArithmeticNode pow = BinaryArithmeticNode.create(BinaryArithmetic.POW);
-    @Child protected BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
-    @Child protected Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
+    @Child private BinaryArithmeticNode pow = BinaryArithmeticNode.create(BinaryArithmetic.POW);
+    @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
+    @Child private Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames());
 
     @Specialization
     protected RDoubleVector mod(RAbstractComplexVector vec) {

@@ -38,7 +38,7 @@ public abstract class Print extends RInvisibleBuiltinNode {
 
     private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
 
-    @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, false);
+    @Child private PrettyPrinterNode prettyPrinter = PrettyPrinterNodeFactory.create(null, null, null, false);
 
     private static void printHelper(String string) {
         RContext.getInstance().getConsoleHandler().println(string);

@@ -51,7 +51,6 @@ public class TestBase {
      */
     public static class RunListener extends org.junit.runner.notification.RunListener {
 
-        private String arg;
         private static File diffsOutputFile;
 
         private static final String GEN_EXPECTED = "gen-expected";
@@ -62,6 +61,8 @@ public class TestBase {
         private static final String GEN_DIFFS = "gen-diff=";
         private static final String KEEP_TRAILING_WHITESPACEG = "keep-trailing-whitespace";
         private static final String TEST_METHODS = "test-methods=";
+
+        private final String arg;
 
         /**
          * Constructor with customization arguments.
@@ -166,16 +167,16 @@ public class TestBase {
     }
 
     private static class ExpectedTestOutputManager extends TestOutputManager {
-        final boolean generate;
+        private final boolean generate;
 
         /**
          * When {@code true}, indicates that test generation is in check only mode.
          */
-        private boolean checkOnly;
+        private final boolean checkOnly;
         /**
          * When running in generation mode, the original content of the expected output file.
          */
-        private String oldExpectedOutputFileContent;
+        private final String oldExpectedOutputFileContent;
 
         private boolean haveRSession;
 
@@ -468,7 +469,7 @@ public class TestBase {
     /**
      * The method to call when a micro-test fails.
      */
-    private static boolean assertTrue(boolean truth) {
+    protected static boolean assertTrue(boolean truth) {
         if (!truth) {
             microTestFailed();
         }
@@ -501,7 +502,7 @@ public class TestBase {
         }
     }
 
-    private static boolean assertFalse() {
+    protected static boolean assertFalse() {
         assertTrue(false);
         return false;
     }
@@ -703,7 +704,5 @@ public class TestBase {
         void setQuiet() {
             quiet = true;
         }
-
     }
-
 }

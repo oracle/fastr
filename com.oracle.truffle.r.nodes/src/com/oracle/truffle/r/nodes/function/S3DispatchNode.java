@@ -22,13 +22,13 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class S3DispatchNode extends DispatchNode {
 
-    @Child protected ReadVariableNode lookup;
-    @CompilationFinal protected String lastFun;
-    @Child protected WriteVariableNode wvnCallEnv;
-    @Child protected WriteVariableNode wvnGeneric;
-    @Child protected WriteVariableNode wvnClass;
+    @Child private ReadVariableNode lookup;
+    @CompilationFinal private String lastFun;
+    @Child private WriteVariableNode wvnCallEnv;
+    @Child private WriteVariableNode wvnGeneric;
+    @Child private WriteVariableNode wvnClass;
     @Child protected WriteVariableNode wvnMethod;
-    @Child protected WriteVariableNode wvnDefEnv;
+    @Child private WriteVariableNode wvnDefEnv;
     @Child protected IndirectCallNode funCallNode = Truffle.getRuntime().createIndirectCallNode();
     protected String targetFunctionName;
     protected RFunction targetFunction;
@@ -134,8 +134,7 @@ public abstract class S3DispatchNode extends DispatchNode {
     private void checkLength(final String className, final String generic) {
         // The magic number two taken from src/main/objects.c
         if (className.length() + generic.length() + 2 > RRuntime.LEN_METHOD_NAME) {
-            // TODO pass frame to make error catchable
-            throw RError.uncatchableError(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_LONG_CLASS_NAME, generic);
         }
     }
 }

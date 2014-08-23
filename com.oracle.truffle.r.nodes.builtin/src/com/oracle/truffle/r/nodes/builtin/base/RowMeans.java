@@ -31,7 +31,7 @@ public abstract class RowMeans extends RBuiltinNode {
         return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
     }
 
-    @Child protected BinaryArithmetic add = BinaryArithmetic.ADD.create();
+    @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
     private final NACheck na = NACheck.create();
 
     @CreateCast("arguments")

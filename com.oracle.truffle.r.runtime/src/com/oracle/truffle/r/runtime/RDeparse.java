@@ -157,30 +157,30 @@ public class RDeparse {
         private int inlist;
         private boolean startline;
         private int indent;
-        private int cutoff;
-        private boolean backtick;
+        private final int cutoff;
+        private final boolean backtick;
         @SuppressWarnings("unused") private int opts;
         @SuppressWarnings("unused") private int sourceable;
         @SuppressWarnings("unused") private int longstring;
-        private int maxlines;
+        private final int maxlines;
         private boolean active = true;
         @SuppressWarnings("unused") private int isS4;
 
-        State(int widthCutOff, boolean backtick, int maxlines, boolean needVector) {
+        private State(int widthCutOff, boolean backtick, int maxlines, boolean needVector) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
             this.maxlines = maxlines;
             lines = needVector ? new ArrayList<>() : null;
         }
 
-        void preAppend() {
+        private void preAppend() {
             if (startline) {
                 startline = false;
                 indent();
             }
         }
 
-        void indent() {
+        private void indent() {
             for (int i = 1; i <= indent; i++) {
                 if (i <= 4) {
                     append("    ");
@@ -190,19 +190,19 @@ public class RDeparse {
             }
         }
 
-        void append(String s) {
+        private void append(String s) {
             preAppend();
             sb.append(s);
             len += s.length();
         }
 
-        void append(char ch) {
+        private void append(char ch) {
             preAppend();
             sb.append(ch);
             len++;
         }
 
-        boolean linebreak(boolean lbreak) {
+        private boolean linebreak(boolean lbreak) {
             boolean result = lbreak;
             if (len > cutoff) {
                 if (!lbreak) {
@@ -214,7 +214,7 @@ public class RDeparse {
             return result;
         }
 
-        void writeline() {
+        private void writeline() {
             if (lines == null) {
                 // nl for debugging really, we don't care about format,
                 // although line length could be an issues also.
@@ -231,7 +231,6 @@ public class RDeparse {
             len = 0;
             startline = true;
         }
-
     }
 
     /**
@@ -282,7 +281,9 @@ public class RDeparse {
             case CLOSXP: {
                 RPairList f = (RPairList) obj;
                 state.append("function (");
-                args2buff(state, (RPairList) f.car(), false, true);
+                if (f.car() instanceof RPairList) {
+                    args2buff(state, (RPairList) f.car(), false, true);
+                }
                 state.append(") ");
                 state.writeline();
                 deparse2buff(state, f.cdr());

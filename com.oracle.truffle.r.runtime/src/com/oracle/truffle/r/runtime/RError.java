@@ -33,8 +33,8 @@ public final class RError extends RuntimeException {
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
 
-        private RError.Message msg;
-        private Object[] args;
+        private final RError.Message msg;
+        private final Object[] args;
 
         protected RErrorException(RError.Message msg, Object[] args) {
             super(RError.formatMessage(msg, args));
@@ -43,7 +43,7 @@ public final class RError extends RuntimeException {
         }
     }
 
-    private SourceSection source;
+    private final SourceSection source;
 
     private RError(SourceSection src, String msg) {
         super(msg);
@@ -91,29 +91,13 @@ public final class RError extends RuntimeException {
     }
 
     /**
-     * An error that cannot be caught by {@code options(error = expr)} as there is no
-     * {@link VirtualFrame} available. Ideally this should not be necessary.
-     */
-    @SlowPath
-    public static RError uncatchableError(SourceSection src, Message msg, Object... args) {
-        throw error0(true, src, msg, args);
-    }
-
-    @SlowPath
-    public static RError uncatchableError(SourceSection src, RErrorException ex) {
-        throw error0(true, src, ex.msg, ex.args);
-    }
-
-    /**
      * Handles an R error with the most general argument signature. All other variants delegate to
      * this method. R allows an error to be caught and an arbitrary expression evaluated, often a
      * call to the {@code browser} function for interactive inspection of the environment where the
      * error occurred.
      *
-     * Note that in the current implementation some errors are uncatchable owing to problems with
-     * their being generated at points where the frame is not available. Note also that the method
-     * never actually returns a result, but the throws the error directly. However, the signature
-     * has a return type of {@link RError} to allow callers to use the idiom
+     * Note that the method never actually returns a result, but the throws the error directly.
+     * However, the signature has a return type of {@link RError} to allow callers to use the idiom
      * {@code throw error(...)} to indicate the control transfer.
      *
      * @param src source of the code throwing the error, or {@code null} if not available
@@ -138,7 +122,10 @@ public final class RError extends RuntimeException {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
         if (ignoreError) {
-            // do we really need to be in the interpreter in this case?
+            /*
+             * TODO Should this be fast-path'ed? The actual error details don't matter as they are
+             * ignored anyway.
+             */
             throw rError;
         }
 

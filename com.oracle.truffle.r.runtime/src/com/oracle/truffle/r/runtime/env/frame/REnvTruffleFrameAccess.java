@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  */
 public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
-    private MaterializedFrame frame;
+    private final MaterializedFrame frame;
 
     public REnvTruffleFrameAccess(VirtualFrame frame) {
         this.frame = frame.materialize();

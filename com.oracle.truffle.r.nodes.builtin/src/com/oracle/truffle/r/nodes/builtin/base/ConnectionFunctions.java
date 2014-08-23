@@ -109,7 +109,7 @@ public abstract class ConnectionFunctions {
     }
 
     public static class GZIPInputRConnection extends RConnection {
-        private GZIPInputStream stream;
+        private final GZIPInputStream stream;
 
         GZIPInputRConnection(String path) throws IOException {
             stream = new GZIPInputStream(new FileInputStream(path));
@@ -124,7 +124,6 @@ public abstract class ConnectionFunctions {
         public InputStream getInputStream() throws IOException {
             return stream;
         }
-
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "raw"})

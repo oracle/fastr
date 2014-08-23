@@ -75,8 +75,8 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * "namespace:base" is the global environment.
  *
  * Whereas R types generally use value semantics environments do not; they have reference semantics.
- * In particular in FastR, there is exactly one environment created for any package or function
- * Truffle frame, allowing equality to be tested using {@code ==}.
+ * In particular in FastR, there is at exactly one environment created for any package frame and at
+ * most one for a function frame, allowing equality to be tested using {@code ==}.
  *
  * TODO retire the {@code Package}, {@code Namespace} and {@code Imports} classes as they are only
  * used by the builtin packages, and will be completely redundant when they are loaded from
@@ -146,7 +146,11 @@ public abstract class REnvironment implements RAttributable {
     }
 
     /**
-     * Returns {@code true} iff {@code frame} is that associated with {@code env}.
+     * Returns {@code true} iff {@code frame} is that associated with {@code env}. N.B. The
+     * environment associated with the frame may be {@code null} as {@link Function} environments
+     * are created lazily. However, we maintain the invariant that whenever a {@link Function}
+     * environment is created the value is stored in the associated frame. Therefore {@code env}
+     * could never match lazy {@code null}.
      */
     public static boolean isFrameForEnv(Frame frame, REnvironment env) {
         return RArguments.getEnvironment(frame) == env;
@@ -801,7 +805,9 @@ public abstract class REnvironment implements RAttributable {
 
     /**
      * When a function is invoked a {@link Function} environment may be created in response to the R
-     * {@code environment()} base package function, and it will have an associated frame.
+     * {@code environment()} base package function, and it will have an associated frame. We hide
+     * the creation of {@link Function} environments to ensure the <i>at most one>/i> invariant and
+     * store the value in the frame immediately.
      */
     private static final class Function extends REnvironment {
 

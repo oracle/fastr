@@ -45,11 +45,11 @@ public abstract class Order extends RBuiltinNode {
 
     public abstract Object executeDoubleVector(VirtualFrame frame, Object vec, RMissing tie);
 
-    @Child protected BooleanOperation eq = BinaryCompare.EQUAL.create();
-    @Child protected BooleanOperation lt = BinaryCompare.LESS_THAN.create();
-    @Child protected BooleanOperation le = BinaryCompare.LESS_EQUAL.create();
-    @Child protected BooleanOperation ge = BinaryCompare.GREATER_EQUAL.create();
-    @Child protected BooleanOperation gt = BinaryCompare.GREATER_THAN.create();
+    @Child private BooleanOperation eq = BinaryCompare.EQUAL.create();
+    @Child private BooleanOperation lt = BinaryCompare.LESS_THAN.create();
+    @Child private BooleanOperation le = BinaryCompare.LESS_EQUAL.create();
+    @Child private BooleanOperation ge = BinaryCompare.GREATER_EQUAL.create();
+    @Child private BooleanOperation gt = BinaryCompare.GREATER_THAN.create();
 
     // specialisations for one parameter
 

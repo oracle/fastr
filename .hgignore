@@ -8,6 +8,7 @@
 ^mx.fastr/eclipse-config-libs.zip
 ^mx.fastr/eclipse-config.zip
 ^mx.fastr/netbeans-config.zip
+^com.oracle.truffle.r.test/rpackages/testrlibs_user
 ^build/
 ^build-nograal/
 ^dist/

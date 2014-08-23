@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "round", kind = PRIMITIVE, parameterNames = {"x", "digits"})
 public abstract class Round extends RBuiltinNode {
 
-    @Child protected UnaryArithmetic roundOp = UnaryArithmetic.ROUND.create();
+    @Child private UnaryArithmetic roundOp = UnaryArithmetic.ROUND.create();
 
     private final NACheck check = NACheck.create();
 

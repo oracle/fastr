@@ -38,12 +38,12 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""})
 public abstract class MatMult extends RBuiltinNode {
 
-    @Child protected BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
-    @Child protected BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
+    @Child private BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
+    @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
 
     protected abstract Object executeObject(VirtualFrame frame, Object a, Object b);
 
-    protected final NACheck na;
+    private final NACheck na;
 
     public MatMult() {
         this.na = NACheck.create();
@@ -753,5 +753,4 @@ public abstract class MatMult extends RBuiltinNode {
         }
         return false;
     }
-
 }

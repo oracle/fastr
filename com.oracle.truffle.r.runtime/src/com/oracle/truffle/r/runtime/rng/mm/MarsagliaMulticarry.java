@@ -19,7 +19,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
  */
 public class MarsagliaMulticarry extends RNGInitAdapter implements GeneratorPrivate {
 
-    private int[] state = new int[2];
+    private final int[] state = new int[2];
 
     public void init(int seed) {
         super.init(seed, state);

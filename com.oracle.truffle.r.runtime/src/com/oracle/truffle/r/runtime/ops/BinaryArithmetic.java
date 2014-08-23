@@ -526,7 +526,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw RError.uncatchableError(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
+            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
@@ -607,7 +607,7 @@ public abstract class BinaryArithmetic extends Operation {
         // GCC, which is licensed under GPL
 
         @Child private CHypot chypot;
-        @Child protected Multiply mult;
+        @Child private Multiply mult;
         @Child protected CPow2 cpow2;
 
         protected void ensurePowKNodes() {
@@ -810,7 +810,7 @@ public abstract class BinaryArithmetic extends Operation {
     private static final class PowNegative extends Pow {
 
         @Child private Pow pow = new PowK();
-        @Child protected CReciprocal creciprocal = new CReciprocal();
+        @Child private CReciprocal creciprocal = new CReciprocal();
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {

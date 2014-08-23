@@ -27,13 +27,13 @@ import edu.umd.cs.findbugs.annotations.*;
 
 public class GroupDispatchNode extends S3DispatchNode {
 
-    @Child protected WriteVariableNode wvnGroup;
+    @Child private WriteVariableNode wvnGroup;
     @Child protected CallArgumentsNode callArgsNode;
-    @Child protected ReadVariableNode builtInNode;
+    @Child private ReadVariableNode builtInNode;
     @CompilationFinal private final String groupName;
     protected boolean writeGroup;
     private boolean isEnvSet;
-    protected RStringVector typeLast;
+    private RStringVector typeLast;
     protected Object[] evaluatedArgs;
     protected RStringVector dotMethod;
 
