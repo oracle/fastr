@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * would induce unnecessary dependencies otherwise.
  */
 public class RMissingHelper {
+    public static final RNode MISSING_ARGUMENT = ConstantNode.create(RMissing.instance);
 
     /**
      * This function determines, of an arguments value - given as 'value' - is missing. An argument

@@ -143,17 +143,8 @@ public class ArgumentMatcher {
      */
     public static MatchedArgumentsNode matchArguments(VirtualFrame frame, RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
 
-        // "Evaluate" supplied arguments
-        RNode[] suppliedEvaled = new RNode[suppliedArgs.getArguments().length];
-        for (int i = 0; i < suppliedEvaled.length; i++) {
-            RNode arg = suppliedArgs.getArguments()[i];
-
-            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-            suppliedEvaled[i] = isMissingSymbol(frame, arg) ? null : arg;
-        }
-
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedEvaled, suppliedArgs.getNames(), encapsulatingSrc, false);
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, false);
         return MatchedArgumentsNode.create(wrappedArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
     }
 
@@ -269,6 +260,15 @@ public class ArgumentMatcher {
      */
     private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuiltin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
+
+        // Check for "missing" symbols
+        RNode[] suppliedArgsChecked = new RNode[suppliedArgs.length];
+        for (int i = 0; i < suppliedArgsChecked.length; i++) {
+            RNode arg = suppliedArgs[i];
+
+            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
+            suppliedArgsChecked[i] = isMissingSymbol(frame, arg) ? RMissingHelper.MISSING_ARGUMENT : arg;
+        }
 
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(frame, function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
@@ -689,6 +689,11 @@ public class ArgumentMatcher {
      *         {@link RMissing} in case neither is present!
      */
     private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, RBuiltinRootNode builtinRootNode, EnvProvider envProvider, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
+        // Check: If supplied is missing, forward this one
+        if (suppliedArg == RMissingHelper.MISSING_ARGUMENT) {
+            return suppliedArg;
+        }
+
         // Determine whether to choose supplied argument or default value
         RNode expr = null;
         PromiseType promiseType = null;

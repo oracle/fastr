@@ -106,8 +106,11 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
         return ResolvePromiseNodeFactory.create(rvn, symbol);
     }
 
-    protected boolean checkType(Object objArg, String type) {
+    protected boolean checkType(VirtualFrame frame, Object objArg, String type) {
         Object obj = objArg;
+        if (obj == RMissing.instance && !getSymbol().isVarArg()) {
+            throw RError.error(frame, RError.Message.ARGUMENT_MISSING, getSymbol());
+        }
         if (type.equals(RRuntime.TYPE_ANY)) {
             return true;
         }
@@ -325,7 +328,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             controlVisibility();
             if (readNode.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = readNode.execute(frame);
-                if (checkType(result, mode)) {
+                if (checkType(frame, result, mode)) {
                     return result;
                 }
             }
@@ -365,7 +368,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             node = insert(ReadLocalVariableNodeFactory.create(new FrameSlotNode.UnresolvedFrameSlotNode(symbol), symbol));
             if (node.getFrameSlotNode().hasValue(frame, frame)) {
                 Object result = node.execute(frame);
-                if (checkType(result, mode)) {
+                if (checkType(frame, result, mode)) {
                     replace(node);
                     return result;
                 }
@@ -445,7 +448,7 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             controlVisibility();
             if (readNode.getFrameSlotNode().hasValue(frame, enclosingFrame)) {
                 Object result = readNode.execute(frame, enclosingFrame);
-                if (checkType(result, mode)) {
+                if (checkType(frame, result, mode)) {
                     return result;
                 }
             }
