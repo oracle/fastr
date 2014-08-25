@@ -351,7 +351,7 @@ public final class RError extends RuntimeException {
         NON_NUMERIC_ARGUMENT_FUNCTION("non-numeric argument to function"),
         SEED_LENGTH(".Random.seed has wrong length"),
         // below: not exactly GNU-R message
-        PROMISE_CYCLE("promise already under evaluation: recursive default argument reference?"),
+        PROMISE_CYCLE("promise already under evaluation: recursive default argument reference or earlier problems?"),
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
         INVALID_ENVIRONMENT("invalid environment specified"),
         ENVIR_NOT_LENGTH_ONE("numeric 'envir' arg not of length one"),

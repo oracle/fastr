@@ -164,12 +164,26 @@ public final class RPromise {
             return value;
         }
 
-        // Evaluate this promises value!
-        // TODO Performance: We can use frame directly if we are sure that it matches the on in env!
-        if (env != null && env != RArguments.getEnvironment(frame)) {
-            value = doEvalArgument();
-        } else {
-            value = doEvalArgument(frame);
+        // Check for dependecy cycle
+        if (underEvaluation) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // TODO Get SourceSection of funcall!
+            throw RError.error(RError.Message.PROMISE_CYCLE);
+        }
+
+        try {
+            underEvaluation = true;
+
+            // Evaluate this promises value!
+            // TODO Performance: We can use frame directly if we are sure that it matches the on in
+            // env!
+            if (env != null && env != RArguments.getEnvironment(frame)) {
+                value = doEvalArgument();
+            } else {
+                value = doEvalArgument(frame);
+            }
+        } finally {
+            underEvaluation = false;
         }
 
         isEvaluated = true;

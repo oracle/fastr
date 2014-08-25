@@ -1099,6 +1099,26 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testMissingIgnore_72acc1b3617e48b2fa82bb26c3766005() {
+        assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testMissingIgnore_4d4ddff49525509727252465a38b7dab() {
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testMissingIgnore_32e4fa660fad3f0468fe84a74a8ee913() {
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testMissingIgnore_77e99ff6cfb53e3c7d569e2a3ec713fd() {
+        assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testOperatorsIgnore_dd8820aada824b55da8fce1b2069a4a8() {
         assertEval("{ `%*%`(3,5) }");
     }
@@ -2306,36 +2326,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testErrors_bf29c1dae99e04f8cd11a340f54e1287() {
         assertEvalError("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testPromisesIgnore_c7558b8584a0a8c1dff6c7ee5575ab52() {
-        assertEval("{ f <- function(x = z) { z = 1 ; x } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testPromisesIgnore_b817867bec89270f00c9820b107edd80() {
-        assertEval("{ z <- 1 ; f <- function(c = z) {  z <- z + 1 ; c  } ; f() }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testPromisesIgnore_0782b9c8b5990e31ca5d45f3d355ad83() {
-        assertEval("{ f <- function(a) { g <- function(b) { x <<- 2; b } ; g(a) } ; x <- 1 ; f(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testPromisesIgnore_9a98faefce072c525121fc846528b144() {
-        assertEval("{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testPromisesIgnore_f502212c6a9fc0404104e3f44f29d926() {
-        assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testPromisesIgnore_1d4e596e32ad6ce14263c2861138bb44() {
-        assertEvalError("{ f <- function(x = y, y = x) { y } ; f() }");
     }
 
     @Ignore
