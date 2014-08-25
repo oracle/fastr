@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -198,7 +199,7 @@ public class ArgumentMatcher {
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
-    protected static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
+    private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
                     SourceSection encapsulatingSrc) {
         String[] formalNames = formals.getNames();
 
@@ -544,6 +545,7 @@ public class ArgumentMatcher {
          */
         String debugString(T[] args);
 
+        @SlowPath
         default String debugString(T arg) {
             T[] args = newArray(1);
             args[0] = arg;
@@ -559,6 +561,7 @@ public class ArgumentMatcher {
             return new RNode[length];
         }
 
+        @SlowPath
         public String debugString(RNode[] args) {
             SourceSection src = Utils.sourceBoundingBox(args);
             return String.valueOf(src);
@@ -573,6 +576,7 @@ public class ArgumentMatcher {
             return new Object[length];
         }
 
+        @SlowPath
         public String debugString(Object[] args) {
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < args.length; i++) {

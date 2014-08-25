@@ -143,25 +143,30 @@ public final class CallArgumentsNode extends ArgumentsNode {
             }
             return new RArgsValuesAndNames(values, this.getNames());
         } else {
-            ArrayList<Object> values = new ArrayList<>(arguments.length);
-            ArrayList<String> newNames = new ArrayList<>(arguments.length);
+            Object[] values = new Object[arguments.length];
+            String[] newNames = new String[arguments.length];
 
+            int index = 0;
             for (int i = 0; i < arguments.length; i++) {
                 Object argEvaluated = arguments[i].execute(frame);
                 if (argEvaluated instanceof RArgsValuesAndNames) {
                     // variadic argument
                     RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) argEvaluated;
+                    values = Utils.resizeObjectsArray(values, values.length + varArgInfo.length() - 1);
+                    newNames = Utils.resizeStringsArray(newNames, newNames.length + varArgInfo.length() - 1);
                     for (int j = 0; j < varArgInfo.length(); j++) {
-                        values.add(varArgInfo.getValues()[j]);
-                        newNames.add(varArgInfo.getNames()[j]);
+                        values[index] = varArgInfo.getValues()[j];
+                        newNames[index] = varArgInfo.getNames()[j];
+                        index++;
                     }
                 } else {
-                    values.add(argEvaluated);
-                    newNames.add(this.getNames()[i]);
+                    values[index] = argEvaluated;
+                    newNames[index] = this.getNames()[i];
+                    index++;
                 }
             }
 
-            return new RArgsValuesAndNames(values.toArray(), newNames.toArray(new String[newNames.size()]));
+            return new RArgsValuesAndNames(values, newNames);
         }
     }
 

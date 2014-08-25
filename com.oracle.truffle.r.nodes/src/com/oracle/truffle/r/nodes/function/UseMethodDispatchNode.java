@@ -59,6 +59,9 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return executeHelper(frame, args);
     }
 
+    // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
+    // having one method with a rather convoluted control flow structure?
+
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
         // Extract arguments from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
@@ -70,7 +73,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         int fi = 0;
         int index = 0;
         for (; fi < argCount; ++fi) {
-            // conditional vs. allocation in extractArgs() - is it worth it?
             Object arg = RArguments.getArgument(frame, fi);
             if (arg instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) arg;
@@ -115,7 +117,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         int fi = 0;
         int index = 0;
         for (; fi < argCount; ++fi) {
-            // conditional vs. allocation in extractArgs() - is it worth it?
             Object arg = args[fi];
             if (arg instanceof Object[]) {
                 Object[] varArgs = (Object[]) arg;
