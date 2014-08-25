@@ -106,7 +106,7 @@ public final class RError extends RuntimeException {
      */
     @SlowPath
     public static RError error(SourceSection src, Message msg, Object... args) {
-        throw error0(false, src, msg, args);
+        throw error0(src, msg, args);
     }
 
     @SlowPath
@@ -114,7 +114,7 @@ public final class RError extends RuntimeException {
         throw error(src, msg, (Object[]) null);
     }
 
-    private static RError error0(boolean uncatchable, SourceSection src, Message msg, Object... args) {
+    private static RError error0(SourceSection src, Message msg, Object... args) {
         RError rError;
         if (src != null) {
             rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
@@ -122,41 +122,31 @@ public final class RError extends RuntimeException {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
         if (ignoreError) {
-            /*
-             * TODO Should this be fast-path'ed? The actual error details don't matter as they are
-             * ignored anyway.
-             */
             throw rError;
         }
 
         Object errorExpr = ROptions.getValue("error");
         if (errorExpr != RNull.instance) {
-            if (uncatchable) {
-                // uncatchable
-                RContext.getInstance().getConsoleHandler().println("error in uncatchable");
-                throw rError;
-            } else {
-                // Errors and warnings are output before the expression is evaluated
-                RContext.getEngine().printRError(rError);
-                // errorExpr can be anything, but not everything makes sense
-                if (errorExpr instanceof RArgsValuesAndNames) {
-                    // TODO: worry about other potential ... values?
-                    errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
-                }
-                if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                    VirtualFrame frame = Utils.getActualCurrentFrame();
-                    if (errorExpr instanceof RLanguage) {
-                        RContext.getEngine().eval((RLanguage) errorExpr, frame);
-                    } else if (errorExpr instanceof RExpression) {
-                        RContext.getEngine().eval((RExpression) errorExpr, frame);
-                    }
-                } else {
-                    // GnuR checks this earlier when the option is set
-                    throw new RError(null, Message.INVALID_ERROR.message);
-                }
-                // Control, transfer to top level, but suppress print
-                throw new RError(null, "");
+            // Errors and warnings are output before the expression is evaluated
+            RContext.getEngine().printRError(rError);
+            // errorExpr can be anything, but not everything makes sense
+            if (errorExpr instanceof RArgsValuesAndNames) {
+                // TODO: worry about other potential ... values?
+                errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
+            if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
+                VirtualFrame frame = Utils.getActualCurrentFrame();
+                if (errorExpr instanceof RLanguage) {
+                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                } else if (errorExpr instanceof RExpression) {
+                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                }
+            } else {
+                // GnuR checks this earlier when the option is set
+                throw new RError(null, Message.INVALID_ERROR.message);
+            }
+            // Control, transfer to top level, but suppress print
+            throw new RError(null, "");
         } else {
             throw rError;
         }
