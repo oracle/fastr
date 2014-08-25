@@ -15714,6 +15714,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_8e8b4b9d534876d4b15da024f9dd620b() {
+        assertEval("{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod(\"f\") }; f(c(1,2), row.names = \"r1\", nm=\"bar\") }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDotsIgnore_e620898284cbe5e1d40bfe326c77804e() {
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
     }

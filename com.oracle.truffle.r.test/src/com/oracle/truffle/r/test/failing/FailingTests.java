@@ -2024,11 +2024,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleFunctions_testArgs_88c2c495f154230921998b06b16d441c() {
-        assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm=\"x\") }");
-    }
-
-    @Ignore
     public void TestSimpleFunctions_testArgsIgnore_4f0bba29449d73452b8aeb86b93aafb5() {
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm=\"x\") }");
     }

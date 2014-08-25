@@ -13465,6 +13465,10 @@ Error: object 'v' not found
 #{ typeof(a~b) }
 [1] "language"
 
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testArgs
+#{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm="x") }
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testBinding
 #{ f <- function(func, a) { func(a) && TRUE } ; g <- function(x) {TRUE} ; f(g, 5) ; f(is.na, 4)  }
 [1] FALSE
@@ -13698,6 +13702,11 @@ Hello world
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a=1,...) a ; f() }
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod("f") }; f(c(1,2), row.names = "r1", nm="bar") }
+[1] FALSE
+[1] "bar"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f<-function(x, y) { print(missing(y)); } ; f(42) }
