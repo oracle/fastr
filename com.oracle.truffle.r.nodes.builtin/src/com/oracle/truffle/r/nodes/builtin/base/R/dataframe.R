@@ -208,7 +208,7 @@ as.data.frame.raw <- function(x, row.names = NULL, nm = NULL, optional = FALSE, 
 #as.data.frame.factor  <- as.data.frame.vector
 #as.data.frame.ordered <- as.data.frame.vector
 #as.data.frame.integer <- as.data.frame.vector
-as.data.frame.integer <- function(x, row.names = NULL, nm = NULL, optional, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.integer <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 #as.data.frame.numeric <- as.data.frame.vector
 as.data.frame.numeric <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
 #as.data.frame.complex <- as.data.frame.vector

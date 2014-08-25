@@ -275,7 +275,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, debugSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
                     // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
                 }
@@ -342,7 +342,7 @@ public abstract class RCallNode extends RNode {
             RArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             EvaluatedArguments evaledArgs = EvaluatedArguments.create(argsValuesAndNames.getValues(), argsValuesAndNames.getNames());
             // ...to match them against the chosen function's formal arguments
-            EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(evaluatedFunction, evaledArgs, getEncapsulatingSourceSection());
+            EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, evaluatedFunction, evaledArgs, getEncapsulatingSourceSection());
 
             Object[] argsObject = RArguments.create(function, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
             return call.call(frame, argsObject);
@@ -370,7 +370,7 @@ public abstract class RCallNode extends RNode {
             RArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             EvaluatedArguments evaledArgs = EvaluatedArguments.create(argsValuesAndNames.getValues(), argsValuesAndNames.getNames());
             // ...to match them against the chosen function's formal arguments
-            EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, getEncapsulatingSourceSection());
+            EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, function, evaledArgs, getEncapsulatingSourceSection());
 
             Object[] argsObject = RArguments.create(function, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
             return indirectCall.call(frame, function.getTarget(), argsObject);

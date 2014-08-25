@@ -102,11 +102,11 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         // ...and use them as 'supplied' arguments...
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
-    private Object executeHelper(Frame callerFrame, Object[] args) {
+    private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
         // Extract arguments from current frame...
         int argCount = args.length;
         int argListSize = argCount;
@@ -132,7 +132,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         // ...and use them as 'supplied' arguments...
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 

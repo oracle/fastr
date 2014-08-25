@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * would induce unnecessary dependencies otherwise.
  */
 public class RMissingHelper {
+    public static final RNode MISSING_ARGUMENT = ConstantNode.create(RMissing.instance);
 
     /**
      * This function determines, of an arguments value - given as 'value' - is missing. An argument
@@ -78,25 +80,13 @@ public class RMissingHelper {
      * @return See {@link #isMissingSymbol(RPromise)}
      */
     @SlowPath
-    public static boolean isMissingArgument(MaterializedFrame frame, Symbol symbol) {
+    public static boolean isMissingArgument(Frame frame, Symbol symbol) {
         // TODO IsDotDotSymbol: Anything special to do here?
 
-        Object value = null;
-
-        // Check binding
-        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(symbol.getName());
-        if (frameSlot == null) {
-            return false;
-        }
-
         // Check symbols value
-        try {
-            value = frame.getObject(frameSlot);
-            if (value == RMissing.instance) {
-                return true;
-            }
-        } catch (FrameSlotTypeException e) {
-            return false;
+        Object value = getMissingValue(frame, symbol);
+        if (value == RMissing.instance) {
+            return true;
         }
 
         // Check for Promise
@@ -108,9 +98,24 @@ public class RMissingHelper {
         return false;
     }
 
+    public static Object getMissingValue(Frame frame, Symbol symbol) {
+        // Check binding
+        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(symbol.getName());
+        if (frameSlot == null) {
+            return null;
+        }
+
+        // Check symbols value
+        try {
+            return frame.getObject(frameSlot);
+        } catch (FrameSlotTypeException e) {
+            return null;
+        }
+    }
+
     /**
      * @param promise The {@link RPromise} which is checked whether it contains a
-     *            {@link #isMissingArgument(MaterializedFrame, Symbol)}.
+     *            {@link #isMissingArgument(Frame, Symbol)}.
      * @return Whether the given {@link RPromise} represents a symbol that is 'missing' in its frame
      */
     @SlowPath
