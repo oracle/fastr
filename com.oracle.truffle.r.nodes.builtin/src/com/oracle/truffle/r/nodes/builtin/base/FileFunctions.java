@@ -43,7 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.base.FileFunctionsFactory.FileExistsFa
 
 public class FileFunctions {
 
-    @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"...", "showWarnings"})
+    @RBuiltin(name = "file.create", kind = INTERNAL, parameterNames = {"vec", "showWarnings"})
     public abstract static class FileCreate extends RBuiltinNode {
 
         @Override
@@ -188,7 +188,7 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"..."})
+    @RBuiltin(name = "file.remove", kind = INTERNAL, parameterNames = {"vec"})
     public abstract static class FileRemove extends RBuiltinNode {
 
         @Specialization

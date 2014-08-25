@@ -259,10 +259,10 @@ def _rpackages_unit_tests():
     return 'com.oracle.truffle.r.test.rpackages'
 
 def _gate_unit_tests():
-    return _simple_unit_tests() + ',' + _rffi_unit_tests() + ',' + _rpackages_unit_tests()
+    return _simple_unit_tests() + ',' + _rffi_unit_tests() + ',' + _rpackages_unit_tests() + ',' + _testrgen_unit_tests()
 
 def _all_unit_tests():
-    return _gate_unit_tests() + ',' + _testrgen_unit_tests()
+    return _gate_unit_tests()
 
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
