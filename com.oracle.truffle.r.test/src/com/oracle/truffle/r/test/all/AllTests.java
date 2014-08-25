@@ -16929,8 +16929,33 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleSequences_testSequenceConstruction_4a3fda323bd5d386396bd5cde0af5bbc() {
+        assertEval("{ 1:NA }");
+    }
+
+    @Test
+    public void TestSimpleSequences_testSequenceConstruction_12c6e3de14f03107388664219b87d221() {
+        assertEval("{ NA:1 }");
+    }
+
+    @Test
+    public void TestSimpleSequences_testSequenceConstruction_5f30aa49a0dad803b9ef79c3852ccda7() {
+        assertEval("{ NA:NA }");
+    }
+
+    @Test
     public void TestSimpleSequences_testSequenceConstructionIgnore_b9324a4b0cb6cce5fbe2323872e18705() {
         assertEvalWarning("{ (1:3):3 }");
+    }
+
+    @Test
+    public void TestSimpleSequences_testSequenceConstructionIgnore_21f0e4d9f66324fb97f8a0e9ca64bb19() {
+        assertEvalWarning("{ 1:(1:3) }");
+    }
+
+    @Test
+    public void TestSimpleSequences_testSequenceConstructionIgnore_0bdc2a5212b5125502d20aa9b6d7012e() {
+        assertEvalWarning("{ (1:3):(1:3) }");
     }
 
     @Test

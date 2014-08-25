@@ -15739,12 +15739,24 @@ NULL
 [1] 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
+#{ 1:NA }
+Error in 1:NA : NA/NaN argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
 #{ 3.1:1 }
 [1] 3.1 2.1 1.1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
 #{ 3:1 }
 [1] 3 2 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
+#{ NA:1 }
+Error in NA:1 : NA/NaN argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
+#{ NA:NA }
+Error in NA:NA : NA/NaN argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleTruffle.test1
 #{ f<-function() { 1:5 } ; f(); f() }

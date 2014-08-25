@@ -34,11 +34,17 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ 1.1:3.1 }");
         assertEval("{ 3:1 }");
         assertEval("{ 3.1:1 }");
+        assertEval("{ 1:NA }");
+        assertEval("{ NA:1 }");
+        assertEval("{ NA:NA }");
     }
 
     @Test
     @Ignore
     public void testSequenceConstructionIgnore() {
         assertEvalWarning("{ (1:3):3 }");
+        assertEvalWarning("{ 1:(1:3) }");
+        assertEvalWarning("{ (1:3):(1:3) }");
     }
+
 }
