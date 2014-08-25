@@ -74,7 +74,7 @@ public abstract class Internal extends RBuiltinNode {
         // .Internal function is validated
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // Replace the original call; we can't just use callNode as that will cause recursion!
-        RCallNode internalCallNode = RCallNode.createInternalCall(frame, this.getParent().getSourceSection(), callNode, function, symbol);
+        RCallNode internalCallNode = RCallNode.createInternalCall(frame, call.getSourceSection(), callNode, function, symbol);
         this.getParent().replace(internalCallNode);
         // evaluate the actual builtin this time, next time we won't get here!
         Object result = internalCallNode.execute(frame);
