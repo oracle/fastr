@@ -30,3 +30,22 @@ ngettext <- function(n, msg1, msg2, domain = NULL)
 
 gettextf <- function(fmt, ..., domain = NULL)
     sprintf(gettext(fmt, domain = domain), ...)
+
+stopifnot <- function(...)
+{
+	n <- length(ll <- list(...))
+	if(n == 0L)
+		return(invisible())
+	#mc <- match.call()
+	for(i in 1L:n)
+		if(!(is.logical(r <- ll[[i]]) && !any(is.na(r)) && all(r))) {
+			#ch <- deparse(mc[[i+1]], width.cutoff = 60L)
+			#if(length(ch) > 1L) ch <- paste(ch[1L], "....")
+			stop(sprintf(ngettext(length(r),
+									"%s is not TRUE",
+									"%s are not all TRUE"),
+							"ch"), call. = FALSE, domain = NA)
+		}
+	invisible()
+}
+
