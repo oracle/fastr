@@ -5014,6 +5014,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsVector_8d0d1cdaff856d660d11866fa044397e() {
+        assertEval("{ as.vector(\"foo\", \"bar\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsVector_7df3d852bd307ec74005874e9e6b860a() {
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
     }
@@ -5041,11 +5046,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testAsVector_bfb16efc959f2032f3fd07f7282ad495() {
         assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testAsVector_8d0d1cdaff856d660d11866fa044397e() {
-        assertEvalError("{ as.vector(\"foo\", \"bar\") }");
     }
 
     @Test
