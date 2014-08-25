@@ -100,7 +100,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
 
         // ...and use them as 'supplied' arguments...
-        // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
@@ -131,7 +130,6 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
 
         // ...and use them as 'supplied' arguments...
-        // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
         // ...to match them against the chosen function's formal arguments
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
