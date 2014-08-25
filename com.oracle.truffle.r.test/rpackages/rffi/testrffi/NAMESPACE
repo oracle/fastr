@@ -1,0 +1,5 @@
+## package has a dynamic library
+useDynLib(testrffi)
+
+## and exported functions
+export(addint)

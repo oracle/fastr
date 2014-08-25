@@ -62,10 +62,15 @@ typedef jobject SEXP;
 #define allocVector		Rf_allocVector
 #define asInteger		Rf_asInteger
 
+#define ScalarInteger		Rf_ScalarInteger
+
 int Rf_asInteger(SEXP x);
 
 SEXP Rf_allocVector(SEXPTYPE, R_xlen_t);
 
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v);
+
+SEXP	 Rf_ScalarInteger(int);
+
 
 #endif

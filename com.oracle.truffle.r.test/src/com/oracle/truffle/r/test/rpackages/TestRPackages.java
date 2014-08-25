@@ -36,35 +36,76 @@ import com.oracle.truffle.r.test.*;
 public class TestRPackages extends TestBase {
     private static class ThisWhiteList extends WhiteList {
 
-        protected ThisWhiteList() {
+        private static ThisWhiteList thisWhiteList;
+
+        private ThisWhiteList() {
             super("RPackagesWhiteList.test");
+        }
+
+        private static ThisWhiteList get() {
+            if (thisWhiteList == null) {
+                thisWhiteList = new ThisWhiteList();
+            }
+            return thisWhiteList;
         }
 
     }
 
+    /**
+     * Create {@link Path}s to needed folders. N.B. The same directory is used when generating
+     * expected output with GnuR, and running FastR, to keep the {@code lib_loc} argument the same
+     * in the test string, so the operation is destructive.
+     */
+    private class PackagePaths {
+        private final Path rpackagesDists;
+        private final Path rpackagesLibs;
+
+        private PackagePaths() {
+            Path cwd = Paths.get(System.getProperty("user.dir"));
+            Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
+            rpackagesLibs = cwd.relativize(rpackages.resolve("testrlibs_user"));
+            if (!rpackagesLibs.toFile().exists()) {
+                rpackagesLibs.toFile().mkdir();
+            }
+            rpackagesDists = rpackages.resolve("distributions");
+        }
+
+        private boolean installPackage(String packageZip) {
+            Path vanilla = rpackagesDists.resolve(packageZip);
+            // install the package (using GnuR for now)
+            ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", vanilla.toString());
+            Map<String, String> env = pb.environment();
+            env.put("R_LIBS_USER", rpackagesLibs.toString());
+            String installKind = generatingExpected() ? "GNUR" : "FASTR";
+            env.put("FASTR_INSTALL", installKind);
+            env.put("FASTR_HOME", REnvVars.rHome());
+            String javaHome = System.getenv("JAVA_HOME");
+            env.put("FASTR_JAVA_HOME", javaHome);
+            try {
+                // Uncomment the following to actually see the INSTALL output (debugging)
+                // pb.inheritIO();
+                Process install = pb.start();
+                int rc = install.waitFor();
+                return rc == 0;
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+    }
+
     @Test
     public void testLoadVanilla() {
-        Path cwd = Paths.get(System.getProperty("user.dir"));
-        Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
-        Path rpackagesLibs = rpackages.resolve("testrlibs_user");
-        Path relLibsPath = cwd.relativize(rpackagesLibs);
-        if (!relLibsPath.toFile().exists()) {
-            relLibsPath.toFile().mkdir();
-        }
-        Path rpackagesDists = rpackages.resolve("distributions");
-        Path vanilla = rpackagesDists.resolve("vanilla_1.0.tar.gz");
-        // install the package (using GnuR for now)
-        ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", vanilla.toString());
-        Map<String, String> env = pb.environment();
-        env.put("R_LIBS_USER", rpackagesLibs.toString());
-        try {
-            Process install = pb.start();
-            int rc = install.waitFor();
-            assertTrue(rc == 0);
-            assertTemplateEval(new ThisWhiteList(), TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{relLibsPath.toString()}));
-        } catch (Exception ex) {
-            assertFalse();
-        }
+        PackagePaths packagePaths = new PackagePaths();
+        assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
+        assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
+    }
+
+    @Test
+    public void testLoadTestRFFI() {
+        PackagePaths packagePaths = new PackagePaths();
+        assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
+        assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); addint(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
+
     }
 
 }

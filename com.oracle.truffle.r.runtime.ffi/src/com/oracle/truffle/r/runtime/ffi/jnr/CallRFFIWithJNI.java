@@ -27,10 +27,8 @@ import java.nio.file.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a
@@ -50,50 +48,25 @@ public class CallRFFIWithJNI implements CallRFFI {
         OSInfo osInfo = RPlatform.getOSInfo();
         Path path = FileSystems.getDefault().getPath(rHome, packageName, "fficall", "jni", "lib", "libcall." + osInfo.libExt);
         System.load(path.toString());
-    }
-
-    /**
-     * Helper function that handles {@link Integer} and {@link RIntVector} "vectors".
-     *
-     * @return value at logical index 0
-     */
-    public static int getIntDataAtZero(Object x) {
-        if (x instanceof Integer) {
-            return ((Integer) x).intValue();
-        } else if (x instanceof RIntVector) {
-            return ((RIntVector) x).getDataAt(0);
-        } else {
-            assert false;
-            return 0;
-        }
-    }
-
-    private static final NACheck elementNACheck = NACheck.create();
-
-    /**
-     * Helper function for updating arrays.
-     */
-    public static void updateIntDataAt(RIntVector x, int index, int value) {
-        elementNACheck.enable(x);
-        x.updateDataAt(index, value, elementNACheck);
+        initialize();
     }
 
     // @formatter:off
     public Object invokeCall(SymbolInfo symbolInfo, Object[] args) throws Throwable {
+        long address = symbolInfo.getAddress();
         switch (args.length) {
-            case 0: return call0(symbolInfo.getAddress());
-            case 1: return call1(symbolInfo.getAddress(), args[0]);
-            case 2: return call2(symbolInfo.getAddress(), args[0], args[1]);
-            case 3: return call3(symbolInfo.getAddress(), args[0], args[1], args[2]);
-            case 4: return call4(symbolInfo.getAddress(), args[0], args[1], args[2], args[3]);
-            case 5: return call5(symbolInfo.getAddress(), args[0], args[1], args[2], args[3], args[4]);
-            case 6: return call6(symbolInfo.getAddress(), args[0], args[1], args[2], args[3], args[4], args[5]);
-            case 7: return call7(symbolInfo.getAddress(), args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-            case 8: return call8(symbolInfo.getAddress(), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-            case 9: return call9(symbolInfo.getAddress(), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+            case 0: return call0(address);
+            case 1: return call1(address, args[0]);
+            case 2: return call2(address, args[0], args[1]);
+            case 3: return call3(address, args[0], args[1], args[2]);
+            case 4: return call4(address, args[0], args[1], args[2], args[3]);
+            case 5: return call5(address, args[0], args[1], args[2], args[3], args[4]);
+            case 6: return call6(address, args[0], args[1], args[2], args[3], args[4], args[5]);
+            case 7: return call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+            case 8: return call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+            case 9: return call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
             default:
-                assert false;
-                return null;
+                return call(address, args);
         }
     }
 
@@ -102,6 +75,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         return null;
     }
 
+    private static native void initialize();
     private static native Object call(long address, Object[] args);
     private static native Object call0(long address);
     private static native Object call1(long address, Object arg1);
