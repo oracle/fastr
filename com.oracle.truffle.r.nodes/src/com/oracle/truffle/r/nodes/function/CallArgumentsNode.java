@@ -134,6 +134,7 @@ public final class CallArgumentsNode extends ArgumentsNode {
         throw new AssertionError();
     }
 
+    @ExplodeLoop
     public RArgsValuesAndNames executeFlatten(VirtualFrame frame) {
         if (!containsVarArgsSymbol()) {
             Object[] values = new Object[arguments.length];

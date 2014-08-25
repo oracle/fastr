@@ -187,6 +187,7 @@ public class TestSimpleFunctions extends TestBase {
 
         assertEval("{ f<-function(x, y) { print(missing(y)); } ; f(42) }");
         assertEval("{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }");
+        assertEval("{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod(\"f\") }; f(c(1,2), row.names = \"r1\", nm=\"bar\") }");
     }
 
     @Test
@@ -249,9 +250,7 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testArgs() {
-        // Test fails in unit tests but not in shell after merge with testrgen
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm=\"x\") }");
     }
 
