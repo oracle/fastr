@@ -70,7 +70,7 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     private RStringVector castStringVector(VirtualFrame frame, Object o) {
         initCast();
-        return (RStringVector) castStringNode.executeString(frame, o);
+        return (RStringVector) ((RStringVector) castStringNode.executeString(frame, o)).copyDropAttributes();
     }
 
     @Specialization
