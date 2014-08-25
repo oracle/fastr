@@ -153,22 +153,7 @@ public class PromiseNode extends RNode {
                 }
                 RPromise promise = factory.createPromiseDefault();
                 return promise.evaluate(frame);
-            }
-// else if (obj instanceof RArgsValuesAndNames) {
-// // TODO Move this up the hierarchy!
-// // Evaluate nested
-// RArgsValuesAndNames varArgs = (RArgsValuesAndNames) obj;
-// for (int i = 0; i < varArgs.getValues().length; i++) {
-// RPromise promise = (RPromise) varArgs.getValues()[i];
-// varArgs.getValues()[i] = promise.evaluate(frame);
-// }
-// return varArgs;
-// }
-// else if (obj instanceof RPromise) {
-// RPromise promise = (RPromise) obj;
-// return promise.evaluate(frame);
-// }
-            else {
+            } else {
                 return obj;
             }
         }

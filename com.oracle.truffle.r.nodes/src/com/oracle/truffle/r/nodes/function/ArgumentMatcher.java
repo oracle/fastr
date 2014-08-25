@@ -186,17 +186,10 @@ public class ArgumentMatcher {
      *         frame
      */
     private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
-        RNode rvnArg = arg;
-
-        if (rvnArg instanceof WrapArgumentNode) {
-            rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
-        }
-
-        // ReadVariableNode denotes a symbol
-        if (rvnArg instanceof ReadVariableNode) {
-            ReadVariableNode rvn = (ReadVariableNode) rvnArg;
-            Symbol symbol = rvn.getSymbol();
+        Symbol symbol = RMissingHelper.unwrapSymbol(arg);
+        if (symbol != null) {
             Object obj = RMissingHelper.getMissingValue(frame, symbol);
+
             // Symbol == missingArgument?
             if (obj == RMissing.instance) {
                 return true;
