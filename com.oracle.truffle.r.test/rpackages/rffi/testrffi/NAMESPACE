@@ -2,4 +2,5 @@
 useDynLib(testrffi)
 
 ## and exported functions
-export(addint)
+export(add_int)
+export(add_double)

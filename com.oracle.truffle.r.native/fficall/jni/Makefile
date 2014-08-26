@@ -25,6 +25,7 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ../..)
 endif
 
+$(warning USE_RINTERNALS=$(USE_R_INTERNALS))
 include $(TOPDIR)/platform.mk
 
 .PHONY: all clean
@@ -49,7 +50,7 @@ $(C_LIB): $(OBJ) $(C_OBJECTS)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: $(SRC)/%.c
+$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:

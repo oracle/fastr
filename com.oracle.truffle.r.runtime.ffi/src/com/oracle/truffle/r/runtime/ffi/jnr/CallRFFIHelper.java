@@ -38,6 +38,10 @@ public class CallRFFIHelper {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
+    static RDoubleVector ScalarDouble(double value) {
+        return RDataFactory.createDoubleVectorFromScalar(value);
+    }
+
     /**
      * Helper function that handles {@link Integer} and {@link RIntVector} "vectors".
      *
@@ -48,6 +52,22 @@ public class CallRFFIHelper {
             return ((Integer) x).intValue();
         } else if (x instanceof RIntVector) {
             return ((RIntVector) x).getDataAt(0);
+        } else {
+            assert false;
+            return 0;
+        }
+    }
+
+    /**
+     * Helper function that handles {@link Integer} and {@link RIntVector} "vectors".
+     *
+     * @return value at logical index 0
+     */
+    static double getDoubleDataAtZero(Object x) {
+        if (x instanceof Double) {
+            return ((Double) x).doubleValue();
+        } else if (x instanceof RDoubleVector) {
+            return ((RDoubleVector) x).getDataAt(0);
         } else {
             assert false;
             return 0;

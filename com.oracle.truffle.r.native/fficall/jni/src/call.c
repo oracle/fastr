@@ -30,8 +30,10 @@ JNIEnv *getEnv() {
 static jclass RDataFactoryClass;
 static jclass CallRFFIHelperClass;
 static jmethodID scalarIntegerMethodID;
+static jmethodID scalarDoubleMethodID;
 static jmethodID createIntArrayMethodID;
 static jmethodID getIntDataAtZeroID;
+static jmethodID getDoubleDataAtZeroID;
 
 static jclass checkFindClass(JNIEnv *env, const char *name);
 static jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
@@ -42,14 +44,21 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper");
 
 	scalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
+	scalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
 	createIntArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createIntVector", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
 	getIntDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getIntDataAtZero", "(Ljava/lang/Object;)I", 1);
+	getDoubleDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getDoubleDataAtZero", "(Ljava/lang/Object;)D", 1);
 
 }
 
 SEXP Rf_ScalarInteger(int value) {
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, scalarIntegerMethodID, value);
+}
+
+SEXP Rf_ScalarReal(double value) {
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, scalarDoubleMethodID, value);
 }
 
 SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
@@ -67,6 +76,11 @@ SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
 int Rf_asInteger(SEXP x) {
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, getIntDataAtZeroID, x);
+}
+
+double Rf_asReal(SEXP x) {
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, getDoubleDataAtZeroID, x);
 }
 
 // Class/method search
