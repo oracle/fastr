@@ -16799,6 +16799,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleParsing_testIncorrectInput_6666cd76f96956469e7be39d750cc7d9() {
+        assertEval("/");
+    }
+
+    @Test
     public void TestSimpleSequences_testSequenceConstruction_a0aafd2380a76f7e9301d729381845b6() {
         assertEval("{ 1:3 }");
     }
