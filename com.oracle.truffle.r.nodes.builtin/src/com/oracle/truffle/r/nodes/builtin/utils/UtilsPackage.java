@@ -8,7 +8,6 @@
  *
  * All rights reserved.
  */
-
 package com.oracle.truffle.r.nodes.builtin.utils;
 
 import com.oracle.truffle.r.nodes.builtin.*;
