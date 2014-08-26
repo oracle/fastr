@@ -11694,6 +11694,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testSeqLen_9a7e2f05aea68278b395c8a236791663() {
+        assertEval("{ seq_len(10) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSeqLen_6f9e27c3c8f37710b7ba1c01381930cf() {
+        assertEval("{ seq_len(5L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSeqLen_d97f2e2af09702e2a3be97b239cb2187() {
+        assertEval("{ seq_len(1:2) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSeqLen_91c5e4e4c0e406ba0750d17d6f4f019d() {
+        assertEval("{ seq_len(integer()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testSequence_521e4a932cff700b625d2bfa8bbdcf0f() {
         assertEval("{ 5L:10L }");
     }

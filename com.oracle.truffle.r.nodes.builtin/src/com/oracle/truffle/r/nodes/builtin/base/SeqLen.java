@@ -25,14 +25,18 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"})
 public abstract class SeqLen extends RBuiltinNode {
+
+    private final ConditionProfile lengthProblem = ConditionProfile.createBinaryProfile();
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
@@ -40,8 +44,16 @@ public abstract class SeqLen extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntSequence seq(int length) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(1, 1, length);
+    protected RIntSequence seqLen(RAbstractIntVector length) {
+        if (lengthProblem.profile(length.getLength() == 0 || length.getLength() > 1)) {
+            if (length.getLength() == 0 || length.getLength() > 1) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.FIRST_ELEMENT_USED, "length.out");
+            }
+            if (length.getLength() == 0) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_COERCIBLE_INTEGER);
+            }
+        }
+        return RDataFactory.createIntSequence(1, 1, length.getDataAt(0));
     }
+
 }
