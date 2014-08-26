@@ -35,8 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "as.vector", kind = SUBSTITUTE, parameterNames = {"x", "mode"})
-// TODO should be INTERNAL
+@RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
 public abstract class AsVector extends RBuiltinNode {
 
     @Child private CastIntegerNode castInteger;

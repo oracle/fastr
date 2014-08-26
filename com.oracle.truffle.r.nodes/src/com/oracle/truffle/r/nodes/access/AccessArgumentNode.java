@@ -63,15 +63,10 @@ public class AccessArgumentNode extends RNode {
         } else if (obj instanceof RArgsValuesAndNames) {
             RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) obj;
             Object[] varArgs = varArgsContainer.getValues();
-// if (varArgs.length == 1) {
-// return varArgs[0] instanceof RPromise ? handlePromise(frame, varArgs[0]) : varArgs[0];
-// } else {
             for (int i = 0; i < varArgsContainer.length(); i++) {
                 varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, varArgs[i]) : varArgs[i];
             }
             return varArgsContainer;
-// return varArgs;
-// }
         } else {
             return obj;
         }
@@ -79,7 +74,6 @@ public class AccessArgumentNode extends RNode {
 
     private Object handlePromise(VirtualFrame frame, Object promiseObj) {
         RPromise promise = (RPromise) promiseObj;
-        assert promise.getEvalPolicy() != EvalPolicy.INLINED;
         assert promise.getType() != PromiseType.NO_ARG;
 
         // Check whether it is necessary to create a callee REnvironment for the promise
@@ -91,8 +85,7 @@ public class AccessArgumentNode extends RNode {
         }
 
         // Now force evaluation for STRICT
-        if (promise.getEvalPolicy() == EvalPolicy.STRICT) { // || promise.getEvalPolicy() ==
-// EvalPolicy.INLINED) {
+        if (promise.getEvalPolicy() == EvalPolicy.INLINED) {
             strictEvaluation.enter();
             return promise.evaluate(frame);
         }

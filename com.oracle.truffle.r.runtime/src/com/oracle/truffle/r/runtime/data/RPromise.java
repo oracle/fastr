@@ -55,15 +55,7 @@ public final class RPromise {
          * happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside callee
          * frame if {@link PromiseType#ARG_DEFAULT}.
          */
-        PROMISED,
-
-        /**
-         * This is used for maintaining old, strict argument evaluation semantics. Arguments are
-         * fully evaluated before executing the actual function.<br/>
-         * Evaluation happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside
-         * callee frame if {@link PromiseType#ARG_DEFAULT}.
-         */
-        STRICT;
+        PROMISED;
     }
 
     /**

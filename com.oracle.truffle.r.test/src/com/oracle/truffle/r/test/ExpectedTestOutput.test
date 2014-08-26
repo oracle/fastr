@@ -13433,6 +13433,15 @@ Error: object 'v' not found
 #{ typeof(a~b) }
 [1] "language"
 
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testArgs
+#{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm="x") }
+[1] FALSE
+[1] "x"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testArgs
+#{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm="x") }
+[1] FALSE
+
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testBinding
 #{ f <- function(func, a) { func(a) && TRUE } ; g <- function(x) {TRUE} ; f(g, 5) ; f(is.na, 4)  }
 [1] FALSE
@@ -13668,6 +13677,11 @@ Hello world
 [1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod("f") }; f(c(1,2), row.names = "r1", nm="bar") }
+[1] FALSE
+[1] "bar"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f<-function(x, y) { print(missing(y)); } ; f(42) }
 [1] TRUE
 
@@ -13678,6 +13692,72 @@ Hello world
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }
 [1] 42  1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ dummy <- 2 ; dummy() }
+Error: could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }
+Error in g() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function() { dummy() } ; dummy <- 2 ; f() }
+Error in f() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function() { dummy() } ; f() }
+Error in f() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }
+Error in f() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }
+Error in g() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }
+Error in f(a = 1, ...) :
+  formal argument "a" matched by multiple actual arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }
+Error in f(a = 1, ...) : argument 2 matches multiple formal arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }
+Error in f(a = 1, ...) :
+  formal argument "bextra" matched by multiple actual arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }
+[1] 1 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }
+[1] 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ...) }  ; f(b=1,a=2) }
+[1] 6
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1) }
+[1] 14
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testInvokeIndirectly
 #{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[1]](1) }
@@ -15777,12 +15857,24 @@ NULL
 [1] 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
+#{ 1:NA }
+Error in 1:NA : NA/NaN argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
 #{ 3.1:1 }
 [1] 3.1 2.1 1.1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
 #{ 3:1 }
 [1] 3 2 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
+#{ NA:1 }
+Error in NA:1 : NA/NaN argument
+
+##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
+#{ NA:NA }
+Error in NA:NA : NA/NaN argument
 
 ##com.oracle.truffle.r.test.simple.TestSimpleTruffle.test1
 #{ f<-function() { 1:5 } ; f(); f() }

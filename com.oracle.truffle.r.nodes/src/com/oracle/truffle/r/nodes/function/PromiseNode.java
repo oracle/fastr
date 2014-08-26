@@ -76,14 +76,6 @@ public class PromiseNode extends RNode {
                 }
                 break;
 
-            case STRICT:
-                if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    pn = new StrictSuppliedPromiseNode(factory, envProvider);
-                } else {
-                    pn = new PromiseNode(factory, envProvider);
-                }
-                break;
-
             case PROMISED:
                 pn = new PromiseNode(factory, envProvider);
                 break;
@@ -102,29 +94,6 @@ public class PromiseNode extends RNode {
     @Override
     public Object execute(VirtualFrame frame) {
         return factory.createPromise(factory.getType() == PromiseType.ARG_DEFAULT ? null : envProvider.getREnvironmentFor(frame));
-    }
-
-    /**
-     * This class is meant for supplied arguments (which have to be evaluated in the caller frame)
-     * which are supposed to evaluated {@link EvalPolicy#STRICT}: This means, we can simply evaluate
-     * them here! And simply fill a {@link RPromise} with the result value.
-     * {@link EvalPolicy#STRICT} {@link PromiseType#ARG_SUPPLIED}
-     */
-    private static class StrictSuppliedPromiseNode extends PromiseNode {
-        @Child private RNode suppliedArg;
-
-        public StrictSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
-            super(factory, envProvider);
-            this.suppliedArg = (RNode) factory.getExpr();
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            // Evaluate the supplied argument here in the caller frame and create the Promise with
-            // this value so it can finally be evaluated on the callee side
-            Object obj = suppliedArg.execute(frame);
-            return factory.createPromiseArgEvaluated(obj);
-        }
     }
 
     /**
