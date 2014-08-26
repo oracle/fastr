@@ -286,6 +286,25 @@ public abstract class Seq extends RBuiltinNode {
         return RDataFactory.createIntSequence(1, 1, alongWith.getLength());
     }
 
+    @Specialization(guards = {"toLengthOne", "positiveLengthOut"})
+    public RIntSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, int lengthOut, RMissing alongWith) {
+        controlVisibility();
+        return RDataFactory.createIntSequence(to.getDataAt(0) - lengthOut + 1, 1, lengthOut);
+    }
+
+    @Specialization(guards = {"toLengthOne", "positiveLengthOut"})
+    public RIntSequence seq(RMissing start, RAbstractIntVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        controlVisibility();
+        final int intLength = (int) Math.ceil(lengthOut);
+        return RDataFactory.createIntSequence(to.getDataAt(0) - intLength + 1, 1, intLength);
+    }
+
+    @Specialization(guards = {"toLengthOne", "positiveLengthOut"})
+    public RDoubleSequence seq(RMissing start, RAbstractDoubleVector to, RMissing stride, double lengthOut, RMissing alongWith) {
+        controlVisibility();
+        return RDataFactory.createDoubleSequence(to.getDataAt(0) - lengthOut + 1, 1, (int) Math.ceil(lengthOut));
+    }
+
     @Specialization(guards = {"startLengthOne", "lengthZero"})
     protected RDoubleVector seq(RAbstractDoubleVector start, RMissing to, RMissing stride, int lengthOut, RMissing alongWith) {
         controlVisibility();
@@ -375,7 +394,7 @@ public abstract class Seq extends RBuiltinNode {
         return true;
     }
 
-    protected boolean toLengthOne(RAbstractVector start, RAbstractVector to) {
+    protected boolean toLengthOne(Object start, RAbstractVector to) {
         if (to.getLength() != 1) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
         }
@@ -408,5 +427,19 @@ public abstract class Seq extends RBuiltinNode {
 
     protected boolean lengthZeroAlong(Object start, Object to, Object stride, Object lengthOut, RAbstractVector v) {
         return v.getLength() == 0;
+    }
+
+    protected boolean positiveLengthOut(Object start, Object to, Object stride, int lengthOut, Object v) {
+        if (lengthOut < 0) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_POSITIVE, "length.out");
+        }
+        return true;
+    }
+
+    protected boolean positiveLengthOut(Object start, Object to, Object stride, double lengthOut, Object v) {
+        if (lengthOut < 0) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_POSITIVE, "length.out");
+        }
+        return true;
     }
 }

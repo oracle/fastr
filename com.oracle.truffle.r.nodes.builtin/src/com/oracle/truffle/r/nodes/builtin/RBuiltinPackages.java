@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.nodes.builtin.fastr.*;
 import com.oracle.truffle.r.nodes.builtin.methods.*;
 import com.oracle.truffle.r.nodes.builtin.stats.*;
+import com.oracle.truffle.r.nodes.builtin.utils.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -42,7 +43,7 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
-    private static final HashMap<String, RBuiltinPackage> packages = new HashMap<>(5);
+    private static final HashMap<String, RBuiltinPackage> packages = new HashMap<>(6);
 
     private static final RBuiltinPackages instance = new RBuiltinPackages();
 
@@ -51,6 +52,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         RBuiltinPackages.add(new FastRPackage());
         RBuiltinPackages.add(new StatsPackage());
         RBuiltinPackages.add(new MethodsPackage());
+        RBuiltinPackages.add(new UtilsPackage());
     }
 
     protected static void add(RBuiltinPackage builtins) {

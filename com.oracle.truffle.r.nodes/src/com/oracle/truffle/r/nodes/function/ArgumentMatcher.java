@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -46,6 +47,51 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * parameters, e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, SourceSection)}
  * for 'UseMethod' and {@link #matchArgumentsInlined(RFunction, CallArgumentsNode, SourceSection)}
  * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
+ * </p>
+ *
+ * <p>
+ * Here are some details on how the argument processing and matching works. The formal arguments
+ * list is constructed at the point when the {@link FunctionDefinitionNode} object is constructed.
+ * The supplied (actual) arguments list is constructed at the point when the
+ * {@link CallArgumentsNode} is constructed. At the point of executing the actual function call, the
+ * supplied arguments are not processed (they are represented as {@link RNode}-s) and must be
+ * "executed" to get converted into language-level values or promises. Then, the matching procedure
+ * takes a list of formal arguments and a list of "executed" supplied arguments and applies the
+ * actual matching algorithm taking into consideration names and positions of arguments, as well as
+ * their number. The last step of the function call execution is packaging of the matched
+ * (potentially reordered) "executed" supplied arguments into an {@link RArguments} object that is
+ * stored in the callee's frame.
+ * </p>
+ *
+ * <p>
+ * One caveat here is related to the S3 dispatch procedure. In this case, we have in fact two
+ * function calls, one to the "dispatch" function (the one containing the UseMethod call) and one to
+ * the function that is ultimately selected. Both functions can have a different list of formal
+ * arguments and may require running a separate argument matching procedure. For example, in the
+ * following piece of R code, the name of argument b must be available when executing the call to
+ * g() for proper argument reordering:
+ *
+ * f<-function(a,b) { UseMethod("f") }; f.numeric<-function(b,a) { a - b }; f(b=1,2)
+ *
+ * Consequently, argument names passed to the "dispatch" function are preserved as part of the
+ * {@link RArguments} object and made this way available when executing the selected function.
+ * </p>
+ *
+ * <p>
+ * Another caveat is related to matching arguments for variadic functions (functions containing the
+ * ... argument). On the caller's side, multiple supplied arguments (with their own names) can be
+ * encapsulated as a single formal ... argument on the callee's side. In this case, however, R still
+ * requires that the names of arguments encapsulated as ... are available to the callee for use in
+ * the argument matching procedures down the call chain. For example, in the following piece of R
+ * code, argument b is encapsulated as ... when executing the call to f() and yet its name has to be
+ * available when executing the call to g() for proper argument reordering:
+ *
+ * f <- function(...) g(...); g <- function(a,b) { a - b }; f(b=1,2)
+ *
+ * Consequently, "non-executed" ... arguments are represented as {@link VarArgsNode}-s (inheriting
+ * from {@link RNode}) and "executed" .. arguments are represented as a language level value of type
+ * {@link RArgsValuesAndNames}, which can be passes directly in the {@link RArguments} object and
+ * whose type is understood by the language's builtins (both representations are name-preserving).
  * </p>
  */
 public class ArgumentMatcher {
@@ -198,7 +244,7 @@ public class ArgumentMatcher {
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
-    protected static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
+    private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
                     SourceSection encapsulatingSrc) {
         String[] formalNames = formals.getNames();
 
@@ -544,6 +590,7 @@ public class ArgumentMatcher {
          */
         String debugString(T[] args);
 
+        @SlowPath
         default String debugString(T arg) {
             T[] args = newArray(1);
             args[0] = arg;
@@ -559,6 +606,7 @@ public class ArgumentMatcher {
             return new RNode[length];
         }
 
+        @SlowPath
         public String debugString(RNode[] args) {
             SourceSection src = Utils.sourceBoundingBox(args);
             return String.valueOf(src);
@@ -573,6 +621,7 @@ public class ArgumentMatcher {
             return new Object[length];
         }
 
+        @SlowPath
         public String debugString(Object[] args) {
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < args.length; i++) {
@@ -642,7 +691,7 @@ public class ArgumentMatcher {
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
         public Object makeList(final Object[] elements, final String[] names) {
             if (elements.length > 0) {
-                return new RArgsValuesAndNames(elements, names == null ? new String[elements.length] : names);
+                return new RArgsValuesAndNames(elements, names);
             } else {
                 return RMissing.instance;
             }

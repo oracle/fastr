@@ -50,7 +50,7 @@ as.list.function <- function (x, ...) c(formals(x), list(body(x)))
 ### NB: as.vector is used for several other as.xxxx, including
 ### as.expression, as.list, as.pairlist, as.single, as.symbol.
 ### as.vector dispatches internally so no need for a generic
-#as.vector <- function(x, mode = "any") .Internal(as.vector(x, mode))
+as.vector <- function(x, mode = "any") .Internal(as.vector(x, mode))
 
 #as.matrix <- function(x, ...) UseMethod("as.matrix")
 #as.matrix.default <- function(x, ...) {

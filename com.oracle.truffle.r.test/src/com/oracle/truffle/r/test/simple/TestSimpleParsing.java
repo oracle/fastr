@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,25 +26,14 @@ import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
 
-public class TestSimpleSequences extends TestBase {
+/**
+ * Tests that challenge the parser.
+ */
+public class TestSimpleParsing extends TestBase {
 
     @Test
-    public void testSequenceConstruction() {
-        assertEval("{ 1:3 }");
-        assertEval("{ 1.1:3.1 }");
-        assertEval("{ 3:1 }");
-        assertEval("{ 3.1:1 }");
-        assertEval("{ 1:NA }");
-        assertEval("{ NA:1 }");
-        assertEval("{ NA:NA }");
-    }
-
-    @Test
-    @Ignore
-    public void testSequenceConstructionIgnore() {
-        assertEvalWarning("{ (1:3):3 }");
-        assertEvalWarning("{ 1:(1:3) }");
-        assertEvalWarning("{ (1:3):(1:3) }");
+    public void testIncorrectInput() {
+        assertEval("/");
     }
 
 }
