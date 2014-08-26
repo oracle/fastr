@@ -1239,6 +1239,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testPrintIgnore_1b704b3de3fb726ef00328841b29f629() {
+        assertEval("{ nql <- noquote(letters); nql}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testProdNa_75349670d382cb12b8cdbbfa32158e8a() {
         assertEval("{prod(c(2,4,NA))}");
     }

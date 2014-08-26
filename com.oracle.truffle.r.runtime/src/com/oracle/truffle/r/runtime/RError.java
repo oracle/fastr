@@ -261,6 +261,7 @@ public final class RError extends RuntimeException {
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
         NO_NONMISSING_MIN("no non-missing arguments to min; returning Inf"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
+        MUST_BE_POSITIVE("%s must be a non-negative number"),
         INVALID_TFB("invalid (to - from)/by in seq(.)"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
         WRONG_TYPE("wrong type of argument"),
@@ -534,7 +535,8 @@ public final class RError extends RuntimeException {
         CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
-        QUOTE_G_ONE("only the first character of 'quote' will be used");
+        QUOTE_G_ONE("only the first character of 'quote' will be used"),
+        UNEXPECTED("unexpected '%s' in \"%s\"");
 
         public final String message;
         private final boolean hasArgs;

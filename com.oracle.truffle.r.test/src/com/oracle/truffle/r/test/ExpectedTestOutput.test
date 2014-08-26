@@ -7083,6 +7083,42 @@ NULL
 #{ txt<-c("rai", "ira", "iri"); grep("i$", txt) }
 [1] 1 3
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{head(letters)}
+[1] "a" "b" "c" "d" "e" "f"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{head(letters, n = -6L)}
+ [1] "a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s"
+[20] "t"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{head(letters, n = 10L)}
+ [1] "a" "b" "c" "d" "e" "f" "g" "h" "i" "j"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{tail(letters)}
+[1] "u" "v" "w" "x" "y" "z"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{tail(letters, n = -6L)}
+ [1] "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y"
+[20] "z"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{tail(letters, n = 10L)}
+ [1] "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{x<-matrix(c(1,2,3,4),2,2); head(x,1);}
+     [,1] [,2]
+[1,]    1    3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testHeadNTail
+#{x<-matrix(c(1,2,3,4),2,2); tail(x,1);}
+     [,1] [,2]
+[2,]    2    4
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIfelse
 #{ ifelse(FALSE,1,0) }
 [1] 0
@@ -8945,11 +8981,20 @@ character(0)
 [1]   11    7 2222    7   33
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ nql <- noquote(letters); nql[1:4] <- "oh"; print(nql)}
+ [1] oh oh oh oh e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y
+[26] z
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
+#{ nql <- noquote(letters); print(nql)}
+ [1] a b c d e f g h i j k l m n o p q r s t u v w x y z
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
 #{ print(1:3,quote=TRUE) }
 [1] 1 2 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
-#{ print(23,quote=TRUE) }
+#{ print(23) }
 [1] 23
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testPrint
@@ -15809,6 +15854,10 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleMatrix.testUpdateScalarIndex
 #{ x<-c(1L,2L,3L,4L,5L,6L,7L,8L,9L,10L); dim(x) <- c(2,5); x[2,4] <- 100L; x[2,4] }
 [1] 100
+
+##com.oracle.truffle.r.test.simple.TestSimpleParsing.testIncorrectInput
+#/
+Error: unexpected '/' in "/"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleSequences.testSequenceConstruction
 #{ 1.1:3.1 }
