@@ -319,6 +319,9 @@ public final class REngine implements RContext.Engine {
             String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, e.charPositionInLine + 1) + "\"";
             singleton.context.getConsoleHandler().println(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"));
             return null;
+        } catch (RError e) {
+            singleton.context.getConsoleHandler().println(e.getMessage());
+            return null;
         } catch (RecognitionException | RuntimeException e) {
             singleton.context.getConsoleHandler().println("Exception while parsing: " + e);
             e.printStackTrace();
@@ -357,8 +360,8 @@ public final class REngine implements RContext.Engine {
     /**
      * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
      * {@link RootCallTarget} for it. We define the
-     * {@link com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition} environment to have the
-     * {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
+     * {@link com.oracle.truffle.r.runtime.env.REnvironment.FunctionDefinition} environment to have
+     * the {@link REnvironment#emptyEnv()} as parent, so it is note scoped relative to any existing
      * environments, i.e. is truly anonymous.
      *
      * N.B. For certain expressions, there might be some value in enclosing the wrapper function in
