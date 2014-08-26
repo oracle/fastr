@@ -8656,8 +8656,32 @@ Warning message:
 In min(integer(0)) : no non-missing arguments to min; returning Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = 2 + 3) { missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a = 2) { g(a) } ; g <- function(b) { missing(b) } ; f() }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z) { missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }
+[1]  TRUE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a) { g(a) } ;  g <- function(b) { missing(b) } ; f() }
@@ -8666,6 +8690,10 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a,b,c) { missing(b) } ; f(1,,2) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) { missing(x) } ; f(a) }
+[1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f(1) }

@@ -84,7 +84,7 @@ public class AccessArgumentNode extends RNode {
             promise.updateEnv(envProvider.getREnvironmentFor(frame));
         }
 
-        // Now force evaluation for STRICT
+        // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
         if (promise.getEvalPolicy() == EvalPolicy.INLINED) {
             strictEvaluation.enter();
             return promise.evaluate(frame);

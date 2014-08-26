@@ -48,6 +48,12 @@ public abstract class Missing extends RBuiltinNode {
 
         // Read symbols value directly
         Object obj = RMissingHelper.getMissingValue(frame, symbol);
+        if (obj == null) {
+            // In case we are not able to read the symbol in current frame: This is not an argument
+            // and thus return false
+            return RRuntime.asLogical(false);
+        }
+
         return RRuntime.asLogical(RMissingHelper.isMissing(obj));
     }
 

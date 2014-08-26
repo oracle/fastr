@@ -9749,23 +9749,38 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_cf62337ead8caecb2e4db39b971a6823() {
+    public void TestSimpleBuiltins_testMissing_cf62337ead8caecb2e4db39b971a6823() {
         assertEval("{ f <- function(a = 2 + 3) { missing(a) } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_e3ec4820900994d734d0199b41a505ab() {
+    public void TestSimpleBuiltins_testMissing_e3ec4820900994d734d0199b41a505ab() {
         assertEval("{ f <- function(a = z) { missing(a) } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_14a03fde115ece14b0e877fd4bf28ad0() {
+    public void TestSimpleBuiltins_testMissing_14a03fde115ece14b0e877fd4bf28ad0() {
         assertEval("{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_0da52004f0b9453ad6deab5e0b49a111() {
+    public void TestSimpleBuiltins_testMissing_0da52004f0b9453ad6deab5e0b49a111() {
         assertEval("{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMissing_fc5302d7e40c71c48b09f7e6fcf1df6d() {
+        assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMissing_20756d2c3aaa3afd4ad6f87416f461ea() {
+        assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMissing_2c7389435b7285c22a1e276db60a1c8e() {
+        assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
     }
 
     @Test
@@ -9781,21 +9796,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testMissingIgnore_a96249c626958ddb13c95b4628e7f318() {
         assertEval("{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMissingIgnore_fc5302d7e40c71c48b09f7e6fcf1df6d() {
-        assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMissingIgnore_20756d2c3aaa3afd4ad6f87416f461ea() {
-        assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testMissingIgnore_2c7389435b7285c22a1e276db60a1c8e() {
-        assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
     }
 
     @Test
