@@ -691,7 +691,7 @@ public class ArgumentMatcher {
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
         public Object makeList(final Object[] elements, final String[] names) {
             if (elements.length > 0) {
-                return new RArgsValuesAndNames(elements, names == null ? new String[elements.length] : names);
+                return new RArgsValuesAndNames(elements, names);
             } else {
                 return RMissing.instance;
             }

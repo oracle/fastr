@@ -1239,6 +1239,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testPrintIgnore_1b704b3de3fb726ef00328841b29f629() {
+        assertEval("{ nql <- noquote(letters); nql}");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testProdNa_75349670d382cb12b8cdbbfa32158e8a() {
         assertEval("{prod(c(2,4,NA))}");
     }
@@ -2221,6 +2226,16 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleSequences_testSequenceConstructionIgnore_b9324a4b0cb6cce5fbe2323872e18705() {
         assertEvalWarning("{ (1:3):3 }");
+    }
+
+    @Ignore
+    public void TestSimpleSequences_testSequenceConstructionIgnore_21f0e4d9f66324fb97f8a0e9ca64bb19() {
+        assertEvalWarning("{ 1:(1:3) }");
+    }
+
+    @Ignore
+    public void TestSimpleSequences_testSequenceConstructionIgnore_0bdc2a5212b5125502d20aa9b6d7012e() {
+        assertEvalWarning("{ (1:3):(1:3) }");
     }
 
     @Ignore
