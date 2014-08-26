@@ -534,7 +534,8 @@ public final class RError extends RuntimeException {
         CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
-        QUOTE_G_ONE("only the first character of 'quote' will be used");
+        QUOTE_G_ONE("only the first character of 'quote' will be used"),
+        UNEXPECTED("unexpected '%s' in \"%s\"");
 
         public final String message;
         private final boolean hasArgs;
