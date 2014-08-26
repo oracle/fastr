@@ -83,7 +83,7 @@ public class TestRPackages extends TestBase {
             env.put("FASTR_JAVA_HOME", javaHome);
             try {
                 // Uncomment the following to actually see the INSTALL output (debugging)
-                pb.inheritIO();
+                // pb.inheritIO();
                 Process install = pb.start();
                 int rc = install.waitFor();
                 return rc == 0;
@@ -106,6 +106,8 @@ public class TestRPackages extends TestBase {
         assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
         assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
         assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_double(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(ThisWhiteList.get(),
+                        TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
 }

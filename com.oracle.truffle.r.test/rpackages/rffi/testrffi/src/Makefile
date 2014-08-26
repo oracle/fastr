@@ -27,11 +27,6 @@ C_SOURCES := $(wildcard *.c)
 # R uses the .so extension on Mac OS X
 C_OBJECTS := $(C_SOURCES:.c=.o)
 C_LIB := testrffi.so
-CC = clang
-
-$(warning cwd=$(CURDIR))
-$(warning FASTR_HOME=$(FASTR_HOME))
-$(warning FASTR_JAVA_HOME=$(FASTR_JAVA_HOME))
 
 ifeq ($(FASTR_INSTALL), GNUR)
     INCLUDES := -I $(R_HOME)/include

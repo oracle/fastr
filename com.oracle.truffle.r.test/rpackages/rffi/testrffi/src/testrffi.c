@@ -37,13 +37,7 @@ SEXP add_double(SEXP a, SEXP b) {
 	return ScalarReal(aDouble + bDouble);
 }
 
-#if false
-SEXP createRealVector2(SEXP a, SEXP b) {
-    SEXP ab = PROTECT(allocVector(REALSXP, 2));
-    REAL(ab)[0] = NUMERIC_VALUE(a);
-    REAL(ab)[1] = NUMERIC_VALUE(b);
-    UNPROTECT(1);
-    return ab;
+SEXP createIntVector(SEXP n) {
+    SEXP v = allocVector(INTSXP, INTEGER_VALUE(n));
+    return v;
 }
-#endif
-

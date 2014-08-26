@@ -32,6 +32,7 @@ static jclass CallRFFIHelperClass;
 static jmethodID scalarIntegerMethodID;
 static jmethodID scalarDoubleMethodID;
 static jmethodID createIntArrayMethodID;
+static jmethodID createDoubleArrayMethodID;
 static jmethodID getIntDataAtZeroID;
 static jmethodID getDoubleDataAtZeroID;
 
@@ -46,6 +47,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	scalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
 	scalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
 	createIntArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createIntVector", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
+	createDoubleArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createDoubleVector", "(I)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
 	getIntDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getIntDataAtZero", "(Ljava/lang/Object;)I", 1);
 	getDoubleDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getDoubleDataAtZero", "(Ljava/lang/Object;)D", 1);
 
@@ -66,10 +68,13 @@ SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
 	switch (t) {
 	case INTSXP: {
 		return (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createIntArrayMethodID, len);
+	}
+	case REALSXP: {
+		return (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createDoubleArrayMethodID, len);
+	}
 	default:
 		(*thisenv)->FatalError(thisenv, "vector type not handled");
 		return NULL;
-	}
 	}
 }
 

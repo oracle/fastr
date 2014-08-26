@@ -25,7 +25,6 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ../..)
 endif
 
-$(warning USE_RINTERNALS=$(USE_R_INTERNALS))
 include $(TOPDIR)/platform.mk
 
 .PHONY: all clean

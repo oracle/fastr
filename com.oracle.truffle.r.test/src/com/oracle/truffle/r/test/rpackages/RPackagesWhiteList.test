@@ -2,3 +2,4 @@
 { library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }|$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0[1] "A vanilla R package"|[1] "A vanilla R package"
 { library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); add_int(2L, 3L) }|$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0$0[1] 5|[1] 5
 { library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); add_double(2, 3) }|$0$0$0$0$0$0$0$0[1] 5|[1] 5
+{ library("testrffi", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }|$0$0$0$0$0$0$0$0[1] 1 2|[1] 1 2
