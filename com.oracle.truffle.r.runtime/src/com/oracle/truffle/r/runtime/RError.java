@@ -114,15 +114,18 @@ public final class RError extends RuntimeException {
         throw error(src, msg, (Object[]) null);
     }
 
+    private static final RError MARKER_EXCEPTION = new RError(null, "<marker exception>");
+
     private static RError error0(SourceSection src, Message msg, Object... args) {
+        if (ignoreError) {
+            throw MARKER_EXCEPTION;
+        }
+
         RError rError;
         if (src != null) {
             rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
         } else {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
-        }
-        if (ignoreError) {
-            throw rError;
         }
 
         Object errorExpr = ROptions.getValue("error");
