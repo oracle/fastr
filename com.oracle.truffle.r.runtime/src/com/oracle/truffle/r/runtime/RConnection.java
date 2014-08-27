@@ -38,4 +38,6 @@ public abstract class RConnection {
      */
     public abstract InputStream getInputStream() throws IOException;
 
+    public abstract void close() throws IOException;
+
 }
