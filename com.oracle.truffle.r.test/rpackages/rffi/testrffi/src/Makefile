@@ -28,18 +28,18 @@ C_SOURCES := $(wildcard *.c)
 C_OBJECTS := $(C_SOURCES:.c=.o)
 C_LIB := testrffi.so
 
+NATIVE_PROJECT=$(FASTR_HOME)/com.oracle.truffle.r.native
+include $(NATIVE_PROJECT)/platform.mk
+
 ifeq ($(FASTR_INSTALL), GNUR)
     INCLUDES := -I $(R_HOME)/include
-    OSNAME := $(shell uname)
     ifeq ($(OSNAME), Darwin)
-        FRAMEWORK_FLAGS := -F${R_HOME}/../.. -framework R
+        FRAMEWORKFLAGS := -F${R_HOME}/../.. -framework R
     else
-        FRAMEWORK_FLAGS :=
+        FRAMEWORKFLAGS :=
     endif
-    LDFLAGS :=  -dynamiclib -L/usr/local/lib $(FRAMEWORK_FLAGS)
+    LDFLAGS :=  $(LDFLAGS) $(FRAMEWORKFLAGS)
 else
-    NATIVE_PROJECT=$(FASTR_HOME)/com.oracle.truffle.r.native
-    include $(NATIVE_PROJECT)/platform.mk
     INCLUDES := -I $(NATIVE_PROJECT)/include/jni -I $(FASTR_JAVA_HOME)/include -I $(FASTR_JAVA_HOME)/include/$(OS_DIR)
 endif
 
