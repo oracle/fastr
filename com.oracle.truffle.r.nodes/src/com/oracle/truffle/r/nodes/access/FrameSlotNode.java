@@ -33,6 +33,14 @@ import com.oracle.truffle.r.nodes.*;
 @TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends Node {
 
+    public static enum InternalFrameSlot {
+        /**
+         * Stores the expression that needs to be executed when the function associated with the
+         * frame terminates.
+         */
+        OnExit
+    }
+
     public abstract boolean hasValue(Frame frame);
 
     public FrameSlot executeFrameSlot(@SuppressWarnings("unused") VirtualFrame frame) {
@@ -49,6 +57,10 @@ public abstract class FrameSlotNode extends Node {
 
     public static FrameSlotNode create(String name) {
         return new UnresolvedFrameSlotNode(name, false);
+    }
+
+    public static FrameSlotNode create(InternalFrameSlot slot, boolean createIfAbsent) {
+        return new UnresolvedFrameSlotNode(slot, createIfAbsent);
     }
 
     public static FrameSlotNode create(FrameSlot slot) {

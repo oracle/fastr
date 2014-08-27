@@ -9939,6 +9939,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testOnExit_990c2fa703195a7a1632c8253766e9d4() {
+        assertEval("n = function() { on.exit(print(\"test\")); print(\"some\") }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_44ae6a4df3702409b2dd9147a69ff0a6() {
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); print(\"some\") }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_22580aebd0c9efb8f36899248e95778f() {
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(); print(\"some\") }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_465f518445ab25801b602e138ad4ccfd() {
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\", TRUE)); print(\"some\") }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_319addbc62ee2707798ce80d93ac944a() {
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\") }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_ae307577808ed87e2d1790ba777d501a() {
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); on.exit(print(\"test2\")); print(\"some\") }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_c48820b6fa534d84474ff03fbde43fdb() {
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\"); on.exit() }; n()");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testOnExit_bafd79cb6d84db2565a75ccd03f04f85() {
+        assertEval("n = function() { on.exit() }; n()");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testOperators_d4e3be6301b8298150f0b9769e6d59f0() {
         assertEval("{ `+`(1,2) }");
     }

@@ -24,12 +24,18 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
  * Placeholder. {@code on.exit} is special (cf {@code .Internal} in that {@code expr} is not
@@ -39,23 +45,56 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "on.exit", kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = {0})
 public abstract class OnExit extends RInvisibleBuiltinNode {
 
+    @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(InternalFrameSlot.OnExit, true);
+
+    private final ConditionProfile addProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile existingProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile emptyPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final NAProfile na = NAProfile.create();
+
     @Override
     public RNode[] getParameterValues() {
         return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(false)};
     }
 
     @Specialization
-    protected Object onExit(@SuppressWarnings("unused") RPromise expr, @SuppressWarnings("unused") byte add) {
+    protected Object onExit(VirtualFrame frame, RPromise expr, byte add) {
         controlVisibility();
-        RContext.getInstance().setEvalWarning("on.exit ignored");
+
+        if (na.isNA(add)) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "add");
+        }
+
+        // the empty (RNull.instance) expression is used to clear on.exit
+        boolean empty = emptyPromiseProfile.profile(expr.isDefaulted());
+
+        assert !empty || expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
+        assert empty || !expr.isEvaluated() : "promise cannot already be evaluated";
+
+        ArrayList<Object> current;
+        FrameSlot slot = onExitSlot.executeFrameSlot(frame);
+        if (existingProfile.profile(onExitSlot.hasValue(frame))) {
+            current = getCurrentList(frame, slot);
+            if (addProfile.profile(!RRuntime.fromLogical(add))) {
+                // add is false, so clear the existing
+                current.clear();
+            }
+        } else {
+            // initialize the list of exit handlers
+            frame.setObject(slot, current = new ArrayList<>());
+        }
+        if (!empty) {
+            current.add(expr.getRep());
+        }
         return RNull.instance;
     }
 
-    @Specialization
-    protected Object onExit(@SuppressWarnings("unused") RNull expr, @SuppressWarnings("unused") byte add) {
-        controlVisibility();
-        RContext.getInstance().setEvalWarning("on.exit ignored");
-        return RNull.instance;
+    @SuppressWarnings("unchecked")
+    private static ArrayList<Object> getCurrentList(VirtualFrame frame, FrameSlot slot) {
+        try {
+            return (ArrayList<Object>) frame.getObject(slot);
+        } catch (FrameSlotTypeException e) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
-
 }

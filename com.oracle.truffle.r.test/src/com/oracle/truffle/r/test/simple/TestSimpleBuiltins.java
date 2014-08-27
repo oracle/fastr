@@ -3442,4 +3442,16 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-matrix(c(1,2,3,4),2,2); tail(x,1);}");
         assertEval("{x<-matrix(c(1,2,3,4),2,2); head(x,1);}");
     }
+
+    @Test
+    public void testOnExit() {
+        assertEval("n = function() { on.exit(print(\"test\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\", TRUE)); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); on.exit(print(\"test2\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\"); on.exit() }; n()");
+        assertEval("n = function() { on.exit() }; n()");
+    }
 }
