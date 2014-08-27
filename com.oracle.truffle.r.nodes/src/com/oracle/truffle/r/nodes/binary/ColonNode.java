@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.ColonNodeFactory.ColonCastNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -126,6 +127,8 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     @NodeChild("operand")
     public abstract static class ColonCastNode extends RNode {
 
+        private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
+
         @Specialization(guards = "isIntValue")
         protected int doDoubleToInt(double operand) {
             return (int) operand;
@@ -138,33 +141,33 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
         @Specialization
         protected int doSequence(RIntSequence sequence) {
-            // TODO enable once source sections are passed correctly during nore specialisations
-            // RError.warning(getSourceSection(), RError.Message.ONLY_FIRST_USED,
-            // sequence.getLength());
+            if (lengthGreaterOne.profile(sequence.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, sequence.getLength());
+            }
             return sequence.getStart();
         }
 
         @Specialization
         protected int doSequence(RIntVector vector) {
-            // TODO enable once source sections are passed correctly during nore specialisations
-            // RError.warning(getSourceSection(), RError.Message.ONLY_FIRST_USED,
-            // vector.getLength());
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
             return vector.getDataAt(0);
         }
 
         @Specialization(guards = "isFirstIntValue")
         protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
-            // TODO enable once source sections are passed correctly during nore specialisations
-            // RError.warning(getSourceSection(), RError.Message.ONLY_FIRST_USED,
-            // vector.getLength());
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
             return (int) vector.getDataAt(0);
         }
 
         @Specialization(guards = "!isFirstIntValue")
         protected double doDoubleVector(RDoubleVector vector) {
-            // TODO enable once source sections are passed correctly during nore specialisations
-            // RError.warning(getSourceSection(), RError.Message.ONLY_FIRST_USED,
-            // vector.getLength());
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
             return vector.getDataAt(0);
         }
 
