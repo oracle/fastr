@@ -127,6 +127,7 @@ public final class RError extends RuntimeException {
         } else {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
+        RInternalError.reportError(rError, src);
 
         Object errorExpr = ROptions.getValue("error");
         if (errorExpr != RNull.instance) {

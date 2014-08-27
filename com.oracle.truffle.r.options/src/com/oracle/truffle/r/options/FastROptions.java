@@ -43,6 +43,8 @@ public class FastROptions {
     //@formatter:off
     @Option(help = "Disable prototypical group generics implementation")
     public static final OptionValue<Boolean> DisableGroupGenerics = new OptionValue<>(false);
+    @Option(help = "Prints Java and R stack traces for all R errors")
+    public static final OptionValue<Boolean> PrintErrorStacktraces = new OptionValue<>(false);
     //@formatter:on
 
     private static FastROptions_Options options = new FastROptions_Options();
@@ -80,5 +82,4 @@ public class FastROptions {
     private static boolean booleanOptionValue(String option) {
         return option.charAt(2) == '+';
     }
-
 }

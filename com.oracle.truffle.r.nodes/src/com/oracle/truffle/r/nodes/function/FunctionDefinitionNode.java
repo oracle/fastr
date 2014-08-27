@@ -22,12 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode.InternalFrameSlot;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -40,6 +45,10 @@ public final class FunctionDefinitionNode extends RRootNode {
     private final RNode uninitializedBody;
     @Child private RNode body;
     private final String description;
+
+    @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(InternalFrameSlot.OnExit, false);
+    @Child private ExpressionExecutorNode onExitExecutor = ExpressionExecutorNode.create();
+    private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -75,17 +84,32 @@ public final class FunctionDefinitionNode extends RRootNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
+        VirtualFrame vf = substituteFrame ? (VirtualFrame) frame.getArguments()[0] : frame;
         try {
-            if (substituteFrame) {
-                VirtualFrame vf = (VirtualFrame) frame.getArguments()[0];
-                Object result = body.execute(vf);
-                return result;
-            } else {
-                return body.execute(frame);
-            }
+            return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
             return ex.getResult();
+        } finally {
+            if (onExitProfile.profile(onExitSlot.hasValue(vf))) {
+                ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
+                for (Object expr : current) {
+                    if (!(expr instanceof RNode)) {
+                        RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                    }
+                    RNode node = (RNode) expr;
+                    onExitExecutor.execute(vf, node);
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ArrayList<Object> getCurrentOnExitList(VirtualFrame frame, FrameSlot slot) {
+        try {
+            return (ArrayList<Object>) frame.getObject(slot);
+        } catch (FrameSlotTypeException e) {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 

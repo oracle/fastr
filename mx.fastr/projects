@@ -106,7 +106,7 @@ project@com.oracle.truffle.r.nodes.builtin.processor@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.nodes
 project@com.oracle.truffle.r.nodes@sourceDirs=src
-project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.r.options,com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser
+project@com.oracle.truffle.r.nodes@dependencies=com.oracle.truffle.api.dsl,com.oracle.truffle.r.parser
 project@com.oracle.truffle.r.nodes@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.nodes@javaCompliance=1.8
 project@com.oracle.truffle.r.nodes@annotationProcessors=com.oracle.truffle.dsl.processor
@@ -156,7 +156,7 @@ project@com.oracle.truffle.r.shell@workingSets=Truffle,FastR
 
 # com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime@sourceDirs=src
-project@com.oracle.truffle.r.runtime@dependencies=com.oracle.truffle.api,FINDBUGS
+project@com.oracle.truffle.r.runtime@dependencies=com.oracle.truffle.api,com.oracle.truffle.r.options,FINDBUGS
 project@com.oracle.truffle.r.runtime@checkstyle=com.oracle.truffle.r.runtime
 project@com.oracle.truffle.r.runtime@javaCompliance=1.8
 project@com.oracle.truffle.r.runtime@workingSets=Truffle,FastR

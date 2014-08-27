@@ -27,86 +27,117 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 
 @TypeSystemReference(RTypes.class)
 public abstract class FrameSlotNode extends Node {
 
-    public abstract boolean hasValue(VirtualFrame virtualFrame, Frame frame);
+    public static enum InternalFrameSlot {
+        /**
+         * Stores the expression that needs to be executed when the function associated with the
+         * frame terminates.
+         */
+        OnExit
+    }
+
+    public abstract boolean hasValue(Frame frame);
 
     public FrameSlot executeFrameSlot(@SuppressWarnings("unused") VirtualFrame frame) {
         throw new UnsupportedOperationException();
     }
 
-    static FrameSlot findFrameSlot(Frame frame, String name) {
-        return frame.getFrameDescriptor().findFrameSlot(name);
+    static FrameSlot findFrameSlot(Frame frame, Object identifier) {
+        return frame.getFrameDescriptor().findFrameSlot(identifier);
     }
 
-    static Assumption getAssumption(Frame frame, String name) {
-        return frame.getFrameDescriptor().getNotInFrameAssumption(name);
+    static Assumption getAssumption(Frame frame, Object identifier) {
+        return frame.getFrameDescriptor().getNotInFrameAssumption(identifier);
     }
 
-    public static final class UnresolvedFrameSlotNode extends FrameSlotNode {
+    public static FrameSlotNode create(String name) {
+        return new UnresolvedFrameSlotNode(name, false);
+    }
 
-        private final String name;
+    public static FrameSlotNode create(InternalFrameSlot slot, boolean createIfAbsent) {
+        return new UnresolvedFrameSlotNode(slot, createIfAbsent);
+    }
 
-        public UnresolvedFrameSlotNode(String name) {
-            this.name = name;
+    public static FrameSlotNode create(FrameSlot slot) {
+        return new PresentFrameSlotNode(slot);
+    }
+
+    private static final class UnresolvedFrameSlotNode extends FrameSlotNode {
+
+        private final Object identifier;
+        private final boolean createIfAbsent;
+
+        public UnresolvedFrameSlotNode(Object identifier, boolean createIfAbsent) {
+            this.identifier = identifier;
+            this.createIfAbsent = createIfAbsent;
         }
 
         @Override
-        public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
+        public boolean hasValue(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return resolveFrameSlot(frame).hasValue(virtualFrame, frame);
+            return resolveFrameSlot(frame).hasValue(frame);
+        }
+
+        @Override
+        public FrameSlot executeFrameSlot(VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            return resolveFrameSlot(frame).executeFrameSlot(frame);
         }
 
         private FrameSlotNode resolveFrameSlot(Frame frame) {
-            final FrameSlotNode newNode;
-            final FrameSlot frameSlot = findFrameSlot(frame, name);
+            FrameSlotNode newNode;
+            FrameSlot frameSlot;
+            if (createIfAbsent) {
+                frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(identifier);
+            } else {
+                frameSlot = frame.getFrameDescriptor().findFrameSlot(identifier);
+            }
             if (frameSlot != null) {
                 newNode = new PresentFrameSlotNode(frameSlot);
             } else {
-                newNode = new AbsentFrameSlotNode(getAssumption(frame, name), name);
+                newNode = new AbsentFrameSlotNode(getAssumption(frame, identifier), identifier);
             }
             return replace(newNode);
         }
     }
 
-    public static final class AbsentFrameSlotNode extends FrameSlotNode {
+    private static final class AbsentFrameSlotNode extends FrameSlotNode {
 
         @CompilationFinal private Assumption assumption;
-        private final String name;
+        private final Object identifier;
 
-        public AbsentFrameSlotNode(Assumption assumption, String name) {
+        public AbsentFrameSlotNode(Assumption assumption, Object identifier) {
             this.assumption = assumption;
-            this.name = name;
+            this.identifier = identifier;
         }
 
         @Override
-        public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
+        public boolean hasValue(Frame frame) {
             try {
                 assumption.check();
             } catch (InvalidAssumptionException e) {
-                final FrameSlot frameSlot = findFrameSlot(frame, name);
+                final FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(identifier);
                 if (frameSlot != null) {
-                    return replace(new PresentFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
+                    return replace(new PresentFrameSlotNode(frameSlot)).hasValue(frame);
                 } else {
                     assumption = frame.getFrameDescriptor().getVersion();
                 }
             }
             return false;
         }
-
-        public Assumption getAssumption() {
-            return assumption;
-        }
     }
 
-    public abstract static class AbstractPresentFrameSlotNode extends FrameSlotNode {
+    private final static class PresentFrameSlotNode extends FrameSlotNode {
 
-        protected final FrameSlot frameSlot;
+        private final ConditionProfile initializedProfile = ConditionProfile.createBinaryProfile();
+        private final FrameSlot frameSlot;
 
-        public AbstractPresentFrameSlotNode(FrameSlot frameSlot) {
+        public PresentFrameSlotNode(FrameSlot frameSlot) {
             this.frameSlot = frameSlot;
         }
 
@@ -115,78 +146,17 @@ public abstract class FrameSlotNode extends Node {
             return frameSlot;
         }
 
-        protected static boolean isInitialized(Frame frame, FrameSlot frameSlot) {
+        private static boolean isInitialized(Frame frame, FrameSlot frameSlot) {
             try {
                 return !frame.isObject(frameSlot) || frame.getObject(frameSlot) != null;
             } catch (FrameSlotTypeException e) {
                 throw new IllegalStateException();
             }
         }
-    }
-
-    public static final class PresentFrameSlotNode extends AbstractPresentFrameSlotNode {
-
-        public PresentFrameSlotNode(FrameSlot frameSlot) {
-            super(frameSlot);
-        }
 
         @Override
-        public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
-            CompilerAsserts.neverPartOfCompilation();
-            boolean initialized = isInitialized(frame, frameSlot);
-            if (initialized) {
-                return replace(new InitializedFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
-            } else {
-                return replace(new NotInitializedFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
-            }
-        }
-    }
-
-    public static final class NotInitializedFrameSlotNode extends AbstractPresentFrameSlotNode {
-
-        public NotInitializedFrameSlotNode(FrameSlot frameSlot) {
-            super(frameSlot);
-        }
-
-        @Override
-        public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
-            boolean initialized = isInitialized(frame, frameSlot);
-            if (!initialized) {
-                return false;
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new MaybeInitializedFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
-            }
-        }
-    }
-
-    public static final class InitializedFrameSlotNode extends AbstractPresentFrameSlotNode {
-
-        public InitializedFrameSlotNode(FrameSlot frameSlot) {
-            super(frameSlot);
-        }
-
-        @Override
-        public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
-            boolean initialized = isInitialized(frame, frameSlot);
-            if (initialized) {
-                return true;
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                return replace(new MaybeInitializedFrameSlotNode(frameSlot)).hasValue(virtualFrame, frame);
-            }
-        }
-    }
-
-    public static final class MaybeInitializedFrameSlotNode extends AbstractPresentFrameSlotNode {
-
-        public MaybeInitializedFrameSlotNode(FrameSlot frameSlot) {
-            super(frameSlot);
-        }
-
-        @Override
-        public boolean hasValue(VirtualFrame virtualFrame, Frame frame) {
-            return isInitialized(frame, frameSlot);
+        public boolean hasValue(Frame frame) {
+            return initializedProfile.profile(isInitialized(frame, frameSlot));
         }
     }
 }

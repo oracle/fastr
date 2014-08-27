@@ -8806,6 +8806,42 @@ Error in ngettext(1, c(1), "b") : 'msg1' must be a character string
 #{ ngettext(c(1,2), "a", "b") }
 [1] "a"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit() }; n()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test")); on.exit(); print("some") }; n()
+[1] "some"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test")); on.exit(print("test2")); print("some") }; n()
+[1] "some"
+[1] "test2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test")); on.exit(print("test2")); print("some"); on.exit() }; n()
+[1] "some"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test")); on.exit(print("test2", TRUE)); print("some") }; n()
+[1] "some"
+[1] "test2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test")); print("some") }; n()
+[1] "some"
+[1] "test"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test", TRUE)); on.exit(print("test2")); print("some") }; n()
+[1] "some"
+[1] "test2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOnExit
+#n = function() { on.exit(print("test", TRUE)); print("some") }; n()
+[1] "some"
+[1] "test"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testOperators
 #{ `!`(TRUE) }
 [1] FALSE

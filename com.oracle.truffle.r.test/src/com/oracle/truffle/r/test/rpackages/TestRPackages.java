@@ -34,22 +34,6 @@ import com.oracle.truffle.r.test.*;
  * Tests related to the loading, etc. of R packages.
  */
 public class TestRPackages extends TestBase {
-    private static class ThisWhiteList extends WhiteList {
-
-        private static ThisWhiteList thisWhiteList;
-
-        private ThisWhiteList() {
-            super("RPackagesWhiteList.test");
-        }
-
-        private static ThisWhiteList get() {
-            if (thisWhiteList == null) {
-                thisWhiteList = new ThisWhiteList();
-            }
-            return thisWhiteList;
-        }
-
-    }
 
     /**
      * Create {@link Path}s to needed folders. N.B. The same directory is used when generating
@@ -97,17 +81,16 @@ public class TestRPackages extends TestBase {
     public void testLoadVanilla() {
         PackagePaths packagePaths = new PackagePaths();
         assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
-        assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
     @Test
     public void testLoadTestRFFI() {
         PackagePaths packagePaths = new PackagePaths();
         assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
-        assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertTemplateEval(ThisWhiteList.get(), TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_double(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
-        assertTemplateEval(ThisWhiteList.get(),
-                        TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_double(2, 3) }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; v }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
 }
