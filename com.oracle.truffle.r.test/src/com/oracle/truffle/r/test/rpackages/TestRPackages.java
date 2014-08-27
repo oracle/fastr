@@ -38,7 +38,11 @@ public class TestRPackages extends TestBase {
     /**
      * Create {@link Path}s to needed folders. N.B. The same directory is used when generating
      * expected output with GnuR, and running FastR, to keep the {@code lib_loc} argument the same
-     * in the test string, so the operation is destructive.
+     * in the test string. So the install is destructive, but ok as there is never a clash.
+     *
+     * Currently we are using GnuR to do the install of the FastR-compiled package. The install
+     * environment is handled in the Makefile using environment variables set in
+     * {@link #installPackage(String)}.
      */
     private class PackagePaths {
         private final Path rpackagesDists;
@@ -64,6 +68,7 @@ public class TestRPackages extends TestBase {
             env.put("FASTR_INSTALL", installKind);
             env.put("FASTR_HOME", REnvVars.rHome());
             String javaHome = System.getenv("JAVA_HOME");
+            // GnuR INSTALL sets JAVA_HOME to a 1.6 JRE
             env.put("FASTR_JAVA_HOME", javaHome);
             try {
                 // Uncomment the following to actually see the INSTALL output (debugging)

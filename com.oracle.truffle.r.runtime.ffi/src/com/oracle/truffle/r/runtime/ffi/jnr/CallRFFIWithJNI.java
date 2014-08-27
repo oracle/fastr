@@ -34,8 +34,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a
- * maximum number of args. We could perhaps be clever using {@ode jnr-invoke} but for simple
- * functions a straight JNI interface is adequate.
+ * maximum number of args (64). This implementation passes up to 9 arguments explicitly; beyond 9
+ * they are passed as an array and the JNI code has to call back to get the args (not very
+ * efficient).
  */
 public class CallRFFIWithJNI implements CallRFFI {
 
@@ -43,12 +44,14 @@ public class CallRFFIWithJNI implements CallRFFI {
         loadLibrary();
     }
 
+    private static boolean FORCE_RTLD_GLOBAL = false;
+
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
-     * that are references by C code in R packages. Unfortunately, {@link System#load(String)} uses
-     * {@code RTLD_LOCAL}, so we have to load the library manually and set that flag. However, a
-     * {@code dlopen} does not hook the JNI functions inti the JVM, so we have to do an additional
-     * {@code System.load} to achieve that.
+     * that are referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
+     * {@code RTLD_LOCAL} with {@code dlopen}, so we have to load the library manually and set
+     * {@code RTLD_GLOBAL}. However, a {@code dlopen} does not hook the JNI functions into the JVM,
+     * so we have to do an additional {@code System.load} to achieve that.
      */
     @SlowPath
     private static void loadLibrary() {
@@ -57,7 +60,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         OSInfo osInfo = RPlatform.getOSInfo();
         Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", osInfo.osSubDir, "librfficall." + osInfo.libExt);
         try {
-            DLL.load(path.toString(), false, false);
+            DLL.load(path.toString(), FORCE_RTLD_GLOBAL, false);
         } catch (DLLException ex) {
             throw RError.error((SourceSection) null, ex);
         }
