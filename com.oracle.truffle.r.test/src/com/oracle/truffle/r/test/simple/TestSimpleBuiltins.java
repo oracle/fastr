@@ -105,6 +105,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSeqLen() {
+        assertEval("{ seq_len(10) }");
+        assertEval("{ seq_len(5L) }");
+        assertEval("{ seq_len(1:2) }");
+        assertEval("{ seq_len(integer()) }");
+    }
+
+    @Test
     public void testArrayConstructors() {
         assertEval("{ integer() }");
         assertEval("{ double() }");
@@ -2652,7 +2660,7 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testPrint() {
-        assertEval("{ print(23,quote=TRUE) }");
+        assertEval("{ print(23) }");
         assertEval("{ print(1:3,quote=TRUE) }");
         assertEval("{ print(list(1,2,3),quote=TRUE) }");
         assertEval("{ x<-c(1,2); names(x)=c(\"a\", \"b\"); print(x,quote=TRUE) }");
@@ -2666,6 +2674,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ print(c(1.1,2.34567),quote=TRUE) }");
         assertEval("{ print(c(1,2.34567),quote=TRUE) }");
         assertEval("{ print(c(11.1,2.34567),quote=TRUE) }");
+        assertEval("{ nql <- noquote(letters); print(nql)}");
+        assertEval("{ nql <- noquote(letters); nql[1:4] <- \"oh\"; print(nql)}");
+    }
+
+    @Test
+    @Ignore
+    public void testPrintIgnore() {
+        assertEval("{ nql <- noquote(letters); nql}");
     }
 
     @Test
@@ -3424,4 +3440,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order,FALSE); } ");
     }
 
+    @Test
+    public void testHeadNTail() {
+        assertEval("{head(letters)}");
+        assertEval("{head(letters, n = 10L)}");
+        assertEval("{head(letters, n = -6L)}");
+        assertEval("{tail(letters)}");
+        assertEval("{tail(letters, n = 10L)}");
+        assertEval("{tail(letters, n = -6L)}");
+        assertEval("{x<-matrix(c(1,2,3,4),2,2); tail(x,1);}");
+        assertEval("{x<-matrix(c(1,2,3,4),2,2); head(x,1);}");
+    }
 }

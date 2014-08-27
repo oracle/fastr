@@ -261,6 +261,7 @@ public final class RError extends RuntimeException {
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
         NO_NONMISSING_MIN("no non-missing arguments to min; returning Inf"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
+        MUST_BE_POSITIVE("%s must be a non-negative number"),
         INVALID_TFB("invalid (to - from)/by in seq(.)"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
         WRONG_TYPE("wrong type of argument"),
@@ -474,6 +475,9 @@ public final class RError extends RuntimeException {
         UNKNOWN_OBJECT_MODE("object '%s' of mode '%s' was not found"),
         INVALID_TYPE_IN("invalid '%s' type in 'x %s y'"),
         DOT_DOT_MISSING("'..%d' is missing"),
+        DOT_DOT_SHORT("the ... list does not contain %d elements"),
+        NO_DOT_DOT("..%d used in an incorrect context, no ... to look in"),
+        NO_LIST_FOR_CDR("'nthcdr' needs a list to CDR down"),
         INVALID_TYPE_LENGTH("invalid type/length (%s/%d) in vector allocation"),
         SUBASSIGN_TYPE_FIX("incompatible types (from %s to %s) in subassignment type fix"),
         SUBSCRIPT_TYPES("incompatible types (from %s to %s) in [[ assignment"),
@@ -534,7 +538,10 @@ public final class RError extends RuntimeException {
         CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
-        QUOTE_G_ONE("only the first character of 'quote' will be used");
+        QUOTE_G_ONE("only the first character of 'quote' will be used"),
+        UNEXPECTED("unexpected '%s' in \"%s\""),
+        FIRST_ELEMENT_USED("first element used of '%s' argument"),
+        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer");
 
         public final String message;
         private final boolean hasArgs;

@@ -44,13 +44,13 @@ print.default <- function(x, quote=TRUE)
 #	dn <- dimnames(x)
 #	.Internal(prmatrix(x, rowlab, collab, quote, right, na.print))
 #}
-#
-#noquote <- function(obj) {
-#	## constructor for a useful "minor" class
-#	if(!inherits(obj,"noquote")) class(obj) <- c(attr(obj, "class"),"noquote")
-#	obj
-#}
-#
+
+noquote <- function(obj) {
+	## constructor for a useful "minor" class
+	if(!inherits(obj,"noquote")) class(obj) <- c(attr(obj, "class"),"noquote")
+	obj
+}
+
 #as.matrix.noquote <- function(x, ...) noquote(NextMethod("as.matrix", x))
 #c.noquote <- function(..., recursive = FALSE)
 #	structure(NextMethod("c"), class = "noquote")
@@ -63,16 +63,18 @@ print.default <- function(x, quote=TRUE)
 #									c("dim","dimnames","names")))])
 #	r
 #}
-#
-#print.noquote <- function(x, ...) {
-#	if(!is.null(cl <- attr(x, "class"))) {
-#		cl <- cl[cl != "noquote"]
-#		attr(x, "class") <-
-#				(if(length(cl)) cl else NULL)
-#	}
-#	print(x, quote = FALSE, ...)
-#}
-#
+
+print.noquote <- function(x, ...) {
+	if(!is.null(cl <- attr(x, "class"))) {
+		cl <- cl[cl != "noquote"]
+		attr(x, "class") <-
+				(if(length(cl)) cl else NULL)
+	}
+	##FIXME
+	##print(x, quote = FALSE, ...)
+	print(x, quote = FALSE)
+}
+
 ### for alias:
 #print.listof <- function(x, ...)
 #{
