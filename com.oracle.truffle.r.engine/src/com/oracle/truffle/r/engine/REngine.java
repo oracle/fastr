@@ -74,7 +74,7 @@ public final class REngine implements RContext.Engine {
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
      * @return a {@link VirtualFrame} that can be passed to
-     *         {@link #parseAndEval(String, VirtualFrame, REnvironment, boolean, boolean)}
+     *         {@link #parseAndEval(String, String, VirtualFrame, REnvironment, boolean, boolean)}
      */
     public static VirtualFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
         singleton.startTime = System.nanoTime();
@@ -99,16 +99,16 @@ public final class REngine implements RContext.Engine {
         ROptions.initialize();
         RProfile.initialize();
         // eval the system profile
-        singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
+        singleton.parseAndEval("<system_profile>", RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
         REnvironment.packagesInitialize(RPackages.initialize());
         RPackageVariables.initialize(); // TODO replace with R code
         String siteProfile = RProfile.siteProfile();
         if (siteProfile != null) {
-            singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
+            singleton.parseAndEval("<site_profile>", siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
         }
         String userProfile = RProfile.userProfile();
         if (userProfile != null) {
-            singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
+            singleton.parseAndEval("<user_profile>", userProfile, globalFrame, REnvironment.globalEnv(), false, false);
         }
         return globalFrame;
     }
@@ -133,8 +133,8 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
-    public Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<shell_input>"), frame, printResult, allowIncompleteSource);
+    public Object parseAndEval(String sourceDesc, String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, sourceDesc), frame, printResult, allowIncompleteSource);
     }
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
