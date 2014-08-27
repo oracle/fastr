@@ -1,6 +1,6 @@
 com.oracle.truffle.r.native/builtinlibs/src/fft.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/builtinlibs/src/rdummy.c,no.copyright
-com.oracle.truffle.r.native/fficall/jni/src/call.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/rfficall.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Arith.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Boolean.h,no.copyright
 com.oracle.truffle.r.native/include/jni/R_ext/Complex.h,no.copyright
