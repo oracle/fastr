@@ -3434,4 +3434,19 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{x<-matrix(c(1,2,3,4),2,2); tail(x,1);}");
         assertEval("{x<-matrix(c(1,2,3,4),2,2); head(x,1);}");
     }
+
+    @Test
+    public void testCharMatch() {
+        assertEval("{charmatch(\"abc\", \"deeee\",c(\"3\",\"4\"))}");
+        assertEval("{charmatch(\"abc\", \"deeee\")}");
+        assertEval("{charmatch(\"abc\", \"deeeec\",c(\"3\",\"4\"))}");
+        assertEval("{charmatch(\"\", \"\")}");
+        assertEval("{charmatch(\"m\",   c(\"mean\", \"median\", \"mode\"))}");
+        assertEval("{charmatch(\"med\", c(\"mean\", \"median\", \"mode\"))}");
+        assertEval("{charmatch(matrix(c(9,3,1,6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch(matrix(c('h',3,'e',6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
+        assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+    }
 }
