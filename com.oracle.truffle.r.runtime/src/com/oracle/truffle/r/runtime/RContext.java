@@ -172,7 +172,7 @@ public final class RContext extends ExecutionContext {
          * @param envForFrame the environment that {@code frame} is bound to.
          * @return the object returned by the evaluation or {@code null} if an error occurred.
          */
-        Object parseAndEval(String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
+        Object parseAndEval(String sourceDesc, String rscript, VirtualFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
 
         static final Object INCOMPLETE_SOURCE = new Object();
 

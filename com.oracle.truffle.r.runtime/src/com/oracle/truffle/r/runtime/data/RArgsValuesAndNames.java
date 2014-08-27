@@ -31,7 +31,7 @@ public class RArgsValuesAndNames {
 
     public RArgsValuesAndNames(Object[] values, String[] names) {
         this.values = values;
-        this.names = names;
+        this.names = names == null ? new String[values.length] : names;
     }
 
     public Object[] getValues() {

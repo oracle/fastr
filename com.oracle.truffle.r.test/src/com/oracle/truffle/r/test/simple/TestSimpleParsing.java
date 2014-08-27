@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.test.simple;
 
-import java.io.*;
+import org.junit.*;
+
+import com.oracle.truffle.r.test.*;
 
 /**
- * Denotes an R {@code connection} instance used in the {@code base} I/O library.
+ * Tests that challenge the parser.
  */
-public abstract class RConnection {
-    /**
-     * Read (n > 0 up to n else unlimited) lines on the connection.
-     */
-    public abstract String[] readLines(int n) throws IOException;
+public class TestSimpleParsing extends TestBase {
 
-    /**
-     * Return the underlying input stream.
-     */
-    public abstract InputStream getInputStream() throws IOException;
-
-    public abstract void close() throws IOException;
+    @Test
+    public void testIncorrectInput() {
+        assertEval("/");
+    }
 
 }

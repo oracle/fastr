@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -170,6 +171,9 @@ public class EnvFunctions {
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"})
     public abstract static class Environment extends RBuiltinNode {
 
+        private final ConditionProfile isFunctionProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
+
         @Override
         public RNode[] getParameterValues() {
             return new RNode[]{ConstantNode.create(RNull.instance)};
@@ -190,11 +194,15 @@ public class EnvFunctions {
         @Specialization
         protected Object environment(Object funcArg) {
             controlVisibility();
-            if (funcArg instanceof RFunction) {
+            if (isFunctionProfile.profile(funcArg instanceof RFunction)) {
                 RFunction func = (RFunction) funcArg;
                 Frame enclosing = func.getEnclosingFrame();
                 REnvironment env = RArguments.getEnvironment(enclosing);
-                return env == null ? REnvironment.createEnclosingEnvironments(enclosing.materialize()) : env;
+                if (createEnvironmentProfile.profile(env == null)) {
+                    return REnvironment.createEnclosingEnvironments(enclosing.materialize());
+                } else {
+                    return env;
+                }
             } else {
                 // Not an error according to GnuR
                 return RNull.instance;
@@ -346,5 +354,4 @@ public class EnvFunctions {
             return RDataFactory.createLogicalVectorFromScalar(false);
         }
     }
-
 }

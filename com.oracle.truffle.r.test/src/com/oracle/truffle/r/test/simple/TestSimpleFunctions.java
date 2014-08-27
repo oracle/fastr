@@ -188,18 +188,20 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f<-function(x, y) { print(missing(y)); } ; f(42) }");
         assertEval("{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }");
         assertEval("{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod(\"f\") }; f(c(1,2), row.names = \"r1\", nm=\"bar\") }");
+
+        assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
+        assertEvalError("{ f <- function(...) { ..1 } ;  f() }");
     }
 
     @Test
-    @Ignore
     public void testDotsIgnore() {
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
-        assertEval("{ f <- function(...) { x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+// assertEval("{ f <- function(...) { x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
-        assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..2 } ; x <- 1 ; f(100,x) }");
-        assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
-        assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
-        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+// assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..2 } ; x <- 1 ; f(100,x) }");
+// assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
+// assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+// assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
         assertEval("{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }");
         assertEval("{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }");
 
@@ -207,7 +209,8 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }");
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ...) }  ; f(b=1,a=2) }");
         assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1) }");
-        assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
+        // GNU-R has slightly different error code formatting
+// assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
         assertEval("{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }");
         assertEval("{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }");
 
@@ -219,24 +222,28 @@ public class TestSimpleFunctions extends TestBase {
         assertEvalError("{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }");
         assertEvalError("{ f <- function() { dummy() } ; dummy <- 2 ; f() }");
         assertEvalError("{ dummy <- 2 ; dummy() }");
-        assertEvalError("{ lapply(1:3, \"dummy\") }");
+// assertEvalError("{ lapply(1:3, \"dummy\") }");
 
         assertEvalError("{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }");
-        assertEval("{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
+// assertEval("{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
         assertEvalError("{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
-        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }");
+// assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }");
         assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }");
-        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
-        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
-        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");
-        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, xxx=2, ...) } ; g(1) }");
+        // GNU-R has slightly different error code formatting
+// assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
+        // GNU-R has slightly different error code formatting
+// assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
+        // GNU-R has slightly different error code formatting
+// assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");
+        // GNU-R has slightly different error code formatting
+// assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, xxx=2, ...) } ; g(1) }");
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }");
-        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
+// assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
         assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }");
         assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }");
 
-        assertEvalError("{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
-        assertEvalError("{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
+// assertEvalError("{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
+// assertEvalError("{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
     }
 
     @Test
@@ -252,11 +259,6 @@ public class TestSimpleFunctions extends TestBase {
     @Test
     public void testArgs() {
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm=\"x\") }");
-    }
-
-    @Test
-    @Ignore
-    public void testArgsIgnore() {
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm=\"x\") }");
     }
 }

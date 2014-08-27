@@ -105,6 +105,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSeqLen() {
+        assertEval("{ seq_len(10) }");
+        assertEval("{ seq_len(5L) }");
+        assertEval("{ seq_len(1:2) }");
+        assertEval("{ seq_len(integer()) }");
+    }
+
+    @Test
     public void testArrayConstructors() {
         assertEval("{ integer() }");
         assertEval("{ double() }");
@@ -532,7 +540,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.vector(\"foo\", \"character\") }");
         assertEval("{ as.vector(\"foo\", \"list\") }");
         assertEval("{ as.vector(\"foo\") }");
-        assertEvalError("{ as.vector(\"foo\", \"bar\") }");
+        assertEval("{ as.vector(\"foo\", \"bar\") }");
         assertEvalWarning("{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
         assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
@@ -3448,5 +3456,17 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
         assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
         assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+    }
+
+    @Test
+    public void testOnExit() {
+        assertEval("n = function() { on.exit(print(\"test\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\", TRUE)); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); on.exit(print(\"test2\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\"); on.exit() }; n()");
+        assertEval("n = function() { on.exit() }; n()");
     }
 }

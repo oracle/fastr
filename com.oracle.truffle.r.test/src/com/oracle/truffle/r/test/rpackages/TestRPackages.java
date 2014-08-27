@@ -34,13 +34,6 @@ import com.oracle.truffle.r.test.*;
  * Tests related to the loading, etc. of R packages.
  */
 public class TestRPackages extends TestBase {
-    private static class ThisWhiteList extends WhiteList {
-
-        protected ThisWhiteList() {
-            super("RPackagesWhiteList.test");
-        }
-
-    }
 
     @Test
     public void testLoadVanilla() {
@@ -61,10 +54,9 @@ public class TestRPackages extends TestBase {
             Process install = pb.start();
             int rc = install.waitFor();
             assertTrue(rc == 0);
-            assertTemplateEval(new ThisWhiteList(), TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{relLibsPath.toString()}));
+            assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{relLibsPath.toString()}));
         } catch (Exception ex) {
             assertFalse();
         }
     }
-
 }
