@@ -74,7 +74,7 @@ public abstract class RCallNode extends RNode {
      * Creates a call to a resolved {@link RBuiltinKind#INTERNAL} that will be used to replace the
      * original call.
      *
-     * @param frame TODO
+     * @param frame The frame to create the inlined builtins in
      * @param src source section to use (from original call)
      * @param internalCallArg the {@link UninitializedCallNode} corresponding to the argument to the
      *            {code .Internal}.
@@ -276,14 +276,12 @@ public abstract class RCallNode extends RNode {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
                     InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, debugSrc);
-                    // TODO Set proper parent <-> child relations for arguments!!
                     return root.inline(inlinedArgs);
                 }
             }
 
             // Now we need to distinguish: Do supplied arguments vary between calls?
-            boolean hasVarArgsInvolved = args.containsVarArgsSymbol() || ((RRootNode) function.getTarget().getRootNode()).getFormalArguments().hasVarArgs();
-            if (hasVarArgsInvolved) {
+            if (args.containsVarArgsSymbol()) {
                 // Yes, maybe.
                 return new DispatchedVarArgsCallNode(function, args);
             } else {

@@ -13710,6 +13710,10 @@ attr(,"myattr")
 Hello world
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..1 } ;  f() }
+Error in f() : 'nthcdr' needs a list to CDR down
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { g(...) } ;  g <- function(b=2) { b } ; f() }
 [1] 2
 
@@ -13728,6 +13732,10 @@ Hello world
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a=1,...) a ; f() }
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(x) { ..1 } ;  f(10) }
+Error in f(10) : ..1 used in an incorrect context, no ... to look in
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f.numeric<-function(x, row.names = NULL, optional = FALSE, ..., nm = NULL) { print(optional); print(nm) }; f<-function(x, row.names = NULL, optional = FALSE, ...) { UseMethod("f") }; f(c(1,2), row.names = "r1", nm="bar") }
@@ -13769,6 +13777,34 @@ Error in f() : could not find function "dummy"
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
 #{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }
 Error in g() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...) { ..1 } ;  f(10) }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...) { ..3 } ; f(1,2) }
+Error in f(1, 2) : the ... list does not contain 3 elements
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+#{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }
+[1] 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
 #{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }
