@@ -25,9 +25,11 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 import java.nio.file.*;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
 import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
@@ -41,12 +43,24 @@ public class CallRFFIWithJNI implements CallRFFI {
         loadLibrary();
     }
 
+    /**
+     * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
+     * that are references by C code in R packages. Unfortunately, {@link System#load(String)} uses
+     * {@code RTLD_LOCAL}, so we have to load the library manually and set that flag. However, a
+     * {@code dlopen} does not hook the JNI functions inti the JVM, so we have to do an additional
+     * {@code System.load} to achieve that.
+     */
     @SlowPath
     private static void loadLibrary() {
         String rHome = REnvVars.rHome();
         String packageName = "com.oracle.truffle.r.native";
         OSInfo osInfo = RPlatform.getOSInfo();
         Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", osInfo.osSubDir, "librfficall." + osInfo.libExt);
+        try {
+            DLL.load(path.toString(), false, false);
+        } catch (DLLException ex) {
+            throw RError.error((SourceSection) null, ex);
+        }
         System.load(path.toString());
         initialize();
     }
