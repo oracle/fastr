@@ -15719,6 +15719,36 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_2a99369402e3625a074eafef17085ffa() {
+        assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_affd9e814dfe7c1912794059804308fd() {
+        assertEvalError("{ f <- function(...) { ..1 } ;  f() }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_e620898284cbe5e1d40bfe326c77804e() {
+        assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_ab19b9b703d36ea0149b6950305344b1() {
+        assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_46356a32a158c79de398dd64974058fc() {
+        assertEval("{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_569ec3ad103b4dcd2b7e7af1202dd26f() {
+        assertEval("{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDotsIgnore_a29c54a3c8cd1ee3e35a2aea432951cb() {
         assertEval("{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }");
     }
@@ -15751,6 +15781,21 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDotsIgnore_30b478f9a7f62680adb64c9c36c9ab71() {
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_ba5a64f80ce3db2ca6ec2bc574c2b011() {
+        assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_ccfd3930d86a89add4a6dbc2941c216e() {
+        assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_67eac84ba5b2dac0c1bc9214053b228c() {
+        assertEvalError("{ f <- function(...) { ..3 } ; f(1,2) }");
     }
 
     @Test
