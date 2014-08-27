@@ -540,7 +540,9 @@ public final class RError extends RuntimeException {
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
         QUOTE_G_ONE("only the first character of 'quote' will be used"),
-        UNEXPECTED("unexpected '%s' in \"%s\"");
+        UNEXPECTED("unexpected '%s' in \"%s\""),
+        FIRST_ELEMENT_USED("first element used of '%s' argument"),
+        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer");
 
         public final String message;
         private final boolean hasArgs;

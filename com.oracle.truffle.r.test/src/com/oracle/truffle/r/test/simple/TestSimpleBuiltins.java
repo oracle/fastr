@@ -105,6 +105,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testSeqLen() {
+        assertEval("{ seq_len(10) }");
+        assertEval("{ seq_len(5L) }");
+        assertEval("{ seq_len(1:2) }");
+        assertEval("{ seq_len(integer()) }");
+    }
+
+    @Test
     public void testArrayConstructors() {
         assertEval("{ integer() }");
         assertEval("{ double() }");

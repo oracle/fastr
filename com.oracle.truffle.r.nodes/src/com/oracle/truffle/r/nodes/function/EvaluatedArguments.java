@@ -42,30 +42,9 @@ public class EvaluatedArguments extends Arguments<Object> {
         super(evaluatedArgs, names);
     }
 
-    public static EvaluatedArguments create(Object[] evaluatedArgs, String[] names) {
-        // Check for trailing null arguments, which might be the case with varargs
-        int trailingNullsCount = 0;
-        for (int i = 0; i < evaluatedArgs.length; i++) {
-            if (evaluatedArgs[i] == null) {
-                trailingNullsCount++;
-            } else {
-                trailingNullsCount = 0;
-            }
-        }
-
-        // Cut of trailing nulls
+    public static EvaluatedArguments create(Object[] args, String[] names) {
         String[] argNames = names;
-        Object[] args = evaluatedArgs;
-        if (trailingNullsCount > 0) {
-            args = new Object[evaluatedArgs.length - trailingNullsCount];
-            System.arraycopy(evaluatedArgs, 0, args, 0, args.length);
-
-            // Names, too!
-            argNames = new String[args.length];
-            if (names != null) {
-                System.arraycopy(names, 0, argNames, 0, argNames.length);
-            }
-        } else if (argNames == null) {
+        if (argNames == null) {
             argNames = new String[args.length];
         }
 
