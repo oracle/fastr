@@ -277,7 +277,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             controlVisibility();
-            if (writeNode.getFrameSlotNode().hasValue(frame, enclosingFrame)) {
+            if (writeNode.getFrameSlotNode().hasValue(enclosingFrame)) {
                 writeNode.execute(frame, value, enclosingFrame);
             } else {
                 nextNode.execute(frame, value, RArguments.getEnclosingFrame(enclosingFrame));
@@ -322,10 +322,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 // we've reached the global scope, do unconditional write
                 // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeFactory.create(1) : null;
-                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, new FrameSlotNode.PresentFrameSlotNode(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)),
-                                this.isArgWrite(), mode);
+                writeNode = WriteSuperVariableNodeFactory.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(enclosingFrame.getFrameDescriptor().findOrAddFrameSlot(symbol)), this.isArgWrite(),
+                                mode);
             } else {
-                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, new FrameSlotNode.UnresolvedFrameSlotNode(symbol), this.isArgWrite(), mode);
+                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeFactory.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), mode);
                 writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
