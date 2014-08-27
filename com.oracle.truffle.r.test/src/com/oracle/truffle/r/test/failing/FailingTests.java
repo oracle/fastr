@@ -2224,21 +2224,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleSequences_testSequenceConstructionIgnore_b9324a4b0cb6cce5fbe2323872e18705() {
-        assertEvalWarning("{ (1:3):3 }");
-    }
-
-    @Ignore
-    public void TestSimpleSequences_testSequenceConstructionIgnore_21f0e4d9f66324fb97f8a0e9ca64bb19() {
-        assertEvalWarning("{ 1:(1:3) }");
-    }
-
-    @Ignore
-    public void TestSimpleSequences_testSequenceConstructionIgnore_0bdc2a5212b5125502d20aa9b6d7012e() {
-        assertEvalWarning("{ (1:3):(1:3) }");
-    }
-
-    @Ignore
     public void TestSimpleTruffle_test1Ignore_3ec182256a363ba8d70350f6d949593b() {
         assertEvalNoOutput("{ f<-function(i) { if(i==1) { i } } ; f(1) ; f(2) }");
     }

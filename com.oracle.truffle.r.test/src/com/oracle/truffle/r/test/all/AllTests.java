@@ -16959,17 +16959,17 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleSequences_testSequenceConstructionIgnore_b9324a4b0cb6cce5fbe2323872e18705() {
+    public void TestSimpleSequences_testSequenceConstruction_b9324a4b0cb6cce5fbe2323872e18705() {
         assertEvalWarning("{ (1:3):3 }");
     }
 
     @Test
-    public void TestSimpleSequences_testSequenceConstructionIgnore_21f0e4d9f66324fb97f8a0e9ca64bb19() {
+    public void TestSimpleSequences_testSequenceConstruction_21f0e4d9f66324fb97f8a0e9ca64bb19() {
         assertEvalWarning("{ 1:(1:3) }");
     }
 
     @Test
-    public void TestSimpleSequences_testSequenceConstructionIgnore_0bdc2a5212b5125502d20aa9b6d7012e() {
+    public void TestSimpleSequences_testSequenceConstruction_0bdc2a5212b5125502d20aa9b6d7012e() {
         assertEvalWarning("{ (1:3):(1:3) }");
     }
 
