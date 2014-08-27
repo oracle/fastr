@@ -25,13 +25,12 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -207,41 +206,10 @@ public class ArgumentMatcher {
     private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuiltin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
-        // Check for "missing" symbols
-        RNode[] suppliedArgsChecked = new RNode[suppliedArgs.length];
-        for (int i = 0; i < suppliedArgsChecked.length; i++) {
-            RNode arg = suppliedArgs[i];
-
-            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-            suppliedArgsChecked[i] = isMissingSymbol(frame, arg) ? RMissingHelper.MISSING_ARGUMENT : arg;
-        }
-
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
         PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
         return wrapInPromises(function, resultArgs, formals, wrapper);
-    }
-
-    /**
-     * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
-     * denote symbols
-     *
-     * @param frame {@link VirtualFrame}
-     * @param arg {@link RNode}
-     * @return Whether the given argument denotes a 'missing' symbol in the context of the given
-     *         frame
-     */
-    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
-        Symbol symbol = RMissingHelper.unwrapSymbol(arg);
-        if (symbol != null) {
-            Object obj = RMissingHelper.getMissingValue(frame, symbol);
-
-            // Symbol == missingArgument?
-            if (obj == RMissing.instance) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -556,11 +524,6 @@ public class ArgumentMatcher {
      *         {@link RMissing} in case neither is present!
      */
     private static RNode wrap(PromiseWrapper promiseWrapper, RFunction function, RBuiltinRootNode builtinRootNode, EnvProvider envProvider, RNode suppliedArg, RNode defaultValue, int logicalIndex) {
-        // Check: If supplied is missing, forward this one
-        if (suppliedArg instanceof ConstantMissingNode) {
-            return suppliedArg;
-        }
-
         // Determine whether to choose supplied argument or default value
         RNode expr = null;
         PromiseType promiseType = null;
