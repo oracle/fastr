@@ -213,7 +213,7 @@ public class ArgumentMatcher {
             RNode arg = suppliedArgs[i];
 
             // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-            suppliedArgsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+            suppliedArgsChecked[i] = isMissingSymbol(frame, arg, isForInlinedBuiltin) ? null : arg;
         }
 
         // Rearrange arguments
@@ -228,17 +228,18 @@ public class ArgumentMatcher {
      *
      * @param frame {@link VirtualFrame}
      * @param arg {@link RNode}
+     * @param inlined Whether the function is going to be called inlined
      * @return Whether the given argument denotes a 'missing' symbol in the context of the given
      *         frame
      */
-    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
+    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg, boolean inlined) {
         if (arg instanceof ConstantMissingNode) {
             return true;
         }
 
         Symbol symbol = RMissingHelper.unwrapSymbol(arg);
-        // Unused "..." are not 'missing'
-        if (symbol != null && !symbol.isVarArg()) {
+        // Unused "..." are not 'missing' for inlined functions
+        if (symbol != null && !(inlined && symbol.isVarArg())) {
             Object obj = RMissingHelper.getMissingValue(frame, symbol);
 
             // Symbol == missingArgument?
@@ -346,19 +347,22 @@ public class ArgumentMatcher {
         // Error check: Unused argument?
         int leftoverCount = suppliedArgs.length - matchedSuppliedArgs.cardinality();
         if (leftoverCount > 0) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-
+            // Check if this is really an error. Might be an inlined "..."!
             UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
+            if (leftoverCount == 1) {
+                T arg = si.next();
+                if (arrFactory.isVararg(arg)) {
+                    return resultArgs;
+                }
+            }
+
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            si.reset();
 
             // UNUSED_ARGUMENT(S)?
             if (leftoverCount == 1) {
                 // TODO Precise error messages: "f(n)" is missing!
-
                 String argStr = arrFactory.debugString(si.next());
-                // TODO This is a HACK, remove it when proper vararg unwrapping is implemented!
-                if (argStr.equals(ArgumentsTrait.VARARG_NAME)) {
-                    return resultArgs;
-                }
                 throw RError.error(null, RError.Message.UNUSED_ARGUMENT, argStr);
             }
 
@@ -386,14 +390,20 @@ public class ArgumentMatcher {
      */
     private static class UnmatchedSuppliedIterator<T> implements Iterator<T> {
         private static final int NO_MORE_ARGS = -1;
-        private int si = 0;
-        private int lastSi = 0;
+        private int si;
+        private int lastSi;
         private final T[] suppliedArgs;
         private final BitSet matchedSuppliedArgs;
 
         public UnmatchedSuppliedIterator(T[] suppliedArgs, BitSet matchedSuppliedArgs) {
             this.suppliedArgs = suppliedArgs;
             this.matchedSuppliedArgs = matchedSuppliedArgs;
+            reset();
+        }
+
+        public void reset() {
+            si = 0;
+            lastSi = 0;
         }
 
         /**
@@ -606,6 +616,14 @@ public class ArgumentMatcher {
         T[] newArray(int length);
 
         /**
+         * @param arg
+         * @return Whether arg represents a <i>formal</i> "..." which carries no content
+         */
+        default boolean isVararg(T arg) {
+            throw Utils.nyi("S3Dispatch should not have arg length mismatch!?");
+        }
+
+        /**
          * @param args
          * @return A {@link String} containing debug names of all given args
          */
@@ -625,6 +643,14 @@ public class ArgumentMatcher {
     private static class RNodeArrayFactory implements ArrayFactory<RNode> {
         public RNode[] newArray(int length) {
             return new RNode[length];
+        }
+
+        @Override
+        public boolean isVararg(RNode arg) {
+            // Empty varargs get passed in as "...", and not unrolled. Thus we only have to check
+            // the RVNs symbol
+            Symbol symbol = RMissingHelper.unwrapSymbol(arg);
+            return symbol != null && symbol.isVarArg();
         }
 
         @SlowPath

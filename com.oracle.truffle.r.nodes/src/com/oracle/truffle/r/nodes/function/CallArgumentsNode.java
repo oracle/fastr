@@ -151,7 +151,8 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
                     // call!
                     Object varArgContent = arguments[i].execute(frame);
                     if (varArgContent == RMissing.instance) {
-                        values[index] = ConstantNode.create(varArgContent);
+                        values[index] = arguments[i];   // Preserve "..." symbol!!! Needed during
+                        // matching to distinguish between missing argument and empty "..."
                         newNames[index] = names[i];
                         index++;
                         continue;

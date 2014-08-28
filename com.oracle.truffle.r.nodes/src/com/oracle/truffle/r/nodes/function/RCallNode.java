@@ -275,8 +275,6 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-
-// UnrolledVariadicArguments unwrappedArgs = args.executeFlatten(frame);
                     InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
                     return root.inline(inlinedArgs);
                 }
