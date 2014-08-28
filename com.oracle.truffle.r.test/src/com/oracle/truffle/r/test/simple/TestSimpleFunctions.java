@@ -192,6 +192,7 @@ public class TestSimpleFunctions extends TestBase {
         assertEvalError("{ f <- function(...) { ..1 } ;  f() }");
     }
 
+    @Ignore
     @Test
     public void testDotsIgnore() {
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");

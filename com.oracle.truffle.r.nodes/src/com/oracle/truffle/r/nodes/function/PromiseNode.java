@@ -89,6 +89,14 @@ public class PromiseNode extends RNode {
     }
 
     /**
+     * @param promise
+     * @return TODO Gero, add comment!
+     */
+    public static VarArgPromiseNode createVarArg(RPromise promise) {
+        return new VarArgPromiseNode(promise);
+    }
+
+    /**
      * Creates a new {@link RPromise} every time.
      */
     @Override
@@ -151,4 +159,19 @@ public class PromiseNode extends RNode {
         }
     }
 
+    /**
+     * TODO Gero, add comment!
+     */
+    private static class VarArgPromiseNode extends RNode {
+        private final RPromise promise;
+
+        private VarArgPromiseNode(RPromise promise) {
+            this.promise = promise;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return promise.evaluate(frame);
+        }
+    }
 }

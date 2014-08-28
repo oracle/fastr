@@ -33,8 +33,6 @@ import com.oracle.truffle.r.runtime.data.*;
  * would induce unnecessary dependencies otherwise.
  */
 public class RMissingHelper {
-    public static final RNode MISSING_ARGUMENT = ConstantNode.create(RMissing.instance);
-
     /**
      * This function determines whether an arguments value - given as 'value' - is missing. An
      * argument is missing when it has not been provided to the current function call (DEFAULTED or

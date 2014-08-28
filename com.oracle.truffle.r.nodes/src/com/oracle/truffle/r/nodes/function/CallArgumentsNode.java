@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -35,16 +37,15 @@ import com.oracle.truffle.r.runtime.data.*;
  * given to a specific function call. The arguments' order is the same as given at the call.<br/>
  * It additionally holds usage hints ({@link #modeChange}, {@link #modeChangeForAll}).
  */
-public final class CallArgumentsNode extends ArgumentsNode {
+public final class CallArgumentsNode extends ArgumentsNode implements CallArguments {
 
     private static final String[] NO_NAMES = new String[0];
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
-     * field is set to the index of the symbol. Otherwise it is {@link #NO_VARARG} (
-     * {@value #NO_VARARG}).
+     * field contains the index of the symbol. Otherwise it is an empty list.
      */
-    private final int varArgsSymbolIndex;
+    private final List<Integer> varArgsSymbolIndices;
 
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
@@ -63,9 +64,9 @@ public final class CallArgumentsNode extends ArgumentsNode {
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, String[] names, int varArgsSymbolIndex, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, String[] names, List<Integer> varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, names);
-        this.varArgsSymbolIndex = varArgsSymbolIndex;
+        this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
     }
@@ -89,17 +90,17 @@ public final class CallArgumentsNode extends ArgumentsNode {
     public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
-        int varArgsSymbolIndex = NO_VARARG;
+        List<Integer> varArgsSymbolIndices = new ArrayList<>();
         for (int i = 0; i < wrappedArgs.length; ++i) {
             RNode arg = args[i];
             if (arg == null) {
                 wrappedArgs[i] = null;
             } else {
-                if (varArgsSymbolIndex == NO_VARARG && arg instanceof ReadVariableNode) {
+                if (arg instanceof ReadVariableNode) {
                     // Check for presence of "..." in the arguments
                     ReadVariableNode rvn = (ReadVariableNode) arg;
                     if (rvn.getSymbol().isVarArg()) {
-                        varArgsSymbolIndex = i;
+                        varArgsSymbolIndices.add(i);
                     }
                 }
                 wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true);
@@ -114,7 +115,7 @@ public final class CallArgumentsNode extends ArgumentsNode {
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndex, modeChange, modeChangeForAll);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndices, modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -134,38 +135,54 @@ public final class CallArgumentsNode extends ArgumentsNode {
     }
 
     @ExplodeLoop
-    public RArgsValuesAndNames executeFlatten(VirtualFrame frame) {
+    public UnrolledVariadicArguments executeFlatten(VirtualFrame frame) {
         if (!containsVarArgsSymbol()) {
-            Object[] values = new Object[arguments.length];
-            for (int i = 0; i < values.length; i++) {
-                values[i] = arguments[i] == null ? null : arguments[i].execute(frame);
-            }
-            return new RArgsValuesAndNames(values, this.getNames());
+            return UnrolledVariadicArguments.create(getArguments(), getNames());
         } else {
-            Object[] values = new Object[arguments.length];
+            RNode[] values = new RNode[arguments.length];
             String[] newNames = new String[arguments.length];
 
             int index = 0;
             for (int i = 0; i < arguments.length; i++) {
-                Object argEvaluated = arguments[i].execute(frame);
-                if (argEvaluated instanceof RArgsValuesAndNames) {
-                    // variadic argument
-                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) argEvaluated;
-                    values = Utils.resizeObjectsArray(values, values.length + varArgInfo.length() - 1);
+                if (varArgsSymbolIndices.contains(i)) {
+                    // Vararg "..." argument. "execute" to retrieve RArgsValuesAndNames. This is the
+                    // reason for this whole method: Before argument matching, we have to unroll
+                    // passed "..." every time, as their content might change per call site each
+                    // call!
+                    Object varArgContent = arguments[i].execute(frame);
+                    if (varArgContent == RMissing.instance) {
+                        values[index] = ConstantNode.create(varArgContent);
+                        newNames[index] = names[i];
+                        index++;
+                        continue;
+                    }
+
+                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) arguments[i].execute(frame);
+                    // length == 0 cannot happen, in that case RMissing is caught above
+                    values = Utils.resizeArray(values, values.length + varArgInfo.length() - 1);
                     newNames = Utils.resizeStringsArray(newNames, newNames.length + varArgInfo.length() - 1);
                     for (int j = 0; j < varArgInfo.length(); j++) {
-                        values[index] = varArgInfo.getValues()[j];
+                        // TODO SourceSection necessary here?
+                        // VarArgInfo may contain two types of values here: RPromises and
+                        // RMissing.instance. Both need to be wrapped into ConstantNodes, so
+                        // they might get wrapped into new promises later on
+                        Object varArgValue = varArgInfo.getValues()[j];
+                        if (varArgValue instanceof RPromise) {
+                            values[index] = PromiseNode.createVarArg((RPromise) varArgValue);
+                        } else {
+                            values[index] = ConstantNode.create(varArgValue);
+                        }
                         newNames[index] = varArgInfo.getNames()[j];
                         index++;
                     }
                 } else {
-                    values[index] = argEvaluated;
-                    newNames[index] = this.getNames()[i];
+                    values[index] = arguments[i];
+                    newNames[index] = names[i];
                     index++;
                 }
             }
 
-            return new RArgsValuesAndNames(values, newNames);
+            return UnrolledVariadicArguments.create(values, newNames);
         }
     }
 
@@ -173,7 +190,17 @@ public final class CallArgumentsNode extends ArgumentsNode {
      * @return {@link #containsVarArgsSymbol}
      */
     public boolean containsVarArgsSymbol() {
-        return varArgsSymbolIndex != NO_VARARG;
+        return !varArgsSymbolIndices.isEmpty();
+    }
+
+    @Override
+    public int getVarArgIndex() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean hasVarArgs() {
+        throw new UnsupportedOperationException();
     }
 
     /**
