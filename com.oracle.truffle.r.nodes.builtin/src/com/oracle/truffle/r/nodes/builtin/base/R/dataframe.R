@@ -247,13 +247,34 @@ as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
     value
 }
 
+as.data.frame.model.matrix <-
+		function(x, row.names = NULL, optional = FALSE, ...)
+{
+	d <- dim(x)
+	nrows <- d[1L]
+	dn <- dimnames(x)
+	row.names <- dn[[1L]]
+	value <- list(x)
+	if(!is.null(row.names)) {
+		row.names <- as.character(row.names)
+		if(length(row.names) != nrows)
+			stop(sprintf(ngettext(length(row.names),
+									"supplied %d row name for %d rows",
+									"supplied %d row names for %d rows"),
+							length(row.names), nrows), domain = NA)
+	}
+	else row.names <- .set_row_names(nrows)
+	if(!optional) names(value) <- deparse(substitute(x))[[1L]]
+	attr(value, "row.names") <- row.names
+	class(value) <- "data.frame"
+	value
+}
+
 as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE, ...)
 {
     ## why not remove class and NextMethod here?
     if(length(dim(x)) == 2L)
-# TODO: implement as.data.frame.model.matrix
-#     as.data.frame.model.matrix(x, row.names, optional)
-     stop("as.data.frame.model.matrix not yet supported")
+     as.data.frame.model.matrix(x, row.names, optional)
     else { # as.data.frame.vector without removing names
         nrows <- length(x)
         nm <- paste(deparse(substitute(x), width.cutoff=500L), collapse=" ")
