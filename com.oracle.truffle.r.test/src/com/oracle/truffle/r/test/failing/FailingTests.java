@@ -2044,6 +2044,121 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_e620898284cbe5e1d40bfe326c77804e() {
+        assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_ab19b9b703d36ea0149b6950305344b1() {
+        assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_46356a32a158c79de398dd64974058fc() {
+        assertEval("{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_569ec3ad103b4dcd2b7e7af1202dd26f() {
+        assertEval("{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_a29c54a3c8cd1ee3e35a2aea432951cb() {
+        assertEval("{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_82b39f3b671e13554b9f70c67b51d9bc() {
+        assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_44ffe8a1375fa81b1531c8e8a3c876ee() {
+        assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ...) }  ; f(b=1,a=2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_1d94abf5afd9989c20c9e7713f15aa3a() {
+        assertEval("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_b7c1eb65db6a2cb8b5f3401383477104() {
+        assertEval("{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_f869c81e19bebe1d0b508f3152867860() {
+        assertEval("{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_30b478f9a7f62680adb64c9c36c9ab71() {
+        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_ba5a64f80ce3db2ca6ec2bc574c2b011() {
+        assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_ccfd3930d86a89add4a6dbc2941c216e() {
+        assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_67eac84ba5b2dac0c1bc9214053b228c() {
+        assertEvalError("{ f <- function(...) { ..3 } ; f(1,2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_452f05dd561690c47f4f03db94d54b6b() {
+        assertEvalError("{ f <- function() { dummy() } ; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_20c4c3aa63da2253e51ef2c5ba9d4a1b() {
+        assertEvalError("{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_8645241807f4b8810f69603e0858ef16() {
+        assertEvalError("{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_edee5dc6f81e51ce659c0f3a2fb21571() {
+        assertEvalError("{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_c3c566ad3a1f22872c3f310db5ae8933() {
+        assertEvalError("{ f <- function() { dummy() } ; dummy <- 2 ; f() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_5606499974e8a959bd2e5a755f7832c8() {
+        assertEvalError("{ dummy <- 2 ; dummy() }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_27d8843efbecef3fd6ae84611b61cdff() {
+        assertEvalError("{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_7f8c80886bf192821872b6edd793baf2() {
+        assertEvalError("{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_997c167046500987d88720745d0018c2() {
+        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }");
+    }
+
+    @Ignore
     public void TestSimpleFunctions_testErrors_97c1046334e0c7a03ba92803615fccd6() {
         assertEvalError("{ x<-function(){1} ; x(y=1) }");
     }
