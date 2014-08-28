@@ -3469,4 +3469,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\"); on.exit() }; n()");
         assertEval("n = function() { on.exit() }; n()");
     }
+
+    @Test
+    public void testTabulate() {
+        assertEval("{tabulate(c(2,3,5))}");
+        assertEval("{tabulate(c(2,3,3,5), nbins = 10)}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5))}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
+        assertEval("{tabulate(factor(letters[1:10]))}");
+    }
 }

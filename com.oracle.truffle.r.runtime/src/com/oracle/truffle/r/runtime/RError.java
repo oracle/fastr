@@ -336,6 +336,7 @@ public final class RError extends RuntimeException {
         SUPPLY_X_Y_MATRIX("supply both 'x' and 'y' or a matrix-like 'x'"),
         SD_ZERO("the standard deviation is zero"),
         INVALID_UNNAMED_ARGUMENTS("invalid arguments"),
+        INVALID_INPUT("invalid input"),
         NA_PRODUCED("NAs produced"),
         DETERMINANT_COMPLEX("determinant not currently defined for complex matrices"),
         NON_NUMERIC_ARGUMENT("non-numeric argument"),

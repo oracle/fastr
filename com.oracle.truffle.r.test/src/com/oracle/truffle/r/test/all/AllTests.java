@@ -12944,6 +12944,31 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testTabulate_4b7b5ec3ddf837f6040cf4105e954f88() {
+        assertEval("{tabulate(c(2,3,5))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_fec0be8a7184c603e90d5b540e990fc8() {
+        assertEval("{tabulate(c(2,3,3,5), nbins = 10)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_140894fd7adda3975501091bc4f6e08f() {
+        assertEval("{tabulate(c(-2,0,2,3,3,5))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_7a9d2766e5ee6691e8120d07526d8630() {
+        assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_0a6ec06d77c3ae8bad08fcaf7dbbb6ba() {
+        assertEval("{tabulate(factor(letters[1:10]))}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testTranspose_6e1d2dd0ef9ac4c3dbae8a1bc755d657() {
         assertEval("{ m <- matrix(1:49, nrow=7) ; sum(m * t(m)) }");
     }
