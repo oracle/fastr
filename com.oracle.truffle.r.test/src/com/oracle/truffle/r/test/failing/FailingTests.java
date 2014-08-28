@@ -304,11 +304,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCall_7c2048e48cfa4b8a27e274503d2d28f2() {
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testCatIgnore_01ac467ff40598b5a055378fc7882537() {
         assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
     }

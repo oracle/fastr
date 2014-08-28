@@ -4274,6 +4274,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAnyDuplicated_7c2048e48cfa4b8a27e274503d2d28f2() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAnyDuplicated_cb726c8352e193993857ad6c6c8738b4() {
         assertEval("{anyDuplicated(c(\"abc\"))}");
     }
@@ -5231,11 +5236,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testCall_ac5601b7f27d60cead4d93b849fd38ca() {
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCall_7c2048e48cfa4b8a27e274503d2d28f2() {
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
     }
 
     @Test
