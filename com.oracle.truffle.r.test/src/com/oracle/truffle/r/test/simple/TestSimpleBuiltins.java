@@ -3444,6 +3444,21 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testCharMatch() {
+        assertEval("{charmatch(\"abc\", \"deeee\",c(\"3\",\"4\"))}");
+        assertEval("{charmatch(\"abc\", \"deeee\")}");
+        assertEval("{charmatch(\"abc\", \"deeeec\",c(\"3\",\"4\"))}");
+        assertEval("{charmatch(\"\", \"\")}");
+        assertEval("{charmatch(\"m\",   c(\"mean\", \"median\", \"mode\"))}");
+        assertEval("{charmatch(\"med\", c(\"mean\", \"median\", \"mode\"))}");
+        assertEval("{charmatch(matrix(c(9,3,1,6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch(matrix(c('h',3,'e',6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
+        assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+    }
+
+    @Test
     public void testOnExit() {
         assertEval("n = function() { on.exit(print(\"test\")); print(\"some\") }; n()");
         assertEval("n = function() { on.exit(print(\"test\", TRUE)); print(\"some\") }; n()");
@@ -3453,5 +3468,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("n = function() { on.exit(print(\"test\", TRUE)); on.exit(print(\"test2\")); print(\"some\") }; n()");
         assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\"); on.exit() }; n()");
         assertEval("n = function() { on.exit() }; n()");
+    }
+
+    @Test
+    public void testTabulate() {
+        assertEval("{tabulate(c(2,3,5))}");
+        assertEval("{tabulate(c(2,3,3,5), nbins = 10)}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5))}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
+        assertEval("{tabulate(factor(letters[1:10]))}");
     }
 }

@@ -5639,6 +5639,61 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCharMatch_1bba70d3556f1331554d4f03dca61c41() {
+        assertEval("{charmatch(\"abc\", \"deeee\",c(\"3\",\"4\"))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_0094ab49a5bda363eaad85209835c54e() {
+        assertEval("{charmatch(\"abc\", \"deeee\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_aa4d03f99bdec59ec1f50b0a70ac6c09() {
+        assertEval("{charmatch(\"abc\", \"deeeec\",c(\"3\",\"4\"))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_e64c0e6b21134ad4b4bb25db598da4af() {
+        assertEval("{charmatch(\"\", \"\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_fdb6d0ffcfe49194fde4c3423560328f() {
+        assertEval("{charmatch(\"m\",   c(\"mean\", \"median\", \"mode\"))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_e232da4885b2245ed024ccb31f179bf1() {
+        assertEval("{charmatch(\"med\", c(\"mean\", \"median\", \"mode\"))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_c8501689286340c24bb7ffc00266a94f() {
+        assertEval("{charmatch(matrix(c(9,3,1,6),2,2,byrow=T), \"hello\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_09f266662b65c3fbabb20e272502f6db() {
+        assertEval("{charmatch(matrix(c('h',3,'e',6),2,2,byrow=T), \"hello\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_a9b47ef376ece2efac7e812eb75c4ed8() {
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_acfeae7272e175b2611328a0a10678c9() {
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCharMatch_00f8ee619ac45b21b733be77508b4be6() {
+        assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCharUtils_38efbb1cdef27318804e0719732d2be0() {
         assertEval("{ toupper(c(\"hello\",\"bye\")) }");
     }
@@ -12886,6 +12941,31 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testSwitchIgnore_85ece8b67b950e9299c9a4d4dcb0b533() {
         assertEval("{answer<-\"no\";switch(as.character(answer), yes=, YES=1, no=, NO=2,3)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_4b7b5ec3ddf837f6040cf4105e954f88() {
+        assertEval("{tabulate(c(2,3,5))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_fec0be8a7184c603e90d5b540e990fc8() {
+        assertEval("{tabulate(c(2,3,3,5), nbins = 10)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_140894fd7adda3975501091bc4f6e08f() {
+        assertEval("{tabulate(c(-2,0,2,3,3,5))}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_7a9d2766e5ee6691e8120d07526d8630() {
+        assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testTabulate_0a6ec06d77c3ae8bad08fcaf7dbbb6ba() {
+        assertEval("{tabulate(factor(letters[1:10]))}");
     }
 
     @Test

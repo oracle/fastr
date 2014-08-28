@@ -54,3 +54,6 @@ match.arg <- function (arg, choices, several.ok = FALSE)
         stop("there is more than one match in 'match.arg'")
     choices[i]
 }
+
+charmatch <- function(x, table, nomatch = NA_integer_)
+	    .Internal(charmatch(as.character(x), as.character(table), nomatch))
