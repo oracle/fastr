@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
+import java.util.function.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -31,7 +32,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -529,14 +530,12 @@ public class ArgumentMatcher {
 
         // Check whether this is a builtin
         RootNode rootNode = function.getTarget().getRootNode();
-        RBuiltinRootNode builtinRootNode = null;
-        if (rootNode instanceof RBuiltinRootNode) {
-            builtinRootNode = (RBuiltinRootNode) rootNode;
-        }
+        final RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
 
         // Insert promises here!
         EnvProvider envProvider = new EnvProvider();
-        int logicalIndex = 0;    // also counts arguments wrapped in vararg
+        // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
+        // take "..." as one), we don't need a logicalIndex
         for (int fi = 0; fi < arguments.length; fi++) {
             RNode arg = arguments[fi];  // arg may be null, which denotes 'no arg supplied'
 
@@ -546,15 +545,14 @@ public class ArgumentMatcher {
                 RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
                 for (int j = 0; j < varArgs.elementNodes.length; j++) {
                     // Obviously single var args have no default values, so null
-                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
-                    logicalIndex++;
+                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, fi);
                 }
-                resArgs[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes, varArgs.getNames(), promiseWrapper.isInlined());
+                final int finalFi = fi;
+                resArgs[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes, varArgs.getNames(), i -> promiseWrapper.getEvalPolicy(function, builtinRootNode, finalFi) == EvalPolicy.INLINED);
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-                resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
-                logicalIndex++;
+                resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, fi);
             }
         }
         return resArgs;
@@ -696,11 +694,6 @@ public class ArgumentMatcher {
          *         {@link PromiseNode}
          */
         EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex);
-
-        /**
-         * @return TODO Gero, add comment!
-         */
-        boolean isInlined();
     }
 
     /**
@@ -711,10 +704,6 @@ public class ArgumentMatcher {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
             return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
-        }
-
-        public boolean isInlined() {
-            return false;
         }
     }
 
@@ -728,10 +717,6 @@ public class ArgumentMatcher {
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is used for arguments that are going inlined for builtins
             return !builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.PROMISED : EvalPolicy.INLINED;
-        }
-
-        public boolean isInlined() {
-            return true;
         }
     }
 
@@ -792,13 +777,13 @@ public class ArgumentMatcher {
      */
     public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
         private String[] names;
-        private final boolean inline;
+        private final Function<Integer, Boolean> inline;
 
         public VarArgsAsObjectArrayNode(RNode[] elements, String[] names) {
-            this(elements, names, false);
+            this(elements, names, i -> false);
         }
 
-        public VarArgsAsObjectArrayNode(RNode[] elements, String[] names, boolean inline) {
+        public VarArgsAsObjectArrayNode(RNode[] elements, String[] names, Function<Integer, Boolean> inline) {
             super(elements);
             this.names = names;
             this.inline = inline;
@@ -816,7 +801,7 @@ public class ArgumentMatcher {
     }
 
     @ExplodeLoop
-    private static Object[] executeArguments(VirtualFrame frame, RNode[] elementNodes, boolean inline) {
+    private static Object[] executeArguments(VirtualFrame frame, RNode[] elementNodes, Function<Integer, Boolean> inline) {
         Object[] evaluatedArgs = new Object[elementNodes.length];
         int index = 0;
         for (int i = 0; i < elementNodes.length; i++) {
@@ -828,10 +813,11 @@ public class ArgumentMatcher {
                 evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, evaluatedArgs.length + argsValuesAndNames.length() - 1);
                 Object[] varargValues = argsValuesAndNames.getValues();
                 for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                    evaluatedArgs[index++] = checkEvaluate(frame, inline, varargValues[j]);
+                    evaluatedArgs[index++] = checkEvaluate(frame, inline, varargValues[j], i);  // i
+                    // because "..." is counted as one in FastR for inlined args
                 }
             } else {
-                evaluatedArgs[index++] = checkEvaluate(frame, inline, argValue);
+                evaluatedArgs[index++] = checkEvaluate(frame, inline, argValue, i);
             }
         }
         return evaluatedArgs;
@@ -843,8 +829,8 @@ public class ArgumentMatcher {
      * @param argValue
      * @return TODO Gero, add comment!
      */
-    private static Object checkEvaluate(VirtualFrame frame, boolean inline, Object argValue) {
-        if (inline && argValue instanceof RPromise) {
+    private static Object checkEvaluate(VirtualFrame frame, Function<Integer, Boolean> inline, Object argValue, int index) {
+        if (inline.apply(index) && argValue instanceof RPromise) {
             RPromise promise = (RPromise) argValue;
             return promise.evaluate(frame);
         }
