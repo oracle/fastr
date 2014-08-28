@@ -38,8 +38,7 @@
 
 row.names <- function(x) UseMethod("row.names")
 row.names.data.frame <- function(x) as.character(attr(x, "row.names"))
-# TODO: remove default parameter values for rownames once snippet default args are handled properly
-row.names.default <- function(x) if(!is.null(dim(x))) rownames(x, TRUE, "row")# else NULL
+row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
 
 # TODO: implement NA_integer_
 .set_row_names <- function(n)
@@ -66,17 +65,16 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x, TRUE, "row")# 
     }
     else if (length(value) != n)
         stop("invalid 'row.names' length")
-# TODO: implement anyDuplicated and sprintf
-#    if (anyDuplicated(value)) {
-#        nonuniq <- sort(unique(value[duplicated(value)]))
-#        warning(ngettext(length(nonuniq),
-#                         sprintf("non-unique value when setting 'row.names': %s",
-#                                 sQuote(nonuniq[1L])),
-#                         sprintf("non-unique values when setting 'row.names': %s",
-#                                 paste(sQuote(nonuniq), collapse = ", "))),
-#                domain = NA, call. = FALSE)
-#        stop("duplicate 'row.names' are not allowed")
-#    }
+    if (anyDuplicated(value)) {
+        nonuniq <- sort(unique(value[duplicated(value)]))
+        warning(ngettext(length(nonuniq),
+                         sprintf("non-unique value when setting 'row.names': %s",
+                                 sQuote(nonuniq[1L])),
+                         sprintf("non-unique values when setting 'row.names': %s",
+                                 paste(sQuote(nonuniq), collapse = ", "))),
+                domain = NA, call. = FALSE)
+        stop("duplicate 'row.names' are not allowed")
+    }
     if (any(is.na(value)))
         stop("missing values in 'row.names' are not allowed")
     attr(x, "row.names") <- value
@@ -93,9 +91,7 @@ print.AsIs <- function (x, ...)
     invisible(x)
 }
 
-# TODO: implement correct argument processing (at this point all methods must have the same signature)
-#as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
-as.data.frame <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = FALSE)
+as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
 {
     if(is.null(x)) # can't assign class to NULL
         return(as.data.frame(list()))
@@ -103,19 +99,14 @@ as.data.frame <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stri
 }
 
 as.data.frame.default <- function(x, ...)
-# TODO: implement deparse
-#    stop(gettextf("cannot coerce class \"%s\" to a data.frame",
-#                  deparse(class(x))),
-    stop(gettextf("cannot coerce class \"\"%s\"\" to a data.frame",
-                  class(x)),
-         domain = 42)
+    stop(gettextf("cannot coerce class \"%s\" to a data.frame",
+                  deparse(class(x))),
+		  domain = 42)
 
 ###  Here are methods ensuring that the arguments to "data.frame"
 ###  are in a form suitable for combining into a data frame.
 
-# TODO: implement correct argument processing (at this point all methods must have the same signature)
-#as.data.frame.data.frame <- function(x, row.names = NULL, ...)
-as.data.frame.data.frame <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = FALSE)
+as.data.frame.data.frame <- function(x, row.names = NULL, ...)
 {
     cl <- oldClass(x)
     i <- match("data.frame", cl)
@@ -136,10 +127,8 @@ as.data.frame.data.frame <- function(x, row.names = NULL, nm = NULL, optional = 
 
 ## prior to 1.8.0 this coerced names - PR#3280
 as.data.frame.list <-
-# TODO: implement correct argument processing (at this point all methods must have the same signature)
-#       function(x, row.names = NULL, optional = FALSE, ...,
-#                stringsAsFactors = default.stringsAsFactors())
-        function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = default.stringsAsFactors())
+       function(x, row.names = NULL, optional = FALSE, ...,
+                stringsAsFactors = default.stringsAsFactors())
         {
             ## need to protect names in x.
             cn <- names(x)
@@ -149,9 +138,8 @@ as.data.frame.list <-
                 cn[m] <- paste0("..adfl.", cn[m])
                 names(x) <- cn
             }
-# TODO: implement eval
-#    x <- eval(as.call(c(expression(data.frame), x, check.names = !optional,
-#                        stringsAsFactors = stringsAsFactors)))
+    x <- eval(as.call(c(expression(data.frame), x, check.names = !optional,
+                        stringsAsFactors = stringsAsFactors)))
             x <- data.frame(x, check.names = !optional,
                             stringsAsFactors = stringsAsFactors)
             if(any(m)) names(x) <- sub("^\\.\\.adfl\\.", "", names(x))
@@ -167,22 +155,17 @@ as.data.frame.list <-
             x
         }
 
-# TODO: handle parameters correctly
-# TODO: implement deparse
-#as.data.frame.vector <- function(x, row.names = NULL, optional = FALSE, ...,
-#                                 nm = paste(deparse(substitute(x),
-#                                 width.cutoff = 500L), collapse=" ")  )
-as.data.frame.vector <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE)
+as.data.frame.vector <- function(x, row.names = NULL, optional = FALSE, ...,
+                                 nm = paste(deparse(substitute(x),
+                                 width.cutoff = 500L), collapse=" ")  )
 {
     force(nm)
     nrows <- length(x)
     if(is.null(row.names)) {
         if (nrows == 0L) {
             row.names <- character() }
-# TODO implement anyDuplicated
-#        else if(length(row.names <- names(x)) == nrows &&
-#            !anyDuplicated(row.names)) {}
-        else if(length(row.names <- names(x)) == nrows) {}
+        else if(length(row.names <- names(x)) == nrows &&
+            !anyDuplicated(row.names)) {}
         else row.names <- .set_row_names(nrows)
     }
     if(!is.null(names(x))) names(x) <- NULL # remove names as from 2.0.0
@@ -201,51 +184,38 @@ as.data.frame.ts <- function(x, ...)
         as.data.frame.vector(x, ...)
 }
 
-# TODO: for some reason assignments do not work at this point
-# TODO: implement correct argument processing (at this point all methods must have the same signature)
-#as.data.frame.raw  <- as.data.frame.vector
-as.data.frame.raw <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
-#as.data.frame.factor  <- as.data.frame.vector
-#as.data.frame.ordered <- as.data.frame.vector
-#as.data.frame.integer <- as.data.frame.vector
-as.data.frame.integer <- function(x, row.names = NULL, nm = NULL, optional, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
-#as.data.frame.numeric <- as.data.frame.vector
-as.data.frame.numeric <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
-#as.data.frame.complex <- as.data.frame.vector
-as.data.frame.complex <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+as.data.frame.raw  <- as.data.frame.vector
+as.data.frame.factor  <- as.data.frame.vector
+as.data.frame.ordered <- as.data.frame.vector
+as.data.frame.integer <- as.data.frame.vector
+as.data.frame.numeric <- as.data.frame.vector
+as.data.frame.complex <- as.data.frame.vector
 
 default.stringsAsFactors <- function()
 {
-# TODO: implement getOption
-#    val <- getOption("stringsAsFactors")
-#    if(is.null(val)) val <- TRUE
-#    if(!is.logical(val) || is.na(val) || length(val) != 1L)
-#        stop('options("stringsAsFactors") not set to TRUE or FALSE')
-#    val
-    FALSE
+    val <- getOption("stringsAsFactors")
+    if(is.null(val)) val <- TRUE
+    if(!is.logical(val) || is.na(val) || length(val) != 1L)
+        stop('options("stringsAsFactors") not set to TRUE or FALSE')
+    val
 }
 
 # TODO: implement deparse (on the main execution path)
 ## in case someone passes 'nm'
-#as.data.frame.character <-
-#    function(x, ..., stringsAsFactors = default.stringsAsFactors())
-#{
+as.data.frame.character <-
+    function(x, ..., stringsAsFactors = default.stringsAsFactors())
+{
 #    nm <- deparse(substitute(x), width.cutoff=500L)
 #    if(stringsAsFactors) x <- factor(x)
 #    if(!"nm" %in% names(list(...)))
 #        as.data.frame.vector(x, ..., nm = nm)
 #    else as.data.frame.vector(x, ...)
-#}
-as.data.frame.character <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
+	as.data.frame.vector(x, ...)
+}
+as.data.frame.logical <- as.data.frame.vector
 
-# TODO: for some reason assignments do not work at this point
-#as.data.frame.logical <- as.data.frame.vector
-as.data.frame.logical <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE) { as.data.frame.vector(x, row.names, nm, optional); }
-
-# TODO: implement correct argument processing (at this point all methods must have the same signature)
-#as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
-#                                 stringsAsFactors = default.stringsAsFactors())
-as.data.frame.matrix <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors = default.stringsAsFactors())
+as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
+                                 stringsAsFactors = default.stringsAsFactors())
 {
     d <- dim(x)
     nrows <- d[1L]; ir <- seq_len(nrows)
@@ -277,9 +247,7 @@ as.data.frame.matrix <- function(x, row.names = NULL, nm = NULL, optional = FALS
     value
 }
 
-# TODO: handle parameters correctly
-#as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE, ...)
-as.data.frame.AsIs <- function(x, row.names = NULL, nm = NULL, optional = FALSE, stringsAsFactors=FALSE)
+as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE, ...)
 {
     ## why not remove class and NextMethod here?
     if(length(dim(x)) == 2L)
@@ -288,20 +256,16 @@ as.data.frame.AsIs <- function(x, row.names = NULL, nm = NULL, optional = FALSE,
      stop("as.data.frame.model.matrix not yet supported")
     else { # as.data.frame.vector without removing names
         nrows <- length(x)
-# TODO: implement deparse
-#        nm <- paste(deparse(substitute(x), width.cutoff=500L), collapse=" ")
+        nm <- paste(deparse(substitute(x), width.cutoff=500L), collapse=" ")
         if(is.null(row.names)) {
             if (nrows == 0L)
                 row.names <- character()
-# TODO: implement anyDuplicated
-#            else if(length(row.names <- names(x)) == nrows &&
-#                    !anyDuplicated(row.names)) {}
+            else if(length(row.names <- names(x)) == nrows &&
+                    !anyDuplicated(row.names)) {}
             else row.names <- .set_row_names(nrows)
         }
         value <- list(x)
-# TODO: implement deparse (see above)
-#        if(!optional) names(value) <- nm
-        if(!optional) stop("deparse not yet supported")
+        if(!optional) names(value) <- nm
         attr(value, "row.names") <- row.names
         class(value) <- "data.frame"
         value
@@ -321,9 +285,8 @@ data.frame <-
             function(current, new, i) {
                 if(is.character(current)) new <- as.character(new)
                 if(is.character(new)) current <- as.character(current)
-# TODO: implement anyDuplicated
-#                if(anyDuplicated(new))
-#                    return(current)
+                if(anyDuplicated(new))
+                    return(current)
                 if(is.null(current))
                     return(new)
                 if(all(current == new) || all(current == ""))
@@ -332,18 +295,16 @@ data.frame <-
             }
         else function(current, new, i) {
             if(is.null(current)) {
-#                if(anyDuplicated(new)) {
-#                    warning(gettextf("some row.names duplicated: %s --> row.names NOT used",
-#                                     paste(which(duplicated(new)), collapse=",")),
-#                            domain = NA)
-#                    current
-#                } else new
+                if(anyDuplicated(new)) {
+                    warning(gettextf("some row.names duplicated: %s --> row.names NOT used",
+                                     paste(which(duplicated(new)), collapse=",")),
+                            domain = NA)
+                    current
+                } else new
                     new
                 } else current
         }
-# TODO: implement substitute
-#    object <- as.list(substitute(list(...))[-1L]
-    object <- list(...)
+    object <- as.list(substitute(list(...)))[-1L]
     mirn <- missing(row.names) # record before possibly changing
     mrn <- is.null(row.names) # missing or NULL
     x <- list(...)
@@ -354,12 +315,11 @@ data.frame <-
                 row.names <- as.character(row.names)
             if(any(is.na(row.names)))
                 stop("row names contain missing values")
-# TODO: implement anyDuplicated
-#            if(anyDuplicated(row.names))
-#                stop(gettextf("duplicate row.names: %s",
-#                              paste(unique(row.names[duplicated(row.names)]),
-#                                    collapse = ", ")),
-#                    domain = NA)
+            if(anyDuplicated(row.names))
+                stop(gettextf("duplicate row.names: %s",
+                              paste(unique(row.names[duplicated(row.names)]),
+                                    collapse = ", ")),
+                    domain = NA)
         } else row.names <- integer()
         return(structure(list(), names = character(),
                          row.names = row.names,
@@ -374,12 +334,9 @@ data.frame <-
     for(i in seq_len(n)) {
         ## do it this way until all as.data.frame methods have been updated
         xi <- if(is.character(x[[i]]) || is.list(x[[i]]))
-# TODO: handle as.data.frame.vector parameters correctly
-#                 as.data.frame(x[[i]], optional = TRUE,
-#                               stringsAsFactors = stringsAsFactors)
-#        else as.data.frame(x[[i]], optional = TRUE)
-                 as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE, stringsAsFactors=FALSE)
-        else as.data.frame(x[[i]], row.names = NULL, nm = NULL, optional = TRUE, stringsAsFactors=FALSE)
+                 as.data.frame(x[[i]], optional = TRUE,
+                               stringsAsFactors = stringsAsFactors)
+        else as.data.frame(x[[i]], optional = TRUE)
 
         nrows[i] <- .row_names_info(xi) # signed for now
         ncols[i] <- length(xi)
@@ -393,14 +350,13 @@ data.frame <-
         else {
             if(length(namesi)) vnames[[i]] <- namesi
             else if (no.vn[[i]]) {
-                stop("deparse not implemented")
-#                tmpname <- deparse(object[[i]])[1L]
-#                if( substr(tmpname, 1L, 2L) == "I(" ) {
-#                    ntmpn <- nchar(tmpname, "c")
-#                    if(substr(tmpname, ntmpn, ntmpn) == ")")
-#                        tmpname <- substr(tmpname, 3L, ntmpn - 1L)
-#                }
-#                vnames[[i]] <- tmpname
+                tmpname <- deparse(object[[i]])[1L]
+                if( substr(tmpname, 1L, 2L) == "I(" ) {
+                    ntmpn <- nchar(tmpname, "c")
+                    if(substr(tmpname, ntmpn, ntmpn) == ")")
+                        tmpname <- substr(tmpname, 3L, ntmpn - 1L)
+                }
+                vnames[[i]] <- tmpname
             }
         } # end of ncols[i] <= 1
         if(mirn && nrows[i] > 0L) {
@@ -477,12 +433,11 @@ data.frame <-
             row.names <- as.character(row.names)
         if(any(is.na(row.names)))
             stop("row names contain missing values")
-# TODO: implement anyDuplicated
-#        if(anyDuplicated(row.names))
-#            stop(gettextf("duplicate row.names: %s",
-#                          paste(unique(row.names[duplicated(row.names)]),
-#                                collapse = ", ")),
-#                 domain = NA)
+        if(anyDuplicated(row.names))
+            stop(gettextf("duplicate row.names: %s",
+                          paste(unique(row.names[duplicated(row.names)]),
+                                collapse = ", ")),
+                 domain = NA)
     }
     attr(value, "row.names") <- row.names
     attr(value, "class") <- "data.frame"
