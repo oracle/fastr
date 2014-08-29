@@ -43,9 +43,9 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)}. The other match
- * functions are used for special cases, where builtins make it necessary to re-match parameters,
- * e.g.:
+ * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)}. The other
+ * match functions are used for special cases, where builtins make it necessary to re-match
+ * parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
  * 'UseMethod' and
  * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)} for
@@ -118,19 +118,8 @@ public class ArgumentMatcher {
      * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
     public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
-        RNode[] args = suppliedArgs.getArguments();
-
-        // Check for "missing" symbols
-        RNode[] suppliedArgsChecked = new RNode[args.length];
-        for (int i = 0; i < suppliedArgsChecked.length; i++) {
-            RNode arg = args[i];
-
-            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-            suppliedArgsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
-        }
-
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgsChecked, suppliedArgs.getNames(), encapsulatingSrc, false);
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, false);
         return MatchedArguments.create(wrappedArgs, formals.getNames());
     }
 
@@ -246,8 +235,20 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
+
+        // Check for "missing" symbols
+        RNode[] argsChecked = resultArgs;
+        if (!isForInlinedBuiltin) {
+            for (int i = 0; i < argsChecked.length; i++) {
+                RNode arg = argsChecked[i];
+
+                // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
+                argsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+            }
+        }
+
         PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
-        return wrapInPromises(function, resultArgs, formals, wrapper);
+        return wrapInPromises(function, argsChecked, formals, wrapper);
     }
 
     /**
