@@ -8281,6 +8281,38 @@ character(0)
 #{ f <- function(abc) { ls(pattern="[a-z]*") }; f(1) }
 [1] "abc"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique("a") }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique("a", 1) }
+Error in make.unique("a", 1) : 'sep' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique("a", character()) }
+Error in make.unique("a", character()) : 'sep' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(1) }
+Error in make.unique(1) : 'names' must be a character vector
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(c("a", "a")) }
+[1] "a"   "a.1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(c("a", "a"), "_") }
+[1] "a"   "a_1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(c("a", "a", "a")) }
+[1] "a"   "a.1" "a.2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(character()) }
+character(0)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatMult
 #{ as.vector(c(1,2,3)) %*% t(as.vector(c(1,2))) }
      [,1] [,2]
@@ -61239,6 +61271,24 @@ NULL
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlog2.testlog23
 #argv <- list(2.2250738585072e-308);log2(argv[[1]]);
 [1] -1022
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique1
+#argv <- list(c('A', 'B', 'C', 'D', 'E', 'F'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+[1] "A" "B" "C" "D" "E" "F"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique2
+#argv <- list(c('b', 'NA', 'NA'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+[1] "b"    "NA"   "NA.1"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique3
+#argv <- list(c('1', '2', '3', '6', '7', '7', '7', '8', '8', '10', '11', '12', '12', '12', '15', '15', '16', '17', '19', '20', '21', '21', '23'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+ [1] "1"    "2"    "3"    "6"    "7"    "7.1"  "7.2"  "8"    "8.1"  "10"
+[11] "11"   "12"   "12.1" "12.2" "15"   "15.1" "16"   "17"   "19"   "20"
+[21] "21"   "21.1" "23"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique4
+#argv <- list(character(0), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmatch.testmatch1
 #argv <- list('corMatrix', c('dpoMatrix', 'dsyMatrix', 'ddenseMatrix', 'symmetricMatrix', 'dMatrix', 'denseMatrix', 'compMatrix', 'Matrix', 'mMatrix'), NA_integer_, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))

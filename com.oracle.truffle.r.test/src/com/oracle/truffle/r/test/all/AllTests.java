@@ -9344,6 +9344,46 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMakeUnique_62ac20f1454b37454233f3b4d05ecdb6() {
+        assertEval("{ make.unique(\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_2872ed87ce979cb698e11275f2bce71f() {
+        assertEval("{ make.unique(character()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_76ed69981fbc88dcbfe1260fc0d4a5cd() {
+        assertEval("{ make.unique(c(\"a\", \"a\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_b6645e4fad590727d29c1b251836245d() {
+        assertEval("{ make.unique(c(\"a\", \"a\", \"a\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_f98291a0d8c0379b4bd648241846e1b3() {
+        assertEval("{ make.unique(c(\"a\", \"a\"), \"_\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_9c6ba926d8d7d398dc604d8921cd538b() {
+        assertEvalError("{ make.unique(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_43631fc312aef5bc2704d8dfab5297c3() {
+        assertEvalError("{ make.unique(\"a\", 1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeUnique_086c856c69860f19c99ad95a4fb67875() {
+        assertEvalError("{ make.unique(\"a\", character()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMatMult_c8d5c07bcbeefe8fbf58f325e98839ea() {
         assertEval("{ matrix(c(1,2,3,4), 2) %*% matrix(c(5,6,7,8), 2) }");
     }

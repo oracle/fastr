@@ -19,6 +19,18 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testMakeUnique() {
+        assertEval("{ make.unique(\"a\") }");
+        assertEval("{ make.unique(character()) }");
+        assertEval("{ make.unique(c(\"a\", \"a\")) }");
+        assertEval("{ make.unique(c(\"a\", \"a\", \"a\")) }");
+        assertEval("{ make.unique(c(\"a\", \"a\"), \"_\") }");
+        assertEvalError("{ make.unique(1) }");
+        assertEvalError("{ make.unique(\"a\", 1) }");
+        assertEvalError("{ make.unique(\"a\", character()) }");
+    }
+
+    @Test
     @Ignore
     public void testSetAttr() {
         assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");

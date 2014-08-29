@@ -9354,26 +9354,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestrGenBuiltinmakeunique_testmakeunique1_a259d93b75237c2f9d87f1469dcda44d() {
-        assertEval("argv <- list(c('A', 'B', 'C', 'D', 'E', 'F'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakeunique_testmakeunique2_ae9ba0d71a11d834ed5d0de6377fda42() {
-        assertEval("argv <- list(c('b', 'NA', 'NA'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakeunique_testmakeunique3_6d802924a5fd45b9d969c974781e035c() {
-        assertEval("argv <- list(c('1', '2', '3', '6', '7', '7', '7', '8', '8', '10', '11', '12', '12', '12', '15', '15', '16', '17', '19', '20', '21', '21', '23'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakeunique_testmakeunique4_90b66112232aa7fab5580ae74b7da5fa() {
-        assertEval("argv <- list(character(0), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
     public void TestrGenBuiltinmapply_testmapply1_4c9b17d42aa71ef6fbf0ca38186bc614() {
         assertEval("argv <- list(.Primitive('c'), list(list(), list(), list()), NULL); .Internal(mapply(argv[[1]], argv[[2]], argv[[3]]))");
     }

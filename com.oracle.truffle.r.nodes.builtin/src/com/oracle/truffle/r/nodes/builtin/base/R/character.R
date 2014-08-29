@@ -96,9 +96,9 @@ substring <- function(text, first, last=1000000L)
 #  }
 #  names2
 #}
-#
-#make.unique <- function (names, sep = ".") .Internal(make.unique(names, sep))
-#
+
+make.unique <- function (names, sep = ".") .Internal(make.unique(names, sep))
+
 #chartr <- function(old, new, x)
 #{
 #  if(!is.character(x)) x <- as.character(x)
