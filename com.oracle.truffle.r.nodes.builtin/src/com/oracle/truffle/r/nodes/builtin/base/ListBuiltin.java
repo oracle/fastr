@@ -45,7 +45,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Child private ListBuiltin listRecursive;
 
     private RList list(Object[] args) {
-        return RDataFactory.createList(args, argNameVector());
+        return RDataFactory.createList(args, argNameVector(getSuppliedArgsNames()));
     }
 
     @Specialization
@@ -99,7 +99,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization(guards = {"!missing", "!oneElement"})
     protected RList list(RArgsValuesAndNames args) {
         controlVisibility();
-        return RDataFactory.createList(args.getValues(), argNameVector());
+        return RDataFactory.createList(args.getValues(), argNameVector(args.getNames()));
     }
 
     @Specialization(guards = {"!missing", "oneElement"})
@@ -107,7 +107,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
         controlVisibility();
         if (listRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            listRecursive = insert(ListBuiltinFactory.create(new RNode[1], getBuiltin(), getSuppliedArgsNames()));
+            listRecursive = insert(ListBuiltinFactory.create(new RNode[1], getBuiltin(), args.getNames()));
         }
         return listRecursive.executeObject(frame, args.getValues()[0]);
     }
@@ -121,23 +121,23 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization
     protected RList list(RNull value) {
         controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector());
+        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
     }
 
     @Specialization
     protected RList list(REnvironment value) {
         controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector());
+        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
     }
 
     @Specialization
     protected RList list(RFunction value) {
         controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector());
+        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
     }
 
-    private RStringVector argNameVector() {
-        String[] argNames = getSuppliedArgsNames();
+    private RStringVector argNameVector(String[] suppliedArgs) {
+        String[] argNames = suppliedArgs;
         if (argNames == null) {
             return null;
         }

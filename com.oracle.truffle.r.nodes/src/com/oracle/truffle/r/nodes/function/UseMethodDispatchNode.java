@@ -84,8 +84,8 @@ public class UseMethodDispatchNode extends S3DispatchNode {
                 boolean allNamesNull = true;
                 for (int i = 0; i < varArgsContainer.length(); i++) {
                     addArg(argValues, varArgsValues[i], index);
-                    String name = varArgsNames[i];
-                    allNamesNull |= name != null;
+                    String name = varArgsNames == null ? null : varArgsNames[i];
+                    allNamesNull &= name == null;
                     argNames[index] = name;
                     index++;
                 }

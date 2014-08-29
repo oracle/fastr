@@ -146,6 +146,7 @@ public final class CallArgumentsNode extends ArgumentsNode {
             String[] newNames = new String[arguments.length];
 
             int index = 0;
+            boolean allNamesNull = true;
             for (int i = 0; i < arguments.length; i++) {
                 Object argEvaluated = arguments[i].execute(frame);
                 if (argEvaluated instanceof RArgsValuesAndNames) {
@@ -155,17 +156,21 @@ public final class CallArgumentsNode extends ArgumentsNode {
                     newNames = Utils.resizeStringsArray(newNames, newNames.length + varArgInfo.length() - 1);
                     for (int j = 0; j < varArgInfo.length(); j++) {
                         values[index] = varArgInfo.getValues()[j];
-                        newNames[index] = varArgInfo.getNames()[j];
+                        String newName = varArgInfo.getNames() == null ? null : varArgInfo.getNames()[j];
+                        allNamesNull &= newName == null;
+                        newNames[index] = newName;
                         index++;
                     }
                 } else {
                     values[index] = argEvaluated;
-                    newNames[index] = this.getNames()[i];
+                    String newName = this.getNames()[i];
+                    allNamesNull &= newName == null;
+                    newNames[index] = newName;
                     index++;
                 }
             }
 
-            return new RArgsValuesAndNames(values, newNames);
+            return new RArgsValuesAndNames(values, allNamesNull ? null : newNames);
         }
     }
 

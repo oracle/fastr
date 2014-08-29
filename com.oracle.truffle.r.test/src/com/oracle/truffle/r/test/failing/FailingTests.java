@@ -2059,6 +2059,96 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_63ce765cd1f689e6c9b84cc46fc09e5f() {
+        assertEval("{ f<-function(...) print(attributes(list(...))); f(a=7) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_f1e9c4a0ce879ba441333308a4c6a419() {
+        assertEval("{ f<-function(...) print(attributes(list(...))); f(a=7, b=42) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_a8e7323fa1a949f877214637cf0a91b1() {
+        assertEval("{ f <- function(...) { x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_a52d7c73079437ca5443652b7f20f2ef() {
+        assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..2 } ; x <- 1 ; f(100,x) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_fc05b96d7c209b4b11d3c1597a4f5d95() {
+        assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_d6e84b6c4d84ca15395f370802824ec0() {
+        assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_581191e3ee585752a4393b1dd5c20af3() {
+        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_168904965e7c99fe53738eba7ef80c6e() {
+        assertEval("{ f <- function(a, barg, ...) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_446276723386c4e17ee775d34b52759a() {
+        assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,du=3, 3) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_a3678db1544ef8395deec4ed02acdb3d() {
+        assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_76837b302e412d60cdec11289bac184b() {
+        assertEvalError("{ lapply(1:3, \"dummy\") }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_601a671e48fcffae9a23e5b3466aa324() {
+        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_c42cdbf8980cb24618b0e81c71c76f87() {
+        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_673e885ab1ad8a737dbc0b05d6a34eed() {
+        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_4ef97fc6760900dfba4abef33ebb3620() {
+        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, xxx=2, ...) } ; g(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_3df181a7e78ef23b092f1aba322bbfa1() {
+        assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_abcc928e40684f62d0ad26ee2f35b057() {
+        assertEvalError("{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
+    }
+
+    @Ignore
+    public void TestSimpleFunctions_testDotsIgnore_408a647f1319d8f5216323761b223a47() {
+        assertEvalError("{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
+    }
+
+    @Ignore
     public void TestSimpleFunctions_testErrors_97c1046334e0c7a03ba92803615fccd6() {
         assertEvalError("{ x<-function(){1} ; x(y=1) }");
     }
