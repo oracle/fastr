@@ -136,7 +136,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
         return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedArgsNames()));
     }
 
-    private RStringVector argNameVector(String[] suppliedArgs) {
+    private static RStringVector argNameVector(String[] suppliedArgs) {
         String[] argNames = suppliedArgs;
         if (argNames == null) {
             return null;
