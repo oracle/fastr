@@ -6,7 +6,7 @@ import com.oracle.truffle.r.nodes.*;
  * @author TODO Gero, add comment!
  *
  */
-public interface CallArguments {
+public interface UnmatchedArguments {
     RNode[] getArguments();
 
     String[] getNames();

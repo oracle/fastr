@@ -37,15 +37,17 @@ import com.oracle.truffle.r.runtime.data.*;
  * given to a specific function call. The arguments' order is the same as given at the call.<br/>
  * It additionally holds usage hints ({@link #modeChange}, {@link #modeChangeForAll}).
  */
-public final class CallArgumentsNode extends ArgumentsNode implements CallArguments {
+public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
-    private static final String[] NO_NAMES = new String[0];
+    @Child private ReadVariableNode varArgsSlotNode = ReadVariableNode.create(ArgumentsTrait.VARARG_NAME, RRuntime.TYPE_ANY, false, false, true, false);
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
      * field contains the index of the symbol. Otherwise it is an empty list.
      */
     private final List<Integer> varArgsSymbolIndices;
+
+    private final FunctionSignature staticSignature;
 
     /**
      * the two flags below are used in cases when we know that either a builtin is not going to
@@ -64,11 +66,12 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, String[] names, List<Integer> varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, String[] names, List<Integer> varArgsSymbolIndices, FunctionSignature signature, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, names);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
         this.modeChangeForAll = modeChangeForAll;
+        this.staticSignature = signature;
     }
 
     /**
@@ -84,12 +87,13 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
      * @param modeChangeForAll {@link #modeChangeForAll}
      * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
      *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
-     * @param names {@link #names}, set directly. If <code>null</code>, {@link #NO_NAMES} is used.
+     * @param names {@link #names}, set directly. If <code>null</code>, an empty array is created.
      * @return A fresh {@link CallArgumentsNode}
      */
     public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, String[] names) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
+        String[] statisSignature = new String[args.length];
         List<Integer> varArgsSymbolIndices = new ArrayList<>();
         for (int i = 0; i < wrappedArgs.length; ++i) {
             RNode arg = args[i];
@@ -102,6 +106,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
                     if (rvn.getSymbol().isVarArg()) {
                         varArgsSymbolIndices.add(i);
                     }
+                    statisSignature[i] = rvn.getSymbol().getName();
                 }
                 wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true);
             }
@@ -110,12 +115,14 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
         // Check names
         String[] resolvedNames = names;
         if (resolvedNames == null) {
-            resolvedNames = NO_NAMES;
+            resolvedNames = new String[args.length];
+        } else if (resolvedNames.length < args.length) {
+            resolvedNames = Arrays.copyOf(names, args.length);
         }
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndices, modeChange, modeChangeForAll);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndices, new FunctionSignature(statisSignature), modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -134,6 +141,32 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
         throw new AssertionError();
     }
 
+    public FunctionSignature createSignature(VirtualFrame frame) {
+        if (!containsVarArgsSymbol()) {
+            return staticSignature;
+        }
+
+        // Unroll "..."s and insert their names into FunctionSignature
+        String[] callSignature = Arrays.copyOf(names, names.length);
+        Object varArgContent = varArgsSlotNode.execute(frame);
+        int index = 0;
+        for (Integer i : varArgsSymbolIndices) {
+            if (varArgContent == RMissing.instance) {
+                // Nothing to insert
+                callSignature[i] = ArgumentsTrait.VARARG_NAME;
+// index++;
+            } else {
+                // Insert passed names
+                RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
+                // length == 0 cannot happen, in that case RMissing is caught above
+                callSignature = Utils.resizeArray(callSignature, callSignature.length + varArgInfo.length() - 1);
+                System.arraycopy(varArgInfo.getNames(), 0, callSignature, i + index, varArgInfo.length());
+                index += varArgInfo.length() - 1;
+            }
+        }
+        return new FunctionSignature(callSignature);
+    }
+
     @ExplodeLoop
     public UnrolledVariadicArguments executeFlatten(VirtualFrame frame) {
         if (!containsVarArgsSymbol()) {
@@ -149,7 +182,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
                     // reason for this whole method: Before argument matching, we have to unroll
                     // passed "..." every time, as their content might change per call site each
                     // call!
-                    Object varArgContent = arguments[i].execute(frame);
+                    Object varArgContent = varArgsSlotNode.execute(frame);
                     if (varArgContent == RMissing.instance) {
                         values[index] = arguments[i];   // Preserve "..." symbol!!! Needed during
                         // matching to distinguish between missing argument and empty "..."
@@ -158,7 +191,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements CallArgume
                         continue;
                     }
 
-                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) arguments[i].execute(frame);
+                    RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
                     // length == 0 cannot happen, in that case RMissing is caught above
                     values = Utils.resizeArray(values, values.length + varArgInfo.length() - 1);
                     newNames = Utils.resizeStringsArray(newNames, newNames.length + varArgInfo.length() - 1);

@@ -43,12 +43,12 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(VirtualFrame, RFunction, CallArguments, SourceSection)}. The other match
+ * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)}. The other match
  * functions are used for special cases, where builtins make it necessary to re-match parameters,
  * e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
  * 'UseMethod' and
- * {@link #matchArgumentsInlined(VirtualFrame, RFunction, CallArguments, SourceSection)} for
+ * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)} for
  * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
  * </p>
  *
@@ -117,7 +117,7 @@ public class ArgumentMatcher {
      *         wrapped in {@link PromiseNode}s
      * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
-    public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, CallArguments suppliedArgs, SourceSection encapsulatingSrc) {
+    public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
         RNode[] args = suppliedArgs.getArguments();
 
         // Check for "missing" symbols
@@ -174,7 +174,7 @@ public class ArgumentMatcher {
      *         wrapped in special {@link PromiseNode}s
      * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
-    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, CallArguments suppliedArgs, SourceSection encapsulatingSrc) {
+    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
         RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, true);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }

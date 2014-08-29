@@ -28,7 +28,7 @@ import com.oracle.truffle.r.nodes.*;
  * @author TODO Gero, add comment!
  *
  */
-public class UnrolledVariadicArguments extends Arguments<RNode> implements CallArguments {
+public class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 
     private UnrolledVariadicArguments(RNode[] arguments, String[] names) {
         super(arguments, names);

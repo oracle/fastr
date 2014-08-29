@@ -253,7 +253,8 @@ public abstract class RCallNode extends RNode {
                 return cachedNode;
             } else {
                 RootCallNode topMost = (RootCallNode) getTopNode();
-                GenericCallNode generic = topMost.replace(new GenericCallNode(topMost.functionNode, args));
+                RCallNode generic = args.containsVarArgsSymbol() ? new GenericVarArgsCallNode(topMost.functionNode, args) : new GenericCallNode(topMost.functionNode, args);
+                generic = topMost.replace(generic);
                 generic.onCreate();
                 return generic;
             }
@@ -325,6 +326,8 @@ public abstract class RCallNode extends RNode {
         @Child private DirectCallNode call;
 
         private final RFunction function;
+        private FunctionSignature callSignature = null;
+        private MatchedArguments reorderedArgs = null;
 
         DispatchedVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.suppliedArgs = suppliedArgs;
@@ -334,12 +337,14 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            // Needs to be created every time as function (and thus its arguments)
-            // may change each call
-
-            UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            // ...to match them against the chosen function's formal arguments
-            MatchedArguments reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+            // As this function takes "..." as argument, it's argument may change every call. Thus
+            // we check whether the signature changed - only then rematching is necessary!
+            FunctionSignature newCallSignature = suppliedArgs.createSignature(frame);
+            if (newCallSignature.isNotEqualTo(callSignature) || reorderedArgs == null) {
+                UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
+                // ...to match them against the chosen function's formal arguments
+                reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+            }
 
             Object[] argsObject = RArguments.create(function, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
             return call.call(frame, argsObject);
@@ -355,21 +360,60 @@ public abstract class RCallNode extends RNode {
         @Child private CallArgumentsNode suppliedArgs;
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
+        private RFunction lastFunction = null;
+        private MatchedArguments reorderedArgs = null;
+
         GenericCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
             super(functionNode);
             this.suppliedArgs = suppliedArgs;
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction function) {
-            // Needs to be created every time as function (and thus its arguments)
-            // may change each call
-            UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            // ...to match them against the chosen function's formal arguments
-            MatchedArguments reorderedArgs = ArgumentMatcher.matchArguments(frame, function, argsValuesAndNames, getEncapsulatingSourceSection());
+        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            // Function may change every call. If it does, rematching is necessary
+            if (currentFunction != lastFunction || reorderedArgs == null) {
+                UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
+                // Match them against the resolved function's formal arguments
+                reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+            }
 
-            Object[] argsObject = RArguments.create(function, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
-            return indirectCall.call(frame, function.getTarget(), argsObject);
+            Object[] argsObject = RArguments.create(currentFunction, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
+            return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
+        }
+    }
+
+    /**
+     * {@link RootCallNode} in case there is no fixed {@link RFunction} but an expression which
+     * first has to be evaluated, which also take one or more "..." arguments.
+     */
+    private static final class GenericVarArgsCallNode extends RootCallNode {
+
+        @Child private CallArgumentsNode suppliedArgs;
+        @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
+
+        private RFunction lastFunction = null;
+        private FunctionSignature callSignature = null;
+        private MatchedArguments reorderedArgs = null;
+
+        GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode suppliedArgs) {
+            super(functionNode);
+            this.suppliedArgs = suppliedArgs;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            // Function may change every call, plus each takes one or more "...": Check if rematch
+            // is necessary...
+            FunctionSignature newCallSignature = suppliedArgs.createSignature(frame);
+            if (currentFunction != lastFunction || newCallSignature.isNotEqualTo(callSignature) || reorderedArgs == null) {
+                // ...yes!
+                UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
+                // Match them against the chosen function's formal arguments
+                reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+            }
+
+            Object[] argsObject = RArguments.create(currentFunction, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
+            return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
 }
