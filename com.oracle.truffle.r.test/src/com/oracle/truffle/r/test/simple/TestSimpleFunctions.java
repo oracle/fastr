@@ -190,6 +190,9 @@ public class TestSimpleFunctions extends TestBase {
 
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
         assertEvalError("{ f <- function(...) { ..1 } ;  f() }");
+
+        assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
+        assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");
     }
 
     @Test

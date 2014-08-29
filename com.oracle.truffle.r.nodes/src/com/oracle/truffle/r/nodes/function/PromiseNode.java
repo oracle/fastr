@@ -237,6 +237,7 @@ public class PromiseNode extends RNode {
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             Object[] evaluatedArgs = new Object[varargs.length];
+            String[] evaluatedNames = names;
             int index = 0;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
@@ -244,16 +245,27 @@ public class PromiseNode extends RNode {
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
                     RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
-                    evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, evaluatedArgs.length + argsValuesAndNames.length() - 1);
+                    int newLength = evaluatedArgs.length + argsValuesAndNames.length() - 1;
+                    if (newLength == 0) {
+                        // Corner case: "f <- function(...) g(...); g <- function(...)"
+                        // In this case, "..." gets evaluated, and its only content is "...", which
+                        // itself is missing. Result: Both disappear!
+                        evaluatedArgs[index++] = RMissing.instance;
+                        continue;
+                    }
+                    evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, newLength);
+                    evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
                     for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index++] = handlePromise(frame, varargValues[j]);
+                        evaluatedArgs[index] = handlePromise(frame, varargValues[j]);
+                        evaluatedNames[index] = argsValuesAndNames.getNames()[j];
+                        index++;
                     }
                 } else {
                     evaluatedArgs[index++] = handlePromise(frame, argValue);
                 }
             }
-            return new RArgsValuesAndNames(evaluatedArgs, names);
+            return new RArgsValuesAndNames(evaluatedArgs, evaluatedNames);
         }
 
         /**

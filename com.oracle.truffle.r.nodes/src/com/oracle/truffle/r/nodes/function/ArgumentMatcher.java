@@ -241,9 +241,18 @@ public class ArgumentMatcher {
         if (!isForInlinedBuiltin) {
             for (int i = 0; i < argsChecked.length; i++) {
                 RNode arg = argsChecked[i];
-
-                // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-                argsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+                if (arg instanceof VarArgsNode) {
+                    VarArgsNode varArgs = (VarArgsNode) arg;
+                    for (int j = 0; j < varArgs.getArgumentNodes().length; j++) {
+                        // Check for 'missing' arguments: mark them 'missing' by replacing with
+                        // 'null'
+                        RNode varArg = varArgs.getArgumentNodes()[j];
+                        varArgs.getArgumentNodes()[j] = isMissingSymbol(frame, varArg) ? null : varArg;
+                    }
+                } else {
+                    // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
+                    argsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+                }
             }
         }
 
@@ -542,15 +551,35 @@ public class ArgumentMatcher {
             // Has varargs? Unfold!
             if (arg instanceof VarArgsAsObjectArrayNode) {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
-                RNode[] varArgsChecked = Arrays.copyOf(varArgs.getArgumentNodes(), varArgs.getArgumentNodes().length);
-                for (int i = 0; i < varArgsChecked.length; i++) {
-                    if (varArgsChecked[i] == null) {
-                        varArgsChecked[i] = ConstantNode.create(RMissing.instance);
+                int varArgsLen = varArgs.getArgumentNodes().length;
+                String[] newNames = varArgs.getNames() == null ? new String[varArgsLen] : Arrays.copyOf(varArgs.getNames(), varArgsLen);
+                RNode[] newVarArgs = Utils.resizeArray(varArgs.getArgumentNodes(), varArgsLen);
+                int index = 0;
+                for (int i = 0; i < varArgs.getArgumentNodes().length; i++) {
+                    if (varArgs.getArgumentNodes()[i] != null) {
+                        newNames[index] = varArgs.getNames() == null ? null : varArgs.getNames()[i];
+                        newVarArgs[index] = varArgs.getArgumentNodes()[i];
+                        index++;
                     }
+                    // "Delete and shrink"
+// varArgsChecked[i] = ConstantNode.create(RMissing.instance);
+                }
+
+                // Shrink only if necessary
+                int newLength = index;
+                if (newLength == 0) {
+                    // Corner case: "f <- function(...) g(...); g <- function(...)"
+                    // Insert correct "missing"!
+                    resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, null, null, fi);
+                    continue;
+                }
+                if (newNames.length > newLength) {
+                    newNames = Arrays.copyOf(newNames, newLength);
+                    newVarArgs = Arrays.copyOf(newVarArgs, newLength);
                 }
 
                 EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, fi);
-                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, varArgsChecked, varArgs.getNames());
+                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, newVarArgs, newNames);
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;

@@ -13891,6 +13891,10 @@ attr(,"myattr")
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ asdf <- function(x,...) UseMethod("asdf",x); asdf.numeric <- function(x, ...) print(paste("num:", x, ...)); asdf(1) }
+[1] "num: 1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) cat(..., "\n") ; f("Hello", "world") }
 Hello world
 
@@ -13930,6 +13934,10 @@ Error in f(10) : ..1 used in an incorrect context, no ... to look in
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f<-function(x, y) { print(missing(y)); } ; f(42) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(...) { c(...,...) } ; g(3) }

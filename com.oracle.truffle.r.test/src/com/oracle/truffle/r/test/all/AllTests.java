@@ -15929,6 +15929,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testDots_7446d28918c6fad1e668949ab385526f() {
+        assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDots_a97bc8dfceb8099abc213eb3ab356309() {
+        assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");
+    }
+
+    @Test
     public void TestSimpleFunctions_testDots_2a99369402e3625a074eafef17085ffa() {
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
     }

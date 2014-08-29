@@ -30,6 +30,9 @@ public class RArgsValuesAndNames {
     private String[] names;
 
     public RArgsValuesAndNames(Object[] values, String[] names) {
+        if (names != null) {
+            assert names.length == values.length;
+        }
         this.values = values;
         this.names = names == null ? new String[values.length] : names;
     }
