@@ -141,6 +141,7 @@ public final class RPromise {
      * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Object)}
      */
     public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
+        assert expr != null;
         return new RPromise(evalPolicy, type, env, expr);
     }
 

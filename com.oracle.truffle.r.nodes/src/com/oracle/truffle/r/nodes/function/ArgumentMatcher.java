@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
-import java.util.function.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
@@ -542,13 +541,15 @@ public class ArgumentMatcher {
             // Has varargs? Unfold!
             if (arg instanceof VarArgsAsObjectArrayNode) {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
-                RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
-                for (int j = 0; j < varArgs.elementNodes.length; j++) {
-                    // Obviously single var args have no default values, so null
-                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, fi);
+                RNode[] varArgsChecked = Arrays.copyOf(varArgs.getArgumentNodes(), varArgs.getArgumentNodes().length);
+                for (int i = 0; i < varArgsChecked.length; i++) {
+                    if (varArgsChecked[i] == null) {
+                        varArgsChecked[i] = ConstantNode.create(RMissing.instance);
+                    }
                 }
-                final int finalFi = fi;
-                resArgs[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes, varArgs.getNames(), i -> promiseWrapper.getEvalPolicy(function, builtinRootNode, finalFi) == EvalPolicy.INLINED);
+
+                EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, fi);
+                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, varArgsChecked, varArgs.getNames());
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
@@ -777,16 +778,10 @@ public class ArgumentMatcher {
      */
     public static final class VarArgsAsObjectArrayNode extends VarArgsNode {
         private String[] names;
-        private final Function<Integer, Boolean> inline;
 
         public VarArgsAsObjectArrayNode(RNode[] elements, String[] names) {
-            this(elements, names, i -> false);
-        }
-
-        public VarArgsAsObjectArrayNode(RNode[] elements, String[] names, Function<Integer, Boolean> inline) {
             super(elements);
             this.names = names;
-            this.inline = inline;
         }
 
         public String[] getNames() {
@@ -794,46 +789,10 @@ public class ArgumentMatcher {
         }
 
         @Override
+        @Deprecated
         public Object execute(VirtualFrame frame) {
-            Object[] evaluatedArgs = executeArguments(frame, elementNodes, inline);
-            return new RArgsValuesAndNames(evaluatedArgs, names);
+            // Simple container
+            throw new UnsupportedOperationException();
         }
-    }
-
-    @ExplodeLoop
-    private static Object[] executeArguments(VirtualFrame frame, RNode[] elementNodes, Function<Integer, Boolean> inline) {
-        Object[] evaluatedArgs = new Object[elementNodes.length];
-        int index = 0;
-        for (int i = 0; i < elementNodes.length; i++) {
-            Object argValue = elementNodes[i].execute(frame);
-            if (argValue instanceof RArgsValuesAndNames) {
-                // this can happen if ... is simply passed around (in particular when the call chain
-                // contains two functions with just the ... argument)
-                RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
-                evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, evaluatedArgs.length + argsValuesAndNames.length() - 1);
-                Object[] varargValues = argsValuesAndNames.getValues();
-                for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                    evaluatedArgs[index++] = checkEvaluate(frame, inline, varargValues[j], i);  // i
-                    // because "..." is counted as one in FastR for inlined args
-                }
-            } else {
-                evaluatedArgs[index++] = checkEvaluate(frame, inline, argValue, i);
-            }
-        }
-        return evaluatedArgs;
-    }
-
-    /**
-     * @param frame
-     * @param inline
-     * @param argValue
-     * @return TODO Gero, add comment!
-     */
-    private static Object checkEvaluate(VirtualFrame frame, Function<Integer, Boolean> inline, Object argValue, int index) {
-        if (inline.apply(index) && argValue instanceof RPromise) {
-            RPromise promise = (RPromise) argValue;
-            return promise.evaluate(frame);
-        }
-        return argValue;
     }
 }
