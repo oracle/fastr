@@ -249,6 +249,21 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testAsCallIgnore_c4214ff09f89d8ba568229a364337e49() {
+        assertEval("{ f <- function() 23 ; l <- list(\"f\") ; cl <- as.call(l) ; eval(cl) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testAsCallIgnore_12b55a68c42f6eaad5a500e87d69798f() {
+        assertEval("{ f <- function(a,b) a+b ; l <- list(\"f\",2,3) ; cl <- as.call(l) ; eval(cl) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testAsCallIgnore_8f4f5c4782818abd1988c75cbe67c286() {
+        assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(\"f\", g()) ; cl <- as.call(l) ; eval(cl) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testAsCharacterIgnore_c803fc23a52fdc9950e5603f439b132f() {
         assertEval("{ as.character(list(1,2,3)) }");
     }
@@ -294,12 +309,12 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCall_7d3147e26292301cfabf8939c17af430() {
+    public void TestSimpleBuiltins_testCallIgnore_7d3147e26292301cfabf8939c17af430() {
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testCall_ac5601b7f27d60cead4d93b849fd38ca() {
+    public void TestSimpleBuiltins_testCallIgnore_ac5601b7f27d60cead4d93b849fd38ca() {
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
     }
 
