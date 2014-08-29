@@ -119,10 +119,47 @@ public class ArgumentMatcher {
      * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
     public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, CallArguments suppliedArgs, SourceSection encapsulatingSrc) {
+        RNode[] args = suppliedArgs.getArguments();
+
+        // Check for "missing" symbols
+        RNode[] suppliedArgsChecked = new RNode[args.length];
+        for (int i = 0; i < suppliedArgsChecked.length; i++) {
+            RNode arg = args[i];
+
+            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
+            suppliedArgsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+        }
 
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, false);
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgsChecked, suppliedArgs.getNames(), encapsulatingSrc, false);
         return MatchedArguments.create(wrappedArgs, formals.getNames());
+    }
+
+    /**
+     * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
+     * denote symbols
+     *
+     * @param frame {@link VirtualFrame}
+     * @param arg {@link RNode}
+     * @return Whether the given argument denotes a 'missing' symbol in the context of the given
+     *         frame
+     */
+    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
+        if (arg instanceof ConstantMissingNode) {
+            return true;
+        }
+
+        Symbol symbol = RMissingHelper.unwrapSymbol(arg);
+        // Unused "..." are not 'missing' for inlined functions
+        if (symbol != null && symbol.isVarArg()) {
+            Object obj = RMissingHelper.getMissingValue(frame, symbol);
+
+            // Symbol == missingArgument?
+            if (obj == RMissing.instance) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -208,47 +245,10 @@ public class ArgumentMatcher {
     private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuiltin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
-        // Check for "missing" symbols
-        RNode[] suppliedArgsChecked = new RNode[suppliedArgs.length];
-        for (int i = 0; i < suppliedArgsChecked.length; i++) {
-            RNode arg = suppliedArgs[i];
-
-            // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
-            suppliedArgsChecked[i] = isMissingSymbol(frame, arg, isForInlinedBuiltin) ? null : arg;
-        }
-
         // Rearrange arguments
-        RNode[] resultArgs = permuteArguments(function, suppliedArgsChecked, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
+        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
         PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
         return wrapInPromises(function, resultArgs, formals, wrapper);
-    }
-
-    /**
-     * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
-     * denote symbols
-     *
-     * @param frame {@link VirtualFrame}
-     * @param arg {@link RNode}
-     * @param inlined Whether the function is going to be called inlined
-     * @return Whether the given argument denotes a 'missing' symbol in the context of the given
-     *         frame
-     */
-    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg, boolean inlined) {
-        if (arg instanceof ConstantMissingNode) {
-            return true;
-        }
-
-        Symbol symbol = RMissingHelper.unwrapSymbol(arg);
-        // Unused "..." are not 'missing' for inlined functions
-        if (symbol != null && !(inlined && symbol.isVarArg())) {
-            Object obj = RMissingHelper.getMissingValue(frame, symbol);
-
-            // Symbol == missingArgument?
-            if (obj == RMissing.instance) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
