@@ -45,7 +45,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      * If a supplied argument is a {@link ReadVariableNode} whose {@link Symbol} is "...", this
      * field contains the index of the symbol. Otherwise it is an empty list.
      */
-    private final List<Integer> varArgsSymbolIndices;
+    private final Integer[] varArgsSymbolIndices;
 
     private final FunctionSignature staticSignature;
 
@@ -66,7 +66,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      */
     private final boolean modeChangeForAll;
 
-    private CallArgumentsNode(RNode[] arguments, String[] names, List<Integer> varArgsSymbolIndices, FunctionSignature signature, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, String[] names, Integer[] varArgsSymbolIndices, FunctionSignature signature, boolean modeChange, boolean modeChangeForAll) {
         super(arguments, names);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.modeChange = modeChange;
@@ -122,7 +122,8 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
 
         // Setup and return
         SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndices, new FunctionSignature(statisSignature), modeChange, modeChangeForAll);
+        Integer[] varArgsSymbolIndicesArr = varArgsSymbolIndices.toArray(new Integer[varArgsSymbolIndices.size()]);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, resolvedNames, varArgsSymbolIndicesArr, new FunctionSignature(statisSignature), modeChange, modeChangeForAll);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -174,9 +175,10 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
             RNode[] values = new RNode[arguments.length];
             String[] newNames = new String[arguments.length];
 
+            int vargsSymbolsIndex = 0;
             int index = 0;
             for (int i = 0; i < arguments.length; i++) {
-                if (varArgsSymbolIndices.contains(i)) {
+                if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
                     // Vararg "..." argument. "execute" to retrieve RArgsValuesAndNames. This is the
                     // reason for this whole method: Before argument matching, we have to unroll
                     // passed "..." every time, as their content might change per call site each
@@ -187,6 +189,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                         // matching to distinguish between missing argument and empty "..."
                         newNames[index] = names[i];
                         index++;
+                        vargsSymbolsIndex++;
                         continue;
                     }
 
@@ -208,6 +211,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                         newNames[index] = varArgInfo.getNames()[j];
                         index++;
                     }
+                    vargsSymbolsIndex++;
                 } else {
                     values[index] = arguments[i];
                     newNames[index] = names[i];
@@ -223,7 +227,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
      * @return {@link #containsVarArgsSymbol}
      */
     public boolean containsVarArgsSymbol() {
-        return !varArgsSymbolIndices.isEmpty();
+        return varArgsSymbolIndices.length > 0;
     }
 
     @Override
