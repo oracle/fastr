@@ -8277,6 +8277,74 @@ character(0)
 #{ f <- function(abc) { ls(pattern="[a-z]*") }; f(1) }
 [1] "abc"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("$") }
+[1] "X."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("$_", allow_=FALSE) }
+[1] "X.."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("...7") }
+[1] "...7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("..7") }
+[1] "..7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names(".7") }
+[1] "X.7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("7") }
+[1] "X7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("NA_integer_", allow_=FALSE) }
+[1] "NA.integer."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a a") }
+[1] "a.a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a") }
+[1] "a_a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_="a") }
+Error in make.names("a_a", allow_ = "a") : invalid 'allow_' value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=7) }
+[1] "a_a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=FALSE) }
+[1] "a.a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=NULL) }
+Error in make.names("a_a", allow_ = NULL) : invalid 'allow_' value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=c(7,42)) }
+[1] "a_a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=logical()) }
+Error in make.names("a_a", allow_ = logical()) : invalid 'allow_' value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("else")}
+[1] "else."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names(7) }
+[1] "X7"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
 #{ make.unique("a") }
 [1] "a"
@@ -61267,6 +61335,51 @@ NULL
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlog2.testlog23
 #argv <- list(2.2250738585072e-308);log2(argv[[1]]);
 [1] -1022
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames1
+#argv <- list('head', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "head"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames10
+#argv <- list(c('', '', 'bady'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "X"    "X"    "bady"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames11
+#argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+character(0)
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames2
+#argv <- list('FALSE', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "FALSE."
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames3
+#argv <- list(c('.Call', '.Call numParameters', '.Fortran', '.Fortran numParameters'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] ".Call"                  ".Call.numParameters"    ".Fortran"
+[4] ".Fortran.numParameters"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames4
+#argv <- list('..adfl.row.names', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "..adfl.row.names"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames5
+#argv <- list(c('name', 'title', 'other.author'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "name"         "title"        "other.author"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames6
+#argv <- list('.2a', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "X.2a"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames7
+#argv <- list('', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "X"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames8
+#argv <- list(NA_character_, TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "NA."
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames9
+#argv <- list(c('Subject', 'predict.fixed', 'predict.Subject'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "Subject"         "predict.fixed"   "predict.Subject"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique1
 #argv <- list(c('A', 'B', 'C', 'D', 'E', 'F'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))

@@ -19,6 +19,28 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testMakeNames() {
+        assertEval("{ make.names(7) }");
+        assertEval("{ make.names(\"a_a\") }");
+        assertEval("{ make.names(\"a a\") }");
+        assertEval("{ make.names(\"a_a\", allow_=FALSE) }");
+        assertEval("{ make.names(\"a_a\", allow_=7) }");
+        assertEval("{ make.names(\"a_a\", allow_=c(7,42)) }");
+        assertEval("{ make.names(\"...7\") }");
+        assertEval("{ make.names(\"..7\") }");
+        assertEval("{ make.names(\".7\") }");
+        assertEval("{ make.names(\"7\") }");
+        assertEval("{ make.names(\"$\") }");
+        assertEval("{ make.names(\"$_\", allow_=FALSE) }");
+        assertEval("{ make.names(\"else\")}");
+        assertEval("{ make.names(\"NA_integer_\", allow_=FALSE) }");
+
+        assertEvalError("{ make.names(\"a_a\", allow_=\"a\") }");
+        assertEvalError("{ make.names(\"a_a\", allow_=logical()) }");
+        assertEvalError("{ make.names(\"a_a\", allow_=NULL) }");
+    }
+
+    @Test
     public void testMakeUnique() {
         assertEval("{ make.unique(\"a\") }");
         assertEval("{ make.unique(character()) }");

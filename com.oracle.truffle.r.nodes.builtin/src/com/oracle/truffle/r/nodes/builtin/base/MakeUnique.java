@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ public abstract class MakeUnique extends RBuiltinNode {
 
     private final BranchProfile identity = new BranchProfile();
     private final BranchProfile makeUnique = new BranchProfile();
+    private final BranchProfile noDuplicates = new BranchProfile();
+    private final BranchProfile withDuplicates = new BranchProfile();
     private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
 
     @Specialization
@@ -68,10 +70,12 @@ public abstract class MakeUnique extends RBuiltinNode {
                 }
             }
             if (!duplicatesExist) {
+                noDuplicates.enter();
                 return names;
             } else {
+                withDuplicates.enter();
                 RStringVector newNames = names.materialize();
-                if (!newNames.isTemporary()) {
+                if (newNames.isShared()) {
                     newNames = (RStringVector) newNames.copy();
                 }
                 // start with 1 as the first one is never the duplicate

@@ -566,7 +566,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     private static int getVariadicComponentIndex(String symbol) {
         if (symbol.length() > 2 && symbol.charAt(0) == '.' && symbol.charAt(1) == '.') {
             for (int i = 2; i < symbol.length(); i++) {
-                if (symbol.charAt(i) < '\u0030' || symbol.charAt(i) > '\u0039') {
+                if (!Utils.isIsoLatinDigit(symbol.charAt(i))) {
                     return -1;
                 }
             }

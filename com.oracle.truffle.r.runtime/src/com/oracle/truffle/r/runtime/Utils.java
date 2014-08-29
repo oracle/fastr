@@ -62,6 +62,10 @@ public final class Utils {
         }
     }
 
+    public static boolean isIsoLatinDigit(char c) {
+        return c >= '\u0030' && c <= '\u0039';
+    }
+
     public static int incMod(int value, int mod) {
         int result = (value + 1);
         if (result == mod) {

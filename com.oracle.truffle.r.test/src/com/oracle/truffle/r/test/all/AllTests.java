@@ -9344,6 +9344,91 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMakeNames_991d7bbd65a2bc1ac3888d143e33b98c() {
+        assertEval("{ make.names(7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_d80e5076739f6e36138f72185af5577b() {
+        assertEval("{ make.names(\"a_a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_501809726044c52876eebff1ac39dfd4() {
+        assertEval("{ make.names(\"a a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_759bfb21adf8facabc541fae171e2d2f() {
+        assertEval("{ make.names(\"a_a\", allow_=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_50dccfe38b217521d15b79e03b87c971() {
+        assertEval("{ make.names(\"a_a\", allow_=7) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_1f668ec55e1e7c56226938606bbcdd9a() {
+        assertEval("{ make.names(\"a_a\", allow_=c(7,42)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_84ac5f4e754f186a0e2ca5d70c23feb1() {
+        assertEval("{ make.names(\"...7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_0622f61c0d0e4aa0fe896b709b1cd390() {
+        assertEval("{ make.names(\"..7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_32dec57a873b0002305061ee8f9d2d9f() {
+        assertEval("{ make.names(\".7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_3204f2fcbf81ee713f96d9e6fcb3c8f2() {
+        assertEval("{ make.names(\"7\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_0875b78af370740cc6c76c447724d39f() {
+        assertEval("{ make.names(\"$\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_8dfc0f88f3ea6d6b1304f3f12af7806d() {
+        assertEval("{ make.names(\"$_\", allow_=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_cdef042d3598eb37b7af97df950185af() {
+        assertEval("{ make.names(\"else\")}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_5762fb7449ccb927de95a94a605a7271() {
+        assertEval("{ make.names(\"NA_integer_\", allow_=FALSE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_346ccadec78e9d845e08d211a0b65d78() {
+        assertEvalError("{ make.names(\"a_a\", allow_=\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_df3cc27bd48b4cf1f30caeb6bf0b9562() {
+        assertEvalError("{ make.names(\"a_a\", allow_=logical()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testMakeNames_5a026d3e82301fdffb01cfdb35b04a52() {
+        assertEvalError("{ make.names(\"a_a\", allow_=NULL) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMakeUnique_62ac20f1454b37454233f3b4d05ecdb6() {
         assertEval("{ make.unique(\"a\") }");
     }

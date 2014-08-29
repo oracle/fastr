@@ -9304,61 +9304,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames1_898df0e3a59db50576c53c531d007018() {
-        assertEval("argv <- list('head', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames10_4aa926b564582b235ded66f082258d20() {
-        assertEval("argv <- list(c('', '', 'bady'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames11_22d9a3235e2cab99684db62ef344d299() {
-        assertEval("argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames2_67e507c1d0708a736eec9c03185c6352() {
-        assertEval("argv <- list('FALSE', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames3_03ae4bfa7f133486b1910528c62665f6() {
-        assertEval("argv <- list(c('.Call', '.Call numParameters', '.Fortran', '.Fortran numParameters'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames4_0560c1f540e0b5bb98fcdbd018329fc5() {
-        assertEval("argv <- list('..adfl.row.names', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames5_f52ad37b2de0be513050a1de0e3b9418() {
-        assertEval("argv <- list(c('name', 'title', 'other.author'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames6_7255cfa6a5dc8bed4e0627ee7a2e2cbf() {
-        assertEval("argv <- list('.2a', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames7_b3f46c6d69eea518172590428806ddf3() {
-        assertEval("argv <- list('', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames8_514336d382135927daedea4cc7e645e3() {
-        assertEval("argv <- list(NA_character_, TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
-    public void TestrGenBuiltinmakenames_testmakenames9_c1f23c2ec8890fbb500886c5fcf439da() {
-        assertEval("argv <- list(c('Subject', 'predict.fixed', 'predict.Subject'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
-    }
-
-    @Ignore
     public void TestrGenBuiltinmapply_testmapply1_4c9b17d42aa71ef6fbf0ca38186bc614() {
         assertEval("argv <- list(.Primitive('c'), list(list(), list(), list()), NULL); .Internal(mapply(argv[[1]], argv[[2]], argv[[3]]))");
     }

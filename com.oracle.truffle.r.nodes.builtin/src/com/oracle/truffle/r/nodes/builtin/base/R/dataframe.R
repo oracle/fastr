@@ -428,9 +428,7 @@ data.frame <-
     if(any(noname))
         vnames[noname] <- paste("Var", seq_along(vnames), sep = ".")[noname]
     if(check.names)
-# TODO: implement make.names
-#    vnames <- make.names(vnames, unique=TRUE)
-    names(value) <- vnames
+    vnames <- make.names(vnames, unique=TRUE)
     if(!mrn) { # non-null row.names arg was supplied
         if(length(row.names) == 1L && nr != 1L) {  # one of the variables
             if(is.character(row.names))
