@@ -263,6 +263,15 @@ public abstract class RProxyNode extends RNode {
     }
 
     @Specialization
+    protected RCall wrap(RCall x) {
+        return proxy(x);
+    }
+
+    protected RCall proxy(RCall x) {
+        return (RCall) proxyScalar(x);
+    }
+
+    @Specialization
     protected RPromise wrap(RPromise x) {
         return proxy(x);
     }
