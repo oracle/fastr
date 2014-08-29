@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.nio.charset.*;
+import java.util.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.*;
@@ -313,4 +314,11 @@ public final class Utils {
         return newValues;
     }
 
+    public static <T> T[] resizeArray(T[] oldValues, int newSize) {
+        T[] newValues = oldValues;
+        if (oldValues != null) {
+            newValues = Arrays.copyOf(oldValues, newSize);
+        }
+        return newValues;
+    }
 }

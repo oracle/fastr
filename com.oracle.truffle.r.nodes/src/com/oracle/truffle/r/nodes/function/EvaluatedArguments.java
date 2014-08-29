@@ -47,8 +47,6 @@ public class EvaluatedArguments extends Arguments<Object> {
         if (argNames == null) {
             argNames = new String[args.length];
         }
-
-        // Create EvaluatedArguments!
         return new EvaluatedArguments(args, argNames);
     }
 

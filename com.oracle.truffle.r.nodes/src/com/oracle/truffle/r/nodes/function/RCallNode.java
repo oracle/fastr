@@ -275,7 +275,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, debugSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
                     return root.inline(inlinedArgs);
                 }
             }
@@ -286,7 +286,7 @@ public abstract class RCallNode extends RNode {
                 return new DispatchedVarArgsCallNode(function, args);
             } else {
                 // Nope! (peeewh)
-                MatchedArgumentsNode matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, debugSrc);
+                MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, debugSrc);
                 return new DispatchedCallNode(function, matchedArgs);
             }
         }
@@ -297,12 +297,12 @@ public abstract class RCallNode extends RNode {
      */
     private static class DispatchedCallNode extends RCallNode {
 
-        @Child private MatchedArgumentsNode matchedArgs;
         @Child private DirectCallNode call;
+        private MatchedArguments matchedArgs;
 
         private final RFunction function;
 
-        DispatchedCallNode(RFunction function, MatchedArgumentsNode matchedArgs) {
+        DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
             this.matchedArgs = matchedArgs;
             this.function = function;
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
@@ -310,7 +310,7 @@ public abstract class RCallNode extends RNode {
 
         @Override
         public Object execute(VirtualFrame frame, RFunction evaluatedFunction) {
-            Object[] argsObject = RArguments.create(function, matchedArgs.executeArray(frame), matchedArgs.getNames());
+            Object[] argsObject = RArguments.create(function, matchedArgs.doExecuteArray(frame), matchedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -337,12 +337,11 @@ public abstract class RCallNode extends RNode {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
 
-            RArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            EvaluatedArguments evaledArgs = EvaluatedArguments.create(argsValuesAndNames.getValues(), argsValuesAndNames.getNames());
+            UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             // ...to match them against the chosen function's formal arguments
-            EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(evaluatedFunction, evaledArgs, getEncapsulatingSourceSection());
+            MatchedArguments reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(function, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+            Object[] argsObject = RArguments.create(function, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
             return call.call(frame, argsObject);
         }
     }
@@ -365,12 +364,11 @@ public abstract class RCallNode extends RNode {
         public Object execute(VirtualFrame frame, RFunction function) {
             // Needs to be created every time as function (and thus its arguments)
             // may change each call
-            RArgsValuesAndNames argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            EvaluatedArguments evaledArgs = EvaluatedArguments.create(argsValuesAndNames.getValues(), argsValuesAndNames.getNames());
+            UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
             // ...to match them against the chosen function's formal arguments
-            EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(function, evaledArgs, getEncapsulatingSourceSection());
+            MatchedArguments reorderedArgs = ArgumentMatcher.matchArguments(frame, function, argsValuesAndNames, getEncapsulatingSourceSection());
 
-            Object[] argsObject = RArguments.create(function, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
+            Object[] argsObject = RArguments.create(function, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
             return indirectCall.call(frame, function.getTarget(), argsObject);
         }
     }

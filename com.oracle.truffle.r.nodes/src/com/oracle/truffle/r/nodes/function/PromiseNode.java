@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
@@ -76,14 +77,6 @@ public class PromiseNode extends RNode {
                 }
                 break;
 
-            case STRICT:
-                if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    pn = new StrictSuppliedPromiseNode(factory, envProvider);
-                } else {
-                    pn = new PromiseNode(factory, envProvider);
-                }
-                break;
-
             case PROMISED:
                 pn = new PromiseNode(factory, envProvider);
                 break;
@@ -97,34 +90,19 @@ public class PromiseNode extends RNode {
     }
 
     /**
+     * @param promise
+     * @return TODO Gero, add comment!
+     */
+    public static VarArgPromiseNode createVarArg(RPromise promise) {
+        return new VarArgPromiseNode(promise);
+    }
+
+    /**
      * Creates a new {@link RPromise} every time.
      */
     @Override
     public Object execute(VirtualFrame frame) {
         return factory.createPromise(factory.getType() == PromiseType.ARG_DEFAULT ? null : envProvider.getREnvironmentFor(frame));
-    }
-
-    /**
-     * This class is meant for supplied arguments (which have to be evaluated in the caller frame)
-     * which are supposed to evaluated {@link EvalPolicy#STRICT}: This means, we can simply evaluate
-     * them here! And simply fill a {@link RPromise} with the result value.
-     * {@link EvalPolicy#STRICT} {@link PromiseType#ARG_SUPPLIED}
-     */
-    private static class StrictSuppliedPromiseNode extends PromiseNode {
-        @Child private RNode suppliedArg;
-
-        public StrictSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
-            super(factory, envProvider);
-            this.suppliedArg = (RNode) factory.getExpr();
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            // Evaluate the supplied argument here in the caller frame and create the Promise with
-            // this value so it can finally be evaluated on the callee side
-            Object obj = suppliedArg.execute(frame);
-            return factory.createPromiseArgEvaluated(obj);
-        }
     }
 
     /**
@@ -182,4 +160,111 @@ public class PromiseNode extends RNode {
         }
     }
 
+    /**
+     * TODO Gero, add comment!
+     */
+    private static class VarArgPromiseNode extends RNode {
+        private final RPromise promise;
+
+        private VarArgPromiseNode(RPromise promise) {
+            this.promise = promise;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return promise.evaluate(frame);
+        }
+    }
+
+    /**
+     * @param src
+     * @param evalPolicy
+     * @param envProvider
+     * @param nodes
+     * @param names
+     * @return TODO Gero, add comment!
+     */
+    public static VarArgsPromiseNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, EnvProvider envProvider, RNode[] nodes, String[] names) {
+        VarArgsPromiseNode node;
+        switch (evalPolicy) {
+            case INLINED:
+                node = new InlineVarArgsPromiseNode(envProvider, nodes, names);
+                break;
+
+            case PROMISED:
+                node = new VarArgsPromiseNode(envProvider, nodes, names);
+                break;
+
+            default:
+                throw new AssertionError();
+        }
+
+        node.assignSourceSection(src);
+        return node;
+    }
+
+    private static class VarArgsPromiseNode extends RNode {
+        protected final RNode[] nodes;
+        protected final String[] names;
+        protected final EnvProvider envProvider;
+
+        public VarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names) {
+            this.envProvider = envProvider;
+            this.nodes = nodes;
+            this.names = names;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] promises = new Object[nodes.length];
+            for (int i = 0; i < nodes.length; i++) {
+                promises[i] = RPromise.create(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, envProvider.getREnvironmentFor(frame), nodes[i]);
+            }
+            return new RArgsValuesAndNames(promises, names);
+        }
+    }
+
+    private static class InlineVarArgsPromiseNode extends VarArgsPromiseNode {
+        @Children private final RNode[] varargs;
+
+        public InlineVarArgsPromiseNode(EnvProvider envProvider, RNode[] nodes, String[] names) {
+            super(envProvider, nodes, names);
+            this.varargs = nodes;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] evaluatedArgs = new Object[varargs.length];
+            int index = 0;
+            for (int i = 0; i < varargs.length; i++) {
+                Object argValue = varargs[i].execute(frame);
+                if (argValue instanceof RArgsValuesAndNames) {
+                    // this can happen if ... is simply passed around (in particular when the call
+                    // chain contains two functions with just the ... argument)
+                    RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
+                    evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, evaluatedArgs.length + argsValuesAndNames.length() - 1);
+                    Object[] varargValues = argsValuesAndNames.getValues();
+                    for (int j = 0; j < argsValuesAndNames.length(); j++) {
+                        evaluatedArgs[index++] = handlePromise(frame, varargValues[j]);
+                    }
+                } else {
+                    evaluatedArgs[index++] = handlePromise(frame, argValue);
+                }
+            }
+            return new RArgsValuesAndNames(evaluatedArgs, names);
+        }
+
+        /**
+         * @param frame
+         * @param obj
+         * @return TODO Gero, add comment!
+         */
+        private static Object handlePromise(VirtualFrame frame, Object obj) {
+            if (obj instanceof RPromise) {
+                RPromise promise = (RPromise) obj;
+                return promise.evaluate(frame);
+            }
+            return obj;
+        }
+    }
 }

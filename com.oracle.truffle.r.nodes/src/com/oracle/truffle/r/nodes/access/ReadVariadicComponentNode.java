@@ -58,6 +58,11 @@ public class ReadVariadicComponentNode extends RNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DOT_DOT_SHORT, index + 1);
         }
         Object ret = argsValuesAndNames.getValues()[index];
+        if (ret instanceof RPromise) {
+            // This might be the case, as lookup only checks for "..." to be a promise and forces it
+            // eventually, NOT (all) of its content
+            ret = ((RPromise) ret).evaluate(frame);
+        }
         return ret == null ? RMissing.instance : ret;
     }
 }
