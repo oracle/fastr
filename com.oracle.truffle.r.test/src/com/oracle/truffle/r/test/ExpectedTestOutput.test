@@ -8820,8 +8820,32 @@ Warning message:
 In min(integer(0)) : no non-missing arguments to min; returning Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = 2 + 3) { missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a = 2) { g(a) } ; g <- function(b) { missing(b) } ; f() }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z) { missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }
+[1]  TRUE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a) { g(a) } ;  g <- function(b) { missing(b) } ; f() }
@@ -8832,8 +8856,25 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) { missing(x) } ; f(a) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f(1) }
+[1] FALSE
+[1] FALSE
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ g <- function(a, b, c) { b } ; f <- function(a,b,c) { g(a,b=2,c) } ; f(1,,2) }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k(y=1) }
+[1] TRUE
+[1] FALSE
+[1] FALSE
+[1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMod
 #{ round(Mod(1+1i)*10000) }
@@ -13890,6 +13931,10 @@ attr(,"myattr")
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ asdf <- function(x,...) UseMethod("asdf",x); asdf.numeric <- function(x, ...) print(paste("num:", x, ...)); asdf(1) }
+[1] "num: 1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) cat(..., "\n") ; f("Hello", "world") }
 Hello world
 
@@ -13929,6 +13974,10 @@ Error in f(10) : ..1 used in an incorrect context, no ... to look in
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f<-function(x, y) { print(missing(y)); } ; f(42) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(...) { c(...,...) } ; g(3) }
@@ -14077,12 +14126,37 @@ Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
 [1] 20
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(a) { g <- function(b) { x <<- 2; b } ; g(a) } ; x <- 1 ; f(x) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x = z) { z = 1 ; x } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }
 [1] 57
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ z <- 1 ; f <- function(c = z) {  z <- z + 1 ; c  } ; f() }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }
 [1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromisesIgnore
+#{ f <- function(x = y, y = x) { y } ; f() }
+Error in f() :
+  promise already under evaluation: recursive default argument reference or earlier problems?
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testRecursion
 #{ f<-function(i) { if (i==1) { 1 } else if (i==2) { 1 } else { f(i-1) + f(i-2) } } ; f(10) }

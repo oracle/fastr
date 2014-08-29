@@ -55,15 +55,7 @@ public final class RPromise {
          * happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside callee
          * frame if {@link PromiseType#ARG_DEFAULT}.
          */
-        PROMISED,
-
-        /**
-         * This is used for maintaining old, strict argument evaluation semantics. Arguments are
-         * fully evaluated before executing the actual function.<br/>
-         * Evaluation happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside
-         * callee frame if {@link PromiseType#ARG_DEFAULT}.
-         */
-        STRICT;
+        PROMISED;
     }
 
     /**
@@ -149,6 +141,7 @@ public final class RPromise {
      * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Object)}
      */
     public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
+        assert expr != null;
         return new RPromise(evalPolicy, type, env, expr);
     }
 
@@ -164,17 +157,31 @@ public final class RPromise {
             return value;
         }
 
-        // Evaluate this promises value!
-        // TODO Performance: We can use frame directly if we are sure that it matches the on in env!
-        if (env != null && env != RArguments.getEnvironment(frame)) {
-            value = doEvalArgument();
-        } else {
-// assert type == PromiseType.ARG_DEFAULT;
-            value = doEvalArgument(frame);
+        // Check for dependecy cycle
+        if (underEvaluation) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // TODO Get SourceSection of funcall!
+            throw RError.error(RError.Message.PROMISE_CYCLE);
+        }
+
+        try {
+            underEvaluation = true;
+
+            // Evaluate this promises value!
+            // TODO Performance: We can use frame directly if we are sure that it matches the on in
+            // env!
+            if (env != null) {
+                value = doEvalArgument();
+            } else {
+                value = doEvalArgument(frame);
+            }
+        } finally {
+            underEvaluation = false;
         }
 
         isEvaluated = true;
         env = null; // REnvironment and associated frame are no longer needed after execution
+        // TODO set NAMED = 2
         CompilerDirectives.transferToInterpreterAndInvalidate();
         return value;
     }
@@ -227,7 +234,7 @@ public final class RPromise {
      *         {@link #updateEnv(REnvironment)})
      */
     public boolean needsCalleeFrame() {
-        return evalPolicy != EvalPolicy.STRICT && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
+        return evalPolicy == EvalPolicy.PROMISED && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
     }
 
     /**

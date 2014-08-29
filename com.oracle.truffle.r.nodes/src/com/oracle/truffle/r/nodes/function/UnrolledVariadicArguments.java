@@ -20,34 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.nodes.function;
+
+import com.oracle.truffle.r.nodes.*;
 
 /**
- * A simple wrapper class for passing the ... argument through RArguments
+ * @author TODO Gero, add comment!
+ *
  */
-public class RArgsValuesAndNames {
-    private Object[] values;
-    private String[] names;
+public class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 
-    public RArgsValuesAndNames(Object[] values, String[] names) {
-        if (names != null) {
-            assert names.length == values.length;
-        }
-        this.values = values;
-        this.names = names == null ? new String[values.length] : names;
+    private UnrolledVariadicArguments(RNode[] arguments, String[] names) {
+        super(arguments, names);
     }
 
-    public Object[] getValues() {
-        return values;
+    public static UnrolledVariadicArguments create(RNode[] arguments, String[] names) {
+        return new UnrolledVariadicArguments(arguments, names);
     }
 
+    @Override
+    public RNode[] getArguments() {
+        return arguments;
+    }
+
+    @Override
     public String[] getNames() {
         return names;
     }
-
-    public int length() {
-        assert names == null || values.length == names.length;
-        return values.length;
-    }
-
 }
