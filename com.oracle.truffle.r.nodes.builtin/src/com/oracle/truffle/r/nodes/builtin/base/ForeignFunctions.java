@@ -288,7 +288,7 @@ public class ForeignFunctions {
      * For now, just some special case functions that are built in to the implementation.
      */
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
-    public abstract static class Call extends RBuiltinNode {
+    public abstract static class DotCall extends RBuiltinNode {
 
         @Child private CastComplexNode castComplex;
         @Child private CastLogicalNode castLogical;

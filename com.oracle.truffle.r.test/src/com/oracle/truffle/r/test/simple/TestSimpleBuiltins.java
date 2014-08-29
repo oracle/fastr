@@ -2459,7 +2459,7 @@ public class TestSimpleBuiltins extends TestBase {
     public void testDeparse() {
         assertEval("{ deparse(TRUE) }");
         assertEval("{ deparse(c(T, F)) }");
-        // TODO add more
+        assertEval("{ k <- 2 ; deparse(k) }");
     }
 
     @Test
@@ -2594,12 +2594,38 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCall() {
+        assertEval("{ call(\"f\") }");
+        assertEval("{ call(\"f\",2,3) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCallIgnore() {
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
-        // Arguments are being passed incorrectly in RCallNode
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
+    }
+
+    @Test
+    public void testIsCall() {
+        assertEval("{ cl <- call(\"f\") ; is.call(cl) }");
+        assertEval("{ cl <- call(\"f\",2,3) ; is.call(cl) }");
+        assertEval("{ cl <- list(\"f\",2,3) ; is.call(cl) }");
+    }
+
+    @Test
+    public void testAsCall() {
+        assertEval("{ l <- list(\"f\") ; as.call(l) }");
+        assertEval("{ l <- list(\"f\",2,3) ; as.call(l) }");
+        assertEval("{ g <- function() 23 ; l <- list(\"f\", g()) ; as.call(l) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsCallIgnore() {
+        assertEval("{ f <- function() 23 ; l <- list(\"f\") ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(a,b) a+b ; l <- list(\"f\",2,3) ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(\"f\", g()) ; cl <- as.call(l) ; eval(cl) }");
     }
 
     @Test
@@ -3200,14 +3226,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testAnyDuplicatedIgnore() {
-        // Error message mismatch.
-        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
-        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
-    }
-
-    @Test
     public void testAnyDuplicated() {
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables=FALSE,fromLast = TRUE)}");
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE, TRUE)}");
@@ -3215,6 +3233,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE )}");
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L)) }");
         assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = TRUE) }");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
 
         // strings
         assertEval("{anyDuplicated(c(\"abc\"))}");
@@ -3253,6 +3272,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
         assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAnyDuplicatedIgnore() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
     }
 
     @Test

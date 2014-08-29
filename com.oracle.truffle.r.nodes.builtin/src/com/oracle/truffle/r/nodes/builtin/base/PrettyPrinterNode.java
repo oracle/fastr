@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.SlowPath;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeFactory.PrintVec
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.RCall.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -749,6 +750,12 @@ public abstract class PrettyPrinterNode extends RNode {
         RFunction getFunction = RContext.getEngine().lookupBuiltin("get");
         RFunction formatFunction = (RFunction) indirectCall.call(frame, getFunction.getTarget(), RArguments.create(getFunction, REnvironment.globalEnv().getFrame(), new Object[]{"format.data.frame"}));
         return RRuntime.toString(indirectCall.call(frame, formatFunction.getTarget(), RArguments.create(formatFunction, new Object[]{operand})));
+    }
+
+    @SlowPath
+    @Specialization
+    protected String prettyPrint(RCall operand, Object listElementName, byte quote) {
+        return operand.toString();
     }
 
     protected static boolean twoDimsOrMore(RAbstractVector v) {

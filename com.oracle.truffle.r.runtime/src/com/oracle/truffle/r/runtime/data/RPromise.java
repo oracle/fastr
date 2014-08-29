@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
+ * Denotes an R {@code promise}.
  */
 @ValueType
 public final class RPromise {
