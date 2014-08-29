@@ -154,7 +154,6 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
             if (varArgContent == RMissing.instance) {
                 // Nothing to insert
                 callSignature[i] = ArgumentsTrait.VARARG_NAME;
-// index++;
             } else {
                 // Insert passed names
                 RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;

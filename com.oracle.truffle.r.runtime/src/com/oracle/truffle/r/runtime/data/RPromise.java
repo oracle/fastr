@@ -170,7 +170,7 @@ public final class RPromise {
             // Evaluate this promises value!
             // TODO Performance: We can use frame directly if we are sure that it matches the on in
             // env!
-            if (env != null && env != RArguments.getEnvironment(frame)) {
+            if (env != null) {
                 value = doEvalArgument();
             } else {
                 value = doEvalArgument(frame);
