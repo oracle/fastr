@@ -100,11 +100,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 public class ArgumentMatcher {
 
     /**
-     * Cached, so it can be used on the FastPath.
-     */
-    protected SourceSection encapsulatingSrc = null;
-
-    /**
      * Match arguments supplied for a specific function call to the formal arguments and wraps them
      * in {@link PromiseNode}s. Used for calls to all functions parsed from R code
      *
@@ -191,7 +186,7 @@ public class ArgumentMatcher {
         RNode[] defaultArgs = formals.getDefaultArgs();
         for (int i = 0; i < defaultArgs.length; i++) {
             Object evaledArg = evaledArgs[i];
-            if (evaledArg == null || evaledArg == RMissing.instance) {      // TODO Gero: Necessary??
+            if (evaledArg == null) {
                 // This is the case whenever there is a new parameter introduced in front of a
                 // vararg in the specific version of a generic
                 // TODO STRICT!
