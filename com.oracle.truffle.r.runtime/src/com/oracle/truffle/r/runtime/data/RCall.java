@@ -76,7 +76,7 @@ public final class RCall extends RLanguageRep {
             String[] names = args.getNames();
             Object[] values = args.getValues();
             for (int i = 0; i < args.length(); ++i) {
-                if (names[i] != null) {
+                if (names != null && names[i] != null) {
                     sb.append(names[i]).append(" = ");
                 }
                 // TODO not sure deparse is the right way to do this (might be better to get hold of
