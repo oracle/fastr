@@ -29,7 +29,7 @@
 
 include ../platform.mk
 
-.PHONY: all clean cleanlib cleanobj force
+.PHONY: all clean cleanlib cleanobj force libr
 
 SRC = src
 OBJ = lib/$(OS_DIR)
@@ -40,10 +40,10 @@ F_SOURCES := $(wildcard $(SRC)/*.f)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
 
-LIBDIR := $(OBJ)/$(OS_DIR)
-LIB_DERIVED := $(OBJ)/$(OS_DIR)/libRDerived.$(SHARED_EXT)
+LIBDIR := $(OBJ)
+LIB_DERIVED := $(OBJ)/libRDerived.$(SHARED_EXT)
 
-all:
+all: libr
 	@echo $(LIB_DERIVED) is up to date
 
 force: $(LIB_DERIVED)
@@ -55,7 +55,25 @@ force: $(LIB_DERIVED)
 
 $(LIB_DERIVED): $(C_OBJECTS) $(F_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIBDIR)/libRDerived.$(SHARED_EXT) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $(LIB_DERIVED) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
+
+ifeq ($(OSNAME), Darwin)
+LIB_RDUMMY := $(OBJ)/libR.$(SHARED_EXT)
+
+libr: $(LIB_RDUMMY)
+$(LIB_RDUMMY): $(OBJ)/rdummy.o
+	mkdir -p $(LIBDIR)
+	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version 3.1.0 -compatibility_version 3.1.0 $(OBJ)/rdummy.o
+
+cleanlibr:
+	rm -f $(LIB_RDUMMY)
+
+else
+libr: 
+
+cleanlibr:
+
+endif
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -67,7 +85,7 @@ $(OBJ)/%.o: $(SRC)/%.f
 cleanlib:
 	rm -f $(LIBDIR)/libRDerived.* $(LIBDIR)/libRblas.$(SHARED_EXT) $(LIBDIR)/libRlapack.$(SHARED_EXT)
 
-clean: cleanobj
+clean: cleanobj cleanlibr
 #	$(MAKE) -C src/blas clean
 #	$(MAKE) -C src/lapack clean
 

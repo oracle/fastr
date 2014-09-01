@@ -19,6 +19,40 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testMakeNames() {
+        assertEval("{ make.names(7) }");
+        assertEval("{ make.names(\"a_a\") }");
+        assertEval("{ make.names(\"a a\") }");
+        assertEval("{ make.names(\"a_a\", allow_=FALSE) }");
+        assertEval("{ make.names(\"a_a\", allow_=7) }");
+        assertEval("{ make.names(\"a_a\", allow_=c(7,42)) }");
+        assertEval("{ make.names(\"...7\") }");
+        assertEval("{ make.names(\"..7\") }");
+        assertEval("{ make.names(\".7\") }");
+        assertEval("{ make.names(\"7\") }");
+        assertEval("{ make.names(\"$\") }");
+        assertEval("{ make.names(\"$_\", allow_=FALSE) }");
+        assertEval("{ make.names(\"else\")}");
+        assertEval("{ make.names(\"NA_integer_\", allow_=FALSE) }");
+
+        assertEvalError("{ make.names(\"a_a\", allow_=\"a\") }");
+        assertEvalError("{ make.names(\"a_a\", allow_=logical()) }");
+        assertEvalError("{ make.names(\"a_a\", allow_=NULL) }");
+    }
+
+    @Test
+    public void testMakeUnique() {
+        assertEval("{ make.unique(\"a\") }");
+        assertEval("{ make.unique(character()) }");
+        assertEval("{ make.unique(c(\"a\", \"a\")) }");
+        assertEval("{ make.unique(c(\"a\", \"a\", \"a\")) }");
+        assertEval("{ make.unique(c(\"a\", \"a\"), \"_\") }");
+        assertEvalError("{ make.unique(1) }");
+        assertEvalError("{ make.unique(\"a\", 1) }");
+        assertEvalError("{ make.unique(\"a\", character()) }");
+    }
+
+    @Test
     @Ignore
     public void testSetAttr() {
         assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
@@ -102,6 +136,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ seq(from=-10.4,to=-5.8,by=2.1) }");
         assertEval("{ round(seq(from=3L,to=-2L,by=-4.2), digits=5) }");
         assertEval("{ seq(along=c(10,11,12)) }"); // test partial name match
+    }
+
+    @Test
+    public void testSeqLen() {
+        assertEval("{ seq_len(10) }");
+        assertEval("{ seq_len(5L) }");
+        assertEval("{ seq_len(1:2) }");
+        assertEval("{ seq_len(integer()) }");
     }
 
     @Test
@@ -532,7 +574,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ as.vector(\"foo\", \"character\") }");
         assertEval("{ as.vector(\"foo\", \"list\") }");
         assertEval("{ as.vector(\"foo\") }");
-        assertEvalError("{ as.vector(\"foo\", \"bar\") }");
+        assertEval("{ as.vector(\"foo\", \"bar\") }");
         assertEvalWarning("{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
         assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
@@ -2271,22 +2313,31 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(a,b,c) { missing(b) } ; f(1,,2) }");
         assertEval("{ g <- function(a, b, c) { b } ; f <- function(a,b,c) { g(a,b=2,c) } ; f(1,,2) }"); // not
         // really the builtin, but somewhat related
+        assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f(1) }");
+        assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k(y=1) }");
+        assertEval("{ f <- function(a = 2 + 3) { missing(a) } ; f() }");
+        assertEval("{ f <- function(a = z) { missing(a) } ; f() }");
+        assertEval("{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }");
+        assertEval("{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
+        assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
+        assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
+        assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
     }
 
     @Test
     @Ignore
     public void testMissingIgnore() {
-        assertEval("{ f <- function(a = 2 + 3) { missing(a) } ; f() }");
-        assertEval("{ f <- function(a = z) { missing(a) } ; f() }");
-        assertEval("{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }");
-        assertEval("{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
         assertEval("{ f <- function(a = z, z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
         assertEval("{ f <- function(a) { g(a) } ; g <- function(b=2) { missing(b) } ; f() }");
         assertEval("{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }");
-        assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
-        assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
-        assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
         assertEval("{ f <- function(...) { missing(..2) } ; f(x + z, a * b) }");
+
+        // All unprecise error message in ArgumentMatcher: function src is missing!
+        assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
+        // Unprecise error message in RPromise
+        assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
     }
 
     @Test
@@ -2416,7 +2467,7 @@ public class TestSimpleBuiltins extends TestBase {
     public void testDeparse() {
         assertEval("{ deparse(TRUE) }");
         assertEval("{ deparse(c(T, F)) }");
-        // TODO add more
+        assertEval("{ k <- 2 ; deparse(k) }");
     }
 
     @Test
@@ -2551,12 +2602,38 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCall() {
+        assertEval("{ call(\"f\") }");
+        assertEval("{ call(\"f\",2,3) }");
+    }
+
+    @Test
+    @Ignore
+    public void testCallIgnore() {
         assertEval("{ f <- function(a, b) { a + b } ; l <- call(\"f\", 2, 3) ; eval(l) }");
         assertEval("{ f <- function(a, b) { a + b } ; x <- 1 ; y <- 2 ; l <- call(\"f\", x, y) ; x <- 10 ; eval(l) }");
-        // Arguments are being passed incorrectly in RCallNode
-        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
+    }
+
+    @Test
+    public void testIsCall() {
+        assertEval("{ cl <- call(\"f\") ; is.call(cl) }");
+        assertEval("{ cl <- call(\"f\",2,3) ; is.call(cl) }");
+        assertEval("{ cl <- list(\"f\",2,3) ; is.call(cl) }");
+    }
+
+    @Test
+    public void testAsCall() {
+        assertEval("{ l <- list(\"f\") ; as.call(l) }");
+        assertEval("{ l <- list(\"f\",2,3) ; as.call(l) }");
+        assertEval("{ g <- function() 23 ; l <- list(\"f\", g()) ; as.call(l) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAsCallIgnore() {
+        assertEval("{ f <- function() 23 ; l <- list(\"f\") ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(a,b) a+b ; l <- list(\"f\",2,3) ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(\"f\", g()) ; cl <- as.call(l) ; eval(cl) }");
     }
 
     @Test
@@ -2642,7 +2719,7 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testPrint() {
-        assertEval("{ print(23,quote=TRUE) }");
+        assertEval("{ print(23) }");
         assertEval("{ print(1:3,quote=TRUE) }");
         assertEval("{ print(list(1,2,3),quote=TRUE) }");
         assertEval("{ x<-c(1,2); names(x)=c(\"a\", \"b\"); print(x,quote=TRUE) }");
@@ -2656,6 +2733,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ print(c(1.1,2.34567),quote=TRUE) }");
         assertEval("{ print(c(1,2.34567),quote=TRUE) }");
         assertEval("{ print(c(11.1,2.34567),quote=TRUE) }");
+        assertEval("{ nql <- noquote(letters); print(nql)}");
+        assertEval("{ nql <- noquote(letters); nql[1:4] <- \"oh\"; print(nql)}");
+    }
+
+    @Test
+    @Ignore
+    public void testPrintIgnore() {
+        assertEval("{ nql <- noquote(letters); nql}");
     }
 
     @Test
@@ -3149,14 +3234,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
-    public void testAnyDuplicatedIgnore() {
-        // Error message mismatch.
-        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
-        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
-    }
-
-    @Test
     public void testAnyDuplicated() {
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables=FALSE,fromLast = TRUE)}");
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE, TRUE)}");
@@ -3164,6 +3241,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), FALSE )}");
         assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L)) }");
         assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = TRUE) }");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
 
         // strings
         assertEval("{anyDuplicated(c(\"abc\"))}");
@@ -3202,6 +3280,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
         assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
+    }
+
+    @Test
+    @Ignore
+    public void testAnyDuplicatedIgnore() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
     }
 
     @Test
@@ -3414,4 +3499,51 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ses <- c(\"low\", \"middle\", \"low\", \"low\", \"low\", \"low\", \"middle\", \"low\", \"middle\", \"middle\", \"middle\", \"middle\", \"middle\", \"high\", \"high\", \"low\", \"middle\", \"middle\", \"low\", \"high\"); ses.f.bad.order <- factor(ses); is.factor(ses.f.bad.order);levels(ses.f.bad.order);ses.f <- factor(ses, levels = c(\"low\", \"middle\", \"high\"));ses.order <- ordered(ses, levels = c(\"low\", \"middle\", \"high\"));print(ses.order,FALSE); } ");
     }
 
+    @Test
+    public void testHeadNTail() {
+        assertEval("{head(letters)}");
+        assertEval("{head(letters, n = 10L)}");
+        assertEval("{head(letters, n = -6L)}");
+        assertEval("{tail(letters)}");
+        assertEval("{tail(letters, n = 10L)}");
+        assertEval("{tail(letters, n = -6L)}");
+        assertEval("{x<-matrix(c(1,2,3,4),2,2); tail(x,1);}");
+        assertEval("{x<-matrix(c(1,2,3,4),2,2); head(x,1);}");
+    }
+
+    @Test
+    public void testCharMatch() {
+        assertEval("{charmatch(\"abc\", \"deeee\",c(\"3\",\"4\"))}");
+        assertEval("{charmatch(\"abc\", \"deeee\")}");
+        assertEval("{charmatch(\"abc\", \"deeeec\",c(\"3\",\"4\"))}");
+        assertEval("{charmatch(\"\", \"\")}");
+        assertEval("{charmatch(\"m\",   c(\"mean\", \"median\", \"mode\"))}");
+        assertEval("{charmatch(\"med\", c(\"mean\", \"median\", \"mode\"))}");
+        assertEval("{charmatch(matrix(c(9,3,1,6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch(matrix(c('h',3,'e',6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
+        assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
+        assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+    }
+
+    @Test
+    public void testOnExit() {
+        assertEval("n = function() { on.exit(print(\"test\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\", TRUE)); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\", TRUE)); on.exit(print(\"test2\")); print(\"some\") }; n()");
+        assertEval("n = function() { on.exit(print(\"test\")); on.exit(print(\"test2\")); print(\"some\"); on.exit() }; n()");
+        assertEval("n = function() { on.exit() }; n()");
+    }
+
+    @Test
+    public void testTabulate() {
+        assertEval("{tabulate(c(2,3,5))}");
+        assertEval("{tabulate(c(2,3,3,5), nbins = 10)}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5))}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
+        assertEval("{tabulate(factor(letters[1:10]))}");
+    }
 }

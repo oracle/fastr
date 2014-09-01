@@ -25,11 +25,13 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -41,19 +43,61 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(VirtualFrame, RFunction, CallArgumentsNode, SourceSection)}. The other
+ * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)}. The other
  * match functions are used for special cases, where builtins make it necessary to re-match
- * parameters, e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, SourceSection)}
- * for 'UseMethod' and {@link #matchArgumentsInlined(RFunction, CallArgumentsNode, SourceSection)}
- * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
+ * parameters, e.g.:
+ * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
+ * 'UseMethod' and
+ * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)} for
+ * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
+ * </p>
+ *
+ * <p>
+ * Here are some details on how the argument processing and matching works. The formal arguments
+ * list is constructed at the point when the {@link FunctionDefinitionNode} object is constructed.
+ * The supplied (actual) arguments list is constructed at the point when the
+ * {@link CallArgumentsNode} is constructed. At the point of executing the actual function call, the
+ * supplied arguments are not processed (they are represented as {@link RNode}-s) and must be
+ * "executed" to get converted into language-level values or promises. Then, the matching procedure
+ * takes a list of formal arguments and a list of "executed" supplied arguments and applies the
+ * actual matching algorithm taking into consideration names and positions of arguments, as well as
+ * their number. The last step of the function call execution is packaging of the matched
+ * (potentially reordered) "executed" supplied arguments into an {@link RArguments} object that is
+ * stored in the callee's frame.
+ * </p>
+ *
+ * <p>
+ * One caveat here is related to the S3 dispatch procedure. In this case, we have in fact two
+ * function calls, one to the "dispatch" function (the one containing the UseMethod call) and one to
+ * the function that is ultimately selected. Both functions can have a different list of formal
+ * arguments and may require running a separate argument matching procedure. For example, in the
+ * following piece of R code, the name of argument b must be available when executing the call to
+ * g() for proper argument reordering:
+ *
+ * f<-function(a,b) { UseMethod("f") }; f.numeric<-function(b,a) { a - b }; f(b=1,2)
+ *
+ * Consequently, argument names passed to the "dispatch" function are preserved as part of the
+ * {@link RArguments} object and made this way available when executing the selected function.
+ * </p>
+ *
+ * <p>
+ * Another caveat is related to matching arguments for variadic functions (functions containing the
+ * ... argument). On the caller's side, multiple supplied arguments (with their own names) can be
+ * encapsulated as a single formal ... argument on the callee's side. In this case, however, R still
+ * requires that the names of arguments encapsulated as ... are available to the callee for use in
+ * the argument matching procedures down the call chain. For example, in the following piece of R
+ * code, argument b is encapsulated as ... when executing the call to f() and yet its name has to be
+ * available when executing the call to g() for proper argument reordering:
+ *
+ * f <- function(...) g(...); g <- function(a,b) { a - b }; f(b=1,2)
+ *
+ * Consequently, "non-executed" ... arguments are represented as {@link VarArgsNode}-s (inheriting
+ * from {@link RNode}) and "executed" .. arguments are represented as a language level value of type
+ * {@link RArgsValuesAndNames}, which can be passes directly in the {@link RArguments} object and
+ * whose type is understood by the language's builtins (both representations are name-preserving).
  * </p>
  */
 public class ArgumentMatcher {
-
-    /**
-     * Cached, so it can be used on the FastPath.
-     */
-    protected SourceSection encapsulatingSrc = null;
 
     /**
      * Match arguments supplied for a specific function call to the formal arguments and wraps them
@@ -64,41 +108,41 @@ public class ArgumentMatcher {
      * @param suppliedArgs The arguments supplied to the call
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
      *
-     * @return A fresh {@link MatchedArgumentsNode} containing the arguments in correct order and
+     * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
-     * @see #matchNodes(RFunction, RNode[], String[], SourceSection, boolean)
+     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
-    public static MatchedArgumentsNode matchArguments(VirtualFrame frame, RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
+    public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
+        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, false);
+        return MatchedArguments.create(wrappedArgs, formals.getNames());
+    }
 
-        // "Evaluate" supplied arguments
-        RNode[] suppliedEvaled = new RNode[suppliedArgs.getArguments().length];
-        for (int i = 0; i < suppliedEvaled.length; i++) {
-            RNode arg = suppliedArgs.getArguments()[i];
-
-            // Check for 'missing' arguments
-            RNode rvnArg = arg;
-
-            // Eventually unfold WrapArgumentNode
-            if (rvnArg instanceof WrapArgumentNode) {
-                rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
-            }
-
-            // ReadVariableNode denotes a symbol
-            if (rvnArg instanceof ReadVariableNode) {
-                ReadVariableNode rvn = (ReadVariableNode) rvnArg;
-                Symbol symbol = rvn.getSymbol();
-                if (RMissingHelper.isMissingArgument(frame.materialize(), symbol)) {
-                    suppliedEvaled[i] = null;
-                    continue;
-                }
-            }
-
-            suppliedEvaled[i] = arg;
+    /**
+     * Handles unwrapping of {@link WrapArgumentNode} and checks for {@link ReadVariableNode} which
+     * denote symbols
+     *
+     * @param frame {@link VirtualFrame}
+     * @param arg {@link RNode}
+     * @return Whether the given argument denotes a 'missing' symbol in the context of the given
+     *         frame
+     */
+    private static boolean isMissingSymbol(VirtualFrame frame, RNode arg) {
+        if (arg instanceof ConstantMissingNode) {
+            return true;
         }
 
-        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(function, suppliedEvaled, suppliedArgs.getNames(), encapsulatingSrc, false);
-        return MatchedArgumentsNode.create(wrappedArgs, formals.getNames(), suppliedArgs.getNames(), suppliedArgs.getSourceSection());
+        Symbol symbol = RMissingHelper.unwrapSymbol(arg);
+        // Unused "..." are not 'missing' for inlined functions
+        if (symbol != null && symbol.isVarArg()) {
+            Object obj = RMissingHelper.getMissingValue(frame, symbol);
+
+            // Symbol == missingArgument?
+            if (obj == RMissing.instance) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -112,10 +156,10 @@ public class ArgumentMatcher {
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
-     * @see #matchNodes(RFunction, RNode[], String[], SourceSection, boolean)
+     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
      */
-    public static InlinedArguments matchArgumentsInlined(RFunction function, CallArgumentsNode suppliedArgs, SourceSection encapsulatingSrc) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, true);
+    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, true);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
@@ -123,6 +167,7 @@ public class ArgumentMatcher {
      * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
      * the called, generic function and prepares them to be passed into the specific function
      *
+     * @param frame Needed for eventual promise reduction
      * @param function The 'Method' which is going to be 'Use'd
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
@@ -131,15 +176,17 @@ public class ArgumentMatcher {
      * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(RFunction function, EvaluatedArguments evaluatedArgs, SourceSection encapsulatingSrc) {
-        FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
+    public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection encapsulatingSrc) {
+        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+        FormalArguments formals = rootNode.getFormalArguments();
         Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(),
                         encapsulatingSrc);
+
         // Replace RMissing with default value!
         RNode[] defaultArgs = formals.getDefaultArgs();
         for (int i = 0; i < defaultArgs.length; i++) {
             Object evaledArg = evaledArgs[i];
-            if (evaledArg == null || evaledArg == RMissing.instance) {
+            if (evaledArg == null) {
                 // This is the case whenever there is a new parameter introduced in front of a
                 // vararg in the specific version of a generic
                 // TODO STRICT!
@@ -150,8 +197,11 @@ public class ArgumentMatcher {
                 } else {
                     // <null> for environment leads to it being fitted with the REnvironment on the
                     // callee side
-                    evaledArgs[i] = RPromise.create(EvalPolicy.STRICT, PromiseType.ARG_DEFAULT, null, defaultArg);
+                    evaledArgs[i] = RPromise.create(EvalPolicy.INLINED, PromiseType.ARG_DEFAULT, null, defaultArg);
                 }
+            } else if (function.isBuiltin() && evaledArg instanceof RPromise) {
+                RPromise promise = (RPromise) evaledArg;
+                evaledArgs[i] = promise.evaluate(frame);
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getNames());
@@ -159,14 +209,15 @@ public class ArgumentMatcher {
 
     /**
      * Matches the supplied arguments to the formal ones and returns them as consolidated
-     * {@link MatchedArgumentsNode}. Handles named args and varargs.<br/>
+     * {@code RNode[]}. Handles named args and varargs.<br/>
      * <strong>Does not</strong> alter the given {@link CallArgumentsNode}
      *
+     * @param frame carrier for missing check
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param suppliedNames The names for the arguments supplied to the call
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
-     * @param isForInlinedBuilin Whether the arguments are passed into an inlined builtin and need
+     * @param isForInlinedBuiltin Whether the arguments are passed into an inlined builtin and need
      *            special treatment
      *
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
@@ -174,17 +225,38 @@ public class ArgumentMatcher {
      * @see #permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory,
      *      ArrayFactory, SourceSection)
      */
-    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuilin) {
+    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuiltin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
         RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
-        PromiseWrapper wrapper = isForInlinedBuilin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
-        return wrapInPromises(function, resultArgs, formals, wrapper);
+
+        // Check for "missing" symbols
+        RNode[] argsChecked = resultArgs;
+        if (!isForInlinedBuiltin) {
+            for (int i = 0; i < argsChecked.length; i++) {
+                RNode arg = argsChecked[i];
+                if (arg instanceof VarArgsNode) {
+                    VarArgsNode varArgs = (VarArgsNode) arg;
+                    for (int j = 0; j < varArgs.getArgumentNodes().length; j++) {
+                        // Check for 'missing' arguments: mark them 'missing' by replacing with
+                        // 'null'
+                        RNode varArg = varArgs.getArgumentNodes()[j];
+                        varArgs.getArgumentNodes()[j] = isMissingSymbol(frame, varArg) ? null : varArg;
+                    }
+                } else {
+                    // Check for 'missing' arguments: mark them 'missing' by replacing with 'null'
+                    argsChecked[i] = isMissingSymbol(frame, arg) ? null : arg;
+                }
+            }
+        }
+
+        PromiseWrapper wrapper = isForInlinedBuiltin ? new BuiltinInitPromiseWrapper() : new DefaultPromiseWrapper();
+        return wrapInPromises(function, argsChecked, formals, wrapper);
     }
 
     /**
-     * This method does the heavy lifting of re-arranging arguments by their names and position,
+     * /** This method does the heavy lifting of re-arranging arguments by their names and position,
      * also handling varargs.
      *
      * @param function The function which should be called
@@ -198,7 +270,7 @@ public class ArgumentMatcher {
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
-    protected static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
+    private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
                     SourceSection encapsulatingSrc) {
         String[] formalNames = formals.getNames();
 
@@ -280,19 +352,23 @@ public class ArgumentMatcher {
         // Error check: Unused argument?
         int leftoverCount = suppliedArgs.length - matchedSuppliedArgs.cardinality();
         if (leftoverCount > 0) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-
+            // Check if this is really an error. Might be an inlined "..."!
             UnmatchedSuppliedIterator<T> si = new UnmatchedSuppliedIterator<>(suppliedArgs, matchedSuppliedArgs);
+            if (leftoverCount == 1) {
+                T arg = si.next();
+                if (arrFactory.isVararg(arg)) {
+                    return resultArgs;
+                }
+            }
+
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            si.reset();
 
             // UNUSED_ARGUMENT(S)?
             if (leftoverCount == 1) {
-                // TODO Check for precise error messages
+                // TODO Precise error messages: "f(n)" is missing!
                 String argStr = arrFactory.debugString(si.next());
-                // TODO This is a HACK, remove it when proper vararg unwrapping is implemented!
-                if (argStr.equals(ArgumentsTrait.VARARG_NAME)) {
-                    return resultArgs;
-                }
-                throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, argStr);
+                throw RError.error(null, RError.Message.UNUSED_ARGUMENT, argStr);
             }
 
             // Create error message:
@@ -302,9 +378,9 @@ public class ArgumentMatcher {
                 debugArgs[pos++] = si.next();
             }
 
-            // TODO Check for precise error messages
+            // TODO Precise error messages: "f(n)" is missing!
             String debugStr = arrFactory.debugString(debugArgs);
-            throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENTS, debugStr);
+            throw RError.error(null, RError.Message.UNUSED_ARGUMENTS, debugStr);
         }
 
         return resultArgs;
@@ -319,14 +395,20 @@ public class ArgumentMatcher {
      */
     private static class UnmatchedSuppliedIterator<T> implements Iterator<T> {
         private static final int NO_MORE_ARGS = -1;
-        private int si = 0;
-        private int lastSi = 0;
+        private int si;
+        private int lastSi;
         private final T[] suppliedArgs;
         private final BitSet matchedSuppliedArgs;
 
         public UnmatchedSuppliedIterator(T[] suppliedArgs, BitSet matchedSuppliedArgs) {
             this.suppliedArgs = suppliedArgs;
             this.matchedSuppliedArgs = matchedSuppliedArgs;
+            reset();
+        }
+
+        public void reset() {
+            si = 0;
+            lastSi = 0;
         }
 
         /**
@@ -452,32 +534,51 @@ public class ArgumentMatcher {
 
         // Check whether this is a builtin
         RootNode rootNode = function.getTarget().getRootNode();
-        RBuiltinRootNode builtinRootNode = null;
-        if (rootNode instanceof RBuiltinRootNode) {
-            builtinRootNode = (RBuiltinRootNode) rootNode;
-        }
+        final RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
 
         // Insert promises here!
         EnvProvider envProvider = new EnvProvider();
-        int logicalIndex = 0;    // also counts arguments wrapped in vararg
+        // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
+        // take "..." as one), we don't need a logicalIndex
         for (int fi = 0; fi < arguments.length; fi++) {
             RNode arg = arguments[fi];  // arg may be null, which denotes 'no arg supplied'
 
             // Has varargs? Unfold!
             if (arg instanceof VarArgsAsObjectArrayNode) {
                 VarArgsAsObjectArrayNode varArgs = (VarArgsAsObjectArrayNode) arg;
-                RNode[] modifiedVArgumentNodes = new RNode[varArgs.elementNodes.length];
-                for (int j = 0; j < varArgs.elementNodes.length; j++) {
-                    // Obviously single var args have no default values, so null
-                    modifiedVArgumentNodes[j] = wrap(promiseWrapper, function, builtinRootNode, envProvider, varArgs.elementNodes[j], null, logicalIndex);
-                    logicalIndex++;
+                int varArgsLen = varArgs.getArgumentNodes().length;
+                String[] newNames = varArgs.getNames() == null ? new String[varArgsLen] : Arrays.copyOf(varArgs.getNames(), varArgsLen);
+                RNode[] newVarArgs = Utils.resizeArray(varArgs.getArgumentNodes(), varArgsLen);
+                int index = 0;
+                for (int i = 0; i < varArgs.getArgumentNodes().length; i++) {
+                    if (varArgs.getArgumentNodes()[i] != null) {
+                        newNames[index] = varArgs.getNames() == null ? null : varArgs.getNames()[i];
+                        newVarArgs[index] = varArgs.getArgumentNodes()[i];
+                        index++;
+                    }
+                    // "Delete and shrink"
+// varArgsChecked[i] = ConstantNode.create(RMissing.instance);
                 }
-                resArgs[fi] = new VarArgsAsObjectArrayNode(modifiedVArgumentNodes, varArgs.getNames());
+
+                // Shrink only if necessary
+                int newLength = index;
+                if (newLength == 0) {
+                    // Corner case: "f <- function(...) g(...); g <- function(...)"
+                    // Insert correct "missing"!
+                    resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, null, null, fi);
+                    continue;
+                }
+                if (newNames.length > newLength) {
+                    newNames = Arrays.copyOf(newNames, newLength);
+                    newVarArgs = Arrays.copyOf(newVarArgs, newLength);
+                }
+
+                EvalPolicy evalPolicy = promiseWrapper.getEvalPolicy(function, builtinRootNode, fi);
+                resArgs[fi] = PromiseNode.createVarArgs(varArgs.getSourceSection(), evalPolicy, envProvider, newVarArgs, newNames);
             } else {
                 // Normal argument: just wrap in promise
                 RNode defaultArg = fi < defaultArgs.length ? defaultArgs[fi] : null;
-                resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, logicalIndex);
-                logicalIndex++;
+                resArgs[fi] = wrap(promiseWrapper, function, builtinRootNode, envProvider, arg, defaultArg, fi);
             }
         }
         return resArgs;
@@ -539,11 +640,20 @@ public class ArgumentMatcher {
         T[] newArray(int length);
 
         /**
+         * @param arg
+         * @return Whether arg represents a <i>formal</i> "..." which carries no content
+         */
+        default boolean isVararg(T arg) {
+            throw Utils.nyi("S3Dispatch should not have arg length mismatch!?");
+        }
+
+        /**
          * @param args
          * @return A {@link String} containing debug names of all given args
          */
         String debugString(T[] args);
 
+        @SlowPath
         default String debugString(T arg) {
             T[] args = newArray(1);
             args[0] = arg;
@@ -559,6 +669,15 @@ public class ArgumentMatcher {
             return new RNode[length];
         }
 
+        @Override
+        public boolean isVararg(RNode arg) {
+            // Empty varargs get passed in as "...", and not unrolled. Thus we only have to check
+            // the RVNs symbol
+            Symbol symbol = RMissingHelper.unwrapSymbol(arg);
+            return symbol != null && symbol.isVarArg();
+        }
+
+        @SlowPath
         public String debugString(RNode[] args) {
             SourceSection src = Utils.sourceBoundingBox(args);
             return String.valueOf(src);
@@ -573,6 +692,7 @@ public class ArgumentMatcher {
             return new Object[length];
         }
 
+        @SlowPath
         public String debugString(Object[] args) {
             StringBuilder b = new StringBuilder();
             for (int i = 0; i < args.length; i++) {
@@ -609,8 +729,7 @@ public class ArgumentMatcher {
         public EvalPolicy getEvalPolicy(RFunction function, RBuiltinRootNode builtinRootNode, int logicalIndex) {
             // This is for actual function calls. However, if the arguments are meant for a builtin,
             // we have to consider whether they should be forced or not!
-            // TODO Strict!
-            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.STRICT : function.getUsePromises() ? EvalPolicy.PROMISED : EvalPolicy.STRICT;  // EvalPolicy.PROMISED;
+            return builtinRootNode != null && builtinRootNode.evaluatesArg(logicalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
         }
     }
 
@@ -642,7 +761,7 @@ public class ArgumentMatcher {
     public static final class VarArgsAsObjectArrayFactory implements VarArgsFactory<Object> {
         public Object makeList(final Object[] elements, final String[] names) {
             if (elements.length > 0) {
-                return new RArgsValuesAndNames(elements, names == null ? new String[elements.length] : names);
+                return new RArgsValuesAndNames(elements, names);
             } else {
                 return RMissing.instance;
             }
@@ -695,31 +814,10 @@ public class ArgumentMatcher {
         }
 
         @Override
+        @Deprecated
         public Object execute(VirtualFrame frame) {
-            Object[] evaluatedArgs = executeArguments(frame, elementNodes);
-            return new RArgsValuesAndNames(evaluatedArgs, names);
+            // Simple container
+            throw new UnsupportedOperationException();
         }
-    }
-
-    @ExplodeLoop
-    private static Object[] executeArguments(VirtualFrame frame, RNode[] elementNodes) {
-        Object[] evaluatedArgs = new Object[elementNodes.length];
-        int index = 0;
-        for (int i = 0; i < elementNodes.length; i++) {
-            Object argValue = elementNodes[i].execute(frame);
-            if (argValue instanceof RArgsValuesAndNames) {
-                // this can happen if ... is simply passed around (in particular when the call chain
-                // contains two functions with just the ... argument)
-                RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
-                evaluatedArgs = Utils.resizeObjectsArray(evaluatedArgs, evaluatedArgs.length + argsValuesAndNames.length() - 1);
-                Object[] varargValues = argsValuesAndNames.getValues();
-                for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                    evaluatedArgs[index++] = varargValues[j];
-                }
-            } else {
-                evaluatedArgs[index++] = argValue;
-            }
-        }
-        return evaluatedArgs;
     }
 }

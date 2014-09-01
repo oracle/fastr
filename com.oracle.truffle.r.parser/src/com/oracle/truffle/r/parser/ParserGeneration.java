@@ -55,7 +55,8 @@ public class ParserGeneration {
         "adopt changed SourceSection creation API",
         "support NA_real_",
         "support NA_character_",
-        "basic support for formula parsing"
+        "basic support for formula parsing",
+        "improved error handling in parser"
     };
 
 }

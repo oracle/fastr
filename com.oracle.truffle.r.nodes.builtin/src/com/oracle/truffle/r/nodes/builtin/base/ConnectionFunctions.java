@@ -63,6 +63,10 @@ public abstract class ConnectionFunctions {
             throw new IOException();
         }
 
+        @Override
+        public void close() throws IOException {
+            throw new IOException();
+        }
     }
 
     private static StdinConnection stdin;
@@ -106,6 +110,11 @@ public abstract class ConnectionFunctions {
         public InputStream getInputStream() throws IOException {
             throw new IOException();
         }
+
+        @Override
+        public void close() throws IOException {
+            bufferedReader.close();
+        }
     }
 
     public static class GZIPInputRConnection extends RConnection {
@@ -123,6 +132,11 @@ public abstract class ConnectionFunctions {
         @Override
         public InputStream getInputStream() throws IOException {
             return stream;
+        }
+
+        @Override
+        public void close() throws IOException {
+            stream.close();
         }
     }
 
@@ -170,14 +184,22 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "close", kind = PRIMITIVE, parameterNames = {"con"})
+    @RBuiltin(name = "close", kind = INTERNAL, parameterNames = {"con", "..."})
     // TODO Internal
     public abstract static class Close extends RInvisibleBuiltinNode {
         @Specialization
-        protected Object close(@SuppressWarnings("unused") Object con) {
+        protected Object close(Object con) {
             controlVisibility();
-            // TODO implement when on.exit doesn't evaluate it's argument
-            return RNull.instance;
+            if (con instanceof RConnection) {
+                try {
+                    ((RConnection) con).close();
+                } catch (IOException e) {
+                    throw RInternalError.unimplemented();
+                }
+                return RNull.instance;
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_CONNECTION, "con");
+            }
         }
     }
 

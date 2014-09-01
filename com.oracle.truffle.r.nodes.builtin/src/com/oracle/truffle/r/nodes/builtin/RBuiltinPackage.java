@@ -138,7 +138,7 @@ public abstract class RBuiltinPackage {
         ArrayList<Component> sources = rSources.get(getName());
         if (sources != null) {
             for (Component src : sources) {
-                RContext.getEngine().parseAndEval(src.libContents, frame, envForFrame, false, false);
+                RContext.getEngine().parseAndEval(src.libName, src.libContents, frame, envForFrame, false, false);
             }
         }
     }

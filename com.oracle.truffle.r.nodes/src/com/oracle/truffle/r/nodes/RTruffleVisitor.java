@@ -125,7 +125,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.getGroup(functionName) != null) {
                 return DispatchedCallNode.create(functionName, RGroupGenerics.RDotGroup, aCallArgNode);
             }
-            return RCallNode.createCall(callSource, ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false), aCallArgNode);
+            return RCallNode.createCall(callSource, ReadVariableNode.create(functionName, RRuntime.TYPE_FUNCTION, false, true, false, true), aCallArgNode);
         } else {
             RNode lhs = call.getLhsNode().accept(this);
             return RCallNode.createCall(callSource, lhs, aCallArgNode);
@@ -563,10 +563,27 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
     }
 
+    private static int getVariadicComponentIndex(String symbol) {
+        if (symbol.length() > 2 && symbol.charAt(0) == '.' && symbol.charAt(1) == '.') {
+            for (int i = 2; i < symbol.length(); i++) {
+                if (!Utils.isIsoLatinDigit(symbol.charAt(i))) {
+                    return -1;
+                }
+            }
+            return Integer.parseInt(symbol.substring(2));
+        }
+        return -1;
+    }
+
     @Override
     public RNode visit(SimpleAccessVariable n) {
         String symbol = RRuntime.toString(n.getVariable());
-        return ReadVariableNode.create(n.getSource(), symbol, RRuntime.TYPE_ANY, n.shouldCopyValue());
+        int ind = getVariadicComponentIndex(symbol);
+        if (ind >= 0) {
+            return new ReadVariadicComponentNode(ind > 0 ? ind - 1 : ind);
+        } else {
+            return ReadVariableNode.create(n.getSource(), symbol, RRuntime.TYPE_ANY, n.shouldCopyValue());
+        }
     }
 
     @Override

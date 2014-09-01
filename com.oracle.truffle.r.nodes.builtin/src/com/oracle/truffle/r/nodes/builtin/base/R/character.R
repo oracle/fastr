@@ -85,20 +85,20 @@ substring <- function(text, first, last=1000000L)
 #  names(x) <- old
 #  x
 #}
-#
-#make.names <- function(names, unique = FALSE, allow_ = TRUE)
-#{
-#  names <- as.character(names)
-#  names2 <- .Internal(make.names(names, allow_))
-#  if(unique) {
-#    o <- order(names != names2)
-#    names2[o] <- make.unique(names2[o])
-#  }
-#  names2
-#}
-#
-#make.unique <- function (names, sep = ".") .Internal(make.unique(names, sep))
-#
+
+make.names <- function(names, unique = FALSE, allow_ = TRUE)
+{
+  names <- as.character(names)
+  names2 <- .Internal(make.names(names, allow_))
+  if(unique) {
+    o <- order(names != names2)
+    names2[o] <- make.unique(names2[o])
+  }
+  names2
+}
+
+make.unique <- function (names, sep = ".") .Internal(make.unique(names, sep))
+
 #chartr <- function(old, new, x)
 #{
 #  if(!is.character(x)) x <- as.character(x)

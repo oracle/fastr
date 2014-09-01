@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.nio.charset.*;
+import java.util.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.*;
@@ -60,6 +61,10 @@ public final class Utils {
             System.err.println(msg);
             // CheckStyle: resume system..print check
         }
+    }
+
+    public static boolean isIsoLatinDigit(char c) {
+        return c >= '\u0030' && c <= '\u0039';
     }
 
     public static int incMod(int value, int mod) {
@@ -297,24 +302,11 @@ public final class Utils {
         }
     }
 
-    public static String[] resizeStringsArray(String[] oldNames, int newSize) {
-        String[] newNames = new String[newSize];
-        if (oldNames != null) {
-            for (int i = 0; i < oldNames.length; i++) {
-                newNames[i] = oldNames[i];
-            }
-        }
-        return newNames;
-    }
-
-    public static Object[] resizeObjectsArray(Object[] oldValues, int newSize) {
-        Object[] newValues = new Object[newSize];
+    public static <T> T[] resizeArray(T[] oldValues, int newSize) {
+        T[] newValues = oldValues;
         if (oldValues != null) {
-            for (int i = 0; i < oldValues.length; i++) {
-                newValues[i] = oldValues[i];
-            }
+            newValues = Arrays.copyOf(oldValues, newSize);
         }
         return newValues;
     }
-
 }

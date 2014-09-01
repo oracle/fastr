@@ -28,7 +28,7 @@ package com.oracle.truffle.r.runtime.data;
  * (unevaluated) AST for the element.
  *
  * This type is not part of the {@code TypeSystem} but it used as a superclass by {@link RLanguage}
- * and {@link RPromise}.
+ * and {@link RCall}.
  */
 public class RLanguageRep {
 

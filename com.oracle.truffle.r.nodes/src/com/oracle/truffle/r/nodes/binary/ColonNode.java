@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.ColonNodeFactory.ColonCastNodeFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,63 +35,75 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
     @CreateCast({"left", "right"})
     public RNode createCast(RNode child) {
-        return ColonCastNodeFactory.create(child);
+        ColonCastNode ccn = ColonCastNodeFactory.create(child);
+        ccn.assignSourceSection(getSourceSection());
+        return ccn;
+    }
+
+    private void naCheck(boolean na) {
+        if (na) {
+            RError.error(getSourceSection(), RError.Message.NA_OR_NAN);
+        }
     }
 
     @Specialization(guards = "isSmaller")
     protected RIntSequence colonAscending(int left, int right) {
         controlVisibility();
+        naCheck(RRuntime.isNA(left) || RRuntime.isNA(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "!isSmaller")
     protected RIntSequence colonDescending(int left, int right) {
         controlVisibility();
+        naCheck(RRuntime.isNA(left) || RRuntime.isNA(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(guards = "isSmaller")
     protected RIntSequence colonAscending(int left, double right) {
         controlVisibility();
+        naCheck(RRuntime.isNA(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, (int) right);
     }
 
     @Specialization(guards = "!isSmaller")
     protected RIntSequence colonDescending(int left, double right) {
         controlVisibility();
+        naCheck(RRuntime.isNA(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createDescendingRange(left, (int) right);
     }
 
     @Specialization(guards = "isSmaller")
     protected RDoubleSequence colonAscending(double left, int right) {
         controlVisibility();
+        naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNA(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "!isSmaller")
     protected RDoubleSequence colonDescending(double left, int right) {
         controlVisibility();
+        naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNA(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
     @Specialization(guards = "isSmaller")
     protected RDoubleSequence colonAscending(double left, double right) {
         controlVisibility();
+        naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
     @Specialization(guards = "!isSmaller")
     protected RDoubleSequence colonDescending(double left, double right) {
         controlVisibility();
+        naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
-    public static ColonNode create(RNode left, RNode right) {
-        return ColonNodeFactory.create(left, right);
-    }
-
     public static ColonNode create(SourceSection src, RNode left, RNode right) {
-        ColonNode cn = create(left, right);
+        ColonNode cn = ColonNodeFactory.create(left, right);
         cn.assignSourceSection(src);
         return cn;
     }
@@ -114,6 +127,8 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     @NodeChild("operand")
     public abstract static class ColonCastNode extends RNode {
 
+        private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
+
         @Specialization(guards = "isIntValue")
         protected int doDoubleToInt(double operand) {
             return (int) operand;
@@ -126,23 +141,33 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
         @Specialization
         protected int doSequence(RIntSequence sequence) {
-            // TODO: Produce warning
+            if (lengthGreaterOne.profile(sequence.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, sequence.getLength());
+            }
             return sequence.getStart();
         }
 
         @Specialization
         protected int doSequence(RIntVector vector) {
-            // TODO: Produce warning
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
             return vector.getDataAt(0);
         }
 
         @Specialization(guards = "isFirstIntValue")
         protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
             return (int) vector.getDataAt(0);
         }
 
         @Specialization(guards = "!isFirstIntValue")
         protected double doDoubleVector(RDoubleVector vector) {
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
             return vector.getDataAt(0);
         }
 
@@ -152,8 +177,8 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         }
 
         @Specialization
-        protected byte doBoolean(byte operand) {
-            return operand;
+        protected int doBoolean(byte operand) {
+            return RRuntime.logical2int(operand);
         }
 
         public static boolean isIntValue(double d) {

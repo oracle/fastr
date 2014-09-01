@@ -47,7 +47,7 @@ public class RCommand {
      * dependencies that cause build problems.
      */
     static {
-        RFFIFactory.setRFFIFactory(Load_RFFIFactory.initialize());
+        Load_RFFIFactory.initialize();
     }
 
 // CheckStyle: stop system..print check
@@ -155,7 +155,7 @@ public class RCommand {
             String content = new String(bytes);
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             VirtualFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(content, frame, REnvironment.globalEnv(), false, false);
+            REngine.getInstance().parseAndEval(filePath, content, frame, REnvironment.globalEnv(), false, false);
         } catch (IOException ex) {
             Utils.fail("unexpected error reading file input");
         }
@@ -180,7 +180,7 @@ public class RCommand {
                     continue;
                 }
 
-                while (REngine.getInstance().parseAndEval(input, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                while (REngine.getInstance().parseAndEval("<shell_input>", input, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
                     console.setPrompt(SLAVE.getValue() ? "" : "+ ");
                     String additionalInput = console.readLine();
                     if (additionalInput == null) {
@@ -195,5 +195,4 @@ public class RCommand {
             Utils.fail("unexpected error reading console input");
         }
     }
-
 }

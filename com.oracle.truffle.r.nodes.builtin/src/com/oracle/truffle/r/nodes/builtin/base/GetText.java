@@ -71,8 +71,9 @@ public abstract class GetText extends RBuiltinNode {
     protected RStringVector getText(VirtualFrame frame, Object args, Object domain) {
         // no translation done at this point
         // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
-        Object[] argValues = ((RArgsValuesAndNames) args).getValues();
-        String[] a = null;
+        RArgsValuesAndNames varargs = (RArgsValuesAndNames) args;
+        Object[] argValues = varargs.getValues();
+        String[] a = varargs.getNames();
         int aLength = 0;
         int index = 0;
         for (int i = 0; i < argValues.length; i++) {
@@ -81,7 +82,7 @@ public abstract class GetText extends RBuiltinNode {
                 RStringVector vector = (RStringVector) castString(frame, v);
                 elementNACheck.enable(vector);
                 aLength += vector.getLength();
-                a = Utils.resizeStringsArray(a, aLength);
+                a = Utils.resizeArray(a, aLength);
                 for (int j = 0; j < vector.getLength(); j++) {
                     a[index] = vector.getDataAt(j);
                     elementNACheck.check(a[index]);

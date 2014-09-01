@@ -59,6 +59,9 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         return executeHelper(frame, args);
     }
 
+    // TODO: the executeHelper methods share quite a bit of code, but is it better or worse from
+    // having one method with a rather convoluted control flow structure?
+
     private Object executeHelper(VirtualFrame frame, Frame callerFrame) {
         // Extract arguments from current frame...
         int argCount = RArguments.getArgumentsLength(frame);
@@ -70,26 +73,25 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         int fi = 0;
         int index = 0;
         for (; fi < argCount; ++fi) {
-            // conditional vs. allocation in extractArgs() - is it worth it?
             Object arg = RArguments.getArgument(frame, fi);
             if (arg instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames varArgsContainer = (RArgsValuesAndNames) arg;
                 argListSize += varArgsContainer.length() - 1;
-                argValues = Utils.resizeObjectsArray(argValues, argListSize);
-                argNames = Utils.resizeStringsArray(argNames, argListSize);
+                argValues = Utils.resizeArray(argValues, argListSize);
+                argNames = Utils.resizeArray(argNames, argListSize);
                 Object[] varArgsValues = varArgsContainer.getValues();
                 String[] varArgsNames = varArgsContainer.getNames();
-                boolean allNamesNull = true;
+// boolean allNamesNull = true;
                 for (int i = 0; i < varArgsContainer.length(); i++) {
                     addArg(argValues, varArgsValues[i], index);
-                    String name = varArgsNames[i];
-                    allNamesNull |= name != null;
+                    String name = varArgsNames == null ? null : varArgsNames[i];
+// allNamesNull &= name == null;
                     argNames[index] = name;
                     index++;
                 }
-                if (allNamesNull && !hasNames) {
-                    argNames = null;
-                }
+// if (allNamesNull && !hasNames) {
+// argNames = null;
+// }
             } else {
                 addArg(argValues, arg, index);
                 if (hasNames) {
@@ -100,14 +102,13 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
 
         // ...and use them as 'supplied' arguments...
-        // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, argNames);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(frame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
-    private Object executeHelper(Frame callerFrame, Object[] args) {
+    private Object executeHelper(VirtualFrame callerFrame, Object[] args) {
         // Extract arguments from current frame...
         int argCount = args.length;
         int argListSize = argCount;
@@ -115,12 +116,11 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         int fi = 0;
         int index = 0;
         for (; fi < argCount; ++fi) {
-            // conditional vs. allocation in extractArgs() - is it worth it?
             Object arg = args[fi];
             if (arg instanceof Object[]) {
                 Object[] varArgs = (Object[]) arg;
                 argListSize += varArgs.length - 1;
-                argValues = Utils.resizeObjectsArray(argValues, argListSize);
+                argValues = Utils.resizeArray(argValues, argListSize);
 
                 for (Object varArg : varArgs) {
                     addArg(argValues, varArg, index++);
@@ -131,15 +131,14 @@ public class UseMethodDispatchNode extends S3DispatchNode {
         }
 
         // ...and use them as 'supplied' arguments...
-        // TODO Need rearrange here! suppliedArgsNames are in supplied order, argList in formal!!!
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, null);
         // ...to match them against the chosen function's formal arguments
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(targetFunction, evaledArgs, getEncapsulatingSourceSection());
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(callerFrame, targetFunction, evaledArgs, getEncapsulatingSourceSection());
         return executeHelper2(callerFrame, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getNames());
     }
 
     private static void addArg(Object[] values, Object value, int index) {
-        if (RMissingHelper.isMissing(value)) {
+        if (value == RMissing.instance || (value instanceof RPromise && RMissingHelper.isMissingSymbol((RPromise) value))) {
             values[index] = null;
         } else {
             values[index] = value;

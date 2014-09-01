@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -35,69 +34,41 @@ import com.oracle.truffle.r.runtime.*;
  * supplied argument, the default argument or <code>null</code>, if neither is provided.
  * </p>
  * <p>
- * The {@link #executeArray(VirtualFrame)} method executes the argument nodes and converts them into
- * a form that can be passed into functions.
+ * The {@link #doExecuteArray(VirtualFrame)} method executes the argument nodes and converts them
+ * into a form that can be passed into functions.
  * </p>
- *
- * @see #suppliedNames
  */
-public final class MatchedArgumentsNode extends ArgumentsNode {
-
-    /**
-     * Holds the list of names for the supplied arguments this {@link MatchedArgumentsNode} was
-     * create with. Needed for combine!
-     */
-    private final String[] suppliedNames;
+public final class MatchedArguments extends Arguments<RNode> {
 
     /**
      * @param arguments {@link #getArguments()}
      * @param names {@link #getNames()}
      */
-    private MatchedArgumentsNode(RNode[] arguments, String[] names, String[] suppliedNames) {
+    private MatchedArguments(RNode[] arguments, String[] names) {
         super(arguments, names);
-        this.suppliedNames = suppliedNames;
     }
 
     /**
      * @param arguments
      * @return ad
      */
-    public static MatchedArgumentsNode createUnnamed(RNode[] arguments) {
+    public static MatchedArguments createUnnamed(RNode[] arguments) {
         String[] names = new String[arguments.length];
         for (int i = 0; i < names.length; i++) {
             names[i] = null;
         }
-        SourceSection src = Utils.sourceBoundingBox(arguments);
-        return create(arguments, names, names, src);
+        return create(arguments, names);
     }
 
     /**
      * @param arguments
      * @param names
-     * @param suppliedNames
-     * @param src
-     * @return A fresh {@link MatchedArgumentsNode}; arguments may contain <code>null</code> iff
-     *         there is neither a supplied argument nor a default argument
+     * @return A fresh {@link MatchedArguments}; arguments may contain <code>null</code> iff there
+     *         is neither a supplied argument nor a default argument
      */
-    public static MatchedArgumentsNode create(RNode[] arguments, String[] names, String[] suppliedNames, SourceSection src) {
-        MatchedArgumentsNode matchedArgs = new MatchedArgumentsNode(arguments, names, suppliedNames);
-        matchedArgs.assignSourceSection(src);
+    public static MatchedArguments create(RNode[] arguments, String[] names) {
+        MatchedArguments matchedArgs = new MatchedArguments(arguments, names);
         return matchedArgs;
-    }
-
-    // Mark unusable
-    /**
-     * Use {@link #executeArray(VirtualFrame)} instead!
-     */
-    @Override
-    @Deprecated
-    public Object execute(VirtualFrame frame) {
-        throw new AssertionError();
-    }
-
-    @Override
-    public Object[] executeArray(VirtualFrame frame) {
-        return doExecuteArray(frame);
     }
 
     /**
@@ -109,7 +80,7 @@ public final class MatchedArgumentsNode extends ArgumentsNode {
      *         represents
      */
     @ExplodeLoop
-    private Object[] doExecuteArray(VirtualFrame frame) {
+    public Object[] doExecuteArray(VirtualFrame frame) {
         Object[] result = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             RNode arg = arguments[i];
@@ -122,7 +93,6 @@ public final class MatchedArgumentsNode extends ArgumentsNode {
      * @return The consolidated list of arguments that should be passed to a function.
      *         <code>null</code> denotes 'no argument specified'
      */
-    @Override
     public RNode[] getArguments() {
         return arguments;
     }
@@ -141,13 +111,5 @@ public final class MatchedArgumentsNode extends ArgumentsNode {
     @Override
     public String[] getNames() {
         return names;
-    }
-
-    /**
-     * @return The names of the arguments when they were supplied to a function call, in that old
-     *         order. 'No name defined' is denoted by <code>null</code>!
-     */
-    public String[] getSuppliedNames() {
-        return suppliedNames;
     }
 }

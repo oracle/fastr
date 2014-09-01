@@ -44,6 +44,13 @@ public abstract class RFFIFactory {
     }
 
     /**
+     * This method will be called immediately after the factory instance is created allowing any
+     * additional initialization that could not be done in the constructor.
+     */
+    protected void initialize() {
+    }
+
+    /**
      * Subclass implements this method to actually create the concrete {@link RFFI} instance.
      */
     protected abstract RFFI createRFFI();

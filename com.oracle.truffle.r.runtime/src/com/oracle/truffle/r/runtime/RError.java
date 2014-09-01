@@ -106,7 +106,7 @@ public final class RError extends RuntimeException {
      */
     @SlowPath
     public static RError error(SourceSection src, Message msg, Object... args) {
-        throw error0(false, src, msg, args);
+        throw error0(src, msg, args);
     }
 
     @SlowPath
@@ -114,49 +114,43 @@ public final class RError extends RuntimeException {
         throw error(src, msg, (Object[]) null);
     }
 
-    private static RError error0(boolean uncatchable, SourceSection src, Message msg, Object... args) {
+    private static final RError MARKER_EXCEPTION = new RError(null, "<marker exception>");
+
+    private static RError error0(SourceSection src, Message msg, Object... args) {
+        if (ignoreError) {
+            throw MARKER_EXCEPTION;
+        }
+
         RError rError;
         if (src != null) {
             rError = new RError(src, wrapMessage("Error in " + src.getCode() + " :", formatMessage(msg, args)));
         } else {
             rError = new RError(null, "Error: " + formatMessage(msg, args));
         }
-        if (ignoreError) {
-            /*
-             * TODO Should this be fast-path'ed? The actual error details don't matter as they are
-             * ignored anyway.
-             */
-            throw rError;
-        }
+        RInternalError.reportError(rError, src);
 
         Object errorExpr = ROptions.getValue("error");
         if (errorExpr != RNull.instance) {
-            if (uncatchable) {
-                // uncatchable
-                RContext.getInstance().getConsoleHandler().println("error in uncatchable");
-                throw rError;
-            } else {
-                // Errors and warnings are output before the expression is evaluated
-                RContext.getEngine().printRError(rError);
-                // errorExpr can be anything, but not everything makes sense
-                if (errorExpr instanceof RArgsValuesAndNames) {
-                    // TODO: worry about other potential ... values?
-                    errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
-                }
-                if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                    VirtualFrame frame = Utils.getActualCurrentFrame();
-                    if (errorExpr instanceof RLanguage) {
-                        RContext.getEngine().eval((RLanguage) errorExpr, frame);
-                    } else if (errorExpr instanceof RExpression) {
-                        RContext.getEngine().eval((RExpression) errorExpr, frame);
-                    }
-                } else {
-                    // GnuR checks this earlier when the option is set
-                    throw new RError(null, Message.INVALID_ERROR.message);
-                }
-                // Control, transfer to top level, but suppress print
-                throw new RError(null, "");
+            // Errors and warnings are output before the expression is evaluated
+            RContext.getEngine().printRError(rError);
+            // errorExpr can be anything, but not everything makes sense
+            if (errorExpr instanceof RArgsValuesAndNames) {
+                // TODO: worry about other potential ... values?
+                errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
             }
+            if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
+                VirtualFrame frame = Utils.getActualCurrentFrame();
+                if (errorExpr instanceof RLanguage) {
+                    RContext.getEngine().eval((RLanguage) errorExpr, frame);
+                } else if (errorExpr instanceof RExpression) {
+                    RContext.getEngine().eval((RExpression) errorExpr, frame);
+                }
+            } else {
+                // GnuR checks this earlier when the option is set
+                throw new RError(null, Message.INVALID_ERROR.message);
+            }
+            // Control, transfer to top level, but suppress print
+            throw new RError(null, "");
         } else {
             throw rError;
         }
@@ -268,6 +262,7 @@ public final class RError extends RuntimeException {
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
         NO_NONMISSING_MIN("no non-missing arguments to min; returning Inf"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
+        MUST_BE_POSITIVE("%s must be a non-negative number"),
         INVALID_TFB("invalid (to - from)/by in seq(.)"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
         WRONG_TYPE("wrong type of argument"),
@@ -341,6 +336,7 @@ public final class RError extends RuntimeException {
         SUPPLY_X_Y_MATRIX("supply both 'x' and 'y' or a matrix-like 'x'"),
         SD_ZERO("the standard deviation is zero"),
         INVALID_UNNAMED_ARGUMENTS("invalid arguments"),
+        INVALID_INPUT("invalid input"),
         NA_PRODUCED("NAs produced"),
         DETERMINANT_COMPLEX("determinant not currently defined for complex matrices"),
         NON_NUMERIC_ARGUMENT("non-numeric argument"),
@@ -351,7 +347,7 @@ public final class RError extends RuntimeException {
         NON_NUMERIC_ARGUMENT_FUNCTION("non-numeric argument to function"),
         SEED_LENGTH(".Random.seed has wrong length"),
         // below: not exactly GNU-R message
-        PROMISE_CYCLE("promise already under evaluation: recursive default argument reference?"),
+        PROMISE_CYCLE("promise already under evaluation: recursive default argument reference or earlier problems?"),
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
         INVALID_ENVIRONMENT("invalid environment specified"),
         ENVIR_NOT_LENGTH_ONE("numeric 'envir' arg not of length one"),
@@ -481,6 +477,9 @@ public final class RError extends RuntimeException {
         UNKNOWN_OBJECT_MODE("object '%s' of mode '%s' was not found"),
         INVALID_TYPE_IN("invalid '%s' type in 'x %s y'"),
         DOT_DOT_MISSING("'..%d' is missing"),
+        DOT_DOT_SHORT("the ... list does not contain %d elements"),
+        NO_DOT_DOT("..%d used in an incorrect context, no ... to look in"),
+        NO_LIST_FOR_CDR("'nthcdr' needs a list to CDR down"),
         INVALID_TYPE_LENGTH("invalid type/length (%s/%d) in vector allocation"),
         SUBASSIGN_TYPE_FIX("incompatible types (from %s to %s) in subassignment type fix"),
         SUBSCRIPT_TYPES("incompatible types (from %s to %s) in [[ assignment"),
@@ -509,7 +508,8 @@ public final class RError extends RuntimeException {
         INCORRECT_ARG("incorrect arguments to %s"),
         UNIMPLEMENTED_ARG_TYPE("unimplemented argument type (arg %d)"),
         NATIVE_CALL_FAILED("native call failed: %s"),
-        SYMBOL_NOT_IN_TABLE("symbol %s not in load table"),
+        C_SYMBOL_NOT_IN_TABLE("C symbol name \"%s\" not in load table"),
+        FORTRAN_SYMBOL_NOT_IN_TABLE("Fortran symbol name \"%s\" not in load table"),
         NOT_THAT_MANY_FRAMES("not that many frames on the stack"),
         UNIMPLEMENTED_ARGUMENT_TYPE("unimplemented argument type"),
         MUST_BE_SQUARE_NUMERIC("'%s' must be a square numeric matrix"),
@@ -541,7 +541,10 @@ public final class RError extends RuntimeException {
         CUMMIN_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
-        QUOTE_G_ONE("only the first character of 'quote' will be used");
+        QUOTE_G_ONE("only the first character of 'quote' will be used"),
+        UNEXPECTED("unexpected '%s' in \"%s\""),
+        FIRST_ELEMENT_USED("first element used of '%s' argument"),
+        MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer");
 
         public final String message;
         private final boolean hasArgs;

@@ -59,10 +59,10 @@ package com.oracle.truffle.r.parser;
      */
     private SourceSection sourceSection(String id, Token start, Token stop) {
         CommonToken cstart = (CommonToken) start;
-        CommonToken cstop = (CommonToken) stop;
+        CommonToken cstop = stop == null ? (CommonToken) start : (CommonToken) stop;
         int startIndex = cstart.getStartIndex();
         int stopIndex = cstop.getStopIndex();
-        int length = stopIndex - startIndex + (stop.getType() == Token.EOF ? 0 : 1);
+        int length = stopIndex - startIndex + (cstop.getType() == Token.EOF ? 0 : 1);
         if (DUMP_SRC) {
             System.out.print("<<" + id + "," + cstart.getLine() + "," + (cstart.getCharPositionInLine() + 1) + "," + startIndex + "," + length);
         }
@@ -163,7 +163,14 @@ package com.oracle.truffle.r.parser;
 
 script returns [ASTNode v]
     @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
-    @after { $v = Sequence.create(sourceSection("script", $start, $stop), stmts); }
+    @after {
+        SourceSection src = sourceSection("script", $start, $stop);
+        if ($stop == null) {
+            String code = src.getCode();
+            RError.error(RError.Message.UNEXPECTED, code, code); 
+        }
+        $v = Sequence.create(src, stmts);
+    }
     : n_ (s=statement { stmts.add(s); })*
     ;
 

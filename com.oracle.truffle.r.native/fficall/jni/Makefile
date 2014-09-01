@@ -32,9 +32,9 @@ include $(TOPDIR)/platform.mk
 OBJ = lib
 SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
-C_LIBNAME := libcall.$(SHARED_EXT)
+C_LIBNAME := librfficall.$(SHARED_EXT)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
-C_LIB := $(OBJ)/$(C_LIBNAME)
+C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(OS_DIR)/$(C_LIBNAME)
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_DIR)
 FFI_INCLUDES = -I$(TOPDIR)/include/jni
@@ -49,8 +49,8 @@ $(C_LIB): $(OBJ) $(C_OBJECTS)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: $(SRC)/%.c
+$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ)
+	rm -rf $(OBJ) $(C_LIB)

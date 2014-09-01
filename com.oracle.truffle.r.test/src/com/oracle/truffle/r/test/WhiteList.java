@@ -71,12 +71,9 @@ public abstract class WhiteList {
                         if (line.startsWith("#") || line.length() == 0) { // ignore line, comment
                             continue;
                         }
-                        if (line.contains("\\n")) {
-                            line = line.replace("\\n", "\n");
-                        }
                         String[] s = line.split("\\" + SPLIT_CHAR);
                         assert s.length == 3;
-                        map.put(s[0], new Results(expandVar(s[1], vars), expandVar(s[2], vars)));
+                        map.put(s[0], new Results(expandVarsAndNLEscape(s[1], vars), expandVarsAndNLEscape(s[2], vars)));
                     }
                 }
             }
@@ -87,12 +84,23 @@ public abstract class WhiteList {
 
     }
 
-    private static String expandVar(String s, String[] vars) {
-        if (s.charAt(0) == '$') {
-            return vars[Integer.parseInt(s.substring(1))];
-        } else {
-            return s;
+    /**
+     * Expand all the {@code $n} instances.
+     */
+    private static String expandVarsAndNLEscape(String s, String[] vars) {
+        String result = s;
+        int ix;
+        while ((ix = result.indexOf('$')) >= 0) {
+            char varIndexChar = result.charAt(ix + 1);
+            assert '0' <= varIndexChar && varIndexChar <= '9';
+            int varIndex = varIndexChar - '0';
+            result = result.substring(0, ix) + vars[varIndex] + result.substring(ix + 2);
         }
+        if (result.contains("\\n")) {
+            result = result.replace("\\n", "\n");
+        }
+
+        return result;
     }
 
     Results get(String expression) {
