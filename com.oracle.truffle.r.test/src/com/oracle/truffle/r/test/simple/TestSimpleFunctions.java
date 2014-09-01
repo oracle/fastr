@@ -157,11 +157,12 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(a) { g <- function(b) { x <<- 2; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }");
+
+        assertEvalError("{ f <- function(x = y, y = x) { y } ; f() }");
     }
 
     @Test
     public void testPromisesIgnore() {
-        assertEvalError("{ f <- function(x = y, y = x) { y } ; f() }");
     }
 
     @Test
@@ -222,11 +223,7 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }");
         assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }");
         assertEval("{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }");
-    }
 
-    @Test
-    @Ignore
-    public void testDotsIgnore() {
         assertEval("{ f<-function(...) print(attributes(list(...))); f(a=7) }");
         assertEval("{ f<-function(...) print(attributes(list(...))); f(a=7, b=42) }");
 
@@ -235,6 +232,11 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+    }
+
+    @Test
+    @Ignore
+    public void testDotsIgnore() {
         // GNU-R has slightly different error code formatting
         assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
         assertEvalError("{ lapply(1:3, \"dummy\") }");
