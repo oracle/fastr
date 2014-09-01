@@ -197,7 +197,7 @@ public final class CallArgumentsNode extends ArgumentsNode implements UnmatchedA
                     RArgsValuesAndNames varArgInfo = (RArgsValuesAndNames) varArgContent;
                     // length == 0 cannot happen, in that case RMissing is caught above
                     values = Utils.resizeArray(values, values.length + varArgInfo.length() - 1);
-                    newNames = Utils.resizeStringsArray(newNames, newNames.length + varArgInfo.length() - 1);
+                    newNames = Utils.resizeArray(newNames, newNames.length + varArgInfo.length() - 1);
                     for (int j = 0; j < varArgInfo.length(); j++) {
                         // TODO SourceSection necessary here?
                         // VarArgInfo may contain two types of values here: RPromises and

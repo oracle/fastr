@@ -81,7 +81,7 @@ public abstract class GetText extends RBuiltinNode {
                 RStringVector vector = (RStringVector) castString(frame, v);
                 elementNACheck.enable(vector);
                 aLength += vector.getLength();
-                a = Utils.resizeStringsArray(a, aLength);
+                a = Utils.resizeArray(a, aLength);
                 for (int j = 0; j < vector.getLength(); j++) {
                     a[index] = vector.getDataAt(j);
                     elementNACheck.check(a[index]);

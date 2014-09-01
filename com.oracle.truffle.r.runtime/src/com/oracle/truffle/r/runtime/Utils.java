@@ -302,22 +302,6 @@ public final class Utils {
         }
     }
 
-    public static String[] resizeStringsArray(String[] oldNames, int newSize) {
-        String[] newNames = new String[newSize];
-        if (oldNames != null) {
-            System.arraycopy(oldNames, 0, newNames, 0, oldNames.length);
-        }
-        return newNames;
-    }
-
-    public static Object[] resizeObjectsArray(Object[] oldValues, int newSize) {
-        Object[] newValues = new Object[newSize];
-        if (oldValues != null) {
-            System.arraycopy(oldValues, 0, newValues, 0, oldValues.length);
-        }
-        return newValues;
-    }
-
     public static <T> T[] resizeArray(T[] oldValues, int newSize) {
         T[] newValues = oldValues;
         if (oldValues != null) {

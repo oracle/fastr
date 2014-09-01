@@ -120,7 +120,7 @@ public class UseMethodDispatchNode extends S3DispatchNode {
             if (arg instanceof Object[]) {
                 Object[] varArgs = (Object[]) arg;
                 argListSize += varArgs.length - 1;
-                argValues = Utils.resizeObjectsArray(argValues, argListSize);
+                argValues = Utils.resizeArray(argValues, argListSize);
 
                 for (Object varArg : varArgs) {
                     addArg(argValues, varArg, index++);
