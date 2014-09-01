@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.RCall.CallRep.Mode.*;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.r.runtime.*;
@@ -34,16 +36,39 @@ public final class RCall extends RLanguageRep {
 
     public static final class CallRep {
 
-        private final String name;
+        public static enum Mode {
+            NAME,
+            FUNCTION
+        }
+
+        private final Mode mode;
+        private final Object repInternal;
         private final RArgsValuesAndNames args;
 
         public CallRep(String name, RArgsValuesAndNames args) {
-            this.name = name;
+            this.mode = NAME;
+            this.repInternal = name;
+            this.args = args;
+        }
+
+        public CallRep(RFunction function, RArgsValuesAndNames args) {
+            this.mode = FUNCTION;
+            this.repInternal = function;
             this.args = args;
         }
 
         public String getName() {
-            return name;
+            if (mode != NAME) {
+                throw RInternalError.shouldNotReachHere("call not defined by name");
+            }
+            return (String) repInternal;
+        }
+
+        public RFunction getFunction() {
+            if (mode != FUNCTION) {
+                throw RInternalError.shouldNotReachHere("call not defined by function");
+            }
+            return (RFunction) repInternal;
         }
 
         public RArgsValuesAndNames getArgs() {
@@ -54,6 +79,10 @@ public final class RCall extends RLanguageRep {
 
     public RCall(String name, RArgsValuesAndNames args) {
         super(new CallRep(name, args));
+    }
+
+    public RCall(RFunction function, RArgsValuesAndNames args) {
+        super(new CallRep(function, args));
     }
 
     @CompilationFinal private String stringRep;
@@ -69,7 +98,17 @@ public final class RCall extends RLanguageRep {
     @SlowPath
     private String toString0() {
         CallRep rep = (CallRep) getRep();
-        StringBuilder sb = new StringBuilder(rep.getName());
+        StringBuilder sb = new StringBuilder();
+        switch (rep.mode) {
+            case NAME:
+                sb.append(rep.getName());
+                break;
+            case FUNCTION:
+                sb.append(deparse(rep.getFunction()));
+                break;
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
         sb.append('(');
         RArgsValuesAndNames args = rep.getArgs();
         if (args != null) {
@@ -81,14 +120,18 @@ public final class RCall extends RLanguageRep {
                 }
                 // TODO not sure deparse is the right way to do this (might be better to get hold of
                 // the source sections of the arguments)
-                // pass default values to deparse
-                sb.append(RDeparse.deparse(values[i], 60, false, -1)[0]);
+                sb.append(deparse(values[i]));
                 if (i + 1 < args.length()) {
                     sb.append(", ");
                 }
             }
         }
         return RRuntime.toString(sb.append(')'));
+    }
+
+    private static String deparse(Object o) {
+        // pass default values to deparse
+        return RDeparse.deparse(o, 60, false, -1)[0];
     }
 
 }

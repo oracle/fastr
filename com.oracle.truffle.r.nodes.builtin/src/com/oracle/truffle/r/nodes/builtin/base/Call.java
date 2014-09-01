@@ -53,6 +53,12 @@ public abstract class Call extends RBuiltinNode {
         return makeCall(name, args);
     }
 
+    @Specialization
+    @SuppressWarnings("unused")
+    protected RNull call(Object name, Object args) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
+    }
+
     @SlowPath
     private static RCall makeCall(String name, RArgsValuesAndNames args) {
         return RDataFactory.createCall(name, args);
