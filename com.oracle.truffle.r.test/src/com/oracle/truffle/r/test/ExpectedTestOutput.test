@@ -4157,6 +4157,9 @@ logical(0)
 raw(0)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- round ; g <- as.call(list(f, quote(A))) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
 #{ g <- function() 23 ; l <- list("f", g()) ; as.call(l) }
 "f"(23)
 
@@ -4165,7 +4168,7 @@ raw(0)
 "f"()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
-#{ l <- list("f",2,3) ; as.call(l) }
+#{ l <- list("f", 2, 3) ; as.call(l) }
 "f"(2, 3)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCharacter
@@ -4794,8 +4797,20 @@ attr(,"c")
 f()
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
-#{ call("f",2,3) }
+#{ call("f", 2, 3) }
 f(2, 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ call("f", quote(A)) }
+f(A)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- "f" ; call(f, quote(A)) }
+f(A)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- round ; call(f, quote(A)) }
+Error in call(f, quote(A)) : first argument must be a character string
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
 #{ as.character(as.complex(1:2)) }
@@ -6154,6 +6169,10 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 [1] "c(TRUE, FALSE)"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(round) }
+[1] ".Primitive(\"round\")"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
 #{ k <- 2 ; deparse(k) }
 [1] "2"
 
@@ -7355,11 +7374,15 @@ Error in rnorm(s = 1, s = 1) :
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
-#{ cl <- call("f",2,3) ; is.call(cl) }
+#{ cl <- call("f", 2, 3) ; is.call(cl) }
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
-#{ cl <- list("f",2,3) ; is.call(cl) }
+#{ cl <- list("f", 2, 3) ; is.call(cl) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
+#{ is.call(call) }
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsFactor
