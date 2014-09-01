@@ -231,12 +231,16 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..2 } ; x <- 1 ; f(100,x) }");
         assertEval("{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }");
         assertEval("{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
-        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
     }
 
     @Test
     @Ignore
     public void testDotsIgnore() {
+        // Inaccurate error message: function src missing
+        assertEval("{ f <- function(...) typeof(...); f()}");
+
+        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+
         // GNU-R has slightly different error code formatting
         assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
         assertEvalError("{ lapply(1:3, \"dummy\") }");

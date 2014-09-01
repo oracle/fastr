@@ -11640,6 +11640,10 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ f <- function(...) typeof(...); f(1)}
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
 #{ length(typeof(NULL)) }
 [1] 1
 
@@ -14049,10 +14053,6 @@ Error in f(1, 2) : the ... list does not contain 3 elements
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { g(...) } ;  g <- function(b=2) { b } ; f() }
 [1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
-#{ f <- function(...) { substitute(..1) } ;  f(x+y) }
-..1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { x <<- 10 ; ..1 } ; x <- 1 ; f(x) }

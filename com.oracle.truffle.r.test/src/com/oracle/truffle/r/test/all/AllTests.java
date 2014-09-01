@@ -13589,6 +13589,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testTypeOf_1de3a4164cf41b122d24ef4b2b34a19b() {
+        assertEval("{ f <- function(...) typeof(...); f(1)}");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testUnlist_52964c4cb43a47670c1f4d283abd1e1d() {
         assertEval("{ unlist(list(\"hello\", \"hi\")) }");
     }
@@ -16179,11 +16184,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testDots_581191e3ee585752a4393b1dd5c20af3() {
-        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
-    }
-
-    @Test
     public void TestSimpleFunctions_testDots_2a99369402e3625a074eafef17085ffa() {
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
     }
@@ -16241,6 +16241,16 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleFunctions_testDots_997c167046500987d88720745d0018c2() {
         assertEvalError("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_847d333bfb40729281acd0b949d4c097() {
+        assertEval("{ f <- function(...) typeof(...); f()}");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testDotsIgnore_581191e3ee585752a4393b1dd5c20af3() {
+        assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
     }
 
     @Test

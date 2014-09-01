@@ -31,10 +31,11 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "typeof", kind = SUBSTITUTE, parameterNames = {"x"})
+@RBuiltin(name = "typeof", kind = SUBSTITUTE, parameterNames = {TypeofNode.ARG_NAME})
 // TODO INTERNAL
 @SuppressWarnings("unused")
 public abstract class Typeof extends RBuiltinNode {
+
     @Child private TypeofNode typeofNode;
 
     public abstract String execute(VirtualFrame frame, Object x);

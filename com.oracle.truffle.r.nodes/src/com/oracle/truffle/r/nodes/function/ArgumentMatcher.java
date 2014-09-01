@@ -556,11 +556,9 @@ public class ArgumentMatcher {
                         newVarArgs[index] = varArgs.getArgumentNodes()[i];
                         index++;
                     }
-                    // "Delete and shrink"
-// varArgsChecked[i] = ConstantNode.create(RMissing.instance);
                 }
 
-                // Shrink only if necessary
+                // "Delete and shrink": Shrink only if necessary
                 int newLength = index;
                 if (newLength == 0) {
                     // Corner case: "f <- function(...) g(...); g <- function(...)"
