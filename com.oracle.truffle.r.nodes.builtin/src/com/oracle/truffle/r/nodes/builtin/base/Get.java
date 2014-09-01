@@ -82,7 +82,7 @@ public abstract class Get extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             lastX = x;
             lastMode = mode;
-            ReadVariableNode rvn = ReadVariableNode.create(x, mode, false, inherits);
+            ReadVariableNode rvn = ReadVariableNode.create(x, mode, false, inherits, true, false);
             ReadVariableNode newLookup = lookup == null ? insert(rvn) : lookup.replace(rvn);
             return newLookup;
         }

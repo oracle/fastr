@@ -26,12 +26,31 @@ package com.oracle.truffle.r.runtime.data;
  * A simple wrapper class for passing the ... argument through RArguments
  */
 public class RArgsValuesAndNames {
-    private Object[] values;
-    private String[] names;
+    private final Object[] values;
+    private final String[] names;
+    private final boolean allNamesEmpty;
 
     public RArgsValuesAndNames(Object[] values, String[] names) {
+        if (names != null) {
+            assert names.length == values.length;
+        }
         this.values = values;
-        this.names = names;
+        if (names == null) {
+            this.names = new String[values.length];
+            this.allNamesEmpty = true;
+        } else {
+            this.names = names;
+            this.allNamesEmpty = allNamesNull(names);
+        }
+    }
+
+    private static boolean allNamesNull(String[] names) {
+        for (String name : names) {
+            if (name != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Object[] getValues() {
@@ -42,9 +61,19 @@ public class RArgsValuesAndNames {
         return names;
     }
 
+    public String[] getNamesNull() {
+        if (allNamesEmpty) {
+            return null;
+        }
+        return names;
+    }
+
     public int length() {
         assert names == null || values.length == names.length;
         return values.length;
     }
 
+    public boolean isAllNamesEmpty() {
+        return allNamesEmpty;
+    }
 }

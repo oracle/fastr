@@ -99,7 +99,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization(guards = {"!missing", "!oneElement"})
     protected RList list(RArgsValuesAndNames args) {
         controlVisibility();
-        return RDataFactory.createList(args.getValues(), argNameVector(args.getNames()));
+        return RDataFactory.createList(args.getValues(), argNameVector(args.getNamesNull()));
     }
 
     @Specialization(guards = {"!missing", "oneElement"})
@@ -107,7 +107,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
         controlVisibility();
         if (listRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            listRecursive = insert(ListBuiltinFactory.create(new RNode[1], getBuiltin(), args.getNames()));
+            listRecursive = insert(ListBuiltinFactory.create(new RNode[1], getBuiltin(), args.getNamesNull()));
         }
         return listRecursive.executeObject(frame, args.getValues()[0]);
     }

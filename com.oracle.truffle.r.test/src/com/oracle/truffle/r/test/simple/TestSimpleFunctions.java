@@ -152,16 +152,15 @@ public class TestSimpleFunctions extends TestBase {
     public void testPromises() {
         assertEval("{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }");
         assertEval("{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }");
-    }
-
-    @Test
-    @Ignore
-    public void testPromisesIgnore() {
         assertEval("{ f <- function(x = z) { z = 1 ; x } ; f() }");
         assertEval("{ z <- 1 ; f <- function(c = z) {  z <- z + 1 ; c  } ; f() }");
         assertEval("{ f <- function(a) { g <- function(b) { x <<- 2; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }");
+    }
+
+    @Test
+    public void testPromisesIgnore() {
         assertEvalError("{ f <- function(x = y, y = x) { y } ; f() }");
     }
 
@@ -191,6 +190,9 @@ public class TestSimpleFunctions extends TestBase {
 
         assertEvalError("{ f <- function(x) { ..1 } ;  f(10) }");
         assertEvalError("{ f <- function(...) { ..1 } ;  f() }");
+
+        assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
+        assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");
 
         assertEval("{ f <- function(...) { ..1 } ;  f(10) }");
         assertEval("{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }");
