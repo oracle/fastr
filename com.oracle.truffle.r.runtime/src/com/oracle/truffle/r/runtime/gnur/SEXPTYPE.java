@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime.gnur;
 
 import java.util.*;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -47,7 +48,7 @@ public enum SEXPTYPE {
     NEWSXP(30, null), /* fresh node created in new page */
     FREESXP(31, null), /* node released by GC */
 
-    FUNSXP(99, null), /* Closure or Builtin */
+    FUNSXP(99, RFunction.class), /* Closure or Builtin */
 
     // used in RSerialize
     REFSXP(255, null),
@@ -91,8 +92,7 @@ public enum SEXPTYPE {
                 return type;
             }
         }
-        assert false;
-        return null;
+        throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
 
     public static SEXPTYPE convertFastRScalarType(SEXPTYPE type) {

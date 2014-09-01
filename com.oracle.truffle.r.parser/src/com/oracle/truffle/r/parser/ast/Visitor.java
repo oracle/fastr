@@ -78,6 +78,8 @@ public interface Visitor<R> {
 
     R visit(SimpleAccessTempVariable readVariable);
 
+    R visit(SimpleAccessVariadicComponent readVariable);
+
     R visit(FieldAccess fieldAccess);
 
     R visit(SimpleAssignVariable assign);

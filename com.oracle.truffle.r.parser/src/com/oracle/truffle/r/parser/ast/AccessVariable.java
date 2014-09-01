@@ -25,4 +25,8 @@ public abstract class AccessVariable extends ASTNode {
     public static ASTNode create(SourceSection src, Object tempSymbol) {
         return new SimpleAccessTempVariable(src, tempSymbol);
     }
+
+    public static ASTNode createDotDot(SourceSection src, String name) {
+        return new SimpleAccessVariadicComponent(src, name);
+    }
 }

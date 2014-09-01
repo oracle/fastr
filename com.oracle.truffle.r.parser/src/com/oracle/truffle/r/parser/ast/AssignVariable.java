@@ -42,6 +42,9 @@ public abstract class AssignVariable extends ASTNode {
     public static ASTNode create(SourceSection src, boolean isSuper, ASTNode lhs, ASTNode rhs) {
         if (lhs instanceof SimpleAccessVariable) {
             return writeVariable(src, isSuper, ((SimpleAccessVariable) lhs).getVariable(), rhs);
+        } else if (lhs instanceof SimpleAccessVariadicComponent) {
+            // assigning to ..N indeed creates a local variable of that name
+            return writeVariable(src, isSuper, ((SimpleAccessVariadicComponent) lhs).getName(), rhs);
         } else if (lhs instanceof AccessVector) {
             return writeVector(src, isSuper, (AccessVector) lhs, rhs);
         } else if (lhs instanceof FieldAccess) {

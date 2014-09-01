@@ -291,6 +291,18 @@ public class RDeparse {
                 break;
             }
 
+            case FUNSXP: {
+                RFunction f = (RFunction) obj;
+                if (f.isBuiltin()) {
+                    state.append(".Primitive(\\\"");
+                    state.append(f.getName());
+                    state.append("\\\")");
+                } else {
+                    throw RInternalError.unimplemented();
+                }
+                break;
+            }
+
             case ENVSXP:
             case VECSXP:
             case EXPRSXP:

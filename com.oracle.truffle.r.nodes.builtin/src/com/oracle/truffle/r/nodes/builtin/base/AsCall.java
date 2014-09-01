@@ -33,10 +33,18 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class AsCall extends RBuiltinNode {
 
-    @Specialization
-    protected RCall asCall(RList x) {
+    @Specialization(guards = "functionIsName")
+    protected RCall asCallName(RList x) {
         // TODO quoting is most likely inaccurate
-        String name = quote((String) x.getDataAt(0));
+        return new RCall(quote((String) x.getDataAt(0)), makeNamesAndValues(x));
+    }
+
+    @Specialization(guards = "functionIsFunction")
+    protected RCall asCallFunction(RList x) {
+        return new RCall((RFunction) x.getDataAt(0), makeNamesAndValues(x));
+    }
+
+    private static RArgsValuesAndNames makeNamesAndValues(RList x) {
         int length = x.getLength() - 1;
         Object[] values = new Object[length];
         String[] names = new String[length];
@@ -45,12 +53,20 @@ public abstract class AsCall extends RBuiltinNode {
             RStringVector ns = (RStringVector) x.getNames();
             System.arraycopy(ns.getDataWithoutCopying(), 1, names, 0, length);
         }
-        return new RCall(name, new RArgsValuesAndNames(values, names));
+        return new RArgsValuesAndNames(values, names);
     }
 
     @SlowPath
     private static String quote(String s) {
         return "\"" + s + "\"";
+    }
+
+    protected static boolean functionIsName(RList x) {
+        return x.getDataAt(0) instanceof String;
+    }
+
+    protected static boolean functionIsFunction(RList x) {
+        return x.getDataAt(0) instanceof RFunction;
     }
 
 }

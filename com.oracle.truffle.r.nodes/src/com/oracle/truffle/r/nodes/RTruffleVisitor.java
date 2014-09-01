@@ -563,33 +563,21 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         }
     }
 
-    private static int getVariadicComponentIndex(String symbol) {
-        if (symbol.length() > 2 && symbol.charAt(0) == '.' && symbol.charAt(1) == '.') {
-            for (int i = 2; i < symbol.length(); i++) {
-                if (!Utils.isIsoLatinDigit(symbol.charAt(i))) {
-                    return -1;
-                }
-            }
-            return Integer.parseInt(symbol.substring(2));
-        }
-        return -1;
-    }
-
     @Override
     public RNode visit(SimpleAccessVariable n) {
-        String symbol = RRuntime.toString(n.getVariable());
-        int ind = getVariadicComponentIndex(symbol);
-        if (ind >= 0) {
-            return new ReadVariadicComponentNode(ind > 0 ? ind - 1 : ind);
-        } else {
-            return ReadVariableNode.create(n.getSource(), symbol, RRuntime.TYPE_ANY, n.shouldCopyValue());
-        }
+        return ReadVariableNode.create(n.getSource(), RRuntime.toString(n.getVariable()), RRuntime.TYPE_ANY, n.shouldCopyValue());
     }
 
     @Override
     public RNode visit(SimpleAccessTempVariable n) {
         String symbol = RRuntime.toString(n.getSymbol());
         return ReadVariableNode.create(n.getSource(), symbol, RRuntime.TYPE_ANY, false);
+    }
+
+    @Override
+    public RNode visit(SimpleAccessVariadicComponent n) {
+        int ind = n.getIndex();
+        return new ReadVariadicComponentNode(ind > 0 ? ind - 1 : ind);
     }
 
     @Override

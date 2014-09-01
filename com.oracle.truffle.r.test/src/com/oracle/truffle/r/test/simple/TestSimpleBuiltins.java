@@ -2468,12 +2468,15 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ deparse(TRUE) }");
         assertEval("{ deparse(c(T, F)) }");
         assertEval("{ k <- 2 ; deparse(k) }");
+        assertEval("{ deparse(round) }");
     }
 
     @Test
     @Ignore
     public void testDeparseIgnore() {
         assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+        assertEval("{ f <- function() 23 ; deparse(f) }");
+        assertEval("{ deparse(nrow) }");
     }
 
     @Test
@@ -2604,7 +2607,10 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testCall() {
         assertEval("{ call(\"f\") }");
-        assertEval("{ call(\"f\",2,3) }");
+        assertEval("{ call(\"f\", 2, 3) }");
+        assertEval("{ call(\"f\", quote(A)) }");
+        assertEval("{ f <- \"f\" ; call(f, quote(A)) }");
+        assertEval("{ f <- round ; call(f, quote(A)) }");
     }
 
     @Test
@@ -2617,15 +2623,17 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testIsCall() {
         assertEval("{ cl <- call(\"f\") ; is.call(cl) }");
-        assertEval("{ cl <- call(\"f\",2,3) ; is.call(cl) }");
-        assertEval("{ cl <- list(\"f\",2,3) ; is.call(cl) }");
+        assertEval("{ cl <- call(\"f\", 2, 3) ; is.call(cl) }");
+        assertEval("{ cl <- list(\"f\", 2, 3) ; is.call(cl) }");
+        assertEval("{ is.call(call) }");
     }
 
     @Test
     public void testAsCall() {
         assertEval("{ l <- list(\"f\") ; as.call(l) }");
-        assertEval("{ l <- list(\"f\",2,3) ; as.call(l) }");
+        assertEval("{ l <- list(\"f\", 2, 3) ; as.call(l) }");
         assertEval("{ g <- function() 23 ; l <- list(\"f\", g()) ; as.call(l) }");
+        assertEval("{ f <- round ; g <- as.call(list(f, quote(A))) }");
     }
 
     @Test

@@ -689,6 +689,16 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testDeparseIgnore_9e5a5fc2f13f5ca564f74ada29302b9d() {
+        assertEval("{ f <- function() 23 ; deparse(f) }");
+    }
+
+    @Ignore
+    public void TestSimpleBuiltins_testDeparseIgnore_ae0471e19b56e163c3b0f1d27722a535() {
+        assertEval("{ deparse(nrow) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testDet_0119e3eeb33ab4a029ba7826ddc06536() {
         assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
     }
