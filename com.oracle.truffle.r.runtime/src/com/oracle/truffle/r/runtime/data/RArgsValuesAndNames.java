@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.frame.*;
+
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
@@ -45,6 +47,14 @@ public class RArgsValuesAndNames {
             this.names = names;
             this.allNamesEmpty = allNamesNull(names);
         }
+    }
+
+    public RArgsValuesAndNames evaluate(VirtualFrame frame) {
+        Object[] newValues = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            newValues[i] = RPromise.checkEvaluate(frame, values[i]);
+        }
+        return new RArgsValuesAndNames(newValues, names);
     }
 
     private static boolean allNamesNull(String[] names) {

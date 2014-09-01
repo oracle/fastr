@@ -1394,6 +1394,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ typeof(typeof(NULL)) }");
         assertEval("{ length(typeof(NULL)) }");
         assertEval("{ typeof(length(typeof(NULL))) }");
+
+        assertEval("{ f <- function(...) typeof(...); f(1)}");
     }
 
     @Test
