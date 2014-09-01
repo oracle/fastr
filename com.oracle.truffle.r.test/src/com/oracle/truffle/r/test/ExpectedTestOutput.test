@@ -6916,6 +6916,14 @@ Error in rm("foo", envir = baseenv()) :
 #{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }
 [1] "x"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExp
+#{ round( exp(1+2i), digits=5 ) }
+[1] -1.1312+2.47173i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExp
+#{ round( exp(c(1+1i,-2-3i)), digits=5 ) }
+[1]  1.46869+2.28736i -0.13398-0.01910i
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFFT
 #{ fft(10) }
 [1] 10+0i

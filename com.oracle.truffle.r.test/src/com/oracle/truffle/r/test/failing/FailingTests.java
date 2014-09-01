@@ -754,16 +754,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testExp_604f92586ff1b698d6b752cce3248f1e() {
-        assertEval("{ round( exp(c(1+1i,-2-3i)), digits=5 ) }");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testExp_615369efc779cc2d92f0f1998762dc35() {
-        assertEval("{ round( exp(1+2i), digits=5 ) }");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testFileListing_9646bfd3fb553824f1f54cc5d04b8219() {
         assertEval("{ list.files(\"test/r/simple/data/tree1\") }");
     }

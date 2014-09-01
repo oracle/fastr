@@ -22,15 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.CreateCast;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.RNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeFactory;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 /**
  * TODO complex specializations, runtime type checks on arguments
@@ -86,11 +94,56 @@ public class TrigExpFunctions {
             ret.copyAttributesFrom(x);
             return ret;
         }
+    }
 
+
+    public static abstract class ComplexArgumentsCallAdapter extends AdapterCall1 {
+        protected interface ComplexArgumentFunctionCall {
+            RComplex call(RComplex rComplex);
+        }
+
+        protected RComplexVector callFunction(RAbstractComplexVector arguments, ComplexArgumentFunctionCall functionCall) {
+            int argumentsLength = arguments.getLength();
+            double[] result = new double[argumentsLength * 2];
+            for (int i = 0; i < argumentsLength; i++) {
+                RComplex rComplexResult = functionCall.call(arguments.getDataAt(i));
+                result[2 * i] = rComplexResult.getRealPart();
+                result[2 * i + 1] = rComplexResult.getImaginaryPart();
+            }
+            return RDataFactory.createComplexVector(result, true);
+        }
+    }
+
+    public static abstract class ComplexExpCalculator extends ComplexArgumentsCallAdapter {
+        @Child
+        private BinaryArithmetic calculatePowNode;
+
+        private final ComplexArgumentFunctionCall expFunctionCall = new ComplexArgumentFunctionCall() {
+            @Override
+            public RComplex call(RComplex rComplex) {
+                ensureCalculatePowNodeCreated();
+                return calculatePowNode.op(Math.E, 0, rComplex.getRealPart(), rComplex.getImaginaryPart());
+            }
+
+            private void ensureCalculatePowNodeCreated() {
+                if (calculatePowNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    calculatePowNode = insert(BinaryArithmetic.POW.create());
+                }
+            }
+        };
+
+        protected RComplexVector calculateExpUsing(RAbstractComplexVector powersVector) {
+            return callFunction(powersVector, expFunctionCall);
+        }
+
+        protected RComplex calculateExpUsing(RComplex power) {
+            return expFunctionCall.call(power);
+        }
     }
 
     @RBuiltin(name = "exp", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class Exp extends AdapterCall1 {
+    public abstract static class Exp extends ComplexExpCalculator {
         @Specialization
         protected double exp(int x) {
             controlVisibility();
@@ -115,10 +168,21 @@ public class TrigExpFunctions {
             return doFun(x, (double d) -> Math.exp(d));
         }
 
+        @Specialization
+        protected RComplex exp(RComplex power) {
+            controlVisibility();
+            return calculateExpUsing(power);
+        }
+
+        @Specialization
+        protected RComplexVector exp(RComplexVector powersVector) {
+            controlVisibility();
+            return calculateExpUsing(powersVector);
+        }
     }
 
     @RBuiltin(name = "expm1", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class ExpM1 extends AdapterCall1 {
+    public abstract static class ExpM1 extends ComplexExpCalculator {
         @Specialization
         protected double expm1(int x) {
             controlVisibility();
@@ -143,6 +207,23 @@ public class TrigExpFunctions {
             return doFun(x, (double d) -> Math.expm1(d));
         }
 
+        @Specialization
+        protected RComplex exp(RComplex power) {
+            controlVisibility();
+            return substract1From(calculateExpUsing(power));
+        }
+
+        private RComplex substract1From(RComplex rComplex) {
+            double decreasedReal = rComplex.getRealPart() - 1.;
+            return RDataFactory.createComplex(decreasedReal, rComplex.getImaginaryPart());
+        }
+
+        @Specialization
+        protected RComplexVector exp(RComplexVector powersVector) {
+            controlVisibility();
+            RComplexVector exponents = calculateExpUsing(powersVector);
+            return callFunction(exponents, (RComplex rComplex) -> substract1From(rComplex));
+        }
     }
 
     @RBuiltin(name = "sin", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})

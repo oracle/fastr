@@ -1265,7 +1265,6 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testExp() {
         assertEval("{ round( exp(c(1+1i,-2-3i)), digits=5 ) }");
         assertEval("{ round( exp(1+2i), digits=5 ) }");
