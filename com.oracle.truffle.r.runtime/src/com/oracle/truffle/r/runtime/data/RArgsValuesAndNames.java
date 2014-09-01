@@ -27,6 +27,9 @@ package com.oracle.truffle.r.runtime.data;
  */
 public class RArgsValuesAndNames {
     private final Object[] values;
+    /**
+     * May NOT be null
+     */
     private final String[] names;
     private final boolean allNamesEmpty;
 
@@ -57,6 +60,9 @@ public class RArgsValuesAndNames {
         return values;
     }
 
+    /**
+     * @return {@link #names}
+     */
     public String[] getNames() {
         return names;
     }
