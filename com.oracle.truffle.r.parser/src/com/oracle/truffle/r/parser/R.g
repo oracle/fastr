@@ -492,7 +492,7 @@ expr_subset [ASTNode i] returns [ASTNode v]
 simple_expr returns [ASTNode v]
     : i=id                                      { $v = AccessVariable.create(sourceSection("simple_expr/id", i), i.getText(), false); }
     | b=bool                                    { $v = b; }
-    | d=DD                                      { $v = AccessVariable.create(sourceSection("simple_expr/DD", d), d.getText(), false); }
+    | d=DD                                      { $v = AccessVariable.createDotDot(sourceSection("simple_expr/DD", d), d.getText()); }
     | t=NULL                                    { $v = Constant.getNull(sourceSection("simple_expr/NULL", t)); }
     | t=INF                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/INF", t), "Inf"); }
     | t=NAN                                     { $v = Constant.createDoubleConstant(sourceSection("simple_expr/NAN", t), "NaN"); }
