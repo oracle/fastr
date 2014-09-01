@@ -96,7 +96,6 @@ public class TrigExpFunctions {
         }
     }
 
-
     public static abstract class ComplexArgumentsCallAdapter extends AdapterCall1 {
         protected interface ComplexArgumentFunctionCall {
             RComplex call(RComplex rComplex);
@@ -115,8 +114,7 @@ public class TrigExpFunctions {
     }
 
     public static abstract class ComplexExpCalculator extends ComplexArgumentsCallAdapter {
-        @Child
-        private BinaryArithmetic calculatePowNode;
+        @Child private BinaryArithmetic calculatePowNode;
 
         private final ComplexArgumentFunctionCall expFunctionCall = new ComplexArgumentFunctionCall() {
             @Override
@@ -213,7 +211,7 @@ public class TrigExpFunctions {
             return substract1From(calculateExpUsing(power));
         }
 
-        private RComplex substract1From(RComplex rComplex) {
+        private static RComplex substract1From(RComplex rComplex) {
             double decreasedReal = rComplex.getRealPart() - 1.;
             return RDataFactory.createComplex(decreasedReal, rComplex.getImaginaryPart());
         }
