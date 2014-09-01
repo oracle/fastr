@@ -183,11 +183,11 @@ public class GroupDispatchNode extends S3DispatchNode {
                     if (evaluatedArgs[i] instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) evaluatedArgs[i];
                         if (argsValuesAndNames.length() == 1) {
-                            argArray[index++] = ConstantNode.create(checkEvaluate(frame, argsValuesAndNames.getValues()[0]));
+                            argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[0]));
                         } else {
                             argArray = new RNode[argArray.length + argsValuesAndNames.length() - 1];
                             for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                                argArray[index++] = ConstantNode.create(checkEvaluate(frame, argsValuesAndNames.getValues()[j]));
+                                argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[j]));
                             }
                         }
                     } else {
@@ -201,18 +201,5 @@ public class GroupDispatchNode extends S3DispatchNode {
             this.funCall = new DispatchNode.FunctionCall(func, callArgsNode);
         }
         this.funCall.function = func;
-    }
-
-    /**
-     * @param frame
-     * @param obj
-     * @return TODO Gero, add comment!
-     */
-    private static Object checkEvaluate(VirtualFrame frame, Object obj) {
-        if (obj instanceof RPromise) {
-            RPromise promise = (RPromise) obj;
-            return promise.evaluate(frame);
-        }
-        return obj;
     }
 }

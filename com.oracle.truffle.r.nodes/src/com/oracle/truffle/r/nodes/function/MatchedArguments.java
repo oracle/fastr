@@ -54,9 +54,6 @@ public final class MatchedArguments extends Arguments<RNode> {
      */
     public static MatchedArguments createUnnamed(RNode[] arguments) {
         String[] names = new String[arguments.length];
-        for (int i = 0; i < names.length; i++) {
-            names[i] = null;
-        }
         return create(arguments, names);
     }
 

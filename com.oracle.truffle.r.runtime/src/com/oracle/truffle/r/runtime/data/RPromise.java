@@ -221,6 +221,17 @@ public final class RPromise extends RLanguageRep {
     }
 
     /**
+     * @param obj
+     * @return If obj is a {@link RPromise}, it is evaluated and its result returned
+     */
+    public static Object checkEvaluate(VirtualFrame frame, Object obj) {
+        if (obj instanceof RPromise) {
+            return ((RPromise) obj).evaluate(frame);
+        }
+        return obj;
+    }
+
+    /**
      * Only to be called from AccessArgumentNode, and in combination with
      * {@link #updateEnv(REnvironment)}!
      *
