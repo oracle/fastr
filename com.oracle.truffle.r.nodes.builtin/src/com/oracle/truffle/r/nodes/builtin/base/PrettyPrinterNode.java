@@ -242,7 +242,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (promise.isEvaluated()) {
             return prettyPrintRecursive(promise.getValue(), listElementName, quote);
         } else {
-            return prettyPrintLanguageRep(promise.getExprRep(), listElementName);
+            return prettyPrintLanguageRep(promise, listElementName);
         }
     }
 

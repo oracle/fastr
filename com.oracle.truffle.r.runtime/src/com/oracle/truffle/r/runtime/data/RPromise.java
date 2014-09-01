@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * Denotes an R {@code promise}.
  */
 @ValueType
-public final class RPromise {
+public final class RPromise extends RLanguageRep {
 
     /**
      * The policy used to evaluate a promise.
@@ -93,16 +93,10 @@ public final class RPromise {
     protected final PromiseType type;
 
     /**
-     * The {@link REnvironment} {@link #exprRep} should be evaluated in. For promises associated
+     * The {@link REnvironment} {@link #getRep()} should be evaluated in. For promises associated
      * with environments (frames) that are not top-level. May be <code>null</code>.
      */
     protected REnvironment env;
-
-    /**
-     * The representation of the supplied argument. May contain <code>null</code> if no expr is
-     * provided!
-     */
-    protected final RLanguageRep exprRep;
 
     /**
      * When {@code null} the promise has not been evaluated.
@@ -125,19 +119,19 @@ public final class RPromise {
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
-     * @param expr {@link #exprRep}
+     * @param expr {@link #getRep()}
      */
     private RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
+        super(expr);
         this.evalPolicy = evalPolicy;
         this.type = type;
         this.env = env;
-        this.exprRep = new RLanguageRep(expr);
     }
 
     /**
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
-     * @param expr {@link #exprRep}
+     * @param expr {@link #getRep()}
      * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Object)}
      */
     public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
@@ -252,6 +246,15 @@ public final class RPromise {
     }
 
     /**
+     * @return The representation of expression (a RNode). May contain <code>null</code> if no expr
+     *         is provided!
+     */
+    @Override
+    public Object getRep() {
+        return super.getRep();
+    }
+
+    /**
      * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
      */
     public boolean isDefaulted() {
@@ -263,20 +266,6 @@ public final class RPromise {
      */
     public REnvironment getEnv() {
         return env;
-    }
-
-    /**
-     * @return {@link #exprRep}
-     */
-    public RLanguageRep getExprRep() {
-        return exprRep;
-    }
-
-    /**
-     * @return {@link #exprRep}
-     */
-    public Object getRep() {
-        return exprRep.getRep();
     }
 
     /**
@@ -313,7 +302,7 @@ public final class RPromise {
     @Override
     @SlowPath
     public String toString() {
-        return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + exprRep.getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
     /**
