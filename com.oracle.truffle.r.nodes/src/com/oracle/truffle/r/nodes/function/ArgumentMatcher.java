@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -361,29 +360,34 @@ public class ArgumentMatcher {
                 }
             }
 
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // Definitely an error: Prepare error message
             si.reset();
-
-            // UNUSED_ARGUMENT(S)?
-            if (leftoverCount == 1) {
-                // TODO Precise error messages: "f(n)" is missing!
-                String argStr = arrFactory.debugString(si.next());
-                throw RError.error(null, RError.Message.UNUSED_ARGUMENT, argStr);
-            }
-
-            // Create error message:
-            T[] debugArgs = arrFactory.newArray(leftoverCount);
-            int pos = 0;
-            while (si.hasNext()) {
-                debugArgs[pos++] = si.next();
-            }
-
-            // TODO Precise error messages: "f(n)" is missing!
-            String debugStr = arrFactory.debugString(debugArgs);
-            throw RError.error(null, RError.Message.UNUSED_ARGUMENTS, debugStr);
+            throwUnusedArgumentError(leftoverCount, si, arrFactory);
         }
 
         return resultArgs;
+    }
+
+    @SlowPath
+    private static <T> void throwUnusedArgumentError(int leftoverCount, UnmatchedSuppliedIterator<T> si, ArrayFactory<T> arrFactory) {
+
+        // UNUSED_ARGUMENT(S)?
+        if (leftoverCount == 1) {
+            // TODO Precise error messages: "f(n)" is missing!
+            String argStr = arrFactory.debugString(si.next());
+            throw RError.error(null, RError.Message.UNUSED_ARGUMENT, argStr);
+        }
+
+        // Create error message:
+        T[] debugArgs = arrFactory.newArray(leftoverCount);
+        int pos = 0;
+        while (si.hasNext()) {
+            debugArgs[pos++] = si.next();
+        }
+
+        // TODO Precise error messages: "f(n)" is missing!
+        String argStr = arrFactory.debugString(debugArgs);
+        throw RError.error(null, RError.Message.UNUSED_ARGUMENTS, argStr);
     }
 
     /**

@@ -195,9 +195,8 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
             if (!promise.isEvaluated() && isInOriginFrame(promise)) {
                 directlyEvaluatedProfile.enter();
 
-                // Check for dependecy cycle
+                // Check for dependency cycle
                 if (promise.isUnderEvaluation()) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     // TODO Get SourceSection of funcall!
                     throw RError.error(RError.Message.PROMISE_CYCLE);
                 }

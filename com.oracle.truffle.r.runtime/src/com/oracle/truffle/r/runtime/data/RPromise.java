@@ -153,7 +153,6 @@ public final class RPromise extends RLanguageRep {
 
         // Check for dependecy cycle
         if (underEvaluation) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO Get SourceSection of funcall!
             throw RError.error(RError.Message.PROMISE_CYCLE);
         }
