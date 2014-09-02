@@ -36,11 +36,11 @@ public abstract class WrapArgumentNode extends RProxyNode {
 
     private final boolean modeChange;
 
-    public WrapArgumentNode(boolean modeChange) {
+    protected WrapArgumentNode(boolean modeChange) {
         this.modeChange = modeChange;
     }
 
-    public WrapArgumentNode(WrapArgumentNode other) {
+    protected WrapArgumentNode(WrapArgumentNode other) {
         this.modeChange = other.modeChange;
     }
 
