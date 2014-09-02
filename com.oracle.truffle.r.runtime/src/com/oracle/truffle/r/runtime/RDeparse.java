@@ -279,6 +279,11 @@ public class RDeparse {
                 state.append((String) obj);
                 break;
 
+            case PROMSXP:
+                Object v = RContext.getEngine().evalPromise((RPromise) obj);
+                deparse2buff(state, v);
+                break;
+
             case CLOSXP: {
                 RPairList f = (RPairList) obj;
                 state.append("function (");
