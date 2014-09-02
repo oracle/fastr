@@ -64,6 +64,24 @@ public abstract class UseMethod extends RBuiltinNode {
         }
 
         public abstract Object execute(VirtualFrame frame, final String generic, final Object o);
+
+        /**
+         * @param frame
+         * @return The 1. (logical) argument in the frame, handles {@link RPromise}s and
+         *         {@link RArgsValuesAndNames}
+         */
+        protected Object getEnclosingArg(VirtualFrame frame) {
+            // For S3Dispatch, we have to evaluate the the first argument
+            Object enclosingArg = RArguments.getArgument(frame, 0);
+            if (enclosingArg instanceof RArgsValuesAndNames) {
+                // The GnuR "1. argument" might be hidden inside a "..."! Unwrap for proper dispatch
+                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
+                enclosingArg = varArgs.getValues()[0];
+            }
+
+            enclosingArg = RPromise.checkEvaluate(frame, enclosingArg);
+            return enclosingArg;
+        }
     }
 
     private static final class UninitializedUseMethodNode extends UseMethodNode {
@@ -137,10 +155,9 @@ public abstract class UseMethod extends RBuiltinNode {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, gen, RRuntime.toString(RNull.instance));
             }
-            Object enclosingArg = RArguments.getArgument(frame, 0);
-            if (enclosingArg instanceof RPromise) {
-                enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
-            }
+
+            // For S3Dispatch, we have to evaluate the the first argument
+            Object enclosingArg = getEnclosingArg(frame);
             return currentNode.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
         }
     }
@@ -172,10 +189,9 @@ public abstract class UseMethod extends RBuiltinNode {
                 if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
-                Object enclosingArg = RArguments.getArgument(frame, 0);
-                if (enclosingArg instanceof RPromise) {
-                    enclosingArg = ((RPromise) enclosingArg).evaluate(frame);
-                }
+
+                // For S3Dispatch, we have to evaluate the the first argument
+                Object enclosingArg = getEnclosingArg(frame);
                 DispatchedCallNode dcn = DispatchedCallNode.create(generic, RRuntime.USE_METHOD, suppliedArgsNames);
                 return dcn.execute(frame, classHierarchyNode.execute(frame, enclosingArg));
             } else {

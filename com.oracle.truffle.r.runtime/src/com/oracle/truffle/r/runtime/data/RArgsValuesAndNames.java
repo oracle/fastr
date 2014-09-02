@@ -22,23 +22,65 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.frame.*;
+
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
 public class RArgsValuesAndNames {
-    private Object[] values;
-    private String[] names;
+    private final Object[] values;
+    /**
+     * May NOT be null
+     */
+    private final String[] names;
+    private final boolean allNamesEmpty;
 
     public RArgsValuesAndNames(Object[] values, String[] names) {
+        if (names != null) {
+            assert names.length == values.length;
+        }
         this.values = values;
-        this.names = names == null ? new String[values.length] : names;
+        if (names == null) {
+            this.names = new String[values.length];
+            this.allNamesEmpty = true;
+        } else {
+            this.names = names;
+            this.allNamesEmpty = allNamesNull(names);
+        }
+    }
+
+    public RArgsValuesAndNames evaluate(VirtualFrame frame) {
+        Object[] newValues = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            newValues[i] = RPromise.checkEvaluate(frame, values[i]);
+        }
+        return new RArgsValuesAndNames(newValues, names);
+    }
+
+    private static boolean allNamesNull(String[] names) {
+        for (String name : names) {
+            if (name != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Object[] getValues() {
         return values;
     }
 
+    /**
+     * @return {@link #names}
+     */
     public String[] getNames() {
+        return names;
+    }
+
+    public String[] getNamesNull() {
+        if (allNamesEmpty) {
+            return null;
+        }
         return names;
     }
 
@@ -47,4 +89,7 @@ public class RArgsValuesAndNames {
         return values.length;
     }
 
+    public boolean isAllNamesEmpty() {
+        return allNamesEmpty;
+    }
 }

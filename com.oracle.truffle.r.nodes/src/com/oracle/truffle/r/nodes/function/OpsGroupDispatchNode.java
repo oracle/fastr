@@ -106,6 +106,6 @@ public class OpsGroupDispatchNode extends GroupDispatchNode {
             }
         }
         dotMethod = RDataFactory.createStringVector(methods, true);
-        return executeHelper();
+        return executeHelper(frame);
     }
 }

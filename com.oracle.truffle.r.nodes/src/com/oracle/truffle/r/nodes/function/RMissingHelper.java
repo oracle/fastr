@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives.SlowPath;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -32,11 +33,11 @@ import com.oracle.truffle.r.runtime.data.*;
  * would induce unnecessary dependencies otherwise.
  */
 public class RMissingHelper {
-
     /**
-     * This function determines, of an arguments value - given as 'value' - is missing. An argument
-     * is missing, when it has not been provided to the current function call, OR if the value that
-     * has been provided once was a missing argument. (cp. R language definition and Internals 1.5.1
+     * This function determines whether an arguments value - given as 'value' - is missing. An
+     * argument is missing when it has not been provided to the current function call (DEFAULTED or
+     * {@code value == RMissing.instance}, if argument has default value), OR if the value that has
+     * been provided once was a missing argument. (cp. R language definition and Internals 1.5.1
      * Missingness).
      *
      * @param value The value that should be examined
@@ -49,21 +50,11 @@ public class RMissingHelper {
 
         // This might be a promise...
         if (value instanceof RPromise) {
-            return isMissing((RPromise) value);
+            RPromise promise = (RPromise) value;
+            if (promise.isDefaulted() || isMissingSymbol(promise)) {
+                return true;
+            }
         }
-        return false;
-    }
-
-    /**
-     * @param promise The {@link RPromise} that might evaluate to be 'missing'
-     * @return See {@link #isMissing(Object)}
-     */
-    public static boolean isMissing(RPromise promise) {
-        // Represents a missing argument itself?
-        if (promise.isDefaulted() || isMissingSymbol(promise)) {
-            return true;
-        }
-
         return false;
     }
 
@@ -78,39 +69,66 @@ public class RMissingHelper {
      * @return See {@link #isMissingSymbol(RPromise)}
      */
     @SlowPath
-    public static boolean isMissingArgument(MaterializedFrame frame, Symbol symbol) {
+    public static boolean isMissingArgument(Frame frame, Symbol symbol) {
         // TODO IsDotDotSymbol: Anything special to do here?
 
-        Object value = null;
-
-        // Check binding
-        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(symbol.getName());
-        if (frameSlot == null) {
-            return false;
-        }
-
         // Check symbols value
-        try {
-            value = frame.getObject(frameSlot);
-            if (value == RMissing.instance) {
-                return true;
-            }
-        } catch (FrameSlotTypeException e) {
-            return false;
+        Object value = getMissingValue(frame, symbol);
+        if (value == RMissing.instance) {
+            return true;
         }
 
         // Check for Promise
         if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
-            return promise.isDefaulted() || isMissingSymbol(promise);
+            return isMissingSymbol(promise);    // promise.isDefaulted() ||
         }
 
         return false;
     }
 
     /**
+     * @param arg The {@link RNode}, expected to be a {@link ReadVariableNode} (possibly wrapped
+     *            into an {@link WrapArgumentNode})
+     * @return The {@link Symbol}, if any ({@code null} else)
+     */
+    public static Symbol unwrapSymbol(RNode arg) {
+        RNode rvnArg = arg;
+        if (rvnArg instanceof WrapArgumentNode) {
+            rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
+        }
+
+        // ReadVariableNode denotes a symbol
+        if (rvnArg instanceof ReadVariableNode) {
+            return ((ReadVariableNode) rvnArg).getSymbol();
+        }
+        return null;
+    }
+
+    /**
+     * @param frame The frame to read symbol in
+     * @param symbol The {@link Symbol} to read
+     * @return The value for the given symbol in the given frame. {@code null} if name is not bound
+     *         or type is not object.
+     */
+    public static Object getMissingValue(Frame frame, Symbol symbol) {
+        // Check binding
+        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(symbol.getName());
+        if (frameSlot == null) {
+            return null;
+        }
+
+        // Read symbols value
+        try {
+            return frame.getObject(frameSlot);
+        } catch (FrameSlotTypeException e) {
+            return null;
+        }
+    }
+
+    /**
      * @param promise The {@link RPromise} which is checked whether it contains a
-     *            {@link #isMissingArgument(MaterializedFrame, Symbol)}.
+     *            {@link #isMissingArgument(Frame, Symbol)}.
      * @return Whether the given {@link RPromise} represents a symbol that is 'missing' in its frame
      */
     @SlowPath

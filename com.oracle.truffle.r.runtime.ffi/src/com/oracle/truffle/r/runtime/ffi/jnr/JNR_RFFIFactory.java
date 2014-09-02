@@ -39,6 +39,10 @@ import com.oracle.truffle.r.runtime.ffi.*;
 public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDerivedRFFI, LapackRFFI, UserRngRFFI {
 
     public JNR_RFFIFactory() {
+    }
+
+    @Override
+    protected void initialize() {
         // This must load early as package libraries reference symbols in it.
         getCallRFFI();
     }

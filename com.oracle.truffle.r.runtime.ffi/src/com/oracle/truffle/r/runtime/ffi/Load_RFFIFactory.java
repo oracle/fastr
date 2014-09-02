@@ -50,9 +50,12 @@ public class Load_RFFIFactory {
             prop = DEFAULT_FACTORY_CLASS;
         }
         try {
-            return (RFFIFactory) Class.forName(prop).newInstance();
+            RFFIFactory instance = (RFFIFactory) Class.forName(prop).newInstance();
+            RFFIFactory.setRFFIFactory(instance);
+            instance.initialize();
+            return instance;
         } catch (Exception ex) {
-            Utils.fail("Failed to instantiate class: " + prop);
+            Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
             return null;
         }
 

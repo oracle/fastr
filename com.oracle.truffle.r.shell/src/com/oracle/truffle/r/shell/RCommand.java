@@ -47,7 +47,7 @@ public class RCommand {
      * dependencies that cause build problems.
      */
     static {
-        RFFIFactory.setRFFIFactory(Load_RFFIFactory.initialize());
+        Load_RFFIFactory.initialize();
     }
 
 // CheckStyle: stop system..print check

@@ -56,7 +56,9 @@ public class ParserGeneration {
         "support NA_real_",
         "support NA_character_",
         "basic support for formula parsing",
-        "improved error handling in parser"
+        "improved error handling in parser",
+        "clean up ... handling in parser",
+        "dedicated AST nodes for ..N"
     };
 
 }

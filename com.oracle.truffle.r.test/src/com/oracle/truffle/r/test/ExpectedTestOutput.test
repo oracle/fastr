@@ -4,10 +4,6 @@
  [1] 0.45336386 0.38848030 0.94576608 0.11726267 0.21542351 0.08672997
  [7] 0.35201276 0.16919220 0.93579263 0.26084486
 
-##com.oracle.truffle.r.test.rpackages.TestRPackages.testLoadVanilla
-#{ library("vanilla", lib.loc = "com.oracle.truffle.r.test/rpackages/testrlibs_user"); vanilla() }
-[1] "A vanilla R package"
-
 ##com.oracle.truffle.r.test.simple.TestSimpleArithmetic.testArithmeticUpdate
 #{ x <- 3 ; f <- function(z) { if (z) { x <- 1 } ; x <- 1L + x ; x } ; f(FALSE) }
 [1] 4
@@ -3934,6 +3930,10 @@ $a
 [1] 5
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAnyDuplicated
+#{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAnyDuplicated
 #{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables=FALSE,fromLast = TRUE)}
 [1] 3
 
@@ -4139,6 +4139,21 @@ logical(0)
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testArrayConstructors
 #{ raw() }
 raw(0)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ f <- round ; g <- as.call(list(f, quote(A))) }
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ g <- function() 23 ; l <- list("f", g()) ; as.call(l) }
+"f"(23)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ l <- list("f") ; as.call(l) }
+"f"()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCall
+#{ l <- list("f", 2, 3) ; as.call(l) }
+"f"(2, 3)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testAsCharacter
 #{ as.character(1) }
@@ -4760,6 +4775,26 @@ attr(,"a")
 [1] 1
 attr(,"c")
 [1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ call("f") }
+f()
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ call("f", 2, 3) }
+f(2, 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ call("f", quote(A)) }
+f(A)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- "f" ; call(f, quote(A)) }
+f(A)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCall
+#{ f <- round ; call(f, quote(A)) }
+Error in call(f, quote(A)) : first argument must be a character string
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testCasts
 #{ as.character(as.complex(1:2)) }
@@ -6117,6 +6152,14 @@ Error in array(dim = c(-2, 2)) : negative length vectors are not allowed
 #{ deparse(c(T, F)) }
 [1] "c(TRUE, FALSE)"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ deparse(round) }
+[1] ".Primitive(\"round\")"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDeparse
+#{ k <- 2 ; deparse(k) }
+[1] "2"
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testDiagonal
 #{ diag(1, 2, 7) }
      [,1] [,2] [,3] [,4] [,5] [,6] [,7]
@@ -6960,6 +7003,14 @@ Error in rm("foo", envir = baseenv()) :
 #{ ne <- new.env(); evalq(x <- 1, ne); ls(ne) }
 [1] "x"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExp
+#{ round( exp(1+2i), digits=5 ) }
+[1] -1.1312+2.47173i
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testExp
+#{ round( exp(c(1+1i,-2-3i)), digits=5 ) }
+[1]  1.46869+2.28736i -0.13398-0.01910i
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testFFT
 #{ fft(10) }
 [1] 10+0i
@@ -7325,6 +7376,22 @@ Error in rnorm(s = 1, s = 1) :
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsAtomic
 #{ is.atomic(c(1,2,3)) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
+#{ cl <- call("f") ; is.call(cl) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
+#{ cl <- call("f", 2, 3) ; is.call(cl) }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
+#{ cl <- list("f", 2, 3) ; is.call(cl) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsCall
+#{ is.call(call) }
+[1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testIsFactor
 #{x<-1;class(x)<-"foo";is.factor(x)}
@@ -8281,6 +8348,106 @@ character(0)
 #{ f <- function(abc) { ls(pattern="[a-z]*") }; f(1) }
 [1] "abc"
 
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("$") }
+[1] "X."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("$_", allow_=FALSE) }
+[1] "X.."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("...7") }
+[1] "...7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("..7") }
+[1] "..7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names(".7") }
+[1] "X.7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("7") }
+[1] "X7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("NA_integer_", allow_=FALSE) }
+[1] "NA.integer."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a a") }
+[1] "a.a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a") }
+[1] "a_a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_="a") }
+Error in make.names("a_a", allow_ = "a") : invalid 'allow_' value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=7) }
+[1] "a_a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=FALSE) }
+[1] "a.a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=NULL) }
+Error in make.names("a_a", allow_ = NULL) : invalid 'allow_' value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=c(7,42)) }
+[1] "a_a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("a_a", allow_=logical()) }
+Error in make.names("a_a", allow_ = logical()) : invalid 'allow_' value
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names("else")}
+[1] "else."
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeNames
+#{ make.names(7) }
+[1] "X7"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique("a") }
+[1] "a"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique("a", 1) }
+Error in make.unique("a", 1) : 'sep' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique("a", character()) }
+Error in make.unique("a", character()) : 'sep' must be a character string
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(1) }
+Error in make.unique(1) : 'names' must be a character vector
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(c("a", "a")) }
+[1] "a"   "a.1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(c("a", "a"), "_") }
+[1] "a"   "a_1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(c("a", "a", "a")) }
+[1] "a"   "a.1" "a.2"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMakeUnique
+#{ make.unique(character()) }
+character(0)
+
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMatMult
 #{ as.vector(c(1,2,3)) %*% t(as.vector(c(1,2))) }
      [,1] [,2]
@@ -8752,8 +8919,32 @@ Warning message:
 In min(integer(0)) : no non-missing arguments to min; returning Inf
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = 2 + 3) { a;  missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = 2 + 3) { missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a = 2) { g(a) } ; g <- function(b) { missing(b) } ; f() }
 [1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a = z) { missing(a) } ; f() }
+[1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }
+[1]  TRUE FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(a) { g(a) } ;  g <- function(b) { missing(b) } ; f() }
@@ -8764,8 +8955,25 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) { missing(x) } ; f(a) }
+[1] FALSE
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f(1) }
+[1] FALSE
+[1] FALSE
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ g <- function(a, b, c) { b } ; f <- function(a,b,c) { g(a,b=2,c) } ; f(1,,2) }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k(y=1) }
+[1] TRUE
+[1] FALSE
+[1] FALSE
+[1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMod
 #{ round(Mod(1+1i)*10000) }
@@ -11510,6 +11718,10 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ f <- function(...) typeof(...); f(1)}
+[1] "double"
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
 #{ length(typeof(NULL)) }
 [1] 1
 
@@ -13853,20 +14065,105 @@ attr(,"myattr")
 [1] TRUE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ asdf <- function(x,...) UseMethod("asdf",x); asdf.numeric <- function(x, ...) print(paste("num:", x, ...)); asdf(1) }
+[1] "num: 1"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ dummy <- 2 ; dummy() }
+Error: could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }
+Error in g() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function() { dummy() } ; dummy <- 2 ; f() }
+Error in f() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function() { dummy() } ; f() }
+Error in f() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }
+Error in f() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }
+Error in g() : could not find function "dummy"
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) cat(..., "\n") ; f("Hello", "world") }
 Hello world
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..1 ; x <<- 10 ; ..2 } ; x <- 1 ; f(100,x) }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..1 <- 2 ; get("..1") } ; f(1,2,3,4) }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { ..1 } ;  f() }
 Error in f() : 'nthcdr' needs a list to CDR down
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..1 } ;  f(10) }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..2 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x,100) }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { ..3 } ; f(1,2) }
+Error in f(1, 2) : the ... list does not contain 3 elements
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(...) { g(...) } ;  g <- function(b=2) { b } ; f() }
 [1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { get("..1") } ; f(1,2,3,4) }
+Error in get("..1") : object '..1' not found
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...) { x <<- 10 ; ..1 } ; x <- 1 ; f(x) }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a, b) { a * b } ; g <- function(...) { f(...,...) } ; g(3) }
 [1] 9
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }
+Error in f(a = 1, ...) :
+  formal argument "a" matched by multiple actual arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }
+[1] 1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(b = 2) }
@@ -13875,6 +14172,19 @@ Error in f() : 'nthcdr' needs a list to CDR down
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a, barg) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2) }
 [1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }
+Error in f(a = 1, ...) : argument 2 matches multiple formal arguments
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }
+Error in f(a = 1, ...) :
+  formal argument "bextra" matched by multiple actual arguments
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f <- function(a=1,...) a ; f() }
@@ -13890,110 +14200,56 @@ Error in f(10) : ..1 used in an incorrect context, no ... to look in
 [1] "bar"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f<-function(...) print(attributes(list(...))); f(a=7) }
+$names
+[1] "a"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ f<-function(...) print(attributes(list(...))); f(a=7, b=42) }
+$names
+[1] "a" "b"
+
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ f<-function(x, y) { print(missing(y)); } ; f(42) }
 [1] TRUE
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ g <- function(...) { 0 } ; f <- function(...) { g(...) ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }
+[1] 10
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(...) { c(...,...) } ; g(3) }
 [1] 3 3
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
-#{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }
-[1] 42  1
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ dummy <- 2 ; dummy() }
-Error: could not find function "dummy"
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }
-Error in g() : could not find function "dummy"
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function() { dummy() } ; dummy <- 2 ; f() }
-Error in f() : could not find function "dummy"
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function() { dummy() } ; f() }
-Error in f() : could not find function "dummy"
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }
-Error in f() : could not find function "dummy"
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }
-Error in g() : could not find function "dummy"
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...) { ..1 ; x <<- 10 ; ..1 } ; x <- 1 ; f(x) }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...) { ..1 <- 2 ; ..1 } ; f(z = 1) }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...) { ..1 } ;  f(10) }
-[1] 10
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...) { ..3 } ; f(1,2) }
-Error in f(1, 2) : the ... list does not contain 3 elements
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...) { g <- function() { ..1 } ; g() } ; f(a=2) }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...,d) { ..1 + ..2 } ; f(1,2,d=4) }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(...,d) { ..1 + ..2 } ; f(1,d=4,2) }
-[1] 3
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }
-Error in f(a = 1, ...) :
-  formal argument "a" matched by multiple actual arguments
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }
-[1] 1
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }
-Error in f(a = 1, ...) : argument 2 matches multiple formal arguments
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(1,2,3) }
-[1] 2
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
-#{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }
-Error in f(a = 1, ...) :
-  formal argument "bextra" matched by multiple actual arguments
-
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
 #{ g <- function(a,b) { a + b } ; f <- function(...) { g(...) }  ; f(1,2) }
 [1] 3
 
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }
 [1] 1 1
 
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(...,x=4) }  ; f(b=1,a=2) }
 [1] 6
 
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ...) }  ; f(b=1,a=2) }
 [1] 6
 
-##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDotsIgnore
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
 #{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1) }
 [1] 14
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testDots
+#{ g<-function(nm, x) { print(c(nm, x)); } ; f<-function(x, ...) { g(x, ...) }; f(x=1, nm=42) }
+[1] 42  1
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testInvokeIndirectly
 #{ f <- function(x) x+1 ; g <- function(x) x+2 ; funs <- list(f,g) ; funs[[1]](1) }
@@ -14040,8 +14296,33 @@ Error in f(hello = 1, bye = 3) : unused argument (bye = 3)
 [1] 20
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }
+[1] 3
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(a) { g <- function(b) { x <<- 2; b } ; g(a) } ; x <- 1 ; f(x) }
+[1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x = y, y = x) { y } ; f() }
+Error in f() :
+  promise already under evaluation: recursive default argument reference or earlier problems?
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x = z) { z = 1 ; x } ; f() }
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ f <- function(x) { for (i in 1:10) { x <- g(x,i) }; x }; g <- function(x,i) { x + i }; f(2) }
 [1] 57
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }
+[1] 10
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
+#{ z <- 1 ; f <- function(c = z) {  z <- z + 1 ; c  } ; f() }
+[1] 2
 
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testPromises
 #{ z <- 1 ; f <- function(c = z) { c(1,2) ; z <- z + 1 ; c  } ; f() }
@@ -61270,6 +61551,69 @@ NULL
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlog2.testlog23
 #argv <- list(2.2250738585072e-308);log2(argv[[1]]);
 [1] -1022
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames1
+#argv <- list('head', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "head"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames10
+#argv <- list(c('', '', 'bady'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "X"    "X"    "bady"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames11
+#argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+character(0)
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames2
+#argv <- list('FALSE', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "FALSE."
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames3
+#argv <- list(c('.Call', '.Call numParameters', '.Fortran', '.Fortran numParameters'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] ".Call"                  ".Call.numParameters"    ".Fortran"
+[4] ".Fortran.numParameters"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames4
+#argv <- list('..adfl.row.names', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "..adfl.row.names"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames5
+#argv <- list(c('name', 'title', 'other.author'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "name"         "title"        "other.author"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames6
+#argv <- list('.2a', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "X.2a"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames7
+#argv <- list('', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "X"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames8
+#argv <- list(NA_character_, TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "NA."
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakenames.testmakenames9
+#argv <- list(c('Subject', 'predict.fixed', 'predict.Subject'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))
+[1] "Subject"         "predict.fixed"   "predict.Subject"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique1
+#argv <- list(c('A', 'B', 'C', 'D', 'E', 'F'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+[1] "A" "B" "C" "D" "E" "F"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique2
+#argv <- list(c('b', 'NA', 'NA'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+[1] "b"    "NA"   "NA.1"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique3
+#argv <- list(c('1', '2', '3', '6', '7', '7', '7', '8', '8', '10', '11', '12', '12', '12', '15', '15', '16', '17', '19', '20', '21', '21', '23'), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+ [1] "1"    "2"    "3"    "6"    "7"    "7.1"  "7.2"  "8"    "8.1"  "10"
+[11] "11"   "12"   "12.1" "12.2" "15"   "15.1" "16"   "17"   "19"   "20"
+[21] "21"   "21.1" "23"
+
+##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmakeunique.testmakeunique4
+#argv <- list(character(0), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))
+character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinmatch.testmatch1
 #argv <- list('corMatrix', c('dpoMatrix', 'dsyMatrix', 'ddenseMatrix', 'symmetricMatrix', 'dMatrix', 'denseMatrix', 'compMatrix', 'Matrix', 'mMatrix'), NA_integer_, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))

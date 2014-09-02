@@ -107,12 +107,12 @@ public class GroupDispatchNode extends S3DispatchNode {
         evaluatedArgs = new Object[]{args[0].execute(frame)};
         if ((this.type = getArgClass(evaluatedArgs[0])) != null) {
             if (targetFunction != null && isEqualType(this.type, this.typeLast) && isFirst) {
-                return executeHelper();
+                return executeHelper(frame);
             }
             findTargetFunction(frame);
             if (targetFunction != null) {
                 dotMethod = RDataFactory.createStringVector(new String[]{targetFunctionName}, true);
-                return executeHelper();
+                return executeHelper(frame);
             }
         }
         return callBuiltin(frame);
@@ -153,14 +153,14 @@ public class GroupDispatchNode extends S3DispatchNode {
         } catch (UnexpectedResultException e) {
             throw new RuntimeException("Builtin " + this.genericName + " not found");
         }
-        initFunCall(builtinFunc);
+        initFunCall(frame, builtinFunc);
         return this.funCall;
     }
 
-    protected Object executeHelper() {
+    protected Object executeHelper(VirtualFrame frame) {
         setEnvironment();
         this.typeLast = this.type;
-        initFunCall(targetFunction);
+        initFunCall(frame, targetFunction);
         return this.funCall;
     }
 
@@ -171,18 +171,8 @@ public class GroupDispatchNode extends S3DispatchNode {
         return null;
     }
 
-    public static RNode[] resizeNodesArray(RNode[] oldNodes, int newSize) {
-        RNode[] newNodes = new RNode[newSize];
-        if (oldNodes != null) {
-            for (int i = 0; i < oldNodes.length; i++) {
-                newNodes[i] = oldNodes[i];
-            }
-        }
-        return newNodes;
-    }
-
     @SlowPath
-    private void initFunCall(RFunction func) {
+    private void initFunCall(VirtualFrame frame, RFunction func) {
         // avoid re-evaluating arguments.
         if (evaluatedArgs != null) {
             RNode[] argArray = new RNode[callArgsNode.getArguments().length];
@@ -193,11 +183,11 @@ public class GroupDispatchNode extends S3DispatchNode {
                     if (evaluatedArgs[i] instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) evaluatedArgs[i];
                         if (argsValuesAndNames.length() == 1) {
-                            argArray[index++] = ConstantNode.create(argsValuesAndNames.getValues()[0]);
+                            argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[0]));
                         } else {
-                            argArray = resizeNodesArray(argArray, argArray.length + argsValuesAndNames.length() - 1);
+                            argArray = new RNode[argArray.length + argsValuesAndNames.length() - 1];
                             for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                                argArray[index++] = ConstantNode.create(argsValuesAndNames.getValues()[j]);
+                                argArray[index++] = ConstantNode.create(RPromise.checkEvaluate(frame, argsValuesAndNames.getValues()[j]));
                             }
                         }
                     } else {

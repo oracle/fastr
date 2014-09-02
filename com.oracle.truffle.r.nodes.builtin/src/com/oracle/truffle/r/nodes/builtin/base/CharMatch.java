@@ -8,7 +8,6 @@
  *
  * All rights reserved.
  */
-
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
@@ -47,8 +46,9 @@ public abstract class CharMatch extends RBuiltinNode {
             for (int j = 0; j < table.getLength(); j++) {
                 final String targetString = table.getDataAt(j);
                 int matchLength = 0;
-                for (; matchLength < matchString.length() && (matchString.charAt(matchLength) == targetString.charAt(matchLength)); matchLength++)
-                    ;
+                while (matchLength < matchString.length() && (matchString.charAt(matchLength) == targetString.charAt(matchLength))) {
+                    matchLength++;
+                }
                 /*
                  * Try to find an exact match and store its index. If there are multiple exact
                  * matches or there are multiple target strings which have source string as a proper

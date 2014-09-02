@@ -31,10 +31,10 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * Denotes an R {@code promise}. It extends {@link RLanguageRep} with a (lazily) evaluated value.
+ * Denotes an R {@code promise}.
  */
 @ValueType
-public final class RPromise {
+public final class RPromise extends RLanguageRep {
 
     /**
      * The policy used to evaluate a promise.
@@ -55,15 +55,7 @@ public final class RPromise {
          * happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside callee
          * frame if {@link PromiseType#ARG_DEFAULT}.
          */
-        PROMISED,
-
-        /**
-         * This is used for maintaining old, strict argument evaluation semantics. Arguments are
-         * fully evaluated before executing the actual function.<br/>
-         * Evaluation happens inside the caller frame if {@link PromiseType#ARG_SUPPLIED} or inside
-         * callee frame if {@link PromiseType#ARG_DEFAULT}.
-         */
-        STRICT;
+        PROMISED;
     }
 
     /**
@@ -101,16 +93,10 @@ public final class RPromise {
     protected final PromiseType type;
 
     /**
-     * The {@link REnvironment} {@link #exprRep} should be evaluated in. For promises associated
+     * The {@link REnvironment} {@link #getRep()} should be evaluated in. For promises associated
      * with environments (frames) that are not top-level. May be <code>null</code>.
      */
     protected REnvironment env;
-
-    /**
-     * The representation of the supplied argument. May contain <code>null</code> if no expr is
-     * provided!
-     */
-    protected final RLanguageRep exprRep;
 
     /**
      * When {@code null} the promise has not been evaluated.
@@ -133,22 +119,23 @@ public final class RPromise {
      *
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
-     * @param expr {@link #exprRep}
+     * @param expr {@link #getRep()}
      */
     private RPromise(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
+        super(expr);
         this.evalPolicy = evalPolicy;
         this.type = type;
         this.env = env;
-        this.exprRep = new RLanguageRep(expr);
     }
 
     /**
      * @param evalPolicy {@link EvalPolicy}
      * @param env {@link #env}
-     * @param expr {@link #exprRep}
+     * @param expr {@link #getRep()}
      * @return see {@link #RPromise(EvalPolicy, PromiseType, REnvironment, Object)}
      */
     public static RPromise create(EvalPolicy evalPolicy, PromiseType type, REnvironment env, Object expr) {
+        assert expr != null;
         return new RPromise(evalPolicy, type, env, expr);
     }
 
@@ -164,17 +151,31 @@ public final class RPromise {
             return value;
         }
 
-        // Evaluate this promises value!
-        // TODO Performance: We can use frame directly if we are sure that it matches the on in env!
-        if (env != null && env != RArguments.getEnvironment(frame)) {
-            value = doEvalArgument();
-        } else {
-// assert type == PromiseType.ARG_DEFAULT;
-            value = doEvalArgument(frame);
+        // Check for dependecy cycle
+        if (underEvaluation) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // TODO Get SourceSection of funcall!
+            throw RError.error(RError.Message.PROMISE_CYCLE);
+        }
+
+        try {
+            underEvaluation = true;
+
+            // Evaluate this promises value!
+            // TODO Performance: We can use frame directly if we are sure that it matches the on in
+            // env!
+            if (env != null) {
+                value = doEvalArgument();
+            } else {
+                value = doEvalArgument(frame);
+            }
+        } finally {
+            underEvaluation = false;
         }
 
         isEvaluated = true;
         env = null; // REnvironment and associated frame are no longer needed after execution
+        // TODO set NAMED = 2
         CompilerDirectives.transferToInterpreterAndInvalidate();
         return value;
     }
@@ -220,6 +221,17 @@ public final class RPromise {
     }
 
     /**
+     * @param obj
+     * @return If obj is a {@link RPromise}, it is evaluated and its result returned
+     */
+    public static Object checkEvaluate(VirtualFrame frame, Object obj) {
+        if (obj instanceof RPromise) {
+            return ((RPromise) obj).evaluate(frame);
+        }
+        return obj;
+    }
+
+    /**
      * Only to be called from AccessArgumentNode, and in combination with
      * {@link #updateEnv(REnvironment)}!
      *
@@ -227,7 +239,7 @@ public final class RPromise {
      *         {@link #updateEnv(REnvironment)})
      */
     public boolean needsCalleeFrame() {
-        return evalPolicy != EvalPolicy.STRICT && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
+        return evalPolicy == EvalPolicy.PROMISED && type == PromiseType.ARG_DEFAULT && env == null && !isEvaluated;
     }
 
     /**
@@ -245,6 +257,15 @@ public final class RPromise {
     }
 
     /**
+     * @return The representation of expression (a RNode). May contain <code>null</code> if no expr
+     *         is provided!
+     */
+    @Override
+    public Object getRep() {
+        return super.getRep();
+    }
+
+    /**
      * @return Whether this promise is of {@link #type} {@link PromiseType#ARG_DEFAULT}.
      */
     public boolean isDefaulted() {
@@ -256,20 +277,6 @@ public final class RPromise {
      */
     public REnvironment getEnv() {
         return env;
-    }
-
-    /**
-     * @return {@link #exprRep}
-     */
-    public RLanguageRep getExprRep() {
-        return exprRep;
-    }
-
-    /**
-     * @return {@link #exprRep}
-     */
-    public Object getRep() {
-        return exprRep.getRep();
     }
 
     /**
@@ -306,7 +313,7 @@ public final class RPromise {
     @Override
     @SlowPath
     public String toString() {
-        return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + exprRep.getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + evalPolicy + ", " + type + ", " + env + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
     /**

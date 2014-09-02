@@ -8,7 +8,6 @@
  *
  * All rights reserved.
  */
-
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;

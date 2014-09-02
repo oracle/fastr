@@ -98,6 +98,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RCall arg) {
+        return RDataFactory.createStringVector(RRuntime.TYPE_CALL);
+    }
+
+    @Specialization
     protected RStringVector getClassHr(RAbstractContainer arg) {
         return arg.getClassHierarchy();
     }

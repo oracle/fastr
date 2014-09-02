@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.text.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
@@ -287,6 +288,18 @@ public class RDeparse {
                 state.append(") ");
                 state.writeline();
                 deparse2buff(state, f.cdr());
+                break;
+            }
+
+            case FUNSXP: {
+                RFunction f = (RFunction) obj;
+                if (f.isBuiltin()) {
+                    state.append(".Primitive(\\\"");
+                    state.append(f.getName());
+                    state.append("\\\")");
+                } else {
+                    throw RInternalError.unimplemented();
+                }
                 break;
             }
 
@@ -676,6 +689,8 @@ public class RDeparse {
         return state;
     }
 
+    private static final DecimalFormat decimalFormat = new DecimalFormat("#.#");
+
     private static State vecElement2buff(State state, SEXPTYPE type, Object element) {
         switch (type) {
             case STRSXP:
@@ -689,10 +704,8 @@ public class RDeparse {
                 state.append(lgl == RRuntime.LOGICAL_TRUE ? "TRUE" : (lgl == RRuntime.LOGICAL_FALSE ? "FALSE" : "NA"));
                 break;
             case REALSXP:
-                String rep = Double.toString((double) element);
-                if (rep.equals("Infinity")) {
-                    rep = "Inf";
-                }
+                double d = (double) element;
+                String rep = Double.isInfinite(d) ? "Inf" : decimalFormat.format(d);
                 state.append(rep);
                 break;
             default:

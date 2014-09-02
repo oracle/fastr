@@ -51,3 +51,4 @@ all:
 	@false
 endif
 
+CFLAGS := $(CFLAGS) -DFASTR

@@ -205,6 +205,11 @@ public class BasicVisitor<R> implements Visitor<R> {
     }
 
     @Override
+    public R visit(SimpleAccessVariadicComponent n) {
+        return visit((ASTNode) n);
+    }
+
+    @Override
     public R visit(FieldAccess n) {
         return visit((ASTNode) n);
     }

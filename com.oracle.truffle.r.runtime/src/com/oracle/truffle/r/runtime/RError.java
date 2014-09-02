@@ -347,7 +347,7 @@ public final class RError extends RuntimeException {
         NON_NUMERIC_ARGUMENT_FUNCTION("non-numeric argument to function"),
         SEED_LENGTH(".Random.seed has wrong length"),
         // below: not exactly GNU-R message
-        PROMISE_CYCLE("promise already under evaluation: recursive default argument reference?"),
+        PROMISE_CYCLE("promise already under evaluation: recursive default argument reference or earlier problems?"),
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
         INVALID_ENVIRONMENT("invalid environment specified"),
         ENVIR_NOT_LENGTH_ONE("numeric 'envir' arg not of length one"),
@@ -508,7 +508,8 @@ public final class RError extends RuntimeException {
         INCORRECT_ARG("incorrect arguments to %s"),
         UNIMPLEMENTED_ARG_TYPE("unimplemented argument type (arg %d)"),
         NATIVE_CALL_FAILED("native call failed: %s"),
-        SYMBOL_NOT_IN_TABLE("symbol %s not in load table"),
+        C_SYMBOL_NOT_IN_TABLE("C symbol name \"%s\" not in load table"),
+        FORTRAN_SYMBOL_NOT_IN_TABLE("Fortran symbol name \"%s\" not in load table"),
         NOT_THAT_MANY_FRAMES("not that many frames on the stack"),
         UNIMPLEMENTED_ARGUMENT_TYPE("unimplemented argument type"),
         MUST_BE_SQUARE_NUMERIC("'%s' must be a square numeric matrix"),

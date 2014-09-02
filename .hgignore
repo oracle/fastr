@@ -9,7 +9,6 @@
 ^mx.fastr/eclipse-config.zip
 ^mx.fastr/netbeans-config.zip
 ^com.oracle.truffle.r.test/rpackages/testrlibs_user
-^com.oracle.truffle.r.native/fficall/jni/lib/libcall.dylib
 ^com.oracle.truffle.r.test.native/urand/lib/liburand.so
 ^build/
 ^build-nograal/
@@ -87,3 +86,5 @@ R.tokens
 .tmp.unit.knucleotide.input
 *.o
 findbugs.html
+com.oracle.truffle.r.native/builtinlibs/lib/*/librfficall.*
+com.oracle.truffle.r.native/builtinlibs/lib/*/libR.dylib

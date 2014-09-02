@@ -95,6 +95,8 @@ public class RRuntime {
     public static final String TYPE_ENVIRONMENT = new String("environment");
     public static final String TYPE_PAIR_LIST = new String("pairlist");
     public static final String CLASS_LANGUAGE = new String("call");
+    public static final String TYPE_CALL = new String("call");
+
     // Defunct types
     public static final String REAL = new String("real");
     public static final String SINGLE = new String("single");

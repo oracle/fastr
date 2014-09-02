@@ -195,7 +195,7 @@ public class ForeignFunctions {
             Object[] argValues = ((RArgsValuesAndNames) args).getValues();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SYMBOL_NOT_IN_TABLE, f);
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
             }
             boolean dupArgs = RRuntime.fromLogical(dup);
             boolean checkNA = RRuntime.fromLogical(naok);
@@ -288,7 +288,7 @@ public class ForeignFunctions {
      * For now, just some special case functions that are built in to the implementation.
      */
     @RBuiltin(name = ".Call", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"})
-    public abstract static class Call extends RBuiltinNode {
+    public abstract static class DotCall extends RBuiltinNode {
 
         @Child private CastComplexNode castComplex;
         @Child private CastLogicalNode castLogical;
@@ -436,7 +436,7 @@ public class ForeignFunctions {
         public Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName) {
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
-                throw RError.error(getEncapsulatingSourceSection(), Message.GENERIC, ".Call %s not found", name);
+                throw RError.error(getEncapsulatingSourceSection(), Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             try {
                 return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getValues());
