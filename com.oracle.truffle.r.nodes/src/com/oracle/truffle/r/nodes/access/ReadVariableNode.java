@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.BuiltinFunctionVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadAndCopySuperVariableNodeFactory;
@@ -37,8 +38,10 @@ import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadLocalVariab
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ReadSuperVariableNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.ResolvePromiseNodeFactory;
 import com.oracle.truffle.r.nodes.access.ReadVariableNodeFactory.UnknownVariableNodeFactory;
+import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ReadVariableNode extends RNode implements VisibilityController {
@@ -183,9 +186,36 @@ public abstract class ReadVariableNode extends RNode implements VisibilityContro
 
         public abstract ReadVariableNode getReadNode();
 
+        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
+
+        private final BranchProfile directlyEvaluatedProfile = new BranchProfile();
+
         @Specialization
         public Object doValue(VirtualFrame frame, RPromise promise) {
+            if (!promise.isEvaluated() && isInOriginFrame(promise)) {
+                directlyEvaluatedProfile.enter();
+
+                // Check for dependecy cycle
+                if (promise.isUnderEvaluation()) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    // TODO Get SourceSection of funcall!
+                    throw RError.error(RError.Message.PROMISE_CYCLE);
+                }
+                try {
+                    promise.setUnderEvaluation(true);
+
+                    Object obj = exprExecNode.execute(frame, (RNode) promise.getRep());
+                    promise.setValue(obj);
+                    return obj;
+                } finally {
+                    promise.setUnderEvaluation(false);
+                }
+            }
             return promise.evaluate(frame);
+        }
+
+        public static boolean isInOriginFrame(RPromise promise) {
+            return promise.getEvalPolicy() == EvalPolicy.PROMISED && promise.getType() == PromiseType.ARG_DEFAULT;
         }
 
         @Specialization
