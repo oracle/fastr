@@ -100,13 +100,13 @@ public abstract class PrettyPrinterNode extends RNode {
         return (String) singleListElementPrettyPrinter.executeString(currentFrame(), o, listElementName, quote);
     }
 
-    private String printVectorMultiDim(RAbstractVector vector, boolean isListOrStringVector, boolean isComplexOrRawVector) {
+    private String printVectorMultiDim(RAbstractVector vector, boolean isListOrStringVector, boolean isComplexOrRawVector, byte quote) {
         if (multiDimPrinter == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            multiDimPrinter = insert(PrintVectorMultiDimNodeFactory.create(null, null, null));
+            multiDimPrinter = insert(PrintVectorMultiDimNodeFactory.create(null, null, null, null));
         }
         StringBuilder sb = new StringBuilder();
-        sb.append((String) multiDimPrinter.executeString(currentFrame(), vector, RRuntime.asLogical(isListOrStringVector), RRuntime.asLogical(isComplexOrRawVector)));
+        sb.append((String) multiDimPrinter.executeString(currentFrame(), vector, RRuntime.asLogical(isListOrStringVector), RRuntime.asLogical(isComplexOrRawVector), quote));
         RAttributes attributes = vector.getAttributes();
         if (attributes != null) {
             sb.append(printAttributes(vector, attributes));
@@ -175,7 +175,10 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization
     protected String prettyPrintVector(String operand, Object listElementName, byte quote) {
-        return concat("[1] ", prettyPrint(operand));
+        if (RRuntime.fromLogical(quote)) {
+            return concat("[1] ", prettyPrint(operand));
+        }
+        return concat("[1] ", operand);
     }
 
     public static String prettyPrint(String operand) {
@@ -582,31 +585,31 @@ public abstract class PrettyPrinterNode extends RNode {
     @SlowPath
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RList operand, Object listElementName, byte quote) {
-        return printVectorMultiDim(operand, true, false);
+        return printVectorMultiDim(operand, true, false, quote);
     }
 
     @SlowPath
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractStringVector operand, Object listElementName, byte quote) {
-        return printVectorMultiDim(operand, true, false);
+        return printVectorMultiDim(operand, true, false, quote);
     }
 
     @SlowPath
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractComplexVector operand, Object listElementName, byte quote) {
-        return printVectorMultiDim(operand, false, true);
+        return printVectorMultiDim(operand, false, true, quote);
     }
 
     @SlowPath
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractRawVector operand, Object listElementName, byte quote) {
-        return printVectorMultiDim(operand, false, true);
+        return printVectorMultiDim(operand, false, true, quote);
     }
 
     @SlowPath
     @Specialization(guards = "twoDimsOrMore")
     protected String prettyPrintM(RAbstractVector operand, Object listElementName, byte quote) {
-        return printVectorMultiDim(operand, false, false);
+        return printVectorMultiDim(operand, false, false, quote);
     }
 
     @SlowPath
@@ -1018,79 +1021,82 @@ public abstract class PrettyPrinterNode extends RNode {
 
     }
 
-    @NodeChild(value = "operand", type = RNode.class)
+    @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "isQuoted", type = RNode.class)})
     abstract static class PrettyPrinterSingleVectorElementNode extends RNode {
 
         @Child private PrettyPrinterSingleVectorElementNode recursivePrettyPrinter;
 
-        private String prettyPrintRecursive(Object o) {
+        private String prettyPrintRecursive(Object o, byte isQuoted) {
             if (recursivePrettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursivePrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null));
+                recursivePrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null, null));
             }
-            return (String) recursivePrettyPrinter.executeString(null, o);
+            return (String) recursivePrettyPrinter.executeString(null, o, isQuoted);
         }
 
-        public abstract Object executeString(VirtualFrame frame, Object o);
+        public abstract Object executeString(VirtualFrame frame, Object o, byte isQuoted);
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(RNull operand) {
+        protected String prettyPrintVectorElement(RNull operand, byte isQuoted) {
             return "NULL";
         }
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(byte operand) {
+        protected String prettyPrintVectorElement(byte operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(int operand) {
+        protected String prettyPrintVectorElement(int operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(double operand) {
+        protected String prettyPrintVectorElement(double operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(RComplex operand) {
+        protected String prettyPrintVectorElement(RComplex operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(String operand) {
+        protected String prettyPrintVectorElement(String operand, byte isQuoted) {
+            if (RRuntime.fromLogical(isQuoted)) {
+                return prettyPrint(operand);
+            }
+            return operand;
+        }
+
+        @SlowPath
+        @Specialization
+        protected String prettyPrintVectorElement(RRaw operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization
-        protected String prettyPrintVectorElement(RRaw operand) {
-            return prettyPrint(operand);
-        }
-
-        @SlowPath
-        @Specialization
-        protected String prettyPrintVectorElement(RList operand) {
+        protected String prettyPrintVectorElement(RList operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization(guards = {"!isLengthOne", "!isVectorList"})
-        protected String prettyPrintVectorElement(RAbstractVector operand) {
+        protected String prettyPrintVectorElement(RAbstractVector operand, byte isQuoted) {
             return prettyPrint(operand);
         }
 
         @SlowPath
         @Specialization(guards = {"isLengthOne", "!isVectorList"})
-        protected String prettyPrintVectorElementLengthOne(RAbstractVector operand) {
-            return prettyPrintRecursive(operand.getDataAtAsObject(0));
+        protected String prettyPrintVectorElementLengthOne(RAbstractVector operand, byte isQuoted) {
+            return prettyPrintRecursive(operand.getDataAtAsObject(0), isQuoted);
         }
 
         protected static boolean isVectorList(RAbstractVector v) {
@@ -1107,40 +1113,41 @@ public abstract class PrettyPrinterNode extends RNode {
 
     }
 
-    @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class)})
+    @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class),
+                    @NodeChild(value = "isQuoted", type = RNode.class)})
     abstract static class PrintVectorMultiDimNode extends RNode {
 
         @Child private PrintVector2DimNode vector2DimPrinter;
         @Child private PrintDimNode dimPrinter;
 
-        private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                vector2DimPrinter = insert(PrintVector2DimNodeFactory.create(null, null, null, null, null));
+                vector2DimPrinter = insert(PrintVector2DimNodeFactory.create(null, null, null, null, null, null));
             }
-            return (String) vector2DimPrinter.executeString(currentFrame(), vector, dimensions, offset, isListOrStringVector, isComplexOrRawVector);
+            return (String) vector2DimPrinter.executeString(currentFrame(), vector, dimensions, offset, isListOrStringVector, isComplexOrRawVector, isQuoted);
         }
 
-        private String printDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header) {
+        private String printDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header, byte isQuoted) {
             if (dimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dimPrinter = insert(PrintDimNodeFactory.create(null, null, null, null, null, null, null));
+                dimPrinter = insert(PrintDimNodeFactory.create(null, null, null, null, null, null, null, null));
             }
-            return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header);
+            return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header, isQuoted);
         }
 
-        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector);
+        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted);
 
         @SlowPath
         @Specialization
-        protected String printVectorMultiDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected String printVectorMultiDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int[] dimensions = vector.getDimensions();
             RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, RDataFactory.COMPLETE_VECTOR);
             assert dimensions != null;
             int numDimensions = dimensions.length;
             assert numDimensions > 1;
             if (numDimensions == 2) {
-                return printVector2Dim(vector, dimensionsVector, 0, isListOrStringVector, isComplexOrRawVector);
+                return printVector2Dim(vector, dimensionsVector, 0, isListOrStringVector, isComplexOrRawVector, isQuoted);
             } else {
                 int dimSize = dimensions[numDimensions - 1];
                 if (dimSize == 0) {
@@ -1155,7 +1162,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         // CheckStyle: resume system..print check
                         sb.append(getDimId(vector, numDimensions, dimInd));
                         sb.append("\n\n");
-                        sb.append(printVector2Dim(vector, dimensionsVector, dimInd * matrixSize, isListOrStringVector, isComplexOrRawVector));
+                        sb.append(printVector2Dim(vector, dimensionsVector, dimInd * matrixSize, isListOrStringVector, isComplexOrRawVector, isQuoted));
                         sb.append("\n");
                         if (dimInd < (dimSize - 1) && vector.getLength() > 0 || vector.getLength() == 0) {
                             sb.append("\n");
@@ -1166,7 +1173,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                         int arrayBase = accDimensions * dimInd;
                         String dimId = getDimId(vector, numDimensions, dimInd);
-                        String innerDims = printDim(vector, isListOrStringVector, isComplexOrRawVector, numDimensions - 1, arrayBase, accDimensions, dimId);
+                        String innerDims = printDim(vector, isListOrStringVector, isComplexOrRawVector, numDimensions - 1, arrayBase, accDimensions, dimId, isQuoted);
                         if (innerDims == null) {
                             return "";
                         } else {
@@ -1185,20 +1192,20 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "dimensions", type = RNode.class), @NodeChild(value = "offset", type = RNode.class),
-                    @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class)})
+                    @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class), @NodeChild(value = "isQuoted", type = RNode.class)})
     abstract static class PrintVector2DimNode extends RNode {
 
         @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
 
-        private String prettyPrintSingleVectorElement(Object o) {
+        private String prettyPrintSingleVectorElement(Object o, byte isQuoted) {
             if (singleVectorElementPrettyPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null));
+                singleVectorElementPrettyPrinter = insert(PrettyPrinterSingleVectorElementNodeFactory.create(null, null));
             }
-            return (String) singleVectorElementPrettyPrinter.executeString(currentFrame(), o);
+            return (String) singleVectorElementPrettyPrinter.executeString(currentFrame(), o, isQuoted);
         }
 
-        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector);
+        public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted);
 
         private static String getDimId(RList dimNames, int dimension, int ind, byte isComplexOrRawVector) {
             StringBuilder sb = new StringBuilder();
@@ -1228,7 +1235,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @SlowPath
         @Specialization(guards = "isEmpty")
-        protected String printVector2DimEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected String printVector2DimEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
 
@@ -1265,7 +1272,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @SlowPath
         @Specialization(guards = "!isEmpty")
-        protected String printVector2Dim(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected String printVector2Dim(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
 
@@ -1327,7 +1334,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @SlowPath
         @Specialization(guards = "!isEmpty")
-        protected String printVector2Dim(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected String printVector2Dim(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
 
@@ -1345,8 +1352,8 @@ public abstract class PrettyPrinterNode extends RNode {
             for (int r = 0; r < nrow; ++r) {
                 for (int c = 0; c < ncol; ++c) {
                     int index = c * nrow + r;
-                    reStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getRealPart());
-                    imStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getImaginaryPart());
+                    reStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getRealPart(), isQuoted);
+                    imStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getImaginaryPart(), isQuoted);
                     siStrings[index] = vector.getDataAt(index + offset).getImaginaryPart() < 0.0 ? "-" : "+";
                     // "" because column width is computed later
                     maintainColumnData(dataColWidths, columnDimNames, c, "");
@@ -1382,7 +1389,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @SlowPath
         @Specialization(guards = {"!isEmpty", "notDoubleOrComplex"})
-        protected String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             int nrow = dimensions.getDataAt(0);
             int ncol = dimensions.getDataAt(1);
 
@@ -1398,7 +1405,7 @@ public abstract class PrettyPrinterNode extends RNode {
             for (int r = 0; r < nrow; ++r) {
                 for (int c = 0; c < ncol; ++c) {
                     int index = c * nrow + r;
-                    dataStrings[index] = prettyPrintSingleVectorElement(vector.getDataAtAsObject(index + offset));
+                    dataStrings[index] = prettyPrintSingleVectorElement(vector.getDataAtAsObject(index + offset), isQuoted);
                     maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
                 }
                 rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
@@ -1541,15 +1548,15 @@ public abstract class PrettyPrinterNode extends RNode {
             return builderToString(b);
         }
 
-        protected boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected boolean isEmpty(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             return vector.getLength() == 0;
         }
 
-        protected boolean isEmpty(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected boolean isEmpty(RAbstractDoubleVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             return vector.getLength() == 0;
         }
 
-        protected boolean isEmpty(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        protected boolean isEmpty(RAbstractComplexVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             return vector.getLength() == 0;
         }
 
@@ -1557,34 +1564,35 @@ public abstract class PrettyPrinterNode extends RNode {
 
     @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "isListOrStringVector", type = RNode.class), @NodeChild(value = "isComplexOrRawVector", type = RNode.class),
                     @NodeChild(value = "currentDimLevel", type = RNode.class), @NodeChild(value = "arrayBase", type = RNode.class), @NodeChild(value = "accDimensions", type = RNode.class),
-                    @NodeChild(value = "header", type = RNode.class)})
+                    @NodeChild(value = "header", type = RNode.class), @NodeChild(value = "isQuoted", type = RNode.class)})
     abstract static class PrintDimNode extends RNode {
 
         public abstract Object executeString(VirtualFrame frame, RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions,
-                        String header);
+                        String header, byte isQuoted);
 
         @Child private PrintVector2DimNode vector2DimPrinter;
         @Child private PrintDimNode dimPrinter;
 
-        private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector) {
+        private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                vector2DimPrinter = insert(PrintVector2DimNodeFactory.create(null, null, null, null, null));
+                vector2DimPrinter = insert(PrintVector2DimNodeFactory.create(null, null, null, null, null, null));
             }
-            return (String) vector2DimPrinter.executeString(currentFrame(), vector, dimensions, offset, isListOrStringVector, isComplexOrRawVector);
+            return (String) vector2DimPrinter.executeString(currentFrame(), vector, dimensions, offset, isListOrStringVector, isComplexOrRawVector, isQuoted);
         }
 
-        private String printDimRecursive(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header) {
+        private String printDimRecursive(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header,
+                        byte isQuoted) {
             if (dimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dimPrinter = insert(PrintDimNodeFactory.create(null, null, null, null, null, null, null));
+                dimPrinter = insert(PrintDimNodeFactory.create(null, null, null, null, null, null, null, null));
             }
-            return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header);
+            return (String) dimPrinter.executeString(currentFrame(), vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel, arrayBase, accDimensions, header, isQuoted);
         }
 
         @SlowPath
         @Specialization
-        protected String printDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header) {
+        protected String printDim(RAbstractVector vector, byte isListOrStringVector, byte isComplexOrRawVector, int currentDimLevel, int arrayBase, int accDimensions, String header, byte isQuoted) {
             int[] dimensions = vector.getDimensions();
             RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, RDataFactory.COMPLETE_VECTOR);
             StringBuilder sb = new StringBuilder();
@@ -1602,7 +1610,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     sb.append(", ");
                     sb.append(header);
                     sb.append("\n\n");
-                    sb.append(printVector2Dim(vector, dimensionsVector, arrayBase + (dimInd * matrixSize), isListOrStringVector, isComplexOrRawVector));
+                    sb.append(printVector2Dim(vector, dimensionsVector, arrayBase + (dimInd * matrixSize), isListOrStringVector, isComplexOrRawVector, isQuoted));
                     sb.append("\n");
                     if ((arrayBase + (dimInd * matrixSize) + matrixSize) < vector.getLength() || vector.getLength() == 0) {
                         sb.append("\n");
@@ -1613,7 +1621,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                     int newArrayBase = arrayBase + newAccDimensions * dimInd;
                     String dimId = getDimId(vector, currentDimLevel, dimInd);
-                    String innerDims = printDimRecursive(vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header));
+                    String innerDims = printDimRecursive(vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header), isQuoted);
                     if (innerDims == null) {
                         return null;
                     } else {

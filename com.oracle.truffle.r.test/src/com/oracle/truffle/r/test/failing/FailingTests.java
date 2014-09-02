@@ -1499,6 +1499,11 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
+    public void TestSimpleBuiltins_testRepIntIgnore_c27e773981d2951d5ec60b9e681b20f9() {
+        assertEval("{ rep.int(c(1,2,3),c(2,8)) }");
+    }
+
+    @Ignore
     public void TestSimpleBuiltins_testRoundIgnore_bb594f5dd03efc19fa1dbee51b5324da() {
         assertEval("{ round(1.123456,digit=2.8) }");
     }
