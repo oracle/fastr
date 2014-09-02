@@ -158,6 +158,7 @@ public final class RPromise extends RLanguageRep {
             throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
+        Object newValue;
         try {
             underEvaluation = true;
 
@@ -165,19 +166,29 @@ public final class RPromise extends RLanguageRep {
             // TODO Performance: We can use frame directly if we are sure that it matches the on in
             // env!
             if (env != null) {
-                value = doEvalArgument();
+                newValue = doEvalArgument();
             } else {
-                value = doEvalArgument(frame);
+                newValue = doEvalArgument(frame);
             }
         } finally {
             underEvaluation = false;
         }
 
-        isEvaluated = true;
-        env = null; // REnvironment and associated frame are no longer needed after execution
-        // TODO set NAMED = 2
+        setValue(newValue);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         return value;
+    }
+
+    /**
+     * Used in case the {@link RPromise} is evaluated outside
+     *
+     * @param newValue
+     */
+    public void setValue(Object newValue) {
+        this.value = newValue;
+        this.isEvaluated = true;
+        this.env = null; // REnvironment and associated frame are no longer needed after execution
+        // TODO set NAMED = 2
     }
 
     @SlowPath

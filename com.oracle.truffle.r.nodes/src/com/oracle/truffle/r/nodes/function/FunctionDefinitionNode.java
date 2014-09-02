@@ -46,7 +46,7 @@ public final class FunctionDefinitionNode extends RRootNode {
     @Child private RNode body;
     private final String description;
 
-    @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(InternalFrameSlot.OnExit, false);
+    @Child private FrameSlotNode onExitSlot;
     @Child private ExpressionExecutorNode onExitExecutor = ExpressionExecutorNode.create();
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
@@ -67,12 +67,19 @@ public final class FunctionDefinitionNode extends RRootNode {
     private final BranchProfile returnProfile = new BranchProfile();
 
     public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
+        this(src, funcEnv, body, formals, description, substituteFrame, false);
+    }
+
+    // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
+    // REngine.evalPromise
+    public FunctionDefinitionNode(SourceSection src, REnvironment.FunctionDefinition funcEnv, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit) {
         super(src, formals, funcEnv.getDescriptor());
         this.funcEnv = funcEnv;
         this.uninitializedBody = NodeUtil.cloneNode(body);
         this.body = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
+        this.onExitSlot = skipExit ? null : FrameSlotNode.create(InternalFrameSlot.OnExit, false);
     }
 
     public REnvironment.FunctionDefinition getEnv() {
@@ -91,7 +98,7 @@ public final class FunctionDefinitionNode extends RRootNode {
             returnProfile.enter();
             return ex.getResult();
         } finally {
-            if (onExitProfile.profile(onExitSlot.hasValue(vf))) {
+            if (onExitProfile.profile(onExitSlot != null && onExitSlot.hasValue(vf))) {
                 ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
                 for (Object expr : current) {
                     if (!(expr instanceof RNode)) {
