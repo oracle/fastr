@@ -5684,13 +5684,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_ad3549732fce5b2ee1cd8a4b9996d797() {
-        assertEval("{ cbind(2,3, c(1,1,1))");
+    public void TestSimpleBuiltins_testCbindIgnore_f5b3db04fe961d7c6d80476d53ae45be() {
+        assertEval("{ cbind(2,3, c(1,1,1)) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCbindIgnore_eac42e3620663dabb16389ef366ddb5e() {
-        assertEval("{ cbind(2.1:10,32.2)");
+    public void TestSimpleBuiltins_testCbindIgnore_e8d1f5dd1ffd1a1a5ccb947fcc02b43f() {
+        assertEval("{ cbind(2.1:10,32.2) }");
     }
 
     @Test
