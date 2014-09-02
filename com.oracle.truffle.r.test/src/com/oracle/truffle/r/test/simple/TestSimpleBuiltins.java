@@ -1399,6 +1399,16 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void testTypeOfIgnore() {
+        // Inaccurate error message: function src missing
+        assertEval("{ f <- function(...) typeof(...); f(1,2)}");
+        assertEval("{ f <- function(...) typeof(...); f(1,2,3)}");
+        assertEval("{ f <- function(...) typeof(...); f(1,2,3,4)}");
+        assertEval("{ f <- function(...) typeof(...); f()}");
+    }
+
+    @Test
     public void testSub() {
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\") }");
         assertEval("{ sub(\"a\",\"aa\", \"prague alley\") }");
@@ -2329,6 +2339,8 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     @Ignore
     public void testMissingIgnore() {
+        assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
+
         assertEval("{ f <- function(a = z, z) {  g(a) } ; g <- function(b) { missing(b) } ; f() }");
         assertEval("{ f <- function(a) { g(a) } ; g <- function(b=2) { missing(b) } ; f() }");
         assertEval("{ f <- function(x = y, y = x) { g(x, y) } ; g <- function(x, y) { missing(x) } ; f() }");
@@ -2338,8 +2350,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
-        // Unprecise error message in RPromise
-        assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
     }
 
     @Test

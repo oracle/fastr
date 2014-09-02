@@ -151,7 +151,7 @@ public final class RPromise extends RLanguageRep {
             return value;
         }
 
-        // Check for dependecy cycle
+        // Check for dependency cycle
         if (underEvaluation) {
             // TODO Get SourceSection of funcall!
             throw RError.error(RError.Message.PROMISE_CYCLE);

@@ -162,10 +162,6 @@ public class TestSimpleFunctions extends TestBase {
     }
 
     @Test
-    public void testPromisesIgnore() {
-    }
-
-    @Test
     public void testMatching() {
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(f=10,2) }");
         assertEval("{ x<-function(foo,bar){foo*bar} ; x(fo=10, bar=2) }");
@@ -237,11 +233,7 @@ public class TestSimpleFunctions extends TestBase {
     @Test
     @Ignore
     public void testDotsIgnore() {
-        // Inaccurate error message: function src missing
-        assertEval("{ f <- function(...) typeof(...); f()}");
-
         assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
-
 
         assertEvalError("{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
         assertEvalError("{ lapply(1:3, \"dummy\") }");
@@ -271,5 +263,12 @@ public class TestSimpleFunctions extends TestBase {
     public void testArgs() {
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional)}; f(c(7,42), row.names=NULL, nm=\"x\") }");
         assertEval("{ f<-function(x, row.names = NULL, optional = FALSE, ...) {print(optional); for (i in list(...)) {print(i)} }; f(c(7,42), row.names=NULL, nm=\"x\") }");
+    }
+
+    @Test
+    @Ignore
+    public void testUnusedArgumentErrorsIgnore() {
+        assertEval("{ foo <- function(x) x; foo() }");
+        assertEval("{ foo <- function(x) x; foo(1,2,3) }");
     }
 }

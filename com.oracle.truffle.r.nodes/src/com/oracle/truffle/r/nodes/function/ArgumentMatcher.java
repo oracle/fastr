@@ -42,13 +42,13 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)}. The other
- * match functions are used for special cases, where builtins make it necessary to re-match
- * parameters, e.g.:
+ * {@link #matchArguments(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
+ * . The other match functions are used for special cases, where builtins make it necessary to
+ * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(VirtualFrame, RFunction, EvaluatedArguments, SourceSection)} for
  * 'UseMethod' and
- * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection)} for
- * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
+ * {@link #matchArgumentsInlined(VirtualFrame, RFunction, UnmatchedArguments, SourceSection, SourceSection)}
+ * for builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
  * </p>
  *
  * <p>
@@ -105,15 +105,17 @@ public class ArgumentMatcher {
      * @param frame carrier for missing check
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
+     * @param callSrc The source of the function call currently executed
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
      *
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
-     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
+     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, SourceSection,
+     *      boolean)
      */
-    public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
+    public static MatchedArguments matchArguments(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection encapsulatingSrc) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, false);
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, encapsulatingSrc, false);
         return MatchedArguments.create(wrappedArgs, formals.getNames());
     }
 
@@ -151,14 +153,16 @@ public class ArgumentMatcher {
      *
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
+     * @param callSrc The source of the function call currently executed
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
-     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, boolean)
+     * @see #matchNodes(VirtualFrame, RFunction, RNode[], String[], SourceSection, SourceSection,
+     *      boolean)
      */
-    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection encapsulatingSrc) {
-        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), encapsulatingSrc, true);
+    public static InlinedArguments matchArgumentsInlined(VirtualFrame frame, RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection encapsulatingSrc) {
+        RNode[] wrappedArgs = matchNodes(frame, function, suppliedArgs.getArguments(), suppliedArgs.getNames(), callSrc, encapsulatingSrc, true);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getNames());
     }
 
@@ -178,7 +182,7 @@ public class ArgumentMatcher {
     public static EvaluatedArguments matchArgumentsEvaluated(VirtualFrame frame, RFunction function, EvaluatedArguments evaluatedArgs, SourceSection encapsulatingSrc) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(),
+        Object[] evaledArgs = permuteArguments(function, evaluatedArgs.getEvaluatedArgs(), evaluatedArgs.getNames(), formals, new VarArgsAsObjectArrayFactory(), new ObjectArrayFactory(), null,
                         encapsulatingSrc);
 
         // Replace RMissing with default value!
@@ -215,6 +219,7 @@ public class ArgumentMatcher {
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param suppliedNames The names for the arguments supplied to the call
+     * @param callSrc The source of the function call currently executed
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
      * @param isForInlinedBuiltin Whether the arguments are passed into an inlined builtin and need
      *            special treatment
@@ -222,13 +227,14 @@ public class ArgumentMatcher {
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
      * @see #permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory,
-     *      ArrayFactory, SourceSection)
+     *      ArrayFactory, SourceSection, SourceSection)
      */
-    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection encapsulatingSrc, boolean isForInlinedBuiltin) {
+    private static RNode[] matchNodes(VirtualFrame frame, RFunction function, RNode[] suppliedArgs, String[] suppliedNames, SourceSection callSrc, SourceSection encapsulatingSrc,
+                    boolean isForInlinedBuiltin) {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc);
+        RNode[] resultArgs = permuteArguments(function, suppliedArgs, suppliedNames, formals, new VarArgsAsObjectArrayNodeFactory(), new RNodeArrayFactory(), encapsulatingSrc, callSrc);
 
         // Check for "missing" symbols
         RNode[] argsChecked = resultArgs;
@@ -264,13 +270,14 @@ public class ArgumentMatcher {
      * @param formals The {@link FormalArguments} this function has
      * @param listFactory An abstraction for the creation of list of different types
      * @param arrFactory An abstraction for the generic creation of type safe arrays
+     * @param callSrc The source of the function call currently executed
      * @param encapsulatingSrc The source code encapsulating the arguments, for debugging purposes
      *
      * @param <T> The type of the given arguments
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     private static <T> T[] permuteArguments(RFunction function, T[] suppliedArgs, String[] suppliedNames, FormalArguments formals, VarArgsFactory<T> listFactory, ArrayFactory<T> arrFactory,
-                    SourceSection encapsulatingSrc) {
+                    SourceSection callSrc, SourceSection encapsulatingSrc) {
         String[] formalNames = formals.getNames();
 
         // Preparations
@@ -289,7 +296,7 @@ public class ArgumentMatcher {
             }
 
             // Search for argument name inside formal arguments
-            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], encapsulatingSrc);
+            int fi = findParameterPosition(formalNames, suppliedNames[si], matchedFormalArgs, si, hasVarArgs, suppliedArgs[si], callSrc, encapsulatingSrc);
             if (fi >= 0) {
                 resultArgs[fi] = suppliedArgs[si];
                 matchedSuppliedArgs.set(si);
@@ -362,37 +369,34 @@ public class ArgumentMatcher {
 
             // Definitely an error: Prepare error message
             si.reset();
-            throwUnusedArgumentError(leftoverCount, si, arrFactory);
+            throwUnusedArgumentError(leftoverCount, si, arrFactory, callSrc);
         }
 
         return resultArgs;
     }
 
     @SlowPath
-    private static <T> void throwUnusedArgumentError(int leftoverCount, UnmatchedSuppliedIterator<T> si, ArrayFactory<T> arrFactory) {
-
+    private static <T> void throwUnusedArgumentError(int leftoverCount, UnmatchedSuppliedIterator<T> si, ArrayFactory<T> arrFactory, SourceSection callSrc) {
         // UNUSED_ARGUMENT(S)?
         if (leftoverCount == 1) {
-            // TODO Precise error messages: "f(n)" is missing!
             String argStr = arrFactory.debugString(si.next());
-            throw RError.error(null, RError.Message.UNUSED_ARGUMENT, argStr);
+            throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, argStr);
         }
 
-        // Create error message:
+        // Create error message
         T[] debugArgs = arrFactory.newArray(leftoverCount);
         int pos = 0;
         while (si.hasNext()) {
             debugArgs[pos++] = si.next();
         }
 
-        // TODO Precise error messages: "f(n)" is missing!
         String argStr = arrFactory.debugString(debugArgs);
-        throw RError.error(null, RError.Message.UNUSED_ARGUMENTS, argStr);
+        throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENTS, argStr);
     }
 
     /**
      * Used in
-     * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection)}
+     * {@link ArgumentMatcher#permuteArguments(RFunction, Object[], String[], FormalArguments, VarArgsFactory, ArrayFactory, SourceSection, SourceSection)}
      * for iteration over suppliedArgs
      *
      * @param <T>
@@ -476,12 +480,13 @@ public class ArgumentMatcher {
      * @param suppliedIndex
      * @param hasVarArgs
      * @param debugArgNode
+     * @param callSrc
      * @param encapsulatingSrc
      *
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
      */
-    private static <T> int findParameterPosition(String[] formalNames, String suppliedName, BitSet matchedSuppliedArgs, int suppliedIndex, boolean hasVarArgs, T debugArgNode,
+    private static <T> int findParameterPosition(String[] formalNames, String suppliedName, BitSet matchedSuppliedArgs, int suppliedIndex, boolean hasVarArgs, T debugArgNode, SourceSection callSrc,
                     SourceSection encapsulatingSrc) {
         int found = -1;
         for (int i = 0; i < formalNames.length; i++) {
@@ -517,7 +522,7 @@ public class ArgumentMatcher {
         if (debugArgNode instanceof RNode) {
             debugSrc = ((RNode) debugArgNode).getSourceSection().getCode();
         }
-        throw RError.error(encapsulatingSrc, RError.Message.UNUSED_ARGUMENT, debugSrc);
+        throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, debugSrc);
     }
 
     /**

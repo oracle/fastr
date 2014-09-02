@@ -277,7 +277,7 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, getSourceSection(), debugSrc);
                     return root.inline(inlinedArgs);
                 }
             }
@@ -288,7 +288,7 @@ public abstract class RCallNode extends RNode {
                 return new DispatchedVarArgsCallNode(function, args);
             } else {
                 // Nope! (peeewh)
-                MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, debugSrc);
+                MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, getSourceSection(), debugSrc);
                 return new DispatchedCallNode(function, matchedArgs);
             }
         }
@@ -346,7 +346,7 @@ public abstract class RCallNode extends RNode {
                 UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
                 // ...to match them against the chosen function's formal arguments
                 callSignature = newCallSignature;
-                reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+                reorderedArgs = ArgumentMatcher.matchArguments(frame, evaluatedFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
             Object[] argsObject = RArguments.create(function, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
@@ -379,7 +379,7 @@ public abstract class RCallNode extends RNode {
                 UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
                 // Match them against the resolved function's formal arguments
                 lastFunction = currentFunction;
-                reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+                reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
             Object[] argsObject = RArguments.create(currentFunction, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
@@ -417,7 +417,7 @@ public abstract class RCallNode extends RNode {
                 lastFunction = currentFunction;
                 callSignature = newCallSignature;
                 // Match them against the chosen function's formal arguments
-                reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getEncapsulatingSourceSection());
+                reorderedArgs = ArgumentMatcher.matchArguments(frame, currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection());
             }
 
             Object[] argsObject = RArguments.create(currentFunction, reorderedArgs.doExecuteArray(frame), reorderedArgs.getNames());
