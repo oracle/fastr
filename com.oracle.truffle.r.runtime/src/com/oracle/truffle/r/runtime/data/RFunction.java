@@ -44,7 +44,6 @@ public final class RFunction extends RScalar {
     private final RootCallTarget target;
     private final RBuiltin builtin;
     private MaterializedFrame enclosingFrame;
-    private boolean usePromises;
 
     public RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
         this.name = name;
@@ -79,13 +78,5 @@ public final class RFunction extends RScalar {
 
     public void setEnclosingFrame(MaterializedFrame frame) {
         this.enclosingFrame = frame;
-    }
-
-    public void setUsePromises() {
-        usePromises = true;
-    }
-
-    public boolean getUsePromises() {
-        return usePromises;
     }
 }
