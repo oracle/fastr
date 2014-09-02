@@ -270,6 +270,7 @@ public abstract class RCallNode extends RNode {
         }
 
         protected RCallNode createCacheNode(VirtualFrame frame, RFunction function, SourceSection debugSrc) {
+            CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
@@ -277,18 +278,18 @@ public abstract class RCallNode extends RNode {
                 if (root != null) {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
-                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, args, debugSrc);
+                    InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, clonedArgs, debugSrc);
                     return root.inline(inlinedArgs);
                 }
             }
 
             // Now we need to distinguish: Do supplied arguments vary between calls?
-            if (args.containsVarArgsSymbol()) {
+            if (clonedArgs.containsVarArgsSymbol()) {
                 // Yes, maybe.
-                return new DispatchedVarArgsCallNode(function, args);
+                return new DispatchedVarArgsCallNode(function, clonedArgs);
             } else {
                 // Nope! (peeewh)
-                MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, args, debugSrc);
+                MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, debugSrc);
                 return new DispatchedCallNode(function, matchedArgs);
             }
         }
