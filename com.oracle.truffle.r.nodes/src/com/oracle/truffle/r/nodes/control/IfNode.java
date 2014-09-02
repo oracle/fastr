@@ -22,11 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -37,13 +36,10 @@ public class IfNode extends RNode implements VisibilityController {
     @Child private RNode thenPart;
     @Child private RNode elsePart;
 
-    private final boolean elseGiven;
-
     protected IfNode(RNode condition, RNode thenPart, RNode elsePart) {
         this.condition = ConvertBooleanNode.create(condition);
         this.thenPart = thenPart;
-        this.elseGiven = elsePart != null;
-        this.elsePart = elseGiven ? elsePart : ConstantNode.create(RNull.instance);
+        this.elsePart = elsePart;
     }
 
     public static IfNode create(RNode condition, RNode thenPart, RNode elsePart) {
@@ -82,13 +78,13 @@ public class IfNode extends RNode implements VisibilityController {
     public Object execute(VirtualFrame frame) {
         byte cond = condition.executeByte(frame);
         if (!RContext.isHeadless()) {
-            isVisible = cond == RRuntime.LOGICAL_TRUE || elseGiven;
+            isVisible = cond == RRuntime.LOGICAL_TRUE || elsePart != null;
         }
         controlVisibility();
         if (cond == RRuntime.LOGICAL_TRUE) {
             return thenPart.execute(frame);
         } else if (cond == RRuntime.LOGICAL_FALSE) {
-            if (elseGiven) {
+            if (elsePart != null) {
                 return elsePart.execute(frame);
             } else {
                 return RNull.instance;
