@@ -271,6 +271,7 @@ public abstract class RCallNode extends RNode {
 
         protected RCallNode createCacheNode(VirtualFrame frame, RFunction function, SourceSection debugSrc) {
             CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
+            RCallNode callNode = null;
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
@@ -279,19 +280,22 @@ public abstract class RCallNode extends RNode {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
                     InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(frame, function, clonedArgs, getSourceSection(), debugSrc);
-                    return root.inline(inlinedArgs);
+                    callNode = root.inline(inlinedArgs);
+                }
+            } else {
+                // Now we need to distinguish: Do supplied arguments vary between calls?
+                if (clonedArgs.containsVarArgsSymbol()) {
+                    // Yes, maybe.
+                    callNode = new DispatchedVarArgsCallNode(function, clonedArgs);
+                } else {
+                    // Nope! (peeewh)
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, getSourceSection(), debugSrc);
+                    callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
 
-            // Now we need to distinguish: Do supplied arguments vary between calls?
-            if (clonedArgs.containsVarArgsSymbol()) {
-                // Yes, maybe.
-                return new DispatchedVarArgsCallNode(function, clonedArgs);
-            } else {
-                // Nope! (peeewh)
-                MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(frame, function, clonedArgs, getSourceSection(), debugSrc);
-                return new DispatchedCallNode(function, matchedArgs);
-            }
+            callNode.assignSourceSection(debugSrc);
+            return callNode;
         }
     }
 

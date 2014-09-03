@@ -48,7 +48,7 @@ public abstract class RBounded {
             length *= newDimensions[i];
         }
         if (length != getLength()) {
-            throw RError.error(sourceSection, RError.Message.DIMS_DONT_MATCH_LENGTH, length, getLength());
+            throw RError.error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, getLength());
         }
     }
 }

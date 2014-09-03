@@ -173,6 +173,7 @@ public class PromiseNode extends RNode {
 
         private VarArgPromiseNode(RPromise promise) {
             this.promise = promise;
+            assignSourceSection(((RNode) promise.getRep()).getSourceSection());
         }
 
         @Override
