@@ -168,7 +168,14 @@ public abstract class Format extends RBuiltinNode {
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
-            return convertToString(value);
+            RStringVector result = convertToString(value);
+            if (value.getDimensions() != null) {
+                result.setDimensions(value.getDimensions());
+                result.setDimNames(value.getDimNames());
+            } else {
+                result.setNames(value.getNames());
+            }
+            return result;
         }
     }
 

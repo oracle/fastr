@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "rep.int", kind = SUBSTITUTE, parameterNames = {"x", "times"})
 // TODO INTERNAL
@@ -86,6 +87,38 @@ public abstract class RepeatInternal extends RBuiltinNode {
             }
         }
         return RDataFactory.createDoubleVector(array, value.isComplete());
+    }
+
+    @Specialization(guards = "isTimesValid")
+    protected RDoubleVector repInt(RAbstractDoubleVector value, RIntVector times) {
+        controlVisibility();
+        List<Double> result = new ArrayList<>();
+        for (int i = 0; i < value.getLength(); i++) {
+            for (int j = 0; j < times.getDataAt(i); ++j) {
+                result.add(value.getDataAt(i));
+            }
+        }
+        double[] ans = new double[result.size()];
+        for (int i = 0; i < ans.length; ++i) {
+            ans[i] = result.get(i);
+        }
+        return RDataFactory.createDoubleVector(ans, value.isComplete());
+    }
+
+    @Specialization(guards = "isTimesValid")
+    protected RIntVector repInt(RAbstractIntVector value, RIntVector times) {
+        controlVisibility();
+        List<Integer> result = new ArrayList<>();
+        for (int i = 0; i < value.getLength(); i++) {
+            for (int j = 0; j < times.getDataAt(i); ++j) {
+                result.add(value.getDataAt(i));
+            }
+        }
+        int[] ans = new int[result.size()];
+        for (int i = 0; i < ans.length; ++i) {
+            ans[i] = result.get(i);
+        }
+        return RDataFactory.createIntVector(ans, value.isComplete());
     }
 
     @Specialization
@@ -151,5 +184,12 @@ public abstract class RepeatInternal extends RBuiltinNode {
             }
         }
         return RDataFactory.createList(array);
+    }
+
+    protected boolean isTimesValid(RAbstractVector value, RIntVector times) {
+        if (value.getLength() != times.getLength()) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "times");
+        }
+        return true;
     }
 }
