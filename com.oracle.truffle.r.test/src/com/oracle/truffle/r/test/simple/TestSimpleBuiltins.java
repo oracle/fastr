@@ -1350,7 +1350,6 @@ public class TestSimpleBuiltins extends TestBase {
     @Ignore
     public void testAbsIgnore() {
         assertEval("{ abs(c(0/0,1i)) }");
-        assertEval("{ exp(-abs((0+1i)/(0+0i))) }");
         assertEval("{ abs(1:3) }");
         assertEval("{ abs(-1:-3) }");
         assertEvalError("{ abs(NULL) }");
