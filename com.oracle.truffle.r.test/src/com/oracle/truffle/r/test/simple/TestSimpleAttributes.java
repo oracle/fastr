@@ -47,8 +47,6 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ;  x & x }");
         assertEval("{ x <- as.raw(1:2);  attr(x, \"hi\") <- 2 ;  x & x }");
 
-        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
-
         assertEval("{ x <- c(1+1i,2+2i);  attr(x, \"hi\") <- 3 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
         assertEval("{ x <- 1+1i;  attr(x, \"hi\") <- 1+2 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
         assertEval("{ x <- c(1+1i, 2+2i) ;  attr(x, \"hi\") <- 3 ; attr(x, \"hihi\") <- 10 ; y <- c(2+2i, 3+3i) ; attr(y,\"zz\") <- 2; attr(y,\"hi\") <-3; " + "attr(y,\"bye\") <- 4 ; x+y }");
@@ -70,7 +68,9 @@ public class TestSimpleAttributes extends TestBase {
     }
 
     @Test
+    @Ignore
     public void testArithmeticPropagationIgnore() {
+        assertEval("{ x <- c(a=FALSE,b=TRUE) ;  attr(x, \"hi\") <- 2 ;  !x  }");
     }
 
     @Test
