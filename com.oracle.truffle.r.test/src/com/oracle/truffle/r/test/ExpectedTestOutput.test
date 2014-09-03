@@ -16527,6 +16527,10 @@ In addition: Warning message:
 In c(1, 2) < c(1, 2, 3) :
   longer object length is not a multiple of shorter object length
 
+##com.oracle.truffle.r.test.simple.TestSimpleValues.testAmbiguousExpression
+#exp(-abs((0+1i)/(0+0i)))
+[1] 0
+
 ##com.oracle.truffle.r.test.simple.TestSimpleValues.testAttributes
 #x <- 1; attr(x, "a") <- "hello"; attr(x, "a");
 [1] "hello"
