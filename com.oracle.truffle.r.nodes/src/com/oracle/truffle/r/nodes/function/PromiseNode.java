@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.expressions.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
@@ -114,6 +115,7 @@ public class PromiseNode extends RNode {
      */
     private static class InlinedSuppliedPromiseNode extends PromiseNode {
         @Child private RNode expr;
+        @Child private ExpressionExecutorNode exprExecNode = ExpressionExecutorNode.create();
 
         public InlinedSuppliedPromiseNode(RPromiseFactory factory, EnvProvider envProvider) {
             super(factory, envProvider);
@@ -131,7 +133,7 @@ public class PromiseNode extends RNode {
                     return RMissing.instance;
                 }
                 RPromise promise = factory.createPromiseDefault();
-                return promise.evaluate(frame);
+                return PromiseHelper.evaluate(frame, exprExecNode, promise);
             } else if (obj instanceof RArgsValuesAndNames) {
                 return ((RArgsValuesAndNames) obj).evaluate(frame);
             } else {
@@ -259,28 +261,15 @@ public class PromiseNode extends RNode {
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
                     for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index] = handlePromise(frame, varargValues[j]);
+                        evaluatedArgs[index] = RPromise.checkEvaluate(frame, varargValues[j]);
                         evaluatedNames[index] = argsValuesAndNames.getNames()[j];
                         index++;
                     }
                 } else {
-                    evaluatedArgs[index++] = handlePromise(frame, argValue);
+                    evaluatedArgs[index++] = RPromise.checkEvaluate(frame, argValue);
                 }
             }
             return new RArgsValuesAndNames(evaluatedArgs, evaluatedNames);
-        }
-
-        /**
-         * @param frame
-         * @param obj
-         * @return TODO Gero, add comment!
-         */
-        private static Object handlePromise(VirtualFrame frame, Object obj) {
-            if (obj instanceof RPromise) {
-                RPromise promise = (RPromise) obj;
-                return promise.evaluate(frame);
-            }
-            return obj;
         }
     }
 }

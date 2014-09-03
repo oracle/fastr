@@ -168,7 +168,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                     }
 
                     // Create an initialization statement
-                    init[index] = WriteVariableNode.create(arg.getName(), new AccessArgumentNode(index, envProvider), true, false);
+                    init[index] = WriteVariableNode.create(arg.getName(), AccessArgumentNode.create(index, envProvider), true, false);
 
                     // Store formal arguments
                     argumentNames[index] = RRuntime.toString(arg.getName());
