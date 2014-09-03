@@ -4084,11 +4084,6 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testAbsIgnore_c0cc055b696d0196df8961748dac97a4() {
-        assertEval("{ exp(-abs((0+1i)/(0+0i))) }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testAbsIgnore_0ab2d0f2d7030b273cd0e45daf435b57() {
         assertEval("{ abs(1:3) }");
     }

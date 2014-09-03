@@ -100,3 +100,4 @@ c(1i,1i,1i)/c(FALSE,FALSE,FALSE)|[1] NaN+NaNi NaN+NaNi NaN+NaNi|[1] NaN+Infi NaN
 c(1i,1i,1i)/(1/0)|[1] 0+0i 0+0i 0+0i|[1] NaN+NaNi NaN+NaNi NaN+NaNi
 1i/(-(1/0))|[1] 0+0i|[1] NaN+NaNi
 c(1i,1i,1i)/(-(1/0))|[1] 0+0i 0+0i 0+0i|[1] NaN+NaNi NaN+NaNi NaN+NaNi
+exp(-abs((0+1i)/(0+0i)))|[1] NaN|[1] 0
