@@ -39,7 +39,8 @@ import com.oracle.truffle.r.runtime.env.*;
  * {@link #getIndex()}). It is used to populate a function's new frame right after the actual
  * function call and before the function's actual body is executed.
  */
-@NodeChild(value = "readArgNode", type = ReadArgumentNode.class)
+// Fully qualified type name to circumvent compiler bug..
+@NodeChild(value = "readArgNode", type = com.oracle.truffle.r.nodes.access.AccessArgumentNode.ReadArgumentNode.class)
 @NodeField(name = "envProvider", type = EnvProvider.class)
 public abstract class AccessArgumentNode extends RNode {
 
