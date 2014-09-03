@@ -84,12 +84,6 @@ public class TestRPackages extends TestBase {
 
     @Test
     public void testLoadVanilla() {
-
-    }
-
-    @Test
-    @Ignore
-    public void testLoadVanillaIgnore() {
         PackagePaths packagePaths = new PackagePaths();
         assertTrue(packagePaths.installPackage("vanilla_1.0.tar.gz"));
         assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); vanilla() }", new String[]{packagePaths.rpackagesLibs.toString()}));
@@ -97,12 +91,6 @@ public class TestRPackages extends TestBase {
 
     @Test
     public void testLoadTestRFFI() {
-
-    }
-
-    @Test
-    @Ignore
-    public void testLoadTestRFFIIgnore() {
         PackagePaths packagePaths = new PackagePaths();
         assertTrue(packagePaths.installPackage("testrffi_1.0.tar.gz"));
         assertTemplateEval(TestBase.template("{ library(\"testrffi\", lib.loc = \"%0\"); add_int(2L, 3L) }", new String[]{packagePaths.rpackagesLibs.toString()}));

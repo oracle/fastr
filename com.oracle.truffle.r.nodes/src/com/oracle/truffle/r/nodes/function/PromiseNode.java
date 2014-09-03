@@ -135,7 +135,7 @@ public class PromiseNode extends RNode {
             } else if (obj instanceof RArgsValuesAndNames) {
                 return ((RArgsValuesAndNames) obj).evaluate(frame);
             } else {
-                return obj;
+                return RPromise.checkEvaluate(frame, obj);
             }
         }
     }
