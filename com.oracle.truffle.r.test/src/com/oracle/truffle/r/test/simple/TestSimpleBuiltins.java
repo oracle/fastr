@@ -1404,15 +1404,14 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ typeof(length(typeof(NULL))) }");
 
         assertEval("{ f <- function(...) typeof(...); f(1)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
     }
 
     @Test
     @Ignore
     public void testTypeOfIgnore() {
-        // Inaccurate error message: function src missing
-        assertEval("{ f <- function(...) typeof(...); f(1,2)}");
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3)}");
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3,4)}");
         assertEval("{ f <- function(...) typeof(...); f()}");
     }
 
@@ -2342,6 +2341,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(x) { missing(x) } ; f(a) }");
         assertEval("{ f <- function(a) { g <- function(b) { before <- missing(b) ; a <<- 2 ; after <- missing(b) ; c(before, after) } ; g(a) } ; f() }");
         assertEval("{ f <- function(...) { g(...) } ;  g <- function(b=2) { missing(b) } ; f() }");
+
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
     }
 
     @Test
@@ -2356,8 +2357,8 @@ public class TestSimpleBuiltins extends TestBase {
 
         // All unprecise error message in ArgumentMatcher: function src is missing!
         assertEval("{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f() }");
-        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
         assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
+        assertEval("{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }");
     }
 
     @Test

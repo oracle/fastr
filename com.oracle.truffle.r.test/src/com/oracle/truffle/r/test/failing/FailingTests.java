@@ -1079,13 +1079,13 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testMissingIgnore_4d4ddff49525509727252465a38b7dab() {
-        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
+    public void TestSimpleBuiltins_testMissingIgnore_32e4fa660fad3f0468fe84a74a8ee913() {
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testMissingIgnore_32e4fa660fad3f0468fe84a74a8ee913() {
-        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
+    public void TestSimpleBuiltins_testMissingIgnore_c6c7ca5b1c15e6206546dac9ba1c9206() {
+        assertEval("{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }");
     }
 
     @Ignore
@@ -1924,21 +1924,6 @@ public class FailingTests extends TestBase {
     }
 
     @Ignore
-    public void TestSimpleBuiltins_testTypeOfIgnore_7a185fb0c140763eec43139d1d4bf9c0() {
-        assertEval("{ f <- function(...) typeof(...); f(1,2)}");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testTypeOfIgnore_342be899f21a36ac26836cbf35a39f3c() {
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3)}");
-    }
-
-    @Ignore
-    public void TestSimpleBuiltins_testTypeOfIgnore_f3a6413b5a4681447446c94430be4fff() {
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3,4)}");
-    }
-
-    @Ignore
     public void TestSimpleBuiltins_testTypeOfIgnore_847d333bfb40729281acd0b949d4c097() {
         assertEval("{ f <- function(...) typeof(...); f()}");
     }
@@ -2191,11 +2176,6 @@ public class FailingTests extends TestBase {
     @Ignore
     public void TestSimpleFunctions_testUnusedArgumentErrorsIgnore_750a30256b5db1960c52679f4d9e5e84() {
         assertEval("{ foo <- function(x) x; foo() }");
-    }
-
-    @Ignore
-    public void TestSimpleFunctions_testUnusedArgumentErrorsIgnore_2a163b61a43ff1147a7cdd5985dec851() {
-        assertEval("{ foo <- function(x) x; foo(1,2,3) }");
     }
 
     @Ignore

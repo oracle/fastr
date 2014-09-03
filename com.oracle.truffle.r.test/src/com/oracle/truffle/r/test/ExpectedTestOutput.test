@@ -8975,6 +8975,13 @@ In min(integer(0)) : no non-missing arguments to min; returning Inf
 [1] FALSE
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
+#{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }
+[1] FALSE
+[1] FALSE
+[1] FALSE
+[1] 1
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testMissing
 #{ f <- function(x) {print(missing(x)); g(x)}; g <- function(y=2) {print(missing(y)); y}; f(1) }
 [1] FALSE
 [1] FALSE
@@ -11738,6 +11745,18 @@ Error in tan() : 0 arguments passed to 'tan' which requires 1
 [1] "double"
 
 ##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ f <- function(...) typeof(...); f(1, 2)}
+Error in typeof(...) : unused argument (2)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ f <- function(...) typeof(...); f(1, 2, 3)}
+Error in typeof(...) : unused arguments (2, 3)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
+#{ f <- function(...) typeof(...); f(1, 2, 3, 4)}
+Error in typeof(...) : unused arguments (2, 3, 4)
+
+##com.oracle.truffle.r.test.simple.TestSimpleBuiltins.testTypeOf
 #{ length(typeof(NULL)) }
 [1] 1
 
@@ -14379,6 +14398,10 @@ NULL
 ##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testReturn
 #{ f<-function() { return(2) ; 3 } ; f() }
 [1] 2
+
+##com.oracle.truffle.r.test.simple.TestSimpleFunctions.testUnusedArgumentErrors
+#{ foo <- function(x) x; foo(1, 2, 3) }
+Error in foo(1, 2, 3) : unused arguments (2, 3)
 
 ##com.oracle.truffle.r.test.simple.TestSimpleIfEvaluator.testCast
 #{ f <- function(a) { if (is.na(a)) { 1 } else { 2 } } ; f(5) ; f(1:3)}

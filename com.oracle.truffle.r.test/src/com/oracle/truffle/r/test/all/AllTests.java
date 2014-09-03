@@ -10114,6 +10114,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testMissing_4d4ddff49525509727252465a38b7dab() {
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testMissingIgnore_77e99ff6cfb53e3c7d569e2a3ec713fd() {
         assertEval("{ k <- function(x=2,y) { xx <- x; yy <- y; print(missing(x)); print(missing(xx)); print(missing(yy)); print(missing(yy))}; k() }");
     }
@@ -10144,13 +10149,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_4d4ddff49525509727252465a38b7dab() {
-        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f(1) }");
+    public void TestSimpleBuiltins_testMissingIgnore_32e4fa660fad3f0468fe84a74a8ee913() {
+        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testMissingIgnore_32e4fa660fad3f0468fe84a74a8ee913() {
-        assertEval("{ f <- function(x) { print(missing(x)); g(x) }; g <- function(y=3) { print(missing(y)); k(y) }; k <- function(l=4) { print(missing(l)); l }; f() }");
+    public void TestSimpleBuiltins_testMissingIgnore_c6c7ca5b1c15e6206546dac9ba1c9206() {
+        assertEval("{ f <- function(x) { print(missing(x)) ; g(x) } ; g <- function(y=1) { print(missing(y)) ; h(y) } ; h <- function(z) { print(missing(z)) ; z } ; f() }");
     }
 
     @Test
@@ -13674,18 +13679,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testTypeOfIgnore_7a185fb0c140763eec43139d1d4bf9c0() {
-        assertEval("{ f <- function(...) typeof(...); f(1,2)}");
+    public void TestSimpleBuiltins_testTypeOf_c537f1365e53eb43493595b75527a433() {
+        assertEval("{ f <- function(...) typeof(...); f(1, 2)}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testTypeOfIgnore_342be899f21a36ac26836cbf35a39f3c() {
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3)}");
+    public void TestSimpleBuiltins_testTypeOf_513845523076f97abcef340cb66c8ddf() {
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3)}");
     }
 
     @Test
-    public void TestSimpleBuiltins_testTypeOfIgnore_f3a6413b5a4681447446c94430be4fff() {
-        assertEval("{ f <- function(...) typeof(...); f(1,2,3,4)}");
+    public void TestSimpleBuiltins_testTypeOf_1675c9457b46c8dc92e10c262f429ca0() {
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
     }
 
     @Test
@@ -16609,13 +16614,13 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleFunctions_testUnusedArgumentErrorsIgnore_750a30256b5db1960c52679f4d9e5e84() {
-        assertEval("{ foo <- function(x) x; foo() }");
+    public void TestSimpleFunctions_testUnusedArgumentErrors_0cbdc150cd6e4db7f1004c14f912a5a5() {
+        assertEval("{ foo <- function(x) x; foo(1, 2, 3) }");
     }
 
     @Test
-    public void TestSimpleFunctions_testUnusedArgumentErrorsIgnore_2a163b61a43ff1147a7cdd5985dec851() {
-        assertEval("{ foo <- function(x) x; foo(1,2,3) }");
+    public void TestSimpleFunctions_testUnusedArgumentErrorsIgnore_750a30256b5db1960c52679f4d9e5e84() {
+        assertEval("{ foo <- function(x) x; foo() }");
     }
 
     @Test
