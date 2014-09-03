@@ -170,19 +170,20 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization()
     @SuppressWarnings("unused")
-    protected RIntVector match(VirtualFrame frame, RAbstractIntVector x, Object table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(VirtualFrame frame, RAbstractIntVector x, RAbstractLogicalVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
         int nomatch = castInt(frame, nomatchObj);
         int[] result = initResult(x.getLength(), nomatch);
-        int tableData = castInt(frame, table);
         boolean matchAll = true;
         for (int i = 0; i < result.length; ++i) {
             double xx = x.getDataAt(i);
             boolean match = false;
-            if (eq.op(xx, tableData) == RRuntime.LOGICAL_TRUE) {
-                result[i] = 1;
-                match = true;
-                break;
+            for (int k = 0; k < table.getLength(); ++k) {
+                if (eq.op(xx, table.getDataAt(k)) == RRuntime.LOGICAL_TRUE) {
+                    result[i] = 1;
+                    match = true;
+                    break;
+                }
             }
             matchAll &= match;
         }

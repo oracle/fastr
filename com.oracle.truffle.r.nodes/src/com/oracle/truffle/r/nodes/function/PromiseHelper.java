@@ -41,6 +41,10 @@ public class PromiseHelper {
      *         {@link ExpressionExecutorNode}
      */
     public static Object evaluate(VirtualFrame frame, ExpressionExecutorNode exprExecNode, RPromise promise) {
+        if (promise.isEvaluated()) {
+            return promise.evaluate(frame);
+        }
+
         // Check for dependency cycle
         if (promise.isUnderEvaluation()) {
             // TODO Get SourceSection of funcall!
